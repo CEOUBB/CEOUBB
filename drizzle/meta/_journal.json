@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1786177939372,
+      "tag": "0000_equal_baron_strucker",
+      "breakpoints": true
+    }
+  ]
+}

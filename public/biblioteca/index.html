@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#78001f">
+  <title>Centro de Estudio 2026</title>
+  <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CE</div>
+        <div><strong>Centro de Estudio</strong><span>Semestre 2026</span></div>
+      </div>
+      <nav id="courseNav" class="course-nav" aria-label="Ramos"></nav>
+      <div class="sidebar-panel">
+        <span class="eyebrow">Progreso total</span>
+        <div class="progress-line"><span id="progressBar"></span></div>
+        <strong id="progressText">0 de 18</strong>
+      </div>
+      <button id="randomButton" class="blood-button" type="button">Ejercicio aleatorio</button>
+      <button id="resetButton" class="ghost-button" type="button">Reiniciar progreso</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Buscar por ramo, tema o palabra..." autocomplete="off">
+        </label>
+        <label class="select-box">Dificultad
+          <select id="difficultySelect">
+            <option value="all">Todas</option>
+            <option value="Tipo certamen">Tipo certamen</option>
+          </select>
+        </label>
+        <label class="select-box">Tema
+          <select id="topicSelect"><option value="all">Todos</option></select>
+        </label>
+      </header>
+
+      <section class="hero">
+        <div>
+          <span class="eyebrow">Banco personal de práctica</span>
+          <h1 id="heroTitle">Certámenes completos para tus seis ramos.</h1>
+          <p id="heroDescription">Evaluaciones largas, puntaje, tiempo, pauta desarrollada, apuntes y material original.</p>
+        </div>
+        <div class="hero-stat"><strong id="heroCompleted">0</strong><span>evaluaciones completadas</span></div>
+      </section>
+
+      <section class="tutor-panel" aria-labelledby="tutorTitle">
+        <div class="tutor-copy">
+          <span class="eyebrow">Modo híbrido</span>
+          <h2 id="tutorTitle">Tutor de Ingeniería Mecánica</h2>
+          <p>Estudia sin conexión o envía una duda con contexto a ChatGPT cuando tengas internet. Perfil preparado para GPT-5.6 Sol y razonamiento muy alto.</p>
+          <div class="tutor-status"><span>● Biblioteca offline</span><span id="onlineStatus">● Comprobando internet</span></div>
+        </div>
+        <div class="tutor-question">
+          <label for="tutorQuestion">Escribe tu duda</label>
+          <textarea id="tutorQuestion" rows="4" placeholder="Ejemplo: explícame por qué el trabajo de compresión resulta negativo con esta convención de signos."></textarea>
+          <button id="askTutorButton" class="blood-button" type="button">Preguntar a ChatGPT</button>
+        </div>
+      </section>
+
+      <section aria-labelledby="coursesTitle">
+        <div class="section-heading">
+          <div><span class="eyebrow">Panel</span><h2 id="coursesTitle">Ramos</h2></div>
+          <span id="courseSummary" class="muted"></span>
+        </div>
+        <div id="courseGrid" class="course-grid"></div>
+      </section>
+
+      <section aria-labelledby="exercisesTitle">
+        <div class="section-heading">
+          <div><span class="eyebrow">Nivel universitario</span><h2 id="exercisesTitle">Certámenes completos</h2></div>
+          <span id="resultCount" class="muted"></span>
+        </div>
+        <div id="exerciseList" class="exercise-list"></div>
+      </section>
+
+      <section aria-labelledby="materialsTitle">
+        <div class="section-heading">
+          <div><span class="eyebrow">Biblioteca local</span><h2 id="materialsTitle">Material del ramo</h2></div>
+        </div>
+        <div id="materialPanel" class="material-panel"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="assets/vendor/katex/katex.min.js"></script>
+  <script src="assets/vendor/katex/contrib/auto-render.min.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
