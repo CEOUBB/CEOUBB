@@ -237,6 +237,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .primary-button:disabled { cursor: progress; opacity: .65; }
 .link-button { display: inline-flex; align-items: center; justify-content: center; }
 
+.google-access-copy { margin: 0 0 1.5rem; }
+.google-access-copy h2 { margin: .55rem 0 .55rem; color: #321820; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1; letter-spacing: -.055em; }
+.google-access-copy p { margin: 0; color: #735d65; font-size: .88rem; line-height: 1.6; }
+
+.google-button {
+  width: 100%;
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  border: 1px solid #cfbdb7;
+  border-radius: .75rem;
+  background: #fffaf7;
+  color: #321820;
+  box-shadow: 0 8px 24px rgba(75, 38, 51, .08);
+  cursor: pointer;
+  font-weight: 780;
+}
+.google-button span { width: 1.8rem; height: 1.8rem; display: grid; place-items: center; border-radius: 50%; background: #fff; color: #4285f4; box-shadow: 0 0 0 1px #ddd; font-weight: 900; }
+.google-button:hover { border-color: #9b7481; transform: translateY(-1px); }
+.google-button:disabled { cursor: progress; opacity: .65; transform: none; }
+.google-button + .form-error { margin-top: 1rem; }
+
 .institution-note { margin-top: 1.4rem; padding: 1rem 1.1rem; border-left: 3px solid #a5264b; background: #eaded9; }
 .institution-note strong { color: #541127; font-size: .82rem; }
 .institution-note p { margin: .35rem 0 0; color: #725c64; font-size: .76rem; line-height: 1.5; }

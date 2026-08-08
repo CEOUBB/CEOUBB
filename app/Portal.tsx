@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 
 type Role = "owner" | "teacher" | "student";
 
@@ -165,37 +166,27 @@ function LoadingScreen() {
 }
 
 function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: { onSignedIn: (user: User) => void; onInstall: () => void; installHelp: boolean; closeInstallHelp: () => void }) {
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const googleAccess = async () => {
     setError("");
     setWorking(true);
-    const form = new FormData(event.currentTarget);
-    const payload = mode === "login"
-      ? { identifier: form.get("identifier"), password: form.get("password") }
-      : { name: form.get("name"), rut: form.get("rut"), email: form.get("email"), password: form.get("password") };
-    if (mode === "register") {
-      const email = String(payload.email ?? "").trim().toLowerCase();
-      if (!email.endsWith("@alumnos.ubiobio.cl") && !email.endsWith("@ubiobio.cl")) {
-        setError("Solo puedes crear una cuenta con tu correo institucional UBB: @alumnos.ubiobio.cl o @ubiobio.cl.");
-        setWorking(false);
-        return;
-      }
-    }
     try {
-      const response = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
+      const idToken = await signInWithInstitutionalGoogle();
+      const response = await fetch("/api/auth/firebase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ idToken }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "No fue posible continuar.");
       onSignedIn(data.user);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "No fue posible continuar.");
+      const message = cause instanceof Error ? cause.message : "No fue posible continuar.";
+      if (message.includes("popup-closed-by-user")) setError("Cerraste la ventana de Google antes de terminar.");
+      else if (message.includes("popup-blocked")) setError("El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo otra vez.");
+      else setError(message);
     } finally {
       setWorking(false);
     }
@@ -225,30 +216,18 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
         <div className="login-card">
           <div className="login-heading">
             <span className="status-dot" />
-            <span>Acceso seguro al portal</span>
+            <span>Acceso institucional verificado</span>
           </div>
-          <div className="tab-switch" role="tablist" aria-label="Acceso o registro">
-            <button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setError(""); }} type="button">Iniciar sesión</button>
-            <button className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setError(""); }} type="button">Crear cuenta</button>
+          <div className="google-access-copy">
+            <span className="eyebrow">Cuenta personal del portal</span>
+            <h2>Ingresa con Google UBB</h2>
+            <p>Tu perfil se crea automáticamente la primera vez. No necesitas inventar otra contraseña ni completar un registro separado.</p>
           </div>
-          <form className="access-form" onSubmit={submit}>
-            {mode === "register" && (
-              <>
-                <label>Nombre completo<input name="name" autoComplete="name" placeholder="Joaquín Araya" required /></label>
-                <div className="form-row">
-                  <label>RUT<input name="rut" inputMode="text" placeholder="12.345.678-5" required /></label>
-                  <label>Correo institucional<input name="email" type="email" autoComplete="email" placeholder="nombre@alumnos.ubiobio.cl" required /></label>
-                </div>
-              </>
-            )}
-            {mode === "login" && <label>RUT o correo institucional<input name="identifier" autoComplete="username" placeholder="12.345.678-5 o correo UBB" required /></label>}
-            <label>Contraseña<input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={10} placeholder="Mínimo 10 caracteres" required /></label>
-            {error && <p className="form-error" role="alert">{error}</p>}
-            <button className="primary-button" disabled={working} type="submit">{working ? "Procesando…" : mode === "login" ? "Ingresar a mis cursos" : "Registrarme e ingresar"}</button>
-          </form>
+          <button className="google-button" disabled={working} onClick={googleAccess} type="button"><span>G</span>{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
+          {error && <p className="form-error" role="alert">{error}</p>}
           <div className="institution-note">
-            <strong>Registro institucional</strong>
-            <p>Solo se aceptan correos UBB. Las cuentas @alumnos.ubiobio.cl ingresan como estudiantes y las cuentas @ubiobio.cl se reconocen automáticamente como profesores.</p>
+            <strong>Acceso exclusivo UBB</strong>
+            <p>@alumnos.ubiobio.cl se reconoce como estudiante y @ubiobio.cl como profesor. Cualquier otra universidad o correo personal será rechazado. La cuenta del desarrollador conserva su excepción administrativa.</p>
           </div>
         </div>
       </section>

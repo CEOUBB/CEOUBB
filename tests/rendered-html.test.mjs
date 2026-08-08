@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render(path = "/") {
@@ -20,6 +21,12 @@ test("renders Centro de Estudio UBB", async () => {
   assert.match(html, /Centro de Estudio UBB/i);
   assert.match(html, /Ingeniería Mecánica/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+test("uses verified institutional Google access", async () => {
+  const source = await readFile(new URL("../app/Portal.tsx", import.meta.url), "utf8");
+  assert.match(source, /Continuar con Google/i);
+  assert.doesNotMatch(source, /Mínimo 10 caracteres/i);
 });
 
 test("serves a sitemap", async () => {

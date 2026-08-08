@@ -136,7 +136,7 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
     .limit(1);
   const user = rows[0] as PublicUser | undefined;
   if (!user) return null;
-  return { ...user, role: roleForEmail(user.email) ?? user.role };
+  return { ...user, rut: publicRut(user.rut), role: roleForEmail(user.email) ?? user.role };
 }
 
 export async function findUserByIdentifier(identifier: string) {
@@ -152,7 +152,7 @@ export async function findUserByIdentifier(identifier: string) {
 }
 
 export function publicUser(user: typeof users.$inferSelect): PublicUser {
-  return { id: user.id, rut: formatRut(user.rut), email: user.email, name: user.name, role: roleForEmail(user.email) ?? user.role };
+  return { id: user.id, rut: publicRut(user.rut), email: user.email, name: user.name, role: roleForEmail(user.email) ?? user.role };
 }
 
 export function canPublish(role: AccountRole) {
@@ -166,6 +166,10 @@ function readCookie(request: Request, name: string) {
     if (key === name) return value.join("=");
   }
   return null;
+}
+
+function publicRut(value: string) {
+  return value.startsWith("FIREBASE:") ? "" : formatRut(value);
 }
 
 function randomToken() {
