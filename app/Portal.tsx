@@ -248,7 +248,7 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
           </form>
           <div className="institution-note">
             <strong>Registro institucional</strong>
-            <p>Solo se aceptan correos @alumnos.ubiobio.cl y @ubiobio.cl. Todas las cuentas ingresan inicialmente como estudiantes y el desarrollador aprueba a cada docente.</p>
+            <p>Solo se aceptan correos UBB. Las cuentas @alumnos.ubiobio.cl ingresan como estudiantes y las cuentas @ubiobio.cl se reconocen automáticamente como profesores.</p>
           </div>
         </div>
       </section>
@@ -575,7 +575,7 @@ function AdminView() {
     setMessage(response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.");
     if (response.ok) await load();
   };
-  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control desarrollador</span><h1>Administración de cuentas</h1><p>Aprueba docentes y administra rangos sin exponer las herramientas de desarrollo al resto de usuarios.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Docente aprobado</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
+  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control desarrollador</span><h1>Administración de cuentas</h1><p>Supervisa los rangos detectados automáticamente por el dominio institucional y conserva el control general de la plataforma.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Profesor UBB</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
 }
 
 function InstallHelp({ close }: { close: () => void }) {

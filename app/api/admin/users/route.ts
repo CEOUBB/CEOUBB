@@ -1,13 +1,13 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
-import { getSessionUser } from "../../../../lib/auth";
+import { getSessionUser, roleForEmail } from "../../../../lib/auth";
 
 export async function GET(request: Request) {
   const actor = await getSessionUser(request);
   if (!actor || actor.role !== "owner") return Response.json({ error: "Acceso restringido." }, { status: 403 });
   const rows = await getDb().select({ id: users.id, rut: users.rut, email: users.email, name: users.name, role: users.role, createdAt: users.createdAt }).from(users);
-  return Response.json({ users: rows });
+  return Response.json({ users: rows.map((user) => ({ ...user, role: roleForEmail(user.email) ?? user.role })) });
 }
 
 export async function PATCH(request: Request) {

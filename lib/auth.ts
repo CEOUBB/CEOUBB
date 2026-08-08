@@ -53,14 +53,14 @@ export function roleForEmail(email: string): AccountRole | null {
   const normalized = normalizeEmail(email);
   if (normalized === OWNER_EMAIL) return "owner";
   if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
-  if (normalized.endsWith("@ubiobio.cl")) return "student";
+  if (normalized.endsWith("@ubiobio.cl")) return "teacher";
   return null;
 }
 
 export function registrationRoleForEmail(email: string): AccountRole | null {
   const normalized = normalizeEmail(email);
   if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
-  if (normalized.endsWith("@ubiobio.cl")) return "student";
+  if (normalized.endsWith("@ubiobio.cl")) return "teacher";
   return null;
 }
 
@@ -134,7 +134,9 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
     .innerJoin(users, eq(sessions.userId, users.id))
     .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)))
     .limit(1);
-  return (rows[0] as PublicUser | undefined) ?? null;
+  const user = rows[0] as PublicUser | undefined;
+  if (!user) return null;
+  return { ...user, role: roleForEmail(user.email) ?? user.role };
 }
 
 export async function findUserByIdentifier(identifier: string) {
@@ -150,7 +152,7 @@ export async function findUserByIdentifier(identifier: string) {
 }
 
 export function publicUser(user: typeof users.$inferSelect): PublicUser {
-  return { id: user.id, rut: formatRut(user.rut), email: user.email, name: user.name, role: user.role };
+  return { id: user.id, rut: formatRut(user.rut), email: user.email, name: user.name, role: roleForEmail(user.email) ?? user.role };
 }
 
 export function canPublish(role: AccountRole) {
