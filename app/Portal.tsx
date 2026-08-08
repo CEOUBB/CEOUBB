@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import { finishInstitutionalGoogleSignIn, signInWithInstitutionalGoogle } from "../lib/firebase-client";
 
 type Role = "owner" | "teacher" | "student";
 
@@ -169,24 +169,45 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
+  const finishGoogleAccess = useCallback(async (idToken: string) => {
+    const response = await fetch("/api/auth/firebase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "No fue posible continuar.");
+    onSignedIn(data.user);
+  }, [onSignedIn]);
+
+  useEffect(() => {
+    let active = true;
+    finishInstitutionalGoogleSignIn()
+      .then(async (idToken) => {
+        if (!active || !idToken) return;
+        setWorking(true);
+        await finishGoogleAccess(idToken);
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setError(cause instanceof Error ? cause.message : "No fue posible continuar.");
+      })
+      .finally(() => {
+        if (active) setWorking(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [finishGoogleAccess]);
+
   const googleAccess = async () => {
     setError("");
     setWorking(true);
     try {
-      const idToken = await signInWithInstitutionalGoogle();
-      const response = await fetch("/api/auth/firebase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "No fue posible continuar.");
-      onSignedIn(data.user);
+      await signInWithInstitutionalGoogle();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "No fue posible continuar.";
-      if (message.includes("popup-closed-by-user")) setError("Cerraste la ventana de Google antes de terminar.");
-      else if (message.includes("popup-blocked")) setError("El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo otra vez.");
-      else setError(message);
+      setError(message);
     } finally {
       setWorking(false);
     }
