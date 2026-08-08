@@ -57,7 +57,7 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const APK_URL = "https://drive.google.com/uc?export=download&id=1v-a6WzERffzD5cOXsdwQ_wuyOcBuZ7W_";
+const APK_URL = "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
 const courses: Course[] = [
   { id: "edo", name: "Ecuaciones Diferenciales", code: "EDO · 2026-2", teacher: "Banco de estudio", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#7d1736" },
