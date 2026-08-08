@@ -25,6 +25,7 @@ type Course = {
 
 type Post = {
   id: string;
+  authorId?: string;
   title: string;
   body: string;
   kind: "notice" | "guide" | "assessment" | "resource";
@@ -36,6 +37,7 @@ type Post = {
 
 type CourseFile = {
   id: string;
+  authorId: string;
   name: string;
   contentType: string;
   size: number;
@@ -50,6 +52,16 @@ type StudentProgress = {
   completed: number;
   total: number;
   updatedAt?: string | null;
+};
+
+type NotificationItem = {
+  id: string;
+  kind: "notice" | "file";
+  title: string;
+  body: string;
+  targetUrl: string;
+  createdAt: string;
+  actorName: string;
 };
 
 type InstallPromptEvent = Event & {
@@ -165,6 +177,14 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
     const payload = mode === "login"
       ? { identifier: form.get("identifier"), password: form.get("password") }
       : { name: form.get("name"), rut: form.get("rut"), email: form.get("email"), password: form.get("password") };
+    if (mode === "register") {
+      const email = String(payload.email ?? "").trim().toLowerCase();
+      if (!email.endsWith("@alumnos.ubiobio.cl") && !email.endsWith("@ubiobio.cl")) {
+        setError("Solo puedes crear una cuenta con tu correo institucional UBB: @alumnos.ubiobio.cl o @ubiobio.cl.");
+        setWorking(false);
+        return;
+      }
+    }
     try {
       const response = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
@@ -228,7 +248,7 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
           </form>
           <div className="institution-note">
             <strong>Registro institucional</strong>
-            <p>Las cuentas <b>@alumnos.ubiobio.cl</b> ingresan como estudiantes y las cuentas <b>@ubiobio.cl</b> como docentes.</p>
+            <p>Solo se aceptan correos @alumnos.ubiobio.cl y @ubiobio.cl. Todas las cuentas ingresan inicialmente como estudiantes y el desarrollador aprueba a cada docente.</p>
           </div>
         </div>
       </section>
@@ -251,6 +271,7 @@ function PortalHeader({ user, screen, setScreen, onLogout, onInstall }: { user: 
         {user.role === "owner" && <button className={screen === "admin" ? "active" : ""} onClick={() => setScreen("admin")} type="button">Administración</button>}
       </nav>
       <div className="header-actions">
+        <NotificationMenu />
         <button className="icon-action" onClick={onInstall} title="Instalar app" type="button">↓</button>
         <a className="icon-action" href="https://chatgpt.com" target="_blank" rel="noreferrer" title="Tutor IA">AI</a>
         <details className="account-menu">
@@ -261,6 +282,37 @@ function PortalHeader({ user, screen, setScreen, onLogout, onInstall }: { user: 
         </details>
       </div>
     </header>
+  );
+}
+
+function NotificationMenu() {
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [unread, setUnread] = useState(0);
+  const load = useCallback(async () => {
+    const response = await fetch("/api/notifications", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setItems(data.notifications ?? []);
+    setUnread(data.unread ?? 0);
+  }, []);
+  useEffect(() => {
+    load().catch(() => undefined);
+    const timer = window.setInterval(() => load().catch(() => undefined), 30000);
+    return () => window.clearInterval(timer);
+  }, [load]);
+  const markRead = async () => {
+    setUnread(0);
+    await fetch("/api/notifications", { method: "POST" });
+  };
+  return (
+    <details className="notification-menu" onToggle={(event) => { if (event.currentTarget.open) markRead().catch(() => undefined); }}>
+      <summary className="icon-action" title="Notificaciones">●{unread > 0 && <b>{unread > 9 ? "9+" : unread}</b>}</summary>
+      <div className="notification-popover">
+        <header><strong>Notificaciones</strong><small>Estática · profesor y estudiantes</small></header>
+        {items.length === 0 && <p>No hay avisos nuevos todavía.</p>}
+        {items.map((item) => <a href={item.targetUrl} key={item.id}><span className={`notification-kind ${item.kind}`}>{item.kind === "file" ? "Archivo" : "Aviso"}</span><strong>{item.title}</strong><small>{item.body}</small><time>{formatDate(item.createdAt)}</time></a>)}
+      </div>
+    </details>
   );
 }
 
@@ -371,6 +423,54 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
     await loadData();
   };
 
+  const editPost = async (post: Post) => {
+    const title = window.prompt("Título de la publicación", post.title);
+    if (title === null) return;
+    const body = window.prompt("Contenido de la publicación", post.body);
+    if (body === null) return;
+    const response = await fetch("/api/courses/estatica/posts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: post.id, title, body, kind: post.kind, linkUrl: post.linkUrl ?? "" }),
+    });
+    const data = await response.json();
+    setStatus(response.ok ? "Publicación actualizada." : data.error ?? "No fue posible modificarla.");
+    if (response.ok) await loadData();
+  };
+
+  const deletePost = async (post: Post) => {
+    if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
+    const response = await fetch("/api/courses/estatica/posts", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: post.id }),
+    });
+    const data = await response.json();
+    setStatus(response.ok ? "Publicación eliminada." : data.error ?? "No fue posible eliminarla.");
+    if (response.ok) await loadData();
+  };
+
+  const renameFile = async (file: CourseFile) => {
+    const name = window.prompt("Nombre del archivo", file.name);
+    if (name === null) return;
+    const response = await fetch(`/api/files/${file.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const data = await response.json();
+    setStatus(response.ok ? "Archivo renombrado." : data.error ?? "No fue posible modificarlo.");
+    if (response.ok) await loadData();
+  };
+
+  const deleteFile = async (file: CourseFile) => {
+    if (!window.confirm(`¿Eliminar “${file.name}”?`)) return;
+    const response = await fetch(`/api/files/${file.id}`, { method: "DELETE" });
+    const data = await response.json();
+    setStatus(response.ok ? "Archivo eliminado." : data.error ?? "No fue posible eliminarlo.");
+    if (response.ok) await loadData();
+  };
+
   return (
     <div className="classroom-layout">
       <aside className="classroom-sidebar">
@@ -397,10 +497,10 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
               </section>
               <aside className="course-sidecards"><div><span className="eyebrow">Coordinación</span><strong>Profesor de Estática</strong><small>Cuenta docente institucional</small></div><div><span className="eyebrow">Próxima entrega</span><strong>Banco RA1 disponible</strong><small>Certamen completo · 90 min</small></div><div><span className="eyebrow">Tu avance</span><strong>{canTeach ? `${students.length} estudiantes` : `${completed} de ${units.length} unidades`}</strong><div className="mini-progress"><span style={{ width: canTeach ? "100%" : `${completed / units.length * 100}%` }} /></div></div></aside>
             </div>
-            <PostsSection posts={posts} />
+            <PostsSection posts={posts} user={user} editPost={editPost} deletePost={deletePost} />
           </>
         )}
-        {tab === "materials" && <MaterialsSection files={files} canTeach={canTeach} publish={publish} upload={upload} status={status} />}
+        {tab === "materials" && <MaterialsSection files={files} user={user} canTeach={canTeach} publish={publish} upload={upload} renameFile={renameFile} deleteFile={deleteFile} status={status} />}
         {tab === "progress" && <ProgressSection user={user} completed={completed} students={students} />}
         {tab === "people" && <PeopleSection user={user} students={students} />}
       </main>
@@ -408,23 +508,23 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
   );
 }
 
-function PostsSection({ posts }: { posts: Post[] }) {
+function PostsSection({ posts, user, editPost, deletePost }: { posts: Post[]; user: User; editPost: (post: Post) => void; deletePost: (post: Post) => void }) {
   return (
     <section className="posts-section">
       <div className="section-title compact-title"><div><span className="eyebrow">Actualizaciones</span><h2>Avisos del curso</h2></div></div>
-      <div className="post-list">{posts.map((post) => <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso ↗</a>}</footer></div></article>)}</div>
+      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorId === user.id); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso ↗</a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
     </section>
   );
 }
 
-function MaterialsSection({ files, canTeach, publish, upload, status }: { files: CourseFile[]; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; status: string }) {
+function MaterialsSection({ files, user, canTeach, publish, upload, renameFile, deleteFile, status }: { files: CourseFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; renameFile: (file: CourseFile) => void; deleteFile: (file: CourseFile) => void; status: string }) {
   return (
     <section className="materials-view">
       <div className="materials-list">
         <div className="section-title compact-title"><div><span className="eyebrow">Biblioteca del aula</span><h2>Archivos compartidos</h2></div></div>
         <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon">Σ</span><div><strong>Banco completo de Estática</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir →</b></a>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
-        {files.map((file) => <a className="material-row" href={`/api/files/${file.id}`} key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><b>Descargar</b></a>)}
+        {files.map((file) => { const canManage = user.role === "owner" || file.authorId === user.id; return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><a href={`/api/files/${file.id}`}>Descargar</a>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
       </div>
       {canTeach && <aside className="teacher-tools"><span className="eyebrow">Herramientas docentes</span><h2>Publicar en el aula</h2><form onSubmit={publish}><label>Título<input name="title" required /></label><label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label><label>Mensaje<textarea name="body" rows={4} required /></label><label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label><button className="primary-button" type="submit">Publicar aviso o enlace</button></form><div className="tool-divider"><span>o subir archivo</span></div><form onSubmit={upload}><label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label><button className="secondary-button" type="submit">Subir al curso</button></form>{status && <p className="tool-status">{status}</p>}</aside>}
     </section>
@@ -475,7 +575,7 @@ function AdminView() {
     setMessage(response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.");
     if (response.ok) await load();
   };
-  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control propietario</span><h1>Administración de cuentas</h1><p>Gestiona rangos sin exponer las herramientas propietarias al resto de usuarios.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Docente</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
+  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control desarrollador</span><h1>Administración de cuentas</h1><p>Aprueba docentes y administra rangos sin exponer las herramientas de desarrollo al resto de usuarios.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Docente aprobado</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
 }
 
 function InstallHelp({ close }: { close: () => void }) {
@@ -483,7 +583,7 @@ function InstallHelp({ close }: { close: () => void }) {
 }
 
 function roleLabel(role: Role) {
-  return role === "owner" ? "Propietario" : role === "teacher" ? "Docente" : "Estudiante";
+  return role === "owner" ? "Desarrollador" : role === "teacher" ? "Docente" : "Estudiante";
 }
 
 function firstName(value: string) {

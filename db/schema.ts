@@ -1,4 +1,4 @@
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -10,7 +10,7 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   createdAt: text("created_at").notNull(),
 }, (table) => [
-  uniqueIndex("idx_users_rut").on(table.rut),
+  index("idx_users_rut").on(table.rut),
   uniqueIndex("idx_users_email").on(table.email),
 ]);
 
@@ -52,3 +52,19 @@ export const progress = sqliteTable("progress", {
   total: integer("total").notNull().default(4),
   updatedAt: text("updated_at").notNull(),
 }, (table) => [primaryKey({ columns: [table.userId, table.courseId] })]);
+
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey(),
+  courseId: text("course_id").notNull(),
+  actorId: text("actor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: ["notice", "file"] }).notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  targetUrl: text("target_url").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_notifications_course_created").on(table.courseId, table.createdAt)]);
+
+export const notificationReads = sqliteTable("notification_reads", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  readAt: text("read_at").notNull(),
+});

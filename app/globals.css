@@ -277,6 +277,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-weight: 850;
 }
 
+.notification-menu { position: relative; }
+.notification-menu > summary { position: relative; list-style: none; }
+.notification-menu > summary::-webkit-details-marker { display: none; }
+.notification-menu > summary b { position: absolute; right: -.32rem; top: -.32rem; min-width: 1.1rem; height: 1.1rem; display: grid; place-items: center; padding: 0 .2rem; border: 2px solid #12090d; border-radius: 99px; background: #d13b58; color: white; font-size: .55rem; }
+.notification-popover { position: absolute; z-index: 30; right: 0; top: 3rem; width: min(24rem, calc(100vw - 1rem)); max-height: 30rem; overflow-y: auto; border: 1px solid #51303b; border-radius: .85rem; background: #211117; box-shadow: 0 24px 70px rgba(0, 0, 0, .55); }
+.notification-popover header { position: sticky; top: 0; z-index: 1; display: grid; gap: .18rem; padding: .9rem 1rem; border-bottom: 1px solid #43232e; background: #211117f5; }
+.notification-popover header strong { font-size: .85rem; }
+.notification-popover header small, .notification-popover > p { color: #8f7b83; font-size: .66rem; }
+.notification-popover > p { padding: .9rem 1rem; }
+.notification-popover > a { display: grid; grid-template-columns: auto 1fr; gap: .22rem .6rem; padding: .85rem 1rem; border-bottom: 1px solid #3c202a; }
+.notification-popover > a:hover { background: #2b1620; }
+.notification-popover > a strong, .notification-popover > a small, .notification-popover > a time { grid-column: 2; }
+.notification-popover > a strong { font-size: .75rem; }
+.notification-popover > a small, .notification-popover > a time { color: #9d8991; font-size: .62rem; line-height: 1.4; }
+.notification-kind { grid-row: 1 / span 3; align-self: start; padding: .28rem .38rem; border-radius: .35rem; background: #562036; color: #efb6c6; font-size: .55rem; font-weight: 800; text-transform: uppercase; }
+.notification-kind.file { background: #16463b; color: #a9e3d1; }
+
 .account-menu { position: relative; }
 .account-menu summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .55rem; margin-left: .25rem; }
 .account-menu summary::-webkit-details-marker { display: none; }
@@ -399,6 +416,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .material-row strong { overflow: hidden; text-overflow: ellipsis; font-size: .82rem; }
 .material-row small { margin-top: .25rem; color: #88757c; font-size: .65rem; }
 .material-row b { color: #d99bae; font-size: .69rem; }
+.material-actions { display: grid; justify-items: end; gap: .35rem; }
+.material-actions > a { color: #d99bae; font-size: .69rem; font-weight: 750; }
+.content-actions { display: inline-flex; gap: .35rem; }
+.content-actions button { border: 1px solid #5a3441; border-radius: .38rem; padding: .28rem .45rem; background: #2a151d; color: #d9a5b5; font: inherit; cursor: pointer; }
+.content-actions button:last-child { color: #f3a3a3; }
 .empty-state, .empty-row { padding: 1.5rem; border: 1px dashed #432630; border-radius: .75rem; color: #9b868d; }
 .empty-state p { margin: .35rem 0 0; font-size: .75rem; }
 .teacher-tools { padding: 1.15rem; border: 1px solid #4d2a37; border-radius: .9rem; background: #f0e4df; color: #28171d; }

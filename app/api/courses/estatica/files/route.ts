@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { env } from "cloudflare:workers";
 import { getDb } from "../../../../../db";
-import { files, users } from "../../../../../db/schema";
+import { files, notifications, users } from "../../../../../db/schema";
 import { canPublish, getSessionUser } from "../../../../../lib/auth";
 
 const COURSE_ID = "estatica-440299";
@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   const rows = await getDb()
     .select({
       id: files.id,
+      authorId: files.authorId,
       name: files.name,
       contentType: files.contentType,
       size: files.size,
@@ -51,7 +52,18 @@ export async function POST(request: Request) {
     storageKey,
     createdAt: new Date().toISOString(),
   };
-  await getDb().insert(files).values(record);
+  const db = getDb();
+  await db.insert(files).values(record);
+  await db.insert(notifications).values({
+    id: crypto.randomUUID(),
+    courseId: COURSE_ID,
+    actorId: user.id,
+    kind: "file",
+    title: record.name,
+    body: `${user.name} subió un archivo nuevo a Estática.`,
+    targetUrl: `/api/files/${record.id}`,
+    createdAt: record.createdAt,
+  });
   return Response.json({ file: { ...record, authorName: user.name } }, { status: 201 });
 }
 

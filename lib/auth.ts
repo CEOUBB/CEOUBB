@@ -1,4 +1,4 @@
-import { and, eq, gt, or } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { getDb } from "../db";
 import { sessions, users } from "../db/schema";
 
@@ -53,7 +53,14 @@ export function roleForEmail(email: string): AccountRole | null {
   const normalized = normalizeEmail(email);
   if (normalized === OWNER_EMAIL) return "owner";
   if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
-  if (normalized.endsWith("@ubiobio.cl")) return "teacher";
+  if (normalized.endsWith("@ubiobio.cl")) return "student";
+  return null;
+}
+
+export function registrationRoleForEmail(email: string): AccountRole | null {
+  const normalized = normalizeEmail(email);
+  if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
+  if (normalized.endsWith("@ubiobio.cl")) return "student";
   return null;
 }
 
@@ -133,9 +140,13 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
 export async function findUserByIdentifier(identifier: string) {
   const db = getDb();
   const email = normalizeEmail(identifier);
+  if (email.includes("@")) {
+    const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return rows[0] ?? null;
+  }
   const rut = normalizeRut(identifier);
-  const rows = await db.select().from(users).where(or(eq(users.email, email), eq(users.rut, rut))).limit(1);
-  return rows[0] ?? null;
+  const rows = await db.select().from(users).where(eq(users.rut, rut)).limit(2);
+  return rows.length === 1 ? rows[0] : null;
 }
 
 export function publicUser(user: typeof users.$inferSelect): PublicUser {
