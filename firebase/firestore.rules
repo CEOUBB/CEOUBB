@@ -42,17 +42,17 @@ service cloud.firestore {
       allow read: if isOwner() || signedIn() && request.auth.uid == userId;
       allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
       allow update: if isOwner() || signedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'domain', 'lastSeen', 'teacherRequested', 'requestedAt']);
-      allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
+      allow delete: if isOwner();
     }
 
-    match /courses/{courseId}/posts/{postId} {
+    match /courses/estatica/posts/{postId} {
       allow read: if isMember();
       allow create: if isTeacher() && request.resource.data.authorId == request.auth.uid;
       allow update: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
       allow delete: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid;
     }
 
-    match /courses/{courseId}/progress/{userId} {
+    match /courses/estatica/progress/{userId} {
       allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
       allow create, update: if isMember() && request.auth.uid == userId && request.resource.data.uid == userId;
       allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
