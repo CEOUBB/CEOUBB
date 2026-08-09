@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cl.ubb.centroestudio",
+      "sha256_cert_fingerprints": [
+        "45:53:B5:B8:35:A5:63:C9:0D:D1:4B:1B:2D:50:ED:E9:85:50:8C:A5:61:D9:99:CA:B0:BE:B7:AE:D3:38:A7:80"
+      ]
+    }
+  }
+]

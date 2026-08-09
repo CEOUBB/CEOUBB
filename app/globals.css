@@ -177,6 +177,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .access-actions { display: flex; align-items: center; gap: 1rem; position: relative; z-index: 1; }
 .text-link { color: #efbac9; font-size: .86rem; text-decoration: underline; text-underline-offset: 4px; }
 .legal-note { position: relative; z-index: 1; margin: 1.3rem 0 0; max-width: 42rem; color: #806f75; font-size: .71rem; line-height: 1.5; }
+.legal-note a { color: #f0a9bd; text-decoration: underline; text-underline-offset: 2px; }
+.policy-page { min-height: 100vh; padding: clamp(1rem, 4vw, 4rem); background: radial-gradient(circle at 15% 0%, #421424 0, #180b10 38rem, #0d080a 100%); color: #f7eef1; }
+.policy-brand { display: inline-flex; margin-bottom: 1.2rem; color: #f4b2c5; font-weight: 900; letter-spacing: .04em; }
+.policy-page article { width: min(52rem, 100%); margin: 0 auto; padding: clamp(1.2rem, 4vw, 3rem); border: 1px solid #57303c; border-radius: 1.25rem; background: #1d1015ee; box-shadow: 0 28px 90px #0008; }
+.policy-page h1 { margin: .5rem 0 1rem; font-size: clamp(2rem, 6vw, 4rem); line-height: 1; }
+.policy-page h2 { margin: 1.7rem 0 .5rem; color: #f3bdcc; font-size: 1.1rem; }
+.policy-page p { color: #d7c8cd; line-height: 1.75; }
+.policy-page p a, .policy-page nav a { color: #f2a9bd; text-decoration: underline; text-underline-offset: 3px; }
+.policy-page nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid #4d2934; }
+.policy-action { display: inline-flex; margin-top: 1.4rem; padding: .9rem 1.1rem; border-radius: .75rem; background: #8f1738; color: white; font-weight: 900; }
 
 .login-panel {
   min-height: 100vh;

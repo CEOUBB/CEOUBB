@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { finishInstitutionalGoogleSignIn, signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import { deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
 
 type Role = "owner" | "teacher" | "student";
 
@@ -27,10 +28,12 @@ type Course = {
 type Post = {
   id: string;
   authorId?: string;
+  authorEmail?: string;
   title: string;
   body: string;
   kind: "notice" | "guide" | "assessment" | "resource";
   linkUrl?: string | null;
+  storagePath?: string;
   createdAt: string;
   authorName: string;
   authorRole: Role;
@@ -39,9 +42,12 @@ type Post = {
 type CourseFile = {
   id: string;
   authorId: string;
+  authorEmail: string;
   name: string;
   contentType: string;
   size: number;
+  storagePath: string;
+  url: string;
   createdAt: string;
   authorName: string;
 };
@@ -230,7 +236,7 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
           <button className="secondary-button" onClick={onInstall} type="button">Instalar en este dispositivo</button>
           <a className="text-link" href={APK_URL}>Descargar APK para Android</a>
         </div>
-        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío.</p>
+        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <a href="/eliminar-cuenta">Eliminar cuenta</a></p>
       </section>
 
       <section className="login-panel" id="inicio">
@@ -364,63 +370,87 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
   const [status, setStatus] = useState("");
   const canTeach = user.role === "teacher" || user.role === "owner";
 
-  const loadData = useCallback(async () => {
-    const [postResponse, fileResponse, progressResponse] = await Promise.all([
-      fetch("/api/courses/estatica/posts", { cache: "no-store" }),
-      fetch("/api/courses/estatica/files", { cache: "no-store" }),
-      fetch("/api/courses/estatica/progress", { cache: "no-store" }),
-    ]);
-    if (postResponse.ok) {
-      const data = await postResponse.json();
-      setPosts([initialPost, ...(data.posts ?? [])]);
-    }
-    if (fileResponse.ok) {
-      const data = await fileResponse.json();
-      setFiles(data.files ?? []);
-    }
-    if (progressResponse.ok) {
-      const data = await progressResponse.json();
-      if (canTeach) setStudents(data.students ?? []);
-      else setCompleted(data.progress?.completed ?? 0);
-    }
+  useEffect(() => {
+    let active = true;
+    let stopPosts = () => undefined;
+    let stopProgress = () => undefined;
+    syncFirebaseProfile().then(() => {
+      if (!active) return;
+      stopPosts = watchClassroomPosts((items) => {
+        const mapped = items.map((item): Post => ({
+          id: item.id,
+          authorId: item.authorId,
+          authorEmail: item.authorEmail,
+          title: item.title,
+          body: item.body,
+          kind: firebasePostKind(item.kind),
+          linkUrl: item.fileUrl || null,
+          storagePath: item.storagePath,
+          createdAt: item.createdAt,
+          authorName: item.authorName,
+          authorRole: item.authorEmail.endsWith("@ubiobio.cl") ? "teacher" : item.authorEmail === "elpapijuaco325@gmail.com" ? "owner" : "student"
+        }));
+        setPosts([initialPost, ...mapped]);
+        setFiles(items.filter((item) => Boolean(item.storagePath && item.fileUrl)).map((item) => ({
+          id: item.id,
+          authorId: item.authorId,
+          authorEmail: item.authorEmail,
+          name: item.fileName,
+          contentType: item.contentType,
+          size: item.fileSize,
+          storagePath: item.storagePath,
+          url: item.fileUrl,
+          createdAt: item.createdAt,
+          authorName: item.authorName
+        })));
+      }, setStatus);
+      if (canTeach) {
+        stopProgress = watchClassroomProgress((items) => setStudents(items.map((item) => ({ userId: item.uid, name: item.displayName, email: item.email, completed: item.completed, total: item.total, updatedAt: item.lastSeen }))), setStatus);
+      } else {
+        loadOwnClassroomProgress().then((value) => {
+          if (active) setCompleted(value);
+        }).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo cargar tu progreso."));
+      }
+    }).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo conectar Firebase."));
+    return () => {
+      active = false;
+      stopPosts();
+      stopProgress();
+    };
   }, [canTeach]);
-
-  useEffect(() => { loadData().catch(() => undefined); }, [loadData]);
 
   const updateProgress = async (next: number) => {
     setCompleted(next);
-    await fetch("/api/courses/estatica/progress", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: next, total: units.length }),
-    });
+    await saveClassroomProgress(next, units.length).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo guardar el progreso."));
   };
 
   const publish = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("Publicando…");
+    const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/courses/estatica/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(form.entries())),
-    });
-    const data = await response.json();
-    if (!response.ok) return setStatus(data.error ?? "No fue posible publicar.");
-    event.currentTarget.reset();
-    setStatus("Publicado correctamente.");
-    await loadData();
+    try {
+      await publishClassroomPost({ title: String(form.get("title") ?? ""), body: String(form.get("body") ?? ""), kind: String(form.get("kind") ?? "notice"), linkUrl: String(form.get("linkUrl") ?? "") });
+      formElement.reset();
+      setStatus("Publicado correctamente y notificado al curso.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible publicar.");
+    }
   };
 
   const upload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("Subiendo archivo…");
-    const response = await fetch("/api/courses/estatica/files", { method: "POST", body: new FormData(event.currentTarget) });
-    const data = await response.json();
-    if (!response.ok) return setStatus(data.error ?? "No fue posible subir el archivo.");
-    event.currentTarget.reset();
-    setStatus("Archivo disponible para el curso.");
-    await loadData();
+    const formElement = event.currentTarget;
+    const file = new FormData(formElement).get("file");
+    if (!(file instanceof File)) return setStatus("Selecciona un archivo.");
+    try {
+      await uploadClassroomFile(file, (percent) => setStatus(`Subiendo archivo… ${percent}%`));
+      formElement.reset();
+      setStatus("Archivo disponible y notificado al curso.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible subir el archivo.");
+    }
   };
 
   const editPost = async (post: Post) => {
@@ -428,47 +458,43 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
     if (title === null) return;
     const body = window.prompt("Contenido de la publicación", post.body);
     if (body === null) return;
-    const response = await fetch("/api/courses/estatica/posts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: post.id, title, body, kind: post.kind, linkUrl: post.linkUrl ?? "" }),
-    });
-    const data = await response.json();
-    setStatus(response.ok ? "Publicación actualizada." : data.error ?? "No fue posible modificarla.");
-    if (response.ok) await loadData();
+    try {
+      await updateClassroomPost(post.id, { title, body, kind: post.kind });
+      setStatus("Publicación actualizada.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible modificarla.");
+    }
   };
 
   const deletePost = async (post: Post) => {
     if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
-    const response = await fetch("/api/courses/estatica/posts", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: post.id }),
-    });
-    const data = await response.json();
-    setStatus(response.ok ? "Publicación eliminada." : data.error ?? "No fue posible eliminarla.");
-    if (response.ok) await loadData();
+    try {
+      await deleteClassroomPost(post.id, post.storagePath ?? "");
+      setStatus("Publicación eliminada.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible eliminarla.");
+    }
   };
 
   const renameFile = async (file: CourseFile) => {
     const name = window.prompt("Nombre del archivo", file.name);
     if (name === null) return;
-    const response = await fetch(`/api/files/${file.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const data = await response.json();
-    setStatus(response.ok ? "Archivo renombrado." : data.error ?? "No fue posible modificarlo.");
-    if (response.ok) await loadData();
+    try {
+      await updateClassroomPost(file.id, { fileName: name });
+      setStatus("Archivo renombrado.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible modificarlo.");
+    }
   };
 
   const deleteFile = async (file: CourseFile) => {
     if (!window.confirm(`¿Eliminar “${file.name}”?`)) return;
-    const response = await fetch(`/api/files/${file.id}`, { method: "DELETE" });
-    const data = await response.json();
-    setStatus(response.ok ? "Archivo eliminado." : data.error ?? "No fue posible eliminarlo.");
-    if (response.ok) await loadData();
+    try {
+      await deleteClassroomPost(file.id, file.storagePath);
+      setStatus("Archivo eliminado.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "No fue posible eliminarlo.");
+    }
   };
 
   return (
@@ -512,7 +538,7 @@ function PostsSection({ posts, user, editPost, deletePost }: { posts: Post[]; us
   return (
     <section className="posts-section">
       <div className="section-title compact-title"><div><span className="eyebrow">Actualizaciones</span><h2>Avisos del curso</h2></div></div>
-      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorId === user.id); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso ↗</a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
+      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail?.toLowerCase() === user.email.toLowerCase()); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso ↗</a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
     </section>
   );
 }
@@ -524,7 +550,7 @@ function MaterialsSection({ files, user, canTeach, publish, upload, renameFile, 
         <div className="section-title compact-title"><div><span className="eyebrow">Biblioteca del aula</span><h2>Archivos compartidos</h2></div></div>
         <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon">Σ</span><div><strong>Banco completo de Estática</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir →</b></a>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
-        {files.map((file) => { const canManage = user.role === "owner" || file.authorId === user.id; return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><a href={`/api/files/${file.id}`}>Descargar</a>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
+        {files.map((file) => { const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase(); return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><a href={file.url} target="_blank" rel="noreferrer">Descargar</a>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
       </div>
       {canTeach && <aside className="teacher-tools"><span className="eyebrow">Herramientas docentes</span><h2>Publicar en el aula</h2><form onSubmit={publish}><label>Título<input name="title" required /></label><label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label><label>Mensaje<textarea name="body" rows={4} required /></label><label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label><button className="primary-button" type="submit">Publicar aviso o enlace</button></form><div className="tool-divider"><span>o subir archivo</span></div><form onSubmit={upload}><label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label><button className="secondary-button" type="submit">Subir al curso</button></form>{status && <p className="tool-status">{status}</p>}</aside>}
     </section>
@@ -546,7 +572,7 @@ function PeopleSection({ user, students }: { user: User; students: StudentProgre
   return (
     <section>
       <div className="section-title compact-title"><div><span className="eyebrow">Comunidad del aula</span><h2>Participantes</h2></div></div>
-      <div className="people-grid"><article><span className="avatar large">PE</span><div><strong>Profesor de Estática</strong><small>Docente · Coordinación del curso</small></div></article><article><span className="avatar large">{initials(user.name)}</span><div><strong>{user.name}</strong><small>{roleLabel(user.role)} · {user.email}</small></div></article>{students.filter((student) => student.userId !== user.id).map((student) => <article key={student.userId}><span className="avatar large">{initials(student.name)}</span><div><strong>{student.name}</strong><small>Estudiante · {student.email}</small></div></article>)}</div>
+      <div className="people-grid"><article><span className="avatar large">PE</span><div><strong>Profesor de Estática</strong><small>Docente · Coordinación del curso</small></div></article><article><span className="avatar large">{initials(user.name)}</span><div><strong>{user.name}</strong><small>{roleLabel(user.role)} · {user.email}</small></div></article>{students.filter((student) => student.email.toLowerCase() !== user.email.toLowerCase()).map((student) => <article key={student.userId}><span className="avatar large">{initials(student.name)}</span><div><strong>{student.name}</strong><small>Estudiante · {student.email}</small></div></article>)}</div>
     </section>
   );
 }
@@ -596,6 +622,14 @@ function initials(value: string) {
 
 function kindLabel(kind: Post["kind"]) {
   return kind === "assessment" ? "Evaluación" : kind === "guide" ? "Guía" : kind === "resource" ? "Recurso" : "Aviso";
+}
+
+function firebasePostKind(value: string): Post["kind"] {
+  const normalized = value.toLowerCase();
+  if (normalized === "assessment" || normalized === "evaluacion" || normalized === "dictamen") return "assessment";
+  if (normalized === "guide" || normalized === "guia") return "guide";
+  if (normalized === "resource" || normalized === "recurso") return "resource";
+  return "notice";
 }
 
 function tabTitle(tab: "home" | "materials" | "progress" | "people") {
