@@ -10,7 +10,7 @@ Este es un proyecto académico independiente. No es un servicio oficial de la Un
 
 ## Estructura
 
-- `app/`, `public/`, `lib/`: aplicación web en React y vinext
+- `app/`, `public/`, `lib/`: aplicación web en React y Next.js
 - `android/`: aplicación Android en Java
 - `firebase/`: reglas, índices y funciones de Firebase
 - `tests/`: verificaciones de la aplicación web

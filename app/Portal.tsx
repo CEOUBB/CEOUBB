@@ -321,8 +321,8 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
 
   useEffect(() => {
     let active = true;
-    let stopPosts = () => undefined;
-    let stopProgress = () => undefined;
+    let stopPosts: () => void = () => undefined;
+    let stopProgress: () => void = () => undefined;
     syncFirebaseProfile().then(() => {
       if (!active) return;
       stopPosts = watchClassroomPosts((items) => {

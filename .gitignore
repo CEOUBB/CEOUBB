@@ -37,6 +37,7 @@ dev.*.log
 
 /dist/
 /.wrangler/
+local.db*
 /outputs/
 /work/
 

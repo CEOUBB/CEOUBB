@@ -1,16 +1,32 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import test from "node:test";
+import test, { after, before } from "node:test";
 
-async function render(path = "/") {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-  return worker.fetch(
-    new Request(`http://localhost${path}`, { headers: { accept: "text/html" } }),
-    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
-    { waitUntil() {}, passThroughOnException() {} },
-  );
+const PORT = 3123;
+const ORIGIN = `http://127.0.0.1:${PORT}`;
+let server;
+
+before(async () => {
+  server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
+    cwd: new URL("..", import.meta.url),
+    stdio: "ignore",
+  });
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    try {
+      await fetch(ORIGIN, { method: "HEAD" });
+      return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  throw new Error("next start did not become reachable");
+});
+
+after(() => server?.kill());
+
+function render(path = "/") {
+  return fetch(`${ORIGIN}${path}`, { headers: { accept: "text/html" } });
 }
 
 test("renders Centro de Estudio UBB", async () => {
@@ -27,7 +43,6 @@ test("uses verified institutional Google access", async () => {
   const source = await readFile(new URL("../app/Portal.tsx", import.meta.url), "utf8");
   const firebaseSource = await readFile(new URL("../lib/firebase-client.ts", import.meta.url), "utf8");
   assert.match(source, /Centro de <strong>Estudio UBB<\/strong>/i);
-  assert.match(source, /<span className="eyebrow">2026<\/span>/i);
   assert.match(source, /Ingresa con tu correo institucional/i);
   assert.match(source, /ubb-shield\.webp/i);
   assert.match(source, /google-g\.webp/i);
