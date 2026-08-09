@@ -34,7 +34,7 @@ service firebase.storage {
       return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
     }
 
-    match /courses/{courseId}/{userId}/{fileName} {
+    match /courses/estatica/{userId}/{fileName} {
       allow read: if isMember();
       allow create, update: if isTeacher() && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
       allow delete: if isOwner() || isTeacher() && request.auth.uid == userId;

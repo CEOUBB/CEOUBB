@@ -87,3 +87,41 @@ test("does not expose the account deletion page", async () => {
   const response = await render("/eliminar-cuenta");
   assert.equal(response.status, 404);
 });
+
+test("keeps the stored account role authoritative", async () => {
+  const authSource = await readFile(new URL("../lib/auth.ts", import.meta.url), "utf8");
+  const adminSource = await readFile(new URL("../app/api/admin/users/route.ts", import.meta.url), "utf8");
+  const firebaseRoute = await readFile(new URL("../app/api/auth/firebase/route.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(authSource, /roleForEmail\(user\.email\)/);
+  assert.doesNotMatch(adminSource, /roleForEmail/);
+  assert.doesNotMatch(firebaseRoute, /set\(\{ name, role \}\)/);
+  assert.match(firebaseRoute, /if \(!role\) return error/);
+});
+
+test("marks the session cookie Secure in production", async () => {
+  const authSource = await readFile(new URL("../lib/auth.ts", import.meta.url), "utf8");
+  assert.match(authSource, /NODE_ENV === "production"/);
+  assert.doesNotMatch(authSource, /new URL\(request\.url\)\.protocol/);
+});
+
+test("keeps profile deletion and course paths locked down", async () => {
+  const firestoreRules = await readFile(new URL("../firebase/firestore.rules", import.meta.url), "utf8");
+  const storageRules = await readFile(new URL("../firebase/storage.rules", import.meta.url), "utf8");
+  assert.match(firestoreRules, /allow delete: if isOwner\(\);/);
+  assert.doesNotMatch(firestoreRules, /match \/courses\/\{courseId\}/);
+  assert.doesNotMatch(storageRules, /match \/courses\/\{courseId\}/);
+});
+
+test("does not persist Firebase Storage download URLs", async () => {
+  const classroom = await readFile(new URL("../lib/firebase-classroom-client.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(classroom, /const fileUrl = await getDownloadURL/);
+  assert.match(classroom, /export async function classroomFileUrl/);
+});
+
+test("serves hardening response headers", async () => {
+  const response = await render();
+  assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+});

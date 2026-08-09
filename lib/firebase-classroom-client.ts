@@ -163,13 +163,12 @@ export async function uploadClassroomFile(file: File, onProgress: (percent: numb
   const reference = ref(storage, storagePath);
   const task = uploadBytesResumable(reference, file, { contentType: file.type || "application/octet-stream" });
   await new Promise<void>((resolve, reject) => task.on("state_changed", (snapshot) => onProgress(Math.round(100 * snapshot.bytesTransferred / snapshot.totalBytes)), reject, resolve));
-  const fileUrl = await getDownloadURL(reference);
   await addDoc(collection(db, "courses", COURSE_ID, "posts"), {
     courseId: COURSE_ID,
     title: file.name,
     body: "Archivo compartido con el curso.",
     kind: "resource",
-    fileUrl,
+    fileUrl: "",
     fileName: file.name,
     storagePath,
     contentType: file.type || "application/octet-stream",
@@ -179,6 +178,10 @@ export async function uploadClassroomFile(file: File, onProgress: (percent: numb
     authorEmail: (user.email ?? "").toLowerCase(),
     createdAt: serverTimestamp()
   });
+}
+
+export async function classroomFileUrl(storagePath: string) {
+  return getDownloadURL(ref(storage, storagePath));
 }
 
 export async function updateClassroomPost(id: string, values: Record<string, string>) {

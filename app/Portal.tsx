@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
-import { deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
+import { classroomFileUrl, deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
 import { isDeveloperEmail } from "../lib/access-policy";
 
 type Role = "owner" | "teacher" | "student";
@@ -340,7 +340,7 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
           authorRole: item.authorEmail.endsWith("@ubiobio.cl") ? "teacher" : isDeveloperEmail(item.authorEmail) ? "owner" : "student"
         }));
         setPosts([initialPost, ...mapped]);
-        setFiles(items.filter((item) => Boolean(item.storagePath && item.fileUrl)).map((item) => ({
+        setFiles(items.filter((item) => Boolean(item.storagePath)).map((item) => ({
           id: item.id,
           authorId: item.authorId,
           authorEmail: item.authorEmail,
@@ -425,6 +425,19 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
     }
   };
 
+  const openFile = async (file: CourseFile) => {
+    const tab = window.open("", "_blank");
+    if (tab) tab.opener = null;
+    try {
+      const url = file.url || await classroomFileUrl(file.storagePath);
+      if (tab) tab.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
+    } catch (cause) {
+      tab?.close();
+      setStatus(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.");
+    }
+  };
+
   const renameFile = async (file: CourseFile) => {
     const name = window.prompt("Nombre del archivo", file.name);
     if (name === null) return;
@@ -475,7 +488,7 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
             <PostsSection posts={posts} user={user} editPost={editPost} deletePost={deletePost} />
           </>
         )}
-        {tab === "materials" && <MaterialsSection files={files} user={user} canTeach={canTeach} publish={publish} upload={upload} renameFile={renameFile} deleteFile={deleteFile} status={status} />}
+        {tab === "materials" && <MaterialsSection files={files} user={user} canTeach={canTeach} publish={publish} upload={upload} openFile={openFile} renameFile={renameFile} deleteFile={deleteFile} status={status} />}
         {tab === "progress" && <ProgressSection user={user} completed={completed} students={students} />}
         {tab === "people" && <PeopleSection user={user} students={students} />}
       </main>
@@ -492,14 +505,14 @@ function PostsSection({ posts, user, editPost, deletePost }: { posts: Post[]; us
   );
 }
 
-function MaterialsSection({ files, user, canTeach, publish, upload, renameFile, deleteFile, status }: { files: CourseFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; renameFile: (file: CourseFile) => void; deleteFile: (file: CourseFile) => void; status: string }) {
+function MaterialsSection({ files, user, canTeach, publish, upload, openFile, renameFile, deleteFile, status }: { files: CourseFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; openFile: (file: CourseFile) => void; renameFile: (file: CourseFile) => void; deleteFile: (file: CourseFile) => void; status: string }) {
   return (
     <section className="materials-view">
       <div className="materials-list">
         <div className="section-title compact-title"><div><span className="eyebrow">Biblioteca del aula</span><h2>Archivos compartidos</h2></div></div>
         <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon">Σ</span><div><strong>Banco completo de Estática</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir →</b></a>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
-        {files.map((file) => { const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase(); return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><a href={file.url} target="_blank" rel="noreferrer">Descargar</a>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
+        {files.map((file) => { const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase(); return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><button onClick={() => openFile(file)} type="button">Descargar</button>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
       </div>
       {canTeach && <aside className="teacher-tools"><span className="eyebrow">Herramientas docentes</span><h2>Publicar en el aula</h2><form onSubmit={publish}><label>Título<input name="title" required /></label><label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label><label>Mensaje<textarea name="body" rows={4} required /></label><label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label><button className="primary-button" type="submit">Publicar aviso o enlace</button></form><div className="tool-divider"><span>o subir archivo</span></div><form onSubmit={upload}><label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label><button className="secondary-button" type="submit">Subir al curso</button></form>{status && <p className="tool-status">{status}</p>}</aside>}
     </section>

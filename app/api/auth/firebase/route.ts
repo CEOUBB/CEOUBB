@@ -38,8 +38,8 @@ export async function POST(request: Request) {
     let user = existing[0];
 
     if (user) {
-      await db.update(users).set({ name, role }).where(eq(users.id, user.id));
-      user = { ...user, name, role };
+      await db.update(users).set({ name }).where(eq(users.id, user.id));
+      user = { ...user, name };
     } else {
       user = {
         id: `firebase:${account.localId}`,
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       await db.insert(users).values(user);
     }
 
-    const cookie = await createSession(user.id, request);
+    const cookie = await createSession(user.id);
     return Response.json({ user: publicUser(user) }, { headers: { "Set-Cookie": cookie } });
   } catch {
     return error("No fue posible completar el acceso institucional.", 500);

@@ -489,7 +489,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .material-row small { margin-top: .25rem; color: #88757c; font-size: .65rem; }
 .material-row b { color: #d99bae; font-size: .69rem; }
 .material-actions { display: grid; justify-items: end; gap: .35rem; }
-.material-actions > a { color: #d99bae; font-size: .69rem; font-weight: 750; }
+.material-actions > a, .material-actions > button { color: #d99bae; font-size: .69rem; font-weight: 750; }
+.material-actions > button { border: 0; padding: 0; background: none; font-family: inherit; cursor: pointer; }
 .content-actions { display: inline-flex; gap: .35rem; }
 .content-actions button { border: 1px solid #5a3441; border-radius: .38rem; padding: .28rem .45rem; background: #2a151d; color: #d9a5b5; font: inherit; cursor: pointer; }
 .content-actions button:last-child { color: #f3a3a3; }

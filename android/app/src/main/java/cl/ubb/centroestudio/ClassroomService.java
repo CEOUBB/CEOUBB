@@ -47,7 +47,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -303,10 +305,30 @@ public final class ClassroomService {
                         return;
                     }
                     JSONArray items = new JSONArray();
+                    List<JSONObject> pending = new ArrayList<>();
+                    List<Task<Uri>> pendingUrls = new ArrayList<>();
                     if (snapshots != null) {
-                        for (QueryDocumentSnapshot document : snapshots) items.put(postJson(document));
+                        for (QueryDocumentSnapshot document : snapshots) {
+                            JSONObject item = postJson(document);
+                            items.put(item);
+                            String storagePath = safe(document.getString("storagePath"));
+                            if (storage != null && !storagePath.isBlank() && safe(document.getString("fileUrl")).isBlank()) {
+                                pending.add(item);
+                                pendingUrls.add(storage.getReference().child(storagePath).getDownloadUrl());
+                            }
+                        }
                     }
-                    emit("posts", jsonWithArray("items", items));
+                    if (pendingUrls.isEmpty()) {
+                        emit("posts", jsonWithArray("items", items));
+                        return;
+                    }
+                    com.google.android.gms.tasks.Tasks.whenAllComplete(pendingUrls).addOnCompleteListener(resolved -> {
+                        for (int index = 0; index < pendingUrls.size(); index++) {
+                            Task<Uri> url = pendingUrls.get(index);
+                            if (url.isSuccessful() && url.getResult() != null) put(pending.get(index), "fileUrl", url.getResult().toString());
+                        }
+                        emit("posts", jsonWithArray("items", items));
+                    });
                 });
         if (canTeach()) {
             progressListener = db.collection("courses").document(COURSE_ID).collection("progress")
@@ -443,12 +465,9 @@ public final class ClassroomService {
             put(payload, "percent", percent);
             put(payload, "fileName", fileName);
             emit("uploadProgress", payload);
-        }).continueWithTask(task -> {
-            if (!task.isSuccessful()) throw task.getException();
-            return reference.getDownloadUrl();
         }).addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                publishPost(pendingTitle, pendingBody, pendingKind, task.getResult().toString(), fileName, storagePath, Math.max(0, size), contentType == null ? "application/octet-stream" : contentType);
+            if (task.isSuccessful()) {
+                publishPost(pendingTitle, pendingBody, pendingKind, "", fileName, storagePath, Math.max(0, size), contentType == null ? "application/octet-stream" : contentType);
             } else {
                 emitError("No se pudo subir el archivo. Puedes publicar un enlace de Drive.");
             }
@@ -531,6 +550,7 @@ public final class ClassroomService {
         put(item, "kind", safe(document.getString("kind")));
         put(item, "fileUrl", safe(document.getString("fileUrl")));
         put(item, "fileName", safe(document.getString("fileName")));
+        put(item, "storagePath", safe(document.getString("storagePath")));
         put(item, "authorId", safe(document.getString("authorId")));
         put(item, "authorName", safe(document.getString("authorName")));
         put(item, "authorEmail", safe(document.getString("authorEmail")));
