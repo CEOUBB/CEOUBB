@@ -435,3 +435,18 @@ Cutover runbook, owner-run, in order:
 
 Next recommended action: run steps 1–4 of the cutover runbook. The code is ready; everything remaining needs credentials this session does not have.
 
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Codex
+Branch / commit: `codex/fix-vercel-lockfile`, based on `7acead5`
+Goal: fix the Vercel install failure caused by an obsolete root pnpm lockfile after the Next.js migration.
+Files changed: deleted the obsolete root `pnpm-lock.yaml`; retained `package-lock.json` as the canonical web lockfile; updated `PLAN.md`.
+External services changed: none.
+Checks passed: clean `npm@11.6.2 ci`; `npm run build`; `npm test` with 6/6 tests passing.
+Checks not run: Vercel redeployment. `npm run lint` still reports the same 10 pre-existing errors and 4 warnings documented by the migration handoff; this change adds no source lint findings.
+Production deployed: no.
+Known risks: `npm audit` reports 8 dependency advisories (1 low, 4 moderate, 3 high); dependency remediation was not mixed into this deployment fix.
+Next recommended action: commit and merge this branch, then redeploy the Vercel project and confirm that the install step uses npm.
+
