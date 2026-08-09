@@ -4,7 +4,8 @@ El proyecto usa Firebase Authentication, Cloud Firestore, Cloud Storage y Cloud 
 
 ## Cuentas y roles
 
-- `elpapijuaco325@gmail.com`: propietario protegido.
+- `elpapijuaco325@gmail.com`: desarrollador principal protegido.
+- `felipearce.2004@gmail.com`: desarrollador colaborador protegido.
 - `@alumnos.ubiobio.cl`: estudiante automático.
 - `@ubiobio.cl`: profesor automático.
 - Cualquier otro dominio queda rechazado.

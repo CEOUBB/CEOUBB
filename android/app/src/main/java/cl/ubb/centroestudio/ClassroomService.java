@@ -61,6 +61,7 @@ public final class ClassroomService {
     private final Executor mainExecutor;
     private final CredentialManager credentialManager;
     private final String ownerEmail;
+    private final String developerEmail;
     private boolean configured;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -81,6 +82,7 @@ public final class ClassroomService {
         this.mainExecutor = activity.getMainExecutor();
         this.credentialManager = CredentialManager.create(activity);
         this.ownerEmail = activity.getString(R.string.firebase_owner_email).trim().toLowerCase(Locale.ROOT);
+        this.developerEmail = activity.getString(R.string.firebase_developer_email).trim().toLowerCase(Locale.ROOT);
         initializeFirebase();
     }
 
@@ -264,7 +266,7 @@ public final class ClassroomService {
 
     private String determineInitialRole(String emailValue) {
         String email = safe(emailValue).toLowerCase(Locale.ROOT);
-        if (email.equals(ownerEmail)) return "owner";
+        if (email.equals(ownerEmail) || email.equals(developerEmail)) return "owner";
         if (email.endsWith("@alumnos.ubiobio.cl")) return "student";
         if (email.endsWith("@ubiobio.cl")) return "teacher";
         return "blocked";

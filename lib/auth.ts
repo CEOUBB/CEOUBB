@@ -1,6 +1,7 @@
 import { and, eq, gt } from "drizzle-orm";
 import { getDb } from "../db";
 import { sessions, users } from "../db/schema";
+import { isDeveloperEmail, normalizeAccessEmail } from "./access-policy";
 
 export type AccountRole = "owner" | "teacher" | "student";
 
@@ -13,7 +14,6 @@ export type PublicUser = {
 };
 
 const SESSION_COOKIE = "centro_estudio_session";
-const OWNER_EMAIL = "elpapijuaco325@gmail.com";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 
 export function normalizeRut(value: string) {
@@ -46,12 +46,12 @@ export function isValidRut(value: string) {
 }
 
 export function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
+  return normalizeAccessEmail(value);
 }
 
 export function roleForEmail(email: string): AccountRole | null {
   const normalized = normalizeEmail(email);
-  if (normalized === OWNER_EMAIL) return "owner";
+  if (isDeveloperEmail(normalized)) return "owner";
   if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
   if (normalized.endsWith("@ubiobio.cl")) return "teacher";
   return null;
@@ -59,6 +59,7 @@ export function roleForEmail(email: string): AccountRole | null {
 
 export function registrationRoleForEmail(email: string): AccountRole | null {
   const normalized = normalizeEmail(email);
+  if (isDeveloperEmail(normalized)) return "owner";
   if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
   if (normalized.endsWith("@ubiobio.cl")) return "teacher";
   return null;

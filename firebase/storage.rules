@@ -11,7 +11,7 @@ service firebase.storage {
     }
 
     function isOwner() {
-      return email() == 'elpapijuaco325@gmail.com';
+      return email() == 'elpapijuaco325@gmail.com' || email() == 'felipearce.2004@gmail.com';
     }
 
     function isStudent() {

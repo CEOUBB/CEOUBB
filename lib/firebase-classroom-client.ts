@@ -2,6 +2,7 @@ import { getAuth, onAuthStateChanged, User as FirebaseUser } from "firebase/auth
 import { addDoc, collection, deleteDoc, doc, getDoc, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
 import { firebaseApp } from "./firebase-client";
+import { isDeveloperEmail } from "./access-policy";
 
 const COURSE_ID = "estatica";
 const auth = getAuth(firebaseApp);
@@ -35,7 +36,7 @@ export type ClassroomProgressRecord = {
 
 function roleFor(emailValue: string | null) {
   const email = (emailValue ?? "").toLowerCase();
-  if (email === "elpapijuaco325@gmail.com") return "owner";
+  if (isDeveloperEmail(email)) return "owner";
   if (email.endsWith("@ubiobio.cl")) return "teacher";
   return "student";
 }

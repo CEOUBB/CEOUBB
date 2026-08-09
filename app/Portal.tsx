@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 import { deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
+import { isDeveloperEmail } from "../lib/access-policy";
 
 type Role = "owner" | "teacher" | "student";
 
@@ -325,7 +326,7 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
           storagePath: item.storagePath,
           createdAt: item.createdAt,
           authorName: item.authorName,
-          authorRole: item.authorEmail.endsWith("@ubiobio.cl") ? "teacher" : item.authorEmail === "elpapijuaco325@gmail.com" ? "owner" : "student"
+          authorRole: item.authorEmail.endsWith("@ubiobio.cl") ? "teacher" : isDeveloperEmail(item.authorEmail) ? "owner" : "student"
         }));
         setPosts([initialPost, ...mapped]);
         setFiles(items.filter((item) => Boolean(item.storagePath && item.fileUrl)).map((item) => ({

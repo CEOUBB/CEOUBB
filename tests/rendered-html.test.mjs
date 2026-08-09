@@ -39,6 +39,17 @@ test("uses verified institutional Google access", async () => {
   assert.doesNotMatch(firebaseSource, /signInWithRedirect|getRedirectResult/);
 });
 
+test("grants the authorized collaborator the developer role", async () => {
+  const accessPolicy = await readFile(new URL("../lib/access-policy.ts", import.meta.url), "utf8");
+  const authSource = await readFile(new URL("../lib/auth.ts", import.meta.url), "utf8");
+  const firestoreRules = await readFile(new URL("../firebase/firestore.rules", import.meta.url), "utf8");
+  const storageRules = await readFile(new URL("../firebase/storage.rules", import.meta.url), "utf8");
+  assert.match(accessPolicy, /felipearce\.2004@gmail\.com/i);
+  assert.match(authSource, /isDeveloperEmail\(normalized\).*return "owner"/s);
+  assert.match(firestoreRules, /felipearce\.2004@gmail\.com/i);
+  assert.match(storageRules, /felipearce\.2004@gmail\.com/i);
+});
+
 test("treats a missing session as an anonymous visitor", async () => {
   const source = await readFile(new URL("../app/api/auth/me/route.ts", import.meta.url), "utf8");
   assert.match(source, /Response\.json\(\{ user: null \}\)/);
