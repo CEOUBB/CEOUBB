@@ -25,6 +25,7 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 |---|---|---|---|---|
 | ACTIVE | Claude Code | `claude/nextjs-vercel-migration` | Migrate web from vinext/OpenAI Sites to Next.js/Vercel; code done, data migration and deploy pending | `package.json`, `db/`, `app/api/`, `tests/`, `AGENTS.md`, Vercel, Turso |
 | DONE | Project owner / Codex | `codex/stage-vercel-domain` | Move `ceoubb.com` and `www.ceoubb.com` from OpenAI Sites to Vercel with the D1 data preserved in Turso | Vercel, Turso, Namecheap DNS, Firebase Authentication |
+| ACTIVE | Claude Code | `claude/security-audit-fixes` | Remediate the eight findings of the 2026-08-09 security audit; code done, Firebase rules deploy and Android build pending | `lib/`, `app/`, `next.config.ts`, `firebase/*.rules`, `android/ClassroomService.java`, `tests/` |
 | NEXT | Unassigned | — | Run the production authentication, Storage, and notification test matrix | Web, Android, Firebase |
 | NEXT | Unassigned | — | Configure billing budget alerts and App Check rollout | Google Cloud, Firebase |
 | BLOCKED | Project owner | — | Complete Google Play verification and obtain the official listing URL | Play Console |
@@ -497,3 +498,43 @@ Production deployed: yes. The clean Vercel deployment is active and DNS now rout
 Known risks: OpenAI Sites, D1, R2, and the two `_cf-custom-hostname` TXT records remain available as a rollback path. Do not remove them until authentication and the role matrix pass against the production hostname.
 Next recommended action: test owner, collaborator, teacher, student, rejected account, and signed-out flows on `https://ceoubb.com`; after they pass, remove the obsolete Sites validation TXT records and deliberately decommission the old Sites infrastructure.
 
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Claude Code
+Branch / commit: `claude/security-audit-fixes`, based on `3fd25d0`
+Goal: remediate the eight findings of the security audit performed against `7e5374e` and re-verified against `3fd25d0`.
+
+Files changed: `lib/auth.ts`, `app/api/auth/firebase/route.ts`, `app/api/auth/me/route.ts`, `app/api/admin/users/route.ts`, `lib/firebase-classroom-client.ts`, `app/Portal.tsx`, `app/globals.css`, `next.config.ts`, `firebase/firestore.rules`, `firebase/storage.rules`, `android/app/src/main/java/cl/ubb/centroestudio/ClassroomService.java`, `tests/rendered-html.test.mjs`, `package-lock.json`.
+
+External services changed: none. No rules were deployed, no Function was redeployed, no Vercel deployment was promoted.
+
+Findings and remediation:
+
+1. The web session recomputed every role from the email domain, so `users.role` was never read and `PATCH /api/admin/users` was a silent no-op. The stored column is now authoritative; the email domain decides the role only when the account is first created. The sign-in handler no longer rewrites the role on every login, and the institutional-domain allowlist gate is unchanged. A guard rejects rank changes on the two developer accounts.
+2. Firestore rules let any user delete their own `users/{uid}` document; both clients then recreated it at the email-derived role on the next sign-in, so any demotion or suspension was self-revertible. Profile deletion is now owner-only. `deleteMyAccount` is unaffected because it runs through the Admin SDK.
+3. No HTTP security response headers existed. `next.config.ts` now sends a Content-Security-Policy with `frame-ancestors 'none'`, plus `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS on every route.
+4. The session cookie derived its `Secure` attribute from a request-supplied protocol. It is now set whenever `NODE_ENV` is production, on both the session cookie and the clearing cookie.
+5. `deleteMyAccount` never removed the mirrored web account, so the `users` row and any unexpired sessions survived. `DELETE /api/auth/me` now removes the caller's sessions, notifications, notification reads, and user row, and clears the cookie.
+6. Uploaded course files persisted a permanent unauthenticated Firebase download URL in the post document, bypassing the member-only Storage read rule. New uploads store only `storagePath`; web and Android resolve a URL on demand through `getDownloadURL`, which enforces the rules. Reads stay backward compatible with existing documents.
+7. `npm audit` reported three high advisories, of which `ws` was reachable in production through `@libsql/client`. The lockfile now resolves `ws` 8.21.3 and the production tree reports zero vulnerabilities.
+8. Firestore and Storage rules accepted an arbitrary `courseId`, and the notification Function derived its FCM topic from it. All course paths are pinned to `estatica`.
+
+Checks passed: `npm test` 11/11, including five new assertions covering the role invariant, the cookie flag, the rules lockdown, the removal of persisted download URLs, and the response headers measured over HTTP. `npm run build` compiles and type checks. `npm run lint` reports 10 errors and 4 warnings, exactly the documented pre-existing baseline, with none added. `npx tsc --noEmit` clean. The production headers were verified in a browser against `next start` on the login page and the `/biblioteca/` library, with no CSP violations.
+
+Checks not run: Google sign-in end to end, so the CSP was not exercised against the real Firebase Authentication popup; the multi-role matrix; the Firebase rules were not compiled or deployed and no Emulator Suite test exists; the Android change is uncompiled because the repository has no Gradle wrapper.
+
+Production deployed: no.
+
+Known risks:
+
+- The CSP is the change most likely to break production. Deploy a Vercel preview and complete one real Google sign-in before promoting it.
+- The Firestore and Storage rule changes must be deployed for findings 2 and 8 to take effect. Pinning the course paths to `estatica` will deny any other course id, which is correct today because both clients hardcode `estatica`.
+- The Android change needs `gradle :app:assembleDebug` and a device test: upload a file, confirm it appears in the feed and opens. The posts listener now resolves one download URL per file per snapshot; acceptable for the beta, worth batching if the file count grows.
+- Finding 6 stops new leaks but does not revoke download URLs already stored on existing posts. Rotating those object tokens is a separate console task.
+- Residual on finding 2: a suspended account can still reset its role by deleting its entire Google-linked account and registering again, which is inherent to deriving roles from an email domain. Closing that needs an email-keyed blocklist checked on profile creation; deferred until suspension is actually used.
+- Four moderate advisories remain in `drizzle-kit` through `esbuild`. They are devDependency-only and need a breaking major, so they were left alone.
+
+Next recommended action: deploy a Vercel preview from this branch, complete one institutional sign-in to validate the CSP, then deploy the Firestore and Storage rules and run the P0.1 and P0.2 matrices before promoting to production.
