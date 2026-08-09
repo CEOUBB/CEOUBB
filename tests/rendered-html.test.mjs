@@ -25,8 +25,17 @@ test("renders Centro de Estudio UBB", async () => {
 
 test("uses verified institutional Google access", async () => {
   const source = await readFile(new URL("../app/Portal.tsx", import.meta.url), "utf8");
+  const firebaseSource = await readFile(new URL("../lib/firebase-client.ts", import.meta.url), "utf8");
   assert.match(source, /Continuar con Google/i);
   assert.doesNotMatch(source, /Mínimo 10 caracteres/i);
+  assert.match(firebaseSource, /signInWithPopup/);
+  assert.doesNotMatch(firebaseSource, /signInWithRedirect|getRedirectResult/);
+});
+
+test("treats a missing session as an anonymous visitor", async () => {
+  const source = await readFile(new URL("../app/api/auth/me/route.ts", import.meta.url), "utf8");
+  assert.match(source, /Response\.json\(\{ user: null \}\)/);
+  assert.doesNotMatch(source, /status:\s*401/);
 });
 
 test("serves a sitemap", async () => {

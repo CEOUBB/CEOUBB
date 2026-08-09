@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
@@ -19,10 +19,6 @@ function institutionalProvider() {
 }
 
 export async function signInWithInstitutionalGoogle() {
-  await signInWithRedirect(getAuth(firebaseApp), institutionalProvider());
-}
-
-export async function finishInstitutionalGoogleSignIn() {
-  const result = await getRedirectResult(getAuth(firebaseApp));
-  return result ? result.user.getIdToken(true) : null;
+  const result = await signInWithPopup(getAuth(firebaseApp), institutionalProvider());
+  return result.user.getIdToken(true);
 }

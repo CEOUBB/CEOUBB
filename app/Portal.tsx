@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { finishInstitutionalGoogleSignIn, signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 import { deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
 
 type Role = "owner" | "teacher" | "student";
@@ -186,31 +186,12 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
     onSignedIn(data.user);
   }, [onSignedIn]);
 
-  useEffect(() => {
-    let active = true;
-    finishInstitutionalGoogleSignIn()
-      .then(async (idToken) => {
-        if (!active || !idToken) return;
-        setWorking(true);
-        await finishGoogleAccess(idToken);
-      })
-      .catch((cause) => {
-        if (!active) return;
-        setError(cause instanceof Error ? cause.message : "No fue posible continuar.");
-      })
-      .finally(() => {
-        if (active) setWorking(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [finishGoogleAccess]);
-
   const googleAccess = async () => {
     setError("");
     setWorking(true);
     try {
-      await signInWithInstitutionalGoogle();
+      const idToken = await signInWithInstitutionalGoogle();
+      await finishGoogleAccess(idToken);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "No fue posible continuar.";
       setError(message);

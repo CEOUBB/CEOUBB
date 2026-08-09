@@ -1,4 +1,4 @@
-const CACHE = "centro-estudio-ubb-v1";
+const CACHE = "centro-estudio-ubb-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/biblioteca/index.html"];
 
 self.addEventListener("install", (event) => {
@@ -14,8 +14,17 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
-  event.respondWith(fetch(request).then((response) => {
-    if (response.ok) caches.open(CACHE).then((cache) => cache.put(request, response.clone()));
-    return response;
-  }).catch(() => caches.match(request).then((cached) => cached || caches.match("/"))));
+  event.respondWith((async () => {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        const copy = response.clone();
+        const cache = await caches.open(CACHE);
+        await cache.put(request, copy);
+      }
+      return response;
+    } catch {
+      return (await caches.match(request)) || (await caches.match("/"));
+    }
+  })());
 });
