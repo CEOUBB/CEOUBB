@@ -1,14 +1,14 @@
 :root {
   color-scheme: dark;
-  --bg: #09070a;
-  --panel: #131014;
-  --panel-2: #1a1217;
-  --line: #36202a;
-  --text: #f7edf1;
-  --muted: #bca9b1;
-  --blood: #8f0028;
-  --blood-light: #d20b44;
-  --blood-bright: #ff315f;
+  --bg: #031c32;
+  --panel: #062944;
+  --panel-2: #083654;
+  --line: #1d628c;
+  --text: #f5faff;
+  --muted: #acc5d8;
+  --blood: #0057a4;
+  --blood-light: #00a6d6;
+  --blood-bright: #ffd100;
   --success: #55d98a;
   --shadow: 0 22px 60px rgba(0, 0, 0, .35);
 }
@@ -22,8 +22,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 84% 4%, rgba(151, 0, 43, .2), transparent 28rem),
-    radial-gradient(circle at 16% 90%, rgba(91, 0, 28, .14), transparent 30rem),
+    radial-gradient(circle at 84% 4%, rgba(0, 166, 214, .18), transparent 28rem),
+    radial-gradient(circle at 16% 90%, rgba(0, 87, 164, .15), transparent 30rem),
     var(--bg);
   color: var(--text);
   font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
@@ -31,21 +31,25 @@ body {
 
 body.auth-locked { overflow: hidden; }
 
-.auth-overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 20% 20%, rgba(178, 0, 52, .24), transparent 34rem), rgba(7, 5, 7, .96); backdrop-filter: blur(18px); z-index: 100; }
+.auth-overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 10%, rgba(0, 166, 214, .16), transparent 28rem), linear-gradient(145deg, #f8fbfe, #e5f0f7); color: #07345a; z-index: 100; }
 .auth-overlay.hidden { display: none; }
-.auth-card { width: min(540px, 100%); padding: clamp(30px, 7vw, 52px); border: 1px solid #742640; border-radius: 30px; background: linear-gradient(145deg, rgba(42, 15, 25, .99), rgba(13, 9, 12, .99)); box-shadow: 0 32px 100px rgba(0,0,0,.62); }
-.auth-card h1 { max-width: 8.5ch; margin: 12px 0 18px; font-size: clamp(42px, 10vw, 66px); font-weight: 430; line-height: .9; letter-spacing: -.065em; }
-.auth-card h1 strong { display: block; color: #f1a9bd; font-weight: 800; letter-spacing: -.075em; }
-.auth-card > p { color: #d0bdc5; line-height: 1.6; }
-.google-button { display: flex; justify-content: center; align-items: center; gap: 11px; width: 100%; min-height: 52px; margin-top: 24px; border: 1px solid #d9d9d9; border-radius: 13px; background: #fff; color: #262626; font-weight: 800; }
-.google-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #4285f4; font-size: 19px; font-weight: 900; }
+.auth-shell { width: min(560px, 100%); display: grid; gap: 20px; }
+.auth-title { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.auth-title > img { width: 76px; height: auto; filter: drop-shadow(0 10px 16px rgba(0, 73, 132, .17)); }
+.auth-title .eyebrow { color: #0078b2; }
+.auth-title h1 { margin: 7px 0 0; color: #07345a; font-size: clamp(38px, 9vw, 58px); font-weight: 430; line-height: .9; letter-spacing: -.065em; }
+.auth-title h1 strong { display: block; color: #0057a4; font-weight: 800; letter-spacing: -.075em; }
+.auth-card { padding: clamp(26px, 6vw, 42px); border: 1px solid rgba(0, 87, 164, .2); border-radius: 28px; background: rgba(255, 255, 255, .88); box-shadow: 0 28px 80px rgba(0, 73, 132, .14); }
+.auth-card h2 { max-width: 13ch; margin: 0 auto; color: #07345a; font-size: clamp(30px, 7vw, 44px); line-height: .98; letter-spacing: -.045em; text-align: center; }
+.google-button { display: flex; justify-content: center; align-items: center; gap: 11px; width: 100%; min-height: 52px; margin-top: 24px; border: 1px solid #b9d0df; border-radius: 13px; background: #fff; color: #07345a; font-weight: 800; }
+.google-button img { width: 24px; height: 24px; object-fit: contain; }
 .auth-offline { margin-top: 10px; }
-.auth-configuration { margin-top: 16px; padding: 10px 12px; border: 1px solid #49323b; border-radius: 10px; color: #bca8b0; background: #110d10; font-size: 12px; line-height: 1.4; }
+.auth-configuration { margin-top: 16px; padding: 10px 12px; border: 1px solid #b8cedc; border-radius: 10px; color: #517289; background: #eaf3f8; font-size: 12px; line-height: 1.4; }
 .auth-configuration.ready { border-color: #275d3c; color: #8fdfaa; }
 .auth-configuration.pending { border-color: #695024; color: #e6c47f; }
-.auth-privacy { display: block; margin-top: 16px; color: #806e75; text-align: center; }
+.auth-privacy { display: block; margin-top: 16px; color: #6a879a; text-align: center; }
 .auth-legal { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
-.auth-legal button { padding: 0; border: 0; background: transparent; color: #d790a4; font-size: 10px; text-decoration: underline; text-underline-offset: 3px; }
+.auth-legal button { padding: 0; border: 0; background: transparent; color: #0057a4; font-size: 10px; text-decoration: underline; text-underline-offset: 3px; }
 
 button, input, select, textarea { font: inherit; }
 
@@ -66,13 +70,13 @@ button, select { cursor: pointer; }
 }
 
 .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 32px; }
-.brand-mark { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #d6194f; border-radius: 15px; background: linear-gradient(145deg, #ba073c, #520018); box-shadow: 0 10px 26px rgba(177, 0, 50, .32); font-weight: 900; }
+.brand-mark { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #00a6d6; border-radius: 15px; background: linear-gradient(145deg, #008ed0, #004d91); box-shadow: 0 10px 26px rgba(0, 73, 132, .32); font-weight: 900; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 15px; letter-spacing: .02em; }
 .brand span { margin-top: 3px; color: var(--muted); font-size: 12px; }
 
-.classroom-shortcut { display: grid; grid-template-columns: 38px 1fr; column-gap: 10px; align-items: center; width: 100%; margin: -10px 0 20px; padding: 11px; border: 1px solid #63243a; border-radius: 14px; background: linear-gradient(135deg, #2d101b, #170e13); color: #fff; text-align: left; }
-.classroom-shortcut > span { grid-row: 1 / 3; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #8f0028; font-size: 12px; font-weight: 900; }
+.classroom-shortcut { display: grid; grid-template-columns: 38px 1fr; column-gap: 10px; align-items: center; width: 100%; margin: -10px 0 20px; padding: 11px; border: 1px solid #1d628c; border-radius: 14px; background: linear-gradient(135deg, #0b456c, #062944); color: #fff; text-align: left; }
+.classroom-shortcut > span { grid-row: 1 / 3; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #0057a4; font-size: 12px; font-weight: 900; }
 .classroom-shortcut strong, .classroom-shortcut small { grid-column: 2; }
 .classroom-shortcut strong { font-size: 12px; }
 .classroom-shortcut small { color: #bda8b1; font-size: 10px; }
@@ -80,23 +84,23 @@ button, select { cursor: pointer; }
 .course-nav { display: grid; gap: 7px; }
 .nav-item { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 10px; color: var(--muted); border: 1px solid transparent; border-radius: 13px; background: transparent; text-align: left; transition: .2s ease; }
 .nav-item:hover { color: var(--text); border-color: var(--line); background: #171017; }
-.nav-item.active { color: #fff; border-color: #72132f; background: linear-gradient(90deg, rgba(155, 0, 42, .34), rgba(91, 0, 29, .12)); }
-.nav-icon { display: grid; place-items: center; height: 34px; border-radius: 10px; background: #24141b; color: #ff6d91; font-weight: 850; }
+.nav-item.active { color: #fff; border-color: #1d78ad; background: linear-gradient(90deg, rgba(0, 126, 190, .34), rgba(0, 87, 164, .12)); }
+.nav-icon { display: grid; place-items: center; height: 34px; border-radius: 10px; background: #0b3d60; color: #63d8f1; font-weight: 850; }
 .nav-count { color: #826f77; font-size: 12px; }
 
 .sidebar-panel { margin-top: 28px; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: #120e12; }
-.eyebrow { color: #e73261; font-size: 11px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+.eyebrow { color: #61d4ef; font-size: 11px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
 .progress-line { height: 7px; margin: 12px 0 9px; overflow: hidden; border-radius: 999px; background: #2c1a22; }
-.progress-line span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #800024, #ff2858); transition: width .35s ease; }
+.progress-line span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0057a4, #00a6d6); transition: width .35s ease; }
 .sidebar-panel strong { color: #e8dbe0; font-size: 13px; }
 
 .blood-button, .ghost-button { width: 100%; min-height: 43px; margin-top: 12px; border-radius: 12px; font-weight: 750; }
-.blood-button { border: 1px solid #c21747; background: linear-gradient(135deg, #b30739, #710020); color: #fff; box-shadow: 0 12px 30px rgba(152, 0, 42, .25); }
+.blood-button { border: 1px solid #00a6d6; background: linear-gradient(135deg, #007fc3, #00529b); color: #fff; box-shadow: 0 12px 30px rgba(0, 82, 155, .25); }
 .blood-button:hover { filter: brightness(1.12); }
 .ghost-button { border: 1px solid var(--line); background: transparent; color: var(--muted); }
 .ghost-button:hover { color: #fff; border-color: #6d3a4d; }
-.portal-web-button { width: auto; min-height: 42px; margin-top: 12px; padding: 10px 14px; border: 1px solid #7c3650; border-radius: 12px; background: linear-gradient(135deg, #3c1725, #211017); color: #f3c4d1; font-weight: 800; }
-.portal-web-button:hover { border-color: #c2486b; filter: brightness(1.08); }
+.portal-web-button { width: auto; min-height: 42px; margin-top: 12px; padding: 10px 14px; border: 1px solid #1d78ad; border-radius: 12px; background: linear-gradient(135deg, #0b456c, #062944); color: #d5f4fb; font-weight: 800; }
+.portal-web-button:hover { border-color: #00a6d6; filter: brightness(1.08); }
 .auth-portal { width: 100%; margin-top: 9px; }
 
 .main-content { width: min(1420px, 100%); padding: 24px clamp(22px, 4vw, 62px) 70px; }

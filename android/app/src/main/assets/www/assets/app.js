@@ -29,7 +29,6 @@ const elements = {
   webPortalButton: document.querySelector('#webPortalButton'),
   webPortalAuthButton: document.querySelector('#webPortalAuthButton'),
   privacyPolicyButton: document.querySelector('#privacyPolicyButton'),
-  accountDeletionWebButton: document.querySelector('#accountDeletionWebButton'),
   onlineStatus: document.querySelector('#onlineStatus'),
   toast: document.querySelector('#toast')
 };
@@ -259,7 +258,6 @@ elements.askTutorButton.addEventListener('click', () => {
 if (elements.webPortalButton) elements.webPortalButton.addEventListener('click', openWebPortal);
 if (elements.webPortalAuthButton) elements.webPortalAuthButton.addEventListener('click', openWebPortal);
 if (elements.privacyPolicyButton) elements.privacyPolicyButton.addEventListener('click', () => openPortalUrl('https://www.ceoubb.com/privacidad'));
-if (elements.accountDeletionWebButton) elements.accountDeletionWebButton.addEventListener('click', () => openPortalUrl('https://www.ceoubb.com/eliminar-cuenta'));
 
 if (typeof window.addEventListener === 'function') {
   window.addEventListener('online', updateOnlineStatus);

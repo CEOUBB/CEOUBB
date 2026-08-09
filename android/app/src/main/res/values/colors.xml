@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="blood">#7A0F2B</color>
-    <color name="blood_dark">#12090D</color>
-    <color name="paper">#F7EEF1</color>
+    <color name="blood">#0057A4</color>
+    <color name="blood_dark">#031C32</color>
+    <color name="paper">#EDF5FB</color>
 </resources>

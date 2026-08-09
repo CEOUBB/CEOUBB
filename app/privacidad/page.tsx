@@ -12,11 +12,11 @@ export default function PrivacyPage() {
         <p>Estos datos se usan exclusivamente para autenticar cuentas UBB, mostrar materiales del curso, sincronizar progreso, administrar permisos y enviar avisos académicos. No vendemos datos, no mostramos publicidad y no utilizamos la información para crear perfiles comerciales.</p>
         <h2>Proveedores</h2>
         <p>La plataforma utiliza Google Firebase para autenticación, base de datos, almacenamiento y notificaciones, y servicios de infraestructura web para publicar ceoubb.com. Cada proveedor procesa información conforme a sus propias condiciones y medidas de seguridad.</p>
-        <h2>Conservación y eliminación</h2>
-        <p>Los datos se conservan mientras la cuenta permanezca activa o sean necesarios para operar el aula. Puedes eliminar tu cuenta desde la aplicación o iniciar una solicitud desde la página de eliminación. La eliminación comprende el perfil, progreso y contenido asociado, salvo información que deba conservarse por una obligación legal o de seguridad.</p>
+        <h2>Conservación</h2>
+        <p>Los datos se conservan mientras la cuenta permanezca activa o sean necesarios para operar el aula, salvo información que deba conservarse por una obligación legal o de seguridad.</p>
         <h2>Contacto</h2>
         <p>Para consultas de privacidad escribe a <a href="mailto:elpapijuaco325@gmail.com">elpapijuaco325@gmail.com</a>.</p>
-        <nav><a href="/eliminar-cuenta">Eliminar mi cuenta</a><a href="/">Volver al portal</a></nav>
+        <nav><a href="/">Volver al portal</a></nav>
       </article>
     </main>
   );

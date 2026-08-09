@@ -29,8 +29,11 @@ test("uses verified institutional Google access", async () => {
   assert.match(source, /Centro de <strong>Estudio UBB<\/strong>/i);
   assert.match(source, /<span className="eyebrow">2026<\/span>/i);
   assert.match(source, /Ingresa con tu correo institucional/i);
+  assert.match(source, /ubb-shield\.webp/i);
+  assert.match(source, /google-g\.webp/i);
   assert.match(source, /Continuar con Google/i);
-  assert.doesNotMatch(source, /Tu semestre completo|Acceso institucional verificado|Tu perfil se crea automáticamente|excepción administrativa|Ingresa con Google UBB/i);
+  assert.doesNotMatch(source, /Tu semestre completo|Acceso institucional verificado|Tu perfil se crea automáticamente|excepción administrativa|Ingresa con Google UBB|Cuenta personal del portal|Instalar en este dispositivo|InstallHelp|beforeinstallprompt|access-pills|Certámenes largos, soluciones desarrolladas/i);
+  assert.doesNotMatch(source, /href="\/eliminar-cuenta"/i);
   assert.doesNotMatch(source, /Mínimo 10 caracteres/i);
   assert.match(firebaseSource, /signInWithPopup/);
   assert.doesNotMatch(firebaseSource, /signInWithRedirect|getRedirectResult/);
@@ -46,4 +49,9 @@ test("serves a sitemap", async () => {
   const response = await render("/sitemap.xml");
   assert.equal(response.status, 200);
   assert.match(await response.text(), /<urlset/);
+});
+
+test("does not expose the account deletion page", async () => {
+  const response = await render("/eliminar-cuenta");
+  assert.equal(response.status, 404);
 });

@@ -6,7 +6,6 @@ export async function GET(request: Request) {
   <url><loc>${origin}/</loc><lastmod>${updated}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>${origin}/biblioteca/index.html</loc><lastmod>${updated}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>${origin}/privacidad</loc><lastmod>${updated}</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
-  <url><loc>${origin}/eliminar-cuenta</loc><lastmod>${updated}</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
 </urlset>`;
   return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
 }

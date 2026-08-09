@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#78001f">
+  <meta name="theme-color" content="#0057a4">
   <title>Centro de Estudio 2026</title>
   <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
   <div id="authOverlay" class="auth-overlay">
-    <div class="auth-card">
-      <span class="eyebrow">2026</span>
-      <h1>Centro de <strong>Estudio UBB</strong></h1>
-      <p>Ingresa con tu correo institucional.</p>
-      <button id="googleSignInButton" class="google-button" type="button"><span class="google-mark">G</span> Continuar con Google</button>
-      <button id="offlineAccessButton" class="ghost-button auth-offline" type="button">Entrar a la biblioteca sin conexión</button>
-      <button id="webPortalAuthButton" class="portal-web-button auth-portal" type="button">Ingresar desde la página web</button>
-      <div id="authConfiguration" class="auth-configuration">Comprobando el servicio de cuentas...</div>
-      <small class="auth-privacy">La app nunca conoce ni guarda tu contraseña de Google.</small>
-      <div class="auth-legal"><button id="privacyPolicyButton" type="button">Privacidad</button><button id="accountDeletionWebButton" type="button">Eliminación de cuenta</button></div>
+    <div class="auth-shell">
+      <header class="auth-title"><img src="assets/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío"><div><span class="eyebrow">2026</span><h1>Centro de <strong>Estudio UBB</strong></h1></div></header>
+      <div class="auth-card">
+        <h2>Ingresa con tu correo institucional</h2>
+        <button id="googleSignInButton" class="google-button" type="button"><img src="assets/google-g.webp" alt=""> Continuar con Google</button>
+        <button id="offlineAccessButton" class="ghost-button auth-offline" type="button">Entrar a la biblioteca sin conexión</button>
+        <button id="webPortalAuthButton" class="portal-web-button auth-portal" type="button">Ingresar desde la página web</button>
+        <div id="authConfiguration" class="auth-configuration">Comprobando el servicio de cuentas...</div>
+        <small class="auth-privacy">La app nunca conoce ni guarda tu contraseña de Google.</small>
+        <div class="auth-legal"><button id="privacyPolicyButton" type="button">Privacidad</button></div>
+      </div>
     </div>
   </div>
   <div class="app-shell">

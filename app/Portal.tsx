@@ -71,20 +71,15 @@ type NotificationItem = {
   actorName: string;
 };
 
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
 const APK_URL = "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
 const courses: Course[] = [
-  { id: "edo", name: "Ecuaciones Diferenciales", code: "EDO · 2026-2", teacher: "Banco de estudio", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#7d1736" },
-  { id: "estadistica", name: "Estadística", code: "220318", teacher: "Aula de práctica", period: "Semestre 2026-2", notices: 1, activities: 3, tone: "#2f6c78" },
-  { id: "estatica", name: "Estática", code: "440299", teacher: "Aula piloto colaborativa", period: "Semestre 2026-2", notices: 1, activities: 4, tone: "#9a5b18" },
-  { id: "ingles", name: "Inglés Comunicacional I", code: "340357", teacher: "Banco de estudio", period: "Semestre 2026-2", notices: 0, activities: 2, tone: "#5d4a82" },
-  { id: "termodinamica", name: "Termodinámica Aplicada", code: "440303", teacher: "Banco de certámenes", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#b1452e" },
-  { id: "matlab", name: "Programación en Ingeniería", code: "MATLAB", teacher: "Laboratorio de código", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#27644d" },
+  { id: "edo", name: "Ecuaciones Diferenciales", code: "EDO · 2026-2", teacher: "Banco de estudio", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#0057a4" },
+  { id: "estadistica", name: "Estadística", code: "220318", teacher: "Aula de práctica", period: "Semestre 2026-2", notices: 1, activities: 3, tone: "#007fc3" },
+  { id: "estatica", name: "Estática", code: "440299", teacher: "Aula piloto colaborativa", period: "Semestre 2026-2", notices: 1, activities: 4, tone: "#00a6d6" },
+  { id: "ingles", name: "Inglés Comunicacional I", code: "340357", teacher: "Banco de estudio", period: "Semestre 2026-2", notices: 0, activities: 2, tone: "#004d91" },
+  { id: "termodinamica", name: "Termodinámica Aplicada", code: "440303", teacher: "Banco de certámenes", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#e84235" },
+  { id: "matlab", name: "Programación en Ingeniería", code: "MATLAB", teacher: "Laboratorio de código", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#ffd100" },
 ];
 
 const units = [
@@ -108,8 +103,6 @@ export function Portal() {
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [screen, setScreen] = useState<"courses" | "estatica" | "calendar" | "resources" | "admin">("courses");
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
-  const [installHelp, setInstallHelp] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -117,23 +110,7 @@ export function Portal() {
       .then((data) => setUser(data.user ?? null))
       .finally(() => setChecking(false));
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    const handler = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
-
-  const install = async () => {
-    if (installPrompt) {
-      await installPrompt.prompt();
-      await installPrompt.userChoice;
-      setInstallPrompt(null);
-    } else {
-      setInstallHelp(true);
-    }
-  };
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -142,11 +119,11 @@ export function Portal() {
   };
 
   if (checking) return <LoadingScreen />;
-  if (!user) return <AccessScreen onSignedIn={setUser} onInstall={install} installHelp={installHelp} closeInstallHelp={() => setInstallHelp(false)} />;
+  if (!user) return <AccessScreen onSignedIn={setUser} />;
 
   return (
     <div className="portal-shell">
-      <PortalHeader user={user} screen={screen} setScreen={setScreen} onLogout={logout} onInstall={install} />
+      <PortalHeader user={user} screen={screen} setScreen={setScreen} onLogout={logout} />
       {screen === "estatica" ? (
         <EstaticaClassroom user={user} goBack={() => setScreen("courses")} />
       ) : (
@@ -157,7 +134,6 @@ export function Portal() {
           {screen === "admin" && user.role === "owner" && <AdminView />}
         </main>
       )}
-      {installHelp && <InstallHelp close={() => setInstallHelp(false)} />}
     </div>
   );
 }
@@ -171,7 +147,7 @@ function LoadingScreen() {
   );
 }
 
-function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: { onSignedIn: (user: User) => void; onInstall: () => void; installHelp: boolean; closeInstallHelp: () => void }) {
+function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
@@ -202,40 +178,30 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
 
   return (
     <main className="access-page">
-      <section className="access-panel">
-        <div className="access-copy">
-          <span className="eyebrow">2026</span>
-          <h1>Centro de <strong>Estudio UBB</strong></h1>
-          <p>Certámenes largos, soluciones desarrolladas, apuntes con notación matemática, materiales del docente y seguimiento del progreso.</p>
-          <div className="access-pills"><span>Android</span><span>iPhone y iPad</span><span>PC y Mac</span><span>Uso sin conexión</span></div>
-        </div>
-        <div className="access-actions">
-          <button className="secondary-button" onClick={onInstall} type="button">Instalar en este dispositivo</button>
-          <a className="text-link" href={APK_URL}>Descargar APK para Android</a>
-        </div>
-        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <a href="/eliminar-cuenta">Eliminar cuenta</a></p>
-      </section>
-
-      <section className="login-panel" id="inicio">
-        <div className="login-card">
+      <div className="access-shell">
+        <header className="access-title">
+          <img src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" />
+          <div><span className="eyebrow">2026</span><h1>Centro de <strong>Estudio UBB</strong></h1></div>
+        </header>
+        <section className="login-card" id="inicio">
           <div className="google-access-copy">
-            <span className="eyebrow">Cuenta personal del portal</span>
             <h2>Ingresa con tu correo institucional</h2>
           </div>
-          <button className="google-button" disabled={working} onClick={googleAccess} type="button"><span>G</span>{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
+          <button className="google-button" disabled={working} onClick={googleAccess} type="button"><img src="/brand/google-g.webp" alt="" aria-hidden="true" />{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
           {error && <p className="form-error" role="alert">{error}</p>}
           <div className="institution-note">
             <strong>Acceso exclusivo UBB</strong>
             <p>Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
           </div>
-        </div>
-      </section>
-      {installHelp && <InstallHelp close={closeInstallHelp} />}
+        </section>
+        <a className="apk-download" href={APK_URL}>Descargar APK para Android</a>
+        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <span>Eliminar cuenta</span></p>
+      </div>
     </main>
   );
 }
 
-function PortalHeader({ user, screen, setScreen, onLogout, onInstall }: { user: User; screen: string; setScreen: (screen: "courses" | "estatica" | "calendar" | "resources" | "admin") => void; onLogout: () => void; onInstall: () => void }) {
+function PortalHeader({ user, screen, setScreen, onLogout }: { user: User; screen: string; setScreen: (screen: "courses" | "estatica" | "calendar" | "resources" | "admin") => void; onLogout: () => void }) {
   return (
     <header className="portal-header">
       <button className="portal-brand" onClick={() => setScreen("courses")} type="button">
@@ -250,7 +216,6 @@ function PortalHeader({ user, screen, setScreen, onLogout, onInstall }: { user: 
       </nav>
       <div className="header-actions">
         <NotificationMenu />
-        <button className="icon-action" onClick={onInstall} title="Instalar app" type="button">↓</button>
         <a className="icon-action" href="https://chatgpt.com" target="_blank" rel="noreferrer" title="Tutor IA">AI</a>
         <details className="account-menu">
           <summary><span className="avatar">{initials(user.name)}</span><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span></summary>
@@ -326,8 +291,8 @@ function CoursesDashboard({ user, openEstatica }: { user: User; openEstatica: ()
         ))}
       </section>
       <section className="download-banner">
-        <div><span className="eyebrow">Acceso rápido</span><h2>Lleva Centro de Estudio UBB contigo</h2><p>Instala la experiencia web en iPhone, iPad, Android o computador, o descarga el APK Android.</p></div>
-        <div><a className="primary-button link-button" href={APK_URL}>Descargar para Android</a><a className="secondary-button link-button" href="#instalar">Cómo instalar en iPhone</a></div>
+        <div><span className="eyebrow">Acceso rápido</span><h2>Lleva Centro de Estudio UBB contigo</h2><p>Descarga directamente la aplicación para Android.</p></div>
+        <div><a className="primary-button link-button" href={APK_URL}>Descargar para Android</a></div>
       </section>
     </>
   );
@@ -574,10 +539,6 @@ function AdminView() {
     if (response.ok) await load();
   };
   return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control desarrollador</span><h1>Administración de cuentas</h1><p>Supervisa los rangos detectados automáticamente por el dominio institucional y conserva el control general de la plataforma.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Profesor UBB</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
-}
-
-function InstallHelp({ close }: { close: () => void }) {
-  return <div className="modal-backdrop" role="presentation"><section className="install-modal" role="dialog" aria-modal="true" aria-labelledby="install-title"><button className="modal-close" onClick={close} type="button">×</button><span className="eyebrow">Instalación multiplataforma</span><h2 id="install-title">Usa Centro de Estudio UBB como una app</h2><div className="install-options"><div><strong>iPhone y iPad</strong><p>Abre la página en Safari, toca Compartir y elige “Agregar a pantalla de inicio”.</p></div><div><strong>Android</strong><p>En Chrome, abre el menú y selecciona “Instalar aplicación”, o descarga el APK.</p><a href={APK_URL}>Descargar APK</a></div><div><strong>Windows, Mac y Linux</strong><p>En Chrome o Edge, presiona el icono de instalación ubicado junto a la dirección web.</p></div></div><button className="primary-button" onClick={close} type="button">Entendido</button></section></div>;
 }
 
 function roleLabel(role: Role) {
