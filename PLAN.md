@@ -24,6 +24,7 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 | Status | Owner / agent | Branch | Scope | Files or services |
 |---|---|---|---|---|
 | ACTIVE | Claude Code | `claude/nextjs-vercel-migration` | Migrate web from vinext/OpenAI Sites to Next.js/Vercel; code done, data migration and deploy pending | `package.json`, `db/`, `app/api/`, `tests/`, `AGENTS.md`, Vercel, Turso |
+| DONE | Project owner / Codex | `codex/stage-vercel-domain` | Move `ceoubb.com` and `www.ceoubb.com` from OpenAI Sites to Vercel with the D1 data preserved in Turso | Vercel, Turso, Namecheap DNS, Firebase Authentication |
 | NEXT | Unassigned | — | Run the production authentication, Storage, and notification test matrix | Web, Android, Firebase |
 | NEXT | Unassigned | — | Configure billing budget alerts and App Check rollout | Google Cloud, Firebase |
 | BLOCKED | Project owner | — | Complete Google Play verification and obtain the official listing URL | Play Console |
@@ -34,7 +35,8 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 ### Web
 
 - `DONE`: Institutional UBB-inspired login design, responsive layout, privacy footer, official Google sign-in button artwork, and non-clickable store badges.
-- `DONE`: Custom domain `ceoubb.com` connected to the deployed Sites project. The Sites deployment is still the live production site; the Next.js/Vercel migration is code-complete but not deployed.
+- `DONE`: `ceoubb.com` and `www.ceoubb.com` route through Namecheap DNS to the production Next.js deployment on Vercel.
+- `DONE`: The former Sites D1 data is migrated to Turso and its table counts were verified before the DNS cutover.
 - `DONE`: Google authentication is handled by Firebase Authentication, followed by the web session endpoint.
 - `DONE`: Access is limited to UBB student and teacher domains plus the two explicit developer exceptions.
 - `DONE`: Dashboard contains six semester courses and an Estática collaborative classroom beta.
@@ -449,4 +451,49 @@ Checks not run: Vercel redeployment. `npm run lint` still reports the same 10 pr
 Production deployed: no.
 Known risks: `npm audit` reports 8 dependency advisories (1 low, 4 moderate, 3 high); dependency remediation was not mixed into this deployment fix.
 Next recommended action: commit and merge this branch, then redeploy the Vercel project and confirm that the install step uses npm.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Codex
+Branch / commit: `codex/stage-vercel-domain`, based on `7e5374e`
+Goal: move `ceoubb.com` and `www.ceoubb.com` from OpenAI Sites to the existing Vercel project without interrupting the live site.
+Files changed: `PLAN.md` only.
+External services changed: attached `ceoubb.com` and `www.ceoubb.com` to Vercel project `ceoubb`; Namecheap DNS, OpenAI Sites, Firebase, Turso, and production traffic were not changed.
+Checks passed: Vercel MCP confirmed production deployment `dpl_CdhC9bBrK9zmhUbFLxrxo8WRE5jM` is `READY`; the protected deployment rendered the homepage and `/api/auth/me` returned a signed-out response; Vercel confirmed both custom domains are owned by the current team and attached to the project; Vercel DNS verification reported the current OpenAI Sites records and the required replacement records.
+Checks not run: real Google sign-in, role matrix, authenticated database routes, and DNS cutover verification. Vercel has no project environment variables, so these checks would not be valid yet.
+Production deployed: no new deployment; no DNS cutover. OpenAI Sites remains live at `ceoubb.com`.
+Known risks: `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are absent from Vercel. A valid institutional login would reach `getDb()` and fail until the Turso database is imported and those variables are configured. The Vercel hostname also needs confirmation in Firebase Authentication authorized domains before sign-in testing.
+Next recommended action: import and compare the D1 data in Turso, configure both Turso variables in Vercel, redeploy and run the preview role matrix. After those checks pass, replace the two Namecheap `@` A records with `216.198.79.1` and `64.29.17.1`, replace the `www` CNAME with `797a21e0385c8eaf.vercel-dns-017.com`, preserve the email-forwarding SPF record, verify both domains in Vercel, and test `https://ceoubb.com` before decommissioning Sites.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Codex
+Branch / commit: `codex/stage-vercel-domain`, based on `7e5374e`
+Goal: preserve the OpenAI Sites D1 data in Turso and prepare the clean Vercel production deployment before the DNS cutover.
+Files changed: `PLAN.md` only on the handoff branch. Temporary migration helpers were committed on isolated local branches and were not added to the production source.
+External services changed: exported the Sites D1 database through a short-lived token-protected worker version; imported the complete export into Turso; restored Sites version 15 and removed the Sites migration secret; removed both temporary Vercel preview deployments and their environment variables; deployed clean production deployment `dpl_5sopBswfrCGhEVm8pAU5rgVRqkhw` with the configured Turso variables. Namecheap DNS and live production traffic were not changed.
+Checks passed: source and Turso counts match exactly for all eight exported tables: `__appgarden_migrations=2`, `users=3`, `sessions=1`, `notification_reads=1`, and `files=0`, `notifications=0`, `posts=0`, `progress=0`; the clean Vercel deployment built successfully; `/` and `/api/auth/me` both returned HTTP 200; Vercel reconfirmed the preferred DNS targets as apex A records `216.198.79.1` and `64.29.17.1` plus `www` CNAME `797a21e0385c8eaf.vercel-dns-017.com`.
+Checks not run: real Google sign-in, authenticated role matrix, and post-cutover checks on `https://ceoubb.com`; these require the DNS cutover.
+Production deployed: yes to Vercel, but Namecheap still routes `ceoubb.com` to OpenAI Sites. Sites was restored to its pre-migration version after the export.
+Known risks: the DNS cutover is still pending because the available Namecheap browser session is signed out. Do not decommission Sites, D1, or R2 until both hostnames route to Vercel and authentication is verified.
+Next recommended action: the owner signs in to the open Namecheap tab, then Codex replaces only the two apex A records and the `www` CNAME, preserves the email-forwarding SPF record, waits for Vercel verification, and runs the production smoke tests.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Codex
+Branch / commit: `codex/stage-vercel-domain`, based on `7e5374e`
+Goal: complete the production DNS cutover from OpenAI Sites to Vercel.
+Files changed: `PLAN.md` only.
+External services changed: in Namecheap, replaced the two apex A records with `216.198.79.1` and `64.29.17.1`, and replaced the `www` CNAME with `797a21e0385c8eaf.vercel-dns-017.com`; preserved the email-forwarding SPF record and both Sites validation TXT records for rollback. Vercel issued automatically renewing certificates for both hostnames.
+Checks passed: Namecheap displayed all three saved replacement records; the authoritative Namecheap resolver plus Cloudflare `1.1.1.1`, Google `8.8.8.8`, and Quad9 `9.9.9.9` returned the Vercel targets; Vercel reported `misconfigured=false` for both hostnames; HTTP reached Vercel and redirected to HTTPS; direct HTTPS checks against both Vercel edges returned HTTP 200 with valid certificates; the signed-out `/api/auth/me` route returned HTTP 200 on the clean production deployment.
+Checks not run: real Google sign-in and the complete production role matrix. The local recursive resolver was still serving the previous apex A records from cache immediately after the cutover, while all independently queried public and authoritative resolvers had already updated.
+Production deployed: yes. The clean Vercel deployment is active and DNS now routes both production hostnames to it.
+Known risks: OpenAI Sites, D1, R2, and the two `_cf-custom-hostname` TXT records remain available as a rollback path. Do not remove them until authentication and the role matrix pass against the production hostname.
+Next recommended action: test owner, collaborator, teacher, student, rejected account, and signed-out flows on `https://ceoubb.com`; after they pass, remove the obsolete Sites validation TXT records and deliberately decommission the old Sites infrastructure.
 
