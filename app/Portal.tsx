@@ -205,7 +205,6 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
             </div>
           </div>
         </section>
-        <a className="apk-download" href={APK_URL}>Descargar APK para Android</a>
         <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <span>Eliminar cuenta</span></p>
       </div>
     </main>
