@@ -197,15 +197,13 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
           <div className="store-badges" aria-label="Aplicaciones móviles próximamente disponibles">
             <div className="store-badge" title="Próximamente en App Store">
               <img src="/brand/app-store-badge-es.webp" alt="Descárgalo en el App Store" />
-              <span>Próximamente</span>
             </div>
             <div className="store-badge" title="Próximamente en Google Play">
               <img src="/brand/google-play-badge-es.webp" alt="Disponible en Google Play" />
-              <span>Próximamente</span>
             </div>
           </div>
         </section>
-        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <span>Eliminar cuenta</span></p>
+        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a></p>
       </div>
     </main>
   );

@@ -92,9 +92,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   min-height: 100svh;
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 12%, rgba(0, 166, 214, .14), transparent 30rem),
-    linear-gradient(145deg, #f8fbfe 0%, #e8f2f9 58%, #e2eef6 100%);
+  background: #f3faff;
   color: #07345a;
 }
 
@@ -149,14 +147,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .access-title { display: flex; align-items: center; justify-content: center; gap: clamp(1rem, 3vw, 1.6rem); text-align: left; }
-.access-title > img { width: clamp(4.8rem, 9vw, 6.6rem); height: auto; flex: 0 0 auto; filter: drop-shadow(0 12px 18px rgba(0, 73, 132, .16)); }
+.access-title > img { width: clamp(4.8rem, 9vw, 6.6rem); height: auto; flex: 0 0 auto; }
 .access-title .eyebrow { display: block; margin-bottom: .42rem; color: #0078b2; }
 .access-title h1 { margin: 0; color: #08365d; font-size: clamp(2.9rem, 6vw, 5.3rem); font-weight: 430; line-height: .88; letter-spacing: -.075em; text-wrap: balance; }
 .access-title h1 strong { display: block; color: #0057a4; font-weight: 800; letter-spacing: -.08em; }
 
 .legal-note { margin: 0; color: #58748a; font-size: .71rem; line-height: 1.5; text-align: center; }
 .legal-note a { color: #0057a4; text-decoration: underline; text-underline-offset: 2px; }
-.legal-note span { color: #58748a; }
 .policy-page { min-height: 100vh; padding: clamp(1rem, 4vw, 4rem); background: radial-gradient(circle at 15% 0%, #0b5e91 0, #062944 38rem, #031728 100%); color: #f5faff; }
 .policy-brand { display: inline-flex; margin-bottom: 1.2rem; color: #8bdcf2; font-weight: 900; letter-spacing: .04em; }
 .policy-page article { width: min(52rem, 100%); margin: 0 auto; padding: clamp(1.2rem, 4vw, 3rem); border: 1px solid #1d628c; border-radius: 1.25rem; background: #062944ee; box-shadow: 0 28px 90px #00152599; }
@@ -171,11 +168,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   width: min(100%, 40rem);
   align-self: center;
   justify-self: center;
-  padding: clamp(1.7rem, 4vw, 2.8rem);
+  padding: clamp(1.7rem, 5vw, 3.8rem);
   border: 1px solid rgba(0, 87, 164, .18);
   border-radius: 1.55rem;
   background: rgba(255, 255, 255, .86);
-  box-shadow: 0 28px 80px rgba(0, 73, 132, .13);
   backdrop-filter: blur(16px);
 }
 
@@ -225,8 +221,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .primary-button:disabled { cursor: progress; opacity: .65; }
 .link-button { display: inline-flex; align-items: center; justify-content: center; }
 
-.google-access-copy { margin: 0 0 1.6rem; text-align: center; }
-.google-access-copy h2 { max-width: 14ch; margin: 0 auto; color: #07345a; font-size: clamp(2.25rem, 4.4vw, 3.35rem); font-weight: 620; line-height: .95; letter-spacing: -.055em; text-wrap: balance; }
+.google-access-copy { margin: 0 0 2.4rem; text-align: center; }
+.google-access-copy h2 { max-width: 14ch; margin: 0 auto; color: #07345a; font-size: clamp(2.25rem, 3.4vw, 3.35rem); font-weight: 500; line-height: .95; letter-spacing: -.055em; text-wrap: balance; }
 
 .google-button {
   width: 100%;
@@ -239,21 +235,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border-radius: .75rem;
   background: #fff;
   color: #07345a;
-  box-shadow: 0 8px 24px rgba(0, 73, 132, .08);
   cursor: pointer;
   font-weight: 780;
 }
 .google-button img { width: 1.65rem; height: 1.65rem; object-fit: contain; }
-.google-button:hover { border-color: #4f91b8; transform: translateY(-1px); }
-.google-button:disabled { cursor: progress; opacity: .65; transform: none; }
+.google-button:hover { border-color: #4f91b8; }
+.google-button:disabled { cursor: progress; opacity: .65; }
 .google-button + .form-error { margin-top: 1rem; }
 
-.institution-note { margin-top: 1.4rem; padding: 1rem 1.1rem; border-left: 3px solid #00a6d6; background: #e8f4fa; }
+.institution-note { margin-top: 2.4rem; padding: 1rem 1.1rem; border-left: 3px solid #00a6d6; background: #e8f4fa; }
 .institution-note strong { color: #00529b; font-size: .82rem; }
 .institution-note p { margin: .35rem 0 0; color: #456b84; font-size: .76rem; line-height: 1.5; }
 
 .store-badges {
-  margin-top: 1.15rem;
+  margin-top: 2.4rem;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -262,9 +257,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .store-badge {
   width: min(10.5rem, 44%);
-  display: grid;
-  justify-items: center;
-  gap: .4rem;
+  display: block;
   cursor: default;
 }
 
@@ -276,14 +269,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   object-fit: contain;
   filter: saturate(.78);
   opacity: .82;
-}
-
-.store-badge span {
-  color: #58748a;
-  font-size: .65rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
 }
 
 .portal-shell { min-height: 100vh; }
