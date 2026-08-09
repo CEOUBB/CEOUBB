@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firebase_api_key">AIzaSyDJDbFt7Ve-wjzJMgoV1DqIbum6PwXIh9Y</string>
+    <string name="firebase_app_id">1:411177916202:android:67a7ba25fbe65ed9e93053</string>
+    <string name="firebase_project_id">centro-de-estudio-ubb</string>
+    <string name="firebase_storage_bucket">centro-de-estudio-ubb.firebasestorage.app</string>
+    <string name="firebase_web_client_id">411177916202-d130n7opuu1iec0p3khq11tu2jg4hbt0.apps.googleusercontent.com</string>
+    <string name="firebase_owner_email">elpapijuaco325@gmail.com</string>
+</resources>

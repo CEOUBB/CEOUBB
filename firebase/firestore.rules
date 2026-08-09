@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return signedIn() ? request.auth.token.email.lower() : '';
+    }
+
+    function isOwner() {
+      return email() == 'elpapijuaco325@gmail.com';
+    }
+
+    function isStudent() {
+      return email().matches('^[^@]+@alumnos\\.ubiobio\\.cl$');
+    }
+
+    function isTeacherEmail() {
+      return email().matches('^[^@]+@ubiobio\\.cl$');
+    }
+
+    function role() {
+      return signedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : '';
+    }
+
+    function isTeacher() {
+      return isOwner() || isTeacherEmail() && role() == 'teacher';
+    }
+
+    function isMember() {
+      return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
+    }
+
+    function expectedRole() {
+      return isOwner() ? 'owner' : isTeacherEmail() ? 'teacher' : 'student';
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner() || signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
+      allow update: if isOwner() || signedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'domain', 'lastSeen', 'teacherRequested', 'requestedAt']);
+      allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
+    }
+
+    match /courses/{courseId}/posts/{postId} {
+      allow read: if isMember();
+      allow create: if isTeacher() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
+      allow delete: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid;
+    }
+
+    match /courses/{courseId}/progress/{userId} {
+      allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
+      allow create, update: if isMember() && request.auth.uid == userId && request.resource.data.uid == userId;
+      allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
+    }
+  }
+}

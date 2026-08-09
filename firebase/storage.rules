@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return signedIn() ? request.auth.token.email.lower() : '';
+    }
+
+    function isOwner() {
+      return email() == 'elpapijuaco325@gmail.com';
+    }
+
+    function isStudent() {
+      return email().matches('^[^@]+@alumnos\\.ubiobio\\.cl$');
+    }
+
+    function isTeacherEmail() {
+      return email().matches('^[^@]+@ubiobio\\.cl$');
+    }
+
+    function role() {
+      return signedIn() ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role : '';
+    }
+
+    function isTeacher() {
+      return isOwner() || isTeacherEmail() && role() == 'teacher';
+    }
+
+    function isMember() {
+      return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
+    }
+
+    match /courses/{courseId}/{userId}/{fileName} {
+      allow read: if isMember();
+      allow create, update: if isTeacher() && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
+      allow delete: if isOwner() || isTeacher() && request.auth.uid == userId;
+    }
+  }
+}
