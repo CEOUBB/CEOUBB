@@ -3,7 +3,7 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
-layout.buildDirectory.set(rootProject.layout.projectDirectory.dir('build-v9/app'))
+layout.buildDirectory.set(rootProject.layout.projectDirectory.dir('build-v10/app'))
 
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('keystore.properties')
@@ -19,8 +19,8 @@ android {
         applicationId 'cl.ubb.centroestudio'
         minSdk 26
         targetSdk 36
-        versionCode 9
-        versionName '1.0.2'
+        versionCode 10
+        versionName '1.0.3'
     }
 
     signingConfigs {

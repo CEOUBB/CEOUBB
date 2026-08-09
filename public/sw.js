@@ -1,4 +1,4 @@
-const CACHE = "centro-estudio-ubb-v2";
+const CACHE = "centro-estudio-ubb-v3";
 const SHELL = ["/", "/manifest.webmanifest", "/biblioteca/index.html"];
 
 self.addEventListener("install", (event) => {

@@ -26,7 +26,9 @@ test("renders Centro de Estudio UBB", async () => {
 test("uses verified institutional Google access", async () => {
   const source = await readFile(new URL("../app/Portal.tsx", import.meta.url), "utf8");
   const firebaseSource = await readFile(new URL("../lib/firebase-client.ts", import.meta.url), "utf8");
+  assert.match(source, /Centro de <strong>Estudio UBB<\/strong>/i);
   assert.match(source, /Continuar con Google/i);
+  assert.doesNotMatch(source, /Tu semestre completo|Acceso institucional verificado|Tu perfil se crea automáticamente|excepción administrativa/i);
   assert.doesNotMatch(source, /Mínimo 10 caracteres/i);
   assert.match(firebaseSource, /signInWithPopup/);
   assert.doesNotMatch(firebaseSource, /signInWithRedirect|getRedirectResult/);

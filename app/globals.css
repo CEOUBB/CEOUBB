@@ -88,16 +88,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .access-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100svh;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(30rem, .95fr);
+  overflow: hidden;
 }
 
 .access-panel {
-  min-height: 100vh;
-  padding: clamp(2rem, 5vw, 5rem);
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(2rem, 4.5vw, 5rem);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   position: relative;
   overflow: hidden;
   background:
@@ -116,13 +119,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   writing-mode: vertical-rl;
 }
 
-.access-brand, .portal-brand {
+.portal-brand {
   display: inline-flex;
   align-items: center;
   gap: .85rem;
 }
-
-.access-brand { width: fit-content; position: relative; z-index: 1; }
 
 .brand-mark {
   width: 3.4rem;
@@ -136,15 +137,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .brand-mark.compact { width: 2.65rem; height: 2.65rem; border-radius: .78rem; font-size: .86rem; }
 
-.access-brand strong, .portal-brand strong { display: block; font-size: 1.02rem; letter-spacing: -.02em; }
-.access-brand small, .portal-brand small { display: block; margin-top: .15rem; color: #c9b9bf; font-size: .73rem; }
+.portal-brand strong { display: block; font-size: 1.02rem; letter-spacing: -.02em; }
+.portal-brand small { display: block; margin-top: .15rem; color: #c9b9bf; font-size: .73rem; }
 
 .access-copy {
-  margin: auto 0;
+  align-self: center;
   position: relative;
   z-index: 1;
   max-width: 48rem;
-  padding: 4rem 0 3rem;
+  padding: clamp(1.5rem, 5vh, 4rem) 0 clamp(1.5rem, 4vh, 3rem);
 }
 
 .eyebrow {
@@ -156,12 +157,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .access-copy h1 {
-  max-width: 12ch;
-  margin: 1rem 0 1.4rem;
-  font-size: clamp(2.7rem, 5.7vw, 6.4rem);
-  line-height: .98;
-  letter-spacing: -.067em;
+  max-width: 9.5ch;
+  margin: .9rem 0 1.25rem;
+  font-size: clamp(3.4rem, 6.4vw, 7.2rem);
+  font-weight: 430;
+  line-height: .88;
+  letter-spacing: -.075em;
+  text-wrap: balance;
 }
+
+.access-copy h1 strong { display: block; color: #f2b6c7; font-weight: 780; letter-spacing: -.082em; }
 
 .access-copy p {
   max-width: 43rem;
@@ -189,7 +194,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .policy-action { display: inline-flex; margin-top: 1.4rem; padding: .9rem 1.1rem; border-radius: .75rem; background: #8f1738; color: white; font-weight: 900; }
 
 .login-panel {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
   padding: clamp(1.25rem, 4vw, 5rem);
@@ -197,9 +203,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   color: #26161c;
 }
 
-.login-card { width: min(100%, 36rem); }
-.login-heading { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.4rem; color: #765764; font-size: .82rem; font-weight: 650; }
-.status-dot { width: .56rem; height: .56rem; background: #388c66; border-radius: 50%; box-shadow: 0 0 0 .3rem rgba(56, 140, 102, .13); }
+.login-card {
+  width: min(100%, 39rem);
+  padding: clamp(1.6rem, 3vw, 2.5rem);
+  border: 1px solid rgba(111, 56, 73, .16);
+  border-radius: 1.5rem;
+  background: rgba(255, 250, 247, .52);
+  box-shadow: 0 24px 80px rgba(85, 42, 56, .1);
+}
 
 .tab-switch {
   display: grid;
@@ -247,9 +258,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .primary-button:disabled { cursor: progress; opacity: .65; }
 .link-button { display: inline-flex; align-items: center; justify-content: center; }
 
-.google-access-copy { margin: 0 0 1.5rem; }
-.google-access-copy h2 { margin: .55rem 0 .55rem; color: #321820; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1; letter-spacing: -.055em; }
-.google-access-copy p { margin: 0; color: #735d65; font-size: .88rem; line-height: 1.6; }
+.google-access-copy { margin: 0 0 1.6rem; }
+.google-access-copy h2 { max-width: 11ch; margin: .65rem 0 0; color: #321820; font-size: clamp(2.45rem, 4.2vw, 4.1rem); font-weight: 560; line-height: .95; letter-spacing: -.065em; text-wrap: balance; }
 
 .google-button {
   width: 100%;
@@ -532,12 +542,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 @media (max-width: 800px) {
-  .access-page { display: block; }
-  .access-panel { min-height: auto; padding: 1.4rem 1.2rem 2rem; }
+  .access-page { display: block; height: auto; min-height: 100svh; overflow: visible; }
+  .access-panel { height: auto; min-height: auto; padding: 1.4rem 1.2rem 2rem; }
   .access-copy { padding: 3.2rem 0 2rem; }
-  .access-copy h1 { font-size: clamp(2.8rem, 14vw, 5rem); }
+  .access-copy h1 { font-size: clamp(3rem, 15vw, 5.5rem); }
   .access-actions { flex-wrap: wrap; }
-  .login-panel { min-height: auto; padding: 2rem 1.2rem 3rem; }
+  .login-panel { height: auto; min-height: auto; padding: 2rem 1.2rem 3rem; }
+  .login-card { padding: 1.4rem; border-radius: 1.15rem; }
   .portal-header { min-height: 4rem; padding: .55rem .75rem; }
   .portal-brand small, .account-copy { display: none; }
   .main-nav { justify-content: flex-start; overflow-x: auto; }

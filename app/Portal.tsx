@@ -203,13 +203,9 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
   return (
     <main className="access-page">
       <section className="access-panel">
-        <a className="access-brand" href="#inicio" aria-label="Centro de Estudio UBB">
-          <span className="brand-mark">CE</span>
-          <span><strong>Centro de Estudio</strong><small>Ingeniería Mecánica UBB</small></span>
-        </a>
         <div className="access-copy">
           <span className="eyebrow">Ingeniería Mecánica · 2026</span>
-          <h1>Tu semestre completo, conectado en un solo lugar.</h1>
+          <h1>Centro de <strong>Estudio UBB</strong></h1>
           <p>Certámenes largos, soluciones desarrolladas, apuntes con notación matemática, materiales del docente y seguimiento del progreso.</p>
           <div className="access-pills"><span>Android</span><span>iPhone y iPad</span><span>PC y Mac</span><span>Uso sin conexión</span></div>
         </div>
@@ -222,20 +218,15 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
 
       <section className="login-panel" id="inicio">
         <div className="login-card">
-          <div className="login-heading">
-            <span className="status-dot" />
-            <span>Acceso institucional verificado</span>
-          </div>
           <div className="google-access-copy">
             <span className="eyebrow">Cuenta personal del portal</span>
             <h2>Ingresa con Google UBB</h2>
-            <p>Tu perfil se crea automáticamente la primera vez. No necesitas inventar otra contraseña ni completar un registro separado.</p>
           </div>
           <button className="google-button" disabled={working} onClick={googleAccess} type="button"><span>G</span>{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
           {error && <p className="form-error" role="alert">{error}</p>}
           <div className="institution-note">
             <strong>Acceso exclusivo UBB</strong>
-            <p>@alumnos.ubiobio.cl se reconoce como estudiante y @ubiobio.cl como profesor. Cualquier otra universidad o correo personal será rechazado. La cuenta del desarrollador conserva su excepción administrativa.</p>
+            <p>Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
           </div>
         </div>
       </section>
