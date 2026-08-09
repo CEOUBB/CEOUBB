@@ -204,7 +204,7 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
     <main className="access-page">
       <section className="access-panel">
         <div className="access-copy">
-          <span className="eyebrow">Ingeniería Mecánica · 2026</span>
+          <span className="eyebrow">2026</span>
           <h1>Centro de <strong>Estudio UBB</strong></h1>
           <p>Certámenes largos, soluciones desarrolladas, apuntes con notación matemática, materiales del docente y seguimiento del progreso.</p>
           <div className="access-pills"><span>Android</span><span>iPhone y iPad</span><span>PC y Mac</span><span>Uso sin conexión</span></div>
@@ -220,7 +220,7 @@ function AccessScreen({ onSignedIn, onInstall, installHelp, closeInstallHelp }: 
         <div className="login-card">
           <div className="google-access-copy">
             <span className="eyebrow">Cuenta personal del portal</span>
-            <h2>Ingresa con Google UBB</h2>
+            <h2>Ingresa con tu correo institucional</h2>
           </div>
           <button className="google-button" disabled={working} onClick={googleAccess} type="button"><span>G</span>{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
           {error && <p className="form-error" role="alert">{error}</p>}

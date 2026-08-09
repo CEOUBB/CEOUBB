@@ -259,7 +259,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .link-button { display: inline-flex; align-items: center; justify-content: center; }
 
 .google-access-copy { margin: 0 0 1.6rem; }
-.google-access-copy h2 { max-width: 11ch; margin: .65rem 0 0; color: #321820; font-size: clamp(2.45rem, 4.2vw, 4.1rem); font-weight: 560; line-height: .95; letter-spacing: -.065em; text-wrap: balance; }
+.google-access-copy h2 { margin: .65rem 0 0; color: #321820; font-size: clamp(2.35rem, 3.4vw, 3.35rem); font-weight: 560; line-height: .95; letter-spacing: -.06em; text-wrap: balance; }
 
 .google-button {
   width: 100%;
