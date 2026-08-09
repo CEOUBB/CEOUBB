@@ -194,6 +194,16 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
             <strong>Acceso exclusivo UBB</strong>
             <p>Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
           </div>
+          <div className="store-badges" aria-label="Aplicaciones móviles próximamente disponibles">
+            <div className="store-badge" title="Próximamente en App Store">
+              <img src="/brand/app-store-badge-es.webp" alt="Descárgalo en el App Store" />
+              <span>Próximamente</span>
+            </div>
+            <div className="store-badge" title="Próximamente en Google Play">
+              <img src="/brand/google-play-badge-es.webp" alt="Disponible en Google Play" />
+              <span>Próximamente</span>
+            </div>
+          </div>
         </section>
         <a className="apk-download" href={APK_URL}>Descargar APK para Android</a>
         <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a> · <span>Eliminar cuenta</span></p>

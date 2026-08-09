@@ -32,6 +32,10 @@ test("uses verified institutional Google access", async () => {
   assert.match(source, /ubb-shield\.webp/i);
   assert.match(source, /google-g\.webp/i);
   assert.match(source, /Continuar con Google/i);
+  assert.match(source, /app-store-badge-es\.webp/i);
+  assert.match(source, /google-play-badge-es\.webp/i);
+  assert.match(source, /Aplicaciones móviles próximamente disponibles/i);
+  assert.doesNotMatch(source, /store-badge[^>]*href=/i);
   assert.doesNotMatch(source, /Tu semestre completo|Acceso institucional verificado|Tu perfil se crea automáticamente|excepción administrativa|Ingresa con Google UBB|Cuenta personal del portal|Instalar en este dispositivo|InstallHelp|beforeinstallprompt|access-pills|Certámenes largos, soluciones desarrolladas/i);
   assert.doesNotMatch(source, /href="\/eliminar-cuenta"/i);
   assert.doesNotMatch(source, /Mínimo 10 caracteres/i);
