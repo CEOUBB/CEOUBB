@@ -12,7 +12,7 @@ Centro de Estudio UBB is an independent educational platform for Universidad del
 
 The repository contains three product surfaces:
 
-- A web portal built with React 19, vinext, Vite, TypeScript, and OpenAI Sites/Cloudflare bindings.
+- A web portal built with React 19, Next.js (App Router), TypeScript, and Turso/libSQL, deployed on Vercel.
 - A native Android application written in Java that embeds the offline study library and integrates native Firebase services.
 - Firebase infrastructure for Authentication, Firestore, Storage, Cloud Functions, and Cloud Messaging.
 
@@ -27,8 +27,8 @@ Treat these identifiers as configuration, not secrets. Do not change them withou
 - Firebase region for Firestore, Storage, and Functions: `southamerica-west1`
 - Default Storage bucket: `centro-de-estudio-ubb.firebasestorage.app`
 - Android application ID: `cl.ubb.centroestudio`
-- Sites project ID in `.openai/hosting.json`: `appgprj_6a76e9bdf030819198b5eddefbf6ba72`
-- Sites bindings: D1 `DB`, R2 `FILES`
+- Web hosting: Vercel (zero-config Next.js project; no `vercel.json` is required)
+- Web database: Turso/libSQL, configured through the `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` environment variables
 
 ## Human and AI collaboration protocol
 
@@ -61,9 +61,8 @@ Direct commits to `main` have been used during initial development, but feature 
 - `lib/`: shared web authentication, access policy, Firebase client setup, and classroom client logic.
 - `public/biblioteca/`: browser-accessible study library and academic material.
 - `public/brand/`, `public/icons/`, `public/manifest.webmanifest`, `public/sw.js`: branding and PWA assets.
-- `db/`, `drizzle/`, `app/api/`: legacy/parallel D1 and R2 application backend. Do not assume it is the canonical classroom backend.
-- `worker/`: Sites/Cloudflare worker entry point.
-- `.openai/hosting.json`: Sites project and binding declarations. Do not replace or casually edit it.
+- `db/`, `drizzle/`: Turso/libSQL schema and migrations backing the web session, user directory, and notification-bell tables only. It is not the classroom backend.
+- `app/api/`: web session, Firebase sign-in exchange, owner administration, and notification endpoints.
 - `android/`: native Android project.
 - `android/app/src/main/assets/www/`: Android's bundled offline study library and classroom bridge assets.
 - `android/app/src/main/java/cl/ubb/centroestudio/`: native Firebase authentication, classroom, file, and notification services.
@@ -74,9 +73,11 @@ Direct commits to `main` have been used during initial development, but feature 
 
 ### Web hosting
 
-The web application is an existing Sites project. Preserve vinext, the Sites Vite plugin, Cloudflare-compatible ESM output, `.openai/hosting.json`, and the current package manager artifacts. Do not replace the framework with a new Next.js, Vite, or Cloudflare scaffold.
+The web application is a Next.js App Router project deployed on Vercel. Preserve the standard Next.js layout, the npm lockfile, and zero-config Vercel deployment. Do not reintroduce vinext, Vite, Cloudflare Workers, D1, or R2, and do not add a bundler config the framework does not need.
 
-Do not run a raw `wrangler deploy` for production. Hosting is managed by Sites. An assistant without the Sites publishing capability should complete and validate the build, then record a deployment handoff in `PLAN.md` instead of inventing a different hosting path.
+The web database is Turso/libSQL, reached through `db/index.ts` with `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. Local development can point `TURSO_DATABASE_URL` at `file:local.db`. Never commit the auth token.
+
+An assistant without Vercel publishing access should complete and validate the build, then record a deployment handoff in `PLAN.md` instead of inventing a different hosting path. Deploy previews before production, and never change `ceoubb.com` DNS without explicit owner sign-off.
 
 ### Authentication and roles
 
@@ -110,7 +111,7 @@ Firebase is the current source of truth for the collaborative Estática beta:
 - Files: `courses/estatica/{uploaderUid}/{timestamp}_{safeFileName}`
 - Student notification topic: `course_estatica_students`
 
-The web Firebase client and native Android service use course ID `estatica`. Some legacy D1/R2 routes still use `estatica-440299`. Do not mix those IDs or extend both backends independently. Any backend consolidation must be an explicit task with migration and rollback plans.
+The web Firebase client and native Android service use course ID `estatica`. The unused D1/R2 classroom routes that used `estatica-440299` were deleted during the Vercel migration; Firebase is now the only classroom backend. The `notifications` table still filters on `estatica-440299` and no longer has a writer, so the web notification bell is always empty until it is repointed at Firestore or removed.
 
 Teachers and owners may create material. A teacher may edit or delete only their own material; owners may administer all material. Students may read/download and update only their own progress. Direct uploads are limited to 50 MiB.
 

@@ -23,6 +23,7 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 
 | Status | Owner / agent | Branch | Scope | Files or services |
 |---|---|---|---|---|
+| ACTIVE | Claude Code | `claude/nextjs-vercel-migration` | Migrate web from vinext/OpenAI Sites to Next.js/Vercel; code done, data migration and deploy pending | `package.json`, `db/`, `app/api/`, `tests/`, `AGENTS.md`, Vercel, Turso |
 | NEXT | Unassigned | — | Run the production authentication, Storage, and notification test matrix | Web, Android, Firebase |
 | NEXT | Unassigned | — | Configure billing budget alerts and App Check rollout | Google Cloud, Firebase |
 | BLOCKED | Project owner | — | Complete Google Play verification and obtain the official listing URL | Play Console |
@@ -33,7 +34,7 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 ### Web
 
 - `DONE`: Institutional UBB-inspired login design, responsive layout, privacy footer, official Google sign-in button artwork, and non-clickable store badges.
-- `DONE`: Custom domain `ceoubb.com` connected to the deployed Sites project.
+- `DONE`: Custom domain `ceoubb.com` connected to the deployed Sites project. The Sites deployment is still the live production site; the Next.js/Vercel migration is code-complete but not deployed.
 - `DONE`: Google authentication is handled by Firebase Authentication, followed by the web session endpoint.
 - `DONE`: Access is limited to UBB student and teacher domains plus the two explicit developer exceptions.
 - `DONE`: Dashboard contains six semester courses and an Estática collaborative classroom beta.
@@ -137,13 +138,13 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 
 ## Important architectural risks and technical debt
 
-### Split classroom backends
+### Split classroom backends — RESOLVED in code, pending data cleanup
 
-The current UI uses Firebase for the Estática classroom, but D1/R2 schemas and API routes remain in `db/`, `drizzle/`, and `app/api/courses/estatica/`. The Firebase course ID is `estatica`; legacy routes use `estatica-440299`.
+The unused D1/R2 classroom routes (`app/api/courses/estatica/*`, `app/api/files/[id]`) had no callers and were deleted during the Vercel migration, together with the `posts`, `files`, and `progress` tables in `db/schema.ts`. Firebase is now the only classroom backend.
 
-Risk: future agents may update the wrong backend, create inconsistent data, or expose permissions differently.
+Remaining: those three tables still physically exist in the old D1 database and will exist in the imported Turso copy. They are unreferenced. Drop them only after confirming the rows are not needed; `npm run db:generate` would emit that drop migration.
 
-Decision needed: either remove/archive the unused classroom routes after confirming no callers remain, or define a deliberate migration/use case for the D1/R2 backend. Do not run both as independent sources of truth.
+Residual defect: the notification bell (`app/api/notifications`) reads `notifications` filtered on the retired course ID `estatica-440299`, and its only writer was the deleted upload route. The bell is therefore permanently empty. Repoint it at Firestore or remove it.
 
 ### Web/Android library divergence
 
@@ -355,4 +356,82 @@ Checks not run: real multi-role upload test, physical-device FCM test, account-d
 Production deployed: yes, Firebase project `centro-de-estudio-ubb`.  
 Known risks: billing alerts and App Check remain unset; account-deletion compliance is unresolved; store approvals and iOS implementation remain pending.  
 Next recommended action: execute P0.1–P0.3 with real owner, teacher, and student accounts before further feature development.
+
+---
+
+Date: 2026-08-09  
+Human maintainer: project owner  
+AI assistant: Claude Code  
+Branch / commit: `main`, uncommitted at time of writing (baseline `eda2776`)  
+Goal: redesign the institutional login screen (visual only; no auth, role, or rules changes).  
+Files changed: `app/Portal.tsx` (`AccessScreen` markup), `app/globals.css` (access-screen styles).  
+External services changed: none.  
+Summary: replaced the centered single-column screen with a 50/50 split (deep-blue brand panel plus light action panel); the crest and wordmark form one large lockup with the eyebrow lifted out of the flex row so crest and wordmark share an exact vertical centre; the four-colour UBB band moved from a top stripe to the panel seam and its blue segment was brightened from `#0057a4` to `#0d8ae0` because the original was only 1.12:1 against the panel and read as a band starting 40% down; a cropped crest watermark at 6% opacity fills the brand panel; the login card, its `backdrop-filter`, and the store-badge caption were deleted.  
+Checks passed: `npm test` 6/6; `npx eslint app/Portal.tsx` at lint parity with baseline (2 pre-existing errors, 4 pre-existing `no-img-element` warnings, none added); layout measured in-browser at 1920/1440/1024/900/390/320 with no horizontal overflow and no display-text clipping; crest/wordmark centre offset measured at 0px; WCAG AA contrast verified on every text pair (lowest 5.27:1); all four brand assets 200 OK; no console errors.  
+Checks not run: real Google sign-in against Firebase from this session, visual screenshot capture (Browser pane was not displayed, so the page never composited frames), physical-device check.  
+Production deployed: no.  
+Known risks: the Android bundled login (`android/app/src/main/assets/www/`) still uses the previous layout and was deliberately left untouched, so web and Android login now differ visually.  
+Next recommended action: sign in once with a real `@alumnos.ubiobio.cl` account to confirm the button's working/error states render correctly, then decide whether to propagate the layout to the Android asset bundle.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Claude Code
+Branch / commit: `claude/nextjs-vercel-migration`, uncommitted (baseline `eda2776`)
+Goal: migrate the web app from vinext/OpenAI Sites (Cloudflare D1 + R2) to Next.js on Vercel, per `PROMPT_NEXTJS_MIGRATION.md`.
+
+Files changed:
+
+- `package.json`: scripts now `next dev/build/start`; removed `vinext`, `vite`, `wrangler`, `@cloudflare/vite-plugin`, `@vitejs/plugin-react`, `@vitejs/plugin-rsc`, `react-server-dom-webpack`; added `next` 16.3.0 and `@libsql/client`.
+- Deleted: `worker/index.ts`, `vite.config.ts`, `.openai/hosting.json`, `build/sites-vite-plugin.ts`, `examples/d1/`, `app/chatgpt-auth.ts` (unused OpenAI Sites helper).
+- Deleted as dead code: `app/api/courses/estatica/{files,posts,progress}/route.ts` and `app/api/files/[id]/route.ts`. These had no callers anywhere in the repo — the UI uses Firebase for the classroom — and were the only consumers of R2. Their `posts`, `files`, and `progress` tables were removed from `db/schema.ts`.
+- `db/index.ts`: Cloudflare D1 binding replaced with libSQL/Turso via `drizzle-orm/libsql`, driven by `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`, client cached per process.
+- `app/Portal.tsx`: two `let stop… = () => undefined` declarations annotated `() => void`. Latent type error that `vinext build` never surfaced because it did not type check; `next build` does.
+- `tests/rendered-html.test.mjs`: the three rendering tests called the deleted Worker entry through `dist/server/index.js`. They now spawn `next start` on port 3123 once and fetch over HTTP. Assertions unchanged.
+- `eslint.config.mjs`: ignores `**/assets/vendor/**`, `android/**`, `firebase/**`.
+- `next-env.d.ts`, `AGENTS.md`, `README.md`: framework references updated.
+
+Chosen database: Turso/libSQL, not Neon or Vercel Postgres. Reason: the schema, the two committed Drizzle migrations, and the D1 export are all SQLite, so this is a driver swap with no dialect conversion, no migration rewrite, and a data migration that is a plain SQL dump import. Neon/Postgres would require converting `sqliteTable` to `pgTable`, regenerating migrations, and transforming the dump. Swap to Neon later if Postgres becomes a requirement.
+
+External services changed: none. No Vercel project created, no Turso database created, no D1/R2 resource touched or deleted, no DNS change.
+
+Checks passed:
+
+- `next build`: compiles, type checks, 11 routes.
+- `node --test tests/rendered-html.test.mjs`: 6/6.
+- Both committed Drizzle migrations applied cleanly to a scratch libSQL file database.
+- Every DB-backed route exercised against that database on `next dev`, signed out and with a seeded owner session: `/api/auth/me` returns `{"user":null}` signed out and the full user with `role: "owner"` when a session row exists (session/user join works); `/api/admin/users` returns 403 signed out and the user list for the owner; `/api/notifications` returns 401 signed out, an empty list with a session, and its POST upsert writes `readAt`; `/api/auth/logout` clears the cookie; `/api/auth/firebase` rejects an invalid ID token at Google's endpoint. No console errors on the rendered page.
+- `.env.local` (git-ignored) holds `TURSO_DATABASE_URL=file:local.db` for local development; `local.db*` was added to `.gitignore`.
+
+Checks not run:
+
+- Anything against a hosted Turso database or the real production data. Verification used a local SQLite file, which exercises the driver and queries but not network latency, auth tokens, or Turso limits.
+- Auth/role matrix with real Google accounts. Requires a deployed preview.
+- D1 → Turso data migration and row-count comparison.
+- Upload/download round-trip and the 50 MiB boundary. These now live entirely in Firebase Storage; the deleted D1/R2 routes had a 25 MiB limit and no callers.
+- `npm ci` from the refreshed lockfile. A wrangler/miniflare dev server from another session held `node_modules` locked, so dependency removal was applied to `package.json` and `package-lock.json` via `npm install --package-lock-only`. The installed `node_modules` still contains the removed packages. Stop that dev server and run `npm ci` to confirm a clean install builds.
+
+`npm run lint`: 10 errors remain, all pre-existing and untouched by this task — 2 `react-hooks` in `app/Portal.tsx`, 2 `no-html-link-for-pages` in `app/privacidad/page.tsx`, 6 in `public/biblioteca/assets/app.js`. The migration added none. Fix as separate work.
+
+Production deployed: no. `ceoubb.com` still serves the OpenAI Sites deployment.
+
+Known risks:
+
+- No production data has moved. Cutting over before the D1 import would silently create an empty user/session table and log everyone out.
+- `app/chatgpt-auth.ts` had uncommitted local edits from an earlier session and was deleted with them. The file was unreferenced and OpenAI Sites-specific, so it was in scope to delete, but those edits are unrecoverable.
+- `firebase/functions` uses pnpm and is unaffected; the root project stays on npm.
+
+Cutover runbook, owner-run, in order:
+
+1. Stop the stale wrangler dev server, then `npm ci && npm run build` to verify a clean install.
+2. `npx wrangler d1 export DB --remote --output=d1-export.sql` against the Sites D1 database.
+3. Create the Turso database and import: `turso db shell <name> < d1-export.sql`.
+4. Compare `SELECT count(*)` for `users`, `sessions`, `notifications`, and `notification_reads` between D1 and Turso before going further.
+5. Create the Vercel project (zero config), set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, deploy a preview.
+6. Add the Vercel preview hostname to Firebase Authentication authorized domains, or Google sign-in will fail on the preview.
+7. Run the full role matrix on the preview: owner, collaborator, `@ubiobio.cl`, `@alumnos.ubiobio.cl`, rejected Gmail, rejected external university, signed-out visitor.
+8. Only after the preview passes: move DNS with owner sign-off, then decommission the Sites project, D1, and R2.
+
+Next recommended action: run steps 1–4 of the cutover runbook. The code is ready; everything remaining needs credentials this session does not have.
 

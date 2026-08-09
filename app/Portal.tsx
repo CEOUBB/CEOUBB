@@ -179,32 +179,36 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
 
   return (
     <main className="access-page">
-      <div className="access-shell">
-        <header className="access-title">
-          <img src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" />
-          <div><span className="eyebrow">2026</span><h1>Centro de <strong>Estudio UBB</strong></h1></div>
-        </header>
-        <section className="login-card" id="inicio">
-          <div className="google-access-copy">
+      <section className="access-brand">
+        <div className="access-brand-lockup">
+          <img src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" width={388} height={594} fetchPriority="high" />
+          <h1>Centro de <strong>Estudio UBB</strong></h1>
+        </div>
+      </section>
+      <section className="access-panel">
+        <div className="access-panel-inner">
+          <div className="login-card" id="inicio">
             <h2>Ingresa con tu correo institucional</h2>
+            <button className="google-button" disabled={working} onClick={googleAccess} type="button">
+              {working ? <span className="google-spinner" aria-hidden="true" /> : <img src="/brand/google-g.webp" alt="" aria-hidden="true" width={256} height={256} />}
+              {working ? "Verificando cuenta…" : "Continuar con Google"}
+            </button>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <p className="institution-note"><strong>Acceso exclusivo UBB.</strong> Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
           </div>
-          <button className="google-button" disabled={working} onClick={googleAccess} type="button"><img src="/brand/google-g.webp" alt="" aria-hidden="true" />{working ? "Verificando cuenta…" : "Continuar con Google"}</button>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <div className="institution-note">
-            <strong>Acceso exclusivo UBB</strong>
-            <p>Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
-          </div>
-          <div className="store-badges" aria-label="Aplicaciones móviles próximamente disponibles">
-            <div className="store-badge" title="Próximamente en App Store">
-              <img src="/brand/app-store-badge-es.webp" alt="Descárgalo en el App Store" />
+          <div className="store-block">
+            <div className="store-badges" role="group" aria-label="Aplicaciones móviles próximamente disponibles">
+              <div className="store-badge">
+                <img src="/brand/app-store-badge-es.webp" alt="App Store" />
+              </div>
+              <div className="store-badge">
+                <img src="/brand/google-play-badge-es.webp" alt="Google Play" />
+              </div>
             </div>
-            <div className="store-badge" title="Próximamente en Google Play">
-              <img src="/brand/google-play-badge-es.webp" alt="Disponible en Google Play" />
-            </div>
           </div>
-        </section>
-        <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a></p>
-      </div>
+          <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a></p>
+        </div>
+      </section>
     </main>
   );
 }
@@ -317,8 +321,8 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
 
   useEffect(() => {
     let active = true;
-    let stopPosts = () => undefined;
-    let stopProgress = () => undefined;
+    let stopPosts: () => void = () => undefined;
+    let stopProgress: () => void = () => undefined;
     syncFirebaseProfile().then(() => {
       if (!active) return;
       stopPosts = watchClassroomPosts((items) => {
