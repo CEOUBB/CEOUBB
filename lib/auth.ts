@@ -15,6 +15,7 @@ export type PublicUser = {
 
 const SESSION_COOKIE = "centro_estudio_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const SESSION_SECURE = process.env.NODE_ENV === "production" ? "; Secure" : "";
 
 export function normalizeRut(value: string) {
   return value.replace(/[^0-9kK]/g, "").toUpperCase();
@@ -57,14 +58,6 @@ export function roleForEmail(email: string): AccountRole | null {
   return null;
 }
 
-export function registrationRoleForEmail(email: string): AccountRole | null {
-  const normalized = normalizeEmail(email);
-  if (isDeveloperEmail(normalized)) return "owner";
-  if (normalized.endsWith("@alumnos.ubiobio.cl")) return "student";
-  if (normalized.endsWith("@ubiobio.cl")) return "teacher";
-  return null;
-}
-
 export async function hashPassword(password: string, salt?: string) {
   const saltBytes = salt ? fromBase64(salt) : crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey(
@@ -92,7 +85,7 @@ export async function verifyPassword(password: string, salt: string, expected: s
   return difference === 0;
 }
 
-export async function createSession(userId: string, request: Request) {
+export async function createSession(userId: string) {
   const rawToken = randomToken();
   const tokenHash = await sha256(rawToken);
   const now = new Date();
@@ -104,8 +97,7 @@ export async function createSession(userId: string, request: Request) {
     createdAt: now.toISOString(),
     expiresAt: expires.toISOString(),
   });
-  const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
-  return `${SESSION_COOKIE}=${rawToken}; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=${SESSION_SECONDS}`;
+  return `${SESSION_COOKIE}=${rawToken}; HttpOnly${SESSION_SECURE}; SameSite=Lax; Path=/; Max-Age=${SESSION_SECONDS}`;
 }
 
 export async function destroySession(request: Request) {
@@ -114,7 +106,7 @@ export async function destroySession(request: Request) {
     const db = getDb();
     await db.delete(sessions).where(eq(sessions.tokenHash, await sha256(rawToken)));
   }
-  return `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`;
+  return `${SESSION_COOKIE}=; HttpOnly${SESSION_SECURE}; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
 export async function getSessionUser(request: Request): Promise<PublicUser | null> {
@@ -137,7 +129,7 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
     .limit(1);
   const user = rows[0] as PublicUser | undefined;
   if (!user) return null;
-  return { ...user, rut: publicRut(user.rut), role: roleForEmail(user.email) ?? user.role };
+  return { ...user, rut: publicRut(user.rut) };
 }
 
 export async function findUserByIdentifier(identifier: string) {
@@ -153,7 +145,7 @@ export async function findUserByIdentifier(identifier: string) {
 }
 
 export function publicUser(user: typeof users.$inferSelect): PublicUser {
-  return { id: user.id, rut: publicRut(user.rut), email: user.email, name: user.name, role: roleForEmail(user.email) ?? user.role };
+  return { id: user.id, rut: publicRut(user.rut), email: user.email, name: user.name, role: user.role };
 }
 
 export function canPublish(role: AccountRole) {
