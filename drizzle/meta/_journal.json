@@ -15,6 +15,13 @@
       "when": 1786181292148,
       "tag": "0001_roles_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786329103452,
+      "tag": "0002_drop_rut_password_notifications",
+      "breakpoints": true
     }
   ]
 }

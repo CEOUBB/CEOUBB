@@ -1,15 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
-import { classroomFileUrl, deleteClassroomPost, loadOwnClassroomProgress, publishClassroomPost, saveClassroomProgress, syncFirebaseProfile, updateClassroomPost, uploadClassroomFile, watchClassroomPosts, watchClassroomProgress } from "../lib/firebase-classroom-client";
-import { isDeveloperEmail } from "../lib/access-policy";
-
-type Role = "owner" | "teacher" | "student";
+import { Fragment, FormEvent, useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Bell, Books, ChartBar, DownloadSimple, Files, House, Robot, Sigma, SignOut, UsersThree } from "@phosphor-icons/react";
+import { signInWithInstitutionalGoogle, watchGooglePhoto } from "../lib/firebase-client";
+import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classroomFileUrl, deleteClassroomPost, editClassroomPost, publishClassroomPost, renameClassroomFile, saveClassroomProgress, uploadClassroomFile, watchClassroom } from "../lib/firebase-classroom-client";
+import type { AccountRole as Role } from "../lib/access-policy";
 
 type User = {
   id: string;
-  rut: string;
   email: string;
   name: string;
   role: Role;
@@ -26,52 +25,6 @@ type Course = {
   tone: string;
 };
 
-type Post = {
-  id: string;
-  authorId?: string;
-  authorEmail?: string;
-  title: string;
-  body: string;
-  kind: "notice" | "guide" | "assessment" | "resource";
-  linkUrl?: string | null;
-  storagePath?: string;
-  createdAt: string;
-  authorName: string;
-  authorRole: Role;
-};
-
-type CourseFile = {
-  id: string;
-  authorId: string;
-  authorEmail: string;
-  name: string;
-  contentType: string;
-  size: number;
-  storagePath: string;
-  url: string;
-  createdAt: string;
-  authorName: string;
-};
-
-type StudentProgress = {
-  userId: string;
-  name: string;
-  email: string;
-  completed: number;
-  total: number;
-  updatedAt?: string | null;
-};
-
-type NotificationItem = {
-  id: string;
-  kind: "notice" | "file";
-  title: string;
-  body: string;
-  targetUrl: string;
-  createdAt: string;
-  actorName: string;
-};
-
 const APK_URL = "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
 const courses: Course[] = [
@@ -83,6 +36,24 @@ const courses: Course[] = [
   { id: "matlab", name: "Programación en Ingeniería", code: "MATLAB", teacher: "Laboratorio de código", period: "Semestre 2026-2", notices: 0, activities: 3, tone: "#ffd100" },
 ];
 
+const agenda = [
+  { date: "2026-08-18", course: "Estática", detail: "Práctica de sistemas de fuerzas", tone: "#00a6d6" },
+  { date: "2026-09-01", course: "Termodinámica Aplicada", detail: "Test 01", tone: "#e84235" },
+  { date: "2026-10-08", course: "Termodinámica Aplicada", detail: "Evaluación 01 · Primera y Segunda ley", tone: "#e84235" },
+  { date: "2026-11-26", course: "Termodinámica Aplicada", detail: "Evaluación 02 · Combustión y ciclos de vapor", tone: "#e84235" },
+];
+
+const navItems = [
+  { key: "courses", label: "Mis cursos" },
+  { key: "calendar", label: "Calendario" },
+  { key: "resources", label: "Recursos" },
+  { key: "admin", label: "Administración" },
+] as const;
+
+const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
+const ease = [0.16, 1, 0.3, 1] as const;
+
 const units = [
   { title: "RA1 · Sistemas de fuerzas", subtitle: "Vectores, leyes de Newton, resultantes y sistemas equivalentes", equation: "ΣF = 0" },
   { title: "RA2 · Cuerpos rígidos y estructuras", subtitle: "Diagramas de cuerpo libre, reacciones y equilibrio en 2D/3D", equation: "ΣM₀ = 0" },
@@ -90,15 +61,21 @@ const units = [
   { title: "RA4 · Propiedades de área y masa", subtitle: "Centroide, centro de gravedad, inercia y teorema de Steiner", equation: "I = Ī + Ad²" },
 ];
 
-const initialPost: Post = {
+const initialPost: ClassroomPost = {
   id: "welcome",
+  authorId: "",
+  authorEmail: "",
+  authorName: "Equipo Centro de Estudio UBB",
+  authorRole: "owner",
   title: "Aula piloto de Estática disponible",
   body: "Aquí el docente puede publicar avisos, guías, presentaciones y dictámenes. Los estudiantes pueden revisar materiales y registrar su avance por resultado de aprendizaje.",
   kind: "notice",
+  linkUrl: null,
+  storagePath: "",
   createdAt: "2026-08-08T12:00:00.000Z",
-  authorName: "Equipo Centro de Estudio UBB",
-  authorRole: "owner",
 };
+
+const emptyClassroom: ClassroomState = { posts: [], files: [], students: [], ownProgress: 0 };
 
 export function Portal() {
   const [user, setUser] = useState<User | null>(null);
@@ -113,8 +90,13 @@ export function Portal() {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [screen]);
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    forgetPhoto();
     setUser(null);
     setScreen("courses");
   };
@@ -123,26 +105,95 @@ export function Portal() {
   if (!user) return <AccessScreen onSignedIn={setUser} />;
 
   return (
-    <div className="portal-shell">
-      <PortalHeader user={user} screen={screen} setScreen={setScreen} onLogout={logout} />
-      {screen === "estatica" ? (
-        <EstaticaClassroom user={user} goBack={() => setScreen("courses")} />
-      ) : (
-        <main className="portal-main">
-          {screen === "courses" && <CoursesDashboard user={user} openEstatica={() => setScreen("estatica")} />}
-          {screen === "calendar" && <CalendarView />}
-          {screen === "resources" && <ResourcesView />}
-          {screen === "admin" && user.role === "owner" && <AdminView />}
-        </main>
-      )}
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="portal-shell">
+        <PortalHeader user={user} screen={screen} setScreen={setScreen} onLogout={logout} />
+        <AnimatePresence initial={false} mode="wait">
+          {screen === "estatica" ? (
+            <Screen key="estatica"><EstaticaClassroom user={user} goBack={() => setScreen("courses")} /></Screen>
+          ) : (
+            <Screen key={screen}>
+              <main className="portal-main">
+                {screen === "courses" && <CoursesDashboard user={user} openEstatica={() => setScreen("estatica")} />}
+                {screen === "calendar" && <CalendarView />}
+                {screen === "resources" && <ResourcesView />}
+                {screen === "admin" && user.role === "owner" && <AdminView />}
+              </main>
+            </Screen>
+          )}
+        </AnimatePresence>
+      </div>
+    </MotionConfig>
+  );
+}
+
+const PHOTO_KEY = "ceoubb:photo";
+
+function cachedPhoto(email: string) {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PHOTO_KEY) ?? "null");
+    return saved?.email === email ? String(saved.url) : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberPhoto(email: string, url: string) {
+  try {
+    window.localStorage.setItem(PHOTO_KEY, JSON.stringify({ email, url }));
+  } catch {
+    return;
+  }
+}
+
+function forgetPhoto() {
+  try {
+    window.localStorage.removeItem(PHOTO_KEY);
+  } catch {
+    return;
+  }
+}
+
+function useGooglePhoto(email: string) {
+  const [photo, setPhoto] = useState<string | null>(() => cachedPhoto(email));
+  useEffect(() => watchGooglePhoto((url) => {
+    if (url) rememberPhoto(email, url);
+    setPhoto(url ?? cachedPhoto(email));
+  }), [email]);
+  return [photo, () => setPhoto(null)] as const;
+}
+
+function Avatar({ email, name, large = false }: { email: string; name: string; large?: boolean }) {
+  const [photo, dropPhoto] = useGooglePhoto(email);
+  return (
+    <span className={large ? "avatar large" : "avatar"}>
+      {photo ? <img alt="" src={photo} onError={dropPhoto} referrerPolicy="no-referrer" /> : initials(name)}
+    </span>
+  );
+}
+
+function Bar({ ratio }: { ratio: number }) {
+  return <motion.span animate={{ scaleX: Math.min(1, Math.max(0, ratio)) }} initial={{ scaleX: 0 }} transition={{ duration: 0.6, ease }} />;
+}
+
+function Screen({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.24, ease }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
 function LoadingScreen() {
   return (
     <main className="loading-screen">
-      <div className="brand-orbit"><span>CE</span></div>
+      <div className="brand-orbit"><img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} /></div>
       <p>Abriendo Centro de Estudio UBB…</p>
     </main>
   );
@@ -160,6 +211,7 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? "No fue posible continuar.");
+    if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
     onSignedIn(data.user);
   }, [onSignedIn]);
 
@@ -213,26 +265,62 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   );
 }
 
+type NotificationItem = {
+  id: string;
+  kind: "notice" | "file";
+  title: string;
+  body: string;
+  targetUrl: string;
+  createdAt: string;
+};
+
+function NotificationMenu({ items = [], unread = 0 }: { items?: NotificationItem[]; unread?: number }) {
+  return (
+    <details className="notification-menu">
+      <summary aria-label="Notificaciones" className="icon-action" title="Notificaciones">
+        <Bell size={18} />
+        {unread > 0 && <b>{unread > 9 ? "9+" : unread}</b>}
+      </summary>
+      <div className="notification-popover">
+        <header><strong>Notificaciones</strong><small>Avisos y archivos del aula</small></header>
+        {items.length === 0 && <p>No hay avisos nuevos todavía.</p>}
+        {items.map((item) => (
+          <a href={item.targetUrl} key={item.id}>
+            <span className={`notification-kind ${item.kind}`}>{item.kind === "file" ? "Archivo" : "Aviso"}</span>
+            <strong>{item.title}</strong>
+            <small>{item.body}</small>
+            <time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time>
+          </a>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function PortalHeader({ user, screen, setScreen, onLogout }: { user: User; screen: string; setScreen: (screen: "courses" | "estatica" | "calendar" | "resources" | "admin") => void; onLogout: () => void }) {
   return (
     <header className="portal-header">
       <button className="portal-brand" onClick={() => setScreen("courses")} type="button">
-        <span className="brand-mark compact">CE</span>
-        <span><strong>Centro de Estudio</strong><small>UBB · 2026-2</small></span>
+        <img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
+        <span><strong>Centro de Estudio UBB</strong><small>Ingeniería Mecánica · 2026-2</small></span>
       </button>
       <nav className="main-nav" aria-label="Navegación principal">
-        <button className={screen === "courses" || screen === "estatica" ? "active" : ""} onClick={() => setScreen("courses")} type="button">Mis cursos</button>
-        <button className={screen === "calendar" ? "active" : ""} onClick={() => setScreen("calendar")} type="button">Calendario</button>
-        <button className={screen === "resources" ? "active" : ""} onClick={() => setScreen("resources")} type="button">Recursos</button>
-        {user.role === "owner" && <button className={screen === "admin" ? "active" : ""} onClick={() => setScreen("admin")} type="button">Administración</button>}
+        {navItems.filter((item) => item.key !== "admin" || user.role === "owner").map((item) => {
+          const active = item.key === "courses" ? screen === "courses" || screen === "estatica" : screen === item.key;
+          return (
+            <button aria-current={active ? "page" : undefined} className={active ? "active" : ""} key={item.key} onClick={() => setScreen(item.key)} type="button">
+              {item.label}
+              {active && <motion.span className="nav-indicator" layoutId="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 38 }} />}
+            </button>
+          );
+        })}
       </nav>
       <div className="header-actions">
         <NotificationMenu />
-        <a className="icon-action" href="https://chatgpt.com" target="_blank" rel="noreferrer" title="Tutor IA">AI</a>
         <details className="account-menu">
-          <summary><span className="avatar">{initials(user.name)}</span><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span></summary>
+          <summary><Avatar email={user.email} name={user.name} /><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span></summary>
           <div className="account-popover">
-            <strong>{user.name}</strong><span>{user.email}</span><span>{user.rut}</span><button onClick={onLogout} type="button">Cerrar sesión</button>
+            <strong>{user.name}</strong><span>{user.email}</span><button onClick={onLogout} type="button"><SignOut size={16} />Cerrar sesión</button>
           </div>
         </details>
       </div>
@@ -240,71 +328,58 @@ function PortalHeader({ user, screen, setScreen, onLogout }: { user: User; scree
   );
 }
 
-function NotificationMenu() {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [unread, setUnread] = useState(0);
-  const load = useCallback(async () => {
-    const response = await fetch("/api/notifications", { cache: "no-store" });
-    if (!response.ok) return;
-    const data = await response.json();
-    setItems(data.notifications ?? []);
-    setUnread(data.unread ?? 0);
-  }, []);
-  useEffect(() => {
-    load().catch(() => undefined);
-    const timer = window.setInterval(() => load().catch(() => undefined), 30000);
-    return () => window.clearInterval(timer);
-  }, [load]);
-  const markRead = async () => {
-    setUnread(0);
-    await fetch("/api/notifications", { method: "POST" });
-  };
-  return (
-    <details className="notification-menu" onToggle={(event) => { if (event.currentTarget.open) markRead().catch(() => undefined); }}>
-      <summary className="icon-action" title="Notificaciones">●{unread > 0 && <b>{unread > 9 ? "9+" : unread}</b>}</summary>
-      <div className="notification-popover">
-        <header><strong>Notificaciones</strong><small>Estática · profesor y estudiantes</small></header>
-        {items.length === 0 && <p>No hay avisos nuevos todavía.</p>}
-        {items.map((item) => <a href={item.targetUrl} key={item.id}><span className={`notification-kind ${item.kind}`}>{item.kind === "file" ? "Archivo" : "Aviso"}</span><strong>{item.title}</strong><small>{item.body}</small><time>{formatDate(item.createdAt)}</time></a>)}
-      </div>
-    </details>
-  );
-}
-
 function CoursesDashboard({ user, openEstatica }: { user: User; openEstatica: () => void }) {
+  const next = nextEvaluation();
   return (
     <>
       <section className="dashboard-hero">
         <div>
-          <span className="eyebrow">Periodo académico 2026-2</span>
           <h1>Bienvenid{user.name.trim().toLowerCase().endsWith("a") ? "a" : "o"}, {firstName(user.name)}</h1>
-          <p>Continúa donde quedaste o entra al aula colaborativa de Estática.</p>
+          <p>Periodo 2026-2 · {courses.length} ramos activos</p>
         </div>
-        <div className="connected-card"><span className="pulse" /><strong>Portal sincronizado</strong><small>Disponible en todos tus dispositivos</small></div>
+        {next && (
+          <div className="next-card" style={{ "--course-tone": next.tone } as React.CSSProperties}>
+            <span className="eyebrow">Próxima evaluación</span>
+            <strong>{next.course}</strong>
+            <small>{next.detail}</small>
+            <time dateTime={next.date}>{longDate(next.date)}</time>
+          </div>
+        )}
       </section>
-      <section className="dashboard-metrics" aria-label="Resumen">
-        <div><strong>6</strong><span>ramos activos</span></div>
-        <div><strong>18</strong><span>certámenes completos</span></div>
-        <div><strong>1</strong><span>aula colaborativa</span></div>
-        <div><strong>24/7</strong><span>biblioteca disponible</span></div>
-      </section>
-      <div className="section-title"><div><span className="eyebrow">Mi semestre</span><h2>Mis cursos</h2></div><a href="/biblioteca/index.html">Ir al banco completo →</a></div>
-      <section className="course-grid">
+      <div className="section-title"><h2>Mis cursos</h2><a href="/biblioteca/index.html">Ir al banco completo <ArrowRight size={14} /></a></div>
+      <motion.section animate="show" className="course-grid" initial="hidden" variants={stagger}>
         {courses.map((course) => (
-          <article className="course-card" key={course.id} style={{ "--course-tone": course.tone } as React.CSSProperties}>
-            <div className="course-band"><span>{course.code}</span><small>{course.period}</small></div>
-            <div className="course-body">
-              <h3>{course.name}</h3>
-              <p>{course.teacher}</p>
-              <div className="course-stats"><span><b>{course.notices}</b> avisos</span><span><b>{course.activities}</b> actividades</span></div>
+          <motion.article
+            className="course-card"
+            key={course.id}
+            style={{ "--course-tone": course.tone } as React.CSSProperties}
+            transition={{ duration: 0.45, ease }}
+            variants={rise}
+            whileHover={{ y: -3 }}
+          >
+            <span className="course-code">{course.code}</span>
+            <h3>{course.name}</h3>
+            <p>{course.teacher}</p>
+            <div className="course-meta">
+              <span>{course.activities} actividades</span>
+              {course.notices > 0 && <span className="fresh">{course.notices} aviso{course.notices > 1 ? "s" : ""}</span>}
             </div>
-            {course.id === "estatica" ? <button onClick={openEstatica} type="button">Entrar al aula</button> : <a href="/biblioteca/index.html">Abrir ejercicios</a>}
-          </article>
+            {course.id === "estatica"
+              ? <button className="course-action" onClick={openEstatica} type="button">Entrar al aula <ArrowRight size={15} /></button>
+              : <a className="course-action" href="/biblioteca/index.html">Abrir ejercicios <ArrowRight size={15} /></a>}
+          </motion.article>
         ))}
-      </section>
-      <section className="download-banner">
-        <div><span className="eyebrow">Acceso rápido</span><h2>Lleva Centro de Estudio UBB contigo</h2><p>Descarga directamente la aplicación para Android.</p></div>
-        <div><a className="primary-button link-button" href={APK_URL}>Descargar para Android</a></div>
+      </motion.section>
+      <section className="panel-navy download-banner">
+        <div>
+          <h2>Lleva Centro de Estudio UBB contigo</h2>
+          <p>La biblioteca de estudio y el aula, disponibles sin conexión en tu teléfono.</p>
+          <a className="apk-link" href={APK_URL}><DownloadSimple size={17} />Descargar para Android</a>
+        </div>
+        <div className="store-badges" role="group" aria-label="Aplicaciones móviles próximamente disponibles">
+          <div className="store-badge"><img src="/brand/google-play-badge-es.webp" alt="Google Play" /></div>
+          <div className="store-badge"><img src="/brand/app-store-badge-es.webp" alt="App Store" /></div>
+        </div>
       </section>
     </>
   );
@@ -312,64 +387,21 @@ function CoursesDashboard({ user, openEstatica }: { user: User; openEstatica: ()
 
 function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void }) {
   const [tab, setTab] = useState<"home" | "materials" | "progress" | "people">("home");
-  const [posts, setPosts] = useState<Post[]>([initialPost]);
-  const [files, setFiles] = useState<CourseFile[]>([]);
-  const [completed, setCompleted] = useState(0);
-  const [students, setStudents] = useState<StudentProgress[]>([]);
+  const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
   const [status, setStatus] = useState("");
   const canTeach = user.role === "teacher" || user.role === "owner";
+  const { files, students } = classroom;
+  const posts = [initialPost, ...classroom.posts];
+  const completed = classroom.ownProgress;
+
+  useEffect(() => watchClassroom(canTeach, (patch) => setClassroom((current) => ({ ...current, ...patch })), setStatus), [canTeach]);
 
   useEffect(() => {
-    let active = true;
-    let stopPosts: () => void = () => undefined;
-    let stopProgress: () => void = () => undefined;
-    syncFirebaseProfile().then(() => {
-      if (!active) return;
-      stopPosts = watchClassroomPosts((items) => {
-        const mapped = items.map((item): Post => ({
-          id: item.id,
-          authorId: item.authorId,
-          authorEmail: item.authorEmail,
-          title: item.title,
-          body: item.body,
-          kind: firebasePostKind(item.kind),
-          linkUrl: item.fileUrl || null,
-          storagePath: item.storagePath,
-          createdAt: item.createdAt,
-          authorName: item.authorName,
-          authorRole: item.authorEmail.endsWith("@ubiobio.cl") ? "teacher" : isDeveloperEmail(item.authorEmail) ? "owner" : "student"
-        }));
-        setPosts([initialPost, ...mapped]);
-        setFiles(items.filter((item) => Boolean(item.storagePath)).map((item) => ({
-          id: item.id,
-          authorId: item.authorId,
-          authorEmail: item.authorEmail,
-          name: item.fileName,
-          contentType: item.contentType,
-          size: item.fileSize,
-          storagePath: item.storagePath,
-          url: item.fileUrl,
-          createdAt: item.createdAt,
-          authorName: item.authorName
-        })));
-      }, setStatus);
-      if (canTeach) {
-        stopProgress = watchClassroomProgress((items) => setStudents(items.map((item) => ({ userId: item.uid, name: item.displayName, email: item.email, completed: item.completed, total: item.total, updatedAt: item.lastSeen }))), setStatus);
-      } else {
-        loadOwnClassroomProgress().then((value) => {
-          if (active) setCompleted(value);
-        }).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo cargar tu progreso."));
-      }
-    }).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo conectar Firebase."));
-    return () => {
-      active = false;
-      stopPosts();
-      stopProgress();
-    };
-  }, [canTeach]);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [tab]);
 
   const updateProgress = async (next: number) => {
-    setCompleted(next);
+    setClassroom((current) => ({ ...current, ownProgress: next }));
     await saveClassroomProgress(next, units.length).catch((cause) => setStatus(cause instanceof Error ? cause.message : "No se pudo guardar el progreso."));
   };
 
@@ -402,30 +434,30 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
     }
   };
 
-  const editPost = async (post: Post) => {
+  const editPost = async (post: ClassroomPost) => {
     const title = window.prompt("Título de la publicación", post.title);
     if (title === null) return;
     const body = window.prompt("Contenido de la publicación", post.body);
     if (body === null) return;
     try {
-      await updateClassroomPost(post.id, { title, body, kind: post.kind });
+      await editClassroomPost(post.id, { title, body });
       setStatus("Publicación actualizada.");
     } catch (cause) {
       setStatus(cause instanceof Error ? cause.message : "No fue posible modificarla.");
     }
   };
 
-  const deletePost = async (post: Post) => {
+  const deletePost = async (post: ClassroomPost) => {
     if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
     try {
-      await deleteClassroomPost(post.id, post.storagePath ?? "");
+      await deleteClassroomPost(post.id, post.storagePath);
       setStatus("Publicación eliminada.");
     } catch (cause) {
       setStatus(cause instanceof Error ? cause.message : "No fue posible eliminarla.");
     }
   };
 
-  const openFile = async (file: CourseFile) => {
+  const openFile = async (file: ClassroomFile) => {
     const tab = window.open("", "_blank");
     if (tab) tab.opener = null;
     try {
@@ -438,18 +470,18 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
     }
   };
 
-  const renameFile = async (file: CourseFile) => {
+  const renameFile = async (file: ClassroomFile) => {
     const name = window.prompt("Nombre del archivo", file.name);
     if (name === null) return;
     try {
-      await updateClassroomPost(file.id, { fileName: name });
+      await renameClassroomFile(file.id, name);
       setStatus("Archivo renombrado.");
     } catch (cause) {
       setStatus(cause instanceof Error ? cause.message : "No fue posible modificarlo.");
     }
   };
 
-  const deleteFile = async (file: CourseFile) => {
+  const deleteFile = async (file: ClassroomFile) => {
     if (!window.confirm(`¿Eliminar “${file.name}”?`)) return;
     try {
       await deleteClassroomPost(file.id, file.storagePath);
@@ -462,28 +494,30 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
   return (
     <div className="classroom-layout">
       <aside className="classroom-sidebar">
-        <button className="back-button" onClick={goBack} type="button">← Mis cursos</button>
-        <div className="course-identity"><span>440299</span><h2>Estática</h2><p>Ingeniería Mecánica · 2026-2</p></div>
+        <button className="back-button" onClick={goBack} type="button"><ArrowLeft size={15} /><span>Mis cursos</span></button>
+        <div className="course-identity panel-navy"><span>440299</span><h2>Estática</h2><p>Ingeniería Mecánica · 2026-2</p></div>
         <nav aria-label="Secciones del aula">
-          <button className={tab === "home" ? "active" : ""} onClick={() => setTab("home")} type="button"><span>⌂</span>Portada del curso</button>
-          <button className={tab === "people" ? "active" : ""} onClick={() => setTab("people")} type="button"><span>◎</span>Participantes</button>
-          <button onClick={() => setTab("progress")} className={tab === "progress" ? "active" : ""} type="button"><span>▣</span>Progreso y monitoreo</button>
-          <button className={tab === "materials" ? "active" : ""} onClick={() => setTab("materials")} type="button"><span>▤</span>Materiales</button>
+          <button className={tab === "home" ? "active" : ""} onClick={() => setTab("home")} type="button"><House size={18} />Portada del curso</button>
+          <button className={tab === "people" ? "active" : ""} onClick={() => setTab("people")} type="button"><UsersThree size={18} />Participantes</button>
+          <button onClick={() => setTab("progress")} className={tab === "progress" ? "active" : ""} type="button"><ChartBar size={18} />Progreso y monitoreo</button>
+          <button className={tab === "materials" ? "active" : ""} onClick={() => setTab("materials")} type="button"><Files size={18} />Materiales</button>
         </nav>
         <div className="unit-menu"><strong>Actividades</strong>{units.map((unit, index) => <button key={unit.title} onClick={() => setTab("home")} type="button"><span>0{index + 1}</span>{unit.title.split(" · ")[1]}</button>)}</div>
-        <a className="sidebar-library" href="/biblioteca/index.html">Abrir banco de certámenes ↗</a>
+        <a className="sidebar-library" href="/biblioteca/index.html">Banco de certámenes <ArrowUpRight size={14} /></a>
       </aside>
       <main className="classroom-main">
         <header className="classroom-top"><div><span className="breadcrumb">Mis cursos / Estática</span><h1>{tabTitle(tab)}</h1></div><span className="role-badge">{roleLabel(user.role)}</span></header>
+        <AnimatePresence initial={false} mode="wait">
+        <Screen key={tab}>
         {tab === "home" && (
           <>
-            <section className="course-cover"><div><span className="eyebrow">Aula piloto colaborativa</span><h2>Equilibrio, fricción y propiedades de área y masa</h2><p>Desarrolla modelos de sistemas mecánicos en equilibrio con análisis riguroso, diagramas de cuerpo libre y notación matemática inmediata.</p><div className="cover-meta"><span>6 créditos SCT</span><span>Semestral</span><span>Presencial + digital</span></div></div><div className="equation-stack"><span>ΣFₓ = 0</span><span>ΣFᵧ = 0</span><span>ΣM₀ = 0</span></div></section>
+            <section className="course-cover panel-navy"><div><span className="eyebrow">Aula piloto colaborativa</span><h2>Equilibrio, fricción y propiedades de área y masa</h2><p>Desarrolla modelos de sistemas mecánicos en equilibrio con análisis riguroso, diagramas de cuerpo libre y notación matemática inmediata.</p><div className="cover-meta"><span>6 créditos SCT</span><span>Semestral</span><span>Presencial y digital</span></div></div><div className="equation-stack"><span>ΣFₓ = 0</span><span>ΣFᵧ = 0</span><span>ΣM₀ = 0</span></div></section>
             <div className="classroom-columns">
               <section>
-                <div className="section-title compact-title"><div><span className="eyebrow">Resultados de aprendizaje</span><h2>Unidades del semestre</h2></div></div>
-                <div className="unit-grid">{units.map((unit, index) => <article key={unit.title}><span className="unit-number">0{index + 1}</span><div><h3>{unit.title}</h3><p>{unit.subtitle}</p></div><strong>{unit.equation}</strong>{!canTeach && <label className="unit-check"><input checked={index < completed} onChange={(event) => updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))} type="checkbox" />Completado</label>}</article>)}</div>
+                <div className="section-title compact-title"><h2>Resultados de aprendizaje</h2></div>
+                <motion.div animate="show" className="unit-grid" initial="hidden" variants={stagger}>{units.map((unit, index) => <motion.article key={unit.title} transition={{ duration: 0.45, ease }} variants={rise}><span className="unit-number">0{index + 1}</span><div><h3>{unit.title}</h3><p>{unit.subtitle}</p></div><strong>{unit.equation}</strong>{!canTeach && <label className="unit-check"><input checked={index < completed} onChange={(event) => updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))} type="checkbox" />Completado</label>}</motion.article>)}</motion.div>
               </section>
-              <aside className="course-sidecards"><div><span className="eyebrow">Coordinación</span><strong>Profesor de Estática</strong><small>Cuenta docente institucional</small></div><div><span className="eyebrow">Próxima entrega</span><strong>Banco RA1 disponible</strong><small>Certamen completo · 90 min</small></div><div><span className="eyebrow">Tu avance</span><strong>{canTeach ? `${students.length} estudiantes` : `${completed} de ${units.length} unidades`}</strong><div className="mini-progress"><span style={{ width: canTeach ? "100%" : `${completed / units.length * 100}%` }} /></div></div></aside>
+              <aside className="course-sidecards"><div><span className="eyebrow">Coordinación</span><strong>Profesor de Estática</strong><small>Cuenta docente institucional</small></div><div><span className="eyebrow">Próxima entrega</span><strong>Banco RA1 disponible</strong><small>Certamen completo · 90 min</small></div><div><span className="eyebrow">{canTeach ? "Estudiantes" : "Tu avance"}</span><strong>{canTeach ? `${students.length} inscritos` : `${completed} de ${units.length} unidades`}</strong>{!canTeach && <div className="mini-progress"><Bar ratio={completed / units.length} /></div>}</div></aside>
             </div>
             <PostsSection posts={posts} user={user} editPost={editPost} deletePost={deletePost} />
           </>
@@ -491,66 +525,144 @@ function EstaticaClassroom({ user, goBack }: { user: User; goBack: () => void })
         {tab === "materials" && <MaterialsSection files={files} user={user} canTeach={canTeach} publish={publish} upload={upload} openFile={openFile} renameFile={renameFile} deleteFile={deleteFile} status={status} />}
         {tab === "progress" && <ProgressSection user={user} completed={completed} students={students} />}
         {tab === "people" && <PeopleSection user={user} students={students} />}
+        </Screen>
+        </AnimatePresence>
       </main>
     </div>
   );
 }
 
-function PostsSection({ posts, user, editPost, deletePost }: { posts: Post[]; user: User; editPost: (post: Post) => void; deletePost: (post: Post) => void }) {
+function PostsSection({ posts, user, editPost, deletePost }: { posts: ClassroomPost[]; user: User; editPost: (post: ClassroomPost) => void; deletePost: (post: ClassroomPost) => void }) {
   return (
     <section className="posts-section">
-      <div className="section-title compact-title"><div><span className="eyebrow">Actualizaciones</span><h2>Avisos del curso</h2></div></div>
-      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail?.toLowerCase() === user.email.toLowerCase()); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso ↗</a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
+      <div className="section-title compact-title"><h2>Avisos del curso</h2></div>
+      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase()); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso <ArrowUpRight size={12} /></a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
     </section>
   );
 }
 
-function MaterialsSection({ files, user, canTeach, publish, upload, openFile, renameFile, deleteFile, status }: { files: CourseFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; openFile: (file: CourseFile) => void; renameFile: (file: CourseFile) => void; deleteFile: (file: CourseFile) => void; status: string }) {
+function MaterialsSection({ files, user, canTeach, publish, upload, openFile, renameFile, deleteFile, status }: { files: ClassroomFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; openFile: (file: ClassroomFile) => void; renameFile: (file: ClassroomFile) => void; deleteFile: (file: ClassroomFile) => void; status: string }) {
   return (
     <section className="materials-view">
       <div className="materials-list">
-        <div className="section-title compact-title"><div><span className="eyebrow">Biblioteca del aula</span><h2>Archivos compartidos</h2></div></div>
-        <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon">Σ</span><div><strong>Banco completo de Estática</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir →</b></a>
+        <div className="section-title compact-title"><h2>Archivos compartidos</h2></div>
+        <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon"><Sigma size={20} /></span><div><strong>Banco completo de Estática</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir <ArrowRight size={14} /></b></a>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
         {files.map((file) => { const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase(); return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><button onClick={() => openFile(file)} type="button">Descargar</button>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
       </div>
-      {canTeach && <aside className="teacher-tools"><span className="eyebrow">Herramientas docentes</span><h2>Publicar en el aula</h2><form onSubmit={publish}><label>Título<input name="title" required /></label><label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label><label>Mensaje<textarea name="body" rows={4} required /></label><label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label><button className="primary-button" type="submit">Publicar aviso o enlace</button></form><div className="tool-divider"><span>o subir archivo</span></div><form onSubmit={upload}><label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label><button className="secondary-button" type="submit">Subir al curso</button></form>{status && <p className="tool-status">{status}</p>}</aside>}
+      {canTeach && <aside className="teacher-tools"><h2>Publicar en el aula</h2><form onSubmit={publish}><label>Título<input name="title" required /></label><label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label><label>Mensaje<textarea name="body" rows={4} required /></label><label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label><button className="primary-button" type="submit">Publicar aviso o enlace</button></form><div className="tool-divider"><span>o subir archivo</span></div><form onSubmit={upload}><label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label><button className="secondary-button" type="submit">Subir al curso</button></form>{status && <p className="tool-status">{status}</p>}</aside>}
     </section>
   );
 }
 
-function ProgressSection({ user, completed, students }: { user: User; completed: number; students: StudentProgress[] }) {
+function ProgressSection({ user, completed, students }: { user: User; completed: number; students: ClassroomStudent[] }) {
   const canTeach = user.role === "teacher" || user.role === "owner";
   return (
     <section className="progress-view">
-      <div className="section-title compact-title"><div><span className="eyebrow">Seguimiento</span><h2>{canTeach ? "Monitoreo del curso" : "Mi progreso en Estática"}</h2></div></div>
-      {!canTeach && <div className="personal-progress"><strong>{completed}/{units.length}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><span style={{ width: `${completed / units.length * 100}%` }} /></div></div></div>}
-      {canTeach && <div className="progress-table"><div className="progress-table-head"><span>Estudiante</span><span>Avance</span><span>Última actividad</span></div>{students.length === 0 && <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>}{students.map((student) => <div className="progress-table-row" key={student.userId}><span><b>{student.name}</b><small>{student.email}</small></span><span><b>{student.completed}/{student.total}</b><i><em style={{ width: `${student.completed / student.total * 100}%` }} /></i></span><span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span></div>)}</div>}
+      {!canTeach && <div className="personal-progress"><strong>{completed}/{units.length}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><Bar ratio={completed / units.length} /></div></div></div>}
+      {canTeach && <div className="progress-table"><div className="progress-table-head"><span>Estudiante</span><span>Avance</span><span>Última actividad</span></div>{students.length === 0 && <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>}{students.map((student) => <div className="progress-table-row" key={student.userId}><span><b>{student.name}</b><small>{student.email}</small></span><span><b>{student.completed}/{student.total}</b><i><motion.em animate={{ scaleX: student.total ? student.completed / student.total : 0 }} initial={{ scaleX: 0 }} transition={{ duration: 0.6, ease }} /></i></span><span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span></div>)}</div>}
     </section>
   );
 }
 
-function PeopleSection({ user, students }: { user: User; students: StudentProgress[] }) {
+function PeopleSection({ user, students }: { user: User; students: ClassroomStudent[] }) {
   return (
     <section>
-      <div className="section-title compact-title"><div><span className="eyebrow">Comunidad del aula</span><h2>Participantes</h2></div></div>
-      <div className="people-grid"><article><span className="avatar large">PE</span><div><strong>Profesor de Estática</strong><small>Docente · Coordinación del curso</small></div></article><article><span className="avatar large">{initials(user.name)}</span><div><strong>{user.name}</strong><small>{roleLabel(user.role)} · {user.email}</small></div></article>{students.filter((student) => student.email.toLowerCase() !== user.email.toLowerCase()).map((student) => <article key={student.userId}><span className="avatar large">{initials(student.name)}</span><div><strong>{student.name}</strong><small>Estudiante · {student.email}</small></div></article>)}</div>
+      <div className="people-grid"><article><span className="avatar large">PE</span><div><strong>Profesor de Estática</strong><small>Docente · Coordinación del curso</small></div></article><article><Avatar large email={user.email} name={user.name} /><div><strong>{user.name}</strong><small>{roleLabel(user.role)} · {user.email}</small></div></article>{students.filter((student) => student.email.toLowerCase() !== user.email.toLowerCase()).map((student) => <article key={student.userId}><span className="avatar large">{initials(student.name)}</span><div><strong>{student.name}</strong><small>Estudiante · {student.email}</small></div></article>)}</div>
     </section>
   );
 }
 
 function CalendarView() {
-  const events = [
-    ["18 AGO", "Estática · RA1", "Práctica de sistemas de fuerzas"],
-    ["01 SEP", "Termodinámica Aplicada", "Test 01"],
-    ["08 OCT", "Termodinámica Aplicada", "Evaluación 01 · Primera y Segunda ley"],
-    ["26 NOV", "Termodinámica Aplicada", "Evaluación 02 · Combustión y ciclos de vapor"],
-  ];
-  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Planificación</span><h1>Calendario académico</h1><p>Una vista rápida de prácticas y evaluaciones del semestre.</p></div></div><div className="timeline">{events.map(([date, title, detail]) => <article key={`${date}-${title}`}><time>{date}</time><div><strong>{title}</strong><p>{detail}</p></div></article>)}</div></section>;
+  const next = nextEvaluation();
+  return (
+    <section>
+      <div className="dashboard-hero">
+        <div>
+          <h1>Calendario académico</h1>
+          <p>{agenda.length} evaluaciones · Periodo 2026-2</p>
+        </div>
+      </div>
+      <div className="calendar-layout">
+        <motion.div animate="show" className="timeline" initial="hidden" variants={stagger}>
+          {agenda.map((item, index) => (
+            <Fragment key={`${item.date}-${item.course}`}>
+              {(index === 0 || monthOf(item.date) !== monthOf(agenda[index - 1].date)) && (
+                <motion.h2 className="timeline-month" transition={{ duration: 0.4, ease }} variants={rise}>{monthLabel(item.date)}</motion.h2>
+              )}
+              <motion.article
+                className={item.date === next.date ? "upcoming" : ""}
+                style={{ "--course-tone": item.tone } as React.CSSProperties}
+                transition={{ duration: 0.45, ease }}
+                variants={rise}
+              >
+                <time dateTime={item.date}><b>{dayOf(item.date)}</b><span>{monthOf(item.date)}</span></time>
+                <div>
+                  <strong>{item.course}</strong>
+                  <p>{item.detail}</p>
+                </div>
+                {item.date === next.date && <span className="upcoming-flag">Próxima</span>}
+              </motion.article>
+            </Fragment>
+          ))}
+        </motion.div>
+        <aside className="period-courses">
+          <strong>Ramos del periodo</strong>
+          <ul>
+            {courses.map((course) => (
+              <li key={course.id} style={{ "--course-tone": course.tone } as React.CSSProperties}>
+                <span>{course.name}</span>
+                <small>{course.code}</small>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+    </section>
+  );
 }
 
 function ResourcesView() {
-  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Biblioteca central</span><h1>Recursos de estudio</h1><p>Accede al contenido matemático y descarga la aplicación.</p></div></div><div className="resource-cards"><a href="/biblioteca/index.html"><span>∫</span><h2>Banco de certámenes</h2><p>Ejercicios completos, pautas, pistas y notación matemática.</p><b>Abrir biblioteca →</b></a><a href={APK_URL}><span>↓</span><h2>App para Android</h2><p>Instala el APK en Samsung y otros equipos Android.</p><b>Descargar →</b></a><a href="https://chatgpt.com" target="_blank" rel="noreferrer"><span>AI</span><h2>Tutor con inteligencia artificial</h2><p>Abre ChatGPT para resolver dudas con contexto.</p><b>Abrir tutor →</b></a></div></section>;
+  const resources = [
+    { href: "/biblioteca/index.html", icon: <Books size={22} />, title: "Banco de certámenes", body: "Evaluaciones largas con puntaje, tiempo y pauta desarrollada.", meta: "18 evaluaciones · 6 ramos", action: "Abrir biblioteca", external: false },
+    { href: APK_URL, icon: <DownloadSimple size={22} />, title: "App para Android", body: "Instala el APK y consulta la biblioteca sin conexión.", meta: "Versión 1.0.6 · Android 8 o superior", action: "Descargar", external: false },
+    { href: "https://chatgpt.com", icon: <Robot size={22} />, title: "Tutor con inteligencia artificial", body: "Resuelve dudas puntuales con el contexto del ramo a mano.", meta: "Enlace externo a ChatGPT", action: "Abrir tutor", external: true },
+  ];
+  return (
+    <section>
+      <div className="dashboard-hero"><div><h1>Recursos de estudio</h1></div></div>
+      <motion.div animate="show" className="resource-cards" initial="hidden" variants={stagger}>
+        {resources.map((resource) => (
+          <motion.a
+            href={resource.href}
+            key={resource.title}
+            rel={resource.external ? "noreferrer" : undefined}
+            target={resource.external ? "_blank" : undefined}
+            transition={{ duration: 0.45, ease }}
+            variants={rise}
+            whileHover={{ y: -3 }}
+          >
+            <span>{resource.icon}</span>
+            <h2>{resource.title}</h2>
+            <p>{resource.body}</p>
+            <em>{resource.meta}</em>
+            <b>{resource.action} {resource.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</b>
+          </motion.a>
+        ))}
+      </motion.div>
+      <div className="section-title compact-title"><h2>Cobertura del banco</h2></div>
+      <div className="period-courses coverage">
+        <ul>
+          {courses.map((course) => (
+            <li key={course.id} style={{ "--course-tone": course.tone } as React.CSSProperties}>
+              <span>{course.name}</span>
+              <small>{course.code}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
 }
 
 function AdminView() {
@@ -563,7 +675,7 @@ function AdminView() {
     setMessage(response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.");
     if (response.ok) await load();
   };
-  return <section><div className="dashboard-hero small"><div><span className="eyebrow">Control desarrollador</span><h1>Administración de cuentas</h1><p>Supervisa los rangos detectados automáticamente por el dominio institucional y conserva el control general de la plataforma.</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Profesor UBB</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
+  return <section><div className="dashboard-hero"><div><h1>Administración de cuentas</h1><p>{accounts.length} {accounts.length === 1 ? "cuenta registrada" : "cuentas registradas"} · el rango se asigna por dominio institucional</p></div></div><div className="admin-table"><div className="admin-head"><span>Cuenta</span><span>Rango</span><span>Acción</span></div>{accounts.length === 0 && <p className="empty-row">Todavía no hay cuentas institucionales registradas.</p>}{accounts.map((account) => <div className="admin-row" key={account.id}><span><b>{account.name}</b><small>{account.email}</small></span><span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span><span>{account.role !== "owner" && <select value={account.role} onChange={(event) => changeRole(account.id, event.target.value as "teacher" | "student")}><option value="student">Estudiante</option><option value="teacher">Profesor UBB</option></select>}</span></div>)}</div>{message && <p className="tool-status">{message}</p>}</section>;
 }
 
 function roleLabel(role: Role) {
@@ -578,20 +690,34 @@ function initials(value: string) {
   return value.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CE";
 }
 
-function kindLabel(kind: Post["kind"]) {
+function kindLabel(kind: ClassroomPost["kind"]) {
   return kind === "assessment" ? "Evaluación" : kind === "guide" ? "Guía" : kind === "resource" ? "Recurso" : "Aviso";
-}
-
-function firebasePostKind(value: string): Post["kind"] {
-  const normalized = value.toLowerCase();
-  if (normalized === "assessment" || normalized === "evaluacion" || normalized === "dictamen") return "assessment";
-  if (normalized === "guide" || normalized === "guia") return "guide";
-  if (normalized === "resource" || normalized === "recurso") return "resource";
-  return "notice";
 }
 
 function tabTitle(tab: "home" | "materials" | "progress" | "people") {
   return tab === "materials" ? "Materiales del curso" : tab === "progress" ? "Progreso y monitoreo" : tab === "people" ? "Participantes" : "Portada del curso";
+}
+
+function nextEvaluation() {
+  const today = new Date().toISOString().slice(0, 10);
+  return agenda.find((item) => item.date >= today) ?? agenda[agenda.length - 1];
+}
+
+function longDate(value: string) {
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
+}
+
+function dayOf(value: string) {
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit" }).format(new Date(`${value}T12:00:00`));
+}
+
+function monthLabel(value: string) {
+  const label = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function monthOf(value: string) {
+  return new Intl.DateTimeFormat("es-CL", { month: "short" }).format(new Date(`${value}T12:00:00`)).replace(".", "").toUpperCase();
 }
 
 function formatDate(value: string) {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#78001f">
-  <title>Centro de Estudio 2026</title>
+  <meta name="theme-color" content="#0057a4">
+  <title>Banco de certámenes · Centro de Estudio UBB</title>
   <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -12,23 +12,27 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">CE</div>
-        <div><strong>Centro de Estudio</strong><span>Semestre 2026</span></div>
+        <img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width="388" height="594">
+        <div><strong>Centro de Estudio UBB</strong><span>Banco de certámenes</span></div>
       </div>
+      <a class="back-link" href="/">
+        <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>
+        Volver al portal
+      </a>
       <nav id="courseNav" class="course-nav" aria-label="Ramos"></nav>
       <div class="sidebar-panel">
         <span class="eyebrow">Progreso total</span>
         <div class="progress-line"><span id="progressBar"></span></div>
         <strong id="progressText">0 de 18</strong>
       </div>
-      <button id="randomButton" class="blood-button" type="button">Ejercicio aleatorio</button>
+      <button id="randomButton" class="primary-button" type="button">Ejercicio aleatorio</button>
       <button id="resetButton" class="ghost-button" type="button">Reiniciar progreso</button>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <label class="search-box">
-          <span>⌕</span>
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>
           <input id="searchInput" type="search" placeholder="Buscar por ramo, tema o palabra..." autocomplete="off">
         </label>
         <label class="select-box">Dificultad
@@ -44,7 +48,6 @@
 
       <section class="hero">
         <div>
-          <span class="eyebrow">Banco personal de práctica</span>
           <h1 id="heroTitle">Certámenes completos para tus seis ramos.</h1>
           <p id="heroDescription">Evaluaciones largas, puntaje, tiempo, pauta desarrollada, apuntes y material original.</p>
         </div>
@@ -53,21 +56,20 @@
 
       <section class="tutor-panel" aria-labelledby="tutorTitle">
         <div class="tutor-copy">
-          <span class="eyebrow">Modo híbrido</span>
           <h2 id="tutorTitle">Tutor de Ingeniería Mecánica</h2>
-          <p>Estudia sin conexión o envía una duda con contexto a ChatGPT cuando tengas internet. Perfil preparado para GPT-5.6 Sol y razonamiento muy alto.</p>
-          <div class="tutor-status"><span>● Biblioteca offline</span><span id="onlineStatus">● Comprobando internet</span></div>
+          <p>Estudia sin conexión o envía una duda con contexto a ChatGPT cuando tengas internet.</p>
+          <div class="tutor-status"><span>Biblioteca disponible sin conexión</span><span id="onlineStatus">Comprobando conexión</span></div>
         </div>
         <div class="tutor-question">
           <label for="tutorQuestion">Escribe tu duda</label>
           <textarea id="tutorQuestion" rows="4" placeholder="Ejemplo: explícame por qué el trabajo de compresión resulta negativo con esta convención de signos."></textarea>
-          <button id="askTutorButton" class="blood-button" type="button">Preguntar a ChatGPT</button>
+          <button id="askTutorButton" class="primary-button" type="button">Preguntar a ChatGPT</button>
         </div>
       </section>
 
       <section aria-labelledby="coursesTitle">
         <div class="section-heading">
-          <div><span class="eyebrow">Panel</span><h2 id="coursesTitle">Ramos</h2></div>
+          <h2 id="coursesTitle">Ramos</h2>
           <span id="courseSummary" class="muted"></span>
         </div>
         <div id="courseGrid" class="course-grid"></div>
@@ -75,7 +77,7 @@
 
       <section aria-labelledby="exercisesTitle">
         <div class="section-heading">
-          <div><span class="eyebrow">Nivel universitario</span><h2 id="exercisesTitle">Certámenes completos</h2></div>
+          <h2 id="exercisesTitle">Certámenes completos</h2>
           <span id="resultCount" class="muted"></span>
         </div>
         <div id="exerciseList" class="exercise-list"></div>
@@ -83,7 +85,7 @@
 
       <section aria-labelledby="materialsTitle">
         <div class="section-heading">
-          <div><span class="eyebrow">Biblioteca local</span><h2 id="materialsTitle">Material del ramo</h2></div>
+          <h2 id="materialsTitle">Material del ramo</h2>
         </div>
         <div id="materialPanel" class="material-panel"></div>
       </section>

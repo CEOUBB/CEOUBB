@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
@@ -21,4 +21,8 @@ function institutionalProvider() {
 export async function signInWithInstitutionalGoogle() {
   const result = await signInWithPopup(getAuth(firebaseApp), institutionalProvider());
   return result.user.getIdToken(true);
+}
+
+export function watchGooglePhoto(onPhoto: (url: string | null) => void) {
+  return onAuthStateChanged(getAuth(firebaseApp), (user) => onPhoto(user?.photoURL ?? null));
 }

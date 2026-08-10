@@ -20,15 +20,15 @@ Este es un proyecto académico independiente. No es un servicio oficial de la Un
 Requisitos: Node.js 22 o superior.
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Para comprobar una compilación:
 
 ```bash
-npm run build
-npm test
+pnpm run build
+pnpm test
 ```
 
 ## Desarrollo Android
@@ -47,9 +47,10 @@ Para firmar una versión de publicación, copia `keystore.properties.example` co
 Las reglas y funciones están en `firebase/`. Para desplegarlas se necesita Firebase CLI autenticado y acceso al proyecto correspondiente.
 
 ```bash
-cd firebase
-npm --prefix functions install
-firebase deploy
+cd firebase/functions
+pnpm install
+cd ..
+pnpm dlx firebase-tools@latest deploy
 ```
 
 ## Seguridad y contenido
