@@ -13,6 +13,12 @@
 # testing
 /coverage
 
+# typescript
+*.tsbuildinfo
+
+# local planning docs
+/plans/
+
 # next.js
 /.next/
 /.vinext/

@@ -54,7 +54,7 @@ function renderMath(root) {
 function updateOnlineStatus() {
   if (!elements.onlineStatus) return;
   const online = typeof navigator === 'undefined' || navigator.onLine !== false;
-  elements.onlineStatus.textContent = online ? '● Tutor online disponible' : '● Sin internet: estudio offline activo';
+  elements.onlineStatus.textContent = online ? 'Tutor online disponible' : 'Sin internet: estudio offline activo';
   elements.onlineStatus.classList.toggle('online', online);
   elements.onlineStatus.classList.toggle('offline', !online);
 }

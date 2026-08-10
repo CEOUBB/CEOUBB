@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const scriptSrc = process.env.NODE_ENV === "production" ? "'self' 'unsafe-inline' https://apis.google.com" : "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com";
+const remoteConnectSrc = "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com";
+const connectSrc = process.env.NODE_ENV === "production" ? `'self' ${remoteConnectSrc}` : `'self' ws://localhost:* ws://127.0.0.1:* ${remoteConnectSrc}`;
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -8,7 +10,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com",
+  `connect-src ${connectSrc}`,
   "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
   "worker-src 'self'",
   "manifest-src 'self'",

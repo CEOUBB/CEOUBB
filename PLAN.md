@@ -26,6 +26,8 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 | ACTIVE | Claude Code | `claude/nextjs-vercel-migration` | Migrate web from vinext/OpenAI Sites to Next.js/Vercel; code done, data migration and deploy pending | `package.json`, `db/`, `app/api/`, `tests/`, `AGENTS.md`, Vercel, Turso |
 | DONE | Project owner / Codex | `codex/stage-vercel-domain` | Move `ceoubb.com` and `www.ceoubb.com` from OpenAI Sites to Vercel with the D1 data preserved in Turso | Vercel, Turso, Namecheap DNS, Firebase Authentication |
 | ACTIVE | Claude Code | `claude/security-audit-fixes` | Remediate the eight findings of the 2026-08-09 security audit; code done, Firebase rules deploy and Android build pending | `lib/`, `app/`, `next.config.ts`, `firebase/*.rules`, `android/ClassroomService.java`, `tests/` |
+| ACTIVE | Claude Code | `main`, uncommitted | Light institutional redesign of every logged-in portal surface and of the web study library; verified locally, not committed or deployed | `app/globals.css`, `app/Portal.tsx`, `app/layout.tsx`, `lib/firebase-client.ts`, `public/biblioteca/`, `AGENTS.md` |
+| NEXT | Unassigned | — | Retheme `android/app/src/main/assets/www/` to match the light library, then build and test the APK on a device | `android/app/src/main/assets/www/` |
 | NEXT | Unassigned | — | Run the production authentication, Storage, and notification test matrix | Web, Android, Firebase |
 | NEXT | Unassigned | — | Configure billing budget alerts and App Check rollout | Google Cloud, Firebase |
 | BLOCKED | Project owner | — | Complete Google Play verification and obtain the official listing URL | Play Console |
@@ -36,6 +38,7 @@ Before starting work, add the task, branch, owner/agent, and affected files to t
 ### Web
 
 - `DONE`: Institutional UBB-inspired login design, responsive layout, privacy footer, official Google sign-in button artwork, and non-clickable store badges.
+- Local only, not deployed: the portal, the privacy page and `public/biblioteca/` now share the light institutional design system documented in `AGENTS.md`. Adds `@phosphor-icons/react` and `motion`. The Android bundled library still uses the previous dark maroon theme.
 - `DONE`: `ceoubb.com` and `www.ceoubb.com` route through Namecheap DNS to the production Next.js deployment on Vercel.
 - `DONE`: The former Sites D1 data is migrated to Turso and its table counts were verified before the DNS cutover.
 - `DONE`: Google authentication is handled by Firebase Authentication, followed by the web session endpoint.
@@ -538,3 +541,63 @@ Known risks:
 - Four moderate advisories remain in `drizzle-kit` through `esbuild`. They are devDependency-only and need a breaking major, so they were left alone.
 
 Next recommended action: deploy a Vercel preview from this branch, complete one institutional sign-in to validate the CSP, then deploy the Firestore and Storage rules and run the P0.1 and P0.2 matrices before promoting to production.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Claude Code
+Branch / commit: working tree on `main`, based on `15cb2a2`. Not committed.
+Goal: act on the five architecture findings raised by the architecture review of `15cb2a2` — one access policy, one classroom module, delete the dead notification bell, shrink the session module, and replace source-text tests with behavioural ones.
+
+Files changed: `lib/access-policy.ts`, `lib/auth.ts`, `lib/firebase-classroom-client.ts`, `app/Portal.tsx`, `app/globals.css`, `app/api/auth/firebase/route.ts`, `app/api/auth/me/route.ts`, `app/api/admin/users/route.ts`, `db/schema.ts`, `drizzle/0002_drop_rut_password_notifications.sql`, `drizzle/meta/*`, `tests/rendered-html.test.mjs`, `tests/access-policy.test.ts` (new), `package.json`, `tsconfig.json`, `AGENTS.md`. Deleted: `app/api/notifications/route.ts`.
+
+External services changed: none. No migration was applied, no rules were deployed, no Function was redeployed, no Vercel deployment was promoted.
+
+What changed and why:
+
+1. Access policy. `roleForEmail` moved into `lib/access-policy.ts`, which now also exports `AccountRole`, `STUDENT_DOMAIN`, `TEACHER_DOMAIN` and an `ACCESS_CASES` matrix. The three TypeScript copies were deleted: `roleForEmail` in `lib/auth.ts`, `roleFor` in `lib/firebase-classroom-client.ts`, and the inline ternary in `app/Portal.tsx` that decided a post author's role. The rules files and the Android service still hold their own copies because they cannot import TypeScript; a conformance test now asserts they name the same owner addresses and domains.
+2. Classroom module. `lib/firebase-classroom-client.ts` no longer hands raw Firestore records to React. `watchClassroom(teaching, onChange, onError)` syncs the profile once, subscribes to posts and to progress, and emits shaped `ClassroomPost` / `ClassroomFile` / `ClassroomStudent` values. `EstaticaClassroom` lost about 50 lines of mapping and orchestration and now holds one `ClassroomState`. `updateClassroomPost(id, Record<string,string>)` was replaced by `editClassroomPost` and `renameClassroomFile`. Commands wait for the Firebase user instead of re-running the profile sync, which removes one Firestore read and one write per publish, upload and progress tick.
+3. Notification bell. `GET/POST /api/notifications`, the `notifications` and `notification_reads` tables, the `NotificationMenu` component with its 30-second poll, its CSS, and the cascade deletes in `DELETE /api/auth/me` are gone. The table had no writer and filtered on the retired course id `estatica-440299`, so the bell was permanently empty. FCM on `course_estatica_students` remains the only notification path.
+4. Session module. `lib/auth.ts` dropped `hashPassword`, `verifyPassword`, `isValidRut`, `formatRut`, `normalizeRut`, `findUserByIdentifier`, `canPublish` and `publicRut` — all unreachable since password login and RUT identity were retired to `410` routes. `users.rut`, `users.password_salt` and `users.password_hash` were dropped from the schema, and `rut` was removed from `PublicUser` and from the account popover, where it always rendered an empty string.
+5. Test seam. `tests/access-policy.test.ts` calls the policy directly under `--experimental-strip-types`. `tests/rendered-html.test.mjs` now migrates a throwaway libSQL database, seeds an owner, a teacher and a student, and starts `next start` against it, so sessions, expiry, forged tokens, logout, the `Secure` cookie flag and the owner-only administration endpoint are exercised over HTTP instead of matched with regular expressions. Nine source-text assertions were replaced by fourteen behavioural ones; the remaining regex tests cover the store badges and the Firebase rules, which no test process can execute.
+
+Checks passed: `npm test` 24/24 — `next build` compiles and type checks, then both test files pass. `npx tsc --noEmit` clean. `npm run lint` reports 8 errors and 9 warnings, all pre-existing in `app/privacidad/page.tsx` and `public/biblioteca/assets/app.js`, none in the changed files. The access screen was loaded in a browser against the running dev server: it renders and the console is clean.
+
+Checks not run: no institutional Google sign-in, so the deepened classroom module was not exercised against real Firestore — posts, files, progress, upload and the teacher tools are unverified end to end. The Firebase rules were not compiled or deployed. The Android app was not built; it was not modified either. The role matrix was tested at the web session and administration layer only, not through Firebase Authentication.
+
+Production deployed: no.
+
+Known risks:
+
+- `drizzle/0002_drop_rut_password_notifications.sql` is destructive and MUST be applied to Turso before this code is deployed. `POST /api/auth/firebase` no longer writes `rut`, `password_salt` or `password_hash`, so sign-in will fail against the old schema on the `NOT NULL` constraints. The migration also drops `files`, `posts`, `progress`, `notifications` and `notification_reads`; the first three were already orphaned by the Vercel migration and hold retired D1 classroom data. Take a Turso backup first.
+- The classroom refactor is the change with the least verification. Before promoting, sign in on a preview as a teacher and as a student and check: the post feed loads, a file upload appears and opens, rename and delete work, and a student's progress checkbox persists across a reload.
+- `tsconfig.json` gained `allowImportingTsExtensions`, which is required for the test to import `lib/access-policy.ts` by path. It permits `.ts` import specifiers everywhere; no application module uses one.
+- The remaining regex assertions on the Firebase rules are still a drift alarm, not a proof. Emulator Suite rule tests are still the right next step and are still absent.
+
+Next recommended action: review the diff, then apply `drizzle/0002` to a Turso branch or copy and deploy a Vercel preview against it. Complete one institutional sign-in as a teacher and one as a student to validate the deepened classroom module before promoting to production.
+
+---
+
+Date: 2026-08-09
+Human maintainer: project owner
+AI assistant: Antigravity
+Branch / commit: working tree on `main`. Not committed.
+Goal: complete transition from npm to pnpm and remove npm entirely across the project, enforce pnpm policy in `AGENTS.md`, update lockfile and dev environment scripts.
+
+Files changed:
+- `package-lock.json`: deleted.
+- `pnpm-lock.yaml`: generated and updated via `pnpm install` / `pnpm approve-builds`.
+- `package.json`: added `"packageManager": "pnpm@11.18.0"`.
+- `.claude/launch.json`: updated `"runtimeExecutable"` to `"pnpm"`.
+- `README.md`: updated all commands to `pnpm`.
+- `AGENTS.md`: updated architecture, setup, testing commands, and added strict policy prohibiting npm/bun and mandating `pnpm` (with `npx` permitted for tools that cannot run via `pnpm dlx`).
+- `PLAN.md`: updated handoff documentation.
+
+Checks passed: `pnpm install --frozen-lockfile` clean; `pnpm test` 24/24 tests passed (Next.js production build succeeded and both test suites passed).
+Checks not run: Vercel preview deployment. `pnpm run lint` reports 8 errors and 9 warnings (pre-existing baseline).
+
+Production deployed: no.
+Known risks: None added by the package manager migration.
+Next recommended action: Proceed with preview testing and deployment as planned.
+

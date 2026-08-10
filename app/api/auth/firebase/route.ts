@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
-import { createSession, normalizeEmail, publicUser, roleForEmail } from "../../../../lib/auth";
+import { normalizeAccessEmail, roleForEmail } from "../../../../lib/access-policy";
+import { createSession, publicUser } from "../../../../lib/auth";
 
 const FIREBASE_API_KEY = "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU";
 
@@ -10,6 +11,8 @@ type FirebaseAccount = {
   email?: string;
   emailVerified?: boolean;
   displayName?: string;
+  photoUrl?: string;
+  providerUserInfo?: { photoUrl?: string }[];
 };
 
 export async function POST(request: Request) {
@@ -27,7 +30,7 @@ export async function POST(request: Request) {
 
     const result = (await verification.json()) as { users?: FirebaseAccount[] };
     const account = result.users?.[0];
-    const email = normalizeEmail(account?.email ?? "");
+    const email = normalizeAccessEmail(account?.email ?? "");
     const role = roleForEmail(email);
     if (!account?.localId || !account.emailVerified) return error("Tu correo de Google debe estar verificado.", 403);
     if (!role) return error("Solo se permite el acceso con cuentas @alumnos.ubiobio.cl o @ubiobio.cl.", 403);
@@ -43,19 +46,18 @@ export async function POST(request: Request) {
     } else {
       user = {
         id: `firebase:${account.localId}`,
-        rut: `FIREBASE:${account.localId}`,
         email,
         name,
         role,
-        passwordSalt: "firebase-google",
-        passwordHash: "firebase-google",
         createdAt: new Date().toISOString(),
       };
       await db.insert(users).values(user);
     }
 
     const cookie = await createSession(user.id);
-    return Response.json({ user: publicUser(user) }, { headers: { "Set-Cookie": cookie } });
+    const googlePhoto = account.photoUrl || account.providerUserInfo?.find((provider) => provider.photoUrl)?.photoUrl || "";
+    const photoUrl = googlePhoto.startsWith("https://") ? googlePhoto : "";
+    return Response.json({ user: publicUser(user), photoUrl }, { headers: { "Set-Cookie": cookie } });
   } catch {
     return error("No fue posible completar el acceso institucional.", 500);
   }
