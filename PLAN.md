@@ -601,12 +601,6 @@ Production deployed: no.
 Known risks: None added by the package manager migration.
 Next recommended action: Proceed with preview testing and deployment as planned.
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
-
 ---
 
 Date: 2026-08-10
