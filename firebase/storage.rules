@@ -34,9 +34,13 @@ service firebase.storage {
       return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
     }
 
-    match /courses/estatica/{userId}/{fileName} {
+    function validCourse(courseId) {
+      return courseId.matches('^[a-z][a-z0-9-]{1,30}$');
+    }
+
+    match /courses/{courseId}/{userId}/{fileName} {
       allow read: if isMember();
-      allow create, update: if isTeacher() && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
+      allow create, update: if isTeacher() && validCourse(courseId) && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
       allow delete: if isOwner() || isTeacher() && request.auth.uid == userId;
     }
   }

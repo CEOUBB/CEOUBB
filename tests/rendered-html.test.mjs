@@ -214,8 +214,12 @@ test("keeps profile deletion and course paths locked down", async () => {
   const firestoreRules = await readFile(new URL("../firebase/firestore.rules", import.meta.url), "utf8");
   const storageRules = await readFile(new URL("../firebase/storage.rules", import.meta.url), "utf8");
   assert.match(firestoreRules, /allow delete: if isOwner\(\);/);
-  assert.doesNotMatch(firestoreRules, /match \/courses\/\{courseId\}/);
-  assert.doesNotMatch(storageRules, /match \/courses\/\{courseId\}/);
+  assert.match(firestoreRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
+  assert.match(storageRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
+  assert.equal(firestoreRules.match(/validCourse\(courseId\)/g).length, 5, "every course write path must be guarded by validCourse");
+  assert.equal(storageRules.match(/validCourse\(courseId\)/g).length, 2, "every course upload path must be guarded by validCourse");
+  assert.match(firestoreRules, /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if isTeacher\(\)/);
+  assert.match(firestoreRules, /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if isTeacher\(\)/);
 });
 
 test("serves the public pages as cacheable static responses", async () => {

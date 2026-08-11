@@ -38,6 +38,10 @@ service cloud.firestore {
       return isOwner() ? 'owner' : isTeacherEmail() ? 'teacher' : 'student';
     }
 
+    function validCourse(courseId) {
+      return courseId.matches('^[a-z][a-z0-9-]{1,30}$');
+    }
+
     match /users/{userId} {
       allow read: if isOwner() || signedIn() && request.auth.uid == userId;
       allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
@@ -45,17 +49,35 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
-    match /courses/estatica/posts/{postId} {
+    match /courses/{courseId}/posts/{postId} {
       allow read: if isMember();
-      allow create: if isTeacher() && request.resource.data.authorId == request.auth.uid;
+      allow create: if isTeacher() && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
       allow update: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
       allow delete: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid;
     }
 
-    match /courses/estatica/progress/{userId} {
+    match /courses/{courseId}/progress/{userId} {
       allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
-      allow create, update: if isMember() && request.auth.uid == userId && request.resource.data.uid == userId;
+      allow create, update: if isMember() && validCourse(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
       allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
+    }
+
+    match /courses/{courseId}/meta/{documentId} {
+      allow read: if isMember();
+      allow write: if isTeacher() && validCourse(courseId);
+    }
+
+    match /courses/{courseId}/grades/{userId} {
+      allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
+      allow write: if isTeacher() && validCourse(courseId);
+    }
+
+    match /{path=**}/posts/{postId} {
+      allow read: if isMember();
+    }
+
+    match /{path=**}/meta/{documentId} {
+      allow read: if isMember();
     }
   }
 }

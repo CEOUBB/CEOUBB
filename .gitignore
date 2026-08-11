@@ -68,3 +68,6 @@ ui-debug.log
 *service-account*.json
 serviceAccountKey.json
 .grepai/
+.claude/
+.agents/
+skills-lock.json

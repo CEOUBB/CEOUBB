@@ -1,3 +1,5 @@
+/* global renderMathInElement */
+
 const courses = window.COURSES;
 const storeKey = 'centro-estudio-2026-certamenes-v2';
 let state = { activeCourse: 'all', difficulty: 'all', topic: 'all', search: '', progress: { completed: {}, notes: {} } };
@@ -5,9 +7,10 @@ let state = { activeCourse: 'all', difficulty: 'all', topic: 'all', search: '', 
 try {
   const saved = JSON.parse(localStorage.getItem(storeKey));
   if (saved && saved.completed && saved.notes) state.progress = saved;
-} catch (error) {
+} catch {
   state.progress = { completed: {}, notes: {} };
 }
+
 
 const elements = {
   nav: document.querySelector('#courseNav'),
@@ -42,10 +45,11 @@ function renderMath(root) {
   renderMathInElement(root, {
     delimiters: [
       { left: '$$', right: '$$', display: true },
-      { left: '\[', right: '\]', display: true },
+      { left: '\\[', right: '\\]', display: true },
       { left: '$', right: '$', display: false },
-      { left: '\(', right: '\)', display: false }
+      { left: '\\(', right: '\\)', display: false }
     ],
+
     throwOnError: false,
     ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
   });
