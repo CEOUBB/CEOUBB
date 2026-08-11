@@ -46,6 +46,8 @@ dev.*.log
 local.db*
 /outputs/
 /work/
+/graphify*/
+/graphify-out/
 
 **/node_modules/
 **/.gradle/
@@ -65,3 +67,4 @@ firestore-debug.log
 ui-debug.log
 *service-account*.json
 serviceAccountKey.json
+.grepai/

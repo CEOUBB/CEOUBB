@@ -1,14 +1,24 @@
 import { getAuth, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getFirestore, onSnapshot, orderBy, query, QueryDocumentSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { deleteObject, getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { firebaseApp } from "./firebase-client";
 import { AccountRole, roleForEmail } from "./access-policy";
 
 const COURSE_ID = "estatica";
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-const storage = getStorage(firebaseApp);
+
+let firestoreHandle: Promise<{ sdk: typeof import("firebase/firestore"); db: ReturnType<typeof import("firebase/firestore").getFirestore> }> | null = null;
+let storageHandle: Promise<{ sdk: typeof import("firebase/storage"); storage: ReturnType<typeof import("firebase/storage").getStorage> }> | null = null;
+
+function firestore() {
+  firestoreHandle ??= import("firebase/firestore").then((sdk) => ({ sdk, db: sdk.getFirestore(firebaseApp) }));
+  return firestoreHandle;
+}
+
+function cloudStorage() {
+  storageHandle ??= import("firebase/storage").then((sdk) => ({ sdk, storage: sdk.getStorage(firebaseApp) }));
+  return storageHandle;
+}
 
 export type ClassroomPostKind = "notice" | "guide" | "assessment" | "resource";
 
@@ -64,10 +74,11 @@ export function watchClassroom(
   let stopPosts: () => void = () => undefined;
   let stopProgress: () => void = () => undefined;
 
-  syncProfile().then((user) => {
+  firestore().then(async ({ sdk, db }) => {
+    const user = await syncProfile();
     if (!active) return;
-    stopPosts = onSnapshot(
-      query(collection(db, "courses", COURSE_ID, "posts"), orderBy("createdAt", "desc")),
+    stopPosts = sdk.onSnapshot(
+      sdk.query(sdk.collection(db, "courses", COURSE_ID, "posts"), sdk.orderBy("createdAt", "desc")),
       (snapshot) => {
         const entries = snapshot.docs.map((document) => ({ post: toPost(document), data: document.data() }));
         onChange({
@@ -78,13 +89,13 @@ export function watchClassroom(
       () => onError("No se pudieron sincronizar las publicaciones de Firebase."),
     );
     if (teaching) {
-      stopProgress = onSnapshot(
-        query(collection(db, "courses", COURSE_ID, "progress"), orderBy("lastSeen", "desc")),
+      stopProgress = sdk.onSnapshot(
+        sdk.query(sdk.collection(db, "courses", COURSE_ID, "progress"), sdk.orderBy("lastSeen", "desc")),
         (snapshot) => onChange({ students: snapshot.docs.map(toStudent) }),
         () => onError("No se pudo sincronizar el progreso del curso."),
       );
     } else {
-      getDoc(doc(db, "courses", COURSE_ID, "progress", user.uid))
+      sdk.getDoc(sdk.doc(db, "courses", COURSE_ID, "progress", user.uid))
         .then((snapshot) => {
           if (active) onChange({ ownProgress: snapshot.exists() ? Number(snapshot.data().completed ?? 0) : 0 });
         })
@@ -100,8 +111,9 @@ export function watchClassroom(
 }
 
 export async function saveClassroomProgress(completed: number, total: number) {
+  const { sdk, db } = await firestore();
   const user = await currentUser();
-  await setDoc(doc(db, "courses", COURSE_ID, "progress", user.uid), {
+  await sdk.setDoc(sdk.doc(db, "courses", COURSE_ID, "progress", user.uid), {
     uid: user.uid,
     displayName: user.displayName ?? "",
     email: emailOf(user),
@@ -109,14 +121,15 @@ export async function saveClassroomProgress(completed: number, total: number) {
     completed,
     total,
     percent: total ? Math.round(100 * completed / total) : 0,
-    lastSeen: serverTimestamp(),
+    lastSeen: sdk.serverTimestamp(),
   }, { merge: true });
 }
 
 export async function publishClassroomPost(input: { title: string; body: string; kind: string; linkUrl: string }) {
+  const { sdk, db } = await firestore();
   const user = await currentUser();
   const linkUrl = input.linkUrl.trim();
-  await addDoc(collection(db, "courses", COURSE_ID, "posts"), {
+  await sdk.addDoc(sdk.collection(db, "courses", COURSE_ID, "posts"), {
     ...authorFields(user),
     courseId: COURSE_ID,
     title: input.title.trim(),
@@ -127,7 +140,7 @@ export async function publishClassroomPost(input: { title: string; body: string;
     storagePath: "",
     contentType: "",
     fileSize: 0,
-    createdAt: serverTimestamp(),
+    createdAt: sdk.serverTimestamp(),
   });
 }
 
@@ -137,14 +150,16 @@ export async function uploadClassroomFile(file: File, onProgress: (percent: numb
   const safeName = file.name.replace(/[^\p{L}\p{N}._-]/gu, "_");
   const contentType = file.type || "application/octet-stream";
   const storagePath = `courses/${COURSE_ID}/${user.uid}/${Date.now()}_${safeName}`;
-  const task = uploadBytesResumable(ref(storage, storagePath), file, { contentType });
+  const cloud = await cloudStorage();
+  const task = cloud.sdk.uploadBytesResumable(cloud.sdk.ref(cloud.storage, storagePath), file, { contentType });
   await new Promise<void>((resolve, reject) => task.on(
     "state_changed",
     (snapshot) => onProgress(Math.round(100 * snapshot.bytesTransferred / snapshot.totalBytes)),
     reject,
     resolve,
   ));
-  await addDoc(collection(db, "courses", COURSE_ID, "posts"), {
+  const { sdk, db } = await firestore();
+  await sdk.addDoc(sdk.collection(db, "courses", COURSE_ID, "posts"), {
     ...authorFields(user),
     courseId: COURSE_ID,
     title: file.name,
@@ -155,25 +170,32 @@ export async function uploadClassroomFile(file: File, onProgress: (percent: numb
     storagePath,
     contentType,
     fileSize: file.size,
-    createdAt: serverTimestamp(),
+    createdAt: sdk.serverTimestamp(),
   });
 }
 
 export async function editClassroomPost(id: string, values: { title: string; body: string }) {
-  await updateDoc(doc(db, "courses", COURSE_ID, "posts", id), { title: values.title, body: values.body });
+  const { sdk, db } = await firestore();
+  await sdk.updateDoc(sdk.doc(db, "courses", COURSE_ID, "posts", id), { title: values.title, body: values.body });
 }
 
 export async function renameClassroomFile(id: string, fileName: string) {
-  await updateDoc(doc(db, "courses", COURSE_ID, "posts", id), { fileName });
+  const { sdk, db } = await firestore();
+  await sdk.updateDoc(sdk.doc(db, "courses", COURSE_ID, "posts", id), { fileName });
 }
 
 export async function deleteClassroomPost(id: string, storagePath = "") {
-  if (storagePath) await deleteObject(ref(storage, storagePath)).catch(() => undefined);
-  await deleteDoc(doc(db, "courses", COURSE_ID, "posts", id));
+  if (storagePath) {
+    const cloud = await cloudStorage();
+    await cloud.sdk.deleteObject(cloud.sdk.ref(cloud.storage, storagePath)).catch(() => undefined);
+  }
+  const { sdk, db } = await firestore();
+  await sdk.deleteDoc(sdk.doc(db, "courses", COURSE_ID, "posts", id));
 }
 
 export async function classroomFileUrl(storagePath: string) {
-  return getDownloadURL(ref(storage, storagePath));
+  const { sdk, storage } = await cloudStorage();
+  return sdk.getDownloadURL(sdk.ref(storage, storagePath));
 }
 
 function currentUser() {
@@ -193,19 +215,20 @@ function currentUser() {
 }
 
 async function syncProfile() {
+  const { sdk, db } = await firestore();
   const user = await currentUser();
-  const profile = doc(db, "users", user.uid);
-  const existing = await getDoc(profile);
+  const profile = sdk.doc(db, "users", user.uid);
+  const existing = await sdk.getDoc(profile);
   const base = {
     uid: user.uid,
     displayName: user.displayName ?? "",
     email: emailOf(user),
     photoUrl: user.photoURL ?? "",
     domain: emailOf(user).split("@").pop() ?? "",
-    lastSeen: serverTimestamp(),
+    lastSeen: sdk.serverTimestamp(),
   };
-  if (existing.exists()) await setDoc(profile, base, { merge: true });
-  else await setDoc(profile, { ...base, role: roleOf(user), createdAt: serverTimestamp(), teacherRequested: false });
+  if (existing.exists()) await sdk.setDoc(profile, base, { merge: true });
+  else await sdk.setDoc(profile, { ...base, role: roleOf(user), createdAt: sdk.serverTimestamp(), teacherRequested: false });
   return user;
 }
 
