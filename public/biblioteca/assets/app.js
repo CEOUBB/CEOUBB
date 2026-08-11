@@ -117,6 +117,18 @@ function renderCourseGrid() {
   elements.courseSummary.textContent = `${allExercises.length} evaluaciones · ${totalProblems} problemas largos`;
 }
 
+function refreshCounts() {
+  elements.nav.querySelectorAll('[data-course]').forEach(button => {
+    const id = button.dataset.course;
+    const total = id === 'all' ? allExercises.length : courses.find(course => course.id === id).exercises.length;
+    button.querySelector('.nav-count').textContent = `${completedCount(id === 'all' ? null : id)}/${total}`;
+  });
+  elements.grid.querySelectorAll('[data-course]').forEach(button => {
+    const course = courses.find(item => item.id === button.dataset.course);
+    button.querySelector('.course-meta span:last-child').textContent = `${completedCount(course.id)}/${course.exercises.length} certámenes`;
+  });
+}
+
 function updateTopicOptions() {
   const relevant = state.activeCourse === 'all' ? courses : courses.filter(course => course.id === state.activeCourse);
   const topics = [...new Set(relevant.flatMap(course => course.topics))].sort((a, b) => a.localeCompare(b, 'es'));
@@ -159,10 +171,15 @@ function exerciseTemplate(exercise) {
 function bindExerciseActions() {
   elements.list.querySelectorAll('[data-complete]').forEach(button => button.addEventListener('click', () => {
     const id = button.dataset.complete;
-    state.progress.completed[id] = !state.progress.completed[id];
+    const done = !state.progress.completed[id];
+    if (done) state.progress.completed[id] = true;
+    else delete state.progress.completed[id];
     saveProgress();
-    render();
-    showToast(state.progress.completed[id] ? 'Evaluación marcada como completada' : 'Evaluación reabierta');
+    button.classList.toggle('checked', done);
+    document.querySelector(`#${id}`).classList.toggle('completed', done);
+    refreshCounts();
+    renderProgress();
+    showToast(done ? 'Evaluación marcada como completada' : 'Evaluación reabierta');
   }));
   elements.list.querySelectorAll('[data-hint]').forEach(button => button.addEventListener('click', () => document.querySelector(`#hint-${button.dataset.hint}`).classList.toggle('visible')));
   elements.list.querySelectorAll('[data-solution]').forEach(button => button.addEventListener('click', () => document.querySelector(`#solution-${button.dataset.solution}`).classList.toggle('visible')));

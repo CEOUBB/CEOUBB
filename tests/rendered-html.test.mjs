@@ -217,3 +217,50 @@ test("keeps profile deletion and course paths locked down", async () => {
   assert.doesNotMatch(firestoreRules, /match \/courses\/\{courseId\}/);
   assert.doesNotMatch(storageRules, /match \/courses\/\{courseId\}/);
 });
+
+test("serves the public pages as cacheable static responses", async () => {
+  for (const path of ["/", "/privacidad"]) {
+    const response = await request(path);
+    assert.equal(response.status, 200);
+    const cacheControl = response.headers.get("cache-control") ?? "";
+    assert.doesNotMatch(cacheControl, /no-store/, `${path} must not be dynamically rendered`);
+  }
+  const html = await (await request("/")).text();
+  assert.match(html, /https:\/\/ceoubb\.com\/opengraph-image\.jpg/);
+});
+
+test("caches the vendored library assets and keeps the service worker fresh", async () => {
+  const vendor = await request("/biblioteca/assets/vendor/katex/katex.min.js");
+  assert.equal(vendor.status, 200);
+  assert.match(vendor.headers.get("cache-control") ?? "", /max-age=31536000/);
+  assert.match(vendor.headers.get("cache-control") ?? "", /immutable/);
+
+  const data = await request("/biblioteca/assets/data.js");
+  assert.match(data.headers.get("cache-control") ?? "", /stale-while-revalidate/);
+  assert.doesNotMatch(data.headers.get("cache-control") ?? "", /immutable/, "library content is not content-hashed");
+
+  const worker = await request("/sw.js");
+  assert.match(worker.headers.get("cache-control") ?? "", /no-store/);
+
+  assert.match(vendor.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/, "security headers must survive the cache rules");
+});
+
+test("serves a non-blocking service worker", async () => {
+  const response = await request("/sw.js");
+  assert.equal(response.status, 200);
+  const source = await response.text();
+  assert.doesNotMatch(source, /await cache\.put/, "the cache write must not block the response");
+  assert.match(source, /event\.waitUntil/);
+  assert.match(source, /caches\.match\("\/"\)/, "the offline navigation fallback must survive");
+});
+
+test("keeps the Firestore and Storage SDKs out of the initial page bundle", async () => {
+  const html = await (await request("/")).text();
+  const chunks = [...new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"]+?\.js/g)].map((match) => match[0]))];
+  assert.ok(chunks.length > 0, "the page must reference at least one client chunk");
+  for (const chunk of chunks) {
+    const source = await (await request(chunk)).text();
+    assert.ok(!source.includes("firestore.googleapis.com"), `${chunk} still ships the Firestore SDK`);
+    assert.ok(!source.includes("firebasestorage.googleapis.com"), `${chunk} still ships the Cloud Storage SDK`);
+  }
+});

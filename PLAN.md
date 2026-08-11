@@ -601,3 +601,81 @@ Production deployed: no.
 Known risks: None added by the package manager migration.
 Next recommended action: Proceed with preview testing and deployment as planned.
 
+
+---
+
+Date: 2026-08-10
+Human maintainer: project owner
+AI assistant: Claude Code
+Branch / commit: working tree on `main`. Not committed.
+Goal: raise the visual and interaction quality of the web portal without introducing a second design language, remove dead UI, and close the accessibility and notation gaps that the existing design system already required.
+
+Approach: targeted evolution inside the design system documented in `AGENTS.md` ("Web design system"). No UI kit, animation library, or icon set was added. The existing Tailwind-preflight + CSS custom properties + Motion + Phosphor + Geist stack was kept, because adding shadcn/HeroUI/GSAP here would have created exactly the templated look the request asked to remove, and `AGENTS.md` prefers targeted changes over broad rewrites.
+
+Files changed:
+- `app/globals.css`: `--ink-3` darkened from `#6b8ba3` to `#517488`; form placeholder switched from `#93aec2` to `--ink-3`; deleted the dead `.icon-action`, `.notification-menu`, `.notification-popover`, `.notification-kind` and `.unit-menu` rule sets; `.course-sidecards` replaced by `.course-facts`; `.resource-cards`/`.coverage` replaced by `.resource-layout`/`.resource-primary`/`.resource-aside`/`.coverage-list`; added `.math`, `.course-head`, `.timeline-when`, `.tool-status.ok`, `.tool-status.bad`; course-card spacing tightened; `.materials-view` given `align-items: start` and `.teacher-tools` made sticky; store badges lifted from `grayscale(1)/opacity .55` to `grayscale(1) contrast(.9)/opacity .78`; `.course-cover h2` selector updated to `h1`; matching updates in the 1100px and 800px breakpoints.
+- `app/Portal.tsx`: removed the `NotificationMenu` component, the `NotificationItem` type, its header instance and the `Bell` import; removed the four dead "Actividades" sidebar buttons that all called `setTab("home")`; the four learning-outcome equations and the three cover equations are now native MathML instead of monospace text; the three eyebrow-labelled sidecards became one `<dl>` facts panel; the redundant `<h1>Portada del curso</h1>` is suppressed on the course home tab and the cover heading promoted to `h1`; course cards gained a per-course next-evaluation line via the new `nextForCourse`/`shortDate` helpers and moved the notice count into a card head row; calendar rows gained a computed `countdown` value; `ResourcesView` rewritten from three equal cards into an asymmetric primary/secondary layout that absorbs the former standalone "Cobertura del banco" section; classroom status messages carry a `Note` tone (`info`/`ok`/`bad`) instead of a bare string, so failures no longer render identically to successes, and the element gained `role="status"`; `0 inscritos` replaced by `studentCount()`; the admin role `<select>` gained an `aria-label`.
+- `mathml.d.ts`: new. Declares the MathML intrinsic elements used, because `@types/react` 19.2 does not ship them. Runtime support is already in React 19 and in all current browsers.
+
+Why MathML rather than KaTeX: `AGENTS.md` requires conventional mathematical notation and forbids programming-style notation. The portal was rendering `ΣF = 0`, `F ≤ μₛN` and `I = Ī + Ad²` in Geist Mono. Native MathML produces correct italic variables, upright operators, real subscripts/superscripts and a true overbar with no dependency, no webfont, and no CSP change, and it is announced correctly by screen readers.
+
+Checks passed: `pnpm test` 24/24 (production build compiles and type checks, then both suites pass). `npx tsc --noEmit` clean. `pnpm run lint` reports 8 errors and 9 warnings, byte-identical to the pre-change baseline (verified by stashing); all are pre-existing in `app/privacidad/page.tsx` and `public/biblioteca/assets/app.js`. Every portal screen was rendered against the dev server at 1440px, 1000px and 390px and inspected: access, dashboard, calendar, resources, admin, classroom home, classroom materials. The error tone was exercised by submitting the publish form and confirming the message renders on the red surface with `role="status"`.
+
+Contrast: `--ink-3` at `#6b8ba3` measured 3.42:1 on `--paper` and 3.59:1 on `--card`, failing WCAG AA for body text; it is the site's most-used secondary colour. `#517488` measures 4.76:1 on paper, 5.00:1 on card and 4.62:1 on wash. The old placeholder `#93aec2` measured 2.31:1 on white.
+
+Checks not run: no institutional Google sign-in, so the classroom was inspected as owner with an owner session seeded directly into the local database. The teacher and student views of `course-facts`, the progress table and the materials list were not seen with real Firebase data. Android was not built and was not modified; its study-library copy is untouched and remains on the older dark theme, as `AGENTS.md` records. Firebase rules were not touched, compiled or deployed.
+
+Production deployed: no.
+
+Known risks:
+- `mathml.d.ts` augments the React JSX namespace. If `@types/react` later ships MathML elements, this file should be deleted rather than left to conflict.
+- The classroom equations are decorative-adjacent but are now real MathML; if the Android bundled library is ever brought onto this theme, it needs the same treatment rather than a third notation style.
+- `window.prompt`/`window.confirm` are still used for editing posts and renaming files. They are the largest remaining polish gap in the teacher flow and were left alone deliberately: replacing them is a dialog-system change, not a styling change, and is worth its own scoped task.
+
+Next recommended action: sign in on a preview as a teacher and as a student to confirm the `course-facts` panel, the progress table and the materials list read correctly with real Firebase data, then decide whether to replace the `prompt`/`confirm` interactions with in-page dialogs.
+
+---
+
+Date: 2026-08-11
+Human maintainer: project owner
+AI assistant: Claude Code
+Branch / commit: `claude/perf-plans`, branched from `76f20bb`.
+Goal: execute the six performance plans generated by the `improve` skill in `plans/` (that directory is gitignored, so it is not part of this branch).
+
+Files changed:
+- `app/layout.tsx` (plan 001, 006): `generateMetadata()` and its `headers()` call replaced by a static `export const metadata` with `metadataBase: new URL("https://ceoubb.com")`. Reading request headers in the root layout was opting every route in the app into dynamic rendering. The hand-written `openGraph.images` and `twitter.images` entries were removed in favour of the file convention.
+- `app/opengraph-image.jpg`, `app/opengraph-image.alt.txt` (plan 006): new. `public/og.png` (1 540 663 B, 1730 × 909) deleted and replaced by a 1200 × 630 JPEG of 64 555 B, re-encoded from the same artwork with `pnpm dlx sharp-cli` (not added to `package.json`). The PNG candidate came out at 857 435 B, so the plan's ≤ 300 000 B decision rule selected JPEG. Next.js now derives `og:image:type`, `og:image:width` and `og:image:height` from the file, which also fixes the previously declared 1728 × 920 against a real 1730 × 909.
+- `next.config.ts` (plan 002): four `Cache-Control` entries appended after the existing security-header entry — `/sw.js` `no-cache, no-store, must-revalidate`; `/biblioteca/:path*` `max-age=300, stale-while-revalidate=86400`; `/biblioteca/assets/vendor/:path*` `max-age=31536000, immutable`; `/:path(brand|icons)/:file*` `max-age=86400, stale-while-revalidate=604800`.
+- `public/sw.js` (plan 004): cache key bumped to `centro-estudio-ubb-v6`. The blocking `await cache.put` before `return response` is gone; writes now run under `event.waitUntil`. Routing split into `cacheFirst` (for `IMMUTABLE` = `/_next/static/` and `/biblioteca/assets/vendor/`, and `REVALIDATE` = the three unfingerprinted library assets) and `networkFirst` (everything else, including all HTML). The offline navigation fallback to `/` is unchanged.
+- `public/biblioteca/assets/app.js` (plan 005): the `[data-complete]` handler no longer calls `render()`. A new `refreshCounts()` updates only the nav counters and course-card counts, so ticking one checkbox no longer re-parses every KaTeX expression on screen.
+- `app/portal-ui.tsx`, `app/EstaticaClassroom.tsx` (plan 003): new. `app/Portal.tsx` went from 782 to 423 lines; the classroom half now loads through `next/dynamic(..., { ssr: false })` and is the only importer of `lib/firebase-classroom-client`.
+- `lib/firebase-classroom-client.ts` (plan 003): `firebase/firestore` and `firebase/storage` are now behind memoised dynamic imports (`firestore()` / `cloudStorage()`); only `firebase/auth` remains a static import. `watchClassroom` still returns its unsubscribe function synchronously.
+- `tests/rendered-html.test.mjs`: four tests added — public pages are not `no-store`, library cache headers and a never-stored service worker, the service worker does not block on its cache write, and no chunk referenced by `/` contains the Firestore or Cloud Storage SDK.
+- `app/Portal.tsx`, `app/globals.css`, `mathml.d.ts`, `.gitignore`: carry the previous session's uncommitted design work, now committed alongside the split because plan 003 moved parts of that work into the two new files and the two changes can no longer be separated.
+
+Measured result:
+- `/` and `/privacidad` are prerendered again (`○` in the route table; both present in `.next/prerender-manifest.json`). Before: all ten routes `ƒ`.
+- Chunks referenced by `/`: 1 349 048 B raw / 407 045 B gzipped before, 840 949 B / 259 289 B after — 147 756 gzipped bytes removed (−36.3 %). The Firestore/Storage SDK is no longer requested by `/` at all. The drop is 1.5 % under plan 003's stated 150 000 B threshold because removing Firestore forced Turbopack to emit `firebase/auth` (66 364 B gzipped) as its own chunk, which `/` still requests deliberately — the login button needs it. That 66 KB was never Firestore's to give back.
+- Social preview image: 1 540 663 B → 64 555 B, and the declared dimensions now match the file.
+
+Deviation from the plans: plan 002 step 2 orders the `/biblioteca/assets/vendor/:path*` rule before the broader `/biblioteca/:path*` rule while also (correctly) citing the Next.js rule that the last matching entry wins for a given header key. Those two statements contradict each other; with the plan's ordering the vendored KaTeX was served `max-age=300` and the plan's own test failed. The broad rule is therefore placed first and the vendor rule second, which is what produces the intended `immutable` on the vendored assets.
+
+Checks passed: `pnpm test` — 28/28 (production build compiles and type checks, then both suites pass). `pnpm exec tsc --noEmit -p tsconfig.json` — clean. `pnpm run lint` — `✖ 17 problems (8 errors, 9 warnings)`, byte-identical to the documented pre-existing baseline; all findings are in `app/privacidad/page.tsx` and `public/biblioteca/assets/app.js`. Build route table and `.next/prerender-manifest.json` inspected. Generated `og:` tags read out of the prerendered HTML.
+
+Note for the plans: `pnpm dlx tsc` resolves to an unrelated squatted `tsc@2.0.4` package that exits nonzero. Use `pnpm exec tsc` instead.
+
+Checks not run (manual, need a real browser or real Firebase accounts):
+- Plan 003 step 8, the 13-row classroom matrix. Rows 3 (lazy chunk arrives on entering the classroom), 12 (leave the classroom before the chunk resolves) and 4 (progress write through the new `await firestore()` path) are the ones this change actually puts at risk.
+- Plan 004 step 4, the 8-row service-worker matrix, especially row 6: the library must still render fully offline.
+- Plan 005's browser matrix for the incremental-render change.
+- Plan 006 step 6: scraping a preview URL with WhatsApp, the Facebook debugger and the X card validator.
+
+Production deployed: no. Nothing was deployed; no DNS, Firebase rule, Functions or billing change was made.
+
+Known risks:
+- `https://ceoubb.com/og.png` now 404s. Social platforms cache preview images for days to weeks, so already-shared links keep showing the old card until their cache expires.
+- The service worker's caching policy and the new `Cache-Control` headers are two layers of one policy. Changing either without the other produces either a wasted header or a stale-content bug.
+- The classroom is a live surface with no automated coverage. The 13-row matrix is the real gate on plan 003, not `pnpm test`.
+- Preview deployments now advertise the production Open Graph image, because `metadataBase` is hardcoded to `https://ceoubb.com`. Intentional and harmless while the image is environment-independent.
+
+Next recommended action: deploy a Vercel preview from this branch, then run the three manual matrices above (classroom as teacher and as student, service worker offline, and a social scrape of the preview URL) before merging to `main`.
