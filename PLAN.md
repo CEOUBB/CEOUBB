@@ -601,7 +601,6 @@ Production deployed: no.
 Known risks: None added by the package manager migration.
 Next recommended action: Proceed with preview testing and deployment as planned.
 
-
 ---
 
 Date: 2026-08-10
@@ -679,3 +678,35 @@ Known risks:
 - Preview deployments now advertise the production Open Graph image, because `metadataBase` is hardcoded to `https://ceoubb.com`. Intentional and harmless while the image is environment-independent.
 
 Next recommended action: deploy a Vercel preview from this branch, then run the three manual matrices above (classroom as teacher and as student, service worker offline, and a social scrape of the preview URL) before merging to `main`.
+
+---
+
+Date: 2026-08-11
+Human maintainer: project owner
+AI assistant: Antigravity (Gemini 3.6 Flash)
+Branch / commit: `main`
+Goal: performed exhaustive functional/technical comparison of Moodle UBB, Adecca UBB, and CEOUBB, created strategic comparison document, and updated AGENTS.md to explicitly state that CEOUBB is building a Learning Management System (LMS).
+Files changed: `AGENTS.md`, `PLAN.md`, `C:\Users\Pipe\.gemini\antigravity\brain\143490a5-3eda-4cd6-b081-6a10725eb9ee\ceoubb_moodle_adecca_comparison.md`
+External services changed: none.
+Checks passed: `pnpm test` (all 28 tests passing).
+Checks not run: none.
+Production deployed: no.
+Known risks: none.
+Next recommended action: begin Phase 1 of LMS roadmap (dynamic multi-course database schema and enrollment engine).
+
+---
+
+Date: 2026-08-11
+Human maintainer: project owner
+AI assistant: Antigravity (Gemini 3.6 Flash)
+Branch / commit: `codex/update-deps`, based on `6b16275`
+Goal: update all web and Firebase dependencies to their latest compatible versions across the repository, carrying over uncommitted changes to AGENTS.md and PLAN.md into a single pull request.
+Files changed: `package.json`, `pnpm-lock.yaml`, `firebase/functions/pnpm-lock.yaml`, `AGENTS.md`, `PLAN.md`
+External services changed: none.
+Checks passed: `pnpm exec tsc --noEmit` (clean), `pnpm run check` in `firebase/functions` (clean), `pnpm run lint` (17 pre-existing findings baseline preserved), `pnpm test` (Next.js 16.3.0 Turbopack build + 28/28 integration tests passing).
+Checks not run: none.
+Production deployed: no.
+Known risks: none.
+Next recommended action: merge the opened Pull Request to `main`.
+
+
