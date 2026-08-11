@@ -8,7 +8,7 @@ Read this file and `PLAN.md` completely before editing. A direct user instructio
 
 ## Project summary
 
-Centro de Estudio UBB is an independent educational platform for Universidad del Bío-Bío students and teachers. It is not an official university service.
+Centro de Estudio UBB is an independent educational platform and Learning Management System (LMS) for Universidad del Bío-Bío students and teachers. It is not an official university service. It aims to unify course management, academic materials delivery, offline study resources, evaluation tracking, and collaborative virtual classrooms into a modern, centralized platform.
 
 The repository contains three product surfaces:
 
