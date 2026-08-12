@@ -1,7 +1,9 @@
+import Link from "next/link";
+
 export default function PrivacyPage() {
   return (
     <main className="policy-page">
-      <a className="policy-brand" href="/">CE · Centro de Estudio UBB</a>
+      <Link className="policy-brand" href="/">CE · Centro de Estudio UBB</Link>
       <article>
         <span className="eyebrow">Vigente desde el 8 de agosto de 2026</span>
         <h1>Política de privacidad</h1>
@@ -16,8 +18,9 @@ export default function PrivacyPage() {
         <p>Los datos se conservan mientras la cuenta permanezca activa o sean necesarios para operar el aula, salvo información que deba conservarse por una obligación legal o de seguridad.</p>
         <h2>Contacto</h2>
         <p>Para consultas de privacidad escribe a <a href="mailto:elpapijuaco325@gmail.com">elpapijuaco325@gmail.com</a>.</p>
-        <nav><a href="/">Volver al portal</a></nav>
+        <nav><Link href="/">Volver al portal</Link></nav>
       </article>
     </main>
   );
 }
+

@@ -6,9 +6,16 @@ This file contains repository-wide instructions for every coding agent working o
 
 Read this file and `PLAN.md` completely before editing. A direct user instruction overrides this file. A nested `AGENTS.md` overrides this file only for files inside that nested directory.
 
+`ceoubb_moodle_adecca_comparison.md` at the repository root compares CEOUBB feature by feature against Moodle UBB and Adecca UBB, marks each gap resolved, partial, open or deferred, records what breaks at university scale, and — since the 2026-08-11 second revision — carries the institutional adoption dossier: what a state university's evaluation requires beyond features. Read it before proposing new product work, and update it when you close one of its items.
+
 ## Project summary
 
 Centro de Estudio UBB is an independent educational platform and Learning Management System (LMS) for Universidad del Bío-Bío students and teachers. It is not an official university service. It aims to unify course management, academic materials delivery, offline study resources, evaluation tracking, and collaborative virtual classrooms into a modern, centralized platform.
+
+**Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS**, in the role Moodle UBB and Adecca UBB occupy today — thousands of students, thousands of course sections, multiple facultades and carreras. Two consequences bind every agent:
+
+- Judge architectural decisions against university scale and against an institutional evaluation (DTI, Vicerrectoría Académica, jurídica), not against the current single-cohort pilot. A design that only works for six ramos is technical debt the moment it is written, and must be labelled as such when it is unavoidable.
+- Until a written agreement with the university exists, the product remains independent and non-official. Keep the disclaimer in the UI, keep the store badges as placeholders, and never present CEOUBB as institutional. Section 8 of `ceoubb_moodle_adecca_comparison.md` is the agreed path: an authorized pilot first, the proposal afterwards.
 
 The repository contains three product surfaces:
 
@@ -57,7 +64,9 @@ Direct commits to `main` have been used during initial development, but feature 
 ## Repository map
 
 - `app/`: web routes, UI, authentication endpoints, and portal features.
-- `app/Portal.tsx`: primary web UI, login, dashboard, Estática classroom, progress, administration, and store placeholders.
+- `app/Portal.tsx`: portal shell — session check, access screen, header navigation and screen routing.
+- `app/portal-views.tsx`: course dashboard, academic calendar, resources and account administration.
+- `app/Classroom.tsx`: the generic classroom, rendered for any course in the registry (portada, participantes, notas, progreso, materiales).
 - `lib/`: shared web authentication, access policy, Firebase client setup, and classroom client logic.
 - `public/biblioteca/`: browser-accessible study library and academic material.
 - `public/brand/`, `public/icons/`, `public/manifest.webmanifest`, `public/sw.js`: branding and PWA assets.
@@ -103,21 +112,55 @@ The rules files and the Android service cannot import TypeScript, so they hold t
 
 Never implement authorization only in the UI. Firestore and Storage rules are the security boundary.
 
+**Scope of this invariant, and its planned successor.** Everything above is an *authentication and account-eligibility* rule: it decides who may enter CEOUBB at all, and it stays enforced exactly as written until it is deliberately replaced. It is not an authorization model, and it cannot become one:
+
+- A domain suffix cannot express per-course roles. The same person is a teacher in one section and a student in another, and `Ayudante` and `Coordinador` do not exist in it at all.
+- The two owner/developer Gmail exceptions are permanent superusers bound to personal consumer accounts. Correct for a pilot run by its two authors; an audit finding in an institutional review.
+
+The target state is institutional SSO (SAML 2.0 / OIDC / CAS) against the UBB directory, with roles taken from directory membership plus per-enrollment role records, and directory-backed administrator accounts replacing the two exceptions. That is `P0B.1` in `PLAN.md`. Amending this section is deliberate work — one commit, `ACCESS_CASES` and the four synchronized surfaces updated together — not something to drift into while building a feature. Until that commit lands, do not weaken, bypass or duplicate the rule as written.
+
 ### Classroom data
 
 Firebase is the current source of truth for the collaborative Estática beta:
 
 - User profiles: `users/{uid}`
-- Posts: `courses/estatica/posts/{postId}`
-- Progress: `courses/estatica/progress/{uid}`
-- Files: `courses/estatica/{uploaderUid}/{timestamp}_{safeFileName}`
+- Posts: `courses/{courseId}/posts/{postId}`
+- Progress: `courses/{courseId}/progress/{uid}` (also holds each student's private `simulated` grade map)
+- Files: `courses/{courseId}/{uploaderUid}/{timestamp}_{safeFileName}`
+- Grading scheme: `courses/{courseId}/meta/gradebook` (teacher-authored `items[]` plus the `exemption` grade)
+- Official grades: `courses/{courseId}/grades/{uid}` (teacher-written, readable by that student and by teachers)
 - Student notification topic: `course_estatica_students`
 
-The web Firebase client and native Android service use course ID `estatica`. The unused D1/R2 classroom routes that used `estatica-440299` were deleted during the Vercel migration; Firebase is now the only classroom backend. The writerless `notifications` and `notification_reads` tables, `GET/POST /api/notifications` and the web notification bell were removed on 2026-08-09; Firebase Cloud Messaging on `course_estatica_students` is the only notification path.
+`lib/courses.ts` is the course registry: the single list of course ids, codes, tones, learning outcomes and known evaluation dates for the web. It is a static module **as scaffolding only**. The owner's stated direction is that courses and enrollments must move to the database: a university-scale deployment means thousands of courses and thousands of students, and a hardcoded list cannot serve that. Treat the current module as a placeholder for the relational academic model specified in "P1 — Academic data model (canonical spec)" of `PLAN.md` — `facultades`, `departamentos`, `carreras`, `planes_de_estudio`, `asignaturas`, `periodos`, `secciones` and `enrollments` (`userId`, `seccionId`, `role`, `state`) — not as a settled architecture, and do not add a second hardcoded catalogue anywhere else.
 
-`lib/firebase-classroom-client.ts` owns the whole Firestore/Storage surface of the classroom. It exposes one subscription, `watchClassroom(teaching, onChange, onError)`, which syncs the profile once and returns already-shaped `ClassroomPost`, `ClassroomFile` and `ClassroomStudent` values, plus the commands `publishClassroomPost`, `uploadClassroomFile`, `editClassroomPost`, `renameClassroomFile`, `deleteClassroomPost`, `saveClassroomProgress` and `classroomFileUrl`. Raw Firestore documents must not cross that seam: keep record shaping, post-kind normalization and author-role derivation inside the module, not in `app/Portal.tsx`.
+Two decisions about that model are settled; do not relitigate them in a feature branch:
+
+- **Course identity is a section**, that is *asignatura × período × sección*, not an asignatura. Today `courseId = "estatica"` is one global bucket, so two paralelos of the same ramo, or the same ramo in a later year, would write into the same `courses/estatica/posts`. Anything that assumes one document tree per asignatura is writing debt.
+- **Turso is the system of record** for every entity above; **Firestore holds a narrow one-way projection** of enrollments (membership and role only) whose sole purpose is to let rules answer "is this user enrolled here?" with `exists()`. That projection has exactly one writer and is never authored by a client. Earlier documentation warned against splitting the data; that warning is superseded.
+
+The interface is already shaped for that swap. Only `app/Portal.tsx` imports the registry; `CoursesDashboard`, `CalendarView` and `ResourcesView` take `courses: Course[]` as a prop, and `calendarEntries(courses, gradebooks)` takes the list as an argument. Migrating means replacing one `const courses = COURSES` with the signed-in user's enrolled courses. Keep it that way: never import `COURSES` from a view component.
+
+These things break at scale and must be fixed as part of that migration, not after it:
+
+- `watchCourseActivity` sweeps the newest posts of every course in the database and filters client-side. Beyond a few dozen active courses a student's own posts stop fitting in the window and the unread badges silently go empty. Replace with a query filtered by enrolled courses, or a per-user aggregate document.
+- `watchGradebooks` reads every published gradebook in the database, unlimited, on each portal load. Six documents today; thousands of reads per session at university scale.
+- `isMember()` grants any signed-in UBB account read access to every course's posts and gradebook. That is acceptable while one cohort shares six ramos and is a privacy problem the moment unrelated faculties coexist. Course reads must then be gated on an enrollment check in the rules.
+- Posts, files, the participant roster and the grade matrix all load whole. Each needs pagination before a 300-student section opens it.
+- `saveStudentScores` writes the whole section in one batch; Firestore caps a write batch at 500 operations. Chunk it.
+- Enrollment-filtered queries will need composite indexes that `firebase/firestore.indexes.json` does not have today.
+- `course_estatica_students` is a single-course notification topic, and `ClassroomService.java` still pins `COURSE_ID = "estatica"`. Both become per-section with the migration.
+
+Adding a ramo today means adding an entry to the registry, nothing else; the rules accept any `courseId` matching `^[a-z][a-z0-9-]{1,30}$`, so no rules deploy is needed for a new course. The native Android service still pins `COURSE_ID = "estatica"`, which the wildcard rules keep working unchanged. The unused D1/R2 classroom routes that used `estatica-440299` were deleted during the Vercel migration; Firebase is now the only classroom backend. The writerless `notifications` and `notification_reads` tables, `GET/POST /api/notifications` and the web notification bell were removed on 2026-08-09; Firebase Cloud Messaging on `course_estatica_students` is the only notification path.
+
+`lib/firebase-classroom-client.ts` owns the whole Firestore/Storage surface of the classroom. Every function takes `courseId` as its first argument. It exposes the per-course subscription `watchClassroom(courseId, teaching, onChange, onError)`, which syncs the profile once and returns already-shaped `ClassroomPost`, `ClassroomFile`, `ClassroomStudent` and grade values, plus two portal-wide collection-group subscriptions, `watchCourseActivity` (drives the unread badges on the course cards) and `watchGradebooks` (drives the calendar). Commands: `publishClassroomPost`, `uploadClassroomFile`, `editClassroomPost`, `renameClassroomFile`, `moveClassroomPost`, `deleteClassroomPost`, `saveClassroomProgress`, `saveGradebook`, `saveStudentScores`, `saveSimulation` and `classroomFileUrl`. Raw Firestore documents must not cross that seam: keep record shaping, post-kind normalization and author-role derivation inside the module, not in `app/Classroom.tsx`.
+
+`lib/grades.ts` is the only place grade arithmetic lives. It holds the Chilean 1,0–7,0 scale constants, `summarize` (weighted average over what already has a grade) and `requiredGrade` (the score still needed to reach a target, rounded up to one decimal, reported as `closed`, `secured`, `impossible` or `needed`). It is pure and has no Firebase import; `tests/grades.test.ts` drives it directly. Do not re-derive a weighted average anywhere else.
 
 Teachers and owners may create material. A teacher may edit or delete only their own material; owners may administer all material. Students may read/download and update only their own progress. Direct uploads are limited to 50 MiB.
+
+Grades follow the same split. Only teachers and owners write `meta/gradebook` and `grades/{uid}`; a student reads the scheme, reads only their own official grades, and can never write them. The student's own what-if simulation is a `simulated` map inside their own progress document, so it never touches a teacher-owned path. CEOUBB is not the institutional grade record: official grades entered here are a convenience copy, never the source of truth for the university.
+
+That disclaimer is what currently substitutes for a grade audit trail — nothing records who changed a score, when, or what the previous value was, because `grades/{uid}` is overwritten in place. It stops being sufficient the moment the platform is proposed as an official gradebook. `P0.9` in `PLAN.md` specifies append-only grade history (author, timestamp, previous and new value) written where clients cannot bypass or edit it. Do not build new grade write paths that would have to be retrofitted for it: any new writer should assume history is coming.
 
 ### Study library duplication
 
@@ -164,6 +207,7 @@ pnpm test
 The suite has two seams and no third one should be invented:
 
 - `tests/access-policy.test.ts` imports `lib/access-policy.ts` and calls it. Pure, no server, no database.
+- `tests/grades.test.ts` imports `lib/grades.ts` the same way. Same seam, same rules: pure functions called directly. Import types with `import type`, otherwise `--experimental-strip-types` fails on the missing runtime export.
 - `tests/rendered-html.test.mjs` migrates a throwaway libSQL database in the OS temp directory, seeds an owner, a teacher and a student, starts `next start` against it through `TURSO_DATABASE_URL`, and exercises the session and administration endpoints over HTTP with real session cookies.
 
 Assert on behaviour through those seams. Do not add regular-expression assertions over source text; the few that remain exist only for store-badge compliance and for the Firebase rules, which no test process can execute.
@@ -246,6 +290,11 @@ The library page cannot use `next/font`, Phosphor or Motion: it is static, depen
 - Validate upload type, size, ownership, and storage path on every surface.
 - Treat account deletion, privacy policy, data retention, Google Play Data safety, and Apple privacy disclosures as release-blocking compliance work.
 - Do not modify DNS, billing plans, IAM roles, store accounts, production rules, or production data unless the active user request clearly authorizes that exact action.
+- Assume every academic record in the platform is personal data of a real student. Grades, rosters and progress are held under Ley 19.628 and the Ley 21.719 regime; keep Firestore, Storage and Functions in `southamerica-west1`, and treat retention, export and deletion as product requirements rather than afterthoughts.
+- There is no backup regime and no proven restore today (`P0.8`). Until there is, treat any change that can mass-write or mass-delete classroom data as high risk, and do not run one against production without an explicit, current instruction.
+- Grade write paths must be designed for the append-only history in `P0.9`. Never add a path that lets a client silently overwrite a score with no record.
+- The two personal-account owner exceptions are a known finding, tracked in `P0B.1`. Do not add a third exception, and do not widen what those accounts can do.
+- No deploy of Firestore or Storage rules should reach production without having run against the emulator suite or a staging project (`P0.10`, `P0.11`).
 
 ## Testing expectations
 
@@ -267,6 +316,8 @@ pnpm run check
 ```
 
 For Firebase rule changes, compile/deploy to an authorized test or production project only with permission. Prefer adding Emulator Suite rule tests before broadening access.
+
+Emulator Suite rule tests and GitHub Actions CI are `P0.10` in `PLAN.md`, not a nice-to-have: once course reads are gated on enrollment, the rules are the only thing standing between one carrera's students and another's material, and nothing in the current suite can execute them. Any change that introduces or modifies an enrollment check should land together with its emulator test. When adding a scale-sensitive path (a query, a batch write, a list view), state in the handoff what its behaviour is at the `P0.7` capacity targets — an unbounded query that is fine at six courses is a defect at six thousand.
 
 For Android changes, at minimum build the debug variant. Authentication, Storage uploads, notification permissions, deep links, offline library access, and FCM delivery require manual testing on a physical Android device.
 
@@ -319,6 +370,8 @@ A task is complete only when:
 5. Documentation and `PLAN.md` reflect material changes.
 6. No secrets, generated binaries, or unrelated local changes are committed.
 7. The branch is synchronized and the commit/push or PR status is clearly reported.
+8. Any new query, list view or write path states its behaviour at university scale — bounded, paginated, enrollment-filtered — or is explicitly labelled as pilot-only debt in `PLAN.md`. "Works for six ramos" is not done.
+9. Nothing in the change presents CEOUBB as an official or university-endorsed service while no agreement exists.
 
 
 <!-- BEGIN:nextjs-agent-rules -->
