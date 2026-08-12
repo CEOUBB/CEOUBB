@@ -3,16 +3,15 @@ import { NextResponse } from "next/server";
 import { isFreshTimestamp, verifyLinearSignature } from "@/lib/linear-signature";
 
 // Discord webhook URL for #🎯-❙-linear
-const DISCORD_WEBHOOK_URL =
-  process.env.DISCORD_LINEAR_WEBHOOK_URL ||
-  "https://discord.com/api/webhooks/1536974344553762897/vdRp3bekJhBcSqIZh2-xQqnGove9rYeiTcgFOxCq0xWZFXPXULUY1OdDcjo-E_6yQX6y";
-
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_LINEAR_WEBHOOK_URL;
 const LINEAR_WEBHOOK_SECRET = process.env.LINEAR_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
   try {
-    if (!LINEAR_WEBHOOK_SECRET) {
-      console.error("[Linear Webhook] LINEAR_WEBHOOK_SECRET is not configured");
+    if (!LINEAR_WEBHOOK_SECRET || !DISCORD_WEBHOOK_URL) {
+      console.error(
+        "[Linear Webhook] LINEAR_WEBHOOK_SECRET or DISCORD_LINEAR_WEBHOOK_URL is not configured",
+      );
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
     }
 
