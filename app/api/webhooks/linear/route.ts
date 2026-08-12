@@ -86,6 +86,8 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        username: "Linear",
+        avatar_url: "https://linear.app/apple-touch-icon.png",
         embeds: [embed],
       }),
     });
