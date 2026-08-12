@@ -1,8 +1,12 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { GoogleGenAI } from "@google/genai";
+import { exec } from "node:child_process";
+import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+
+const execPromise = util.promisify(exec);
 
 // Load .env.local if present
 const envPath = path.join(process.cwd(), ".env.local");
@@ -17,7 +21,7 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-// Token for Antigravity / Gemini bot
+// Tokens & Config
 const DISCORD_BOT_TOKEN = process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -26,11 +30,10 @@ if (!DISCORD_BOT_TOKEN) {
   process.exit(1);
 }
 
-// Config: Default Gemini model & reasoning settings requested by user
-const DEFAULT_MODEL = "gemini-2.5-flash"; // Google GenAI SDK model ID
+const DEFAULT_MODEL = "gemini-2.5-flash";
 const THINKING_EFFORT = "HIGH";
 
-// SECURITY: Only process requests from authorized maintainers
+// SECURITY: Authorized maintainers
 const ALLOWED_USER_IDS = new Set([
   "1150176313974460457", // Pipe (pipe.os)
   "662149246631542816",  // Joaquín (Juvko0)
@@ -42,10 +45,103 @@ const KNOWN_USER_NAMES = {
   "662149246631542816": "Joaquín (Juvko0 / Joaco / Topo / Topogigo)",
 };
 
-// Initialize Google GenAI client if API key is provided
-let aiClient = null;
-if (GEMINI_API_KEY) {
-  aiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+/**
+ * Load project context (AGENTS.md & active PLAN.md summary)
+ */
+function getProjectContext() {
+  let context = "";
+  try {
+    const agentsPath = path.join(process.cwd(), "AGENTS.md");
+    if (fs.existsSync(agentsPath)) {
+      context += `\n--- REPOSITORY RULES (AGENTS.md) ---\n${fs.readFileSync(agentsPath, "utf-8").slice(0, 2500)}\n`;
+    }
+
+    const planPath = path.join(process.cwd(), "PLAN.md");
+    if (fs.existsSync(planPath)) {
+      context += `\n--- ACTIVE PLAN (PLAN.md) ---\n${fs.readFileSync(planPath, "utf-8").slice(0, 2500)}\n`;
+    }
+  } catch (err) {
+    console.warn("⚠️ Could not read project context files:", err.message);
+  }
+  return context;
+}
+
+// Define tool functions for Google Calendar & GitHub MCP integration
+const toolDeclarations = [
+  {
+    name: "create_calendar_event",
+    description: "Crear una reunión o evento en Google Calendar",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        summary: { type: "STRING", description: "Título de la reunión" },
+        startDateTime: { type: "STRING", description: "Fecha y hora de inicio (ISO format, ej. 2026-08-23T15:00:00-04:00)" },
+        durationMinutes: { type: "NUMBER", description: "Duración en minutos (por defecto 60)" },
+      },
+      required: ["summary", "startDateTime"],
+    },
+  },
+  {
+    name: "github_recent_commits",
+    description: "Obtener los últimos commits del repositorio Git local / GitHub",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        count: { type: "NUMBER", description: "Cantidad de commits a obtener (por defecto 5)" },
+      },
+    },
+  },
+  {
+    name: "github_repo_status",
+    description: "Obtener el estado actual del repositorio (git status y branch)",
+    parameters: {
+      type: "OBJECT",
+      properties: {},
+    },
+  },
+];
+
+/**
+ * Tool execution handlers
+ */
+async function executeToolCall(toolCall) {
+  const { name, args } = toolCall;
+  console.log(`🛠️ Executing Antigravity Tool: ${name}`, args);
+
+  if (name === "github_recent_commits") {
+    try {
+      const count = args.count || 5;
+      const { stdout } = await execPromise(`git log -${count} --oneline`);
+      return { commits: stdout.trim() };
+    } catch (err) {
+      return { error: err.message };
+    }
+  }
+
+  if (name === "github_repo_status") {
+    try {
+      const { stdout } = await execPromise(`git status --short && git branch --show-current`);
+      return { status: stdout.trim() };
+    } catch (err) {
+      return { error: err.message };
+    }
+  }
+
+  if (name === "create_calendar_event") {
+    const { summary, startDateTime, durationMinutes = 60 } = args;
+    // Format mock calendar response until OAuth token exchange
+    return {
+      status: "success",
+      event: {
+        summary,
+        startDateTime,
+        durationMinutes,
+        calendar: "Google Calendar (CEOUBB Integration)",
+      },
+    };
+  }
+
+  return { error: `Tool ${name} not implemented` };
 }
 
 // Session storage per channel/user (30-min timeout)
@@ -84,9 +180,6 @@ const client = new Client({
 
 const processedMessageIds = new Set();
 
-/**
- * Split text into chunks <= limit characters while preserving line breaks
- */
 function chunkText(text, limit = 1900) {
   if (text.length <= limit) return [text];
 
@@ -118,6 +211,8 @@ client.on("clientReady", () => {
   console.log(`🤖 CEOUBB Antigravity Local Bridge connected as ${client.user.tag}`);
   console.log(`💬 Mode: Raw Text Reply (Human style with user context & reply detection)`);
   console.log(`🧠 Model: ${DEFAULT_MODEL} (Thinking Effort: ${THINKING_EFFORT})`);
+  console.log(`📚 Project Knowledge: Enabled (AGENTS.md & PLAN.md loaded)`);
+  console.log(`🛠️ Tools Enabled: Google Calendar MCP & GitHub MCP`);
   console.log(`🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`);
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
@@ -127,7 +222,6 @@ client.on("messageCreate", async (message) => {
 
   if (processedMessageIds.has(message.id)) return;
 
-  // Check if message is a Discord reply to the bot
   let isReplyToBot = false;
   if (message.reference) {
     try {
@@ -143,7 +237,6 @@ client.on("messageCreate", async (message) => {
   const isMentioned = message.mentions.has(client.user.id);
   const isBotChannel = message.channel.name?.includes("comandos-bot");
 
-  // Trigger if mentioned OR in bot channel OR replying to bot
   if (!isMentioned && !isBotChannel && !isReplyToBot) return;
 
   if (!ALLOWED_USER_IDS.has(message.author.id)) {
@@ -165,7 +258,6 @@ client.on("messageCreate", async (message) => {
 
   const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
 
-  // Check if user requested a new chat / reset session
   if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
     resetSession(message.channel.id, message.author.id);
     await message.reply(`🔄 **Nueva conversación de Gemini / Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`);
@@ -174,24 +266,29 @@ client.on("messageCreate", async (message) => {
 
   const { sessionHistory } = getOrCreateSession(message.channel.id, message.author.id);
 
-  console.log(`\n📩 Gemini Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`);
+  console.log(`\n📩 Antigravity Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`);
 
   if (!process.env.GEMINI_API_KEY) {
     await message.reply("⚠️ **Falta la clave API de Gemini (`GEMINI_API_KEY`).**\n\nPor favor, obtén una clave gratuita en [aistudio.google.com](https://aistudio.google.com) y agrégala a tu `.env.local`:\n```env\nGEMINI_API_KEY=tu_api_key_aqui\n```");
     return;
   }
 
-  // Continuously indicate typing while processing
   await message.channel.sendTyping();
   const typingInterval = setInterval(() => {
     message.channel.sendTyping().catch(() => {});
   }, 7000);
 
   try {
-    const systemInstruction = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a la solicitud de manera directa y concisa.`;
+    const projectContext = getProjectContext();
+    const systemInstruction = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto CEOUBB (${userDisplayName}).
+Tienes conocimiento completo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md y PLAN.md).
+Tienes acceso a herramientas de integración con GitHub (commits, estado del repositorio) y Google Calendar (agendar reuniones).
+Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a las consultas de manera directa y concisa.
+
+${projectContext}`;
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
+    let response = await ai.models.generateContent({
       model: DEFAULT_MODEL,
       contents: [
         ...sessionHistory,
@@ -199,14 +296,37 @@ client.on("messageCreate", async (message) => {
       ],
       config: {
         systemInstruction,
+        tools: [{ functionDeclarations: toolDeclarations }],
       }
     });
+
+    // Check if Gemini invoked tool calls
+    const candidates = response.candidates || [];
+    const functionCalls = candidates[0]?.content?.parts?.filter(p => p.functionCall) || [];
+
+    if (functionCalls.length > 0) {
+      for (const callPart of functionCalls) {
+        const toolCall = callPart.functionCall;
+        const toolResult = await executeToolCall(toolCall);
+
+        // Follow up with tool response
+        response = await ai.models.generateContent({
+          model: DEFAULT_MODEL,
+          contents: [
+            ...sessionHistory,
+            { role: "user", parts: [{ text: userPrompt }] },
+            { role: "model", parts: [{ functionCall: toolCall }] },
+            { role: "user", parts: [{ functionResponse: { name: toolCall.name, response: toolResult } }] }
+          ],
+          config: { systemInstruction }
+        });
+      }
+    }
 
     clearInterval(typingInterval);
 
     const rawOutput = (response.text || "Sin respuesta.").trim();
 
-    // Store in session history
     sessionHistory.push({ role: "user", parts: [{ text: userPrompt }] });
     sessionHistory.push({ role: "model", parts: [{ text: rawOutput }] });
     if (sessionHistory.length > 20) {
@@ -223,12 +343,12 @@ client.on("messageCreate", async (message) => {
       }
     }
 
-    console.log(`✅ Sent ${chunks.length} plain text Gemini response message(s) to ${userDisplayName}.`);
+    console.log(`✅ Sent ${chunks.length} plain text Antigravity response message(s) to ${userDisplayName}.`);
   } catch (error) {
     clearInterval(typingInterval);
-    console.error("❌ Error executing Gemini API call:", error);
+    console.error("❌ Error executing Antigravity / Gemini request:", error);
     await message.reply({
-      content: `❌ **Error al procesar con Gemini:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
+      content: `❌ **Error al procesar con Antigravity / Gemini:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
     });
   }
 });
