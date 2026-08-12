@@ -109,7 +109,6 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "Linear",
-        avatar_url: "https://avatars.githubusercontent.com/u/49293156?s=200&v=4",
         embeds: [embed],
       }),
     });
