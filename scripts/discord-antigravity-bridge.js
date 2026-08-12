@@ -1,11 +1,8 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import { exec } from "node:child_process";
-import util from "node:util";
+import { GoogleGenAI } from "@google/genai";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-
-const execPromise = util.promisify(exec);
 
 // Load .env.local if present
 const envPath = path.join(process.cwd(), ".env.local");
@@ -20,17 +17,18 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-// Token for Antigravity bot
+// Token for Antigravity / Gemini bot
 const DISCORD_BOT_TOKEN = process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!DISCORD_BOT_TOKEN) {
   console.error("❌ Error: DISCORD_ANTIGRAVITY_BOT_TOKEN is not set in .env.local or environment.");
   process.exit(1);
 }
 
-// Config: Default model & reasoning setting for Antigravity requested by user
-const DEFAULT_MODEL = "gemini-3.6-flash";
-const THINKING_EFFORT = "high";
+// Config: Default Gemini model & reasoning settings requested by user
+const DEFAULT_MODEL = "gemini-2.5-flash"; // Google GenAI SDK model ID
+const THINKING_EFFORT = "HIGH";
 
 // SECURITY: Only process requests from authorized maintainers
 const ALLOWED_USER_IDS = new Set([
@@ -44,6 +42,12 @@ const KNOWN_USER_NAMES = {
   "662149246631542816": "Joaquín (Juvko0 / Joaco / Topo / Topogigo)",
 };
 
+// Initialize Google GenAI client if API key is provided
+let aiClient = null;
+if (GEMINI_API_KEY) {
+  aiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+}
+
 // Session storage per channel/user (30-min timeout)
 const userSessions = new Map();
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -55,19 +59,19 @@ function getOrCreateSession(channelId, userId) {
 
   if (existing && (now - existing.lastUsed) < SESSION_TIMEOUT_MS) {
     existing.lastUsed = now;
-    return { sessionId: existing.sessionId, isExisting: true };
+    return { sessionHistory: existing.history, isExisting: true };
   }
 
-  const newSessionId = crypto.randomUUID();
-  userSessions.set(sessionKey, { sessionId: newSessionId, lastUsed: now });
-  return { sessionId: newSessionId, isExisting: false };
+  const newHistory = [];
+  userSessions.set(sessionKey, { history: newHistory, lastUsed: now });
+  return { sessionHistory: newHistory, isExisting: false };
 }
 
 function resetSession(channelId, userId) {
   const sessionKey = `${channelId}_${userId}`;
-  const newSessionId = crypto.randomUUID();
-  userSessions.set(sessionKey, { sessionId: newSessionId, lastUsed: Date.now() });
-  return newSessionId;
+  const newHistory = [];
+  userSessions.set(sessionKey, { history: newHistory, lastUsed: Date.now() });
+  return newHistory;
 }
 
 const client = new Client({
@@ -113,7 +117,8 @@ function chunkText(text, limit = 1900) {
 client.on("clientReady", () => {
   console.log(`🤖 CEOUBB Antigravity Local Bridge connected as ${client.user.tag}`);
   console.log(`💬 Mode: Raw Text Reply (Human style with user context & reply detection)`);
-  console.log(`🧠 CLI: antigravity-ide chat -m agent`);
+  console.log(`🧠 Model: ${DEFAULT_MODEL} (Thinking Effort: ${THINKING_EFFORT})`);
+  console.log(`🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`);
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
 
@@ -144,7 +149,7 @@ client.on("messageCreate", async (message) => {
   if (!ALLOWED_USER_IDS.has(message.author.id)) {
     console.log(`⛔ Ignored prompt from unauthorized user @${message.author.username} (${message.author.id})`);
     if (isMentioned || isReplyToBot) {
-      await message.reply("🔒 Este agente local de Antigravity está restringido únicamente a los mantenedores autorizados del proyecto.");
+      await message.reply("🔒 Este agente local de Antigravity / Gemini está restringido únicamente a los mantenedores autorizados del proyecto.");
     }
     return;
   }
@@ -161,18 +166,20 @@ client.on("messageCreate", async (message) => {
   const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
 
   // Check if user requested a new chat / reset session
-  let sessionObj;
   if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
-    const newId = resetSession(message.channel.id, message.author.id);
-    await message.reply(`🔄 **Nueva conversación de Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`);
+    resetSession(message.channel.id, message.author.id);
+    await message.reply(`🔄 **Nueva conversación de Gemini / Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`);
     return;
-  } else {
-    sessionObj = getOrCreateSession(message.channel.id, message.author.id);
   }
 
-  const { sessionId } = sessionObj;
+  const { sessionHistory } = getOrCreateSession(message.channel.id, message.author.id);
 
-  console.log(`\n📩 Antigravity Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}...]: "${userPrompt}"`);
+  console.log(`\n📩 Gemini Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`);
+
+  if (!process.env.GEMINI_API_KEY) {
+    await message.reply("⚠️ **Falta la clave API de Gemini (`GEMINI_API_KEY`).**\n\nPor favor, obtén una clave gratuita en [aistudio.google.com](https://aistudio.google.com) y agrégala a tu `.env.local`:\n```env\nGEMINI_API_KEY=tu_api_key_aqui\n```");
+    return;
+  }
 
   // Continuously indicate typing while processing
   await message.channel.sendTyping();
@@ -181,23 +188,31 @@ client.on("messageCreate", async (message) => {
   }, 7000);
 
   try {
-    const systemPromptText = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Opera utilizando el modelo ${DEFAULT_MODEL} con nivel de razonamiento ${THINKING_EFFORT} (High Thinking). Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a la solicitud de manera directa. No cites las reglas de notificación pasiva de AGENTS.md.`;
-    const fullPrompt = `[${systemPromptText}]\n\n[Mensaje de Discord enviado por ${userDisplayName} (@${message.author.username})]: ${userPrompt}`;
-    const safePrompt = fullPrompt.replace(/"/g, '\\"');
+    const systemInstruction = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a la solicitud de manera directa y concisa.`;
 
-    // Command calling antigravity-ide chat CLI
-    const command = `antigravity-ide chat -m agent "${safePrompt}"`;
-
-    console.log(`🚀 Executing local Antigravity CLI command: ${command}`);
-
-    const { stdout, stderr } = await execPromise(command, {
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024 * 10,
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: DEFAULT_MODEL,
+      contents: [
+        ...sessionHistory,
+        { role: "user", parts: [{ text: userPrompt }] }
+      ],
+      config: {
+        systemInstruction,
+      }
     });
 
     clearInterval(typingInterval);
 
-    const rawOutput = (stdout || stderr || "Sin respuesta.").trim();
+    const rawOutput = (response.text || "Sin respuesta.").trim();
+
+    // Store in session history
+    sessionHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+    sessionHistory.push({ role: "model", parts: [{ text: rawOutput }] });
+    if (sessionHistory.length > 20) {
+      sessionHistory.splice(0, 2);
+    }
+
     const chunks = chunkText(rawOutput);
 
     for (let i = 0; i < chunks.length; i++) {
@@ -208,12 +223,12 @@ client.on("messageCreate", async (message) => {
       }
     }
 
-    console.log(`✅ Sent ${chunks.length} plain text Antigravity response message(s) to ${userDisplayName}.`);
+    console.log(`✅ Sent ${chunks.length} plain text Gemini response message(s) to ${userDisplayName}.`);
   } catch (error) {
     clearInterval(typingInterval);
-    console.error("❌ Error executing local Antigravity process:", error);
+    console.error("❌ Error executing Gemini API call:", error);
     await message.reply({
-      content: `❌ **Error al procesar con Antigravity:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
+      content: `❌ **Error al procesar con Gemini:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
     });
   }
 });

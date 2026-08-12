@@ -22,6 +22,7 @@
     "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-antigravity-autostart.ps1"
   },
   "dependencies": {
+    "@google/genai": "^2.16.0",
     "@libsql/client": "^0.17.4",
     "@phosphor-icons/react": "^2.1.10",
     "discord.js": "^14.27.0",
