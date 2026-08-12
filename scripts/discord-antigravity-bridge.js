@@ -30,7 +30,7 @@ if (!DISCORD_BOT_TOKEN) {
   process.exit(1);
 }
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.6-flash";
 const THINKING_EFFORT = "HIGH";
 
 // SECURITY: Authorized maintainers
