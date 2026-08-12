@@ -58,10 +58,12 @@ export async function POST(request: Request) {
       description = `**[Ver Issue en Linear](${issueUrl})**`;
 
       if (stateName) {
-        const stateValue =
-          prevStateName && prevStateName !== stateName
-            ? `\`${prevStateName}\` ➡️ \`${stateName}\``
-            : `\`${stateName}\``;
+        let stateValue = `\`${stateName}\``;
+        if (prevStateName && prevStateName !== stateName) {
+          stateValue = `\`${prevStateName}\` ➡️ \`${stateName}\``;
+        } else if (updatedFrom?.stateId || updatedFrom?.state) {
+          stateValue = `➡️ \`${stateName}\``;
+        }
         fields.push({ name: "Estado", value: stateValue, inline: true });
       }
       if (data.assignee?.name) {
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "Linear",
-        avatar_url: "https://linear.app/apple-touch-icon.png",
+        avatar_url: "https://avatars.githubusercontent.com/u/49293156?s=200&v=4",
         embeds: [embed],
       }),
     });
