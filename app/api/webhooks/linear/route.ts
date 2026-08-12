@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // Discord webhook URL for #🎯-❙-linear
 const DISCORD_WEBHOOK_URL =
   process.env.DISCORD_LINEAR_WEBHOOK_URL ||
-  "https://discord.com/api/webhooks/1536974344553762897/vdRp3bekJhBcSqlZh2-xQqnGove9rYeiTcgF0xCq0xWZFXPXULUY10dDcja-E_6yQX6y";
+  "https://discord.com/api/webhooks/1536974344553762897/vdRp3bekJhBcSqIZh2-xQqnGove9rYeiTcgFOxCq0xWZFXPXULUY1OdDcjo-E_6yQX6y";
 
 export async function POST(request: Request) {
   try {
