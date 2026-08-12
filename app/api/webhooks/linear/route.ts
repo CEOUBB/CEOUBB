@@ -25,16 +25,32 @@ export async function POST(request: Request) {
       const issueTitle = data.title || "Untitled Issue";
       const issueUrl = url || data.url || `https://linear.app/ceoubb/issue/${issueIdentifier}`;
       const stateName = data.state?.name || "Actualizado";
+      const updatedFrom = payload.updatedFrom;
+      const prevStateName =
+        updatedFrom?.state?.name || updatedFrom?.stateName || null;
+
+      const stateLower = stateName.toLowerCase();
 
       if (action === "create") {
         title = `🎯 Nuevo Issue: [${issueIdentifier}] ${issueTitle}`;
         color = 0x5e6ad2;
-      } else if (action === "update") {
-        title = `🔄 Issue Actualizado: [${issueIdentifier}] ${issueTitle}`;
-        color = 0x3b82f6;
       } else if (action === "remove") {
         title = `🗑️ Issue Eliminado: [${issueIdentifier}] ${issueTitle}`;
         color = 0xef4444;
+      } else if (action === "update") {
+        if (stateLower.includes("done") || stateLower.includes("complet") || stateLower.includes("resuelto") || stateLower.includes("closed")) {
+          title = `✅ Issue Completado: [${issueIdentifier}] ${issueTitle}`;
+          color = 0x10b981; // Green
+        } else if (stateLower.includes("progress") || stateLower.includes("progreso") || stateLower.includes("review")) {
+          title = `🚀 Issue en Progreso: [${issueIdentifier}] ${issueTitle}`;
+          color = 0xf59e0b; // Amber / Orange
+        } else if (stateLower.includes("todo") || stateLower.includes("backlog") || stateLower.includes("pendiente")) {
+          title = `📋 Issue Movido a Pendiente: [${issueIdentifier}] ${issueTitle}`;
+          color = 0x3b82f6; // Blue
+        } else {
+          title = `🔄 Issue Actualizado: [${issueIdentifier}] ${issueTitle}`;
+          color = 0x5e6ad2;
+        }
       } else {
         title = `🎯 Issue [${issueIdentifier}]: ${issueTitle}`;
       }
@@ -42,7 +58,11 @@ export async function POST(request: Request) {
       description = `**[Ver Issue en Linear](${issueUrl})**`;
 
       if (stateName) {
-        fields.push({ name: "Estado", value: `\`${stateName}\``, inline: true });
+        const stateValue =
+          prevStateName && prevStateName !== stateName
+            ? `\`${prevStateName}\` ➡️ \`${stateName}\``
+            : `\`${stateName}\``;
+        fields.push({ name: "Estado", value: stateValue, inline: true });
       }
       if (data.assignee?.name) {
         fields.push({ name: "Asignado a", value: data.assignee.name, inline: true });
