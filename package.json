@@ -13,11 +13,16 @@
     "test": "next build && node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/linear-webhook.test.ts tests/rendered-html.test.mjs",
     "lint": "eslint .",
     "doctor": "react-doctor",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "bot:bridge": "node scripts/discord-claude-bridge.js",
+    "bot:codex": "node scripts/discord-codex-bridge.js",
+    "bot:autostart:claude": "powershell -ExecutionPolicy Bypass -File scripts/setup-claude-autostart.ps1",
+    "bot:autostart:codex": "powershell -ExecutionPolicy Bypass -File scripts/setup-codex-autostart.ps1"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "@phosphor-icons/react": "^2.1.10",
+    "discord.js": "^14.27.0",
     "drizzle-orm": "0.45.2",
     "firebase": "^12.17.1",
     "motion": "^13.1.0",
