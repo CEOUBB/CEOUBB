@@ -60,7 +60,7 @@ When both assistants may work concurrently:
 - Before merging, rebase or merge the latest `origin/main`, resolve conflicts deliberately, and rerun all relevant checks.
 - Only one person or agent should perform a production deployment at a time.
 - After material work, update `PLAN.md` with the result, verification performed, deployment status, remaining risks, and the next recommended action.
-- **Discord Agent Notifications**: Whenever an agent completes material work, opens a PR, or needs review, it must post an embed to `#💬-❙-general` (`1536934842741301321`). Title: `<Agent Name> | <User>` (e.g. `Claude Code | pipe_.os` or `Codex | Juvko0`). Always cross-tag the co-maintainer (`<@1150176313974460457>` for Pipe, `<@ID_JOAQUIN>` for Joaquín). See `.agents/rules/discord_notifications.md`.
+- **Discord Agent Notifications**: An agent MUST ONLY post a Discord message or tag a co-maintainer WHEN EXPLICITLY INSTRUCTED BY THE USER in their prompt (e.g. *"when finished, notify Joaquín on Discord"*). If not explicitly requested, do not send any Discord message. When requested, post an embed to `#💬-❙-general` (`1536934842741301321`) titled `<Agent Name> | <User>` (e.g. `Claude Code | pipe_.os` or `Codex | Juvko0`), cross-tagging the co-maintainer (`<@1150176313974460457>` for Pipe, `<@ID_JOAQUIN>` for Joaquín). See `.agents/rules/discord_notifications.md`.
 
 Direct commits to `main` have been used during initial development, but feature branches and reviewed pull requests are the preferred workflow now that two maintainers are active.
 
