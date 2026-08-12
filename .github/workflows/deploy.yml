@@ -22,6 +22,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure Git Author for Vercel Hobby Plan
+        run: |
+          git config user.name "CEOUBB"
+          git config user.email "elpapijuaco325@gmail.com"
+          git commit --amend --author="CEOUBB <elpapijuaco325@gmail.com>" --no-edit
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
@@ -40,7 +46,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Pull Vercel Environment Information (Preview)
@@ -49,7 +56,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Build Project Artifacts (Production)
@@ -58,7 +66,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Build Project Artifacts (Preview)
@@ -67,7 +76,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Deploy Production Artifacts to Vercel
@@ -76,7 +86,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Deploy Preview Artifacts to Vercel
@@ -88,7 +99,8 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "Joaquin Araya Ailio"
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Comment Preview URL on PR
