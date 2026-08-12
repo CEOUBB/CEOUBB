@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "next build && node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/rendered-html.test.mjs",
+    "test": "next build && node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/linear-webhook.test.ts tests/rendered-html.test.mjs",
     "lint": "eslint .",
     "doctor": "react-doctor",
     "db:generate": "drizzle-kit generate"

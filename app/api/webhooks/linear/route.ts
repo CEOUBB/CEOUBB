@@ -1,13 +1,38 @@
 import { NextResponse } from "next/server";
 
+import { isFreshTimestamp, verifyLinearSignature } from "@/lib/linear-signature";
+
 // Discord webhook URL for #🎯-❙-linear
 const DISCORD_WEBHOOK_URL =
   process.env.DISCORD_LINEAR_WEBHOOK_URL ||
   "https://discord.com/api/webhooks/1536974344553762897/vdRp3bekJhBcSqIZh2-xQqnGove9rYeiTcgFOxCq0xWZFXPXULUY1OdDcjo-E_6yQX6y";
 
+const LINEAR_WEBHOOK_SECRET = process.env.LINEAR_WEBHOOK_SECRET;
+
 export async function POST(request: Request) {
   try {
-    const payload = await request.json();
+    if (!LINEAR_WEBHOOK_SECRET) {
+      console.error("[Linear Webhook] LINEAR_WEBHOOK_SECRET is not configured");
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+
+    const rawBody = await request.text();
+    if (
+      !verifyLinearSignature(
+        rawBody,
+        request.headers.get("linear-signature"),
+        LINEAR_WEBHOOK_SECRET,
+      )
+    ) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawBody);
+
+    if (!isFreshTimestamp(payload.webhookTimestamp, Date.now())) {
+      return NextResponse.json({ error: "Stale payload" }, { status: 401 });
+    }
+
     const { action, type, data, url } = payload;
 
     if (!data) {
@@ -120,8 +145,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Linear Webhook] Processing error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
