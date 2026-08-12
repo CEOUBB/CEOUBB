@@ -16,8 +16,10 @@
     "db:generate": "drizzle-kit generate",
     "bot:bridge": "node scripts/discord-claude-bridge.js",
     "bot:codex": "node scripts/discord-codex-bridge.js",
+    "bot:antigravity": "node scripts/discord-antigravity-bridge.js",
     "bot:autostart:claude": "powershell -ExecutionPolicy Bypass -File scripts/setup-claude-autostart.ps1",
-    "bot:autostart:codex": "powershell -ExecutionPolicy Bypass -File scripts/setup-codex-autostart.ps1"
+    "bot:autostart:codex": "powershell -ExecutionPolicy Bypass -File scripts/setup-codex-autostart.ps1",
+    "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-antigravity-autostart.ps1"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
