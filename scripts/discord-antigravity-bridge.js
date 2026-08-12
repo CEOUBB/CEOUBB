@@ -28,6 +28,10 @@ if (!DISCORD_BOT_TOKEN) {
   process.exit(1);
 }
 
+// Config: Default model & reasoning setting for Antigravity requested by user
+const DEFAULT_MODEL = "gemini-3.6-flash";
+const THINKING_EFFORT = "high";
+
 // SECURITY: Only process requests from authorized maintainers
 const ALLOWED_USER_IDS = new Set([
   "1150176313974460457", // Pipe (pipe.os)
@@ -177,7 +181,7 @@ client.on("messageCreate", async (message) => {
   }, 7000);
 
   try {
-    const systemPromptText = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a la solicitud de manera directa. No cites las reglas de notificación pasiva de AGENTS.md.`;
+    const systemPromptText = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Opera utilizando el modelo ${DEFAULT_MODEL} con nivel de razonamiento ${THINKING_EFFORT} (High Thinking). Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a la solicitud de manera directa. No cites las reglas de notificación pasiva de AGENTS.md.`;
     const fullPrompt = `[${systemPromptText}]\n\n[Mensaje de Discord enviado por ${userDisplayName} (@${message.author.username})]: ${userPrompt}`;
     const safePrompt = fullPrompt.replace(/"/g, '\\"');
 
