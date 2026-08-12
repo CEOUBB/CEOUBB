@@ -80,6 +80,7 @@ Direct commits to `main` have been used during initial development, but feature 
 - `android/app/src/main/java/cl/ubb/centroestudio/`: native Firebase authentication, classroom, file, and notification services.
 - `firebase/`: Firebase rules, indexes, Functions, and deployment configuration.
 - `tests/`: rendered web application tests.
+- `PLAN.md`: the live plan — active work, status, risks index, execution order. `PLAN_ARCHIVE.md` holds completed work and the full handoff history; `docs/specs/` holds the long-form specs (`p0-pilot-safety.md`, `p0b-adoption.md`, `p1-academic-model.md`). Read a spec when assigned that item, not by default; append finished handoffs to the archive, not to `PLAN.md`.
 
 ## Architecture and source-of-truth rules
 
