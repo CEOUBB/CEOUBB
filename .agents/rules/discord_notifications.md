@@ -8,7 +8,7 @@ When explicitly requested by the user, the agent MUST format the notification ac
 2. **Embed Title**: `<Agent Name> | <User>`
    - Examples: `Claude Code | pipe_.os`, `Antigravity | pipe_.os`, `Codex | Juvko0`
 3. **Cross-Tagging Logic**:
-   - If the task was requested by **Pipe** (`pipe_.os`), tag **Joaquín** (`<@ID_JOAQUIN>`).
+   - If the task was requested by **Pipe** (`pipe_.os`), tag **Joaquín** (`<@662149246631542816>`).
    - If the task was requested by **Joaquín** (`Juvko0`), tag **Pipe** (`<@1150176313974460457>`).
 4. **Embed Styling**:
    - **Color**: Hex `#10B981` for completed tasks, `#F59E0B` for pending review, `#EF4444` for errors/blocked.
