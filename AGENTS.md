@@ -41,20 +41,22 @@ Treat these identifiers as configuration, not secrets. Do not change them withou
 
 Two people maintain this project using different assistants: one uses Codex and the other uses Claude Code. GitHub is the shared source of truth; local chat history is not.
 
-At the beginning of every task:
+At the beginning of every task and **always before editing any code**:
 
 1. Read `AGENTS.md`, `PLAN.md`, and the relevant source files.
 2. Run `git status --short`, `git branch --show-current`, and `git log -5 --oneline`.
-3. Fetch the remote and confirm that the working branch is based on the current `origin/main`.
-4. Preserve any existing uncommitted work. Never discard, reset, overwrite, or reformat another contributor's changes.
-5. Check the active and recently completed items in `PLAN.md` before selecting work.
+3. Fetch the remote (`git fetch origin`) and check if local files and branch are in sync with `origin/main`.
+4. **Mandatory sync check**: Always check if local files are up to date with `origin/main` before editing code. If not in sync, pull from `main` (or rebase onto `origin/main`) and fix any conflicts before making any changes to the code.
+5. Preserve any existing uncommitted work. Never discard, reset, overwrite, or reformat another contributor's changes.
+6. Check the active and recently completed items in `PLAN.md` before selecting work.
 
 When both assistants may work concurrently:
 
 - Use a separate branch per task. Prefer `codex/<short-task>` for Codex and `claude/<short-task>` for Claude Code.
 - Do not let two agents edit the same files at the same time. If scopes overlap, stop and coordinate before continuing.
 - Pull with fast-forward only. Never force-push shared branches and never rewrite another contributor's commits.
-- Keep commits small and single-purpose. Use imperative English commit subjects, for example `Add Firebase rules tests`.
+- Always check that local files are synced with `origin/main` and resolve any conflicts prior to editing code.
+- Keep commits small and single-purpose. Always follow Conventional Commits rules with imperative English subjects, for example `test: add Firebase rules tests` or `feat: add section enrollment tracking`.
 - Before merging, rebase or merge the latest `origin/main`, resolve conflicts deliberately, and rerun all relevant checks.
 - Only one person or agent should perform a production deployment at a time.
 - After material work, update `PLAN.md` with the result, verification performed, deployment status, remaining risks, and the next recommended action.
