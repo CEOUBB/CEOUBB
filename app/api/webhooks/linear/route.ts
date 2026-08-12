@@ -27,19 +27,19 @@ export async function POST(request: Request) {
       const stateName = data.state?.name || "Actualizado";
 
       if (action === "create") {
-        title = `🎯 Nuevo Ticket: [${issueIdentifier}] ${issueTitle}`;
+        title = `🎯 Nuevo Issue: [${issueIdentifier}] ${issueTitle}`;
         color = 0x5e6ad2;
       } else if (action === "update") {
-        title = `🔄 Ticket Actualizado: [${issueIdentifier}] ${issueTitle}`;
+        title = `🔄 Issue Actualizado: [${issueIdentifier}] ${issueTitle}`;
         color = 0x3b82f6;
       } else if (action === "remove") {
-        title = `🗑️ Ticket Eliminado: [${issueIdentifier}] ${issueTitle}`;
+        title = `🗑️ Issue Eliminado: [${issueIdentifier}] ${issueTitle}`;
         color = 0xef4444;
       } else {
-        title = `🎯 Ticket [${issueIdentifier}]: ${issueTitle}`;
+        title = `🎯 Issue [${issueIdentifier}]: ${issueTitle}`;
       }
 
-      description = `**[Ver Ticket en Linear](${issueUrl})**`;
+      description = `**[Ver Issue en Linear](${issueUrl})**`;
 
       if (stateName) {
         fields.push({ name: "Estado", value: `\`${stateName}\``, inline: true });
