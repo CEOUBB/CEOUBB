@@ -31,7 +31,7 @@ Companion files:
 - [NEXT] Remove the two hardcoded personal Gmail owner exceptions, replaced by directory-backed admin accounts (P0B.1). `lib/access-policy.ts`, `firebase/*.rules`, `android/.../firebase.xml`, `ClassroomService.java`
 - [NEXT] Grade audit trail: author, timestamp, previous value on every score change (P0.9). `lib/firebase-classroom-client.ts`, `firebase/firestore.rules`, `firebase/functions/`
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore export, Turso backup, stated RPO/RTO (P0.8). Sharpest risk in the repository. Firebase, Turso, `firebase/functions/`
-- [NEXT] GitHub Actions CI (lint, test, build, Functions check) + Firebase Emulator Suite rule tests as merge gate (P0.10). Two agents on one repo with no CI is a P0. `.github/workflows/`, `tests/`
+- [ACTIVE] GitHub Actions CI implemented (`.github/workflows/ci.yml`, `deploy.yml` pre-flight quality gates, `package.json` fast `test:unit`, `typecheck`, `check:functions`). Next: Firebase Emulator Suite rule tests as merge gate (P0.10). `.github/workflows/`, `tests/`
 - [NEXT] Staging Firebase project and seeded emulator dataset (P0.11). Every deploy instruction targets production today. Firebase, `firebase/`
 - [NEXT] Define and record the P0.7 capacity and cost targets, then load-check against them. Without numbers, "production-ready" is untestable. `docs/specs/p0-pilot-safety.md`, Google Cloud billing
 - [NEXT] Retheme `android/app/src/main/assets/www/` to match the light library, then build and test the APK on a device. `android/app/src/main/assets/www/`
