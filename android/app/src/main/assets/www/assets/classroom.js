@@ -185,25 +185,114 @@ function renderMonitoring() {
   if (!classroomElements.monitoringList) return;
   const items = classroomState.monitoring.filter(item => item.role === 'student');
   const average = items.length ? Math.round(items.reduce((sum, item) => sum + Number(item.percent || 0), 0) / items.length) : 0;
-  if (classroomElements.studentCount) classroomElements.studentCount.textContent = items.length;
-  if (classroomElements.monitorActive) classroomElements.monitorActive.textContent = items.length;
+  if (classroomElements.studentCount) classroomElements.studentCount.textContent = String(items.length);
+  if (classroomElements.monitorActive) classroomElements.monitorActive.textContent = String(items.length);
   if (classroomElements.monitorAverage) classroomElements.monitorAverage.textContent = `${average}%`;
-  classroomElements.monitoringList.innerHTML = items.length ? items.map(item => `<article class="monitor-row"><div><strong>${escapeHtml(item.displayName || 'Estudiante')}</strong><small>${escapeHtml(item.email || '')} · Última actividad ${formatClassDate(item.lastSeen)}</small></div><div class="student-progress"><span>${Number(item.completed || 0)}/${Number(item.total || 0)} certámenes · ${Number(item.percent || 0)}%</span><i style="--student-progress:${Math.max(0, Math.min(100, Number(item.percent || 0)))}%"></i></div></article>`).join('') : '<div class="post-empty">El seguimiento aparecerá cuando los estudiantes abran la beta de Estática.</div>';
+  classroomElements.monitoringList.textContent = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'post-empty';
+    empty.textContent = 'El seguimiento aparecerá cuando los estudiantes abran la beta de Estática.';
+    classroomElements.monitoringList.appendChild(empty);
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  items.forEach(item => {
+    const article = document.createElement('article');
+    article.className = 'monitor-row';
+    const info = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = item.displayName || 'Estudiante';
+    const detail = document.createElement('small');
+    detail.textContent = `${item.email || ''} · Última actividad ${formatClassDate(item.lastSeen)}`;
+    info.appendChild(name);
+    info.appendChild(detail);
+
+    const progDiv = document.createElement('div');
+    progDiv.className = 'student-progress';
+    const progText = document.createElement('span');
+    progText.textContent = `${Number(item.completed || 0)}/${Number(item.total || 0)} certámenes · ${Number(item.percent || 0)}%`;
+    const bar = document.createElement('i');
+    bar.style.setProperty('--student-progress', `${Math.max(0, Math.min(100, Number(item.percent || 0)))}%`);
+    progDiv.appendChild(progText);
+    progDiv.appendChild(bar);
+
+    article.appendChild(info);
+    article.appendChild(progDiv);
+    fragment.appendChild(article);
+  });
+  classroomElements.monitoringList.appendChild(fragment);
 }
 
 function renderPermissions() {
   if (!classroomElements.permissionsList) return;
   const ownerUid = classroomState.auth.uid;
-  classroomElements.permissionsList.innerHTML = classroomState.users.length ? classroomState.users.map(user => {
+  classroomElements.permissionsList.textContent = '';
+  if (!classroomState.users.length) {
+    const empty = document.createElement('div');
+    empty.className = 'post-empty';
+    empty.textContent = 'Las cuentas aparecerán después de su primer inicio de sesión.';
+    classroomElements.permissionsList.appendChild(empty);
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  classroomState.users.forEach(user => {
     const fixedOwner = user.uid === ownerUid || user.role === 'owner';
     const request = user.teacherRequested ? ' · Solicitud docente pendiente' : '';
-    return `<article class="permission-row"><div><strong>${escapeHtml(user.displayName || 'Usuario')}</strong><small>${escapeHtml(user.email || '')} · ${escapeHtml(roleLabel(user.role))}${escapeHtml(request)}</small></div><div class="permission-actions">${fixedOwner ? '<span class="badge">Propietario protegido</span>' : `<select data-role-user="${escapeHtml(user.uid)}"><option value="student" ${user.role === 'student' ? 'selected' : ''}>Estudiante</option><option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>Profesor</option><option value="pending_teacher" ${user.role === 'pending_teacher' ? 'selected' : ''}>Profesor pendiente</option><option value="suspended" ${user.role === 'suspended' ? 'selected' : ''}>Suspendido</option></select><button class="small-button" data-save-role="${escapeHtml(user.uid)}" type="button">Guardar</button>`}</div></article>`;
-  }).join('') : '<div class="post-empty">Las cuentas aparecerán después de su primer inicio de sesión.</div>';
-  classroomElements.permissionsList.querySelectorAll('[data-save-role]').forEach(button => button.addEventListener('click', () => {
-    const escapeFn = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape : String;
-    const selector = classroomElements.permissionsList.querySelector(`[data-role-user="${escapeFn(button.dataset.saveRole)}"]`);
-    if (selector) classroomBridge('setUserRole', button.dataset.saveRole, selector.value);
-  }));
+    const article = document.createElement('article');
+    article.className = 'permission-row';
+
+    const info = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = user.displayName || 'Usuario';
+    const detail = document.createElement('small');
+    detail.textContent = `${user.email || ''} · ${roleLabel(user.role)}${request}`;
+    info.appendChild(name);
+    info.appendChild(detail);
+
+    const actions = document.createElement('div');
+    actions.className = 'permission-actions';
+
+    if (fixedOwner) {
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = 'Propietario protegido';
+      actions.appendChild(badge);
+    } else {
+      const select = document.createElement('select');
+      select.dataset.roleUser = user.uid;
+      const roles = [
+        { value: 'student', label: 'Estudiante' },
+        { value: 'teacher', label: 'Profesor' },
+        { value: 'pending_teacher', label: 'Profesor pendiente' },
+        { value: 'suspended', label: 'Suspendido' }
+      ];
+      roles.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.value;
+        opt.textContent = r.label;
+        if (user.role === r.value) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const button = document.createElement('button');
+      button.className = 'small-button';
+      button.dataset.saveRole = user.uid;
+      button.type = 'button';
+      button.textContent = 'Guardar';
+      button.addEventListener('click', () => {
+        classroomBridge('setUserRole', user.uid, select.value);
+      });
+
+      actions.appendChild(select);
+      actions.appendChild(button);
+    }
+
+    article.appendChild(info);
+    article.appendChild(actions);
+    fragment.appendChild(article);
+  });
+  classroomElements.permissionsList.appendChild(fragment);
 }
 
 function activateClassTab(tab) {
