@@ -64,7 +64,8 @@ Maintainers collaborate using different AI assistants with GitHub as the shared 
 - `db/`, `drizzle/`: Turso/libSQL schema and migrations for web sessions and user directory.
 - `android/`: Native Java Android application (`android/app/src/main/java/cl/ubb/centroestudio/`).
 - `firebase/`: Firestore rules (`firestore.rules`), Storage rules (`storage.rules`), indexes, and Cloud Functions (`firebase/functions/`).
-- `tests/`: Automated unit and HTTP suite (`access-policy.test.ts`, `grades.test.ts`, `rendered-html.test.mjs`).
+- `tests/`: Automated unit and HTTP suite (`access-policy.test.ts`, `grades.test.ts`, `linear-webhook.test.ts`, `rendered-html.test.mjs`).
+- `.github/workflows/`: CI merge gate (`ci.yml`), Vercel deployment pipeline with pre-flight gates (`deploy.yml`), and diagnostics (`react-doctor.yml`).
 - `design-ceoubb.md`: Root repository design system spec (tokens, typography, components, Do's & Don'ts).
 - `PLAN.md`: Active project handoff plan and backlog (`PLAN_ARCHIVE.md` holds completed history).
 
@@ -109,14 +110,16 @@ Always use `pnpm` (`no npm`, `no bun`). `npx` is permitted only for standalone C
 pnpm install
 pnpm run dev
 pnpm run lint
-pnpm test
+pnpm run typecheck
+pnpm run test:unit      # Fast unit tests (<150ms: access-policy, grades, webhooks)
+pnpm test               # Full build + integration tests
 ```
 
 ### Firebase Functions & Rules:
 ```bash
-cd firebase/functions
-pnpm install --frozen-lockfile
-pnpm run check
+pnpm run check:functions  # Root syntax check
+# or from subfolder:
+cd firebase/functions && pnpm install --frozen-lockfile && pnpm run check
 
 # Selective Deploys (run from firebase/ directory with authorization)
 pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only firestore
