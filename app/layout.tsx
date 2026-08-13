@@ -1,9 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+
+/** Voz institucional: la serif académica sólo firma títulos y nombres de ramo. */
+const sourceSerif = Source_Serif_4({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["600", "700"],
+  style: ["normal"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ceoubb.com"),
@@ -15,16 +23,16 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   openGraph: {
     title: "Centro de Estudio UBB",
-    description: "Tu aula y banco de certámenes de Ingeniería Mecánica en cualquier dispositivo.",
+    description: "Tu aula y biblioteca académica de Ingeniería Mecánica en cualquier dispositivo.",
     type: "website",
     locale: "es_CL",
   },
-  twitter: { card: "summary_large_image", title: "Centro de Estudio UBB", description: "Aula y banco de certámenes de Ingeniería Mecánica UBB." },
+  twitter: { card: "summary_large_image", title: "Centro de Estudio UBB", description: "Aula y biblioteca académica de Ingeniería Mecánica UBB." },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-192.png" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0057a4",
+  themeColor: "#0055b8",
   colorScheme: "light",
   width: "device-width",
   initialScale: 1,
@@ -33,8 +41,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body>
+    <html className={`${inter.variable} ${sourceSerif.variable}`} lang="es">
+      <body>{children}</body>
     </html>
   );
 }

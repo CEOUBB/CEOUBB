@@ -1,6 +1,6 @@
 # Programación en Ingeniería con MATLAB - Evaluaciones y ejercicios
 
-Creado como banco universitario de programación aplicada a Ingeniería Mecánica con MATLAB.
+Creado como biblioteca académica de programación aplicada a Ingeniería Mecánica con MATLAB.
 
 ## 1. Certamen de entrenamiento 1 - Fundamentos y datos
 

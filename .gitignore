@@ -69,4 +69,6 @@ ui-debug.log
 serviceAccountKey.json
 .grepai/
 .claude/
+.impeccable/
+.codex/
 skills-lock.json

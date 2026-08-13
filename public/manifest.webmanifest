@@ -1,7 +1,7 @@
 {
   "name": "Centro de Estudio UBB",
   "short_name": "Centro UBB",
-  "description": "Aula y banco de certámenes para Ingeniería Mecánica UBB.",
+  "description": "Aula y biblioteca académica para Ingeniería Mecánica UBB.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

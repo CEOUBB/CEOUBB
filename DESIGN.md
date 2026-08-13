@@ -13,8 +13,8 @@ colors:
   surface: "#ffffff"
   ink: "#0f172a"
   ink-secondary: "#334155"
-  ink-muted: "#64748b"
-  ink-faint: "#94a3b8"
+  ink-muted: "#57657a"
+  ink-faint: "#616f85"
   hairline: "#e2e8f0"
   accent-sky: "#38bdf8"
   accent-purple: "#8b5cf6"
@@ -198,7 +198,6 @@ components:
     typography: "{typography.caption}"
     padding: 32px
 
-  # ─── Examples (illustrative) — auto-derived; resolve any TO_FILL markers below ───
   ex-pricing-tier:
     description: "Default Pricing tier card. Re-uses feature-card chrome with brand canvas-soft surface."
     backgroundColor: "{colors.canvas-soft}"
@@ -283,9 +282,11 @@ Surfaces are defined by clean hairlines (`{colors.hairline}` / #e2e8f0) and subt
 
 > Palette derived directly from the official Universidad del Bío-Bío heraldic shield (`ubb-shield.webp`): UBB Royal Blue, Shield Red center, Sun Gold torches/stars, Wave Sky Blue, and Platinum silver accents.
 
-### Brand & Accent
+### Primary
 - **UBB Royal Blue** (`{colors.primary}` — #0055b8): the single structural accent. Primary CTA fill ("Ingresar a CEOUBB", "Ver ramo"), inline link color, active tab indicator, and focus ring. This is the only color that paints primary user actions.
 - **Pressed Blue** (`{colors.primary-active}` — #003d82): the darker press state of the primary CTA button.
+
+### Secondary
 - **UBB Midnight Navy** (`{colors.secondary}` — #002b5c): the institutional chrome. It fills the global app bar across every portal view and the dark course cover band, directly matching the deep base of the UBB shield. Both surfaces close with the heraldic rule — royal blue, sky, gold, red — read from the crest.
 
 The remaining colors form CEOUBB's **academic category palette** — used for course badges, evaluation status, faculty tags, and statistics, never as primary CTA fills:
@@ -294,175 +295,72 @@ The remaining colors form CEOUBB's **academic category palette** — used for co
 - **Shield Red** (`{colors.accent-orange}` — #e31b23) / **Deep Red** (`{colors.accent-orange-deep}` — #991b1b)
 - **Academic Emerald** (`{colors.accent-green}` — #10b981)
 - **Academic Teal** (`{colors.accent-teal}` — #0d9488)
-- **Academic Purple** (`{colors.accent-purple}` — #8b5cf6`) / **Deep Purple** (`{colors.accent-purple-deep}` — #4c1d95)
+- **Academic Purple** (`{colors.accent-purple}` — #8b5cf6) / **Deep Purple** (`{colors.accent-purple-deep}` — #4c1d95)
 - **Academic Pink** (`{colors.accent-pink}` — #ec4899)
 - **Academic Bronze** (`{colors.accent-brown}` — #78350f)
 
-### Surface
+### Neutral
 - **White** (`{colors.canvas}` / `{colors.surface}` — #ffffff): card and panel surfaces, navigation bar, form fields.
 - **Paper Canvas** (`{colors.canvas-soft}` — #f4f6f9): the signature page canvas and footer band — a soft off-white slate that gives the entire platform its calm document feel.
 - **Hairline** (`{colors.hairline}` — #e2e8f0): 1px card borders and section dividers.
-
-### Text
 - **Ink** (`{colors.ink}` — #0f172a): primary headings and main body text.
 - **Slate Charcoal** (`{colors.ink-secondary}` — #334155): secondary body copy and footer text.
 - **Muted Slate** (`{colors.ink-muted}` — #64748b): supporting copy, timestamps, and secondary metadata.
 - **Ash Slate** (`{colors.ink-faint}` — #94a3b8): captions, placeholder text, and disabled elements.
 
-### Semantic
-Status and system feedback map to the academic palette:
-- **Success / Approved**: `{colors.accent-green}` (#10b981)
-- **Warning / Pending**: `{colors.accent-yellow}` (#f59e0b)
-- **Danger / Urgent**: `{colors.accent-orange}` (#e31b23)
-- **Info / Course Note**: `{colors.primary}` (#0055b8) or `{colors.accent-sky}` (#38bdf8)
-
 ## Typography
 
 ### Font Family
-CEOUBB runs on a two-family pairing, the same split a university uses between its printed acts and its administrative forms.
-
-- **`Source Serif 4`** (`--font-display`, fallback `"Iowan Old Style", "Palatino Linotype", Georgia, serif`) signs the institution: page headings, section titles, course names and cover headlines, the brand lockup, and the large grade and progress figures. It carries the academic authority that a UI sans cannot.
-- **`Inter`** (`--font-core`, fallback `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`) carries everything operational: navigation, tables, forms, metadata, badges, and body copy — the dense material a student reads for hours.
-
-Numerals are set with `font-variant-numeric: lining-nums tabular-nums` (`--num`) wherever figures line up in a column: grades, weights, dates, counters. Monospace (`--font-mono`) is reserved for registry identifiers such as course codes (`440299`, `MATLAB`) and file extensions — never as a decorative "technical" voice.
+- **`Source Serif 4`** (`--font-display`): page headings, section titles, course names and cover headlines, the brand lockup, and the large grade and progress figures.
+- **`Inter`** (`--font-core`): navigation, tables, forms, metadata, badges, and body copy.
 
 ### Hierarchy
-
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-1}` | 64px | 700 | 1.0 | −2.125px | Main portal hero headline ("Centro de Estudio UBB") |
-| `{typography.display-2}` | 54px | 700 | 1.04 | −1.875px | Major section titles |
-| `{typography.heading-1}` | 40px | 700 | 1.1 | −1px | Page headings ("Mis Asignaturas y Materiales") |
-| `{typography.heading-2}` | 26px | 700 | 1.23 | −0.625px | Course module headings, section subtitles |
-| `{typography.heading-3}` | 22px | 700 | 1.27 | −0.25px | Course card titles, dialog titles |
-| `{typography.title}` | 20px | 600 | 1.4 | −0.125px | Resource item titles, callout headings |
-| `{typography.body-md}` | 16px | 400 | 1.5 | 0 | Standard body copy, announcement text |
-| `{typography.body-sm}` | 15px | 400 | 1.33 | 0 | Dense body, table cells, navigation links |
-| `{typography.button}` | 16px | 500 | 1.5 | 0 | Action button labels |
-| `{typography.caption}` | 14px | 400 | 1.43 | 0 | Footnotes, file sizes, upload metadata |
-| `{typography.eyebrow}` | 12px | 600 | 1.33 | +0.125px | Status badges, category pills, code tags |
-
-### Principles
-CEOUBB's typographic voice is **clean, structured, and legible**. Headlines rely on weight 700 and negative tracking at larger font sizes so display titles read compactly. Body copy maintains a 1.5 line-height for optimal reading comfort. The contrast between bold headings (700) and regular body text (400) creates a fast, scannable academic hierarchy.
+- **Display 1** (`{typography.display-1}`): 64px, weight 700, line height 1.0, tracking −2.125px.
+- **Display 2** (`{typography.display-2}`): 54px, weight 700, line height 1.04, tracking −1.875px.
+- **Headline 1** (`{typography.heading-1}`): 40px, weight 700, line height 1.1, tracking −1px.
+- **Headline 2** (`{typography.heading-2}`): 26px, weight 700, line height 1.23, tracking −0.625px.
+- **Headline 3** (`{typography.heading-3}`): 22px, weight 700, line height 1.27, tracking −0.25px.
+- **Title** (`{typography.title}`): 20px, weight 600, line height 1.4, tracking −0.125px.
+- **Body Medium** (`{typography.body-md}`): 16px, weight 400, line height 1.5.
+- **Body Small** (`{typography.body-sm}`): 15px, weight 400, line height 1.33.
+- **Button** (`{typography.button}`): 16px, weight 500, line height 1.5.
+- **Caption** (`{typography.caption}`): 14px, weight 400, line height 1.43.
+- **Eyebrow** (`{typography.eyebrow}`): 12px, weight 600, line height 1.33, tracking +0.125px.
 
 ## Layout
 
 ### Spacing System
-- **Base unit**: 8px.
-- **Tokens (front matter)**: `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 24px · `{spacing.xl}` 28px · `{spacing.xxl}` 32px.
-- Card interior padding uses `{spacing.lg}` (24px); utility buttons use 4px 14px; search fields use 6px padding. Section gaps stack the larger 24px–32px steps.
+- Base unit: 8px.
+- Scale: xxs (4px), xs (8px), sm (12px), md (16px), lg (24px), xl (28px), xxl (32px).
 
 ### Grid & Container
-Content is centered in a standard max-width container (~1080–1300px on desktop) with generous lateral padding. Course dashboards alternate between full-width hero summary blocks and 2-up / 3-up resource grids; grade tables widen to full container width. The dark hero band spans full-bleed edge-to-edge while main page content rests within the centered container.
-
-### Whitespace Philosophy
-Whitespace is the primary grouping device. Dashboard sections are separated by generous vertical padding rather than dark divider lines, and course cards sit on the soft canvas with subtle hairlines (`{colors.hairline}`). The presentation feels airy, structured, and easy to navigate.
-
-### Responsive Strategy
-
-#### Breakpoints
-| Name | Width | Key Changes |
-|---|---|---|
-| Wide | 1440px+ | Full multi-column dashboard grids, max container |
-| Desktop | 1080–1300px | Standard centered container, 3-column course grids |
-| Tablet | 768–840px | Grids reflow to 2 columns, navigation collapses |
-| Mobile | ≤600px | Single-column vertical stack, mobile drawer, full-width actions |
-
-#### Touch Targets
-All action buttons (`button-primary`, `button-secondary`, `button-utility`) maintain a minimum 44×44px hit region on touch devices by preserving vertical touch padding even on compact viewports.
-
-#### Collapsing Strategy
-Top navigation reflows into a mobile menu below 768px; multi-column course grids stack into a single column; gradebook tables convert to scrollable or card-based views.
+Centered max-width container (~1080–1300px) with lateral padding. Course dashboards alternate between full-width hero summary blocks and 2-up / 3-up resource grids.
 
 ## Elevation & Depth
 
-| Level | Treatment | Use |
-|---|---|---|
-| 0 — Flat | Hairline border `{colors.hairline}`, no shadow | Default cards, subject list items |
-| 1 — Soft | Micro shadow: `rgba(0,0,0,0.01) 0 0.175px 1.041px`, `0.02 0 0.8px 2.925px`, `0.027 0 2.025px 7.847px`, `0.04 0 4px 18px` | Hoverable course cards, floating actions |
-| 2 — Elevated | Deeper shadow stack ending in `rgba(0,0,0,0.05) 0 23px 52px` | Modals, popovers, announcement dialogs |
-
-CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered micro-shadows so elements lift gently off the light background without creating heavy visual noise.
+- **0 — Flat**: Hairline border `{colors.hairline}`, no shadow. Default cards.
+- **1 — Soft**: Layered micro shadow. Hoverable course cards.
+- **2 — Elevated**: Deeper shadow stack. Modals and popovers.
 
 ## Shapes
 
-### Border Radius Scale
-
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.xs}` | 4px | Form inputs, search fields, inline code chips |
-| `{rounded.sm}` | 5px | Table row actions, dropdown menu items |
-| `{rounded.md}` | 8px | Utility buttons, filter tags, small container cards |
-| `{rounded.lg}` | 12px | Course cards, resource containers, preview frames |
-| `{rounded.xl}` | 16px | Main dashboard panels, modal containers |
-| `{rounded.full}` | 9999px | Primary pill CTAs, status badges, avatar icons |
+- **xs (4px)**: Form inputs, search fields.
+- **sm (5px)**: Table row actions, dropdown menu items.
+- **md (8px)**: Utility buttons, filter tags.
+- **lg (12px)**: Course cards, resource containers.
+- **xl (16px)**: Main dashboard panels.
+- **full (9999px)**: Primary pill CTAs, status badges.
 
 ## Components
 
-> Specs document Default and Active/Pressed states. Component tokens match front-matter entries.
-
-### Navigation
-
-**`nav-bar`** — Main navigation bar
-- White background `{colors.canvas}`, `{colors.ink}` text at `{typography.body-sm}`, padding `{spacing.md}`. Includes CEOUBB logo mark, navigation links, and a `button-utility` CTA ("Acceder al Portal").
-
-### Buttons
-
-**`button-primary`** — Primary Action CTA ("Ingresar a CEOUBB")
-- Background `{colors.primary}` (#0055b8), text `{colors.on-primary}`, type `{typography.button}`, fully pill-shaped `{rounded.full}`. Used for the primary call-to-action on any view.
-- Pressed state in `button-primary-pressed` (background `{colors.primary-active}`).
-
-**`button-primary-pressed`**
-- Background `{colors.primary-active}` (#003d82), text `{colors.on-primary}`.
-
-**`button-secondary`** — Secondary Action CTA ("Explorar Ramos")
-- White background `{colors.surface}`, text `{colors.ink}`, type `{typography.button}`, pill `{rounded.full}`, subtle Level-1 shadow.
-
-**`button-utility`** — Compact Navigation / Filter Action
-- White surface `{colors.surface}`, text `{colors.ink}`, type `{typography.button}`, radius `{rounded.md}` (8px), padding `4px 14px`, 1px `{colors.hairline}` border.
-
-**`button-icon-circular`** — Circular Media / Icon Control
-- Circular `{rounded.full}` control with translucent `rgba(0,0,0,0.05)` fill and `{colors.on-primary}` glyph.
-
-### Cards & Containers
-
-**`feature-card`** — Course / Resource Card
-- White surface `{colors.surface}`, `{colors.ink}` text, `{typography.body-md}`, radius `{rounded.lg}` (12px), padding `{spacing.lg}` (24px). Often paired with a color-coded top category indicator tag from the UBB academic palette. Hairline border `{colors.hairline}`.
-
-**`feature-card-elevated`** — Floating Feature Container
-- Same dimensions as `feature-card` with Level-1 micro shadow.
-
-**`pricing-plan-card`** / **`pricing-plan-card-featured`** — Module / Track Cards
-- Repurposed for course track and study plan cards using `{colors.surface}` and `{colors.canvas-soft}` backgrounds.
-
-### Inputs & Forms
-
-**`text-input`** — Input / Search Field
-- White surface `{colors.surface}`, `{colors.ink}` text, `{typography.body-sm}`, 1px `{colors.hairline}` border, radius `{rounded.xs}` (4px), padding `6px`.
-
-### Signature Components
-
-**`hero-band`** — Portal Hero Header
-- Full-bleed UBB Midnight Navy `{colors.secondary}` (#002b5c) band carrying white `{typography.display-1}` title, institutional emblem, and CTA button pair.
-
-**`badge-pill`** — Status & Category Pill
-- White surface `{colors.surface}`, `{colors.primary}` text, `{typography.eyebrow}` (12px / 600), pill `{rounded.full}`, padding `4px 8px`.
-
-**`footer`** — Institutional Footer
-- `{colors.canvas-soft}` band, `{colors.ink-secondary}` text at `{typography.caption}`, padding `{spacing.xxl}`. Includes disclaimers, resource links, and copyright info.
-
-### Examples (illustrative)
-
-**`ex-pricing-tier`** — Default Course Track card. Uses feature-card style with `{colors.canvas-soft}` background.
-**`ex-pricing-tier-featured`** — Highlighted Course Track — inverted surface (`{colors.ink}` fill with `{colors.on-primary}` text).
-**`ex-product-selector`** — Resource summary card for academic materials.
-**`ex-cart-drawer`** — Selected study materials list drawer.
-**`ex-app-shell-row`** — Sidebar navigation item with `{colors.primary}` active indicator.
-**`ex-data-table-cell`** — Academic gradebook th + td cell style.
-**`ex-auth-form-card`** — Student login / auth card.
-**`ex-modal-card`** — Dialog modal surface.
-**`ex-empty-state-card`** — Empty state container.
-**`ex-toast`** — System toast notification.
+- **`nav-bar`**: Main navigation bar.
+- **`button-primary`**: Primary Action CTA ("Ingresar a CEOUBB").
+- **`button-secondary`**: Secondary Action CTA ("Explorar Ramos").
+- **`button-utility`**: Compact Navigation / Filter Action.
+- **`feature-card`**: Course / Resource Card.
+- **`hero-band`**: Portal Hero Header.
+- **`badge-pill`**: Status & Category Pill.
+- **`footer`**: Institutional Footer.
 
 ## Do's and Don'ts
 
@@ -470,20 +368,8 @@ CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered mic
 - Reserve UBB Royal Blue (`{colors.primary}` / #0055b8) strictly for primary actions, active navigation states, and inline links.
 - Keep page backgrounds on the paper-soft canvas (`{colors.canvas-soft}` / #f4f6f9) for readability.
 - Use the academic shield palette (`{colors.accent-yellow}`, `{colors.accent-orange}`, `{colors.accent-sky}`, etc.) exclusively for category tags, subject badges, and status highlights.
-- Set headings, course names and cover headlines in bold `Source Serif 4` (`{typography.display-1}`, `{typography.heading-1}`) with about −0.02em tracking, and leave every operational surface in `Inter`.
-- Give figures that line up in a column — grades, weights, dates, counters — `lining-nums tabular-nums`.
-- Keep the global app bar in UBB Midnight Navy with the heraldic rule closing it; it is the platform's institutional signature.
-- Apply fully pill-shaped radii (`{rounded.full}`) for main CTA buttons and 8px (`{rounded.md}`) for utility buttons.
-- Use 1px hairlines (`{colors.hairline}`) and micro shadows for UI component borders.
-- Keep the dark UBB Midnight Navy (`{colors.secondary}`) treatment reserved for the hero header.
 
 ### Don't
-- Don't paint primary CTAs or structural page fills in category accent colors (e.g. red or gold).
-- Don't introduce arbitrary blue shades outside the official UBB Royal Blue (`#0055b8`) and Navy (`#002b5c`).
-- Don't use full pill radii on text inputs — keep form controls tight at 4px (`{rounded.xs}`).
+- Don't paint primary CTAs or structural page fills in category accent colors.
 - Don't use heavy, dark drop-shadows.
 - Don't set body copy in bold weights — reserve weight 700 for headings.
-- Don't set the serif in interface furniture: buttons, tabs, table cells, form labels, badges and metadata stay in `Inter`.
-- Don't place an eyebrow or kicker label above a page heading; the heading carries its own weight, and context belongs in the line beneath it or in a chip row.
-- Don't use monospace as a "technical" costume — it is only for course codes, file extensions and other registry identifiers.
-- Don't use pure clinical white (#ffffff) for full page backgrounds; use `{colors.canvas-soft}` (#f4f6f9).

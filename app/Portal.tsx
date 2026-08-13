@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
-import { SignOut } from "@phosphor-icons/react";
+import { AnimatePresence, MotionConfig } from "motion/react";
+import { Archive, Books, CalendarBlank, FolderSimple, House, SignOut, Sliders } from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
-import { COURSES, Course, courseById } from "../lib/courses";
+import { COURSES, Course, courseById, PERIOD } from "../lib/courses";
 import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
 import { AdminView, CalendarView, CoursesDashboard, ResourcesView, calendarEntries, firstName } from "./portal-views";
 import { Avatar, forgetPhoto, rememberPhoto, roleLabel, Screen } from "./portal-ui";
 import type { User } from "./portal-ui";
+import { Menu } from "./animated-menu";
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
@@ -21,10 +22,10 @@ const SEEN_KEY = "ceoubb:seen";
 type Screen = "courses" | "course" | "calendar" | "resources" | "admin";
 
 const navItems = [
-  { key: "courses", label: "Mis cursos" },
-  { key: "calendar", label: "Calendario" },
-  { key: "resources", label: "Recursos" },
-  { key: "admin", label: "Administración" },
+  { key: "courses", label: "Área personal", Icon: House },
+  { key: "calendar", label: "Calendario", Icon: CalendarBlank },
+  { key: "resources", label: "Recursos", Icon: Books },
+  { key: "admin", label: "Administración", Icon: Sliders },
 ] as const;
 
 function readSeen(): Record<string, string> {
@@ -45,6 +46,7 @@ export function Portal() {
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(readSeen);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -99,22 +101,33 @@ export function Portal() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="portal-shell">
-        <PortalHeader user={user} screen={screen} setScreen={setScreen} onLogout={logout} />
-        <AnimatePresence initial={false} mode="wait">
-          {screen === "course" && openedCourse ? (
-            <Screen key={`course-${openedCourse.id}`}><Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} /></Screen>
-          ) : (
-            <Screen key={screen}>
-              <main className="portal-main">
-                {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
-                {screen === "calendar" && <CalendarView courses={courses} entries={entries} />}
-                {screen === "resources" && <ResourcesView courses={courses} />}
-                {screen === "admin" && user.role === "owner" && <AdminView />}
-              </main>
-            </Screen>
-          )}
-        </AnimatePresence>
+      <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
+        <PortalHeader sidebarOpen={sidebarOpen} user={user} onLogout={logout} onHome={() => setScreen("courses")} toggleSidebar={() => setSidebarOpen((open) => !open)} />
+        <PortalSidebar
+          courses={courses}
+          openCourse={openCourse}
+          openCourseId={screen === "course" ? openedCourse?.id : undefined}
+          screen={screen}
+          setScreen={setScreen}
+          user={user}
+        />
+        <button aria-label="Cerrar el menú" className="sidebar-scrim" onClick={() => setSidebarOpen(false)} type="button" />
+        <main className="app-main">
+          <AnimatePresence initial={false} mode="wait">
+            {screen === "course" && openedCourse ? (
+              <Screen key={`course-${openedCourse.id}`}><Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} /></Screen>
+            ) : (
+              <Screen key={screen}>
+                <div className="portal-main">
+                  {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
+                  {screen === "calendar" && <CalendarView courses={courses} entries={entries} />}
+                  {screen === "resources" && <ResourcesView courses={courses} />}
+                  {screen === "admin" && user.role === "owner" && <AdminView />}
+                </div>
+              </Screen>
+            )}
+          </AnimatePresence>
+        </main>
       </div>
     </MotionConfig>
   );
@@ -195,24 +208,14 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   );
 }
 
-function PortalHeader({ user, screen, setScreen, onLogout }: { user: User; screen: Screen; setScreen: (screen: Screen) => void; onLogout: () => void }) {
+function PortalHeader({ sidebarOpen, user, onLogout, onHome, toggleSidebar }: { sidebarOpen: boolean; user: User; onLogout: () => void; onHome: () => void; toggleSidebar: () => void }) {
   return (
-    <header className="portal-header">
-      <button className="portal-brand" onClick={() => setScreen("courses")} type="button">
+    <header className="app-header">
+      <button aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"} className="icon-button menu-button" onClick={toggleSidebar} type="button"><Menu animate={sidebarOpen} aria-hidden="true" /></button>
+      <button className="app-brand" onClick={onHome} type="button">
         <img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
-        <span><strong>Centro de Estudio UBB</strong><small>Ingeniería Mecánica · 2026-2</small></span>
+        <span><strong>Centro de Estudio UBB</strong><small>Plataforma de estudio · {PERIOD}</small></span>
       </button>
-      <nav className="main-nav" aria-label="Navegación principal">
-        {navItems.filter((item) => item.key !== "admin" || user.role === "owner").map((item) => {
-          const active = item.key === "courses" ? screen === "courses" || screen === "course" : screen === item.key;
-          return (
-            <button aria-current={active ? "page" : undefined} className={active ? "active" : ""} key={item.key} onClick={() => setScreen(item.key)} type="button">
-              {item.label}
-              {active && <motion.span className="nav-indicator" layoutId="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 38 }} />}
-            </button>
-          );
-        })}
-      </nav>
       <div className="header-actions">
         <details className="account-menu">
           <summary><Avatar email={user.email} name={user.name} /><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span></summary>
@@ -222,5 +225,45 @@ function PortalHeader({ user, screen, setScreen, onLogout }: { user: User; scree
         </details>
       </div>
     </header>
+  );
+}
+
+function PortalSidebar({ user, screen, courses, openCourseId, setScreen, openCourse }: { user: User; screen: Screen; courses: Course[]; openCourseId?: string; setScreen: (screen: Screen) => void; openCourse: (course: Course) => void }) {
+  return (
+    <aside className="app-sidebar">
+      <nav aria-label="Navegación principal" className="side-nav">
+        {navItems.filter((item) => item.key !== "admin" || user.role === "owner").map(({ key, label, Icon }) => {
+          const active = screen === key;
+          return (
+            <button aria-current={active ? "page" : undefined} className={active ? "side-item active" : "side-item"} key={key} onClick={() => setScreen(key)} type="button">
+              <span className="side-icon"><Icon size={18} /></span>
+              <span className="side-label">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      <div className="side-group">
+        <span className="eyebrow">Mis ramos</span>
+        {courses.map((course) => {
+          return (
+          <button
+            aria-current={openCourseId === course.id ? "page" : undefined}
+            className={openCourseId === course.id ? "side-item active" : "side-item"}
+            key={course.id}
+            onClick={() => openCourse(course)}
+            style={{ "--course-tone": course.tone } as React.CSSProperties}
+            type="button"
+          >
+            <span className="side-icon tone"><FolderSimple size={24} weight="fill" /></span>
+            <span className="side-label">{course.name}<small>{course.code}</small></span>
+          </button>
+          );
+        })}
+      </div>
+      <a className="side-item side-foot" href="/biblioteca/index.html">
+        <span className="side-icon"><Archive size={18} /></span>
+        <span className="side-label">Biblioteca académica</span>
+      </a>
+    </aside>
   );
 }

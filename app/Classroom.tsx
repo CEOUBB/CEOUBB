@@ -1,48 +1,23 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, ChartBar, Files, GraduationCap, House, Sigma, UsersThree } from "@phosphor-icons/react";
+import { ArrowRight, ArrowUpRight, ChartBar, Check, CopySimple, Files, GraduationCap, House, Info, Sigma, UsersThree } from "@phosphor-icons/react";
 import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classroomFileUrl, deleteClassroomPost, editClassroomPost, moveClassroomPost, publishClassroomPost, renameClassroomFile, saveClassroomProgress, saveGradebook, saveSimulation, saveStudentScores, uploadClassroomFile, watchClassroom } from "../lib/firebase-classroom-client";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../lib/courses";
 import { DEFAULT_EXEMPTION_GRADE, GradeItem, GradeScores, MAX_GRADE, MIN_GRADE, PASSING_GRADE, formatGrade, isValidGrade, requiredGrade, summarize } from "../lib/grades";
-import { Avatar, ease, initials, rise, roleLabel, Screen, stagger } from "./portal-ui";
+import { Avatar, ease, initials, roleLabel, Screen } from "./portal-ui";
 import type { User } from "./portal-ui";
 
-function Equilibrium({ symbol, sub }: { symbol: string; sub?: string }) {
-  return (
-    <math className="math">
-      <mrow>
-        <mo>∑</mo>
-        {sub ? <msub><mi>{symbol}</mi><mi>{sub}</mi></msub> : <mi>{symbol}</mi>}
-        <mo>=</mo>
-        <mn>0</mn>
-      </mrow>
-    </math>
-  );
-}
-
-const friction = (
-  <math className="math">
-    <mrow><mi>F</mi><mo>≤</mo><msub><mi>μ</mi><mi>s</mi></msub><mi>N</mi></mrow>
-  </math>
-);
-
-const steiner = (
-  <math className="math">
-    <mrow><mi>I</mi><mo>=</mo><mover><mi>I</mi><mo>¯</mo></mover><mo>+</mo><mi>A</mi><msup><mi>d</mi><mn>2</mn></msup></mrow>
-  </math>
-);
-
-const UNIT_EQUATIONS: Record<string, ReactNode[]> = {
-  estatica: [<Equilibrium key="ra1" symbol="F" />, <Equilibrium key="ra2" symbol="M" sub="O" />, friction, steiner],
-};
-
-const COVER_EQUATIONS: Record<string, ReactNode[]> = {
-  estatica: [<Equilibrium key="fx" symbol="F" sub="x" />, <Equilibrium key="fy" symbol="F" sub="y" />, <Equilibrium key="mo" symbol="M" sub="O" />],
-};
-
 type Tab = "home" | "materials" | "grades" | "progress" | "people";
+
+const COURSE_TABS: { key: Tab; label: string; Icon: typeof House }[] = [
+  { key: "home", label: "Portada", Icon: House },
+  { key: "materials", label: "Materiales", Icon: Files },
+  { key: "grades", label: "Notas", Icon: GraduationCap },
+  { key: "progress", label: "Progreso", Icon: ChartBar },
+  { key: "people", label: "Participantes", Icon: UsersThree },
+];
 type Note = { text: string; tone: "info" | "ok" | "bad" };
 
 const emptyClassroom: ClassroomState = { posts: [], files: [], students: [], ownProgress: 0, gradebook: [], exemption: null, officialScores: {}, simulation: {}, classScores: {} };
@@ -55,11 +30,13 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
   const [tab, setTab] = useState<Tab>("home");
   const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
   const [status, setStatus] = useState<Note>({ text: "", tone: "info" });
+  const [copiedCourseReference, setCopiedCourseReference] = useState(false);
   const note = (text: string, tone: Note["tone"] = "info") => setStatus({ text, tone });
   const canTeach = user.role === "teacher" || user.role === "owner";
   const { files, students, posts } = classroom;
   const units = course.units;
   const completed = classroom.ownProgress;
+  const courseReference = `${course.code} - ${course.section}`;
 
   useEffect(() => watchClassroom(course.id, canTeach, (patch) => setClassroom((current) => ({ ...current, ...patch })), (message) => note(message, "bad")), [course.id, canTeach]);
 
@@ -176,37 +153,42 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
     }
   };
 
+  const copyCourseReference = async () => {
+    try {
+      await navigator.clipboard.writeText(courseReference);
+      setCopiedCourseReference(true);
+      window.setTimeout(() => setCopiedCourseReference(false), 1600);
+      note("Código del ramo copiado.", "ok");
+    } catch {
+      note("No fue posible copiar el código del ramo.", "bad");
+    }
+  };
+
   return (
-    <div className="classroom-layout">
-      <aside className="classroom-sidebar">
-        <button className="back-button" onClick={goBack} type="button"><ArrowLeft size={15} /><span>Mis cursos</span></button>
-        <div className="course-identity panel-navy"><span>{course.code}</span><h2>{course.name}</h2><p>Ingeniería Mecánica · {course.period.replace("Semestre ", "")}</p></div>
-        <nav aria-label="Secciones del aula">
-          <button className={tab === "home" ? "active" : ""} onClick={() => setTab("home")} type="button"><House size={18} />Portada del curso</button>
-          <button className={tab === "people" ? "active" : ""} onClick={() => setTab("people")} type="button"><UsersThree size={18} />Participantes</button>
-          <button className={tab === "grades" ? "active" : ""} onClick={() => setTab("grades")} type="button"><GraduationCap size={18} />Notas y ponderaciones</button>
-          <button onClick={() => setTab("progress")} className={tab === "progress" ? "active" : ""} type="button"><ChartBar size={18} />Progreso y monitoreo</button>
-          <button className={tab === "materials" ? "active" : ""} onClick={() => setTab("materials")} type="button"><Files size={18} />Materiales</button>
-        </nav>
-        <a className="sidebar-library" href="/biblioteca/index.html">Banco de certámenes <ArrowUpRight size={14} /></a>
-      </aside>
+    <div className="classroom-layout" style={{ "--course-tone": course.tone } as React.CSSProperties}>
       <main className="classroom-main">
-        <header className="classroom-top"><div><span className="breadcrumb">Mis cursos / {course.name}</span>{tab !== "home" && <h1>{tabTitle(tab)}</h1>}</div><span className="role-badge">{roleLabel(user.role)}</span></header>
+        <header className="classroom-top">
+          <div>
+            <span className="breadcrumb"><button onClick={goBack} type="button">Mis cursos</button> / {course.name}</span>
+            <h1>{tab === "home" ? course.name : tabTitle(tab)}</h1>
+          </div>
+          <div className="classroom-meta"><button aria-label={copiedCourseReference ? "Código copiado" : `Copiar código ${courseReference}`} className="course-reference" onClick={copyCourseReference} title={copiedCourseReference ? "Código copiado" : "Copiar código del ramo"} type="button">Código: {courseReference}{copiedCourseReference ? <Check size={14} aria-hidden="true" /> : <CopySimple size={14} aria-hidden="true" />}</button></div>
+        </header>
+        <nav aria-label="Secciones del aula" className="course-tabs">
+          {COURSE_TABS.map(({ key, label, Icon }) => (
+            <button aria-current={tab === key ? "page" : undefined} className={tab === key ? "active" : ""} key={key} onClick={() => setTab(key)} type="button">
+              <Icon size={18} />{label}
+            </button>
+          ))}
+        </nav>
         <AnimatePresence initial={false} mode="wait">
         <Screen key={tab}>
         {tab === "home" && (
-          <>
-            <section className="course-cover panel-navy">
-              <div><span className="eyebrow">{course.eyebrow}</span><h1>{course.headline}</h1><p>{course.summary}</p>{course.facts.length > 0 && <div className="cover-meta">{course.facts.map((fact) => <span key={fact}>{fact}</span>)}</div>}</div>
-              {COVER_EQUATIONS[course.id] && <div className="equation-stack">{COVER_EQUATIONS[course.id].map((equation, index) => <span key={index}>{equation}</span>)}</div>}
-            </section>
-            <div className="classroom-columns">
-              <section>
-                <div className="section-title compact-title"><h2>Resultados de aprendizaje</h2></div>
-                {units.length === 0 && <div className="empty-state"><strong>Este ramo aún no tiene resultados de aprendizaje cargados.</strong><p>Se agregan al registro del curso cuando el docente entrega el programa oficial.</p></div>}
-                <motion.div animate="show" className="unit-grid" initial="hidden" variants={stagger}>{units.map((unit, index) => <motion.article key={unit.title} transition={{ duration: 0.45, ease }} variants={rise}><span className="unit-number">0{index + 1}</span><div><h3>{unit.title}</h3><p>{unit.subtitle}</p></div><strong>{UNIT_EQUATIONS[course.id]?.[index]}</strong>{!canTeach && <label className="unit-check"><input checked={index < completed} onChange={(event) => updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))} type="checkbox" />Completado</label>}</motion.article>)}</motion.div>
-              </section>
-              <aside className="course-facts">
+          <div className="classroom-columns">
+            <PostsSection posts={posts} user={user} editPost={editPost} deletePost={deletePost} openMaterials={() => setTab("materials")} />
+            <aside className="course-rail">
+              <div className="section-title compact-title"><h2><Info size={19} weight="fill" aria-hidden="true" />Información del ramo</h2></div>
+              <div className="course-facts">
                 <dl>
                   <div>
                     <dt>Coordinación</dt>
@@ -220,14 +202,13 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
                     </dd>
                   </div>
                 </dl>
-              </aside>
-            </div>
-            <PostsSection posts={posts} user={user} editPost={editPost} deletePost={deletePost} />
-          </>
+              </div>
+            </aside>
+          </div>
         )}
         {tab === "materials" && <MaterialsSection course={course} files={files} user={user} canTeach={canTeach} publish={publish} upload={upload} openFile={openFile} renameFile={renameFile} moveFile={moveFile} deleteFile={deleteFile} status={status} />}
         {tab === "grades" && <GradesSection course={course} classroom={classroom} canTeach={canTeach} note={note} status={status} />}
-        {tab === "progress" && <ProgressSection units={units.length} canTeach={canTeach} completed={completed} students={students} />}
+        {tab === "progress" && <ProgressSection units={units} canTeach={canTeach} completed={completed} students={students} updateProgress={updateProgress} />}
         {tab === "people" && <PeopleSection course={course} user={user} students={students} />}
         </Screen>
         </AnimatePresence>
@@ -236,11 +217,11 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
   );
 }
 
-function PostsSection({ posts, user, editPost, deletePost }: { posts: ClassroomPost[]; user: User; editPost: (post: ClassroomPost) => void; deletePost: (post: ClassroomPost) => void }) {
+function PostsSection({ posts, user, editPost, deletePost, openMaterials }: { posts: ClassroomPost[]; user: User; editPost: (post: ClassroomPost) => void; deletePost: (post: ClassroomPost) => void; openMaterials: () => void }) {
   return (
     <section className="posts-section">
       <div className="section-title compact-title"><h2>Avisos del curso</h2></div>
-      {posts.length === 0 && <div className="empty-state"><strong>Todavía no hay avisos publicados.</strong><p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p></div>}
+      {posts.length === 0 && <div className="empty-state"><strong>Todavía no hay avisos publicados.</strong><p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p>{(user.role === "teacher" || user.role === "owner") ? <button className="empty-state-action" onClick={openMaterials} type="button">Publicar primer aviso <ArrowRight size={15} /></button> : <a className="empty-state-action" href="/biblioteca/index.html">Abrir biblioteca académica <ArrowRight size={15} /></a>}</div>}
       <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase()); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso <ArrowUpRight size={12} /></a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
     </section>
   );
@@ -252,7 +233,7 @@ function MaterialsSection({ course, files, user, canTeach, publish, upload, open
     <section className="materials-view">
       <div className="materials-list">
         <div className="section-title compact-title"><h2>Archivos compartidos</h2></div>
-        <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon"><Sigma size={20} /></span><div><strong>Banco completo del ramo</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir <ArrowRight size={14} /></b></a>
+        <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon"><Sigma size={20} /></span><div><strong>Biblioteca académica del ramo</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir <ArrowRight size={14} /></b></a>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
         {folders.map(([folder, items]) => (
           <details className="material-folder" key={folder} open>
@@ -475,11 +456,13 @@ function TeacherGrades({ course, classroom, note, status }: { course: Course; cl
   );
 }
 
-function ProgressSection({ units, canTeach, completed, students }: { units: number; canTeach: boolean; completed: number; students: ClassroomStudent[] }) {
+function ProgressSection({ units, canTeach, completed, students, updateProgress }: { units: Course["units"]; canTeach: boolean; completed: number; students: ClassroomStudent[]; updateProgress: (next: number) => void }) {
+  const total = units.length;
   return (
     <section className="progress-view">
-      {!canTeach && units === 0 && <div className="empty-state"><strong>Este ramo aún no tiene resultados de aprendizaje cargados.</strong><p>Tu avance por unidad aparecerá cuando el curso publique su programa.</p></div>}
-      {!canTeach && units > 0 && <div className="personal-progress"><strong>{completed}/{units}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><Bar ratio={completed / units} /></div></div></div>}
+      {!canTeach && total === 0 && <div className="empty-state"><strong>Este ramo aún no tiene resultados de aprendizaje cargados.</strong><p>Tu avance por unidad aparecerá cuando el curso publique su programa.</p></div>}
+      {!canTeach && total > 0 && <div className="personal-progress"><strong>{completed}/{total}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><Bar ratio={completed / total} /></div></div></div>}
+      {!canTeach && total > 0 && <div className="unit-grid">{units.map((unit, index) => <article key={unit.title}><div><h3>{unit.title}</h3><p>{unit.subtitle}</p></div><label className="unit-check"><input checked={index < completed} onChange={(event) => updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))} type="checkbox" />Completado</label></article>)}</div>}
       {canTeach && <div className="progress-table"><div className="progress-table-head"><span>Estudiante</span><span>Avance</span><span>Última actividad</span></div>{students.length === 0 && <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>}{students.map((student) => <div className="progress-table-row" key={student.userId}><span><b>{student.name}</b><small>{student.email}</small></span><span><b>{student.completed}/{student.total}</b><i><motion.em animate={{ scaleX: student.total ? student.completed / student.total : 0 }} initial={{ scaleX: 0 }} transition={{ duration: 0.6, ease }} /></i></span><span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span></div>)}</div>}
     </section>
   );
