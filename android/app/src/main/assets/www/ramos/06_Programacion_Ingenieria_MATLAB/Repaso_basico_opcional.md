@@ -1,6 +1,6 @@
 # Programación en Ingeniería con MATLAB - Evaluaciones y ejercicios
 
-Banco inicial creado desde cero para práctica de programación aplicada a ingeniería en MATLAB.
+Biblioteca inicial creada desde cero para práctica de programación aplicada a ingeniería en MATLAB.
 
 ## 1. Vectores y operaciones básicas
 

@@ -910,7 +910,7 @@ window.COURSES = [
     "short": "MATLAB",
     "icon": ">_",
     "description": "Certámenes completos de programación, métodos numéricos y simulación mecánica.",
-    "sourceNote": "Creado como banco universitario de programación aplicada a Ingeniería Mecánica con MATLAB.",
+    "sourceNote": "Creado como biblioteca académica de programación aplicada a Ingeniería Mecánica con MATLAB.",
     "topics": [
       "Certamen 1",
       "Certamen 2",

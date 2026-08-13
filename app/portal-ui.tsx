@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { BookOpen, Code, Compass, Flame, Function as FunctionIcon, Translate, TrendUp } from "@phosphor-icons/react";
 import { watchGooglePhoto } from "../lib/firebase-client";
 import type { AccountRole as Role } from "../lib/access-policy";
 
@@ -11,6 +12,18 @@ export type User = {
   name: string;
   role: Role;
 };
+
+export function courseIcon(id: string) {
+  switch (id) {
+    case "estatica": return Compass;
+    case "edo": return FunctionIcon;
+    case "estadistica": return TrendUp;
+    case "ingles": return Translate;
+    case "termodinamica": return Flame;
+    case "matlab": return Code;
+    default: return BookOpen;
+  }
+}
 
 export const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
