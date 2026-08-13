@@ -4,14 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, MotionConfig } from "motion/react";
+import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import { Archive, Books, CalendarBlank, FolderSimple, House, SignOut, Sliders } from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 import { COURSES, Course, courseById, PERIOD } from "../lib/courses";
 import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
 import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
 import { Avatar, Screen } from "./portal-ui";
-import { calendarEntries, firstName, forgetPhoto, rememberPhoto, roleLabel, type User } from "../lib/portal-utils";
+import { calendarEntries, firstName, forgetPhoto, loadCurrentSession, rememberPhoto, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 
 const Classroom = dynamic(() => import("./Classroom"), {
@@ -51,15 +51,21 @@ export function Portal() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) return { user: null };
-        return response.json();
+    let active = true;
+    loadCurrentSession()
+      .then((sessionUser) => {
+        if (active) setUser(sessionUser);
       })
-      .then((data) => setUser(data.user ?? null))
-      .catch(() => setUser(null))
-      .finally(() => setChecking(false));
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setChecking(false);
+      });
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -112,36 +118,38 @@ export function Portal() {
   const openedCourse = course ?? courseById(COURSES[0].id);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
-        <PortalHeader sidebarOpen={sidebarOpen} user={user} onLogout={logout} onHome={() => setScreen("courses")} toggleSidebar={() => setSidebarOpen((open) => !open)} />
-        <PortalSidebar
-          courses={courses}
-          openCourse={openCourse}
-          openCourseId={screen === "course" ? openedCourse?.id : undefined}
-          screen={screen}
-          setScreen={setScreen}
-          user={user}
-        />
-        <button aria-label="Cerrar el menú" className="sidebar-scrim" onClick={() => setSidebarOpen(false)} type="button" />
-        <main className="app-main">
-          <AnimatePresence initial={false} mode="wait">
-            {screen === "course" && openedCourse ? (
-              <Screen key={`course-${openedCourse.id}`}><Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} /></Screen>
-            ) : (
-              <Screen key={screen}>
-                <div className="portal-main">
-                  {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
-                  {screen === "calendar" && <CalendarView courses={courses} entries={entries} />}
-                  {screen === "resources" && <ResourcesView courses={courses} />}
-                  {screen === "admin" && user.role === "owner" && <AdminView />}
-                </div>
-              </Screen>
-            )}
-          </AnimatePresence>
-        </main>
-      </div>
-    </MotionConfig>
+    <LazyMotion features={domAnimation}>
+      <MotionConfig reducedMotion="user">
+        <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
+          <PortalHeader sidebarOpen={sidebarOpen} user={user} onLogout={logout} onHome={() => setScreen("courses")} toggleSidebar={() => setSidebarOpen((open) => !open)} />
+          <PortalSidebar
+            courses={courses}
+            openCourse={openCourse}
+            openCourseId={screen === "course" ? openedCourse?.id : undefined}
+            screen={screen}
+            setScreen={setScreen}
+            user={user}
+          />
+          <button aria-label="Cerrar el menú" className="sidebar-scrim" onClick={() => setSidebarOpen(false)} type="button" />
+          <main className="app-main">
+            <AnimatePresence initial={false} mode="wait">
+              {screen === "course" && openedCourse ? (
+                <Screen key={`course-${openedCourse.id}`}><Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} /></Screen>
+              ) : (
+                <Screen key={screen}>
+                  <div className="portal-main">
+                    {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
+                    {screen === "calendar" && <CalendarView courses={courses} entries={entries} />}
+                    {screen === "resources" && <ResourcesView courses={courses} />}
+                    {screen === "admin" && user.role === "owner" && <AdminView />}
+                  </div>
+                </Screen>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
+      </MotionConfig>
+    </LazyMotion>
   );
 }
 

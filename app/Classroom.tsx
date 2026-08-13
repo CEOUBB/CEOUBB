@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { ArrowRight, ArrowUpRight, ChartBar, Check, CopySimple, Files, GraduationCap, House, Info, Sigma, UsersThree } from "@phosphor-icons/react";
 import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classroomFileUrl, deleteClassroomPost, editClassroomPost, moveClassroomPost, publishClassroomPost, renameClassroomFile, saveClassroomProgress, saveGradebook, saveSimulation, saveStudentScores, uploadClassroomFile, watchClassroom } from "../lib/firebase-classroom-client";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../lib/courses";
@@ -25,7 +26,7 @@ const emptyClassroom: ClassroomState = { posts: [], files: [], students: [], own
 
 function Bar({ ratio }: { ratio: number }) {
   const safeRatio = typeof ratio === "number" && !Number.isNaN(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
-  return <motion.span animate={{ scaleX: safeRatio }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} />;
+  return <m.span animate={{ scaleX: safeRatio }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} />;
 }
 
 export default function Classroom({ course, user, goBack }: { course: Course; user: User; goBack: () => void }) {
@@ -536,7 +537,7 @@ function ProgressSection({ units, canTeach, completed, students, updateProgress 
               <span><b>{student.name}</b><small>{student.email}</small></span>
               <span>
                 <b>{student.completed}/{student.total}</b>
-                <i><motion.em animate={{ scaleX: student.total && typeof student.completed === "number" && !Number.isNaN(student.completed) ? Math.min(1, Math.max(0, student.completed / student.total)) : 0 }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} /></i>
+                <i><m.em animate={{ scaleX: student.total && typeof student.completed === "number" && !Number.isNaN(student.completed) ? Math.min(1, Math.max(0, student.completed / student.total)) : 0 }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} /></i>
               </span>
               <span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span>
             </div>

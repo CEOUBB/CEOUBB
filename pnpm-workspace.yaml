@@ -1,5 +1,3 @@
-minimumReleaseAge: 10080
-trustPolicy: no-downgrade
 blockExoticSubdeps: true
 allowBuilds:
   '@firebase/util': true

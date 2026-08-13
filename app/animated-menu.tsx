@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, type SVGMotionProps, type Variants } from "motion/react";
+import * as m from "motion/react-m";
+import type { SVGMotionProps, Variants } from "motion/react";
 
 type MenuProps = Omit<SVGMotionProps<SVGSVGElement>, "animate"> & {
   animate?: boolean;
@@ -21,7 +22,7 @@ const lastLineVariants: Variants = {
 
 export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
   return (
-    <motion.svg
+    <m.svg
       animate={animate ? "active" : "initial"}
       fill="none"
       height={size}
@@ -35,9 +36,9 @@ export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <motion.line x1={4} x2={20} y1={6} y2={6} variants={lineVariants} />
-      <motion.line x1={4} x2={20} y1={12} y2={12} variants={{ initial: { opacity: 1 }, active: { opacity: 0, transition: { ease: "easeInOut", duration: 0.2 } } }} />
-      <motion.line x1={4} x2={20} y1={18} y2={18} variants={lastLineVariants} />
-    </motion.svg>
+      <m.line x1={4} x2={20} y1={6} y2={6} variants={lineVariants} />
+      <m.line x1={4} x2={20} y1={12} y2={12} variants={{ initial: { opacity: 1 }, active: { opacity: 0, transition: { ease: "easeInOut", duration: 0.2 } } }} />
+      <m.line x1={4} x2={20} y1={18} y2={18} variants={lastLineVariants} />
+    </m.svg>
   );
 }

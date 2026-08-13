@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { watchGooglePhoto } from "../lib/firebase-client";
 import { cachedPhoto, ease, initials, rememberPhoto } from "../lib/portal-utils";
 
@@ -39,13 +39,13 @@ export function Avatar({ email, name, large = false }: { email: string; name: st
 
 export function Screen({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.24, ease }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

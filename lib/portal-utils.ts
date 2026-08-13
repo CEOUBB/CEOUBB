@@ -1,4 +1,3 @@
-import { BookOpen, Code, Compass, Flame, Function as FunctionIcon, Translate, TrendUp } from "@phosphor-icons/react";
 import type { AccountRole as Role } from "./access-policy";
 import type { Course } from "./courses";
 import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
@@ -147,6 +146,28 @@ export function formatDay(value: string): string {
 export function formatBytes(value: number): string {
   if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export async function loadCurrentSession(): Promise<User | null> {
+  try {
+    const response = await fetch("/api/auth/me", { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { user?: User };
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadAdminUsers(): Promise<User[]> {
+  try {
+    const response = await fetch("/api/admin/users", { cache: "no-store" });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { users?: User[] };
+    return data.users ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export function fileExtension(value: string): string {

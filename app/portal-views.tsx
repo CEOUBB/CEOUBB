@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { ArrowRight, ArrowUpRight, Books, DownloadSimple, Robot } from "@phosphor-icons/react";
 import { Course, PERIOD } from "../lib/courses";
 import type { CourseActivity } from "../lib/firebase-classroom-client";
@@ -12,6 +12,7 @@ import {
   ease,
   firstName,
   getSantiagoDateISO,
+  loadAdminUsers,
   monthLabel,
   monthOf,
   nextEntry,
@@ -75,13 +76,13 @@ export function CoursesDashboard({
         </div>
       )}
       <div className="section-title"><h2>Mis cursos</h2></div>
-      <motion.section animate="show" className="course-grid" initial="hidden" variants={stagger}>
+      <m.section animate="show" className="course-grid" initial="hidden" variants={stagger}>
         {courses.map((course) => {
           const upcoming = entries.find((entry) => entry.courseId === course.id && entry.date >= todayISO);
           const total = activity.filter((item) => item.courseId === course.id).length;
           const unseen = unseenCount(activity, course.id, seen[course.id]);
           return (
-            <motion.article
+            <m.article
               className="course-card"
               key={course.id}
               style={{ "--course-tone": course.tone } as React.CSSProperties}
@@ -107,10 +108,10 @@ export function CoursesDashboard({
                   Entrar al aula <ArrowRight size={15} />
                 </button>
               </div>
-            </motion.article>
+            </m.article>
           );
         })}
-      </motion.section>
+      </m.section>
     </>
   );
 }
@@ -124,7 +125,7 @@ export function CalendarView({ courses, entries }: { courses: Course[]; entries:
         <p><span><b>{entries.length}</b> {entries.length === 1 ? "evaluación" : "evaluaciones"}</span><span>·</span><span>Periodo <b>{PERIOD}</b></span></p>
       </div>
       <div className="calendar-layout">
-        <motion.div animate="show" className="timeline" initial="hidden" variants={stagger}>
+        <m.div animate="show" className="timeline" initial="hidden" variants={stagger}>
           {entries.length === 0 && (
             <div className="empty-state">
               <strong>Todavía no hay evaluaciones cargadas.</strong>
@@ -134,11 +135,11 @@ export function CalendarView({ courses, entries }: { courses: Course[]; entries:
           {entries.map((item, index) => (
             <Fragment key={item.key}>
               {(index === 0 || monthOf(item.date) !== monthOf(entries[index - 1].date)) && (
-                <motion.h2 className="timeline-month" transition={{ duration: 0.4, ease }} variants={rise}>
+                <m.h2 className="timeline-month" transition={{ duration: 0.4, ease }} variants={rise}>
                   {monthLabel(item.date)}
-                </motion.h2>
+                </m.h2>
               )}
-              <motion.article
+              <m.article
                 className={item.key === next?.key ? "upcoming" : ""}
                 style={{ "--course-tone": item.tone } as React.CSSProperties}
                 transition={{ duration: 0.45, ease }}
@@ -153,10 +154,10 @@ export function CalendarView({ courses, entries }: { courses: Course[]; entries:
                   {item.key === next?.key && <b className="upcoming-flag">Próxima</b>}
                   {countdown(item.date)}
                 </span>
-              </motion.article>
+              </m.article>
             </Fragment>
           ))}
-        </motion.div>
+        </m.div>
         <aside className="period-courses">
           <strong>Ramos del periodo</strong>
           <ul>
@@ -180,8 +181,8 @@ export function ResourcesView({ courses }: { courses: Course[] }) {
         <h1>Recursos de estudio</h1>
         <p><span>La biblioteca académica cubre los <b>{courses.length}</b> ramos del periodo. La app y el tutor son apoyos complementarios.</span></p>
       </div>
-      <motion.div animate="show" className="resource-layout" initial="hidden" variants={stagger}>
-        <motion.a className="resource-primary" href="/biblioteca/index.html" transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
+      <m.div animate="show" className="resource-layout" initial="hidden" variants={stagger}>
+        <m.a className="resource-primary" href="/biblioteca/index.html" transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
           <span className="resource-icon"><Books size={22} /></span>
           <h2>Biblioteca académica</h2>
           <p>Evaluaciones largas con puntaje, tiempo y pauta desarrollada.</p>
@@ -194,22 +195,22 @@ export function ResourcesView({ courses }: { courses: Course[] }) {
             ))}
           </ul>
           <b>Abrir biblioteca <ArrowRight size={14} /></b>
-        </motion.a>
-        <motion.a className="resource-aside" href={APK_URL} transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
+        </m.a>
+        <m.a className="resource-aside" href={APK_URL} transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
           <span className="resource-icon"><DownloadSimple size={22} /></span>
           <h2>App para Android</h2>
           <p>Instala el APK y consulta la biblioteca sin conexión.</p>
           <em>Versión 1.0.6 · Android 8 o superior</em>
           <b>Descargar <ArrowRight size={14} /></b>
-        </motion.a>
-        <motion.a className="resource-aside" href="https://chatgpt.com" rel="noreferrer" target="_blank" transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
+        </m.a>
+        <m.a className="resource-aside" href="https://chatgpt.com" rel="noreferrer" target="_blank" transition={{ duration: 0.45, ease }} variants={rise} whileHover={{ y: -1 }}>
           <span className="resource-icon"><Robot size={22} /></span>
           <h2>Tutor con inteligencia artificial</h2>
           <p>Resuelve dudas puntuales con el contexto del ramo a mano.</p>
           <em>Enlace externo a ChatGPT</em>
           <b>Abrir tutor <ArrowUpRight size={14} /></b>
-        </motion.a>
-      </motion.div>
+        </m.a>
+      </m.div>
     </section>
   );
 }
@@ -218,36 +219,20 @@ export function AdminView() {
   const [accounts, setAccounts] = useState<User[]>([]);
   const [message, setMessage] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      const response = await fetch("/api/admin/users", { cache: "no-store" });
-      if (!response.ok) {
-        setAccounts([]);
-        return;
-      }
-      const data = (await response.json()) as { users?: User[] };
-      setAccounts(data.users ?? []);
-    } catch {
-      setAccounts([]);
-    }
+  const refreshAccounts = useCallback(async () => {
+    const list = await loadAdminUsers();
+    setAccounts(list);
   }, []);
 
   useEffect(() => {
     let active = true;
-    const init = async () => {
-      try {
-        const response = await fetch("/api/admin/users", { cache: "no-store" });
-        if (!response.ok) {
-          if (active) setAccounts([]);
-          return;
-        }
-        const data = (await response.json()) as { users?: User[] };
-        if (active) setAccounts(data.users ?? []);
-      } catch {
+    loadAdminUsers()
+      .then((users) => {
+        if (active) setAccounts(users);
+      })
+      .catch(() => {
         if (active) setAccounts([]);
-      }
-    };
-    init().catch(() => undefined);
+      });
     return () => {
       active = false;
     };
@@ -262,7 +247,7 @@ export function AdminView() {
       });
       setMessage(response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.");
       if (response.ok) {
-        await load();
+        await refreshAccounts();
       }
     } catch {
       setMessage("No fue posible actualizar el rol.");

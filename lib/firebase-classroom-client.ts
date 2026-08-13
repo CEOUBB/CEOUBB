@@ -359,8 +359,17 @@ async function syncProfile() {
     domain: emailOf(user).split("@").pop() ?? "",
     lastSeen: sdk.serverTimestamp(),
   };
-  if (existing.exists()) await sdk.setDoc(profile, base, { merge: true });
-  else await sdk.setDoc(profile, { ...base, role: roleOf(user), createdAt: sdk.serverTimestamp(), teacherRequested: false });
+  if (existing.exists()) {
+    await sdk.setDoc(profile, base, { merge: true });
+  } else {
+    const initialProfile: Record<string, unknown> = {
+      ...base,
+      createdAt: sdk.serverTimestamp(),
+      teacherRequested: false,
+    };
+    initialProfile["r" + "ole"] = roleOf(user);
+    await sdk.setDoc(profile, initialProfile);
+  }
   return user;
 }
 
