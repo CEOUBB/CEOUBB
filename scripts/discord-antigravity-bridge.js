@@ -30,8 +30,34 @@ if (!DISCORD_BOT_TOKEN) {
   process.exit(1);
 }
 
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const MODEL_FALLBACK_LIST = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3-flash",
+  "gemma-4-31b-it",
+];
 const THINKING_EFFORT = "HIGH";
+
+/**
+ * Execute generateContent trying fallback models in sequence if errors occur
+ */
+async function generateContentWithFallback(ai, requestParams) {
+  let lastError;
+  for (const modelId of MODEL_FALLBACK_LIST) {
+    try {
+      const response = await ai.models.generateContent({
+        ...requestParams,
+        model: modelId,
+      });
+      return { response, usedModel: modelId };
+    } catch (err) {
+      console.warn(`⚠️ Model '${modelId}' failed: ${err.message}. Trying next fallback model...`);
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
 
 // SECURITY: Authorized maintainers
 const ALLOWED_USER_IDS = new Set([
@@ -234,7 +260,8 @@ function chunkText(text, limit = 1900) {
 client.on("clientReady", () => {
   console.log(`🤖 CEOUBB Antigravity Local Bridge connected as ${client.user.tag}`);
   console.log(`💬 Mode: Raw Text Reply (Human style with user context & reply detection)`);
-  console.log(`🧠 Model: ${DEFAULT_MODEL} (Thinking Effort: ${THINKING_EFFORT})`);
+  console.log(`🧠 Primary Model: ${MODEL_FALLBACK_LIST[0]} (Thinking Effort: ${THINKING_EFFORT})`);
+  console.log(`🔄 Fallback Sequence: ${MODEL_FALLBACK_LIST.join(" -> ")}`);
   console.log(`📚 Project Knowledge: Enabled (AGENTS.md & PLAN.md loaded)`);
   console.log(`🛠️ Tools Enabled: Google Calendar MCP & GitHub MCP`);
   console.log(`🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`);
@@ -312,8 +339,7 @@ Responde siempre en español formal, educado y profesional. No utilices modismos
 ${projectContext}`;
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    let response = await ai.models.generateContent({
-      model: DEFAULT_MODEL,
+    const firstCall = await generateContentWithFallback(ai, {
       contents: [
         ...sessionHistory,
         { role: "user", parts: [{ text: userPrompt }] }
@@ -323,6 +349,8 @@ ${projectContext}`;
         tools: [{ functionDeclarations: toolDeclarations }],
       }
     });
+
+    let response = firstCall.response;
 
     // Check if Gemini invoked tool calls
     const candidates = response.candidates || [];
@@ -342,9 +370,9 @@ ${projectContext}`;
         });
       }
 
-      // Follow up with tool response while preserving modelContent and thought_signature
+      // Follow up with tool response using the same model that handled the initial call
       response = await ai.models.generateContent({
-        model: DEFAULT_MODEL,
+        model: firstCall.usedModel,
         contents: [
           ...sessionHistory,
           { role: "user", parts: [{ text: userPrompt }] },
