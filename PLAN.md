@@ -21,7 +21,7 @@ Companion files:
 
 ## Active work
 
-- [ACTIVE] Claude Code · `main`, uncommitted — light institutional redesign of every logged-in portal surface and the web study library. Verified locally, not committed or deployed. `app/globals.css`, `app/Portal.tsx`, `app/layout.tsx`, `lib/firebase-client.ts`, `public/biblioteca/`, `AGENTS.md`
+- [ACTIVE] Claude Code · `main`, uncommitted — the whole web surface (access screen, portal, aula, calendario, recursos, administración, `/privacidad`, web study library) rebuilt on the owner's **CEOUBB Design System** from claude.ai/design (project `1730f6d2-1697-4fd1-bad0-f4e0b2863cd8`): paper canvas `#f4f6f9`, one accent `#0055b8`, navy `#002b5c` for the single dark band per page, `#e2e8f0` hairlines, Inter with the DS type ramp, DS radii/shadow/motion scales, academic palette for course accents. Removed the marketing download banner and the four-colour institutional rule; the "próxima evaluación" card is now a one-line strip above the course grid. Font swapped Geist → Inter (`--font-inter` is declared on `<html>` so `--font-core` resolves at `:root`). `pnpm test` (build + 44 tests) passes; `pnpm run lint` is clean for `app/` (pre-existing errors remain in `scripts/discord-*.js`). Not committed, not deployed, and **not verified behind the institutional login** — no signed-in screenshot was taken. `app/globals.css`, `app/layout.tsx`, `app/Portal.tsx`, `app/portal-views.tsx`, `app/Classroom.tsx`, `lib/courses.ts`, `public/biblioteca/assets/styles.css`
 - [ACTIVE] Claude Code · `main`, uncommitted — multi-course engine, material folders, gradebook (official grades + student simulator), live badges. Build and tests pass locally; rules not deployed; nothing verified behind the institutional login. `lib/courses.ts`, `lib/grades.ts`, `app/Classroom.tsx`, `app/portal-views.tsx`, `app/Portal.tsx`, `firebase/*.rules`, `tests/`
 - [NEXT] Deploy the wildcard course rules to Firestore and Storage, then run the classroom and gradebook manual matrix with owner, teacher and student accounts. `firebase/*.rules`, Firebase
 - [NEXT] Academic data model — course identity becomes *asignatura × periodo × sección*; Turso system of record, Firestore one-way enrollment projection. Spec: [`p1-academic-model.md`](docs/specs/p1-academic-model.md). `db/`, `drizzle/`, `lib/courses.ts`, `app/Portal.tsx`, `firebase/firestore.rules`
@@ -76,7 +76,7 @@ Detail and remediation live in the spec files; this is the index.
 - **Web/Android library divergence** — `assets/data.js` matches; HTML, JS, styles and the native bridge differ. Academic corrections may reach only one platform. Needs a content-sync script that copies portable content and verifies hashes without overwriting native-only behaviour.
 - **Test coverage gap** — no Firebase rule emulator tests, no Android unit/instrumentation tests, no end-to-end multi-role tests.
 - **Store distribution gap** — Play approval, testing tracks, listing assets, policy declarations and final AAB verification remain; no iOS app.
-- **D1 leftovers** — `posts`, `files`, `progress` tables still physically exist in the imported Turso copy, unreferenced. Drop only after confirming the rows are not needed (`pnpm run db:generate` emits the migration).
+- **D1 leftovers** — `posts`, `files`, `progress` tables still physically exist in the imported Turso copy, unreferenced. Drop only after confirming the rows are not needed.
 
 ## Remaining work — two parallel tracks
 
@@ -171,10 +171,6 @@ Next recommended action:
 
 ## Next recommended step
 
-Deploy the two rules sets to `centro-de-estudio-ubb`, then run the manual matrix with one owner, one teacher and one student account before deploying the web to Vercel:
-
-```bash
-cd firebase && pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only firestore,storage
-```
+Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization) and fills in the P0.7 capacity and cost targets — both gate work that otherwise stalls.
