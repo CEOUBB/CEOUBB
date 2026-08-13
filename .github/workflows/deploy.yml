@@ -40,6 +40,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check Firebase Functions syntax
+        run: pnpm run check:functions
+
+      - name: TypeScript typecheck
+        run: pnpm run typecheck
+
+      - name: Lint code
+        run: pnpm run lint
+
+      - name: Run test suite
+        run: pnpm test
+
       - name: Pull Vercel Environment Information (Production)
         if: github.event_name == 'push'
         run: pnpm vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
