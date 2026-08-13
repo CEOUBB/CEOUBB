@@ -17,6 +17,7 @@ Companion files:
 - [`PLAN_ARCHIVE.md`](PLAN_ARCHIVE.md) — completed work, implemented milestones, full handoff history.
 - [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md) — P0.1–P0.11 detail and acceptance criteria.
 - [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md) — P0B.1–P0B.7 institutional adoption dossier.
+- [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md) — React Doctor quality & frontend reliability remediation spec (SDD).
 - [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md) — canonical academic data model / enrollment migration spec.
 
 ## Active work

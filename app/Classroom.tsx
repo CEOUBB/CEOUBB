@@ -1,13 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, ChartBar, Check, CopySimple, Files, GraduationCap, House, Info, Sigma, UsersThree } from "@phosphor-icons/react";
 import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classroomFileUrl, deleteClassroomPost, editClassroomPost, moveClassroomPost, publishClassroomPost, renameClassroomFile, saveClassroomProgress, saveGradebook, saveSimulation, saveStudentScores, uploadClassroomFile, watchClassroom } from "../lib/firebase-classroom-client";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../lib/courses";
 import { DEFAULT_EXEMPTION_GRADE, GradeItem, GradeScores, MAX_GRADE, MIN_GRADE, PASSING_GRADE, formatGrade, isValidGrade, requiredGrade, summarize } from "../lib/grades";
-import { Avatar, ease, initials, roleLabel, Screen } from "./portal-ui";
-import type { User } from "./portal-ui";
+import { Avatar, Screen } from "./portal-ui";
+import { ease, fileExtension, formatBytes, formatDate, formatDay, initials, roleLabel, type User } from "../lib/portal-utils";
 
 type Tab = "home" | "materials" | "grades" | "progress" | "people";
 
@@ -23,7 +24,8 @@ type Note = { text: string; tone: "info" | "ok" | "bad" };
 const emptyClassroom: ClassroomState = { posts: [], files: [], students: [], ownProgress: 0, gradebook: [], exemption: null, officialScores: {}, simulation: {}, classScores: {} };
 
 function Bar({ ratio }: { ratio: number }) {
-  return <motion.span animate={{ scaleX: Math.min(1, Math.max(0, ratio)) }} initial={{ scaleX: 0 }} transition={{ duration: 0.6, ease }} />;
+  const safeRatio = typeof ratio === "number" && !Number.isNaN(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  return <motion.span animate={{ scaleX: safeRatio }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} />;
 }
 
 export default function Classroom({ course, user, goBack }: { course: Course; user: User; goBack: () => void }) {
@@ -35,7 +37,7 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
   const canTeach = user.role === "teacher" || user.role === "owner";
   const { files, students, posts } = classroom;
   const units = course.units;
-  const completed = classroom.ownProgress;
+  const completed = typeof classroom.ownProgress === "number" && !Number.isNaN(classroom.ownProgress) ? classroom.ownProgress : 0;
   const courseReference = `${course.code} - ${course.section}`;
 
   useEffect(() => watchClassroom(course.id, canTeach, (patch) => setClassroom((current) => ({ ...current, ...patch })), (message) => note(message, "bad")), [course.id, canTeach]);
@@ -45,8 +47,9 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
   }, [tab]);
 
   const updateProgress = async (next: number) => {
-    setClassroom((current) => ({ ...current, ownProgress: next }));
-    await saveClassroomProgress(course.id, next, units.length).catch((cause) => note(cause instanceof Error ? cause.message : "No se pudo guardar el progreso.", "bad"));
+    const safeNext = typeof next === "number" && !Number.isNaN(next) ? Math.max(0, next) : 0;
+    setClassroom((current) => ({ ...current, ownProgress: safeNext }));
+    await saveClassroomProgress(course.id, safeNext, units.length).catch((cause) => note(cause instanceof Error ? cause.message : "No se pudo guardar el progreso.", "bad"));
   };
 
   const publish = async (event: FormEvent<HTMLFormElement>) => {
@@ -198,7 +201,7 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
                     <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
                     <dd>
                       <b>{canTeach ? studentCount(students.length) : units.length > 0 ? `${completed} de ${units.length} unidades` : "Sin unidades cargadas"}</b>
-                      {!canTeach && units.length > 0 && <span className="mini-progress"><Bar ratio={completed / units.length} /></span>}
+                      {!canTeach && units.length > 0 && <span className="mini-progress"><Bar ratio={units.length ? completed / units.length : 0} /></span>}
                     </dd>
                   </div>
                 </dl>
@@ -221,8 +224,42 @@ function PostsSection({ posts, user, editPost, deletePost, openMaterials }: { po
   return (
     <section className="posts-section">
       <div className="section-title compact-title"><h2>Avisos del curso</h2></div>
-      {posts.length === 0 && <div className="empty-state"><strong>Todavía no hay avisos publicados.</strong><p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p>{(user.role === "teacher" || user.role === "owner") ? <button className="empty-state-action" onClick={openMaterials} type="button">Publicar primer aviso <ArrowRight size={15} /></button> : <a className="empty-state-action" href="/biblioteca/index.html">Abrir biblioteca académica <ArrowRight size={15} /></a>}</div>}
-      <div className="post-list">{posts.map((post) => { const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase()); return <article key={post.id}><span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span><div><h3>{post.title}</h3><p>{post.body}</p><footer><span>{post.authorName}</span><time>{formatDate(post.createdAt)}</time>{post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noreferrer">Abrir recurso <ArrowUpRight size={12} /></a>}{canManage && <span className="content-actions"><button onClick={() => editPost(post)} type="button">Modificar</button><button onClick={() => deletePost(post)} type="button">Eliminar</button></span>}</footer></div></article>; })}</div>
+      {posts.length === 0 && (
+        <div className="empty-state">
+          <strong>Todavía no hay avisos publicados.</strong>
+          <p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p>
+          {(user.role === "teacher" || user.role === "owner") ? (
+            <button className="empty-state-action" onClick={openMaterials} type="button">Publicar primer aviso <ArrowRight size={15} /></button>
+          ) : (
+            <Link className="empty-state-action" href="/biblioteca/index.html">Abrir biblioteca académica <ArrowRight size={15} /></Link>
+          )}
+        </div>
+      )}
+      <div className="post-list">
+        {posts.map((post) => {
+          const canManage = Boolean(post.authorId) && (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase());
+          return (
+            <article key={post.id}>
+              <span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span>
+              <div>
+                <h3>{post.title}</h3>
+                <p>{post.body}</p>
+                <footer>
+                  <span>{post.authorName}</span>
+                  <time>{formatDate(post.createdAt)}</time>
+                  {post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noopener noreferrer">Abrir recurso <ArrowUpRight size={12} /></a>}
+                  {canManage && (
+                    <span className="content-actions">
+                      <button onClick={() => editPost(post)} type="button">Modificar</button>
+                      <button onClick={() => deletePost(post)} type="button">Eliminar</button>
+                    </span>
+                  )}
+                </footer>
+              </div>
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -233,12 +270,34 @@ function MaterialsSection({ course, files, user, canTeach, publish, upload, open
     <section className="materials-view">
       <div className="materials-list">
         <div className="section-title compact-title"><h2>Archivos compartidos</h2></div>
-        <a className="material-row featured" href="/biblioteca/index.html"><span className="file-icon"><Sigma size={20} /></span><div><strong>Biblioteca académica del ramo</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div><b>Abrir <ArrowRight size={14} /></b></a>
+        <Link className="material-row featured" href="/biblioteca/index.html">
+          <span className="file-icon"><Sigma size={20} /></span>
+          <div><strong>Biblioteca académica del ramo</strong><small>Certámenes, ejercicios resueltos, apuntes y material original</small></div>
+          <b>Abrir <ArrowRight size={14} /></b>
+        </Link>
         {files.length === 0 && <div className="empty-state"><strong>Aún no hay archivos del docente.</strong><p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p></div>}
         {folders.map(([folder, items]) => (
           <details className="material-folder" key={folder} open>
             <summary><span>{folder}</span><b>{items.length} {items.length === 1 ? "archivo" : "archivos"}</b></summary>
-            {items.map((file) => { const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase(); return <div className="material-row" key={file.id}><span className="file-icon">{fileExtension(file.name)}</span><div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div><span className="material-actions"><button onClick={() => openFile(file)} type="button">Descargar</button>{canManage && <span className="content-actions"><button onClick={() => renameFile(file)} type="button">Modificar</button><button onClick={() => moveFile(file)} type="button">Mover</button><button onClick={() => deleteFile(file)} type="button">Eliminar</button></span>}</span></div>; })}
+            {items.map((file) => {
+              const canManage = user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase();
+              return (
+                <div className="material-row" key={file.id}>
+                  <span className="file-icon">{fileExtension(file.name)}</span>
+                  <div><strong>{file.name}</strong><small>{file.authorName} · {formatBytes(file.size)} · {formatDate(file.createdAt)}</small></div>
+                  <span className="material-actions">
+                    <button onClick={() => openFile(file)} type="button">Descargar</button>
+                    {canManage && (
+                      <span className="content-actions">
+                        <button onClick={() => renameFile(file)} type="button">Modificar</button>
+                        <button onClick={() => moveFile(file)} type="button">Mover</button>
+                        <button onClick={() => deleteFile(file)} type="button">Eliminar</button>
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
           </details>
         ))}
       </div>
@@ -280,7 +339,8 @@ function StudentGrades({ course, gradebook, exemption, officialScores, simulatio
 
   const scores: GradeScores = {};
   for (const item of gradebook) {
-    const simulated = Number(draft[item.id]);
+    const rawSim = draft[item.id];
+    const simulated = typeof rawSim === "string" && rawSim.trim() !== "" ? Number(rawSim) : Number.NaN;
     if (isValidGrade(officialScores[item.id])) scores[item.id] = officialScores[item.id];
     else if (isValidGrade(simulated)) scores[item.id] = simulated;
   }
@@ -293,7 +353,7 @@ function StudentGrades({ course, gradebook, exemption, officialScores, simulatio
   const persist = async () => {
     const next: GradeScores = {};
     for (const [id, value] of Object.entries(draft)) {
-      const score = Number(value);
+      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
       if (isValidGrade(score)) next[id] = score;
     }
     await saveSimulation(course.id, next).catch((cause) => note(cause instanceof Error ? cause.message : "No se pudo guardar la simulación.", "bad"));
@@ -365,7 +425,7 @@ function TeacherGrades({ course, classroom, note, status }: { course: Course; cl
   const exempt = draftExempt ?? String(exemption ?? DEFAULT_EXEMPTION_GRADE);
   const setItems = (update: (current: GradeItem[]) => GradeItem[]) => setDraftItems(update(items));
 
-  const totalWeight = items.reduce((total, item) => total + item.weight, 0);
+  const totalWeight = items.reduce((total, item) => total + (typeof item.weight === "number" && !Number.isNaN(item.weight) ? item.weight : 0), 0);
 
   const patch = (id: string, values: Partial<GradeItem>) => setItems((current) => current.map((item) => item.id === id ? { ...item, ...values } : item));
 
@@ -375,10 +435,10 @@ function TeacherGrades({ course, classroom, note, status }: { course: Course; cl
   };
 
   const save = async () => {
-    const target = Number(exempt);
+    const target = typeof exempt === "string" && exempt.trim() !== "" ? Number(exempt) : Number.NaN;
     note("Guardando ponderación…");
     try {
-      await saveGradebook(course.id, items.filter((item) => item.name.trim() && item.weight > 0), isValidGrade(target) ? target : null);
+      await saveGradebook(course.id, items.filter((item) => item.name.trim() && typeof item.weight === "number" && !Number.isNaN(item.weight) && item.weight > 0), isValidGrade(target) ? target : null);
       setDraftItems(null);
       setDraftExempt(null);
       note("Ponderación guardada. Los estudiantes ya la ven.", "ok");
@@ -388,8 +448,8 @@ function TeacherGrades({ course, classroom, note, status }: { course: Course; cl
   };
 
   const setScore = async (userId: string, itemId: string, value: string) => {
-    const score = Number(value);
-    const next = { ...classScores[userId] };
+    const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+    const next = { ...(classScores[userId] ?? {}) };
     if (isValidGrade(score)) next[itemId] = score;
     else delete next[itemId];
     try {
@@ -407,7 +467,11 @@ function TeacherGrades({ course, classroom, note, status }: { course: Course; cl
         {items.map((item) => (
           <div className="grades-editor-row" key={item.id}>
             <label>Evaluación<input onChange={(event) => patch(item.id, { name: event.target.value })} value={item.name} /></label>
-            <label>Pondera %<input max={100} min={0} onChange={(event) => patch(item.id, { weight: Number(event.target.value) })} type="number" value={item.weight} /></label>
+            <label>Pondera %<input max={100} min={0} onChange={(event) => {
+              const raw = event.target.value.trim();
+              const parsed = raw === "" ? 0 : Number(raw);
+              patch(item.id, { weight: Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0 });
+            }} type="number" value={item.weight} /></label>
             <label>Fecha<input onChange={(event) => patch(item.id, { date: event.target.value })} type="date" value={item.date} /></label>
             <button className="remove-row" onClick={() => setItems((current) => current.filter((row) => row.id !== item.id))} type="button">Quitar</button>
           </div>
@@ -461,17 +525,59 @@ function ProgressSection({ units, canTeach, completed, students, updateProgress 
   return (
     <section className="progress-view">
       {!canTeach && total === 0 && <div className="empty-state"><strong>Este ramo aún no tiene resultados de aprendizaje cargados.</strong><p>Tu avance por unidad aparecerá cuando el curso publique su programa.</p></div>}
-      {!canTeach && total > 0 && <div className="personal-progress"><strong>{completed}/{total}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><Bar ratio={completed / total} /></div></div></div>}
+      {!canTeach && total > 0 && <div className="personal-progress"><strong>{completed}/{total}</strong><div><h3>Resultados de aprendizaje completados</h3><p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p><div className="big-progress"><Bar ratio={total > 0 ? completed / total : 0} /></div></div></div>}
       {!canTeach && total > 0 && <div className="unit-grid">{units.map((unit, index) => <article key={unit.title}><div><h3>{unit.title}</h3><p>{unit.subtitle}</p></div><label className="unit-check"><input checked={index < completed} onChange={(event) => updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))} type="checkbox" />Completado</label></article>)}</div>}
-      {canTeach && <div className="progress-table"><div className="progress-table-head"><span>Estudiante</span><span>Avance</span><span>Última actividad</span></div>{students.length === 0 && <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>}{students.map((student) => <div className="progress-table-row" key={student.userId}><span><b>{student.name}</b><small>{student.email}</small></span><span><b>{student.completed}/{student.total}</b><i><motion.em animate={{ scaleX: student.total ? student.completed / student.total : 0 }} initial={{ scaleX: 0 }} transition={{ duration: 0.6, ease }} /></i></span><span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span></div>)}</div>}
+      {canTeach && (
+        <div className="progress-table">
+          <div className="progress-table-head"><span>Estudiante</span><span>Avance</span><span>Última actividad</span></div>
+          {students.length === 0 && <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>}
+          {students.map((student) => (
+            <div className="progress-table-row" key={student.userId}>
+              <span><b>{student.name}</b><small>{student.email}</small></span>
+              <span>
+                <b>{student.completed}/{student.total}</b>
+                <i><motion.em animate={{ scaleX: student.total && typeof student.completed === "number" && !Number.isNaN(student.completed) ? Math.min(1, Math.max(0, student.completed / student.total)) : 0 }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} /></i>
+              </span>
+              <span>{student.updatedAt ? formatDate(student.updatedAt) : "Sin actividad"}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 function PeopleSection({ course, user, students }: { course: Course; user: User; students: ClassroomStudent[] }) {
+  const currentEmail = user.email.toLowerCase();
   return (
     <section>
-      <div className="people-grid"><article><span className="avatar large">{initials(course.name)}</span><div><strong>{course.teacher}</strong><small>Coordinación del curso</small></div></article><article><Avatar large email={user.email} name={user.name} /><div><strong>{user.name}</strong><small>{roleLabel(user.role)} · {user.email}</small></div></article>{students.filter((student) => student.email.toLowerCase() !== user.email.toLowerCase()).map((student) => <article key={student.userId}><span className="avatar large">{initials(student.name)}</span><div><strong>{student.name}</strong><small>Estudiante · {student.email}</small></div></article>)}</div>
+      <div className="people-grid">
+        <article>
+          <span className="avatar large">{initials(course.name)}</span>
+          <div>
+            <strong>{course.teacher}</strong>
+            <small>Coordinación del curso</small>
+          </div>
+        </article>
+        <article>
+          <Avatar large email={user.email} name={user.name} />
+          <div>
+            <strong>{user.name}</strong>
+            <small>{roleLabel(user.role)} · {user.email}</small>
+          </div>
+        </article>
+        {students.flatMap((student) =>
+          student.email.toLowerCase() === currentEmail ? [] : [
+            <article key={student.userId}>
+              <span className="avatar large">{initials(student.name)}</span>
+              <div>
+                <strong>{student.name}</strong>
+                <small>Estudiante · {student.email}</small>
+              </div>
+            </article>,
+          ]
+        )}
+      </div>
     </section>
   );
 }
@@ -496,26 +602,7 @@ function tabTitle(tab: Tab) {
 }
 
 function studentCount(total: number) {
-  if (total === 0) return "Sin estudiantes aún";
-  return `${total} inscrito${total > 1 ? "s" : ""}`;
-}
-
-const dateFormat = new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" });
-
-function formatDate(value: string) {
-  return dateFormat.format(new Date(value));
-}
-
-function formatDay(value: string) {
-  return dateFormat.format(new Date(`${value}T12:00:00`));
-}
-
-function formatBytes(value: number) {
-  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
-  return `${(value / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function fileExtension(value: string) {
-  const extension = value.split(".").pop()?.toUpperCase() ?? "DOC";
-  return extension.slice(0, 4);
+  const safeTotal = typeof total === "number" && !Number.isNaN(total) ? Math.max(0, Math.floor(total)) : 0;
+  if (safeTotal === 0) return "Sin estudiantes aún";
+  return `${safeTotal} inscrito${safeTotal > 1 ? "s" : ""}`;
 }

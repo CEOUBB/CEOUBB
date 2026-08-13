@@ -55,19 +55,23 @@ exports.deleteMyAccount = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión para eliminar tu cuenta.");
   const db = getFirestore();
-  const posts = await db.collectionGroup("posts").where("authorId", "==", uid).get();
-  const progress = await db.collectionGroup("progress").where("uid", "==", uid).get();
   const bucket = getStorage().bucket();
-  await Promise.all(posts.docs.map(async (document) => {
-    const storagePath = text(document.get("storagePath"), "", 900);
-    if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
-      await bucket.file(storagePath).delete({ ignoreNotFound: true });
-    }
-    await document.ref.delete();
-  }));
-  await Promise.all(progress.docs.map((document) => document.ref.delete()));
-  await bucket.deleteFiles({ prefix: `courses/estatica/${uid}/` });
-  await db.collection("users").doc(uid).delete();
+  const [posts, progress] = await Promise.all([
+    db.collectionGroup("posts").where("authorId", "==", uid).get(),
+    db.collectionGroup("progress").where("uid", "==", uid).get(),
+  ]);
+  await Promise.all([
+    Promise.all(posts.docs.map(async (document) => {
+      const storagePath = text(document.get("storagePath"), "", 900);
+      if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
+        await bucket.file(storagePath).delete({ ignoreNotFound: true });
+      }
+      await document.ref.delete();
+    })),
+    Promise.all(progress.docs.map((document) => document.ref.delete())),
+    bucket.deleteFiles({ prefix: `courses/estatica/${uid}/` }),
+    db.collection("users").doc(uid).delete(),
+  ]);
   await getAuth().deleteUser(uid);
   return { deleted: true };
 });

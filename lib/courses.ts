@@ -136,7 +136,10 @@ export function courseById(id: string) {
 }
 
 export function materialFolders(course: Course) {
-  const units = course.units.map((unit) => unit.title.split("·")[0].trim()).filter(Boolean);
+  const units = course.units.flatMap((unit) => {
+    const title = unit.title.split("·")[0].trim();
+    return title ? [title] : [];
+  });
   return [...units, "Certámenes anteriores", "General"];
 }
 

@@ -33,21 +33,29 @@ export function isValidGrade(value: unknown): value is number {
 
 export function normalizeScores(value: unknown): GradeScores {
   if (!value || typeof value !== "object") return {};
-  const entries = Object.entries(value as Record<string, unknown>).filter(([, score]) => isValidGrade(score));
-  return Object.fromEntries(entries) as GradeScores;
+  const scores: GradeScores = {};
+  for (const [key, score] of Object.entries(value as Record<string, unknown>)) {
+    if (isValidGrade(score)) {
+      scores[key] = score;
+    }
+  }
+  return scores;
 }
 
 export function normalizeItems(value: unknown): GradeItem[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    .map((item, index) => ({
-      id: String(item.id ?? `item-${index}`),
-      name: String(item.name ?? "Evaluación"),
-      weight: Math.max(0, Number(item.weight ?? 0)),
-      date: String(item.date ?? ""),
-    }))
-    .filter((item) => item.weight > 0);
+  return value.flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as Record<string, unknown>;
+    const weight = Math.max(0, Number(record.weight ?? 0));
+    if (weight <= 0) return [];
+    return [{
+      id: String(record.id ?? `item-${index}`),
+      name: String(record.name ?? "Evaluación"),
+      weight,
+      date: String(record.date ?? ""),
+    }];
+  });
 }
 
 export function summarize(items: GradeItem[], scores: GradeScores): GradeSummary {

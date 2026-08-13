@@ -9,15 +9,15 @@ type MenuProps = Omit<SVGMotionProps<SVGSVGElement>, "animate"> & {
 
 const lineTransition = { type: "spring", stiffness: 200, damping: 20 } as const;
 
-const lineVariants = {
-  initial: { rotate: 0, x: 0, y: 0 },
+const lineVariants: Variants = {
+  initial: { rotate: 0, x: 0, y: 0, transformOrigin: "top right" },
   active: { rotate: -45, x: -2.35, y: 0.35, transformOrigin: "top right", transition: lineTransition },
-} satisfies Variants;
+};
 
-const lastLineVariants = {
-  initial: { rotate: 0, x: 0, y: 0 },
+const lastLineVariants: Variants = {
+  initial: { rotate: 0, x: 0, y: 0, transformOrigin: "bottom right" },
   active: { rotate: 45, x: -2.35, y: -0.35, transformOrigin: "bottom right", transition: lineTransition },
-} satisfies Variants;
+};
 
 export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
   return (

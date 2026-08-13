@@ -22,7 +22,11 @@ export default function SentryExamplePage() {
     setStatus(null);
     try {
       const res = await fetch("/api/sentry-test");
-      const data = await res.json();
+      if (!res.ok) {
+        setStatus(`❌ Error al contactar la API: HTTP ${res.status}`);
+        return;
+      }
+      const data = (await res.json()) as { eventId?: string };
       setStatus(`✅ Error de servidor enviado exitosamente. Event ID: ${data.eventId}`);
     } catch (e) {
       setStatus(`❌ Error al contactar la API: ${(e as Error).message}`);

@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
 import { AnimatePresence, MotionConfig } from "motion/react";
 import { Archive, Books, CalendarBlank, FolderSimple, House, SignOut, Sliders } from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 import { COURSES, Course, courseById, PERIOD } from "../lib/courses";
 import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
-import { AdminView, CalendarView, CoursesDashboard, ResourcesView, calendarEntries, firstName } from "./portal-views";
-import { Avatar, forgetPhoto, rememberPhoto, roleLabel, Screen } from "./portal-ui";
-import type { User } from "./portal-ui";
+import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
+import { Avatar, Screen } from "./portal-ui";
+import { calendarEntries, firstName, forgetPhoto, rememberPhoto, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 
 const Classroom = dynamic(() => import("./Classroom"), {
@@ -50,7 +52,10 @@ export function Portal() {
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : { user: null })
+      .then(async (response) => {
+        if (!response.ok) return { user: null };
+        return response.json();
+      })
       .then((data) => setUser(data.user ?? null))
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
@@ -87,7 +92,14 @@ export function Portal() {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        // Fallback gracefully on response error
+      }
+    } catch {
+      // Ignore network failure
+    }
     forgetPhoto();
     setUser(null);
     setCourse(null);
@@ -136,7 +148,7 @@ export function Portal() {
 function LoadingScreen() {
   return (
     <main className="loading-screen">
-      <div className="brand-orbit"><img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} /></div>
+      <div className="brand-orbit"><Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} /></div>
       <p>Abriendo Centro de Estudio UBB…</p>
     </main>
   );
@@ -152,8 +164,17 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
     });
+    if (!response.ok) {
+      let errorMessage = "No fue posible continuar.";
+      try {
+        const errorData = await response.json();
+        if (errorData?.error) errorMessage = errorData.error;
+      } catch {
+        // Non-JSON response
+      }
+      throw new Error(errorMessage);
+    }
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? "No fue posible continuar.");
     if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
     onSignedIn(data.user);
   }, [onSignedIn]);
@@ -176,7 +197,7 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
     <main className="access-page">
       <section className="access-brand">
         <div className="access-brand-lockup">
-          <img src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" width={388} height={594} fetchPriority="high" />
+          <Image src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" width={388} height={594} priority />
           <h1>Centro de <strong>Estudio UBB</strong></h1>
         </div>
       </section>
@@ -185,7 +206,7 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
           <div className="login-card" id="inicio">
             <h2>Ingresa con tu correo institucional</h2>
             <button className="google-button" disabled={working} onClick={googleAccess} type="button">
-              {working ? <span className="google-spinner" aria-hidden="true" /> : <img src="/brand/google-g.webp" alt="" aria-hidden="true" width={256} height={256} />}
+              {working ? <span className="google-spinner" aria-hidden="true" /> : <Image src="/brand/google-g.webp" alt="" aria-hidden="true" width={256} height={256} />}
               {working ? "Verificando cuenta…" : "Continuar con Google"}
             </button>
             {error && <p className="form-error" role="alert">{error}</p>}
@@ -194,14 +215,14 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
           <div className="store-block">
             <div className="store-badges" role="group" aria-label="Aplicaciones móviles próximamente disponibles">
               <div className="store-badge">
-                <img src="/brand/app-store-badge-es.webp" alt="App Store" />
+                <Image src="/brand/app-store-badge-es.webp" alt="App Store" width={3840} height={1284} />
               </div>
               <div className="store-badge">
-                <img src="/brand/google-play-badge-es.webp" alt="Google Play" />
+                <Image src="/brand/google-play-badge-es.webp" alt="Google Play" width={2214} height={675} />
               </div>
             </div>
           </div>
-          <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <a href="/privacidad">Privacidad</a></p>
+          <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link></p>
         </div>
       </section>
     </main>
@@ -213,7 +234,7 @@ function PortalHeader({ sidebarOpen, user, onLogout, onHome, toggleSidebar }: { 
     <header className="app-header">
       <button aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"} className="icon-button menu-button" onClick={toggleSidebar} type="button"><Menu animate={sidebarOpen} aria-hidden="true" /></button>
       <button className="app-brand" onClick={onHome} type="button">
-        <img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
+        <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
         <span><strong>Centro de Estudio UBB</strong><small>Plataforma de estudio · {PERIOD}</small></span>
       </button>
       <div className="header-actions">
@@ -260,10 +281,10 @@ function PortalSidebar({ user, screen, courses, openCourseId, setScreen, openCou
           );
         })}
       </div>
-      <a className="side-item side-foot" href="/biblioteca/index.html">
+      <Link className="side-item side-foot" href="/biblioteca/index.html">
         <span className="side-icon"><Archive size={18} /></span>
         <span className="side-label">Biblioteca académica</span>
-      </a>
+      </Link>
     </aside>
   );
 }

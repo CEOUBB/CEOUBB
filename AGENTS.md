@@ -99,6 +99,12 @@ Role derivation is strictly governed by institutional email domain:
 ### 3. Study Library Duplication
 `public/biblioteca/` (web) and `android/app/src/main/assets/www/` (Android) share study assets. When modifying academic material, update `public/biblioteca/` as the source and intentionally propagate to Android, preserving Android-specific native bridge code.
 
+### 4. Spec-Driven Development (SDD) Guardrail (Non-Negotiable)
+- **Spec First, Code Second**: No agent may generate code for non-trivial features, migrations, API changes, or cross-cutting remediations without an approved specification in `docs/specs/`.
+- **Formal Requirements**: Use EARS syntax (*Ubiquitous, Event-Driven, State-Driven, Unwanted Behavior, Optional*) and RFC 2119 keywords.
+- **BDD & Test Protection**: Define testable Gherkin acceptance criteria. Agents are strictly forbidden from weakening or deleting test assertions to pass builds.
+- **Skill Reference**: Read `.agents/skills/spec-driven-development/SKILL.md` before initiating non-trivial tasks.
+
 ---
 
 ## Development Setup & Commands

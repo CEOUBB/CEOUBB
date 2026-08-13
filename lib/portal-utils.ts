@@ -1,0 +1,157 @@
+import { BookOpen, Code, Compass, Flame, Function as FunctionIcon, Translate, TrendUp } from "@phosphor-icons/react";
+import type { AccountRole as Role } from "./access-policy";
+import type { Course } from "./courses";
+import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
+
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+};
+
+export type CalendarEntry = {
+  key: string;
+  courseId: string;
+  course: string;
+  detail: string;
+  date: string;
+  tone: string;
+};
+
+export const APK_URL = "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
+
+export const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
+export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
+export const ease = [0.16, 1, 0.3, 1] as const;
+
+const PHOTO_KEY = "ceoubb:photo";
+
+export function cachedPhoto(email: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PHOTO_KEY) ?? "null");
+    return saved?.email === email ? String(saved.url) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberPhoto(email: string, url: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PHOTO_KEY, JSON.stringify({ email, url }));
+  } catch {
+    return;
+  }
+}
+
+export function forgetPhoto(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(PHOTO_KEY);
+  } catch {
+    return;
+  }
+}
+
+export function roleLabel(role: Role): string {
+  return role === "owner" ? "Desarrollador" : role === "teacher" ? "Docente" : "Estudiante";
+}
+
+export function initials(value: string): string {
+  return value.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CE";
+}
+
+export function firstName(value: string): string {
+  return value.trim().split(/\s+/)[0] || "estudiante";
+}
+
+export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]): CalendarEntry[] {
+  const entries = courses.flatMap((course) => {
+    const dated = gradebooks.find((entry) => entry.courseId === course.id)?.items.filter((item) => item.date) ?? [];
+    const source = dated.length > 0
+      ? dated.map((item) => ({ id: item.id, name: `${item.name} · ${item.weight}% de la nota`, date: item.date }))
+      : course.evaluations;
+    return source.map((item) => ({
+      key: `${course.id}-${item.id}`,
+      courseId: course.id,
+      course: course.name,
+      detail: item.name,
+      date: item.date,
+      tone: course.tone,
+    }));
+  });
+  return entries.sort((first, second) => first.date.localeCompare(second.date));
+}
+
+const TIME_ZONE = "America/Santiago";
+const LOCALE = "es-CL";
+
+const shortFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "short", timeZone: TIME_ZONE });
+const dayFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", timeZone: TIME_ZONE });
+const monthYearFormat = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "numeric", timeZone: TIME_ZONE });
+const monthFormat = new Intl.DateTimeFormat(LOCALE, { month: "short", timeZone: TIME_ZONE });
+const dateFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "short", year: "numeric", timeZone: TIME_ZONE });
+const isoDateFormat = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TIME_ZONE });
+
+export function getSantiagoDateISO(date: Date = new Date()): string {
+  return isoDateFormat.format(date);
+}
+
+export function nextEntry(entries: CalendarEntry[]): CalendarEntry | null {
+  const today = getSantiagoDateISO();
+  return entries.find((entry) => entry.date >= today) ?? entries[entries.length - 1] ?? null;
+}
+
+export function unseenCount(activity: CourseActivity[], courseId: string, seenAt: string | undefined): number {
+  return activity.filter((item) => item.courseId === courseId && (!seenAt || item.createdAt > seenAt)).length;
+}
+
+export function countdown(value: string): string {
+  const target = new Date(`${value}T12:00:00-04:00`).getTime();
+  const todayISO = getSantiagoDateISO();
+  const current = new Date(`${todayISO}T12:00:00-04:00`).getTime();
+  const days = Math.round((target - current) / 86400000);
+  if (days < 0) return "Realizada";
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${days} días`;
+}
+
+export function shortDate(value: string): string {
+  return shortFormat.format(new Date(`${value}T12:00:00`)).replace(".", "");
+}
+
+export function dayOf(value: string): string {
+  return dayFormat.format(new Date(`${value}T12:00:00`));
+}
+
+export function monthLabel(value: string): string {
+  const label = monthYearFormat.format(new Date(`${value}T12:00:00`));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function monthOf(value: string): string {
+  return monthFormat.format(new Date(`${value}T12:00:00`)).replace(".", "").toUpperCase();
+}
+
+export function formatDate(value: string): string {
+  return dateFormat.format(new Date(value));
+}
+
+export function formatDay(value: string): string {
+  return dateFormat.format(new Date(`${value}T12:00:00`));
+}
+
+export function formatBytes(value: number): string {
+  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export function fileExtension(value: string): string {
+  const extension = value.split(".").pop()?.toUpperCase() ?? "DOC";
+  return extension.slice(0, 4);
+}
+
+export { formatGrade } from "./grades";

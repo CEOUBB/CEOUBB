@@ -1,4 +1,4 @@
-window.COURSES = [
+const COURSES = [
   {
     "id": "edo",
     "name": "Ecuaciones Diferenciales Ordinarias",
@@ -1002,3 +1002,7 @@ window.COURSES = [
     ]
   }
 ];
+if (typeof window !== "undefined") {
+  window.COURSES = COURSES;
+}
+

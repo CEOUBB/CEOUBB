@@ -102,11 +102,16 @@ export function watchClassroom(
     stops.push(sdk.onSnapshot(
       sdk.query(sdk.collection(db, "courses", courseId, "posts"), sdk.orderBy("createdAt", "desc")),
       (snapshot) => {
-        const entries = snapshot.docs.map((document) => ({ post: toPost(document), data: document.data() }));
-        onChange({
-          posts: entries.map((entry) => entry.post),
-          files: entries.filter((entry) => entry.post.storagePath).map((entry) => toFile(entry.post, entry.data)),
-        });
+        const posts: ClassroomPost[] = [];
+        const files: ClassroomFile[] = [];
+        for (const document of snapshot.docs) {
+          const post = toPost(document);
+          posts.push(post);
+          if (post.storagePath) {
+            files.push(toFile(post, document.data()));
+          }
+        }
+        onChange({ posts, files });
       },
       () => onError("No se pudieron sincronizar las publicaciones de Firebase."),
     ));
@@ -157,12 +162,16 @@ export function watchCourseActivity(onChange: (items: CourseActivity[]) => void,
     if (!active) return;
     stop = sdk.onSnapshot(
       sdk.query(sdk.collectionGroup(db, "posts"), sdk.orderBy("createdAt", "desc"), sdk.limit(ACTIVITY_LIMIT)),
-      (snapshot) => onChange(snapshot.docs.map((document) => ({
-        id: document.id,
-        courseId: document.ref.parent.parent?.id ?? String(document.data().courseId ?? ""),
-        kind: postKind(String(document.data().kind ?? "notice")),
-        createdAt: iso(document.data().createdAt),
-      })).filter((item) => item.courseId)),
+      (snapshot) => onChange(snapshot.docs.flatMap((document) => {
+        const courseId = document.ref.parent.parent?.id ?? String(document.data().courseId ?? "");
+        if (!courseId) return [];
+        return [{
+          id: document.id,
+          courseId,
+          kind: postKind(String(document.data().kind ?? "notice")),
+          createdAt: iso(document.data().createdAt),
+        }];
+      })),
       () => onError("No se pudo sincronizar la actividad de los cursos."),
     );
   }).catch(() => onError("No se pudo conectar Firebase."));
@@ -181,10 +190,12 @@ export function watchGradebooks(onChange: (items: CourseGradebook[]) => void, on
     if (!active) return;
     stop = sdk.onSnapshot(
       sdk.query(sdk.collectionGroup(db, "meta")),
-      (snapshot) => onChange(snapshot.docs.map((document) => {
+      (snapshot) => onChange(snapshot.docs.flatMap((document) => {
+        const courseId = document.ref.parent.parent?.id ?? "";
+        if (!courseId) return [];
         const state = toGradebookState(document.data());
-        return { courseId: document.ref.parent.parent?.id ?? "", items: state.gradebook, exemption: state.exemption };
-      }).filter((entry) => entry.courseId)),
+        return [{ courseId, items: state.gradebook, exemption: state.exemption }];
+      })),
       () => onError("No se pudieron cargar las evaluaciones de los cursos."),
     );
   }).catch(() => onError("No se pudo conectar Firebase."));
@@ -201,7 +212,6 @@ export async function saveClassroomProgress(courseId: string, completed: number,
     uid: user.uid,
     displayName: user.displayName ?? "",
     email: emailOf(user),
-    role: roleOf(user),
     completed,
     total,
     percent: total ? Math.round(100 * completed / total) : 0,
@@ -215,7 +225,6 @@ export async function saveSimulation(courseId: string, scores: GradeScores) {
     uid: user.uid,
     displayName: user.displayName ?? "",
     email: emailOf(user),
-    role: roleOf(user),
     simulated: normalizeScores(scores),
     lastSeen: sdk.serverTimestamp(),
   }, { merge: true });
