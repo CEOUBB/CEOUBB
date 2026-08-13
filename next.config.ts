@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const scriptSrc = process.env.NODE_ENV === "production" ? "'self' 'unsafe-inline' https://apis.google.com" : "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400";
-const remoteConnectSrc = "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com";
+const remoteConnectSrc = "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io";
 const connectSrc = process.env.NODE_ENV === "production" ? `'self' ${remoteConnectSrc}` : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc}`;
 
 const contentSecurityPolicy = [
@@ -12,7 +13,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   `connect-src ${connectSrc}`,
   "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
-  "worker-src 'self'",
+  "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -54,4 +55,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "ceoubb",
+  project: "javascript-nextjs",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  silent: !process.env.CI,
+});
