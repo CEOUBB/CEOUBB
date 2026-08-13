@@ -163,7 +163,7 @@ client.on("messageCreate", async (message) => {
   // Check if user requested a new chat / reset session
   let sessionObj;
   if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
-    const newId = resetSession(message.channel.id, message.author.id);
+    resetSession(message.channel.id, message.author.id);
     await message.reply(`🔄 **Nueva conversación de Codex iniciada para ${userDisplayName}.** Contexto reiniciado.`);
     return;
   } else {

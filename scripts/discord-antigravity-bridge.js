@@ -4,7 +4,6 @@ import { exec } from "node:child_process";
 import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 
 const execPromise = util.promisify(exec);
 
