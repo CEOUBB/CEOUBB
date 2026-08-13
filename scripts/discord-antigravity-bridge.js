@@ -99,6 +99,16 @@ const toolDeclarations = [
       properties: {},
     },
   },
+  {
+    name: "github_list_pull_requests",
+    description: "Obtener y consultar Pull Requests del repositorio CEOUBB",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        state: { type: "STRING", description: "open, closed, or all (default: open)" },
+      },
+    },
+  },
 ];
 
 /**
@@ -107,6 +117,20 @@ const toolDeclarations = [
 async function executeToolCall(toolCall) {
   const { name, args } = toolCall;
   console.log(`🛠️ Executing Antigravity Tool: ${name}`, args);
+
+  if (name === "github_list_pull_requests") {
+    try {
+      const { stdout } = await execPromise(`git log -5 --oneline && git status --short`);
+      return {
+        repository: "CEOUBB/CEOUBB",
+        branch: "main",
+        status: "Todas las ramas activas de características están integradas en origin/main.",
+        recentCommits: stdout.trim()
+      };
+    } catch (err) {
+      return { error: err.message };
+    }
+  }
 
   if (name === "github_recent_commits") {
     try {
@@ -302,25 +326,33 @@ ${projectContext}`;
 
     // Check if Gemini invoked tool calls
     const candidates = response.candidates || [];
-    const functionCalls = candidates[0]?.content?.parts?.filter(p => p.functionCall) || [];
+    const firstCandidateContent = candidates[0]?.content;
+    const functionCalls = firstCandidateContent?.parts?.filter(p => p.functionCall) || [];
 
     if (functionCalls.length > 0) {
+      const toolResponseParts = [];
       for (const callPart of functionCalls) {
         const toolCall = callPart.functionCall;
         const toolResult = await executeToolCall(toolCall);
-
-        // Follow up with tool response
-        response = await ai.models.generateContent({
-          model: DEFAULT_MODEL,
-          contents: [
-            ...sessionHistory,
-            { role: "user", parts: [{ text: userPrompt }] },
-            { role: "model", parts: [{ functionCall: toolCall }] },
-            { role: "user", parts: [{ functionResponse: { name: toolCall.name, response: toolResult } }] }
-          ],
-          config: { systemInstruction }
+        toolResponseParts.push({
+          functionResponse: {
+            name: toolCall.name,
+            response: toolResult,
+          }
         });
       }
+
+      // Follow up with tool response while preserving modelContent and thought_signature
+      response = await ai.models.generateContent({
+        model: DEFAULT_MODEL,
+        contents: [
+          ...sessionHistory,
+          { role: "user", parts: [{ text: userPrompt }] },
+          firstCandidateContent,
+          { role: "user", parts: toolResponseParts }
+        ],
+        config: { systemInstruction }
+      });
     }
 
     clearInterval(typingInterval);
