@@ -15,6 +15,11 @@ export type PaletteItem = {
 
 /** Búsqueda global del portal: filtra vistas y ramos, se abre con Ctrl/⌘ + K. */
 export function CommandPalette({ open, items, onClose }: { open: boolean; items: PaletteItem[]; onClose: () => void }) {
+  if (!open) return null;
+  return <CommandPaletteDialog items={items} onClose={onClose} />;
+}
+
+function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -33,14 +38,12 @@ export function CommandPalette({ open, items, onClose }: { open: boolean; items:
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (open && !dialog.open) {
-      setQuery("");
-      setCursor(0);
-      dialog.showModal();
-      inputRef.current?.focus();
-    }
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+    dialog.showModal();
+    inputRef.current?.focus();
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  }, []);
 
   // Clic en el velo: el evento apunta al propio <dialog>, no a su contenido.
   useEffect(() => {

@@ -21,7 +21,7 @@ import {
   validateBlock,
   weekDates,
 } from "../lib/planner";
-import type { PersonalEvent, PersonalEventKind, PlannerItem } from "../lib/planner";
+import type { PersonalEvent, PersonalEventKind, PlacedBlock, PlannerItem } from "../lib/planner";
 import {
   APK_URL,
   countdown,
@@ -358,149 +358,30 @@ export function CalendarView({ courses, gradebooks, activity, openCourse }: {
         </div>
 
         {dueCount > 0 && (
-        <div className="planner-ribbon" key={`ribbon-${days[0]}`}>
-          <span className="planner-ribbon-label">Entregas</span>
-          {days.map((day) => {
-            const ribbon = byDay.get(day)?.ribbon ?? [];
-            return (
-              <div className="planner-ribbon-cell" data-focus={day === focusDay ? "true" : undefined} key={day}>
-                {ribbon.map((item) => {
-                  const course = item.courseId ? courseById.get(item.courseId) : undefined;
-                  return (
-                    <button
-                      className="planner-due"
-                      data-kind={item.kind}
-                      key={item.id}
-                      onClick={() => course && openCourse(course)}
-                      style={{ "--course-tone": item.tone } as React.CSSProperties}
-                      title={`${item.title} · ${item.courseName ?? ""} · ${item.detail}`}
-                      type="button"
-                    >
-                      <span aria-hidden="true" className="planner-due-dot" />
-                      <span className="planner-due-title">{item.title}</span>
-                      <small>{item.detail}</small>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+          <PlannerRibbon
+            byDay={byDay}
+            courseById={courseById}
+            days={days}
+            focusDay={focusDay}
+            openCourse={openCourse}
+          />
         )}
 
-        {/* La semana entrante se anima desde CSS: sin salida que esperar, la
-            rejilla llega en el acto y el teclado no arrastra la navegación. */}
-        <div className="planner-grid" key={`grid-${days[0]}`} ref={openGrid}>
-            <div aria-hidden="true" className="planner-hours">
-              {HOUR_LINES.map((hour) => (
-                <span key={hour} style={{ top: offsetOf(hour * 60) }}>{timeOfMinutes(hour * 60)}</span>
-              ))}
-              {days.includes(today) && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
-                <b className="planner-hours-now" style={{ top: offsetOf(nowMinutes) }}>{timeOfMinutes(nowMinutes)}</b>
-              )}
-            </div>
-            {days.map((day, index) => {
-              const blocks = byDay.get(day)?.blocks ?? [];
-              const isToday = day === today;
-              return (
-                <div
-                  className="planner-col"
-                  data-focus={day === focusDay ? "true" : undefined}
-                  data-today={isToday ? "true" : undefined}
-                  data-weekend={index > 4 ? "true" : undefined}
-                  key={day}
-                >
-                  {isToday && nowMinutes > DAY_START_MINUTES && (
-                    <div
-                      aria-hidden="true"
-                      className="planner-spent"
-                      style={{ "--planner-spent": String((Math.min(nowMinutes, DAY_END_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN) } as React.CSSProperties}
-                    />
-                  )}
-                  {SLOT_HOURS.map((hour) => (
-                    <button
-                      aria-label={`Crear un bloque el ${weekdayOf(day)} ${dayOf(day)} a las ${timeOfMinutes(hour * 60)}`}
-                      className="planner-slot"
-                      key={hour}
-                      onClick={() => newBlock(day, hour)}
-                      /* 91 celdas en el orden de tabulación entierran los bloques y el
-                         diálogo; el teclado crea bloques desde «Nuevo bloque». */
-                      tabIndex={-1}
-                      type="button"
-                    >
-                      <Plus aria-hidden="true" size={13} weight="bold" />
-                    </button>
-                  ))}
-                  {/* Guardar, borrar o esconder un ramo dejaba parpadear los bloques.
-                      Ahora entran y salen, y el filtro se ve actuar. El montaje de
-                      la semana queda mudo con `initial={false}`. */}
-                  <AnimatePresence initial={false}>
-                  {blocks.map((block) => (
-                    <m.article
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="planner-block"
-                      data-done={block.completed ? "true" : undefined}
-                      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
-                      initial={{ opacity: 0, scale: 0.94 }}
-                      key={block.id}
-                      transition={{ duration: 0.2, ease }}
-                      style={{
-                        "--course-tone": block.tone,
-                        top: offsetOf(block.startMinutes),
-                        height: `${((block.endMinutes - block.startMinutes) / MINUTE_SPAN) * 100}%`,
-                        left: `${(block.column / block.columns) * 100}%`,
-                        width: `${100 / block.columns}%`,
-                      } as React.CSSProperties}
-                    >
-                      <button
-                        aria-label={block.completed ? `Marcar “${block.title}” como pendiente` : `Marcar “${block.title}” como hecho`}
-                        aria-pressed={block.completed}
-                        className="planner-check"
-                        onClick={() => toggleDone(block)}
-                        type="button"
-                      >
-                        <m.span
-                          animate={{ scale: block.completed ? 1 : 0.2, opacity: block.completed ? 1 : 0 }}
-                          transition={{ type: "spring", stiffness: 620, damping: 26 }}
-                        >
-                          <Check aria-hidden="true" size={10} weight="bold" />
-                        </m.span>
-                      </button>
-                      <button className="planner-block-open" onClick={() => editBlock(block)} type="button">
-                        <strong>{block.title}</strong>
-                        <small>{block.startTime}–{block.endTime}{block.courseName ? ` · ${block.courseName}` : ` · ${KIND_LABEL[block.kind as PersonalEventKind] ?? ""}`}</small>
-                      </button>
-                      {block.source === "user_personal" && (
-                        <button
-                          aria-label={`Eliminar “${block.title}”`}
-                          className="planner-block-remove"
-                          onClick={() => removeBlock(block)}
-                          type="button"
-                        >
-                          <X aria-hidden="true" size={10} weight="bold" />
-                        </button>
-                      )}
-                    </m.article>
-                  ))}
-                  </AnimatePresence>
-                  {isToday && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
-                    <div aria-hidden="true" className="planner-now" style={{ top: offsetOf(nowMinutes) }} />
-                  )}
-                </div>
-              );
-            })}
-            {blockCount === 0 && weekLoaded && (
-              <div className="planner-blank">
-                <div>
-                  <strong>Tu semana está vacía.</strong>
-                  <p>Elige una hora y resérvala para estudiar. El calendario la recuerda y la sincroniza con las entregas de tus ramos.</p>
-                  <button className="planner-create" onClick={() => newBlock(focusDay, firstFreeHour)} type="button">
-                    <Plus size={15} weight="bold" /> Crear el primer bloque
-                  </button>
-                </div>
-              </div>
-            )}
-        </div>
+        <PlannerGrid
+          blockCount={blockCount}
+          byDay={byDay}
+          days={days}
+          firstFreeHour={firstFreeHour}
+          focusDay={focusDay}
+          nowMinutes={nowMinutes}
+          onEditBlock={editBlock}
+          onNewBlock={newBlock}
+          onOpenGrid={openGrid}
+          onRemoveBlock={removeBlock}
+          onToggleDone={toggleDone}
+          today={today}
+          weekLoaded={weekLoaded}
+        />
       </div>
 
       {draft && (
@@ -512,6 +393,212 @@ export function CalendarView({ courses, gradebooks, activity, openCourse }: {
         />
       )}
     </section>
+  );
+}
+
+function PlannerRibbon({
+  days,
+  focusDay,
+  byDay,
+  courseById,
+  openCourse,
+}: {
+  days: string[];
+  focusDay: string;
+  byDay: Map<string, { ribbon: PlannerItem[]; blocks: PlacedBlock[] }>;
+  courseById: Map<string, Course>;
+  openCourse: (course: Course) => void;
+}) {
+  return (
+    <div className="planner-ribbon" key={`ribbon-${days[0]}`}>
+      <span className="planner-ribbon-label">Entregas</span>
+      {days.map((day) => {
+        const ribbon = byDay.get(day)?.ribbon ?? [];
+        return (
+          <div className="planner-ribbon-cell" data-focus={day === focusDay ? "true" : undefined} key={day}>
+            {ribbon.map((item) => {
+              const course = item.courseId ? courseById.get(item.courseId) : undefined;
+              return (
+                <button
+                  className="planner-due"
+                  data-kind={item.kind}
+                  key={item.id}
+                  onClick={() => course && openCourse(course)}
+                  style={{ "--course-tone": item.tone } as React.CSSProperties}
+                  title={`${item.title} · ${item.courseName ?? ""} · ${item.detail}`}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="planner-due-dot" />
+                  <span className="planner-due-title">{item.title}</span>
+                  <small>{item.detail}</small>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PlannerGrid({
+  days,
+  today,
+  focusDay,
+  byDay,
+  nowMinutes,
+  blockCount,
+  weekLoaded,
+  onOpenGrid,
+  onNewBlock,
+  onToggleDone,
+  onEditBlock,
+  onRemoveBlock,
+  firstFreeHour,
+}: {
+  days: string[];
+  today: string;
+  focusDay: string;
+  byDay: Map<string, { ribbon: PlannerItem[]; blocks: PlacedBlock[] }>;
+  nowMinutes: number;
+  blockCount: number;
+  weekLoaded: boolean;
+  onOpenGrid: (node: HTMLDivElement | null) => void;
+  onNewBlock: (day: string, hour: number) => void;
+  onToggleDone: (block: PlannerItem) => void;
+  onEditBlock: (block: PlannerItem) => void;
+  onRemoveBlock: (block: PlannerItem) => void;
+  firstFreeHour: number;
+}) {
+  return (
+    <div className="planner-grid" key={`grid-${days[0]}`} ref={onOpenGrid}>
+      <div aria-hidden="true" className="planner-hours">
+        {HOUR_LINES.map((hour) => (
+          <span key={hour} style={{ top: offsetOf(hour * 60) }}>{timeOfMinutes(hour * 60)}</span>
+        ))}
+        {days.includes(today) && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
+          <b className="planner-hours-now" style={{ top: offsetOf(nowMinutes) }}>{timeOfMinutes(nowMinutes)}</b>
+        )}
+      </div>
+      {days.map((day, index) => {
+        const blocks = byDay.get(day)?.blocks ?? [];
+        const isToday = day === today;
+        return (
+          <div
+            className="planner-col"
+            data-focus={day === focusDay ? "true" : undefined}
+            data-today={isToday ? "true" : undefined}
+            data-weekend={index > 4 ? "true" : undefined}
+            key={day}
+          >
+            {isToday && nowMinutes > DAY_START_MINUTES && (
+              <div
+                aria-hidden="true"
+                className="planner-spent"
+                style={{ "--planner-spent": String((Math.min(nowMinutes, DAY_END_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN) } as React.CSSProperties}
+              />
+            )}
+            {SLOT_HOURS.map((hour) => (
+              <button
+                aria-label={`Crear un bloque el ${weekdayOf(day)} ${dayOf(day)} a las ${timeOfMinutes(hour * 60)}`}
+                className="planner-slot"
+                key={hour}
+                onClick={() => onNewBlock(day, hour)}
+                tabIndex={-1}
+                type="button"
+              >
+                <Plus aria-hidden="true" size={13} weight="bold" />
+              </button>
+            ))}
+            <AnimatePresence initial={false}>
+              {blocks.map((block) => (
+                <PlannerBlockArticle
+                  block={block}
+                  key={block.id}
+                  onEdit={onEditBlock}
+                  onRemove={onRemoveBlock}
+                  onToggleDone={onToggleDone}
+                />
+              ))}
+            </AnimatePresence>
+            {isToday && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
+              <div aria-hidden="true" className="planner-now" style={{ top: offsetOf(nowMinutes) }} />
+            )}
+          </div>
+        );
+      })}
+      {blockCount === 0 && weekLoaded && (
+        <div className="planner-blank">
+          <div>
+            <strong>Tu semana está vacía.</strong>
+            <p>Elige una hora y resérvala para estudiar. El calendario la recuerda y la sincroniza con las entregas de tus ramos.</p>
+            <button className="planner-create" onClick={() => onNewBlock(focusDay, firstFreeHour)} type="button">
+              <Plus size={15} weight="bold" /> Crear el primer bloque
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlannerBlockArticle({
+  block,
+  onToggleDone,
+  onEdit,
+  onRemove,
+}: {
+  block: PlacedBlock;
+  onToggleDone: (block: PlannerItem) => void;
+  onEdit: (block: PlannerItem) => void;
+  onRemove: (block: PlannerItem) => void;
+}) {
+  return (
+    <m.article
+      animate={{ opacity: 1, scale: 1 }}
+      className="planner-block"
+      data-done={block.completed ? "true" : undefined}
+      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
+      initial={{ opacity: 0, scale: 0.94 }}
+      key={block.id}
+      style={{
+        "--course-tone": block.tone,
+        top: offsetOf(block.startMinutes),
+        height: `${((block.endMinutes - block.startMinutes) / MINUTE_SPAN) * 100}%`,
+        left: `${(block.column / block.columns) * 100}%`,
+        width: `${100 / block.columns}%`,
+      } as React.CSSProperties}
+      transition={{ duration: 0.2, ease }}
+    >
+      <button
+        aria-label={block.completed ? `Marcar “${block.title}” como pendiente` : `Marcar “${block.title}” como hecho`}
+        aria-pressed={block.completed}
+        className="planner-check"
+        onClick={() => onToggleDone(block)}
+        type="button"
+      >
+        <m.span
+          animate={{ scale: block.completed ? 1 : 0.2, opacity: block.completed ? 1 : 0 }}
+          transition={{ type: "spring", stiffness: 620, damping: 26 }}
+        >
+          <Check aria-hidden="true" size={10} weight="bold" />
+        </m.span>
+      </button>
+      <button className="planner-block-open" onClick={() => onEdit(block)} type="button">
+        <strong>{block.title}</strong>
+        <small>{block.startTime}–{block.endTime}{block.courseName ? ` · ${block.courseName}` : ` · ${KIND_LABEL[block.kind as PersonalEventKind] ?? ""}`}</small>
+      </button>
+      {block.source === "user_personal" && (
+        <button
+          aria-label={`Eliminar “${block.title}”`}
+          className="planner-block-remove"
+          onClick={() => onRemove(block)}
+          type="button"
+        >
+          <X aria-hidden="true" size={10} weight="bold" />
+        </button>
+      )}
+    </m.article>
   );
 }
 
