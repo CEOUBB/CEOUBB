@@ -68,13 +68,8 @@
   --container-max: 1240px;
   --container-pad: 32px;
 
-  /* Barra institucional: navy sólido, como el sistema oficial de una universidad. */
-  --chrome-navy: #002b5c;
-  --chrome-navy-soft: #0a3a70;
-  --chrome-line: rgba(255, 255, 255, .14);
-  --chrome-text: rgba(255, 255, 255, .74);
-  --chrome-text-strong: #ffffff;
-  --header-height: 70px;
+  /* Barra institucional: papel sobre el lienzo, cerrada por la franja heráldica. */
+  --header-height: 62px;
 
   --radius-xs: 4px;
   --radius-sm: 5px;
@@ -146,7 +141,7 @@ img { max-width: 100%; }
 .section-title h2,
 .classroom-top h1,
 .course-card h3,
-.resource-layout h2,
+.resource-card h3,
 .policy-page h1,
 .access-brand h1,
 .login-card h2 {
@@ -155,32 +150,163 @@ img { max-width: 100%; }
   font-feature-settings: "lnum" 1;
 }
 
-/* ── Carga ────────────────────────────────────────────────── */
+/* ── Carga: esqueleto del portal ──────────────────────────────
+   Reproduce la geometría real del shell para que el contenido caiga donde ya
+   estaba dibujado. Un solo barrido de luz cruza toda la página en diagonal;
+   --sk-delay escalona cada bloque contra esa ola.
+   ─────────────────────────────────────────────────────────── */
 
-.loading-screen {
+.boot-shell {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--space-lg);
+  grid-template-columns: 268px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "header header" "sidebar main";
   background: var(--canvas-soft);
 }
 
-.loading-screen p { font-size: 15px; color: var(--text-muted); }
+.sk {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--hairline) 62%, var(--canvas));
+  animation: sk-settle .5s cubic-bezier(.16, 1, .3, 1) var(--sk-delay, 0ms) both;
+}
 
-.brand-orbit { position: relative; display: grid; place-items: center; width: 84px; height: 84px; }
-
-.brand-orbit::after {
+/* El brillo viaja sobre el bloque; el ancho del recorrido es el del propio bloque,
+   y el retraso compartido hace que la cresta cruce la página como una sola ola. */
+.sk::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--hairline);
-  border-top-color: var(--color-primary);
-  animation: spin 900ms linear infinite;
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, .92) 50%, transparent 68%);
+  animation: sk-sweep 1.55s cubic-bezier(.45, 0, .25, 1) infinite;
+  animation-delay: var(--sk-delay, 0ms);
 }
 
-.brand-orbit img { width: auto; height: 40px; }
+.sk-round { border-radius: var(--radius-full); }
+
+@keyframes sk-settle { from { opacity: 0; transform: translateY(6px); } }
+@keyframes sk-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.boot-header {
+  position: relative;
+  grid-area: header;
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--space-md) 0 10px;
+  background: var(--canvas);
+}
+
+.boot-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ubb-royal-blue) 0 42%, var(--shield-sky) 42% 66%, var(--shield-gold) 66% 85%, var(--shield-red) 85%);
+}
+
+/* La marca no es un hueso gris: es lo único cierto mientras la sesión resuelve. */
+.boot-header img { width: auto; height: 32px; flex: 0 0 auto; margin-left: 6px; }
+
+.boot-header strong {
+  flex: 0 0 auto;
+  margin-left: 10px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+  white-space: nowrap;
+}
+
+.boot-menu { width: 38px; height: 38px; flex: 0 0 auto; }
+.boot-search { flex: 0 1 320px; min-width: 0; height: 38px; margin-left: auto; border-radius: var(--radius-full); }
+.boot-avatar { width: 34px; height: 34px; flex: 0 0 auto; margin-left: var(--space-sm); }
+
+.boot-side {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: var(--space-md) 10px;
+  background: var(--canvas);
+  border-right: 1px solid var(--border-hairline);
+}
+
+.boot-row { height: 38px; border-radius: var(--radius-md); }
+.boot-legend { width: 84px; height: 11px; margin: var(--space-md) 0 4px 10px; }
+
+.boot-main {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl) var(--container-pad) var(--space-4xl);
+  max-width: var(--container-max);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.boot-head { display: flex; flex-direction: column; gap: 10px; }
+.boot-title { width: min(58%, 340px); height: 30px; }
+.boot-subtitle { width: min(76%, 460px); height: 13px; }
+.boot-strip { height: 74px; border-radius: var(--radius-lg); }
+
+.boot-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+
+.boot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 var(--space-md);
+  overflow: hidden;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  animation: sk-settle .5s cubic-bezier(.16, 1, .3, 1) var(--sk-delay, 0ms) both;
+}
+
+/* Los hijos heredan el retraso de su tarjeta: la ola cruza la rejilla, no cada bloque. */
+.boot-card > .sk { margin: 0 var(--space-md); animation: none; }
+.boot-cover { aspect-ratio: 16 / 5; margin: 0 !important; border-radius: 0; }
+.boot-line { height: 12px; }
+.boot-line.wide { width: 78%; height: 17px; margin-top: 4px; }
+.boot-line.short { width: 42%; }
+
+/* Sin animación, el esqueleto sigue siendo una silueta legible del portal. */
+@media (prefers-reduced-motion: reduce) {
+  .sk::after { display: none; }
+}
+
+@media (max-width: 1240px) {
+  .boot-shell { grid-template-columns: 240px minmax(0, 1fr); }
+}
+
+@media (max-width: 1100px) {
+  .boot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .boot-shell { grid-template-columns: minmax(0, 1fr); grid-template-areas: "header" "main"; }
+  .boot-side { display: none; }
+  .boot-header strong { display: none; }
+}
+
+@media (max-width: 800px) {
+  .boot-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .boot-main { padding: var(--space-md) var(--space-md) var(--space-xxl); }
+  .boot-search { flex: 0 0 38px; border-radius: var(--radius-md); }
+}
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -370,17 +496,20 @@ img { max-width: 100%; }
 /* ── Shell tipo LMS: cabecera + sidebar + lienzo ─────────── */
 
 .app-shell {
+  --rail-width: 268px;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 268px minmax(0, 1fr);
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas: "header header" "sidebar main";
   transition: grid-template-columns var(--transition-base);
 }
 
-.app-shell[data-sidebar="closed"] { grid-template-columns: 0 minmax(0, 1fr); }
+.app-shell[data-sidebar="closed"] { --rail-width: 0px; }
 .app-shell[data-sidebar="closed"] .app-sidebar { transform: translateX(-100%); opacity: 0; pointer-events: none; }
 
+/* Cabecera de papel: el lienzo sube hasta el tope y la única nota de color
+   es la franja heráldica del escudo. El contenido del aula manda, no el cromo. */
 .app-header {
   grid-area: header;
   position: sticky;
@@ -389,11 +518,19 @@ img { max-width: 100%; }
   min-height: var(--header-height);
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 0 var(--space-lg) 0 var(--space-sm);
-  background: var(--chrome-navy);
-  color: var(--chrome-text-strong);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .08), 0 1px 2px rgba(0, 43, 92, .16);
+  gap: 6px;
+  padding: 0 var(--space-md) 0 10px;
+  background: var(--canvas);
+  color: var(--text-body);
+}
+
+/* El contenido pasa por debajo de la cabecera al hacer scroll: se vela, no se tapa. */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .app-header {
+    background: color-mix(in srgb, var(--white) 78%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    backdrop-filter: saturate(180%) blur(16px);
+  }
 }
 
 /* Franja heráldica UBB: azul, celeste, oro y rojo del escudo. */
@@ -410,32 +547,190 @@ img { max-width: 100%; }
   place-items: center;
   width: 38px;
   height: 38px;
+  flex: 0 0 38px;
   border-radius: var(--radius-md);
-  color: var(--chrome-text);
+  color: var(--text-secondary);
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.icon-button:hover:not(:disabled) { background: rgba(255, 255, 255, .12); color: var(--chrome-text-strong); }
+.icon-button:hover:not(:disabled) { background: var(--canvas-soft); color: var(--text-body); }
 .icon-button:disabled { opacity: .42; cursor: not-allowed; }
-.app-header :focus-visible { outline-color: var(--shield-sky); }
 
-.app-brand { display: flex; align-items: center; gap: var(--space-sm); text-align: left; min-width: 0; padding: 4px 10px 4px 4px; border-radius: var(--radius-md); transition: background var(--transition-fast); }
-.app-brand:hover { background: rgba(255, 255, 255, .1); }
-.app-brand img { width: auto; height: 44px; flex: 0 0 auto; }
-.app-brand span { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-.app-brand strong { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -.01em; color: var(--chrome-text-strong); }
-.app-brand small { font-size: 12px; line-height: 1.35; letter-spacing: .1px; color: var(--chrome-text); }
+.app-brand { display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0; flex: 0 0 auto; padding: 6px 10px 6px 6px; border-radius: var(--radius-md); transition: background var(--transition-fast); }
+.app-brand:hover { background: var(--canvas-soft); }
+.app-brand img { width: auto; height: 32px; flex: 0 0 auto; }
+.app-brand strong { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.1; letter-spacing: -.015em; color: var(--text-body); white-space: nowrap; }
 
-.header-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-xxs); }
+/* Rastro de contexto: dónde está el usuario ahora mismo y en qué período. */
+.header-context {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-right: var(--space-md);
+  font-size: 14.5px;
+}
+
+.header-context-sep { flex: 0 0 auto; color: var(--text-faint); font-size: 20px; font-weight: 300; }
+.header-context-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
+
+/* El rastro de contexto cede espacio antes que la búsqueda: un nombre de ramo
+   largo debe recortarse con puntos suspensivos, no aplastar el buscador. */
+.header-search {
+  flex: 0 1 320px;
+  min-width: 208px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  height: 38px;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  color: var(--text-muted);
+  font-size: 14.5px;
+  text-align: left;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.header-search:hover { background: var(--canvas); border-color: var(--text-faint); color: var(--text-body); }
+.header-search > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.header-search kbd, .palette-field kbd {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid var(--border-hairline);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  font-family: var(--font-core);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.33;
+  color: var(--text-faint);
+}
+
+.header-actions { flex: 0 0 auto; display: flex; align-items: center; gap: var(--space-xxs); }
+
+/* ── Portal · búsqueda global (Ctrl/⌘ + K) ───────────────── */
+
+/* Sólo abierto: `display: flex` sin filtro pisa el `display: none` del agente
+   de usuario y el diálogo queda pegado en pantalla desde la carga. */
+.palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.palette {
+  width: min(560px, calc(100vw - 2 * var(--space-md)));
+  max-height: min(62vh, 520px);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  color: var(--text-body);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: palette-in 240ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.palette::backdrop {
+  background: rgba(15, 23, 42, .3);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: palette-veil 200ms ease-out;
+}
+
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-10px) scale(.975); filter: blur(6px); }
+}
+
+@keyframes palette-veil {
+  from { opacity: 0; }
+}
+
+.palette-field {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 var(--space-md);
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.palette-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--text-body);
+  caret-color: var(--color-primary);
+}
+
+.palette-field input::placeholder { color: var(--text-faint); }
+
+.palette-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+
+.palette-list::-webkit-scrollbar { width: 10px; }
+.palette-list::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: var(--radius-full); background: var(--hairline); background-clip: content-box; }
+
+.palette-group {
+  padding: 12px 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  text-align: left;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.palette-item[data-active="true"] { background: var(--color-primary-wash); color: var(--color-primary); font-weight: 600; }
+.palette-icon { display: inline-grid; place-items: center; width: 26px; flex: 0 0 26px; color: var(--course-tone, var(--text-muted)); }
+.palette-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.palette-item small { margin-left: auto; flex: 0 0 auto; font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--text-faint); }
+.palette-empty { padding: var(--space-lg) var(--space-md); font-size: 15px; line-height: 1.5; color: var(--text-muted); }
+.palette-empty strong { font-weight: 600; color: var(--text-body); }
 
 .app-sidebar {
   grid-area: sidebar;
   position: sticky;
   top: var(--header-height);
   align-self: start;
-  height: calc(100vh - var(--header-height));
+  /* Ancho fijo: al plegar, la columna del grid se cierra pero los rótulos no
+     se reajustan a mitad de la animación. El panel sale deslizándose entero. */
+  width: 268px;
+  /* dvh: en móvil la barra del navegador no debe empujar la biblioteca fuera de alcance. */
+  height: calc(100dvh - var(--header-height));
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -443,7 +738,12 @@ img { max-width: 100%; }
   background: var(--canvas);
   border-right: 1px solid var(--border-hairline);
   transition: transform var(--transition-base), opacity var(--transition-fast);
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
 }
+
+.app-sidebar::-webkit-scrollbar { width: 10px; }
+.app-sidebar::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: var(--radius-full); background: var(--hairline); background-clip: content-box; }
 
 .side-nav, .side-group { display: flex; flex-direction: column; gap: 1px; }
 
@@ -471,7 +771,12 @@ img { max-width: 100%; }
 }
 
 .side-item:hover { background: var(--canvas-soft); color: var(--text-body); }
+.side-item:hover .side-icon { color: var(--text-body); }
 .side-item.active { background: var(--color-primary-wash); color: var(--color-primary); font-weight: 600; }
+/* Un nombre de asignatura largo cambiaría de punto de corte al engrosarse y saltaría
+   a dos líneas al activarse. El ramo activo se marca con el riel, el lavado y el azul;
+   el peso se queda fuera para que la fila no se mueva bajo el cursor. */
+.side-group .side-item.active { font-weight: inherit; }
 .side-item.active::before { content: ""; position: absolute; left: -10px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 2px 2px 0; background: var(--color-primary); }
 
 .side-icon {
@@ -491,6 +796,12 @@ img { max-width: 100%; }
 .side-label { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
 .side-label small { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: .2px; color: var(--text-faint); }
 
+/* Un nombre de asignatura largo se corta a dos líneas: la fila no crece sin límite
+   y el `title` del botón conserva el nombre completo. */
+.side-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+
+.side-empty { padding: 2px 10px 4px; font-size: 14px; line-height: 1.43; color: var(--text-faint); }
+
 .side-foot {
   margin-top: auto;
   min-height: 42px;
@@ -504,7 +815,8 @@ img { max-width: 100%; }
 
 .sidebar-scrim { display: none; }
 
-.app-main { grid-area: main; min-width: 0; }
+/* Opaco: el panel plegándose pasa por debajo del lienzo en vez de asomar. */
+.app-main { grid-area: main; min-width: 0; background: var(--canvas-soft); }
 
 .account-menu { position: relative; }
 
@@ -512,16 +824,20 @@ img { max-width: 100%; }
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: 4px 10px 4px 4px;
+  padding: 4px 8px 4px 4px;
   border-radius: var(--radius-full);
   cursor: pointer;
   list-style: none;
   transition: background var(--transition-fast);
 }
 
-.account-menu summary:hover { background: rgba(255, 255, 255, .12); }
+.account-menu summary:hover { background: var(--canvas-soft); }
 .account-menu summary::-webkit-details-marker { display: none; }
-.account-menu[open] summary { background: rgba(255, 255, 255, .16); }
+.account-menu[open] summary { background: var(--canvas-soft); box-shadow: inset 0 0 0 1px var(--border-hairline); }
+
+/* La única señal de que la cuenta abre un menú; gira al desplegarse. */
+.account-caret { flex: 0 0 auto; color: var(--text-faint); transition: transform var(--transition-fast), color var(--transition-fast); }
+.account-menu[open] .account-caret { transform: rotate(180deg); color: var(--text-secondary); }
 
 .avatar {
   display: inline-grid;
@@ -538,11 +854,11 @@ img { max-width: 100%; }
 }
 
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.app-header .avatar { background: rgba(255, 255, 255, .18); color: var(--chrome-text-strong); box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); }
+.app-header .avatar { box-shadow: 0 0 0 1px var(--border-hairline); }
 
 .account-copy { display: flex; flex-direction: column; line-height: 1.25; text-align: left; }
-.account-copy strong { font-size: 14px; font-weight: 600; color: var(--chrome-text-strong); }
-.account-copy small { font-size: 12px; color: var(--chrome-text); }
+.account-copy strong { font-size: 14px; font-weight: 600; color: var(--text-body); }
+.account-copy small { font-size: 12px; color: var(--text-muted); }
 
 .account-popover {
   position: absolute;
@@ -614,7 +930,7 @@ img { max-width: 100%; }
 /* Cabecera del área personal: la voz display a plena escala. */
 .page-head.lead { display: grid; gap: var(--space-sm); padding-bottom: var(--space-lg); }
 .page-head.lead h1 { font-size: clamp(38px, 5.4vw, 64px); line-height: 1; letter-spacing: -.03em; }
-.page-head.lead p { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.page-head.lead p { display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: 76ch; }
 .page-head.lead p b { font-weight: 600; color: var(--text-secondary); }
 
 /* Aviso de cartelera: la próxima evaluación del periodo. */
@@ -1320,10 +1636,12 @@ img { max-width: 100%; }
   font-size: 14px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
 }
 
 .planner-pill:hover { border-color: color-mix(in srgb, var(--course-tone) 42%, var(--hairline)); }
+.planner-pill:active { transform: scale(.97); }
+.planner-pill[aria-pressed="true"] { border-color: color-mix(in srgb, var(--course-tone) 30%, var(--border-hairline)); }
 .planner-pill-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--course-tone); transition: background var(--transition-fast); }
 .planner-pill[aria-pressed="false"] { background: transparent; color: var(--text-faint); }
 .planner-pill[aria-pressed="false"] .planner-pill-dot { background: var(--border-hairline); }
@@ -1465,6 +1783,20 @@ img { max-width: 100%; }
   scrollbar-gutter: stable;
 }
 
+/* La semana entra por el lado desde el que viene: fundida a secas, avanzar y
+   retroceder se ven idénticos y no queda pista de hacia dónde se movió uno.
+   Cabecera, entregas y rejilla viajan como un solo plano; el marco recorta. */
+@keyframes planner-week {
+  from { opacity: 0; transform: translate3d(calc(var(--planner-dir, 0) * 30px), 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+.planner-frame[data-moved] .planner-head,
+.planner-frame[data-moved] .planner-ribbon,
+.planner-frame[data-moved] .planner-grid {
+  animation: planner-week 260ms cubic-bezier(.16, 1, .3, 1);
+}
+
 .planner-hours,
 .planner-col { position: relative; height: calc(var(--planner-rows, 13) * var(--planner-row)); }
 
@@ -1480,12 +1812,48 @@ img { max-width: 100%; }
 .planner-hours span:first-child { transform: none; }
 .planner-hours span:last-child { transform: translateY(-100%); }
 
+/* La hora actual vive en la canaleta, alineada con la línea roja: sin ella hay
+   que contar filas desde la etiqueta más cercana para saber dónde cae «ahora». */
+.planner-hours-now {
+  position: absolute;
+  right: 6px;
+  z-index: 1;
+  transform: translateY(-50%);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: var(--shield-red);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: var(--num);
+  /* El reloj avanza cada minuto: la etiqueta y su línea se deslizan en vez de
+     saltar, y el día se lee como algo que corre. */
+  transition: top 600ms cubic-bezier(.2, 0, 0, 1);
+}
+
 .planner-col {
   border-left: 1px solid var(--border-hairline);
   background-image: repeating-linear-gradient(to bottom, var(--planner-line) 0 1px, transparent 1px var(--planner-row));
 }
 
+.planner-col[data-weekend="true"] { background-color: color-mix(in srgb, var(--paper) 78%, white); }
 .planner-col[data-today="true"] { background-color: color-mix(in srgb, var(--color-primary) 4%, white); }
+
+/* Las horas ya vividas del día de hoy se apagan: el ojo aterriza en lo que queda. */
+.planner-spent {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 0;
+  /* El velo cubre la columna entera y se recorta por escala: animar `height`
+     cada minuto pedía maquetación; `scaleY` sólo compone. */
+  height: 100%;
+  transform-origin: top;
+  transform: scaleY(var(--planner-spent, 0));
+  background: color-mix(in srgb, var(--paper) 68%, transparent);
+  pointer-events: none;
+  transition: transform 600ms cubic-bezier(.2, 0, 0, 1);
+}
 
 .planner-slot {
   position: relative;
@@ -1506,26 +1874,34 @@ img { max-width: 100%; }
 .planner-slot:hover,
 .planner-slot:focus-visible { opacity: 1; background: var(--color-primary-wash); }
 
+/* El «+» crece al entrar el puntero: la celda se ofrece en vez de limitarse a
+   aparecer. */
+.planner-slot svg { transform: scale(.7); transition: transform var(--transition-fast); }
+.planner-slot:hover svg,
+.planner-slot:focus-visible svg { transform: none; }
+
 .planner-block {
   position: absolute;
   z-index: 2;
-  container-type: inline-size;
+  container-type: size;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
   gap: 5px;
   overflow: hidden;
-  padding: 4px 6px;
-  background: color-mix(in srgb, var(--course-tone) 11%, white);
-  border: 1px solid color-mix(in srgb, var(--course-tone) 24%, white);
-  border-left: 3px solid var(--course-tone);
-  border-radius: var(--radius-sm);
+  padding: 5px 7px;
+  background: color-mix(in srgb, var(--course-tone) 13%, white);
+  border: 1px solid color-mix(in srgb, var(--course-tone) 38%, white);
+  border-radius: var(--radius-md);
   box-shadow: rgba(15, 23, 42, .05) 0 1px 2px;
-  transition: box-shadow var(--transition-fast), opacity var(--transition-base);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
-.planner-block:hover { box-shadow: var(--shadow-1); }
-.planner-block[data-done="true"] { opacity: .55; }
+.planner-block:hover { box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--course-tone) 62%, white); }
+/* El apagado del bloque hecho vive en el texto, no en el artículo: la entrada y
+   la salida animan `opacity` en línea y se pisarían entre sí. La marca queda
+   viva, que es lo que confirma la acción. */
+.planner-block[data-done="true"] .planner-block-open { opacity: .5; }
 .planner-block[data-done="true"] .planner-block-open strong { text-decoration: line-through; }
 
 .planner-check {
@@ -1544,6 +1920,42 @@ img { max-width: 100%; }
 }
 
 .planner-check span { display: grid; place-items: center; }
+
+/* Borrar un bloque exigía abrir el diálogo. La cruz se guarda hasta que el
+   puntero entra en la tarjeta —no conviene una acción destructiva permanente en
+   una rejilla densa— y queda siempre visible donde no hay hover, o en un táctil
+   sería inalcanzable. */
+.planner-block-remove {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+  color: color-mix(in srgb, var(--course-tone) 46%, #334155);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.planner-block-remove:hover {
+  background: color-mix(in srgb, var(--shield-red) 12%, transparent);
+  color: var(--shield-red);
+}
+
+@media (hover: hover) {
+  .planner-block-remove { opacity: 0; }
+  .planner-block:hover .planner-block-remove,
+  .planner-block-remove:focus-visible { opacity: 1; }
+}
+
+/* Bajo 104px la columna ya sacrificó la hora; la cruz se va con ella y el
+   bloque se borra desde el diálogo. */
+@container (max-width: 104px) {
+  .planner-block-remove { display: none; }
+}
 .planner-block[data-done="true"] .planner-check { background: var(--course-tone); border-color: var(--course-tone); }
 
 .planner-block-open {
@@ -1556,6 +1968,7 @@ img { max-width: 100%; }
   background: none;
   border: 0;
   cursor: pointer;
+  transition: opacity var(--transition-base);
 }
 
 .planner-block-open strong,
@@ -1566,6 +1979,13 @@ img { max-width: 100%; }
 /* Cuando el solape parte la columna, el título manda: la hora ya está en el eje. */
 @container (max-width: 104px) {
   .planner-block-open small { display: none; }
+}
+
+/* Un bloque de dos horas tiene sitio de sobra: el título deja de truncarse y el
+   ramo se lee entero en vez de morir en una elipsis. */
+@container (min-height: 74px) {
+  .planner-block-open strong,
+  .planner-block-open small { white-space: normal; }
 }
 
 .planner-now {
@@ -1599,6 +2019,13 @@ img { max-width: 100%; }
   padding: 56px var(--space-lg) var(--space-lg);
   pointer-events: none;
   background: linear-gradient(to bottom, rgba(255, 255, 255, .5) 0%, rgba(255, 255, 255, .8) 46%);
+  /* Llega cuando la semana ya respondió, así que entra en vez de aparecer. */
+  animation: planner-blank 240ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes planner-blank {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .planner-blank > div {
@@ -1703,14 +2130,24 @@ img { max-width: 100%; }
 
 .field-hint { font-size: 12px; font-weight: 400; line-height: 1.4; color: var(--text-faint); }
 
-/* ── Recursos ────────────────────────────────────────────── */
+/* ── Recursos ─────────────────────────────────────────────────
+   Cuatro bloques con densidades distintas: dos tarjetas grandes para el
+   ecosistema propio, mosaico compacto para las IA, lista continua para los
+   beneficios y un panel con filete heráldico para los portales UBB.
+   ─────────────────────────────────────────────────────────── */
 
-.resource-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
+.resources-hub { display: grid; gap: var(--space-3xl); }
+.portal-main > .resources-hub > .page-head { margin-bottom: 0; }
 
-.resource-layout > a {
+.resource-block { display: grid; gap: var(--space-md); }
+.resource-block > .section-title { margin-top: 0; }
+
+.resource-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-md); align-items: stretch; }
+
+.resource-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   padding: var(--space-lg);
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
@@ -1719,14 +2156,17 @@ img { max-width: 100%; }
   transition: box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
-.resource-layout > a:hover { box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline)); color: var(--text-body); }
-.resource-layout > a:hover .resource-icon { background: var(--color-primary); color: var(--color-on-primary); }
+a.resource-card:hover,
+a.resource-card:focus-visible { box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline)); color: var(--text-body); }
+a.resource-card:hover .resource-icon,
+a.resource-card:focus-visible .resource-icon { background: var(--color-primary); color: var(--color-on-primary); }
 
-.resource-primary { grid-row: span 2; }
-
+/* El icono abre la tarjeta: se separa del título más de lo que el título se
+   separa de su propio cuerpo. */
 .resource-icon {
   display: inline-grid;
   place-items: center;
+  margin-bottom: var(--space-xxs);
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
@@ -1735,26 +2175,155 @@ img { max-width: 100%; }
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.resource-layout h2 { font-size: 22px; font-weight: 700; line-height: 1.27; letter-spacing: -.25px; }
-.resource-layout p { font-size: 15px; color: var(--text-muted); }
-.resource-layout em { font-style: normal; font-size: 13px; color: var(--text-faint); }
-.resource-layout b { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; font-size: 15px; font-weight: 500; color: var(--color-primary); }
+.resource-card h3 { font-size: 22px; font-weight: 700; line-height: 1.27; letter-spacing: -.25px; }
+.resource-card p { font-size: 15px; color: var(--text-muted); }
+.resource-card em { font-style: normal; font-size: 13px; line-height: 1.5; color: var(--text-faint); }
+.resource-card > b { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: var(--space-xs); font-size: 15px; font-weight: 500; color: var(--color-primary); }
 
-.coverage-list { margin: var(--space-xxs) 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.resource-points { margin: var(--space-xxs) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space-xs); }
+.resource-points li { display: flex; align-items: flex-start; gap: var(--space-xs); font-size: 15px; line-height: 1.45; color: var(--text-secondary); }
+.resource-points svg { flex: none; margin-top: 4px; color: var(--academic-teal); }
 
-.coverage-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-xs) 0;
-  border-top: 1px solid var(--border-hairline);
+.resource-card .store-badges { justify-content: flex-start; margin-top: var(--space-xxs); }
+
+.resource-inline { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: var(--space-xs); font-size: 15px; font-weight: 500; color: var(--color-primary); }
+.resource-inline:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.resource-note { max-width: 76ch; font-size: 13px; line-height: 1.6; color: var(--text-muted); }
+.resource-note sup { font-weight: 600; color: var(--text-secondary); }
+
+/* Las llamadas al pie son un solo grupo: se juntan entre sí y se despegan del mosaico. */
+.resource-notes { display: grid; gap: var(--space-xs); margin-top: var(--space-xs); }
+
+/* Asistentes de IA: el nivel se rotula con una píldora, no con una tarjeta aparte. */
+.ai-tier { display: grid; gap: var(--space-sm); }
+.ai-tier + .ai-tier { margin-top: var(--space-md); }
+
+.tier-label {
+  justify-self: start;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.33;
+  letter-spacing: .125px;
+  text-transform: uppercase;
 }
 
-.coverage-list li:first-child { border-top: 0; }
-.coverage-list li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--course-tone); flex: 0 0 6px; }
-.coverage-list span { flex: 1; font-size: 15px; }
-.coverage-list small { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+.tier-label sup { margin-left: 1px; font-size: 9px; letter-spacing: 0; }
+.tier-label.free { background: color-mix(in srgb, var(--academic-emerald) 12%, white); border-color: color-mix(in srgb, var(--academic-emerald) 34%, white); color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900)); }
+.tier-label.plan { background: color-mix(in srgb, var(--shield-gold) 14%, white); border-color: color-mix(in srgb, var(--shield-gold) 40%, white); color: var(--academic-bronze); }
+
+.brand-grid { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: var(--space-sm); }
+.brand-grid > li { display: flex; }
+
+.brand-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 14px var(--space-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  color: var(--text-body);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+}
+
+.brand-tile:hover,
+.brand-tile:focus-visible { transform: translateY(-1px); box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline)); color: var(--text-body); }
+.brand-head { display: flex; align-items: center; gap: var(--space-xs); }
+.brand-head b { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; }
+.brand-head sup { margin-left: 2px; font-size: 10px; color: var(--text-muted); }
+.brand-tile small { font-size: 13px; line-height: 1.45; color: var(--text-muted); }
+
+.brand-mark { width: 22px; height: 22px; flex: none; }
+.brand-go { flex: none; color: var(--text-faint); transition: color var(--transition-fast); }
+.brand-tile:hover .brand-go, .perk-row:hover .brand-go, .portal-link:hover .brand-go,
+.brand-tile:focus-visible .brand-go, .perk-row:focus-visible .brand-go, .portal-link:focus-visible .brand-go { color: var(--color-primary); }
+
+/* Beneficios: una sola superficie con filas, para no repetir siete tarjetas iguales. */
+.perk-list { margin: 0; padding: 0; list-style: none; background: var(--surface-card); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg); overflow: hidden; }
+.perk-list li + li { border-top: 1px solid var(--border-hairline); }
+
+.perk-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  color: var(--text-body);
+  transition: background var(--transition-fast);
+}
+
+.perk-row:hover,
+.perk-row:focus-visible { background: var(--canvas-soft); color: var(--text-body); }
+
+.perk-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.perk-row:hover .perk-mark,
+.perk-row:focus-visible .perk-mark { background: var(--surface-card); }
+.perk-mark .brand-mark { width: 20px; height: 20px; }
+.perk-row b { display: block; font-size: 15px; font-weight: 600; }
+.perk-row small { display: block; margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--text-muted); }
+.perk-row em { display: block; margin-top: 4px; font-style: normal; font-size: 12px; line-height: 1.4; color: var(--text-faint); }
+
+/* Portales UBB: filete heráldico como sello institucional del bloque de cierre. */
+.portal-panel {
+  position: relative;
+  display: grid;
+  gap: var(--space-md);
+  overflow: hidden;
+  padding: var(--space-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.portal-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ubb-royal-blue) 0 40%, var(--shield-sky) 40% 64%, var(--shield-gold) 64% 84%, var(--shield-red) 84%);
+}
+
+.portal-panel > p { max-width: 76ch; font-size: 14px; line-height: 1.55; color: var(--text-muted); }
+.portal-links { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: var(--space-xs); }
+
+/* Los nombres largos ocupan dos líneas: alinear arriba mantiene una sola
+   línea base para toda la fila. */
+.portal-link {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  height: 100%;
+  padding: 10px var(--space-sm);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-body);
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.portal-link:hover,
+.portal-link:focus-visible { background: var(--color-primary-wash); border-color: color-mix(in srgb, var(--color-primary) 34%, var(--hairline)); color: var(--text-body); }
+.portal-copy { min-width: 0; flex: 1; }
+.portal-link b { display: block; font-size: 14px; font-weight: 600; }
+.portal-link small { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+
+.portal-mark { display: grid; place-items: center; width: 22px; height: 22px; flex: none; }
+.portal-mark img { width: auto; height: 22px; object-fit: contain; }
 
 /* ── Administración ──────────────────────────────────────── */
 
@@ -1950,7 +2519,7 @@ img { max-width: 100%; }
   .classroom-columns, .materials-view, .grades-view, .resource-layout { grid-template-columns: minmax(0, 1fr); }
   .planner-frame { --planner-gutter: 54px; }
   .teacher-tools { position: static; }
-  .resource-primary { grid-row: auto; }
+  .resources-hub { gap: var(--space-xxl); }
 }
 
 @media (max-width: 900px) {
@@ -1999,12 +2568,30 @@ img { max-width: 100%; }
   .planner-ribbon-label { visibility: hidden; }
 }
 
+@media (max-width: 560px) {
+  .brand-grid, .portal-links { grid-template-columns: minmax(0, 1fr); }
+  .perk-row { grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+  .perk-mark { width: 36px; height: 36px; }
+  .resource-card .store-badges { flex-wrap: wrap; }
+}
+
 @media (max-width: 520px) {
   .planner-jump { display: none; }
+  /* Sin espacio para las dos, el escudo sostiene la marca y el texto pasa a ser el contexto. */
+  .app-brand strong { display: none; }
+  .app-brand { padding: 6px; }
+  .header-context-sep { display: none; }
+  .palette { margin-top: 6vh; max-height: 74vh; }
+}
+
+/* La búsqueda pierde el rótulo antes que el rastro de contexto: el atajo ya no cabe. */
+@media (max-width: 1000px) {
+  .header-search { flex: 0 0 38px; min-width: 0; padding: 0; justify-content: center; border-radius: var(--radius-md); }
+  .header-search > span, .header-search kbd { display: none; }
 }
 
 @media (max-width: 800px) {
-  .app-brand small, .account-copy { display: none; }
+  .account-copy { display: none; }
   .course-grid { grid-template-columns: minmax(0, 1fr); }
   .people-grid { grid-template-columns: minmax(0, 1fr); }
   .progress-table-head, .progress-table-row, .admin-head, .admin-row { grid-template-columns: minmax(0, 1fr) auto; }
