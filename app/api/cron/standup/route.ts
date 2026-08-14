@@ -178,7 +178,7 @@ export async function GET(req: NextRequest) {
   if (type === "morning") {
     const prompt = `
 Eres el Scrum Lead y Tech Advisor de **CEOUBB** (LMS Universidad del Bío-Bío).
-Genera el **Daily Standup de Apertura (12:00 PM)** para Pipe y Joaquín.
+Genera el **Daily Standup de Apertura (12:00 PM)** para Pipe y Joaquín con tareas y prompts técnicos.
 
 === COMMITS RECIENTES EN GITHUB ===
 ${commits.map((c: { hash: string; author: string; message: string }) => `- [${c.hash}] ${c.author}: ${c.message}`).join("\n") || "- Sin commits recientes"}
@@ -188,7 +188,8 @@ ${linear.active.map((i: { id: string; title: string; assignee: string }) => `- [
 
 REGLAS DE ESTILO:
 - Tono sobrio, técnico, directo y profesional. Cero exceso de emojis.
-- Resumen de 2 bullets cortos.
+- Resumen en 2 bullets cortos.
+- Sin "Actúa como".
 
 ESTRUCTURA DE "summary":
 ¡Buenas tardes equipo!
@@ -207,19 +208,77 @@ ESTRUCTURA DE "summary":
 
 **Backlog General:**
 - \`CEO-15\`: [Tarea general]
+
+Devuelve estrictamente un JSON válido:
+{
+  "summary": "El texto formateado según la estructura anterior",
+  "recommendedTasks": [
+    {
+      "id": "pipe",
+      "buttonLabel": "Prompt: Pipe (CEO-38)",
+      "taskTitle": "CEO-38: Modelo Académico (Pipe)"
+    },
+    {
+      "id": "joaquin",
+      "buttonLabel": "Prompt: Joaquín (CEO-29)",
+      "taskTitle": "CEO-29: Reglas Firestore (Joaquín)"
+    },
+    {
+      "id": "backlog",
+      "buttonLabel": "Prompt: Backlog (CEO-15)",
+      "taskTitle": "CEO-15: Accesibilidad WCAG (General)"
+    }
+  ]
+}
 `;
 
     const { text, usedModel } = await callGemini(ai, prompt);
 
+    let summaryText = text.trim();
+    let tasks = [
+      { id: "pipe", buttonLabel: "Prompt: Pipe (CEO-38)" },
+      { id: "joaquin", buttonLabel: "Prompt: Joaquín (CEO-29)" },
+      { id: "backlog", buttonLabel: "Prompt: Backlog (CEO-15)" },
+    ];
+
+    try {
+      let clean = text.trim();
+      const first = clean.indexOf("{");
+      const last = clean.lastIndexOf("}");
+      if (first !== -1 && last !== -1) {
+        clean = clean.slice(first, last + 1);
+      }
+      const parsed = JSON.parse(clean);
+      if (parsed.summary) summaryText = parsed.summary;
+      if (Array.isArray(parsed.recommendedTasks) && parsed.recommendedTasks.length > 0) {
+        tasks = parsed.recommendedTasks;
+      }
+    } catch {
+      // Fallback a texto plano
+    }
+
     const embed = {
       title: "☀️ CEOUBB Daily Standup — Apertura de Jornada (12:00 PM)",
-      description: text.trim(),
+      description: `${summaryText}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**Lanzador de Tareas para Agentes IA:**\nPresiona cualquier botón para recibir el prompt o comando git listo para usar.`,
       color: 0x0055b8, // UBB Blue
       footer: { text: `CEOUBB LMS • Vercel Cron • Gemini (${usedModel})` },
       timestamp: new Date().toISOString(),
     };
 
-    await sendDiscordEmbed(embed);
+    // Construcción de botones nativos de Discord
+    const components = [
+      {
+        type: 1, // ActionRow
+        components: tasks.map((t, idx) => ({
+          type: 2, // Button
+          style: idx === 0 ? 1 : idx === 1 ? 3 : 2, // 1: Primary (Blue), 3: Success (Green), 2: Secondary (Gray)
+          label: (t.buttonLabel || `Prompt: ${t.id}`).slice(0, 80),
+          custom_id: `btn_cron_${t.id}_${Date.now()}`,
+        })),
+      },
+    ];
+
+    await sendDiscordEmbed(embed, components);
     return NextResponse.json({ success: true, type: "morning", model: usedModel });
   } else {
     const prompt = `
