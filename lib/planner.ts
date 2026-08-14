@@ -219,7 +219,7 @@ export function dayItems(items: PlannerItem[], date: string) {
   const sameDay = items.filter((item) => item.date === date);
   return {
     ribbon: sameDay.filter((item) => !item.startTime),
-    blocks: placeBlocks(sameDay.filter((item) => item.startTime)),
+    blocks: placeBlocks(sameDay),
   };
 }
 
@@ -229,10 +229,12 @@ export function dayItems(items: PlannerItem[], date: string) {
  * asigna la primera columna libre de cada racimo.
  */
 export function placeBlocks(items: PlannerItem[]): PlacedBlock[] {
-  const timed = items
-    .filter((item) => item.startTime && item.endTime)
-    .map((item) => ({ ...item, startMinutes: minutesOf(item.startTime!), endMinutes: minutesOf(item.endTime!), column: 0, columns: 1 }))
-    .sort((first, second) => first.startMinutes - second.startMinutes || first.endMinutes - second.endMinutes);
+  const timed: PlacedBlock[] = [];
+  for (const item of items) {
+    if (!item.startTime || !item.endTime) continue;
+    timed.push({ ...item, startMinutes: minutesOf(item.startTime), endMinutes: minutesOf(item.endTime), column: 0, columns: 1 });
+  }
+  timed.sort((first, second) => first.startMinutes - second.startMinutes || first.endMinutes - second.endMinutes);
 
   const placed: PlacedBlock[] = [];
   let cluster: PlacedBlock[] = [];
