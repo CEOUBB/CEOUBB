@@ -22,16 +22,12 @@ service firebase.storage {
       return email().matches('^[^@]+@ubiobio\\.cl$');
     }
 
-    function role() {
-      return signedIn() ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role : '';
-    }
-
     function isTeacher() {
-      return isOwner() || isTeacherEmail() && role() == 'teacher';
+      return isOwner() || isTeacherEmail();
     }
 
     function isMember() {
-      return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
+      return isOwner() || isStudent() || isTeacherEmail();
     }
 
     function validCourse(courseId) {
