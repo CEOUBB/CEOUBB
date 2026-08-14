@@ -4,6 +4,8 @@ import { firebaseApp } from "./firebase-client";
 import { AccountRole, roleForEmail } from "./access-policy";
 import { DEFAULT_FOLDER } from "./courses";
 import { GradeItem, GradeScores, normalizeItems, normalizeScores } from "./grades";
+import { normalizeDueDate, normalizeTime, validateBlock } from "./planner";
+import type { PersonalEvent, PersonalEventKind } from "./planner";
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 const ACTIVITY_LIMIT = 120;
@@ -36,6 +38,7 @@ export type ClassroomPost = {
   folder: string;
   linkUrl: string | null;
   storagePath: string;
+  dueDate: string;
   createdAt: string;
 };
 
@@ -77,7 +80,9 @@ export type ClassroomState = {
 export type CourseActivity = {
   id: string;
   courseId: string;
+  title: string;
   kind: ClassroomPostKind;
+  dueDate: string;
   createdAt: string;
 };
 
@@ -154,6 +159,10 @@ export function watchClassroom(
   };
 }
 
+// ponytail: el planificador reutiliza este barrido para las entregas en vez de abrir un
+// segundo collectionGroup. Techo: una entrega cuya publicación quede fuera de las
+// ACTIVITY_LIMIT más recientes no aparece en el ribbon. Se corrige con la consulta filtrada
+// por matrícula que PLAN.md ya tiene pendiente, no con otro barrido global.
 export function watchCourseActivity(onChange: (items: CourseActivity[]) => void, onError: (message: string) => void) {
   let active = true;
   let stop: () => void = () => undefined;
@@ -168,7 +177,9 @@ export function watchCourseActivity(onChange: (items: CourseActivity[]) => void,
         return [{
           id: document.id,
           courseId,
+          title: String(document.data().title ?? "Publicación"),
           kind: postKind(String(document.data().kind ?? "notice")),
+          dueDate: normalizeDueDate(document.data().dueDate),
           createdAt: iso(document.data().createdAt),
         }];
       })),
@@ -204,6 +215,102 @@ export function watchGradebooks(onChange: (items: CourseGradebook[]) => void, on
     active = false;
     stop();
   };
+}
+
+export type PersonalEventInput = {
+  id?: string;
+  title: string;
+  detail: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  courseId: string | null;
+  kind: PersonalEventKind;
+};
+
+/**
+ * Escucha sólo los bloques de la semana visible. La consulta usa un rango sobre
+ * un único campo, así que no necesita índice compuesto y no crece con el semestre.
+ */
+/**
+ * Traduce los fallos de Firestore a algo que un estudiante pueda leer y accionar.
+ * `permission-denied` es el caso real cuando las reglas del calendario no están publicadas.
+ */
+function personalEventError(cause: unknown, action: "leer" | "guardar" | "eliminar"): string {
+  const code = String((cause as { code?: unknown })?.code ?? "");
+  if (code.endsWith("permission-denied")) return "Tu calendario personal todavía no está habilitado en el servidor. Avisa al equipo de CEOUBB.";
+  if (code.endsWith("unavailable") || code.endsWith("network-request-failed")) return "Sin conexión con el servidor. Revisa tu red e inténtalo otra vez.";
+  if (code.endsWith("unauthenticated")) return "Tu sesión expiró. Cierra sesión y vuelve a ingresar.";
+  if (action === "leer") return "No se pudieron sincronizar tus bloques de estudio.";
+  return `No se pudo ${action} el bloque.`;
+}
+
+export function watchPersonalEvents(
+  fromDate: string,
+  toDate: string,
+  onChange: (items: PersonalEvent[]) => void,
+  onError: (message: string) => void,
+) {
+  let active = true;
+  let stop: () => void = () => undefined;
+
+  Promise.all([firestore(), currentUser()]).then(([{ sdk, db }, user]) => {
+    if (!active) return;
+    stop = sdk.onSnapshot(
+      sdk.query(
+        sdk.collection(db, "users", user.uid, "calendar_events"),
+        sdk.where("date", ">=", fromDate),
+        sdk.where("date", "<=", toDate),
+      ),
+      (snapshot) => onChange(snapshot.docs.map(toPersonalEvent)),
+      (cause) => onError(personalEventError(cause, "leer")),
+    );
+  }).catch((cause) => onError(personalEventError(cause, "leer")));
+
+  return () => {
+    active = false;
+    stop();
+  };
+}
+
+export async function savePersonalEvent(input: PersonalEventInput) {
+  const problem = validateBlock(input);
+  if (problem) throw new Error(problem);
+  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
+  const values = {
+    userId: user.uid,
+    title: input.title.trim().slice(0, 120),
+    detail: input.detail.trim().slice(0, 400),
+    date: input.date,
+    startTime: normalizeTime(input.startTime),
+    endTime: normalizeTime(input.endTime),
+    courseId: input.courseId || null,
+    kind: personalKind(input.kind),
+    updatedAt: sdk.serverTimestamp(),
+  };
+  const events = sdk.collection(db, "users", user.uid, "calendar_events");
+  try {
+    if (input.id) {
+      await sdk.updateDoc(sdk.doc(events, input.id), values);
+      return input.id;
+    }
+    const created = await sdk.addDoc(events, { ...values, completed: false, createdAt: sdk.serverTimestamp() });
+    return created.id;
+  } catch (cause) {
+    throw new Error(personalEventError(cause, "guardar"));
+  }
+}
+
+export async function setPersonalEventCompleted(id: string, completed: boolean) {
+  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
+  await sdk.updateDoc(sdk.doc(db, "users", user.uid, "calendar_events", id), { completed, updatedAt: sdk.serverTimestamp() })
+    .catch((cause) => { throw new Error(personalEventError(cause, "guardar")); });
+}
+
+export async function deletePersonalEvent(id: string) {
+  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
+  await sdk.deleteDoc(sdk.doc(db, "users", user.uid, "calendar_events", id))
+    .catch((cause) => { throw new Error(personalEventError(cause, "eliminar")); });
 }
 
 export async function saveClassroomProgress(courseId: string, completed: number, total: number) {
@@ -252,7 +359,7 @@ export async function saveStudentScores(courseId: string, userId: string, scores
   });
 }
 
-export async function publishClassroomPost(courseId: string, input: { title: string; body: string; kind: string; folder: string; linkUrl: string }) {
+export async function publishClassroomPost(courseId: string, input: { title: string; body: string; kind: string; folder: string; linkUrl: string; dueDate: string }) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   const linkUrl = input.linkUrl.trim();
   await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
@@ -262,6 +369,7 @@ export async function publishClassroomPost(courseId: string, input: { title: str
     body: input.body.trim(),
     kind: postKind(input.kind),
     folder: folderName(input.folder),
+    dueDate: normalizeDueDate(input.dueDate),
     fileUrl: linkUrl,
     fileName: linkUrl ? "Abrir recurso" : "",
     storagePath: "",
@@ -413,6 +521,7 @@ function toPost(document: QueryDocumentSnapshot<DocumentData>): ClassroomPost {
     folder: String(value.folder || DEFAULT_FOLDER),
     linkUrl: linkUrl || null,
     storagePath: String(value.storagePath ?? ""),
+    dueDate: normalizeDueDate(value.dueDate),
     createdAt: iso(value.createdAt),
   };
 }
@@ -443,6 +552,26 @@ function toStudent(document: QueryDocumentSnapshot<DocumentData>): ClassroomStud
     total: Number(value.total ?? 0),
     updatedAt: value.lastSeen ? iso(value.lastSeen) : null,
   };
+}
+
+function toPersonalEvent(document: QueryDocumentSnapshot<DocumentData>): PersonalEvent {
+  const value = document.data();
+  return {
+    id: document.id,
+    title: String(value.title ?? "Bloque"),
+    detail: String(value.detail ?? ""),
+    date: String(value.date ?? ""),
+    startTime: normalizeTime(value.startTime) ?? "",
+    endTime: normalizeTime(value.endTime) ?? "",
+    courseId: value.courseId ? String(value.courseId) : null,
+    kind: personalKind(value.kind),
+    completed: value.completed === true,
+  };
+}
+
+function personalKind(value: unknown): PersonalEventKind {
+  const normalized = String(value ?? "").toLowerCase();
+  return normalized === "personal" || normalized === "task" ? normalized : "study";
 }
 
 function postKind(value: string): ClassroomPostKind {

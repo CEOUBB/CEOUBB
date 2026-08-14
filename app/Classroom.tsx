@@ -4,12 +4,12 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
-import { ArrowRight, ArrowUpRight, ChartBar, Check, CopySimple, Files, GraduationCap, House, Info, Sigma, UsersThree } from "@phosphor-icons/react";
+import { ArrowRight, ArrowUpRight, CalendarCheck, ChartBar, Check, CopySimple, Files, GraduationCap, House, Info, Sigma, UsersThree } from "@phosphor-icons/react";
 import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classroomFileUrl, deleteClassroomPost, editClassroomPost, moveClassroomPost, publishClassroomPost, renameClassroomFile, saveClassroomProgress, saveGradebook, saveSimulation, saveStudentScores, uploadClassroomFile, watchClassroom } from "../lib/firebase-classroom-client";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../lib/courses";
 import { DEFAULT_EXEMPTION_GRADE, GradeItem, GradeScores, MAX_GRADE, MIN_GRADE, PASSING_GRADE, formatGrade, isValidGrade, requiredGrade, summarize } from "../lib/grades";
 import { Avatar, Screen } from "./portal-ui";
-import { ease, fileExtension, formatBytes, formatDate, formatDay, initials, roleLabel, type User } from "../lib/portal-utils";
+import { ease, fileExtension, formatBytes, formatDate, formatDay, formatDueDate, initials, roleLabel, type User } from "../lib/portal-utils";
 
 type Tab = "home" | "materials" | "grades" | "progress" | "people";
 
@@ -65,6 +65,7 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
         kind: String(form.get("kind") ?? "notice"),
         folder: String(form.get("folder") ?? ""),
         linkUrl: String(form.get("linkUrl") ?? ""),
+        dueDate: String(form.get("dueDate") ?? ""),
       });
       formElement.reset();
       note("Publicado correctamente y notificado al curso.", "ok");
@@ -248,6 +249,7 @@ function PostsSection({ posts, user, editPost, deletePost, openMaterials }: { po
                 <footer>
                   <span>{post.authorName}</span>
                   <time>{formatDate(post.createdAt)}</time>
+                  {post.dueDate && <span className="post-due"><CalendarCheck size={13} weight="fill" aria-hidden="true" />Entrega {formatDueDate(post.dueDate)}</span>}
                   {post.linkUrl && <a href={post.linkUrl} target="_blank" rel="noopener noreferrer">Abrir recurso <ArrowUpRight size={12} /></a>}
                   {canManage && (
                     <span className="content-actions">
@@ -312,6 +314,7 @@ function MaterialsSection({ course, files, user, canTeach, publish, upload, open
             <label>Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} /></label>
             <label>Mensaje<textarea name="body" rows={4} required /></label>
             <label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label>
+            <label>Fecha de entrega opcional<input name="dueDate" type="datetime-local" /><small className="field-hint">Aparece en el calendario de cada estudiante del ramo.</small></label>
             <button className="primary-button" type="submit">Publicar aviso o enlace</button>
           </form>
           <div className="tool-divider"><span>o subir archivo</span></div>
