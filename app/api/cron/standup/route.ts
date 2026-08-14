@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30; // 30s timeout para Vercel Serverless
+export const maxDuration = 60; // 60s max para Vercel Serverless
 
 // IDs
 const PIPE_DISCORD_ID = "1150176313974460457";
 const JOAQUIN_DISCORD_ID = "662149246631542816";
 const TARGET_CHANNEL_ID = process.env.DISCORD_STANDUP_CHANNEL_ID || "1537708834561327175";
 
+// Modelos Gemini 3.x modernos
 const MODEL_FALLBACK_LIST = [
   "gemini-3.7-flash",
   "gemini-3.6-flash",
@@ -26,7 +27,7 @@ async function callGemini(ai: GoogleGenAI, prompt: string) {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
       });
       const text = res.text || res.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      return { text, usedModel: modelId };
+      if (text) return { text, usedModel: modelId };
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.warn(`⚠️ Model '${modelId}' falló en Vercel Cron: ${errorMsg}`);
@@ -44,8 +45,10 @@ async function getRecentGitHubCommits() {
     const res = await fetch("https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=10", {
       headers: {
         Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CEOUBB-Standup-Bot-Vercel",
         ...(process.env.GITHUB_TOKEN ? { Authorization: `token ${process.env.GITHUB_TOKEN}` } : {}),
       },
+      signal: AbortSignal.timeout(6000),
       next: { revalidate: 0 },
     });
     if (!res.ok) return [];
@@ -98,6 +101,7 @@ async function getLinearIssues() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: apiKey },
       body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(6000),
     });
     const data = await res.json();
     return {
@@ -137,6 +141,7 @@ async function sendDiscordEmbed(embed: Record<string, unknown>, components: unkn
       embeds: [embed],
       components,
     }),
+    signal: AbortSignal.timeout(6000),
   });
 
   if (!res.ok) {
