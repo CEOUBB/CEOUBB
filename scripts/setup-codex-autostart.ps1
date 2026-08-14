@@ -2,21 +2,27 @@
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$vbsSource = Join-Path $scriptDir "start-codex-bridge.vbs"
+$repoDir = (Get-Item $scriptDir).Parent.FullName
 $startupFolder = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\Start Menu\Programs\Startup")
 $vbsTarget = Join-Path $startupFolder "ceoubb-codex-bridge.vbs"
 
-if (-not (Test-Path $vbsSource)) {
-    Write-Error "Source VBS file not found: $vbsSource"
-    exit 1
-}
+$vbsContent = @"
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.CurrentDirectory = "$repoDir"
+WshShell.Run "node scripts/discord-codex-bridge.js", 0, False
+"@
 
-# Copy launcher to Windows Startup folder
-Copy-Item -Path $vbsSource -Destination $vbsTarget -Force
-Write-Host "✅ CEOUBB Codex Bridge added to Windows Startup folder:" -ForegroundColor Green
-Write-Host "   $vbsTarget`n" -ForegroundColor Cyan
+# Write launcher to Windows Startup folder with absolute repo directory
+[System.IO.File]::WriteAllText($vbsTarget, $vbsContent, [System.Text.Encoding]::ASCII)
+
+Write-Host "✅ CEOUBB Codex Bridge configured in Windows Startup folder:" -ForegroundColor Green
+Write-Host "   Target: $vbsTarget" -ForegroundColor Cyan
+Write-Host "   Working Directory: $repoDir`n" -ForegroundColor DarkGray
+
+# Stop any existing instance
+Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.CommandLine -like "*discord-codex-bridge*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force } -ErrorAction SilentlyContinue
 
 # Start process immediately in background
 Start-Process wscript.exe -ArgumentList "`"$vbsTarget`""
 Write-Host "🚀 CEOUBB Codex Bridge launched in background!" -ForegroundColor Green
-Write-Host "   Codex bot is now online and listening for Discord prompts." -ForegroundColor Yellow
+Write-Host "   Codex bot is now online and will automatically start with Windows." -ForegroundColor Yellow
