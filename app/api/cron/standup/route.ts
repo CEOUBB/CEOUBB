@@ -270,16 +270,18 @@ Devuelve estrictamente un JSON válido:
       {
         type: 1, // ActionRow
         components: tasks.map((t, idx) => {
-          const matchCode = (t.buttonLabel || "").match(/CEO-\d+/i) || ["CEO-38"];
+          const matchCode = (t.buttonLabel || t.taskTitle || "").match(/CEO-\d+/i) || ["CEO-38"];
           const code = matchCode[0].toUpperCase();
           const cleanTitle = (t.taskTitle || t.buttonLabel || "Tarea")
-            .replace(/[^a-zA-Z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
+            .replace(/^Prompt:\s*/i, "")
+            .replace(/^CEO-\d+[:\s-]*/i, "")
+            .replace(/\((.*?)\)/g, "$1")
+            .trim();
           return {
             type: 2, // Button
             style: idx === 0 ? 1 : idx === 1 ? 3 : 2, // 1: Primary (Blue), 3: Success (Green), 2: Secondary (Gray)
             label: (t.buttonLabel || `Prompt: ${t.id}`).slice(0, 80),
-            custom_id: `btn:${t.id}:${code}:${cleanTitle.slice(0, 30)}`,
+            custom_id: `btn:${t.id}:${code}:${cleanTitle.slice(0, 45)}`,
           };
         }),
       },

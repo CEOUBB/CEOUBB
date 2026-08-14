@@ -74,15 +74,24 @@ export async function POST(req: NextRequest) {
     // Formato: btn:<role>:<taskCode>:<taskTitle>
     const parts = customId.split(":");
     const taskCode = parts[2] || "CEO-TASK";
-    const taskTitle = (parts[3] || "Tarea del sprint").replace(/-/g, " ");
+    const rawTitle = parts[3] || "Tarea del sprint";
+    const cleanTitle = rawTitle
+      .replace(/^CEO-\d+[:\s-]*/i, "")
+      .replace(/^Prompt:\s*/i, "")
+      .trim() || "Tarea del sprint";
 
-    const branchName = `feat/${taskCode.toLowerCase()}-${taskTitle
+    // Branch slug: normaliza acentos (ó -> o, etc.) y genera formato git
+    const slug = cleanTitle
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")}`;
+      .replace(/^-|-$/g, "");
+
+    const branchName = `feat/${taskCode.toLowerCase()}-${slug}`;
 
     const promptText =
-      `OBJETIVO: Resolver la tarea "${taskCode}: ${taskTitle}" en el LMS CEOUBB.\n\n` +
+      `OBJETIVO: Resolver la tarea "${taskCode}: ${cleanTitle}" en el LMS CEOUBB.\n\n` +
       `CONTEXTO: Revisar AGENTS.md y PLAN.md para especificaciones y reglas del repositorio.\n\n` +
       `REGLAS (AGENTS.md):\n` +
       `- Usar siempre pnpm (no npm, no bun).\n` +
@@ -91,7 +100,7 @@ export async function POST(req: NextRequest) {
       `TESTS: Ejecutar pnpm run test:unit y pnpm run typecheck antes de concluir.`;
 
     const responseMarkdown =
-      `### 📋 Prompt para Agente (${taskCode}: ${taskTitle})\n` +
+      `### 📋 Prompt para Agente (${taskCode}: ${cleanTitle})\n` +
       `Copia este bloque en **Antigravity**, **Claude Code** o **Codex**:\n\n` +
       `\`\`\`markdown\n` +
       `${promptText}\n` +
