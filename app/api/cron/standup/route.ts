@@ -235,10 +235,10 @@ Devuelve estrictamente un JSON válido:
     const { text, usedModel } = await callGemini(ai, prompt);
 
     let summaryText = text.trim();
-    let tasks = [
-      { id: "pipe", buttonLabel: "Prompt: Pipe (CEO-38)" },
-      { id: "joaquin", buttonLabel: "Prompt: Joaquín (CEO-29)" },
-      { id: "backlog", buttonLabel: "Prompt: Backlog (CEO-15)" },
+    let tasks: Array<{ id: string; buttonLabel: string; taskTitle?: string }> = [
+      { id: "pipe", buttonLabel: "Prompt: Pipe (CEO-38)", taskTitle: "CEO-38: Modelo Académico" },
+      { id: "joaquin", buttonLabel: "Prompt: Joaquín (CEO-29)", taskTitle: "CEO-29: Reglas Firestore" },
+      { id: "backlog", buttonLabel: "Prompt: Backlog (CEO-15)", taskTitle: "CEO-15: Accesibilidad WCAG" },
     ];
 
     try {
@@ -269,12 +269,19 @@ Devuelve estrictamente un JSON válido:
     const components = [
       {
         type: 1, // ActionRow
-        components: tasks.map((t, idx) => ({
-          type: 2, // Button
-          style: idx === 0 ? 1 : idx === 1 ? 3 : 2, // 1: Primary (Blue), 3: Success (Green), 2: Secondary (Gray)
-          label: (t.buttonLabel || `Prompt: ${t.id}`).slice(0, 80),
-          custom_id: `btn_cron_${t.id}_${Date.now()}`,
-        })),
+        components: tasks.map((t, idx) => {
+          const matchCode = (t.buttonLabel || "").match(/CEO-\d+/i) || ["CEO-38"];
+          const code = matchCode[0].toUpperCase();
+          const cleanTitle = (t.taskTitle || t.buttonLabel || "Tarea")
+            .replace(/[^a-zA-Z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+          return {
+            type: 2, // Button
+            style: idx === 0 ? 1 : idx === 1 ? 3 : 2, // 1: Primary (Blue), 3: Success (Green), 2: Secondary (Gray)
+            label: (t.buttonLabel || `Prompt: ${t.id}`).slice(0, 80),
+            custom_id: `btn:${t.id}:${code}:${cleanTitle.slice(0, 30)}`,
+          };
+        }),
       },
     ];
 
