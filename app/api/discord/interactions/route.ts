@@ -17,17 +17,15 @@ function verifyDiscordSignature(
 ): boolean {
   if (!publicKey || !signature || !timestamp) return false;
   try {
+    const spki = Buffer.concat([
+      Buffer.from("302a300506032b6570032100", "hex"), // ASN.1 header para Ed25519
+      Buffer.from(publicKey, "hex"),
+    ]);
+    const key = crypto.createPublicKey({ key: spki, format: "der", type: "spki" });
     return crypto.verify(
       null,
       Buffer.from(timestamp + rawBody),
-      {
-        key: Buffer.concat([
-          Buffer.from("302a300506032b6570032100", "hex"), // ASN.1 header para Ed25519
-          Buffer.from(publicKey, "hex"),
-        ]),
-        format: "der",
-        type: "spki",
-      },
+      key,
       Buffer.from(signature, "hex")
     );
   } catch {
