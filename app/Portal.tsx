@@ -139,7 +139,7 @@ export function Portal() {
                 <Screen key={screen}>
                   <div className="portal-main">
                     {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
-                    {screen === "calendar" && <CalendarView courses={courses} entries={entries} />}
+                    {screen === "calendar" && <CalendarView courses={courses} gradebooks={gradebooks} activity={activity} openCourse={openCourse} />}
                     {screen === "resources" && <ResourcesView courses={courses} />}
                     {screen === "admin" && user.role === "owner" && <AdminView />}
                   </div>
@@ -211,7 +211,9 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
       </section>
       <section className="access-panel">
         <div className="access-panel-inner">
+
           <div className="login-card" id="inicio">
+            <span className="login-rule" aria-hidden="true" />
             <h2>Ingresa con tu correo institucional</h2>
             <button className="google-button" disabled={working} onClick={googleAccess} type="button">
               {working ? <span className="google-spinner" aria-hidden="true" /> : <Image src="/brand/google-g.webp" alt="" aria-hidden="true" width={256} height={256} />}
@@ -230,6 +232,7 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
               </div>
             </div>
           </div>
+
           <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link></p>
         </div>
       </section>

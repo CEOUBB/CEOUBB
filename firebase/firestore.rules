@@ -47,6 +47,12 @@ service cloud.firestore {
       allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
       allow update: if isOwner() || signedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'domain', 'lastSeen', 'teacherRequested', 'requestedAt']);
       allow delete: if isOwner();
+
+      // Bloques del calendario semanal. Estrictamente privados: ni el owner
+      // ni un docente pueden leer la agenda personal de otra cuenta.
+      match /calendar_events/{eventId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
     }
 
     match /courses/{courseId}/posts/{postId} {

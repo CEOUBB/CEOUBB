@@ -1,6 +1,7 @@
 import type { AccountRole as Role } from "./access-policy";
 import type { Course } from "./courses";
 import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
+import { dueDateParts } from "./planner";
 
 export type User = {
   id: string;
@@ -93,9 +94,36 @@ const monthYearFormat = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "
 const monthFormat = new Intl.DateTimeFormat(LOCALE, { month: "short", timeZone: TIME_ZONE });
 const dateFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "short", year: "numeric", timeZone: TIME_ZONE });
 const isoDateFormat = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TIME_ZONE });
+const weekdayFormat = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: TIME_ZONE });
+const rangeFormat = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "long", timeZone: TIME_ZONE });
+const clockFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TIME_ZONE });
 
 export function getSantiagoDateISO(date: Date = new Date()): string {
   return isoDateFormat.format(date);
+}
+
+/** Minutos transcurridos del día en Santiago; mueve la línea de "ahora" del planificador. */
+export function getSantiagoMinutes(date: Date = new Date()): number {
+  const [hours, minutes] = clockFormat.format(date).split(":");
+  return Number(hours) * 60 + Number(minutes);
+}
+
+export function weekdayOf(value: string): string {
+  const label = weekdayFormat.format(new Date(`${value}T12:00:00`)).replace(".", "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function weekRangeLabel(from: string, to: string): string {
+  const start = rangeFormat.format(new Date(`${from}T12:00:00`));
+  const end = rangeFormat.format(new Date(`${to}T12:00:00`));
+  const year = to.slice(0, 4);
+  return `${start} — ${end} de ${year}`;
+}
+
+export function formatDueDate(value: string): string {
+  const parts = dueDateParts(value);
+  if (!parts) return "";
+  return parts.time ? `${formatDay(parts.date)} · ${parts.time}` : formatDay(parts.date);
 }
 
 export function nextEntry(entries: CalendarEntry[]): CalendarEntry | null {
