@@ -8,8 +8,12 @@ import { waitUntil } from "@vercel/functions";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Discord Public Key (de Discord Developer Portal -> General Information)
-const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY || "";
+// Claves públicas de Discord (de Discord Developer Portal -> General Information)
+const DISCORD_PUBLIC_KEYS = [
+  process.env.DISCORD_PUBLIC_KEY,
+  process.env.DISCORD_GEMINI_PUBLIC_KEY,
+  process.env.DISCORD_ANTIGRAVITY_PUBLIC_KEY,
+].filter(Boolean) as string[];
 
 const MODEL_FALLBACK_LIST = [
   "gemini-3.7-flash",
@@ -524,9 +528,11 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get("x-signature-ed25519") || "";
   const timestamp = req.headers.get("x-signature-timestamp") || "";
 
-  // 1. Validar firma de Discord (si DISCORD_PUBLIC_KEY está configurada)
-  if (DISCORD_PUBLIC_KEY) {
-    const isValid = verifyDiscordSignature(rawBody, signature, timestamp, DISCORD_PUBLIC_KEY);
+  // 1. Validar firma de Discord (si hay claves públicas configuradas)
+  if (DISCORD_PUBLIC_KEYS.length > 0) {
+    const isValid = DISCORD_PUBLIC_KEYS.some((pk) =>
+      verifyDiscordSignature(rawBody, signature, timestamp, pk)
+    );
     if (!isValid) {
       return new NextResponse("Invalid request signature", { status: 401 });
     }

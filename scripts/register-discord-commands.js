@@ -14,35 +14,12 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const BOT_TOKEN =
-  process.env.DISCORD_CEOUBB_BOT_TOKEN ||
-  process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN ||
-  process.env.DISCORD_BOT_TOKEN;
+// Tokens
+const CEOUBB_BOT_TOKEN = process.env.DISCORD_CEOUBB_BOT_TOKEN;
+const GEMINI_BOT_TOKEN = process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
 
-if (!BOT_TOKEN) {
-  console.error("❌ Error: No se encontró DISCORD_CEOUBB_BOT_TOKEN ni DISCORD_BOT_TOKEN en .env.local");
-  process.exit(1);
-}
-
-const COMMANDS = [
-  {
-    name: "gemini",
-    description: "Pregúntale a Gemini 3.7 sobre el proyecto CEOUBB, Linear, GitHub o código",
-    options: [
-      {
-        name: "pregunta",
-        description: "¿Qué deseas consultar o solicitar a Gemini?",
-        type: 3, // STRING
-        required: true,
-      },
-      {
-        name: "privado",
-        description: "¿Responder solo para ti (mensaje efímero)?",
-        type: 5, // BOOLEAN
-        required: false,
-      },
-    ],
-  },
+// 1. Comandos exclusivos para CEOUBB Bot (DevOps, CI/CD, Standup, Prompts)
+const CEOUBB_COMMANDS = [
   {
     name: "doctor",
     description: "Verificar estado y diagnóstico de CI/CD en main",
@@ -89,70 +66,116 @@ const COMMANDS = [
   },
 ];
 
-async function main() {
-  console.log("🔄 Autenticando con Discord API...");
+// 2. Comandos exclusivos para el Bot de Gemini (Conversación, Consultas técnicas, Linear, Código)
+const GEMINI_COMMANDS = [
+  {
+    name: "gemini",
+    description: "Pregúntale a Gemini 3.7 sobre el proyecto CEOUBB, Linear, GitHub o código",
+    options: [
+      {
+        name: "pregunta",
+        description: "¿Qué deseas consultar o solicitar a Gemini?",
+        type: 3, // STRING
+        required: true,
+      },
+      {
+        name: "privado",
+        description: "¿Responder solo para ti (mensaje efímero)?",
+        type: 5, // BOOLEAN
+        required: false,
+      },
+    ],
+  },
+  {
+    name: "consultar",
+    description: "Consultar al Asistente Gemini de CEOUBB",
+    options: [
+      {
+        name: "pregunta",
+        description: "¿Qué deseas consultar o solicitar?",
+        type: 3, // STRING
+        required: true,
+      },
+      {
+        name: "privado",
+        description: "¿Responder solo para ti (mensaje efímero)?",
+        type: 5, // BOOLEAN
+        required: false,
+      },
+    ],
+  },
+];
 
-  // Obtener info del bot y Application ID
+async function registerForBot(botName, botToken, commands) {
+  if (!botToken) {
+    console.warn(`⚠️ Omitiendo ${botName}: token no configurado.`);
+    return;
+  }
+
+  console.log(`\n========================================`);
+  console.log(`🤖 Registrando comandos para: ${botName}`);
+  console.log(`========================================`);
+
   const meRes = await fetch("https://discord.com/api/v10/users/@me", {
-    headers: { Authorization: `Bot ${BOT_TOKEN}` },
+    headers: { Authorization: `Bot ${botToken}` },
   });
 
   if (!meRes.ok) {
-    console.error("❌ Error al autenticar con el token de Discord:", await meRes.text());
-    process.exit(1);
+    console.error(`❌ Error autenticando ${botName}:`, await meRes.text());
+    return;
   }
 
   const meData = await meRes.json();
-  const applicationId = process.env.DISCORD_APPLICATION_ID || meData.id;
+  const applicationId = meData.id;
+  console.log(`👤 Usuario de Discord: ${meData.username}#${meData.discriminator} (App ID: ${applicationId})`);
 
-  console.log(`🤖 Bot identificado: ${meData.username}#${meData.discriminator} (App ID: ${applicationId})`);
-
-  // 1. Obtener servidores (guilds) donde está el bot
+  // Obtener servidores donde está el bot
   const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-    headers: { Authorization: `Bot ${BOT_TOKEN}` },
+    headers: { Authorization: `Bot ${botToken}` },
   });
 
   if (guildsRes.ok) {
     const guilds = await guildsRes.json();
     for (const g of guilds) {
-      console.log(`📡 Registrando comandos de forma INMEDIATA en el servidor "${g.name}" (Guild ID: ${g.id})...`);
+      console.log(`📡 Registrando ${commands.length} comando(s) en servidor "${g.name}" (${g.id})...`);
       const guildUrl = `https://discord.com/api/v10/applications/${applicationId}/guilds/${g.id}/commands`;
       const guildRes = await fetch(guildUrl, {
         method: "PUT",
         headers: {
-          Authorization: `Bot ${BOT_TOKEN}`,
+          Authorization: `Bot ${botToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(COMMANDS),
+        body: JSON.stringify(commands),
       });
 
       if (guildRes.ok) {
-        console.log(`✅ Comandos registrados INSTANTÁNEAMENTE en el servidor "${g.name}" (${g.id}).`);
+        console.log(`✅ Comandos registrados con éxito para ${botName} en "${g.name}".`);
       } else {
-        console.warn(`⚠️ Error al registrar en ${g.name} (${guildRes.status}):`, await guildRes.text());
+        console.warn(`⚠️ Error registrando comandos en "${g.name}" (${guildRes.status}):`, await guildRes.text());
       }
     }
   }
 
-  // 2. Limpiar comandos globales para evitar duplicados en la lista
-  console.log("🧹 Limpiando comandos globales para evitar duplicados en el servidor...");
+  // Limpiar comandos globales para evitar duplicados
   const globalUrl = `https://discord.com/api/v10/applications/${applicationId}/commands`;
-  const globalRes = await fetch(globalUrl, {
+  await fetch(globalUrl, {
     method: "PUT",
     headers: {
-      Authorization: `Bot ${BOT_TOKEN}`,
+      Authorization: `Bot ${botToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify([]), // Vaciar comandos globales para que solo queden los del servidor
+    body: JSON.stringify([]),
   });
+}
 
-  if (globalRes.ok) {
-    console.log("✅ Comandos globales limpiados. Ahora solo aparecerá un único comando por servidor.");
-  } else {
-    console.warn(`⚠️ Error al limpiar comandos globales (${globalRes.status}):`, await globalRes.text());
-  }
+async function main() {
+  // Registrar para CEOUBB Bot
+  await registerForBot("CEOUBB Bot (DevOps)", CEOUBB_BOT_TOKEN, CEOUBB_COMMANDS);
 
-  console.log("\n🎉 ¡Listo! El comando /gemini está limpio y único en Discord.");
+  // Registrar para Gemini Bot
+  await registerForBot("Gemini Bot (Asistente IA)", GEMINI_BOT_TOKEN, GEMINI_COMMANDS);
+
+  console.log("\n🎉 ¡Registro completado! Cada bot ahora tiene exclusivamente sus propios comandos.");
 }
 
 main().catch(console.error);
