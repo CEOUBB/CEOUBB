@@ -30,7 +30,9 @@ export function BlockDialog({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    dialogRef.current?.showModal();
+    // `showModal()` sobre un diálogo ya modal lanza `InvalidStateError`, y en
+    // desarrollo React monta cada efecto dos veces.
+    if (dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
     titleRef.current?.focus();
   }, []);
 

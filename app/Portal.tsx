@@ -110,6 +110,11 @@ export function Portal() {
   // Implements: REQ-CAP-15
   useExternalLinks();
   useHardwareBack(useCallback(() => {
+    /* Capacitor reemplaza el gesto atrás por completo: sin esto un `<dialog>` abierto
+       —la búsqueda, el editor de bloques— manda la app al fondo en vez de cerrarse.
+       Se resuelve una vez aquí, donde pasa cualquier diálogo nativo del portal. */
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog instanceof HTMLDialogElement) return dialog.close(), true;
     if (preview) return setPreview(null), true;
     if (coursesSheet) return setCoursesSheet(false), true;
     if (screen !== "courses") return setScreen("courses"), true;
@@ -184,12 +189,18 @@ export function Portal() {
     })),
   ];
 
-  // Implements: REQ-CAP-04 — Inicio, Cursos, Calendario y Biblioteca en la zona del pulgar.
+  /*
+    Implements: REQ-CAP-04 — Inicio, Cursos, Calendario y Recursos en la zona del pulgar.
+    La cuarta pestaña decía «Biblioteca» y abría el HTML estático, mientras la vista
+    titulada «Recursos de estudio» —que es la que contiene la biblioteca, los asistentes
+    y los beneficios— no tenía pestaña y dejaba la barra sin ningún rótulo activo.
+    Ahora el rótulo nombra su destino y la biblioteca entra desde la primera tarjeta.
+  */
   const mobileTabs: MobileTab[] = [
     { key: "courses", label: "Inicio", Icon: House, active: screen === "courses", onSelect: () => setScreen("courses") },
     { key: "list", label: "Cursos", Icon: Stack, active: screen === "course", onSelect: () => setCoursesSheet(true) },
     { key: "calendar", label: "Calendario", Icon: CalendarBlank, active: screen === "calendar", onSelect: () => setScreen("calendar") },
-    { key: "library", label: "Biblioteca", Icon: Archive, active: false, href: "/biblioteca/index.html" },
+    { key: "resources", label: "Recursos", Icon: Books, active: screen === "resources", onSelect: () => setScreen("resources") },
   ];
 
   return (
@@ -234,7 +245,7 @@ export function Portal() {
           </main>
           {mobile && <MobileBottomNav items={mobileTabs} />}
           {mobile && (
-            <MobileSheet onOpenChange={setCoursesSheet} open={coursesSheet} title="Mis ramos" description={`Semestre ${courses[0]?.period ?? ""}`.trim()}>
+            <MobileSheet onOpenChange={setCoursesSheet} open={coursesSheet} title="Mis ramos" description={courses[0]?.period ?? ""}>
               <div className="sheet-list">
                 {courses.length === 0 && <p className="side-empty">Sin ramos en este período. Aparecerán aquí al quedar inscritos.</p>}
                 {courses.map((item) => (
@@ -250,10 +261,10 @@ export function Portal() {
                     <span>{item.name}<small>{item.code}</small></span>
                   </button>
                 ))}
-                <button className="sheet-row" onClick={() => { setCoursesSheet(false); setScreen("resources"); }} type="button">
-                  <span className="sheet-row-icon"><Books size={20} /></span>
-                  <span>Recursos</span>
-                </button>
+                <Link className="sheet-row" href="/biblioteca/index.html" onClick={() => setCoursesSheet(false)}>
+                  <span className="sheet-row-icon"><Archive size={20} /></span>
+                  <span>Biblioteca académica</span>
+                </Link>
                 {user.role === "owner" && (
                   <button className="sheet-row" onClick={() => { setCoursesSheet(false); setScreen("admin"); }} type="button">
                     <span className="sheet-row-icon"><Sliders size={20} /></span>
