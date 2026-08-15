@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { GoogleGenAI } from "@google/genai";
+import fs from "node:fs";
+import path from "node:path";
+import { GoogleGenAI, Type, type FunctionDeclaration } from "@google/genai";
+import { waitUntil } from "@vercel/functions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,25 +18,332 @@ const MODEL_FALLBACK_LIST = [
   "gemini-3-flash",
 ];
 
-async function callGemini(prompt: string): Promise<string> {
-  const apiKey = process.env.STANDUP_GEMINI_API_KEY || process.env.GEMINI_STANDUP_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) return "API Key de Gemini no configurada.";
+/**
+ * Obtener clave API de Gemini
+ */
+function getGeminiApiKey(): string | null {
+  return (
+    process.env.STANDUP_GEMINI_API_KEY ||
+    process.env.GEMINI_STANDUP_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    null
+  );
+}
+
+/**
+ * Cargar contexto del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md)
+ */
+function getProjectContext(): string {
+  let context = "";
+  try {
+    const agentsPath = path.join(process.cwd(), "AGENTS.md");
+    if (fs.existsSync(agentsPath)) {
+      context += `\n--- REPOSITORY RULES & SPECS (AGENTS.md) ---\n${fs.readFileSync(agentsPath, "utf-8").slice(0, 3500)}\n`;
+    }
+
+    const planPath = path.join(process.cwd(), "PLAN.md");
+    if (fs.existsSync(planPath)) {
+      context += `\n--- ACTIVE PLAN & SPRINT (PLAN.md) ---\n${fs.readFileSync(planPath, "utf-8").slice(0, 3500)}\n`;
+    }
+
+    const designPath = path.join(process.cwd(), "design-ceoubb.md");
+    if (fs.existsSync(designPath)) {
+      context += `\n--- DESIGN SYSTEM RULES (design-ceoubb.md) ---\n${fs.readFileSync(designPath, "utf-8").slice(0, 1500)}\n`;
+    }
+  } catch (err) {
+    console.warn("⚠️ Error leyendo archivos de contexto del proyecto:", err);
+  }
+  return context;
+}
+
+/**
+ * Declaraciones de herramientas para Function Calling con Gemini
+ */
+const geminiToolsDeclarations: FunctionDeclaration[] = [
+  {
+    name: "linear_get_issue",
+    description: "Obtener información detallada de un issue o tarea de Linear mediante su identificador (ej: CEO-38)",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        issueId: { type: Type.STRING, description: "Identificador del issue (ej: CEO-38)" },
+      },
+      required: ["issueId"],
+    },
+  },
+  {
+    name: "linear_list_active_issues",
+    description: "Listar los issues activos y pendientes del sprint en Linear",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        limit: { type: Type.NUMBER, description: "Cantidad máxima de issues a retornar (por defecto 10)" },
+      },
+    },
+  },
+  {
+    name: "github_recent_commits",
+    description: "Consultar los commits recientes de la rama main en GitHub",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        count: { type: Type.NUMBER, description: "Cantidad de commits a obtener (por defecto 5)" },
+      },
+    },
+  },
+  {
+    name: "github_list_prs",
+    description: "Consultar Pull Requests abiertos o recientes en el repositorio CEOUBB",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        state: { type: Type.STRING, description: "Estado de los PRs: open, closed o all (por defecto open)" },
+      },
+    },
+  },
+  {
+    name: "github_ci_status",
+    description: "Consultar el estado del último pipeline de CI/CD (GitHub Actions) en la rama main",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+    },
+  },
+];
+
+/**
+ * Ejecutor de herramientas (Tools)
+ */
+async function executeGeminiToolCall(name: string, args: Record<string, unknown>): Promise<unknown> {
+  const linearApiKey = process.env.LINEAR_API_KEY;
+  const githubToken = process.env.GITHUB_TOKEN;
+
+  if (name === "linear_get_issue") {
+    const issueId = String(args.issueId || "").toUpperCase();
+    if (!linearApiKey) return { error: "LINEAR_API_KEY no configurada en Vercel." };
+
+    try {
+      const query = `
+        query GetIssue($id: String!) {
+          issue(id: $id) {
+            identifier
+            title
+            description
+            url
+            priority
+            state { name type }
+            assignee { name }
+          }
+        }
+      `;
+      const res = await fetch("https://api.linear.app/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: linearApiKey },
+        body: JSON.stringify({ query, variables: { id: issueId } }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { error: `Error HTTP ${res.status} al consultar Linear` };
+      const data = await res.json();
+      const issue = data?.data?.issue;
+      if (!issue) return { error: `No se encontró el issue ${issueId} en Linear` };
+      return {
+        id: issue.identifier,
+        title: issue.title,
+        status: issue.state?.name,
+        assignee: issue.assignee?.name || "Sin asignar",
+        priority: issue.priority,
+        url: issue.url,
+        description: issue.description ? issue.description.slice(0, 500) : "Sin descripción",
+      };
+    } catch (err) {
+      return { error: String(err) };
+    }
+  }
+
+  if (name === "linear_list_active_issues") {
+    if (!linearApiKey) return { error: "LINEAR_API_KEY no configurada en Vercel." };
+    const limit = typeof args.limit === "number" ? Math.min(args.limit, 20) : 10;
+    try {
+      const query = `
+        query GetActiveIssues($limit: Int!) {
+          issues(filter: { state: { type: { in: ["started", "unstarted", "backlog"] } } }, first: $limit) {
+            nodes {
+              identifier
+              title
+              state { name }
+              assignee { name }
+            }
+          }
+        }
+      `;
+      const res = await fetch("https://api.linear.app/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: linearApiKey },
+        body: JSON.stringify({ query, variables: { limit } }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { error: `Error HTTP ${res.status} al consultar Linear` };
+      const data = await res.json();
+      const issues = data?.data?.issues?.nodes || [];
+      return {
+        count: issues.length,
+        issues: issues.map((i: { identifier: string; title: string; state?: { name: string }; assignee?: { name: string } }) => ({
+          id: i.identifier,
+          title: i.title,
+          status: i.state?.name || "Pendiente",
+          assignee: i.assignee?.name || "Sin asignar",
+        })),
+      };
+    } catch (err) {
+      return { error: String(err) };
+    }
+  }
+
+  if (name === "github_recent_commits") {
+    const count = typeof args.count === "number" ? Math.min(args.count, 10) : 5;
+    try {
+      const headers: Record<string, string> = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CEOUBB-Discord-Interactions",
+      };
+      if (githubToken) headers.Authorization = `token ${githubToken}`;
+
+      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${count}`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { error: `Error consultando GitHub API (${res.status})` };
+      const data = await res.json();
+      return (data || []).map((c: { sha: string; commit: { author: { name: string }; message: string } }) => ({
+        sha: c.sha?.slice(0, 7),
+        author: c.commit?.author?.name,
+        message: c.commit?.message?.split("\n")[0],
+      }));
+    } catch (err) {
+      return { error: String(err) };
+    }
+  }
+
+  if (name === "github_list_prs") {
+    const state = typeof args.state === "string" ? args.state : "open";
+    try {
+      const headers: Record<string, string> = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CEOUBB-Discord-Interactions",
+      };
+      if (githubToken) headers.Authorization = `token ${githubToken}`;
+
+      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls?state=${state}&per_page=5`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { error: `Error consultando PRs en GitHub (${res.status})` };
+      const data = await res.json();
+      return (data || []).map((p: { number: number; title: string; user?: { login: string }; state: string; html_url: string; head?: { ref: string } }) => ({
+        number: p.number,
+        title: p.title,
+        author: p.user?.login,
+        branch: p.head?.ref,
+        state: p.state,
+        url: p.html_url,
+      }));
+    } catch (err) {
+      return { error: String(err) };
+    }
+  }
+
+  if (name === "github_ci_status") {
+    return await fetchLatestCIDiagnostics();
+  }
+
+  return { error: `Herramienta desconocida: ${name}` };
+}
+
+/**
+ * Ejecución de Gemini con Function Calling loop y fallbacks
+ */
+async function processGeminiQueryWithTools(userPrompt: string, userDisplayName: string): Promise<string> {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    return "⚠️ **Error de configuración:** La variable `STANDUP_GEMINI_API_KEY` o `GEMINI_API_KEY` no está configurada en Vercel.";
+  }
 
   const ai = new GoogleGenAI({ apiKey });
-  let lastError;
+  const projectContext = getProjectContext();
+
+  const systemInstruction = `Eres el Asistente de IA Senior y Copiloto de Desarrollo de CEOUBB (Centro de Estudio UBB - LMS Universidad del Bío-Bío).
+Estás interactuando en Discord con el mantenedor del proyecto (${userDisplayName}).
+Tienes conocimiento profundo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md).
+Tienes acceso a herramientas para consultar Linear (issues, sprints) y GitHub (commits, PRs, CI).
+
+Reglas indispensables de CEOUBB:
+- Stack: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, Firebase southamerica-west1.
+- Paquetes: Usar SIEMPRE pnpm (no npm, no bun).
+- Auth & Roles: Gobernado estrictamente por lib/access-policy.ts (@ubiobio.cl docente, @alumnos.ubiobio.cl estudiante).
+- Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (design-ceoubb.md).
+- Idioma: Responde siempre en español formal, técnico y educado.
+
+${projectContext}`;
+
+  let lastError: unknown;
+
   for (const modelId of MODEL_FALLBACK_LIST) {
     try {
-      const res = await ai.models.generateContent({
+      const firstRes = await ai.models.generateContent({
         model: modelId,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        config: {
+          systemInstruction,
+          tools: [{ functionDeclarations: geminiToolsDeclarations }],
+        },
       });
-      const text = res.text || res.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return text.trim();
+
+      const candidates = firstRes.candidates || [];
+      const firstCandidateContent = candidates[0]?.content;
+      const functionCalls = firstCandidateContent?.parts?.filter((p) => p.functionCall) || [];
+
+      if (functionCalls.length > 0 && firstCandidateContent) {
+        const toolResponseParts = [];
+        for (const callPart of functionCalls) {
+          if (!callPart.functionCall) continue;
+          const toolCall = callPart.functionCall;
+          const toolName = toolCall.name || "";
+          const toolResult = await executeGeminiToolCall(toolName, (toolCall.args as Record<string, unknown>) || {});
+          toolResponseParts.push({
+            functionResponse: {
+              name: toolName,
+              response: typeof toolResult === "object" && toolResult !== null ? (toolResult as Record<string, unknown>) : { result: toolResult },
+            },
+          });
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const followUpContents: any[] = [
+          { role: "user", parts: [{ text: userPrompt }] },
+          firstCandidateContent,
+          { role: "user", parts: toolResponseParts },
+        ];
+
+        const followUpRes = await ai.models.generateContent({
+          model: modelId,
+          contents: followUpContents,
+          config: { systemInstruction },
+        });
+
+        const followUpText = followUpRes.text || followUpRes.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (followUpText) return followUpText.trim();
+      }
+
+      const directText = firstRes.text || firstCandidateContent?.parts?.[0]?.text || "";
+      if (directText) return directText.trim();
     } catch (err) {
+      console.warn(`⚠️ Error en modelo '${modelId}' en Vercel:`, err);
       lastError = err;
     }
   }
-  throw lastError;
+
+  const errMsg = lastError instanceof Error ? lastError.message : String(lastError);
+  return `⚠️ No se pudo obtener respuesta de Gemini: ${errMsg}`;
 }
 
 /**
@@ -167,7 +477,7 @@ function verifyDiscordSignature(
   if (!publicKey || !signature || !timestamp) return false;
   try {
     const spki = Buffer.concat([
-      Buffer.from("302a300506032b6570032100", "hex"), // ASN.1 header para Ed25519
+      Buffer.from("302a300506032b6570032100", "hex"),
       Buffer.from(publicKey, "hex"),
     ]);
     const key = crypto.createPublicKey({ key: spki, format: "der", type: "spki" });
@@ -179,6 +489,33 @@ function verifyDiscordSignature(
     );
   } catch {
     return false;
+  }
+}
+
+/**
+ * Actualizar mensaje original de Discord diferido (Deferred Interaction Type 5)
+ */
+async function updateOriginalDiscordMessage(
+  applicationId: string,
+  interactionToken: string,
+  content: string
+): Promise<void> {
+  try {
+    const safeContent = content.length > 1950 ? `${content.slice(0, 1920)}\n\n_...(respuesta recortada por límite de Discord)_` : content;
+
+    const url = `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: safeContent }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) {
+      console.error(`❌ Error al actualizar mensaje diferido en Discord (${res.status}):`, await res.text());
+    }
+  } catch (err) {
+    console.error("❌ Error en updateOriginalDiscordMessage:", err);
   }
 }
 
@@ -197,13 +534,15 @@ export async function POST(req: NextRequest) {
 
   let body: {
     type: number;
+    application_id?: string;
+    token?: string;
     data?: {
       custom_id?: string;
       name?: string;
-      options?: Array<{ name: string; value: string | number }>;
+      options?: Array<{ name: string; value: string | number | boolean }>;
     };
-    member?: { user?: { username: string; id: string } };
-    user?: { username: string; id: string };
+    member?: { user?: { username: string; id: string; global_name?: string } };
+    user?: { username: string; id: string; global_name?: string };
   };
 
   try {
@@ -217,11 +556,62 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ type: 1 }); // PONG
   }
 
+  const applicationId = body.application_id || "";
+  const interactionToken = body.token || "";
+  const discordUser = body.member?.user || body.user;
+  const userDisplayName = discordUser?.global_name || discordUser?.username || "Mantenedor";
+
   // 3. Manejo de Slash Commands (Type 2: APPLICATION_COMMAND)
   if (body.type === 2 && body.data?.name) {
     const commandName = body.data.name;
     const options = body.data.options || [];
     const getOpt = (name: string) => options.find((o) => o.name === name)?.value;
+
+    // COMANDO 1: /gemini o /consultar (con respuesta diferida Type 5 para IA)
+    if (commandName === "gemini" || commandName === "consultar" || commandName === "ask") {
+      const userPrompt = String(getOpt("pregunta") || "").trim();
+      const isPrivate = Boolean(getOpt("privado"));
+
+      if (!userPrompt) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: "⚠️ Por favor escribe una pregunta para Gemini.", flags: 64 },
+        });
+      }
+
+      // Si tenemos application_id e interactionToken, usamos el flujo diferido asíncrono
+      if (applicationId && interactionToken) {
+        waitUntil(
+          (async () => {
+            try {
+              const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName);
+              const header = `> **Consulta:** ${userPrompt}\n\n`;
+              await updateOriginalDiscordMessage(applicationId, interactionToken, `${header}${aiResponse}`);
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              await updateOriginalDiscordMessage(
+                applicationId,
+                interactionToken,
+                `❌ Error procesando consulta con Gemini: ${msg}`
+              );
+            }
+          })()
+        );
+
+        // Devolver inmediatamente Type 5 (DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE)
+        return NextResponse.json({
+          type: 5,
+          data: { flags: isPrivate ? 64 : 0 },
+        });
+      }
+
+      // Fallback síncrono si no hay token diferido
+      const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName);
+      return NextResponse.json({
+        type: 4,
+        data: { content: aiResponse, flags: isPrivate ? 64 : 0 },
+      });
+    }
 
     if (commandName === "prompt") {
       const taskInput = String(getOpt("tarea") || "").trim();
@@ -357,7 +747,6 @@ export async function POST(req: NextRequest) {
         const diffText = diffRes.ok ? await diffRes.text() : "";
         const truncatedDiff = diffText.slice(0, 6000);
 
-        // 3. Obtener comentarios del PR para detectar diagnósticos de React Doctor
         let reactDoctorNotes = "Sin comentarios de React Doctor detectados en el PR.";
         try {
           const commentsRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/issues/${prNum}/comments`, {
@@ -403,7 +792,26 @@ Emite un informe conciso en español formal con este formato:
 **Veredicto**: (✅ APROBADO si todo está limpio y sin problemas de React Doctor, o ⚠️ REQUIERE CAMBIOS indicando qué corregir)
 `;
 
-        const review = await callGemini(prompt);
+        const apiKey = getGeminiApiKey();
+        let review = "API Key de Gemini no configurada.";
+        if (apiKey) {
+          const ai = new GoogleGenAI({ apiKey });
+          for (const modelId of MODEL_FALLBACK_LIST) {
+            try {
+              const res = await ai.models.generateContent({
+                model: modelId,
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+              });
+              const text = res.text || res.candidates?.[0]?.content?.parts?.[0]?.text || "";
+              if (text) {
+                review = text.trim();
+                break;
+              }
+            } catch {
+              // Probar siguiente modelo
+            }
+          }
+        }
 
         const responseMarkdown =
           `### 🔍 Auditoría de PR #${prNum}: [${prData.title}](${prData.html_url})\n\n` +
@@ -436,7 +844,6 @@ Emite un informe conciso en español formal con este formato:
   // 4. Manejo de clics en Botones (Type 3: MESSAGE_COMPONENT)
   if (body.type === 3 && body.data?.custom_id) {
     const customId = body.data.custom_id;
-    // Formato: btn:<role>:<taskCode>:<taskTitle>
     const parts = customId.split(":");
     const taskCode = parts[2] || "CEO-TASK";
     const rawTitle = parts[3] || "Tarea del sprint";
@@ -445,7 +852,6 @@ Emite un informe conciso en español formal con este formato:
       .replace(/^Prompt:\s*/i, "")
       .trim() || "Tarea del sprint";
 
-    // Branch slug: normaliza acentos (ó -> o, etc.) y genera formato git
     const slug = cleanTitle
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -476,10 +882,10 @@ Emite un informe conciso en español formal con este formato:
       `\`\`\``;
 
     return NextResponse.json({
-      type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+      type: 4,
       data: {
         content: responseMarkdown,
-        flags: 64, // 64 = EPHEMERAL (Solo el usuario que hizo clic lo ve)
+        flags: 64,
       },
     });
   }

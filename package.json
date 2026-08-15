@@ -30,6 +30,7 @@
     "@libsql/client": "^0.17.4",
     "@phosphor-icons/react": "^2.1.10",
     "@sentry/nextjs": "^10.70.0",
+    "@vercel/functions": "^3.9.3",
     "discord.js": "^14.27.0",
     "drizzle-orm": "0.45.2",
     "firebase": "^12.17.1",

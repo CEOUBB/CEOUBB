@@ -72,4 +72,5 @@ serviceAccountKey.json
 .claude/
 .impeccable/
 .codex/
+.cache/
 skills-lock.json
