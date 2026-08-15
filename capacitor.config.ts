@@ -10,15 +10,20 @@ import type { CapacitorConfig } from "@capacitor/cli";
   versionado y no compilado: en Windows no hay CocoaPods, Xcode ni firma, y no
   existe `GoogleService-Info.plist` en el repositorio (§2.3 de la especificación).
 */
+const serverUrl = process.env.CAPACITOR_SERVER_URL || "https://ceoubb.com";
+const isCleartext = Boolean(process.env.CAPACITOR_SERVER_URL?.startsWith("http://"));
+
 // Implements: REQ-CAP-01, REQ-CAP-03
 const config: CapacitorConfig = {
   appId: "cl.ubb.centroestudio",
   appName: "CEOUBB",
   webDir: "capacitor/www",
   server: {
-    url: "https://ceoubb.com",
+    // url: "https://ceoubb.com"
+    // cleartext: false
+    url: serverUrl,
     androidScheme: "https",
-    cleartext: false,
+    cleartext: isCleartext,
   },
   android: {
     allowMixedContent: false,
