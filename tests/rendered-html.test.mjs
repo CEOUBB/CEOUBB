@@ -103,6 +103,33 @@ test("renders Centro de Estudio UBB", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
+// Implements: REQ-DOC-01, REQ-DOC-02, REQ-DOC-03, REQ-DOC-07, REQ-DOC-11, REQ-DOC-14
+test("renders the isolated teacher preview with noindex and a bounded DOM", async () => {
+  const response = await request("/preview/docente");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Vista previa/i);
+  assert.match(html, /Datos de ejemplo/i);
+  assert.match(html, /Buenos días, docente/i);
+  assert.match(html, /Vista estudiante/i);
+  assert.match(html, /name="robots" content="noindex/i);
+  assert.doesNotMatch(html, /type="file"|Entregar actividad|Adjuntar entrega/i);
+  assert.ok((html.match(/<[a-z][\w-]*\b/gi) ?? []).length < 1500, "the initial preview DOM must remain below 1500 elements");
+});
+
+// Implements: REQ-DOC-02, REQ-DOC-14
+test("keeps Firebase, Storage and Turso out of the teacher preview bundle", async () => {
+  const html = await (await request("/preview/docente")).text();
+  const chunks = [...new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"]+?\.js/g)].map((match) => match[0]))];
+  assert.ok(chunks.length > 0, "the teacher preview must reference at least one client chunk");
+  for (const chunk of chunks) {
+    const source = await (await request(chunk)).text();
+    assert.ok(!source.includes("firestore.googleapis.com"), `${chunk} ships Firestore into the isolated preview`);
+    assert.ok(!source.includes("firebasestorage.googleapis.com"), `${chunk} ships Storage into the isolated preview`);
+    assert.ok(!source.includes("TURSO_DATABASE_URL"), `${chunk} ships Turso configuration into the isolated preview`);
+  }
+});
+
 test("serves hardening response headers", async () => {
   const response = await request("/");
   assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);

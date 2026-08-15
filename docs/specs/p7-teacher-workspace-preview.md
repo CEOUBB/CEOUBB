@@ -1,6 +1,6 @@
 # P7 — Espacio docente CEOUBB: preview navegable
 
-**Estado:** BORRADOR
+**Estado:** EN EJECUCION
 
 **Responsables del gate:** Joaquín y Pipe
 
@@ -9,6 +9,8 @@
 **Entrega autorizada:** PR en borrador + Vercel Preview; sin merge ni producción
 
 **Última revisión:** 2026-08-15
+
+**Aprobación humana:** Joaquín aprobó P7 el 2026-08-15 y autorizó exclusivamente los marcadores `// Implements: REQ-DOC-XX` exigidos por SDD.
 
 ## 1. Intención y decisión de producto
 
@@ -274,23 +276,23 @@ type ReviewPreview = {
 - [x] **T0 — REQ-DOC-01..REQ-DOC-14:** escribir esta especificación y registrar la rama en `PLAN.md`.
   - **Archivos:** `docs/specs/p7-teacher-workspace-preview.md`, `PLAN.md`.
   - **Verificación:** `git diff --check`.
-- [ ] **T1 — REQ-DOC-01, REQ-DOC-02, REQ-DOC-13, REQ-DOC-14:** crear guard de entorno, metadata, tipos, fixtures y reducer puros.
+- [x] **T1 — REQ-DOC-01, REQ-DOC-02, REQ-DOC-13, REQ-DOC-14:** crear guard de entorno, metadata, tipos, fixtures y reducer puros.
   - **Archivos previstos:** `app/preview/docente/page.tsx`, `app/preview/docente/teacher-preview-model.ts`, `tests/teacher-workspace-preview.test.ts`.
   - **Verificación:** `pnpm run test:unit`.
-- [ ] **T2 — REQ-DOC-03, REQ-DOC-04, REQ-DOC-07:** construir shell docente, resumen y navegación propia del preview.
+- [x] **T2 — REQ-DOC-03, REQ-DOC-04, REQ-DOC-07:** construir shell docente, resumen y navegación propia del preview.
   - **Archivos previstos:** `app/preview/docente/TeacherWorkspacePreview.tsx`.
   - **Verificación:** `pnpm run typecheck && pnpm run lint`.
-- [ ] **T3 — REQ-DOC-05, REQ-DOC-06:** implementar listado y editor progresivo con borrador/publicación simulados.
+- [x] **T3 — REQ-DOC-05, REQ-DOC-06:** implementar listado y editor progresivo con borrador/publicación simulados.
   - **Archivos previstos:** componentes bajo `app/preview/docente/`.
   - **Verificación:** `pnpm run test:unit && pnpm run typecheck`.
-- [ ] **T4 — REQ-DOC-08, REQ-DOC-09, REQ-DOC-10:** implementar cola paginada, mesa de corrección e historial sintético.
+- [x] **T4 — REQ-DOC-08, REQ-DOC-09, REQ-DOC-10:** implementar cola paginada, mesa de corrección e historial sintético.
   - **Archivos previstos:** componentes bajo `app/preview/docente/`.
   - **Verificación:** `pnpm run test:unit && pnpm run typecheck`.
-- [ ] **T5 — REQ-DOC-03, REQ-DOC-09, REQ-DOC-10:** implementar Vista estudiante read-only alimentada por el mismo estado docente.
+- [x] **T5 — REQ-DOC-03, REQ-DOC-09, REQ-DOC-10:** implementar Vista estudiante read-only alimentada por el mismo estado docente.
   - **Archivos previstos:** componentes bajo `app/preview/docente/`.
   - **Verificación:** `pnpm run test:unit && pnpm run typecheck`.
-- [ ] **T6 — REQ-DOC-11, REQ-DOC-12, REQ-DOC-14:** aplicar diseño CEOUBB, responsive, teclado, foco y reducción de movimiento.
-  - **Archivos previstos:** `app/preview/docente/teacher-workspace-preview.css`.
+- [x] **T6 — REQ-DOC-11, REQ-DOC-12, REQ-DOC-14:** aplicar diseño CEOUBB, responsive, teclado, foco y reducción de movimiento.
+  - **Archivos previstos:** `app/preview/docente/teacher-workspace-preview.module.css`.
   - **Verificación:** `pnpm run lint && pnpm run typecheck`.
 - [ ] **T7 — REQ-DOC-01..REQ-DOC-14:** cerrar pruebas automatizadas, aislamiento de bundle y presupuesto DOM.
   - **Archivos previstos:** `tests/teacher-workspace-preview.test.ts`, `tests/rendered-html.test.mjs`, `package.json`.
@@ -298,6 +300,15 @@ type ReviewPreview = {
 - [ ] **T8 — REQ-DOC-01..REQ-DOC-14:** verificar teclado, 360×800, escritorio, red vacía y Vercel Preview; actualizar handoff.
   - **Archivos:** `docs/specs/p7-teacher-workspace-preview.md`, `PLAN.md`, `PLAN_ARCHIVE.md`.
   - **Verificación:** navegador + `git diff --check`.
+
+### Registro de ejecución local
+
+- `pnpm run test:unit`: 67/67 pruebas aprobadas.
+- `pnpm run lint`, `pnpm run typecheck`, `pnpm run check:functions` y `pnpm run build`: aprobados.
+- React Doctor sobre archivos modificados: cero hallazgos atribuibles al preview; permanecen seis diagnósticos preexistentes fuera de P7.
+- Navegador automatizado: recorrido completo aprobado en 1440×1000 y 390×844, foco recuperable, cero desborde horizontal, cero errores de consola y cero solicitudes a Firebase, Storage, Turso o Functions.
+- Guard de entorno: respuesta 200 con `noindex` en preview y 404 sin contenido docente con `VERCEL_ENV=production`.
+- `pnpm test`: la ejecución local queda pendiente de confirmación en CI porque este workspace conserva un directorio Android vacío y no versionado que activa la protección contra la antigua copia de `assets/www`; un checkout limpio no contiene ese directorio.
 
 ## 8. Gate de salida del preview
 
