@@ -134,8 +134,8 @@ async function main() {
     }
   }
 
-  // 2. Registrar comandos globales
-  console.log("🌐 Registrando comandos de barra globales en Discord...");
+  // 2. Limpiar comandos globales para evitar duplicados en la lista
+  console.log("🧹 Limpiando comandos globales para evitar duplicados en el servidor...");
   const globalUrl = `https://discord.com/api/v10/applications/${applicationId}/commands`;
   const globalRes = await fetch(globalUrl, {
     method: "PUT",
@@ -143,16 +143,16 @@ async function main() {
       Authorization: `Bot ${BOT_TOKEN}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(COMMANDS),
+    body: JSON.stringify([]), // Vaciar comandos globales para que solo queden los del servidor
   });
 
   if (globalRes.ok) {
-    console.log("✅ Comandos globales registrados exitosamente.");
+    console.log("✅ Comandos globales limpiados. Ahora solo aparecerá un único comando por servidor.");
   } else {
-    console.error(`❌ Error al registrar comandos globales (${globalRes.status}):`, await globalRes.text());
+    console.warn(`⚠️ Error al limpiar comandos globales (${globalRes.status}):`, await globalRes.text());
   }
 
-  console.log("\n🎉 ¡Listo! El comando /gemini ya está disponible en Discord.");
+  console.log("\n🎉 ¡Listo! El comando /gemini está limpio y único en Discord.");
 }
 
 main().catch(console.error);
