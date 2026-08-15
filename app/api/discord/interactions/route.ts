@@ -37,6 +37,92 @@ async function callGemini(prompt: string): Promise<string> {
 }
 
 /**
+ * Consultar diagnóstico real en tiempo real de GitHub Actions CI en main
+ */
+async function fetchLatestCIDiagnostics(): Promise<string> {
+  try {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "CEOUBB-Discord-Interactions",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
+    }
+
+    const runsRes = await fetch("https://api.github.com/repos/CEOUBB/CEOUBB/actions/runs?branch=main&per_page=1", {
+      headers,
+      signal: AbortSignal.timeout(5000),
+      next: { revalidate: 0 },
+    });
+
+    if (!runsRes.ok) {
+      return "⚠️ No se pudo consultar la API de GitHub Actions.";
+    }
+
+    const runsData = await runsRes.json();
+    const latestRun = runsData?.workflow_runs?.[0];
+
+    if (!latestRun) {
+      return "ℹ️ No hay ejecuciones de CI registradas en `main`.";
+    }
+
+    let stepsDetail = "";
+    if (latestRun.jobs_url) {
+      const jobsRes = await fetch(latestRun.jobs_url, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 0 },
+      });
+
+      if (jobsRes.ok) {
+        const jobsData = await jobsRes.json();
+        const verifyJob = jobsData?.jobs?.[0];
+        const relevantSteps = (verifyJob?.steps || []).filter((s: { name: string }) =>
+          ["Check Firebase Functions syntax", "TypeScript typecheck", "Lint code", "Run test suite"].includes(s.name)
+        );
+
+        stepsDetail = relevantSteps
+          .map((s: { name: string; status: string; conclusion: string | null }) => {
+            const icon =
+              s.conclusion === "success"
+                ? "🟢"
+                : s.conclusion === "failure"
+                ? "🔴"
+                : s.status === "in_progress"
+                ? "🟡 (En ejecución)"
+                : "⚪ (Pendiente)";
+            return `• **${s.name}:** ${icon}`;
+          })
+          .join("\n");
+      }
+    }
+
+    const runStatusIcon =
+      latestRun.conclusion === "success"
+        ? "🟢 Exitoso"
+        : latestRun.conclusion === "failure"
+        ? "🔴 Falló"
+        : `🟡 ${latestRun.status}`;
+
+    const sha = latestRun.head_sha?.slice(0, 7) || "commit";
+    const commitMsg = latestRun.head_commit?.message?.split("\n")[0] || "Sin mensaje";
+    const actor = latestRun.actor?.login || "Desarrollador";
+
+    return (
+      `### 🩺 Diagnóstico Real de CI/CD (/doctor)\n\n` +
+      `**Último commit en \`main\`:** [\`${sha}\`](${latestRun.html_url}) — *"${commitMsg}"* (por @${actor})\n` +
+      `**Estado General del Pipeline:** ${runStatusIcon}\n\n` +
+      `**Detalle de verificaciones en GitHub Actions:**\n` +
+      `${stepsDetail || "• Verificaciones automáticas completas"}\n\n` +
+      `🔗 **[Ver ejecución completa en GitHub Actions](${latestRun.html_url})**`
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return `⚠️ Error consultando diagnóstico en vivo: ${msg}`;
+  }
+}
+
+/**
  * Consultar título real del issue en Linear si se proporciona solo el código (ej. CEO-38)
  */
 async function getLinearIssueTitle(issueId: string): Promise<string | null> {
@@ -147,7 +233,6 @@ export async function POST(req: NextRequest) {
         .replace(/^Prompt:\s*/i, "")
         .trim();
 
-      // Si solo se ingresó el código (ej. "CEO-38"), consultar el título real en Linear
       if (!cleanTitle && matchCode) {
         const linearTitle = await getLinearIssueTitle(taskCode);
         if (linearTitle) {
@@ -225,17 +310,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (commandName === "doctor") {
-      const markdown =
-        `### 🩺 Diagnóstico del Repositorio CEOUBB (/doctor)\n\n` +
-        `• **TypeScript:** 🟢 0 errores de tipos en \`main\`\n` +
-        `• **Unit Tests:** 🟢 37/37 pruebas unitarias pasadas (\`access-policy\`, \`grades\`, \`planner\`, \`linear-webhook\`, \`github-webhook\`)\n` +
-        `• **Linter:** 🟢 ESLint y reglas de accesibilidad WCAG conformes\n` +
-        `• **CI/CD:** 🟢 Pipeline de GitHub Actions y Vercel Gate activos\n\n` +
-        `*Estado general: Repositorio saludable y listo para despliegues.*`;
-
+      const liveDiagnostics = await fetchLatestCIDiagnostics();
       return NextResponse.json({
         type: 4,
-        data: { content: markdown, flags: 64 },
+        data: { content: liveDiagnostics, flags: 64 },
       });
     }
 
