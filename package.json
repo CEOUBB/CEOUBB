@@ -21,6 +21,7 @@
     "bot:codex": "node scripts/discord-codex-bridge.js",
     "bot:antigravity": "node scripts/discord-antigravity-bridge.js",
     "bot:standup": "node scripts/daily-standup-bot.js",
+    "bot:register": "node scripts/register-discord-commands.js",
     "bot:autostart:claude": "powershell -ExecutionPolicy Bypass -File scripts/setup-claude-autostart.ps1",
     "bot:autostart:codex": "powershell -ExecutionPolicy Bypass -File scripts/setup-codex-autostart.ps1",
     "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-antigravity-autostart.ps1"

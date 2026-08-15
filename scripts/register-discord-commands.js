@@ -104,27 +104,33 @@ async function main() {
 
   const meData = await meRes.json();
   const applicationId = process.env.DISCORD_APPLICATION_ID || meData.id;
-  const guildId = process.env.DISCORD_GUILD_ID || "1536934842741301321";
 
   console.log(`🤖 Bot identificado: ${meData.username}#${meData.discriminator} (App ID: ${applicationId})`);
 
-  // 1. Registrar comandos en el Guild (inmediato, sin esperar 1 hora de propagación global)
-  if (guildId) {
-    console.log(`📡 Registrando comandos de barra en el servidor (Guild ID: ${guildId})...`);
-    const guildUrl = `https://discord.com/api/v10/applications/${applicationId}/guilds/${guildId}/commands`;
-    const guildRes = await fetch(guildUrl, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bot ${BOT_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(COMMANDS),
-    });
+  // 1. Obtener servidores (guilds) donde está el bot
+  const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+    headers: { Authorization: `Bot ${BOT_TOKEN}` },
+  });
 
-    if (guildRes.ok) {
-      console.log(`✅ Comandos registrados con éxito en el servidor de Discord (${guildId}).`);
-    } else {
-      console.warn(`⚠️ No se pudieron registrar comandos a nivel de Guild (${guildRes.status}):`, await guildRes.text());
+  if (guildsRes.ok) {
+    const guilds = await guildsRes.json();
+    for (const g of guilds) {
+      console.log(`📡 Registrando comandos de forma INMEDIATA en el servidor "${g.name}" (Guild ID: ${g.id})...`);
+      const guildUrl = `https://discord.com/api/v10/applications/${applicationId}/guilds/${g.id}/commands`;
+      const guildRes = await fetch(guildUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bot ${BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(COMMANDS),
+      });
+
+      if (guildRes.ok) {
+        console.log(`✅ Comandos registrados INSTANTÁNEAMENTE en el servidor "${g.name}" (${g.id}).`);
+      } else {
+        console.warn(`⚠️ Error al registrar en ${g.name} (${guildRes.status}):`, await guildRes.text());
+      }
     }
   }
 
