@@ -294,12 +294,13 @@ type ReviewPreview = {
 - [x] **T6 — REQ-DOC-11, REQ-DOC-12, REQ-DOC-14:** aplicar diseño CEOUBB, responsive, teclado, foco y reducción de movimiento.
   - **Archivos previstos:** `app/preview/docente/teacher-workspace-preview.module.css`.
   - **Verificación:** `pnpm run lint && pnpm run typecheck`.
-- [ ] **T7 — REQ-DOC-01..REQ-DOC-14:** cerrar pruebas automatizadas, aislamiento de bundle y presupuesto DOM.
+- [x] **T7 — REQ-DOC-01..REQ-DOC-14:** cerrar pruebas automatizadas, aislamiento de bundle y presupuesto DOM.
   - **Archivos previstos:** `tests/teacher-workspace-preview.test.ts`, `tests/rendered-html.test.mjs`, `package.json`.
   - **Verificación:** `pnpm run check:functions && pnpm run lint && pnpm run typecheck && pnpm test`.
 - [ ] **T8 — REQ-DOC-01..REQ-DOC-14:** verificar teclado, 360×800, escritorio, red vacía y Vercel Preview; actualizar handoff.
   - **Archivos:** `docs/specs/p7-teacher-workspace-preview.md`, `PLAN.md`, `PLAN_ARCHIVE.md`.
   - **Verificación:** navegador + `git diff --check`.
+  - **Estado:** verificación técnica y Vercel Preview completados; revisión funcional de Pipe y archivo del handoff pendientes.
 
 ### Registro de ejecución local
 
@@ -308,7 +309,8 @@ type ReviewPreview = {
 - React Doctor sobre archivos modificados: cero hallazgos atribuibles al preview; permanecen seis diagnósticos preexistentes fuera de P7.
 - Navegador automatizado: recorrido completo aprobado en 1440×1000 y 390×844, foco recuperable, cero desborde horizontal, cero errores de consola y cero solicitudes a Firebase, Storage, Turso o Functions.
 - Guard de entorno: respuesta 200 con `noindex` en preview y 404 sin contenido docente con `VERCEL_ENV=production`.
-- `pnpm test`: la ejecución local queda pendiente de confirmación en CI porque este workspace conserva un directorio Android vacío y no versionado que activa la protección contra la antigua copia de `assets/www`; un checkout limpio no contiene ese directorio.
+- `pnpm test`: 91/92 local porque este workspace conserva un directorio Android vacío y no versionado que activa la protección contra la antigua copia de `assets/www`; el checkout limpio de GitHub Actions aprobó la suite completa.
+- GitHub Actions: `CI`, `React Doctor` y `Deploy to Vercel` aprobados para `bb6feee`; preview publicada y protegida por inicio de sesión del equipo.
 
 ## 8. Gate de salida del preview
 
