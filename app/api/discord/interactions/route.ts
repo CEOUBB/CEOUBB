@@ -264,21 +264,77 @@ async function executeGeminiToolCall(name: string, args: Record<string, unknown>
 }
 
 /**
+ * Obtener historial de los últimos mensajes del canal en Discord
+ */
+async function fetchDiscordChannelHistory(channelId?: string, limit = 12): Promise<string> {
+  const botToken =
+    process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN ||
+    process.env.DISCORD_CEOUBB_BOT_TOKEN ||
+    process.env.DISCORD_BOT_TOKEN;
+  if (!botToken || !channelId) return "";
+
+  try {
+    const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`, {
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        "User-Agent": "CEOUBB-Discord-Interactions",
+      },
+      signal: AbortSignal.timeout(4000),
+    });
+
+    if (!res.ok) return "";
+    const messages = await res.json();
+    if (!Array.isArray(messages) || messages.length === 0) return "";
+
+    const reversed = [...messages].reverse();
+    const lines: string[] = [];
+
+    for (const msg of reversed) {
+      if (!msg.content && (!msg.embeds || msg.embeds.length === 0)) continue;
+      const authorName = msg.author?.global_name || msg.author?.username || "Usuario";
+      const cleanContent = (msg.content || "[Mensaje con archivo/embed]").replace(/<@!?\d+>/g, "").trim();
+      if (!cleanContent) continue;
+      const snippet = cleanContent.length > 300 ? `${cleanContent.slice(0, 300)}...` : cleanContent;
+      lines.push(`• @${authorName}: ${snippet}`);
+    }
+
+    if (lines.length === 0) return "";
+
+    return (
+      `\n=== HISTORIAL RECIENTE DE CONVERSACIÓN EN ESTE CANAL DE DISCORD ===\n` +
+      `${lines.join("\n")}\n` +
+      `====================================================================\n`
+    );
+  } catch (err) {
+    console.warn("⚠️ Error obteniendo historial del canal de Discord:", err);
+    return "";
+  }
+}
+
+/**
  * Ejecución de Gemini con Function Calling loop y fallbacks
  */
-async function processGeminiQueryWithTools(userPrompt: string, userDisplayName: string): Promise<string> {
+async function processGeminiQueryWithTools(
+  userPrompt: string,
+  userDisplayName: string,
+  channelId?: string
+): Promise<string> {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return "⚠️ **Error de configuración:** La variable `STANDUP_GEMINI_API_KEY` o `GEMINI_API_KEY` no está configurada en Vercel.";
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const projectContext = getProjectContext();
+  const [projectContext, channelHistory] = await Promise.all([
+    Promise.resolve(getProjectContext()),
+    fetchDiscordChannelHistory(channelId, 12),
+  ]);
 
   const systemInstruction = `Eres el Asistente de IA Senior y Copiloto de Desarrollo de CEOUBB (Centro de Estudio UBB - LMS Universidad del Bío-Bío).
 Estás interactuando en Discord con el mantenedor del proyecto (${userDisplayName}).
 Tienes conocimiento profundo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md).
 Tienes acceso a herramientas para consultar Linear (issues, sprints) y GitHub (commits, PRs, CI).
+Si el usuario pregunta por temas conversados previamente en el canal o acuerdos recientes, revisa el historial reciente de conversación en este canal.
 
 Reglas indispensables de CEOUBB:
 - Stack: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, Firebase southamerica-west1.
@@ -287,7 +343,8 @@ Reglas indispensables de CEOUBB:
 - Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (design-ceoubb.md).
 - Idioma: Responde siempre en español formal, técnico y educado.
 
-${projectContext}`;
+${projectContext}
+${channelHistory}`;
 
   let lastError: unknown;
 
@@ -542,6 +599,8 @@ export async function POST(req: NextRequest) {
     type: number;
     application_id?: string;
     token?: string;
+    channel_id?: string;
+    channel?: { id?: string };
     data?: {
       custom_id?: string;
       name?: string;
@@ -564,6 +623,7 @@ export async function POST(req: NextRequest) {
 
   const applicationId = body.application_id || "";
   const interactionToken = body.token || "";
+  const channelId = body.channel_id || body.channel?.id || "";
   const discordUser = body.member?.user || body.user;
   const userDisplayName = discordUser?.global_name || discordUser?.username || "Mantenedor";
 
@@ -590,7 +650,7 @@ export async function POST(req: NextRequest) {
         waitUntil(
           (async () => {
             try {
-              const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName);
+              const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName, channelId);
               const header = `> **Consulta:** ${userPrompt}\n\n`;
               await updateOriginalDiscordMessage(applicationId, interactionToken, `${header}${aiResponse}`);
             } catch (err) {
@@ -612,7 +672,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Fallback síncrono si no hay token diferido
-      const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName);
+      const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName, channelId);
       return NextResponse.json({
         type: 4,
         data: { content: aiResponse, flags: isPrivate ? 64 : 0 },
