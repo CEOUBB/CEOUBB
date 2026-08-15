@@ -37,6 +37,39 @@ async function callGemini(prompt: string): Promise<string> {
 }
 
 /**
+ * Consultar título real del issue en Linear si se proporciona solo el código (ej. CEO-38)
+ */
+async function getLinearIssueTitle(issueId: string): Promise<string | null> {
+  const apiKey = process.env.LINEAR_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const query = `
+      query GetIssue($id: String!) {
+        issue(id: $id) {
+          title
+        }
+      }
+    `;
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({ query, variables: { id: issueId.toUpperCase() } }),
+      signal: AbortSignal.timeout(4000),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data?.issue?.title || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Valida la firma criptográfica Ed25519 requerida por Discord
  */
 function verifyDiscordSignature(
@@ -105,14 +138,26 @@ export async function POST(req: NextRequest) {
     const getOpt = (name: string) => options.find((o) => o.name === name)?.value;
 
     if (commandName === "prompt") {
-      const taskName = String(getOpt("tarea") || "Tarea del sprint");
-      const cleanTitle = taskName
+      const taskInput = String(getOpt("tarea") || "").trim();
+      const matchCode = taskInput.match(/CEO-\d+/i);
+      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+
+      let cleanTitle = taskInput
         .replace(/^CEO-\d+[:\s-]*/i, "")
         .replace(/^Prompt:\s*/i, "")
-        .trim() || "Tarea del sprint";
+        .trim();
 
-      const matchCode = taskName.match(/CEO-\d+/i);
-      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+      // Si solo se ingresó el código (ej. "CEO-38"), consultar el título real en Linear
+      if (!cleanTitle && matchCode) {
+        const linearTitle = await getLinearIssueTitle(taskCode);
+        if (linearTitle) {
+          cleanTitle = linearTitle;
+        }
+      }
+
+      if (!cleanTitle) {
+        cleanTitle = "Tarea del sprint";
+      }
 
       const slug = cleanTitle
         .normalize("NFD")
@@ -150,11 +195,30 @@ export async function POST(req: NextRequest) {
     }
 
     if (commandName === "gitstarter") {
-      const taskCode = String(getOpt("tarea") || "tarea").toLowerCase().replace(/\s+/g, "-");
+      const taskInput = String(getOpt("tarea") || "tarea").trim();
+      const matchCode = taskInput.match(/CEO-\d+/i);
+      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+
+      let cleanTitle = taskInput
+        .replace(/^CEO-\d+[:\s-]*/i, "")
+        .trim();
+
+      if (!cleanTitle && matchCode) {
+        const linearTitle = await getLinearIssueTitle(taskCode);
+        if (linearTitle) cleanTitle = linearTitle;
+      }
+
+      const slug = (cleanTitle || "tarea")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
       return NextResponse.json({
         type: 4,
         data: {
-          content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode} && pnpm dev\n\`\`\``,
+          content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode.toLowerCase()}-${slug} && pnpm dev\n\`\`\``,
           flags: 64,
         },
       });

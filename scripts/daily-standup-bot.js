@@ -214,6 +214,36 @@ async function getLinearActivity(hours = 12) {
 }
 
 /**
+ * Consultar título de issue en Linear si se ingresa solo el código
+ */
+async function getLinearIssueTitle(issueId) {
+  if (!LINEAR_API_KEY) return null;
+  try {
+    const query = `
+      query GetIssue($id: String!) {
+        issue(id: $id) {
+          title
+        }
+      }
+    `;
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: LINEAR_API_KEY,
+      },
+      body: JSON.stringify({ query, variables: { id: issueId.toUpperCase() } }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data?.issue?.title || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Generar Apertura de Jornada (12:00 PM)
  */
 async function generateMorningStandup({ gitData, planContext, linearData }) {
@@ -704,23 +734,66 @@ async function main() {
     }
 
     if (interaction.commandName === "prompt") {
-      const taskName = interaction.options.getString("tarea");
+      const taskInput = (interaction.options.getString("tarea") || "").trim();
+      const matchCode = taskInput.match(/CEO-\d+/i);
+      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+
+      let cleanTitle = taskInput
+        .replace(/^CEO-\d+[:\s-]*/i, "")
+        .replace(/^Prompt:\s*/i, "")
+        .trim();
+
+      if (!cleanTitle && matchCode) {
+        const linearTitle = await getLinearIssueTitle(taskCode);
+        if (linearTitle) cleanTitle = linearTitle;
+      }
+
+      if (!cleanTitle) cleanTitle = "Tarea del sprint";
+
+      const slug = cleanTitle
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      const branchName = `feat/${taskCode.toLowerCase()}-${slug}`;
+
       await interaction.deferReply({ flags: [1 << 6] });
       const promptText =
-        `OBJETIVO: Resolver la tarea "${taskName}" en el repositorio CEOUBB.\n\n` +
+        `OBJETIVO: Resolver la tarea "${taskCode}: ${cleanTitle}" en el LMS CEOUBB.\n\n` +
         `CONTEXTO: Revisar AGENTS.md y PLAN.md para especificaciones y requisitos.\n\n` +
-        `REGLAS (AGENTS.md):\n- Usar pnpm (no npm, no bun).\n- Mantener consistencia con lib/access-policy.ts.\n\n` +
+        `REGLAS (AGENTS.md):\n- Usar pnpm (no npm, no bun).\n- Mantener consistencia con lib/access-policy.ts (@ubiobio.cl).\n- Respetar el diseño institucional sobrio (design-ceoubb.md).\n\n` +
         `TESTS: Ejecutar pnpm run test:unit y pnpm run typecheck al finalizar.`;
 
       await interaction.editReply({
-        content: `### 📋 Prompt para ${taskName}:\n\`\`\`markdown\n${promptText}\n\`\`\``,
+        content: `### 📋 Prompt para Agente (${taskCode}: ${cleanTitle})\nCopia este bloque en **Antigravity**, **Claude Code** o **Codex**:\n\n\`\`\`markdown\n${promptText}\n\`\`\`\n💻 **Comando de inicio en terminal:**\n\`\`\`bash\ngit checkout -b ${branchName} && pnpm dev\n\`\`\``,
       });
     }
 
     if (interaction.commandName === "gitstarter") {
-      const taskCode = interaction.options.getString("tarea").toLowerCase().replace(/\s+/g, "-");
+      const taskInput = (interaction.options.getString("tarea") || "tarea").trim();
+      const matchCode = taskInput.match(/CEO-\d+/i);
+      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+
+      let cleanTitle = taskInput
+        .replace(/^CEO-\d+[:\s-]*/i, "")
+        .trim();
+
+      if (!cleanTitle && matchCode) {
+        const linearTitle = await getLinearIssueTitle(taskCode);
+        if (linearTitle) cleanTitle = linearTitle;
+      }
+
+      const slug = (cleanTitle || "tarea")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
       await interaction.reply({
-        content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode} && pnpm dev\n\`\`\``,
+        content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode.toLowerCase()}-${slug} && pnpm dev\n\`\`\``,
         flags: [1 << 6],
       });
     }
