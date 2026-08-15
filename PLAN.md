@@ -21,6 +21,7 @@ Companion files:
 - [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md) — canonical academic data model / enrollment migration spec.
 - [`docs/specs/p2-academic-time-blocking-planner.md`](docs/specs/p2-academic-time-blocking-planner.md) — Academic Time-Blocking Planner & deadline sync spec (SDD).
 - [`docs/specs/p3-study-resources-hub.md`](docs/specs/p3-study-resources-hub.md) — Study Resources Hub, AI Models & UBB Perks spec (SDD).
+- [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md) — portal views modularization spec (SDD). Implemented 2026-08-14: `app/portal-views.tsx` is now a four-line barrel over `app/views/` (`CoursesDashboard.tsx`, `AdminView.tsx`, `calendar/`, `resources/`). Public exports and behaviour unchanged; `pnpm run typecheck`, `pnpm run lint` and `pnpm test` (53/53) pass.
 
 ## Active work
 
@@ -47,7 +48,7 @@ Companion files:
 - [BACKLOG] Assignment submissions against an evaluation + teacher feedback text per grade. `lib/firebase-classroom-client.ts`, `app/Classroom.tsx`, `firebase/*.rules`
 - [BACKLOG] "Mi Bodega" personal file locker. Deferred by decision; needs a per-student quota and a Storage cost estimate first. Firebase Storage, `firebase/storage.rules`
 - [BACKLOG] Participants directory: `Ayudantes` role, roster search/filter, contact actions. `app/Classroom.tsx`
-- [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in the planner grid. The weekly view shipped with P2. `app/portal-views.tsx`, `lib/courses.ts`
+- [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in the planner grid. The weekly view shipped with P2. `app/views/calendar/`, `lib/courses.ts`
 - [BACKLOG] Load real learning outcomes and evaluation schedules for the five non-Estática ramos. `lib/courses.ts`
 - [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI, IMS Common Cartridge, QTI, Moodle `.mbz` importer (P0B.3). Required for adoption; nothing exists. New surface
 - [BACKLOG] WCAG 2.2 AA audit and published conformance statement (P0B.5). Legal obligation for a state body. Web portal, `public/biblioteca/`
