@@ -1,18 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Archive, Books, CalendarBlank, FolderSimple, House, SignOut, Sliders } from "@phosphor-icons/react";
+import { Archive, Books, CalendarBlank, CaretDown, FolderSimple, House, MagnifyingGlass, SignOut, Sliders } from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
-import { COURSES, Course, courseById, PERIOD } from "../lib/courses";
+import { COURSES, Course, courseById } from "../lib/courses";
 import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
 import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
 import { Avatar, Screen } from "./portal-ui";
 import { calendarEntries, firstName, forgetPhoto, loadCurrentSession, rememberPhoto, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
+import { CommandPalette, type PaletteItem } from "./command-palette";
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
@@ -49,6 +50,7 @@ export function Portal() {
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(readSeen);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -81,6 +83,16 @@ export function Portal() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [screen]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey)) return;
+      event.preventDefault();
+      setSearchOpen((open) => !open);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const courses = COURSES;
   const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
@@ -116,14 +128,47 @@ export function Portal() {
   if (!user) return <AccessScreen onSignedIn={setUser} />;
 
   const openedCourse = course ?? courseById(COURSES[0].id);
+  const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
+  const context = screen === "course" && openedCourse
+    ? openedCourse.name
+    : views.find((item) => item.key === screen)?.label ?? "Área personal";
+
+  const paletteItems: PaletteItem[] = [
+    ...views.map(({ key, label, Icon }) => ({
+      id: `view-${key}`,
+      group: "Ir a",
+      label,
+      icon: <Icon size={18} />,
+      run: () => setScreen(key),
+    })),
+    ...courses.map((item) => ({
+      id: `course-${item.id}`,
+      group: "Mis ramos",
+      label: item.name,
+      hint: item.code,
+      tone: item.tone,
+      icon: <FolderSimple size={20} weight="fill" />,
+      run: () => openCourse(item),
+    })),
+  ];
 
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
         <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
-          <PortalHeader sidebarOpen={sidebarOpen} user={user} onLogout={logout} onHome={() => setScreen("courses")} toggleSidebar={() => setSidebarOpen((open) => !open)} />
+          <PortalHeader
+            context={context}
+            onHome={() => setScreen("courses")}
+            onLogout={logout}
+            onSearch={() => setSearchOpen(true)}
+            sidebarOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen((open) => !open)}
+            user={user}
+          />
+          <CommandPalette items={paletteItems} onClose={() => setSearchOpen(false)} open={searchOpen} />
           <PortalSidebar
             courses={courses}
+            open={sidebarOpen}
             openCourse={openCourse}
             openCourseId={screen === "course" ? openedCourse?.id : undefined}
             screen={screen}
@@ -140,7 +185,7 @@ export function Portal() {
                   <div className="portal-main">
                     {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
                     {screen === "calendar" && <CalendarView courses={courses} gradebooks={gradebooks} activity={activity} openCourse={openCourse} />}
-                    {screen === "resources" && <ResourcesView courses={courses} />}
+                    {screen === "resources" && <ResourcesView />}
                     {screen === "admin" && user.role === "owner" && <AdminView />}
                   </div>
                 </Screen>
@@ -153,12 +198,57 @@ export function Portal() {
   );
 }
 
+/*
+  Carga — el esqueleto del portal, no una pantalla aparte.
+  Reproduce la geometría real del shell (cabecera de papel con la franja heráldica,
+  barra lateral de 268px, rejilla de ramos) con los bloques todavía en gris. Cuando la
+  sesión resuelve, el contenido cae exactamente donde ya estaba dibujado: sin salto de
+  layout y sin una pantalla intermedia que no se parezca a nada del producto.
+  El barrido de luz es uno solo y cruza toda la página en diagonal — una ola, no
+  veintitantos parpadeos sueltos. `--sk-delay` retrasa cada bloque contra esa ola.
+*/
+const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
+const SKELETON_NAV = [0, 1, 2];
+const SKELETON_SIDE_COURSES = [0, 1, 2, 3, 4];
+
 function LoadingScreen() {
   return (
-    <main className="loading-screen">
-      <div className="brand-orbit"><Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} /></div>
-      <p>Abriendo Centro de Estudio UBB…</p>
-    </main>
+    <div aria-busy="true" className="boot-shell">
+      <p className="sr-only" role="status">Abriendo Centro de Estudio UBB…</p>
+      <header className="boot-header">
+        <span className="sk sk-round boot-menu" />
+        <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} priority />
+        <strong>Centro de Estudio UBB</strong>
+        <span className="sk boot-search" style={{ "--sk-delay": "80ms" } as React.CSSProperties} />
+        <span className="sk sk-round boot-avatar" style={{ "--sk-delay": "120ms" } as React.CSSProperties} />
+      </header>
+      <aside className="boot-side">
+        {SKELETON_NAV.map((row) => (
+          <span className="sk boot-row" key={`nav-${row}`} style={{ "--sk-delay": `${row * 45}ms` } as React.CSSProperties} />
+        ))}
+        <span className="sk boot-legend" style={{ "--sk-delay": "180ms" } as React.CSSProperties} />
+        {SKELETON_SIDE_COURSES.map((row) => (
+          <span className="sk boot-row" key={`course-${row}`} style={{ "--sk-delay": `${220 + row * 45}ms` } as React.CSSProperties} />
+        ))}
+      </aside>
+      <main className="boot-main">
+        <div className="boot-head">
+          <span className="sk boot-title" style={{ "--sk-delay": "60ms" } as React.CSSProperties} />
+          <span className="sk boot-subtitle" style={{ "--sk-delay": "110ms" } as React.CSSProperties} />
+        </div>
+        <span className="sk boot-strip" style={{ "--sk-delay": "160ms" } as React.CSSProperties} />
+        <div className="boot-grid">
+          {SKELETON_COURSES.map((card) => (
+            <article className="boot-card" key={card} style={{ "--sk-delay": `${220 + card * 70}ms` } as React.CSSProperties}>
+              <span className="sk boot-cover" />
+              <span className="sk boot-line wide" />
+              <span className="sk boot-line" />
+              <span className="sk boot-line short" />
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -240,17 +330,52 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   );
 }
 
-function PortalHeader({ sidebarOpen, user, onLogout, onHome, toggleSidebar }: { sidebarOpen: boolean; user: User; onLogout: () => void; onHome: () => void; toggleSidebar: () => void }) {
+function PortalHeader({ sidebarOpen, user, context, onLogout, onHome, onSearch, toggleSidebar }: { sidebarOpen: boolean; user: User; context: string; onLogout: () => void; onHome: () => void; onSearch: () => void; toggleSidebar: () => void }) {
+  // El atajo se rotula según el teclado real: ⌘K en Mac, Ctrl K en Windows y Linux.
+  const shortcut = typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl K";
+  const account = useRef<HTMLDetailsElement>(null);
+
+  // El menú de cuenta es un <details>: el navegador no lo cierra al pulsar fuera ni con Escape.
+  useEffect(() => {
+    const dismiss = (event: Event) => {
+      const menu = account.current;
+      if (!menu?.open) return;
+      if (event.type === "pointerdown") {
+        if (!menu.contains(event.target as Node)) menu.open = false;
+        return;
+      }
+      if ((event as KeyboardEvent).key !== "Escape") return;
+      menu.open = false;
+      menu.querySelector("summary")?.focus();
+    };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", dismiss);
+    };
+  }, []);
+
   return (
     <header className="app-header">
       <button aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"} className="icon-button menu-button" onClick={toggleSidebar} type="button"><Menu animate={sidebarOpen} aria-hidden="true" /></button>
-      <button className="app-brand" onClick={onHome} type="button">
+      <button aria-label="Centro de Estudio UBB · ir al área personal" className="app-brand" onClick={onHome} type="button">
         <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
-        <span><strong>Centro de Estudio UBB</strong><small>Plataforma de estudio · {PERIOD}</small></span>
+        <strong>Centro de Estudio UBB</strong>
+      </button>
+      <p className="header-context">
+        <span aria-hidden="true" className="header-context-sep">/</span>
+        <span className="header-context-label">{context}</span>
+      </p>
+      {/* El rótulo se oculta en pantallas angostas: el nombre accesible tiene que sobrevivir a eso. */}
+      <button aria-keyshortcuts="Control+K Meta+K" aria-label="Buscar ramos y vistas" className="header-search" onClick={onSearch} type="button">
+        <MagnifyingGlass size={17} aria-hidden="true" />
+        <span aria-hidden="true">Buscar ramos y vistas</span>
+        <kbd aria-hidden="true">{shortcut}</kbd>
       </button>
       <div className="header-actions">
-        <details className="account-menu">
-          <summary><Avatar email={user.email} name={user.name} /><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span></summary>
+        <details className="account-menu" ref={account}>
+          <summary><Avatar email={user.email} name={user.name} /><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span><CaretDown className="account-caret" size={13} weight="bold" aria-hidden="true" /></summary>
           <div className="account-popover">
             <strong>{user.name}</strong><span>{user.email}</span><button onClick={onLogout} type="button"><SignOut size={16} />Cerrar sesión</button>
           </div>
@@ -260,9 +385,10 @@ function PortalHeader({ sidebarOpen, user, onLogout, onHome, toggleSidebar }: { 
   );
 }
 
-function PortalSidebar({ user, screen, courses, openCourseId, setScreen, openCourse }: { user: User; screen: Screen; courses: Course[]; openCourseId?: string; setScreen: (screen: Screen) => void; openCourse: (course: Course) => void }) {
+function PortalSidebar({ user, screen, courses, open, openCourseId, setScreen, openCourse }: { user: User; screen: Screen; courses: Course[]; open: boolean; openCourseId?: string; setScreen: (screen: Screen) => void; openCourse: (course: Course) => void }) {
   return (
-    <aside className="app-sidebar">
+    // Con el menú plegado el panel sigue en el DOM para animar: `inert` lo saca del foco y del lector.
+    <aside className="app-sidebar" inert={!open}>
       <nav aria-label="Navegación principal" className="side-nav">
         {navItems.filter((item) => item.key !== "admin" || user.role === "owner").map(({ key, label, Icon }) => {
           const active = screen === key;
@@ -276,6 +402,7 @@ function PortalSidebar({ user, screen, courses, openCourseId, setScreen, openCou
       </nav>
       <div className="side-group">
         <span className="eyebrow">Mis ramos</span>
+        {courses.length === 0 && <p className="side-empty">Sin ramos en este período. Aparecerán aquí al quedar inscritos.</p>}
         {courses.map((course) => {
           return (
           <button
@@ -286,8 +413,8 @@ function PortalSidebar({ user, screen, courses, openCourseId, setScreen, openCou
             style={{ "--course-tone": course.tone } as React.CSSProperties}
             type="button"
           >
-            <span className="side-icon tone"><FolderSimple size={24} weight="fill" /></span>
-            <span className="side-label">{course.name}<small>{course.code}</small></span>
+            <span className="side-icon tone"><FolderSimple size={18} weight="fill" /></span>
+            <span className="side-label"><span className="side-name">{course.name}</span><small>{course.code}</small></span>
           </button>
           );
         })}

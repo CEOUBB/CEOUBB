@@ -52,6 +52,7 @@ Maintainers collaborate using different AI assistants with GitHub as the shared 
 - **Tree Synchronization**: Always verify local files are in sync with `origin/main` before making code changes.
 - **Branching Strategy**: Use feature branches (`codex/<task>` or `claude/<task>`). Do not make direct commits to `main` for non-trivial features.
 - **Conflict Prevention**: Do not edit files being actively modified by another maintainer/agent. Keep commits small, logical, and formatted with Conventional Commits (`feat:`, `fix:`, `test:`, `refactor:`).
+- **Language Policy for Commits & Pull Requests**: All commit messages, PR titles, and PR descriptions **MUST ALWAYS BE WRITTEN IN SPANISH** (e.g., `feat(portal): rediseño de cabecera`, `fix(auth): corregir derivación de rol docente`). Standard Conventional Commit prefixes (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`) are retained, but all descriptive summary text and PR bodies must strictly be in Spanish.
 - **Discord Notifications**: Send Discord notifications **ONLY WHEN EXPLICITLY INSTRUCTED BY THE USER** in their prompt. When requested, post an embed to `#💬-❙-general` (`1536934842741301321`) titled `<Agent Name> | <User>`, cross-tagging Pipe (`<@1150176313974460457>`) or Joaquín (`<@662149246631542816>`). See `.agents/rules/discord_notifications.md`.
 
 ---
@@ -194,6 +195,7 @@ A task is complete ONLY when:
 4. Scale implications (pagination, bounded queries) are addressed or documented as pilot debt in `PLAN.md`.
 5. Product disclaimers and non-official status remain preserved.
 6. Documentation and `PLAN.md` are updated with clear handoff details.
+7. Commit messages and pull request descriptions are strictly written in Spanish.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
