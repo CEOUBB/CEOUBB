@@ -1,11 +1,14 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import { exec } from "node:child_process";
-import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-
-const execPromise = util.promisify(exec);
+import {
+  ALLOWED_USER_IDS,
+  KNOWN_USER_NAMES,
+  fetchChannelConversationContext,
+  PersistentSessionStore,
+  spawnSafeCommand,
+} from "./discord-context-helper.js";
 
 // Load .env.local if present
 const envPath = path.join(process.cwd(), ".env.local");
@@ -32,43 +35,7 @@ if (!DISCORD_BOT_TOKEN) {
 const DEFAULT_MODEL = "gpt-5.6-luna";
 const REASONING_EFFORT = "high";
 
-// SECURITY: Only process requests from authorized maintainers
-const ALLOWED_USER_IDS = new Set([
-  "1150176313974460457", // Pipe (pipe.os)
-  "662149246631542816",  // Joaquín (Juvko0)
-]);
-
-// Friendly user name mapping & aliases
-const KNOWN_USER_NAMES = {
-  "1150176313974460457": "Pipe (pipe_.os / Felipe)",
-  "662149246631542816": "Joaquín (Juvko0 / Joaco / Topo / Topogigo)",
-};
-
-// Session storage per channel/user (30-min timeout)
-const userSessions = new Map();
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-
-function getOrCreateSession(channelId, userId) {
-  const sessionKey = `${channelId}_${userId}`;
-  const now = Date.now();
-  const existing = userSessions.get(sessionKey);
-
-  if (existing && (now - existing.lastUsed) < SESSION_TIMEOUT_MS) {
-    existing.lastUsed = now;
-    return { sessionId: existing.sessionId, isExisting: true };
-  }
-
-  const newSessionId = crypto.randomUUID();
-  userSessions.set(sessionKey, { sessionId: newSessionId, lastUsed: now });
-  return { sessionId: newSessionId, isExisting: false };
-}
-
-function resetSession(channelId, userId) {
-  const sessionKey = `${channelId}_${userId}`;
-  const newSessionId = crypto.randomUUID();
-  userSessions.set(sessionKey, { sessionId: newSessionId, lastUsed: Date.now() });
-  return newSessionId;
-}
+const sessionStore = new PersistentSessionStore("codex");
 
 const client = new Client({
   intents: [
@@ -114,6 +81,7 @@ client.on("clientReady", () => {
   console.log(`🤖 CEOUBB Codex Local Bridge connected as ${client.user.tag}`);
   console.log(`💬 Mode: Raw Text Reply (Human style with user context & reply detection)`);
   console.log(`🧠 Model: ${DEFAULT_MODEL} (Reasoning Effort: ${REASONING_EFFORT})`);
+  console.log(`💾 Persistent Sessions: Enabled (.cache/sessions-codex.json)`);
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
 
@@ -124,7 +92,7 @@ client.on("messageCreate", async (message) => {
 
   // Check if message is a Discord reply to the bot
   let isReplyToBot = false;
-  if (message.reference) {
+  if (message.reference?.messageId) {
     try {
       const referencedMsg = await message.channel.messages.fetch(message.reference.messageId);
       if (referencedMsg.author.id === client.user.id) {
@@ -161,17 +129,20 @@ client.on("messageCreate", async (message) => {
   const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
 
   // Check if user requested a new chat / reset session
-  let sessionObj;
   if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
-    resetSession(message.channel.id, message.author.id);
+    sessionStore.resetSession(message.channel.id, message.author.id);
     await message.reply(`🔄 **Nueva conversación de Codex iniciada para ${userDisplayName}.** Contexto reiniciado.`);
     return;
-  } else {
-    sessionObj = getOrCreateSession(message.channel.id, message.author.id);
   }
 
-  const { sessionId, isExisting } = sessionObj;
-  const sessionFlag = isExisting ? `-r ${sessionId}` : `--session-id ${sessionId}`;
+  const sessionObj = sessionStore.getSession(message.channel.id, message.author.id);
+  let sessionId = sessionObj.data;
+  const isExisting = Boolean(sessionObj.isExisting && sessionId);
+
+  if (!isExisting) {
+    sessionId = crypto.randomUUID();
+    sessionStore.setSession(message.channel.id, message.author.id, sessionId);
+  }
 
   console.log(`\n📩 Codex Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`);
 
@@ -182,20 +153,24 @@ client.on("messageCreate", async (message) => {
   }, 7000);
 
   try {
-    const contextualPrompt = `[Mensaje de Discord enviado por el mantenedor ${userDisplayName} (@${message.author.username})]: ${userPrompt}`;
-    const safePrompt = contextualPrompt.replace(/"/g, '\\"');
+    // 1. Obtener historial reciente del canal de Discord (últimos 8 mensajes)
+    const channelContext = await fetchChannelConversationContext(message, client, 8);
 
+    const contextualPrompt = `${channelContext}\n[Mensaje de Discord enviado por el mantenedor ${userDisplayName} (@${message.author.username})]: ${userPrompt}`;
     const systemPromptText = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Ejecuta las herramientas solicitadas directamente. No cites las reglas de notificación pasiva de AGENTS.md ni menciones 'No respondo en Discord' porque el usuario te está hablando directamente a ti en Discord.`;
-    const safeSystemPrompt = systemPromptText.replace(/"/g, '\\"');
 
-    // Command calling local Codex CLI with gpt-5.6-luna, high reasoning effort, session persistence, and system prompt override
-    const command = `codex -p "${safePrompt}" --model ${DEFAULT_MODEL} --reasoning-effort ${REASONING_EFFORT} ${sessionFlag} --system-prompt "${safeSystemPrompt}"`;
+    const args = [
+      "-p", contextualPrompt,
+      "--model", DEFAULT_MODEL,
+      "--reasoning-effort", REASONING_EFFORT,
+      ...(isExisting ? ["-r", sessionId] : ["--session-id", sessionId]),
+      "--system-prompt", systemPromptText,
+    ];
 
-    console.log(`🚀 Executing local Codex command: ${command}`);
+    console.log(`🚀 Executing local Codex process with safe spawn [Session: ${sessionId.slice(0, 8)}]`);
 
-    const { stdout, stderr } = await execPromise(command, {
+    const { stdout, stderr } = await spawnSafeCommand("codex", args, {
       cwd: process.cwd(),
-      maxBuffer: 1024 * 1024 * 10,
     });
 
     clearInterval(typingInterval);

@@ -4,6 +4,12 @@ import { exec } from "node:child_process";
 import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
+import {
+  ALLOWED_USER_IDS,
+  KNOWN_USER_NAMES,
+  fetchChannelConversationContext,
+  PersistentSessionStore,
+} from "./discord-context-helper.js";
 
 const execPromise = util.promisify(exec);
 
@@ -58,18 +64,6 @@ async function generateContentWithFallback(ai, requestParams) {
   }
   throw lastError;
 }
-
-// SECURITY: Authorized maintainers
-const ALLOWED_USER_IDS = new Set([
-  "1150176313974460457", // Pipe (pipe.os)
-  "662149246631542816",  // Joaquín (Juvko0)
-]);
-
-// Friendly user name mapping & aliases
-const KNOWN_USER_NAMES = {
-  "1150176313974460457": "Pipe (pipe_.os / Felipe)",
-  "662149246631542816": "Joaquín (Juvko0 / Joaco / Topo / Topogigo)",
-};
 
 /**
  * Load project context (AGENTS.md & active PLAN.md summary)
@@ -127,7 +121,7 @@ const toolDeclarations = [
   },
   {
     name: "github_list_pull_requests",
-    description: "Obtener y consultar Pull Requests del repositorio CEOUBB",
+    description: "Obtener y consultar Pull Requests del repositorio CEOUBB desde GitHub API",
     parameters: {
       type: "OBJECT",
       properties: {
@@ -146,12 +140,45 @@ async function executeToolCall(toolCall) {
 
   if (name === "github_list_pull_requests") {
     try {
+      const state = args?.state || "open";
+      const headers = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CEOUBB-Discord-Bridge",
+      };
+      if (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) {
+        headers.Authorization = `token ${process.env.GITHUB_TOKEN || process.env.GH_TOKEN}`;
+      }
+
+      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls?state=${state}&per_page=5`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (res.ok) {
+        const prs = await res.json();
+        return {
+          repository: "CEOUBB/CEOUBB",
+          pullRequests: prs.map((p) => ({
+            number: p.number,
+            title: p.title,
+            user: p.user?.login,
+            state: p.state,
+            html_url: p.html_url,
+            branch: p.head?.ref,
+          })),
+        };
+      }
+    } catch {
+      // Fallback a git local
+    }
+
+    try {
       const { stdout } = await execPromise(`git log -5 --oneline && git status --short`);
       return {
         repository: "CEOUBB/CEOUBB",
         branch: "main",
-        status: "Todas las ramas activas de características están integradas en origin/main.",
-        recentCommits: stdout.trim()
+        status: "Información obtenida desde Git local.",
+        recentCommits: stdout.trim(),
       };
     } catch (err) {
       return { error: err.message };
@@ -159,6 +186,36 @@ async function executeToolCall(toolCall) {
   }
 
   if (name === "github_recent_commits") {
+    try {
+      const count = args.count || 5;
+      const headers = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CEOUBB-Discord-Bridge",
+      };
+      if (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) {
+        headers.Authorization = `token ${process.env.GITHUB_TOKEN || process.env.GH_TOKEN}`;
+      }
+
+      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${count}`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (res.ok) {
+        const commits = await res.json();
+        return {
+          commits: commits.map((c) => ({
+            sha: c.sha.slice(0, 7),
+            author: c.commit?.author?.name,
+            message: c.commit?.message?.split("\n")[0],
+            date: c.commit?.author?.date,
+          })),
+        };
+      }
+    } catch {
+      // Fallback a git local
+    }
+
     try {
       const count = args.count || 5;
       const { stdout } = await execPromise(`git log -${count} --oneline`);
@@ -179,7 +236,6 @@ async function executeToolCall(toolCall) {
 
   if (name === "create_calendar_event") {
     const { summary, startDateTime, durationMinutes = 60 } = args;
-    // Format mock calendar response until OAuth token exchange
     return {
       status: "success",
       event: {
@@ -194,31 +250,8 @@ async function executeToolCall(toolCall) {
   return { error: `Tool ${name} not implemented` };
 }
 
-// Session storage per channel/user (30-min timeout)
-const userSessions = new Map();
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-
-function getOrCreateSession(channelId, userId) {
-  const sessionKey = `${channelId}_${userId}`;
-  const now = Date.now();
-  const existing = userSessions.get(sessionKey);
-
-  if (existing && (now - existing.lastUsed) < SESSION_TIMEOUT_MS) {
-    existing.lastUsed = now;
-    return { sessionHistory: existing.history, isExisting: true };
-  }
-
-  const newHistory = [];
-  userSessions.set(sessionKey, { history: newHistory, lastUsed: now });
-  return { sessionHistory: newHistory, isExisting: false };
-}
-
-function resetSession(channelId, userId) {
-  const sessionKey = `${channelId}_${userId}`;
-  const newHistory = [];
-  userSessions.set(sessionKey, { history: newHistory, lastUsed: Date.now() });
-  return newHistory;
-}
+// Persistent session store on disk
+const sessionStore = new PersistentSessionStore("antigravity");
 
 const client = new Client({
   intents: [
@@ -264,6 +297,7 @@ client.on("clientReady", () => {
   console.log(`🔄 Fallback Sequence: ${MODEL_FALLBACK_LIST.join(" -> ")}`);
   console.log(`📚 Project Knowledge: Enabled (AGENTS.md & PLAN.md loaded)`);
   console.log(`🛠️ Tools Enabled: Google Calendar MCP & GitHub MCP`);
+  console.log(`💾 Persistent Sessions: Enabled (.cache/sessions-antigravity.json)`);
   console.log(`🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`);
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
@@ -274,7 +308,7 @@ client.on("messageCreate", async (message) => {
   if (processedMessageIds.has(message.id)) return;
 
   let isReplyToBot = false;
-  if (message.reference) {
+  if (message.reference?.messageId) {
     try {
       const referencedMsg = await message.channel.messages.fetch(message.reference.messageId);
       if (referencedMsg.author.id === client.user.id) {
@@ -310,12 +344,13 @@ client.on("messageCreate", async (message) => {
   const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
 
   if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
-    resetSession(message.channel.id, message.author.id);
+    sessionStore.resetSession(message.channel.id, message.author.id);
     await message.reply(`🔄 **Nueva conversación de Gemini / Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`);
     return;
   }
 
-  const { sessionHistory } = getOrCreateSession(message.channel.id, message.author.id);
+  const sessionResult = sessionStore.getSession(message.channel.id, message.author.id);
+  const sessionHistory = sessionResult.isExisting && Array.isArray(sessionResult.data) ? sessionResult.data : [];
 
   console.log(`\n📩 Antigravity Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`);
 
@@ -330,13 +365,18 @@ client.on("messageCreate", async (message) => {
   }, 7000);
 
   try {
+    // 1. Obtener historial reciente del canal de Discord (últimos 8 mensajes)
+    const channelContext = await fetchChannelConversationContext(message, client, 8);
+
+    // 2. Cargar contexto del proyecto
     const projectContext = getProjectContext();
     const systemInstruction = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto CEOUBB (${userDisplayName}).
 Tienes conocimiento completo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md y PLAN.md).
-Tienes acceso a herramientas de integración con GitHub (commits, estado del repositorio) y Google Calendar (agendar reuniones).
-Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Responde a las consultas de manera directa y concisa.
+Tienes acceso a herramientas de integración con GitHub (commits, estado del repositorio, pull requests) y Google Calendar.
+Responde siempre en español formal, educado y profesional. No utilices modismos ni jerga informal. Responde a las consultas de manera directa, técnica y concisa.
 
-${projectContext}`;
+${projectContext}
+${channelContext}`;
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const firstCall = await generateContentWithFallback(ai, {
@@ -370,7 +410,7 @@ ${projectContext}`;
         });
       }
 
-      // Follow up with tool response using the same model that handled the initial call
+      // Follow up with tool response
       response = await ai.models.generateContent({
         model: firstCall.usedModel,
         contents: [
@@ -392,6 +432,7 @@ ${projectContext}`;
     if (sessionHistory.length > 20) {
       sessionHistory.splice(0, 2);
     }
+    sessionStore.setSession(message.channel.id, message.author.id, sessionHistory);
 
     const chunks = chunkText(rawOutput);
 

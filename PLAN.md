@@ -22,6 +22,7 @@ Companion files:
 - [`docs/specs/p2-academic-time-blocking-planner.md`](docs/specs/p2-academic-time-blocking-planner.md) — Academic Time-Blocking Planner & deadline sync spec (SDD).
 - [`docs/specs/p3-study-resources-hub.md`](docs/specs/p3-study-resources-hub.md) — Study Resources Hub, AI Models & UBB Perks spec (SDD).
 - [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md) — portal views modularization spec (SDD). Implemented 2026-08-14: `app/portal-views.tsx` is now a four-line barrel over `app/views/` (`CoursesDashboard.tsx`, `AdminView.tsx`, `calendar/`, `resources/`). Public exports and behaviour unchanged; `pnpm run typecheck`, `pnpm run lint` and `pnpm test` (53/53) pass.
+- **Discord AI Bridges & Automation Suite** (Implemented 2026-08-14): Inyección de contexto histórico del canal (últimos 8 mensajes + replies) en bridges locales (`scripts/discord-antigravity-bridge.js`, `scripts/discord-claude-bridge.js`, `scripts/discord-codex-bridge.js`), persistencia de sesiones en disco (`.cache/`), ejecución segura mediante `spawn`, comandos `/doctor` y `/review-pr` con Gemini 3.7 en `daily-standup-bot.js`, y webhook de CI/CD en `app/api/webhooks/github/route.ts` con diagnóstico inteligente de fallos. 37/37 unit tests pasados (`tests/github-webhook.test.ts`).
 
 ## Active work
 

@@ -67,6 +67,18 @@ Verified at merge: `pnpm run lint` clean for `app/` (pre-existing `no-img-elemen
 - Sidebar Polish: fixed 268px sliding rail with `--rail-width`, `inert` attribute when closed for accessibility compliance, 18px icons, and two-line clamped course names.
 - Files: `app/Portal.tsx`, `app/portal-views.tsx`, `app/command-palette.tsx`, `app/globals.css`, `docs/specs/p3-study-resources-hub.md`, `public/brand/adecca-mark.webp`, `public/brand/werken-mark.webp`.
 
+### 9. Discord AI Bridges & Automation Suite — completed 2026-08-14
+
+- Context history injection: `fetchChannelConversationContext` in `scripts/discord-context-helper.js` pulls the last 8 channel messages and quoted replies, injecting them into the prompt/system instruction across Antigravity, Claude, and Codex bridges (`scripts/discord-antigravity-bridge.js`, `scripts/discord-claude-bridge.js`, `scripts/discord-codex-bridge.js`).
+- Persistent session storage on disk in `.cache/sessions-<bridge>.json`.
+- Secure CLI process spawning with `spawnSafeCommand` preventing Windows command string escaping issues.
+- Direct GitHub REST API integration for PR and commit queries in Antigravity Bridge.
+- Slash commands `/doctor` (runs `typecheck`, `test:unit`, `lint` in background and outputs an embed) and `/review-pr [numero]` (audits GitHub PR diff against `AGENTS.md` and university scale standards using Gemini 3.7) in `scripts/daily-standup-bot.js`.
+- GitHub Actions CI/CD Webhook route in `app/api/webhooks/github/route.ts` with HMAC-SHA256 signature verification (`lib/github-signature.ts`) and Gemini 3.7 automated failure diagnosis and fix suggestions in Discord.
+- Created `#🧪-❙-tests` private testing channel on Discord with `@everyone` view access denied.
+- Unit test suite: added `tests/github-webhook.test.ts` (37/37 tests passing).
+- Files: `scripts/discord-context-helper.js`, `scripts/discord-antigravity-bridge.js`, `scripts/discord-claude-bridge.js`, `scripts/discord-codex-bridge.js`, `scripts/daily-standup-bot.js`, `app/api/webhooks/github/route.ts`, `lib/github-signature.ts`, `tests/github-webhook.test.ts`, `package.json`, `PLAN.md`, `PLAN_ARCHIVE.md`.
+
 ### 6. Firebase production setup completed on 2026-08-09
 
 - Created the Storage bucket in Santiago.

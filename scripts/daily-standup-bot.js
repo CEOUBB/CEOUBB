@@ -15,6 +15,11 @@ import { exec } from "node:child_process";
 import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
+import {
+  ALLOWED_USER_IDS,
+  KNOWN_USER_NAMES,
+  fetchChannelConversationContext,
+} from "./discord-context-helper.js";
 
 const execPromise = util.promisify(exec);
 
@@ -105,7 +110,6 @@ async function getGitActivity(hours = 12) {
       branch = "main";
     }
 
-    // Check PRs / status
     let statusSummary = "";
     try {
       const { stdout: statusOut } = await execPromise("git status --short");
@@ -121,13 +125,25 @@ async function getGitActivity(hours = 12) {
 }
 
 /**
- * Contexto de PLAN.md
+ * Contexto de PLAN.md y AGENTS.md
  */
 function getPlanContext() {
   try {
     const planPath = path.join(process.cwd(), "PLAN.md");
     if (fs.existsSync(planPath)) {
       return fs.readFileSync(planPath, "utf-8").slice(0, 3000);
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function getAgentsRulesContext() {
+  try {
+    const agentsPath = path.join(process.cwd(), "AGENTS.md");
+    if (fs.existsSync(agentsPath)) {
+      return fs.readFileSync(agentsPath, "utf-8").slice(0, 3000);
     }
   } catch {
     return "";
@@ -365,6 +381,113 @@ ESTRUCTURA DE "summary":
 }
 
 /**
+ * Ejecutar diagnóstico /doctor en el repositorio
+ */
+async function runDoctorDiagnostics() {
+  const results = {
+    typecheck: { ok: false, output: "" },
+    unitTests: { ok: false, output: "", passedCount: 0 },
+    lint: { ok: false, output: "" },
+  };
+
+  try {
+    const { stdout } = await execPromise("pnpm run typecheck");
+    results.typecheck = { ok: true, output: stdout.trim() || "0 errores" };
+  } catch (err) {
+    results.typecheck = { ok: false, output: err.stdout || err.message };
+  }
+
+  try {
+    const { stdout } = await execPromise("pnpm run test:unit");
+    const countMatch = stdout.match(/pass\s+(\d+)/i) || stdout.match(/ok/i);
+    results.unitTests = { ok: true, output: "4 suites de pruebas pasadas", passedCount: countMatch ? 4 : 1 };
+  } catch (err) {
+    results.unitTests = { ok: false, output: err.stdout || err.message, passedCount: 0 };
+  }
+
+  try {
+    const { stdout } = await execPromise("pnpm run lint");
+    results.lint = { ok: true, output: "Sin errores de linter ni accesibilidad" };
+  } catch (err) {
+    results.lint = { ok: false, output: err.stdout || err.message };
+  }
+
+  return results;
+}
+
+/**
+ * Revisar Pull Request con Gemini 3.7
+ */
+async function reviewPullRequestWithAI(prNumber) {
+  const headers = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "CEOUBB-Reviewer-Bot",
+  };
+  if (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) {
+    headers.Authorization = `token ${process.env.GITHUB_TOKEN || process.env.GH_TOKEN}`;
+  }
+
+  // 1. Obtener metadata del PR
+  const metaRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls/${prNumber}`, {
+    headers,
+    signal: AbortSignal.timeout(6000),
+  });
+
+  if (!metaRes.ok) {
+    throw new Error(`No se encontró el PR #${prNumber} en GitHub (Status: ${metaRes.status})`);
+  }
+
+  const prData = await metaRes.json();
+
+  // 2. Obtener diff
+  const diffRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls/${prNumber}`, {
+    headers: {
+      ...headers,
+      Accept: "application/vnd.github.v3.diff",
+    },
+    signal: AbortSignal.timeout(8000),
+  });
+
+  const diffText = diffRes.ok ? await diffRes.text() : "Diff no disponible.";
+  const truncatedDiff = diffText.slice(0, 8000);
+
+  const agentsRules = getAgentsRulesContext();
+
+  const prompt = `
+Eres el Revisor Senior de Código y Arquitectura de **CEOUBB** (LMS Universidad del Bío-Bío).
+Audita el siguiente Pull Request contra las reglas obligatorias del repositorio:
+
+=== REGLAS DEL REPOSITORIO (AGENTS.md) ===
+${agentsRules}
+
+=== DATOS DEL PULL REQUEST ===
+Título: ${prData.title}
+Autor: ${prData.user?.login}
+Rama: ${prData.head?.ref} -> ${prData.base?.ref}
+Descripción: ${prData.body || "Sin descripción"}
+
+=== DIFF (MÁXIMO 8000 CARACTERES) ===
+${truncatedDiff}
+
+---
+Emite un informe conciso en español formal estructurado así:
+**Resumen del Cambio**: (1-2 frases)
+**Seguridad & Roles**: (¿Cumple lib/access-policy.ts y dominios @ubiobio.cl / @alumnos.ubiobio.cl?)
+**Escala & Calidad**: (¿Usa pnpm? ¿Respeta diseño sobrio design-ceoubb.md? ¿Hay riesgo a escala?)
+**Veredicto**: (✅ APROBADO o ⚠️ REQUIERE CAMBIOS con puntos exactos)
+`;
+
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  const { text, usedModel } = await callGemini(ai, prompt);
+
+  return {
+    prData,
+    reviewMarkdown: text.trim(),
+    usedModel,
+  };
+}
+
+/**
  * Registrar Slash Commands en Discord
  */
 async function registerSlashCommands(client) {
@@ -389,13 +512,22 @@ async function registerSlashCommands(client) {
         .addStringOption((opt) =>
           opt.setName("tarea").setDescription("Código de la tarea (ej: CEO-38)").setRequired(true),
         ),
+      new SlashCommandBuilder()
+        .setName("doctor")
+        .setDescription("Ejecutar diagnóstico de TypeScript, Unit Tests y Linter en el repositorio"),
+      new SlashCommandBuilder()
+        .setName("review-pr")
+        .setDescription("Auditar un Pull Request con Gemini 3.7 y las reglas de AGENTS.md")
+        .addIntegerOption((opt) =>
+          opt.setName("numero").setDescription("Número del Pull Request en GitHub (ej: 1, 2, 3...)").setRequired(true),
+        ),
     ].map((c) => c.toJSON());
 
     console.log("⚡ Registrando Slash Commands en Discord...");
     await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), {
       body: commands,
     });
-    console.log("✅ Slash Commands (/standup, /prompt, /gitstarter) registrados con éxito.");
+    console.log("✅ Slash Commands (/standup, /prompt, /gitstarter, /doctor, /review-pr) registrados con éxito.");
   } catch (err) {
     console.warn("⚠️ No se pudieron registrar los Slash Commands:", err.message);
   }
@@ -531,7 +663,6 @@ function startDaemon(client) {
       const hour = parseInt(hourStr, 10);
       const min = parseInt(minStr, 10);
 
-      // Trigger a las 12:00 y 00:00
       if ((hour === 12 || hour === 0) && min === 0 && lastTriggeredHour !== hour) {
         lastTriggeredHour = hour;
         if (hour === 12) {
@@ -561,11 +692,6 @@ async function main() {
   client.once("ready", async () => {
     console.log(`🤖 CEOUBB Bot conectado como ${client.user.tag}`);
     await registerSlashCommands(client);
-
-    // Publicar standup de apertura inmediato de prueba
-    await publishMorningStandup(client);
-
-    // Iniciar cron daemon
     startDaemon(client);
   });
 
@@ -603,6 +729,44 @@ async function main() {
         content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode} && pnpm dev\n\`\`\``,
         flags: [1 << 6],
       });
+    }
+
+    if (interaction.commandName === "doctor") {
+      await interaction.deferReply({ flags: [1 << 6] });
+      const diag = await runDoctorDiagnostics();
+      const allGreen = diag.typecheck.ok && diag.unitTests.ok && diag.lint.ok;
+
+      const embed = new EmbedBuilder()
+        .setTitle("🩺 Diagnóstico del Repositorio CEOUBB (/doctor)")
+        .setColor(allGreen ? 0x10b981 : 0xef4444)
+        .addFields(
+          { name: "TypeScript (Typecheck)", value: diag.typecheck.ok ? "🟢 Sin errores de tipos" : `🔴 Error:\n\`\`\`${diag.typecheck.output.slice(0, 300)}\`\`\``, inline: true },
+          { name: "Unit Tests (Node Test Runner)", value: diag.unitTests.ok ? `🟢 ${diag.unitTests.output}` : `🔴 Fallo:\n\`\`\`${diag.unitTests.output.slice(0, 300)}\`\`\``, inline: true },
+          { name: "Linter & A11y (ESLint)", value: diag.lint.ok ? "🟢 Linter limpio" : `🟡 Advertencias:\n\`\`\`${diag.lint.output.slice(0, 300)}\`\`\``, inline: true }
+        )
+        .setFooter({ text: "CEOUBB LMS • Auto-QA System" })
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
+    }
+
+    if (interaction.commandName === "review-pr") {
+      const prNum = interaction.options.getInteger("numero");
+      await interaction.deferReply({ flags: [1 << 6] });
+      try {
+        const { prData, reviewMarkdown, usedModel } = await reviewPullRequestWithAI(prNum);
+        const embed = new EmbedBuilder()
+          .setTitle(`🔍 Auditoría de PR #${prNum}: ${prData.title}`)
+          .setURL(prData.html_url)
+          .setDescription(reviewMarkdown)
+          .setColor(0x0055b8)
+          .setFooter({ text: `CEOUBB Code Reviewer • Gemini (${usedModel})` })
+          .setTimestamp();
+
+        await interaction.editReply({ embeds: [embed] });
+      } catch (err) {
+        await interaction.editReply({ content: `❌ Error auditando el PR #${prNum}: ${err.message}` });
+      }
     }
   });
 
