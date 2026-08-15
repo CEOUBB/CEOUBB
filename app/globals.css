@@ -2132,7 +2132,7 @@ img { max-width: 100%; }
 
 /* ── Recursos ─────────────────────────────────────────────────
    Cuatro bloques con densidades distintas: dos tarjetas grandes para el
-   ecosistema propio, mosaico compacto para las IA, lista continua para los
+   ecosistema propio, fichas mínimas para las IA, mosaico agrupado para los
    beneficios y un panel con filete heráldico para los portales UBB.
    ─────────────────────────────────────────────────────────── */
 
@@ -2192,12 +2192,12 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
 .resource-note { max-width: 76ch; font-size: 13px; line-height: 1.6; color: var(--text-muted); }
 .resource-note sup { font-weight: 600; color: var(--text-secondary); }
 
-/* Las llamadas al pie son un solo grupo: se juntan entre sí y se despegan del mosaico. */
-.resource-notes { display: grid; gap: var(--space-xs); margin-top: var(--space-xs); }
-
-/* Asistentes de IA: el nivel se rotula con una píldora, no con una tarjeta aparte. */
-.ai-tier { display: grid; gap: var(--space-sm); }
-.ai-tier + .ai-tier { margin-top: var(--space-md); }
+/* Grupos rotulados (IA y beneficios): la píldora clasifica y la bajada explica
+   la condición de uso una sola vez, en lugar de repetirla en cada ficha. */
+.tier-group { display: grid; gap: var(--space-sm); }
+.tier-group + .tier-group { margin-top: var(--space-md); }
+.tier-head { display: grid; gap: var(--space-xxs); }
+.tier-head p { max-width: 76ch; font-size: 13px; line-height: 1.6; color: var(--text-muted); }
 
 .tier-label {
   justify-self: start;
@@ -2211,7 +2211,6 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
   text-transform: uppercase;
 }
 
-.tier-label sup { margin-left: 1px; font-size: 9px; letter-spacing: 0; }
 .tier-label.free { background: color-mix(in srgb, var(--academic-emerald) 12%, white); border-color: color-mix(in srgb, var(--academic-emerald) 34%, white); color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900)); }
 .tier-label.plan { background: color-mix(in srgb, var(--shield-gold) 14%, white); border-color: color-mix(in srgb, var(--shield-gold) 40%, white); color: var(--academic-bronze); }
 
@@ -2235,47 +2234,33 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
 .brand-tile:focus-visible { transform: translateY(-1px); box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline)); color: var(--text-body); }
 .brand-head { display: flex; align-items: center; gap: var(--space-xs); }
 .brand-head b { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; }
-.brand-head sup { margin-left: 2px; font-size: 10px; color: var(--text-muted); }
 .brand-tile small { font-size: 13px; line-height: 1.45; color: var(--text-muted); }
+
+/* Fichas de IA: sólo la marca. Sin descripción, la tarjeta sobra y el
+   contenedor se ajusta al nombre. */
+.chip-grid { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 9px var(--space-sm);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-body);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+}
+
+.brand-chip:hover,
+.brand-chip:focus-visible { transform: translateY(-1px); box-shadow: var(--shadow-1); border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline)); color: var(--text-body); }
+.brand-chip b { font-size: 15px; font-weight: 600; }
+.brand-chip .brand-mark { width: 20px; height: 20px; }
 
 .brand-mark { width: 22px; height: 22px; flex: none; }
 .brand-go { flex: none; color: var(--text-faint); transition: color var(--transition-fast); }
-.brand-tile:hover .brand-go, .perk-row:hover .brand-go, .portal-link:hover .brand-go,
-.brand-tile:focus-visible .brand-go, .perk-row:focus-visible .brand-go, .portal-link:focus-visible .brand-go { color: var(--color-primary); }
-
-/* Beneficios: una sola superficie con filas, para no repetir siete tarjetas iguales. */
-.perk-list { margin: 0; padding: 0; list-style: none; background: var(--surface-card); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg); overflow: hidden; }
-.perk-list li + li { border-top: 1px solid var(--border-hairline); }
-
-.perk-row {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  color: var(--text-body);
-  transition: background var(--transition-fast);
-}
-
-.perk-row:hover,
-.perk-row:focus-visible { background: var(--canvas-soft); color: var(--text-body); }
-
-.perk-mark {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  background: var(--canvas-soft);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-}
-
-.perk-row:hover .perk-mark,
-.perk-row:focus-visible .perk-mark { background: var(--surface-card); }
-.perk-mark .brand-mark { width: 20px; height: 20px; }
-.perk-row b { display: block; font-size: 15px; font-weight: 600; }
-.perk-row small { display: block; margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--text-muted); }
-.perk-row em { display: block; margin-top: 4px; font-style: normal; font-size: 12px; line-height: 1.4; color: var(--text-faint); }
+.brand-tile:hover .brand-go, .brand-chip:hover .brand-go, .portal-link:hover .brand-go,
+.brand-tile:focus-visible .brand-go, .brand-chip:focus-visible .brand-go, .portal-link:focus-visible .brand-go { color: var(--color-primary); }
 
 /* Portales UBB: filete heráldico como sello institucional del bloque de cierre. */
 .portal-panel {
@@ -2570,8 +2555,6 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
 
 @media (max-width: 560px) {
   .brand-grid, .portal-links { grid-template-columns: minmax(0, 1fr); }
-  .perk-row { grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
-  .perk-mark { width: 36px; height: 36px; }
   .resource-card .store-badges { flex-wrap: wrap; }
 }
 
