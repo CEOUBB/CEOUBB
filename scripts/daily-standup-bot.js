@@ -830,7 +830,7 @@ async function main() {
     }
 
     if (interaction.commandName === "doctor") {
-      await interaction.deferReply({ flags: [1 << 6] });
+      await interaction.deferReply();
       const diag = await runDoctorDiagnostics();
       const allGreen = diag.typecheck.ok && diag.unitTests.ok && diag.lint.ok;
 
@@ -850,7 +850,7 @@ async function main() {
 
     if (interaction.commandName === "review-pr") {
       const prNum = interaction.options.getInteger("numero");
-      await interaction.deferReply({ flags: [1 << 6] });
+      await interaction.deferReply();
       try {
         const { prData, reviewMarkdown, usedModel } = await reviewPullRequestWithAI(prNum);
         const embed = new EmbedBuilder()

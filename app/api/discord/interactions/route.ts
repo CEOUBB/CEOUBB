@@ -313,7 +313,7 @@ export async function POST(req: NextRequest) {
       const liveDiagnostics = await fetchLatestCIDiagnostics();
       return NextResponse.json({
         type: 4,
-        data: { content: liveDiagnostics, flags: 64 },
+        data: { content: liveDiagnostics },
       });
     }
 
@@ -411,7 +411,7 @@ Emite un informe conciso en español formal con este formato:
 
         return NextResponse.json({
           type: 4,
-          data: { content: responseMarkdown, flags: 64 },
+          data: { content: responseMarkdown },
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -428,7 +428,7 @@ Emite un informe conciso en español formal con este formato:
         `Para ver el reporte completo y lanzar tareas, usa los botones del Standup en <#1537708834561327175> o <#1538027564503933039>.`;
       return NextResponse.json({
         type: 4,
-        data: { content: markdown, flags: 64 },
+        data: { content: markdown },
       });
     }
   }
