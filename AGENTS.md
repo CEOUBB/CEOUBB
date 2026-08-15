@@ -22,7 +22,7 @@ Centro de Estudio UBB is an independent Learning Management System (LMS) for Uni
 
 ### Product Surfaces:
 - **Web Portal**: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, deployed on Vercel (`https://ceoubb.com`).
-- **Android App**: Native Java (`cl.ubb.centroestudio`) with embedded offline study library and native Firebase integration.
+- **Mobile App**: Capacitor 7 runtime (`cl.ubb.centroestudio`) — Android is the publishable target, `ios/` is a versioned non-built scaffold. Remote-first: the WebView loads `https://ceoubb.com`; `capacitor/www/` only holds the offline fallback document.
 - **Firebase Infrastructure**: Authentication, Firestore, Storage, Cloud Functions, and Messaging in region `southamerica-west1`.
 
 ---
@@ -63,7 +63,9 @@ Maintainers collaborate using different AI assistants with GitHub as the shared 
 - `lib/`: Shared authentication, access policy (`access-policy.ts`), course scaffolding (`courses.ts`), grade math (`grades.ts`), and Firebase client (`firebase-classroom-client.ts`).
 - `public/biblioteca/`: Browser-accessible study library and academic resources.
 - `db/`, `drizzle/`: Turso/libSQL schema and migrations for web sessions and user directory.
-- `android/`: Native Java Android application (`android/app/src/main/java/cl/ubb/centroestudio/`).
+- `capacitor.config.ts`, `capacitor/www/`: Capacitor runtime configuration and the offline fallback document that serves as `webDir`.
+- `android/`, `ios/`: Capacitor-generated native projects. `android/` is regenerable — the publishable bits reapplied on top are the release `signingConfig`, `versionCode`, `minSdk 26`, `google-services.json`, `res/values/firebase.xml` and the verified App Links `intent-filter`.
+- `lib/mobile-bridge.ts`, `lib/push-notifications.ts`, `lib/native-files.ts`, `app/mobile-shell.tsx`: the mobile seam. Every entry point degrades to a silent no-op on the web.
 - `firebase/`: Firestore rules (`firestore.rules`), Storage rules (`storage.rules`), indexes, and Cloud Functions (`firebase/functions/`).
 - `tests/`: Automated unit and HTTP suite (`access-policy.test.ts`, `grades.test.ts`, `linear-webhook.test.ts`, `rendered-html.test.mjs`).
 - `.github/workflows/`: CI merge gate (`ci.yml`), Vercel deployment pipeline with pre-flight gates (`deploy.yml`), and diagnostics (`react-doctor.yml`).
@@ -86,10 +88,11 @@ Role derivation is strictly governed by institutional email domain:
 1. `lib/access-policy.ts`
 2. `firebase/firestore.rules`
 3. `firebase/storage.rules`
-4. `android/app/src/main/res/values/firebase.xml`
-5. `android/app/src/main/java/cl/ubb/centroestudio/ClassroomService.java`
+4. `android/app/src/main/res/values/firebase.xml` (owner addresses only)
 
 `tests/access-policy.test.ts` asserts this synchronization.
+
+Since the Capacitor migration (P5), the native layer no longer parses email domains: `ClassroomService.java` was removed with the hand-rolled WebView, and the app hands the Firebase `User` straight to `roleForEmail` (REQ-CAP-12). Four mirrors, not five. Re-adding domain parsing to native code is a regression.
 
 ### 2. Classroom Data & Database Split
 - **System of Record**: Turso/libSQL stores academic structure (`facultades`, `carreras`, `secciones`, `enrollments`).
@@ -97,8 +100,8 @@ Role derivation is strictly governed by institutional email domain:
 - **Course Identity**: Course identity is a **section** (*asignatura $\times$ período $\times$ sección*), not a generic course name.
 - **Grade Math Seam**: `lib/grades.ts` is the sole source of truth for Chilean 1.0–7.0 scale calculations and weighted averages. Do not duplicate grade arithmetic elsewhere.
 
-### 3. Study Library Duplication
-`public/biblioteca/` (web) and `android/app/src/main/assets/www/` (Android) share study assets. When modifying academic material, update `public/biblioteca/` as the source and intentionally propagate to Android, preserving Android-specific native bridge code.
+### 3. Study Library — Single Copy
+`public/biblioteca/` is the only copy of the study library. The duplicated Android tree (`android/app/src/main/assets/www/`) was removed by the Capacitor migration (REQ-CAP-19): the native shell loads `https://ceoubb.com` and offline coverage comes from `public/sw.js`, which precaches `/biblioteca/index.html` and serves the vendored assets cache-first. Do not regenerate that tree — `tests/rendered-html.test.mjs` fails if it comes back.
 
 ### 4. Spec-Driven Development (SDD) Guardrail (Non-Negotiable)
 - **Spec First, Code Second**: No agent may generate code for non-trivial features, migrations, API changes, or cross-cutting remediations without an approved specification in `docs/specs/`.
@@ -134,11 +137,13 @@ pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only sto
 pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only functions --force
 ```
 
-### Android Application:
+### Mobile Application (Capacitor):
 ```bash
-cd android
-gradle :app:assembleDebug
+pnpm exec cap sync android     # after changing capacitor.config.ts or adding a plugin
+pnpm exec cap doctor android
+cd android && ./gradlew :app:assembleDebug
 ```
+`ios/` is a versioned scaffold only: `pod install`, compilation and signing need macOS + Xcode, and `GoogleService-Info.plist` is not in the repository. Do not add iOS build steps to CI.
 
 ---
 

@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">Centro de Estudio UBB</string>
+    <string name="title_activity_main">Centro de Estudio UBB</string>
+    <string name="package_name">cl.ubb.centroestudio</string>
+    <string name="custom_url_scheme">cl.ubb.centroestudio</string>
 </resources>

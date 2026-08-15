@@ -1,0 +1,177 @@
+/*
+  Shell móvil — sólo activo por debajo de 768px, el mismo umbral que usa
+  `useIsMobileApp()` en `lib/mobile-bridge.ts`. Si los dos se desalinean, la barra
+  inferior se monta sin que el CSS le haga sitio y tapa el pie del contenido.
+  Los tokens salen de `design-ceoubb.md`; aquí no se define ningún color nuevo.
+*/
+
+.mobile-nav { display: none; }
+
+@media (max-width: 767px) {
+  /* Implements: REQ-CAP-04 — el cromo de escritorio desaparece: el riel lateral
+     y su cortina se sustituyen por la barra del pulgar, no conviven con ella. */
+  .app-shell[data-mobile="true"] { --mobile-nav-height: 58px; }
+
+  .app-shell[data-mobile="true"] .app-sidebar,
+  .app-shell[data-mobile="true"] .sidebar-scrim,
+  .app-shell[data-mobile="true"] .menu-button { display: none; }
+
+  .app-shell[data-mobile="true"] .app-main {
+    /* Implements: REQ-CAP-07 — el contenido termina por encima del inset inferior. */
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  /* Implements: REQ-CAP-04 */
+  .app-shell[data-mobile="true"] .mobile-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 46;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    align-items: stretch;
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border-hairline);
+    /* Superficie opaca: sin blur en móvil (REQ-CAP-09) el velo translúcido
+       dejaría el rótulo activo ilegible sobre el feed que pasa por debajo. */
+    background: var(--white);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    /* 44px de alto útil es el mínimo táctil; la celda entera es el objetivo. */
+    min-height: 44px;
+    padding: 6px 4px;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-item[data-active="true"] { color: var(--color-primary); }
+
+  /* Indicador activo: una barra corta arriba, del mismo azul que las pestañas
+     del portal. No se usa relleno de color en la celda entera. */
+  .mobile-nav-item[data-active="true"] .mobile-nav-icon::after {
+    content: "";
+    position: absolute;
+    inset: -8px 50% auto;
+    translate: 50% 0;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-primary);
+  }
+
+  .mobile-nav-icon { position: relative; display: grid; place-items: center; }
+  .mobile-nav-label { font-size: 11px; font-weight: 500; letter-spacing: -.005em; }
+
+  .app-shell[data-mobile="true"] .header-context { display: none; }
+}
+
+/* ── Hojas inferiores (vaul) ─────────────────────────────── */
+
+/* Implements: REQ-CAP-05 */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  /* Plano a propósito: `backdrop-filter` está prohibido en móvil (REQ-CAP-09). */
+  background: rgba(15, 23, 42, .42);
+}
+
+.sheet-content {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  max-height: 88dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 18px 18px 0 0;
+  background: var(--surface-card, #fff);
+  box-shadow: 0 -8px 30px rgba(15, 23, 42, .16);
+  outline: none;
+}
+
+.sheet-handle { margin: 10px auto 4px; }
+
+.sheet-head {
+  padding: 6px var(--space-lg) var(--space-sm);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.sheet-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  color: var(--text-body);
+}
+
+.sheet-description { margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--text-muted); }
+
+.sheet-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.sheet-list { display: flex; flex-direction: column; gap: 4px; }
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.sheet-row:hover { background: var(--canvas-soft); }
+.sheet-row[data-active="true"] { background: var(--color-primary-wash); color: var(--color-primary); font-weight: 600; }
+.sheet-row .sheet-row-icon { display: grid; place-items: center; width: 26px; flex: 0 0 26px; color: var(--course-tone, var(--text-muted)); }
+.sheet-row small { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+
+.sheet-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--space-md);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+}
+
+.sheet-field { display: flex; flex-direction: column; gap: 6px; margin-top: var(--space-md); font-size: 13px; color: var(--text-muted); }
+.sheet-field input { min-height: 46px; padding: 0 12px; border: 1px solid var(--border-hairline); border-radius: var(--radius-md); background: var(--white); color: var(--text-body); font: inherit; font-size: 16px; }
+.sheet-field input:disabled { background: var(--canvas-soft); color: var(--text-faint); }
+
+/* El panel docente pierde su geometría de columna dentro de la hoja. */
+.sheet-tools { position: static; width: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+
+.sheet-facts { display: flex; flex-direction: column; gap: 10px; }
+.sheet-facts > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
+.sheet-facts dt { font-size: 13px; color: var(--text-muted); }
+.sheet-facts dd { font-size: 15px; font-weight: 600; color: var(--text-body); }

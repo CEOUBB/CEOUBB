@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after, before } from "node:test";
@@ -109,6 +109,37 @@ test("serves hardening response headers", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+});
+
+// REQ-CAP-14 — el bridge de Capacitor vive en capacitor://localhost y https://localhost.
+test("admits the Capacitor bridge origins without relaxing any other directive", async () => {
+  const response = await request("/");
+  const directives = new Map(
+    (response.headers.get("content-security-policy") ?? "")
+      .split(";")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => [entry.split(/\s+/)[0], entry]),
+  );
+  for (const name of ["default-src", "script-src", "connect-src"]) {
+    assert.match(directives.get(name) ?? "", /capacitor:\/\/localhost/, `${name} must admit the Android bridge origin`);
+    assert.match(directives.get(name) ?? "", /https:\/\/localhost/, `${name} must admit the iOS bridge origin`);
+  }
+  const untouched = {
+    "style-src": "style-src 'self' 'unsafe-inline'",
+    "img-src": "img-src 'self' data: blob: https:",
+    "font-src": "font-src 'self' data:",
+    "frame-src": "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
+    "worker-src": "worker-src 'self' blob:",
+    "manifest-src": "manifest-src 'self'",
+    "object-src": "object-src 'none'",
+    "base-uri": "base-uri 'self'",
+    "form-action": "form-action 'self'",
+    "frame-ancestors": "frame-ancestors 'none'",
+  };
+  for (const [name, value] of Object.entries(untouched)) {
+    assert.equal(directives.get(name), value, `${name} must not differ from the pre-migration policy`);
+  }
 });
 
 test("serves a sitemap", async () => {
@@ -256,6 +287,16 @@ test("serves a non-blocking service worker", async () => {
   assert.doesNotMatch(source, /await cache\.put/, "the cache write must not block the response");
   assert.match(source, /event\.waitUntil/);
   assert.match(source, /caches\.match\("\/"\)/, "the offline navigation fallback must survive");
+});
+
+// REQ-CAP-19 — la biblioteca deja de estar duplicada: sólo el service worker la cubre sin conexión.
+test("covers the library offline from the service worker alone", async () => {
+  const source = await (await request("/sw.js")).text();
+  assert.match(source, /"\/biblioteca\/index\.html"/, "the library entry point must be precached on install");
+  assert.match(source, /biblioteca\\\/assets\\\/vendor\\\//, "the immutable library assets must be served cache-first");
+
+  const duplicated = new URL("../android/app/src/main/assets/www/", import.meta.url);
+  await assert.rejects(access(duplicated), "the duplicated Android library tree must not come back");
 });
 
 test("keeps the Firestore and Storage SDKs out of the initial page bundle", async () => {

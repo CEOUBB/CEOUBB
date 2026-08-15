@@ -9,10 +9,15 @@ const OWNER_SURFACES = [
   "../android/app/src/main/res/values/firebase.xml",
 ];
 
+/*
+  Tras la migración a Capacitor la capa nativa ya no interpreta dominios (REQ-CAP-12):
+  `ClassroomService.java` desapareció con el WebView artesanal y no se sustituye. Quedan
+  cuatro espejos de la política — `lib/access-policy.ts`, las dos reglas de Firebase y
+  `firebase.xml`, que sigue enumerando a los owners.
+*/
 const DOMAIN_SURFACES = [
   "../firebase/firestore.rules",
   "../firebase/storage.rules",
-  "../android/app/src/main/java/cl/ubb/centroestudio/ClassroomService.java",
 ];
 
 const POLICY_CONSUMERS = [

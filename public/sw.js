@@ -1,4 +1,11 @@
-const CACHE = "centro-estudio-ubb-v6";
+/*
+  Única cobertura offline de la biblioteca. La copia que vivía en
+  `android/app/src/main/assets/www/` desapareció con el WebView artesanal: el
+  contenedor Capacitor carga `https://ceoubb.com`, así que quien sirve
+  `/biblioteca` sin conexión es este service worker y nadie más.
+*/
+// Implements: REQ-CAP-19
+const CACHE = "centro-estudio-ubb-v7";
 const SHELL = ["/", "/manifest.webmanifest", "/biblioteca/index.html"];
 const IMMUTABLE = /^\/(_next\/static\/|biblioteca\/assets\/vendor\/)/;
 const REVALIDATE = /^\/biblioteca\/assets\/(app|data)\.js$|^\/biblioteca\/assets\/styles\.css$/;

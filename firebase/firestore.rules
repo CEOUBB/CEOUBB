@@ -45,7 +45,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner() || signedIn() && request.auth.uid == userId;
       allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
-      allow update: if isOwner() || signedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'domain', 'lastSeen', 'teacherRequested', 'requestedAt']);
+      // Implements: REQ-CAP-18 — 'fcmToken' es la única ampliación de la app
+      // nativa: el propio dueño escribe su token FCM y nada más. El rol sigue
+      // congelado y `hasOnly` mantiene el resto del documento fuera de alcance.
+      allow update: if isOwner() || signedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'domain', 'lastSeen', 'teacherRequested', 'requestedAt', 'fcmToken']);
       allow delete: if isOwner();
 
       // Bloques del calendario semanal. Estrictamente privados: ni el owner

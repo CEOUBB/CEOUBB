@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
-import { normalizeAccessEmail, roleForEmail } from "../../../../lib/access-policy";
+import { ACCESS_REJECTION_MESSAGE, normalizeAccessEmail, roleForEmail } from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
 
 const FIREBASE_API_KEY = "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const email = normalizeAccessEmail(account?.email ?? "");
     const role = roleForEmail(email);
     if (!account?.localId || !account.emailVerified) return error("Tu correo de Google debe estar verificado.", 403);
-    if (!role) return error("Solo se permite el acceso con cuentas @alumnos.ubiobio.cl o @ubiobio.cl.", 403);
+    if (!role) return error(ACCESS_REJECTION_MESSAGE, 403);
 
     const db = getDb();
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
