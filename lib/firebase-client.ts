@@ -1,5 +1,8 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signInWithPopup, signOut } from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
+import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
@@ -18,8 +21,41 @@ function institutionalProvider() {
   return provider;
 }
 
+/*
+  Dentro de la WebView `signInWithPopup` no funciona — el almacenamiento está
+  particionado y la ventana emergente nunca vuelve. La app abre la hoja nativa de
+  Google y canjea la credencial resultante; el navegador conserva el popup.
+  Las dos ramas terminan en el mismo `User` de Firebase.
+*/
+// Implements: REQ-CAP-12
+async function nativeCredentialSignIn() {
+  const result = await FirebaseAuthentication.signInWithGoogle();
+  const idToken = result.credential?.idToken;
+  if (!idToken) throw new Error("Google no devolvió una credencial utilizable.");
+  const credential = GoogleAuthProvider.credential(idToken, result.credential?.accessToken);
+  return signInWithCredential(getAuth(firebaseApp), credential);
+}
+
+/** Cierra la sesión en las dos capas: sin esto la hoja nativa recuerda la cuenta rechazada. */
+// Implements: REQ-CAP-12b
+async function abandonSession() {
+  await signOut(getAuth(firebaseApp)).catch(() => undefined);
+  if (Capacitor.isNativePlatform()) await FirebaseAuthentication.signOut().catch(() => undefined);
+}
+
+// Implements: REQ-CAP-12, REQ-CAP-12b
 export async function signInWithInstitutionalGoogle() {
-  const result = await signInWithPopup(getAuth(firebaseApp), institutionalProvider());
+  const result = Capacitor.isNativePlatform()
+    ? await nativeCredentialSignIn()
+    : await signInWithPopup(getAuth(firebaseApp), institutionalProvider());
+
+  // El rol siempre lo decide `roleForEmail`: ni la capa nativa ni esta función
+  // vuelven a interpretar el dominio del correo.
+  if (!roleForEmail(result.user.email ?? "")) {
+    await abandonSession();
+    throw new Error(ACCESS_REJECTION_MESSAGE);
+  }
+
   return result.user.getIdToken(true);
 }
 
