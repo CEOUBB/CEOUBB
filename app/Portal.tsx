@@ -5,8 +5,11 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Archive, Books, CalendarBlank, CaretDown, FolderSimple, House, MagnifyingGlass, SignOut, Sliders } from "@phosphor-icons/react";
+import { Archive, Books, CalendarBlank, CaretDown, FolderSimple, House, MagnifyingGlass, SignOut, Sliders, Stack } from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import { useExternalLinks, useHardwareBack, useIsMobileApp, useStatusBar } from "../lib/mobile-bridge";
+import { MobileBottomNav, MobileSheet, type MobileTab } from "./mobile-shell";
+import { registerPushNotifications } from "../lib/push-notifications";
 import { COURSES, Course, courseById } from "../lib/courses";
 import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
 import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
@@ -51,6 +54,11 @@ export function Portal() {
   const [seen, setSeen] = useState<Record<string, string>>(readSeen);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  // En móvil el riel lateral no cabe: la lista de ramos y el detalle de una
+  // asignatura pasan a hojas arrastrables sobre la barra del pulgar.
+  const [coursesSheet, setCoursesSheet] = useState(false);
+  const [preview, setPreview] = useState<Course | null>(null);
+  const mobile = useIsMobileApp();
 
   useEffect(() => {
     let active = true;
@@ -72,6 +80,9 @@ export function Portal() {
 
   useEffect(() => {
     if (!user) return;
+    // Implements: REQ-CAP-10 — el token se pide con sesión ya abierta; si el
+    // permiso está denegado la función se retira sola y la navegación sigue igual.
+    void registerPushNotifications();
     const stopActivity = watchCourseActivity(setActivity, () => undefined);
     const stopGradebooks = watchGradebooks(setGradebooks, () => undefined);
     return () => {
@@ -94,10 +105,22 @@ export function Portal() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Implements: REQ-CAP-07 — la franja de estado sigue a la superficie visible.
+  useStatusBar(user ? "canvas" : "hero");
+  // Implements: REQ-CAP-15
+  useExternalLinks();
+  useHardwareBack(useCallback(() => {
+    if (preview) return setPreview(null), true;
+    if (coursesSheet) return setCoursesSheet(false), true;
+    if (screen !== "courses") return setScreen("courses"), true;
+    // Desde la pestaña raíz nadie consume el gesto: la app se va al fondo.
+    return false;
+  }, [coursesSheet, preview, screen]));
+
   const courses = COURSES;
   const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
 
-  const openCourse = (next: Course) => {
+  const enterCourse = (next: Course) => {
     const merged = { ...seen, [next.id]: new Date().toISOString() };
     try {
       window.localStorage.setItem(SEEN_KEY, JSON.stringify(merged));
@@ -105,9 +128,18 @@ export function Portal() {
       // sin almacenamiento local los avisos se vuelven a marcar como nuevos
     }
     setSeen(merged);
+    setPreview(null);
+    setCoursesSheet(false);
     setCourse(next);
     setScreen("course");
   };
+
+  /*
+    En móvil una tarjeta de ramo no salta directo al aula: abre la ficha en una hoja
+    inferior, que es donde el pulgar ya está. El salto al aula queda a un toque.
+  */
+  // Implements: REQ-CAP-05
+  const openCourse = (next: Course) => (mobile ? setPreview(next) : enterCourse(next));
 
   const logout = async () => {
     try {
@@ -152,10 +184,18 @@ export function Portal() {
     })),
   ];
 
+  // Implements: REQ-CAP-04 — Inicio, Cursos, Calendario y Biblioteca en la zona del pulgar.
+  const mobileTabs: MobileTab[] = [
+    { key: "courses", label: "Inicio", Icon: House, active: screen === "courses", onSelect: () => setScreen("courses") },
+    { key: "list", label: "Cursos", Icon: Stack, active: screen === "course", onSelect: () => setCoursesSheet(true) },
+    { key: "calendar", label: "Calendario", Icon: CalendarBlank, active: screen === "calendar", onSelect: () => setScreen("calendar") },
+    { key: "library", label: "Biblioteca", Icon: Archive, active: false, href: "/biblioteca/index.html" },
+  ];
+
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
-        <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
+        <div className="app-shell" data-mobile={mobile} data-sidebar={sidebarOpen ? "open" : "closed"}>
           <PortalHeader
             context={context}
             onHome={() => setScreen("courses")}
@@ -192,6 +232,48 @@ export function Portal() {
               )}
             </AnimatePresence>
           </main>
+          {mobile && <MobileBottomNav items={mobileTabs} />}
+          {mobile && (
+            <MobileSheet onOpenChange={setCoursesSheet} open={coursesSheet} title="Mis ramos" description={`Semestre ${courses[0]?.period ?? ""}`.trim()}>
+              <div className="sheet-list">
+                {courses.length === 0 && <p className="side-empty">Sin ramos en este período. Aparecerán aquí al quedar inscritos.</p>}
+                {courses.map((item) => (
+                  <button
+                    className="sheet-row"
+                    data-active={screen === "course" && openedCourse?.id === item.id}
+                    key={item.id}
+                    onClick={() => openCourse(item)}
+                    style={{ "--course-tone": item.tone } as React.CSSProperties}
+                    type="button"
+                  >
+                    <span className="sheet-row-icon"><FolderSimple size={20} weight="fill" /></span>
+                    <span>{item.name}<small>{item.code}</small></span>
+                  </button>
+                ))}
+                <button className="sheet-row" onClick={() => { setCoursesSheet(false); setScreen("resources"); }} type="button">
+                  <span className="sheet-row-icon"><Books size={20} /></span>
+                  <span>Recursos</span>
+                </button>
+                {user.role === "owner" && (
+                  <button className="sheet-row" onClick={() => { setCoursesSheet(false); setScreen("admin"); }} type="button">
+                    <span className="sheet-row-icon"><Sliders size={20} /></span>
+                    <span>Administración</span>
+                  </button>
+                )}
+              </div>
+            </MobileSheet>
+          )}
+          {mobile && preview && (
+            <MobileSheet onOpenChange={(open) => !open && setPreview(null)} open title={preview.name} description={preview.eyebrow}>
+              <dl className="sheet-facts">
+                <div><dt>Código</dt><dd>{preview.code}</dd></div>
+                <div><dt>Sección</dt><dd>{preview.section}</dd></div>
+                <div><dt>Período</dt><dd>{preview.period}</dd></div>
+                <div><dt>Docente</dt><dd>{preview.teacher}</dd></div>
+              </dl>
+              <button className="sheet-cta" onClick={() => enterCourse(preview)} type="button">Entrar al aula</button>
+            </MobileSheet>
+          )}
         </div>
       </MotionConfig>
     </LazyMotion>

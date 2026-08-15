@@ -9,6 +9,9 @@ import { ClassroomFile, ClassroomPost, ClassroomState, ClassroomStudent, classro
 import { Course, DEFAULT_FOLDER, materialFolders } from "../lib/courses";
 import { DEFAULT_EXEMPTION_GRADE, GradeItem, GradeScores, MAX_GRADE, MIN_GRADE, PASSING_GRADE, formatGrade, isValidGrade, requiredGrade, summarize } from "../lib/grades";
 import { Avatar, Screen } from "./portal-ui";
+import { MobileSheet } from "./mobile-shell";
+import { hapticTap, isNativeShell, useIsMobileApp } from "../lib/mobile-bridge";
+import { openDocumentNatively } from "../lib/native-files";
 import { ease, fileExtension, formatBytes, formatDate, formatDay, formatDueDate, initials, roleLabel, type User } from "../lib/portal-utils";
 
 type Tab = "home" | "materials" | "grades" | "progress" | "people";
@@ -113,7 +116,23 @@ export default function Classroom({ course, user, goBack }: { course: Course; us
     }
   };
 
+  /*
+    En el contenedor nativo la WebView no debe intentar pintar el PDF: se descarga
+    con Filesystem y se entrega al visor del sistema. Si el traspaso falla por lo
+    que sea, cae al mismo camino del navegador que ya existía.
+  */
+  // Implements: REQ-CAP-11
   const openFile = async (file: ClassroomFile) => {
+    if (isNativeShell()) {
+      note("Descargando archivo…");
+      try {
+        const url = file.url || await classroomFileUrl(file.storagePath);
+        if (await openDocumentNatively(url, file.name)) return note("", "info");
+      } catch (cause) {
+        return note(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.", "bad");
+      }
+      note("No se pudo abrir con el visor del sistema; se intentará en el navegador.", "info");
+    }
     const tab = window.open("", "_blank");
     if (tab) tab.opener = null;
     try {
@@ -269,6 +288,33 @@ function PostsSection({ posts, user, editPost, deletePost, openMaterials }: { po
 
 function MaterialsSection({ course, files, user, canTeach, publish, upload, openFile, renameFile, moveFile, deleteFile, status }: { course: Course; files: ClassroomFile[]; user: User; canTeach: boolean; publish: (event: FormEvent<HTMLFormElement>) => void; upload: (event: FormEvent<HTMLFormElement>) => void; openFile: (file: ClassroomFile) => void; renameFile: (file: ClassroomFile) => void; moveFile: (file: ClassroomFile) => void; deleteFile: (file: ClassroomFile) => void; status: Note }) {
   const folders = useMemo(() => groupByFolder(course, files), [course, files]);
+  const mobile = useIsMobileApp();
+  const [toolsOpen, setToolsOpen] = useState(false);
+
+  /* El panel docente ocupa una columna entera: en móvil no cabe al lado del
+     listado, así que se guarda tras un botón y sube como hoja arrastrable. */
+  const tools = (
+    <>
+      <datalist id="folder-options">{materialFolders(course).map((folder) => <option key={folder} value={folder} />)}</datalist>
+      <form onSubmit={publish}>
+        <label>Título<input name="title" required /></label>
+        <label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label>
+        <label>Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} /></label>
+        <label>Mensaje<textarea name="body" rows={4} required /></label>
+        <label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label>
+        <label>Fecha de entrega opcional<input name="dueDate" type="datetime-local" /><small className="field-hint">Aparece en el calendario de cada estudiante del ramo.</small></label>
+        <button className="primary-button" type="submit">Publicar aviso o enlace</button>
+      </form>
+      <div className="tool-divider"><span>o subir archivo</span></div>
+      <form onSubmit={upload}>
+        <label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label>
+        <label>Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} /></label>
+        <button className="secondary-button" type="submit">Subir al curso</button>
+      </form>
+      {status.text && <p className={`tool-status ${status.tone}`} role="status">{status.text}</p>}
+    </>
+  );
+
   return (
     <section className="materials-view">
       <div className="materials-list">
@@ -304,27 +350,20 @@ function MaterialsSection({ course, files, user, canTeach, publish, upload, open
           </details>
         ))}
       </div>
-      {canTeach && (
+      {canTeach && !mobile && (
         <aside className="teacher-tools">
           <h2>Publicar en el aula</h2>
-          <datalist id="folder-options">{materialFolders(course).map((folder) => <option key={folder} value={folder} />)}</datalist>
-          <form onSubmit={publish}>
-            <label>Título<input name="title" required /></label>
-            <label>Tipo<select name="kind"><option value="notice">Aviso</option><option value="guide">Guía</option><option value="assessment">Dictamen o certamen</option><option value="resource">Recurso</option></select></label>
-            <label>Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} /></label>
-            <label>Mensaje<textarea name="body" rows={4} required /></label>
-            <label>Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" /></label>
-            <label>Fecha de entrega opcional<input name="dueDate" type="datetime-local" /><small className="field-hint">Aparece en el calendario de cada estudiante del ramo.</small></label>
-            <button className="primary-button" type="submit">Publicar aviso o enlace</button>
-          </form>
-          <div className="tool-divider"><span>o subir archivo</span></div>
-          <form onSubmit={upload}>
-            <label>PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required /></label>
-            <label>Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} /></label>
-            <button className="secondary-button" type="submit">Subir al curso</button>
-          </form>
-          {status.text && <p className={`tool-status ${status.tone}`} role="status">{status.text}</p>}
+          {tools}
         </aside>
+      )}
+      {/* Implements: REQ-CAP-05 — el selector de archivos del docente, como hoja. */}
+      {canTeach && mobile && (
+        <>
+          <button className="sheet-cta" onClick={() => { hapticTap(); setToolsOpen(true); }} type="button">Publicar o subir archivo</button>
+          <MobileSheet onOpenChange={setToolsOpen} open={toolsOpen} title="Publicar en el aula" description="Aviso, enlace o archivo del ramo.">
+            <div className="teacher-tools sheet-tools">{tools}</div>
+          </MobileSheet>
+        </>
       )}
     </section>
   );
@@ -338,6 +377,8 @@ function GradesSection({ course, classroom, canTeach, note, status }: { course: 
 
 function StudentGrades({ course, gradebook, exemption, officialScores, simulation, note, status }: { course: Course; gradebook: GradeItem[]; exemption: number | null; officialScores: GradeScores; simulation: GradeScores; note: (text: string, tone?: Note["tone"]) => void; status: Note }) {
   const [typed, setTyped] = useState<Record<string, string> | null>(null);
+  const mobile = useIsMobileApp();
+  const [detail, setDetail] = useState<GradeItem | null>(null);
   const draft = typed ?? Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
   const setDraft = (update: (current: Record<string, string>) => Record<string, string>) => setTyped(update(draft));
 
@@ -367,6 +408,64 @@ function StudentGrades({ course, gradebook, exemption, officialScores, simulatio
     return <div className="empty-state"><strong>El docente aún no publica la ponderación del ramo.</strong><p>Cuando cargue las evaluaciones y sus porcentajes podrás ver tu promedio y simular la nota que necesitas.</p></div>;
   }
 
+  const simulationField = (item: GradeItem) => (
+    <input
+      aria-label={`Nota simulada de ${item.name}`}
+      disabled={isValidGrade(officialScores[item.id])}
+      max={MAX_GRADE}
+      min={MIN_GRADE}
+      onBlur={persist}
+      onChange={(event) => setDraft((current) => ({ ...current, [item.id]: event.target.value }))}
+      step="0.1"
+      type="number"
+      value={draft[item.id] ?? ""}
+    />
+  );
+
+  /*
+    Cuatro columnas no entran en un teléfono sin encoger la nota a un tamaño
+    ilegible: en móvil la tabla se convierte en una lista y el desglose de cada
+    evaluación —ponderación, nota oficial y simulación— sube en una hoja.
+  */
+  // Implements: REQ-CAP-05
+  if (mobile) {
+    return (
+      <section className="grades-view">
+        <div className="sheet-list">
+          {gradebook.map((item) => (
+            <button className="sheet-row" key={item.id} onClick={() => { hapticTap(); setDetail(item); }} type="button">
+              <span>{item.name}<small>{item.weight}% · {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}</small></span>
+            </button>
+          ))}
+        </div>
+        <aside className="grades-summary">
+          <div className="grades-average">
+            <strong>{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+            <div><h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3><p>{summary.gradedWeight}% de {summary.totalWeight}% ya tiene nota</p></div>
+          </div>
+          <dl className="grades-targets">
+            <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
+            <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
+          </dl>
+          <p className="grades-note">La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden editar aquí.</p>
+          {status.text && <p className={`tool-status ${status.tone}`} role="status">{status.text}</p>}
+        </aside>
+        {detail && (
+          <MobileSheet onOpenChange={(open) => !open && setDetail(null)} open title={detail.name} description={detail.date ? formatDay(detail.date) : undefined}>
+            <dl className="sheet-facts">
+              <div><dt>Ponderación</dt><dd>{detail.weight}%</dd></div>
+              <div><dt>Nota oficial</dt><dd>{isValidGrade(officialScores[detail.id]) ? formatGrade(officialScores[detail.id]) : "—"}</dd></div>
+            </dl>
+            <label className="sheet-field">
+              {isValidGrade(officialScores[detail.id]) ? "Simulación (bloqueada: ya hay nota oficial)" : "Simulación"}
+              {simulationField(detail)}
+            </label>
+          </MobileSheet>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="grades-view">
       <div className="grades-table">
@@ -376,19 +475,7 @@ function StudentGrades({ course, gradebook, exemption, officialScores, simulatio
             <span><b>{item.name}</b>{item.date && <small>{formatDay(item.date)}</small>}</span>
             <span className="grades-weight">{item.weight}%</span>
             <span className="grades-official">{isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}</span>
-            <span>
-              <input
-                aria-label={`Nota simulada de ${item.name}`}
-                disabled={isValidGrade(officialScores[item.id])}
-                max={MAX_GRADE}
-                min={MIN_GRADE}
-                onBlur={persist}
-                onChange={(event) => setDraft((current) => ({ ...current, [item.id]: event.target.value }))}
-                step="0.1"
-                type="number"
-                value={draft[item.id] ?? ""}
-              />
-            </span>
+            <span>{simulationField(item)}</span>
           </div>
         ))}
       </div>
