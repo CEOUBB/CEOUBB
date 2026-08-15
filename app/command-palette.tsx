@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { MagnifyingGlass, X } from "@phosphor-icons/react";
 
 export type PaletteItem = {
   id: string;
@@ -38,11 +38,15 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    dialog.showModal();
+    /* `showModal()` sobre un diálogo ya modal lanza `InvalidStateError`, y en
+       desarrollo React monta cada efecto dos veces. */
+    if (!dialog.open) dialog.showModal();
     inputRef.current?.focus();
-    return () => {
-      if (dialog.open) dialog.close();
-    };
+    /* Sin limpieza a propósito. `dialog.close()` aquí emitía un evento `close`
+       —diferido, no síncrono— que llegaba a `onClose` después de que el efecto
+       se hubiera vuelto a montar: el padre ponía `open` en false y la paleta se
+       cerraba en el mismo frame en que se abría. Quitar el nodo del DOM ya lo
+       saca de la capa superior; el navegador no necesita ayuda. */
   }, []);
 
   // Clic en el velo: el evento apunta al propio <dialog>, no a su contenido.
@@ -101,6 +105,11 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
           value={query}
         />
         <kbd>Esc</kbd>
+        {/* En el teléfono no hay tecla Escape y el botón atrás lo intercepta el
+            contenedor nativo: la búsqueda necesita una salida a la vista. */}
+        <button aria-label="Cerrar la búsqueda" className="palette-close" onClick={onClose} type="button">
+          <X size={18} weight="bold" aria-hidden="true" />
+        </button>
       </div>
       <div className="palette-list">
         {matches.length === 0 ? (

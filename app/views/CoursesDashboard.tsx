@@ -73,8 +73,11 @@ export function CoursesDashboard({
             </span>
           </div>
           <div className="next-strip-body">
+            {/* El punto medio separa en una línea; en el teléfono el nombre del
+                ramo baja a su propio renglón y el separador quedaría colgando. */}
             <p className="next-strip-line">
-              Próxima evaluación · <strong>{next.course}</strong>
+              Próxima evaluación<span className="next-strip-sep"> · </span>
+              <strong>{next.course}</strong>
             </p>
             <p className="next-strip-detail">{next.detail}</p>
           </div>

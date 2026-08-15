@@ -7,6 +7,9 @@
 
 .mobile-nav { display: none; }
 
+/* En escritorio la salida de la búsqueda es Escape y el rótulo `kbd` lo dice. */
+.palette-close { display: none; }
+
 @media (max-width: 767px) {
   /* Implements: REQ-CAP-04 — el cromo de escritorio desaparece: el riel lateral
      y su cortina se sustituyen por la barra del pulgar, no conviven con ella. */
@@ -18,7 +21,7 @@
 
   .app-shell[data-mobile="true"] .app-main {
     /* Implements: REQ-CAP-07 — el contenido termina por encima del inset inferior. */
-    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--mobile-nav-height) + var(--safe-bottom));
   }
 
   /* Implements: REQ-CAP-04 */
@@ -30,8 +33,8 @@
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
     align-items: stretch;
-    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(var(--mobile-nav-height) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
     border-top: 1px solid var(--border-hairline);
     /* Superficie opaca: sin blur en móvil (REQ-CAP-09) el velo translúcido
        dejaría el rótulo activo ilegible sobre el feed que pasa por debajo. */
@@ -56,24 +59,383 @@
   }
 
   .mobile-nav-item[data-active="true"] { color: var(--color-primary); }
+  .mobile-nav-item:active { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
 
-  /* Indicador activo: una barra corta arriba, del mismo azul que las pestañas
-     del portal. No se usa relleno de color en la celda entera. */
-  .mobile-nav-item[data-active="true"] .mobile-nav-icon::after {
-    content: "";
-    position: absolute;
-    inset: -8px 50% auto;
-    translate: 50% 0;
-    width: 20px;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--color-primary);
+  /* Indicador activo: la píldora detrás del icono que usa cualquier barra de
+     pestañas nativa. Una barrita de 2px arriba lee como pestaña web. */
+  .mobile-nav-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 30px;
+    border-radius: var(--radius-full);
+    transition: background var(--transition-fast);
   }
 
-  .mobile-nav-icon { position: relative; display: grid; place-items: center; }
+  .mobile-nav-item[data-active="true"] .mobile-nav-icon { background: var(--color-primary-wash); }
   .mobile-nav-label { font-size: 11px; font-weight: 500; letter-spacing: -.005em; }
+  .mobile-nav-item[data-active="true"] .mobile-nav-label { font-weight: 600; }
 
   .app-shell[data-mobile="true"] .header-context { display: none; }
+}
+
+/* ── Teléfono: el portal deja de ser un escritorio encogido ── */
+
+/*
+  Todo lo de aquí abajo cuelga del ancho, no de `data-mobile`: los diálogos nativos
+  y la paleta viven en la capa superior del navegador y hay que poder alcanzarlos
+  con el mismo selector desde el móvil web y desde la WebView.
+*/
+@media (max-width: 767px) {
+  /* ── Búsqueda ───────────────────────────────────────────── */
+
+  /* La paleta de escritorio flotaba a 12vh: con el teclado abierto quedaban dos
+     resultados visibles y ningún modo de cerrarla. En el teléfono ocupa la
+     pantalla entera, como cualquier buscador nativo. */
+  .palette {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    animation: palette-sheet-in 220ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .palette-field {
+    gap: var(--space-xs);
+    min-height: calc(56px + var(--safe-top));
+    padding-top: var(--safe-top);
+  }
+
+  /* No hay tecla Escape en un teléfono; la salida es el aspa de al lado. */
+  .palette-field kbd { display: none; }
+
+  .palette-list { padding-bottom: calc(var(--space-lg) + var(--safe-bottom)); }
+  .palette-item { min-height: 48px; }
+
+  /* El botón atrás de Android lo intercepta Capacitor: sin una salida visible la
+     búsqueda se convierte en un callejón sin retorno. */
+  .palette-close {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+  }
+
+  .palette-close:active { background: var(--canvas-soft); }
+
+  /* ── Aula ───────────────────────────────────────────────── */
+
+  /* El código del ramo se metía debajo del título en cuanto el nombre ocupaba
+     dos líneas: en columna cada cosa tiene su renglón. */
+  .classroom-top { flex-direction: column; align-items: flex-start; gap: var(--space-xs); }
+  .classroom-meta { justify-content: flex-start; }
+
+  /* Las pestañas del ramo se desplazan hasta el borde real de la pantalla: si el
+     carril termina antes, «Notas» parece el final de la lista y no lo es. */
+  .course-tabs {
+    margin-inline: calc(-1 * var(--space-md));
+    padding-inline: var(--space-md);
+    scroll-padding-inline: var(--space-md);
+  }
+
+  .course-tabs button { padding-inline: 12px; }
+
+  /* ── Calendario ─────────────────────────────────────────── */
+
+  /* La cabecera de la rejilla repetía el día que ya elige la barra de chips y se
+     llevaba 56px de las horas útiles. Con un solo día visible sobra. */
+  .planner-head { display: none; }
+
+  /* La canaleta tiene que caber «08:00» a 11px más su margen; por debajo de eso
+     el radio de la tarjeta recorta la etiqueta por la esquina. */
+  .planner-frame { --planner-gutter: 54px; }
+  .planner-lead h1 { font-size: 28px; }
+
+  /* Seis ramos apilados empujaban la rejilla fuera de la primera pantalla:
+     pasan a un carril horizontal que sangra hasta los bordes. La máscara
+     difumina los extremos: sin ella la píldora cortada a media palabra parece
+     un error de maquetación en vez de la señal de que el carril sigue. */
+  .planner-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(-1 * var(--space-md));
+    padding-inline: var(--space-md);
+    scroll-padding-inline: var(--space-md);
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--space-md), #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--space-md), #000 calc(100% - 28px), transparent 100%);
+  }
+
+  .planner-filters::-webkit-scrollbar { display: none; }
+  .planner-pill { flex: 0 0 auto; min-height: 38px; padding: 8px 14px 8px 11px; scroll-snap-align: start; font-size: 13.5px; }
+
+  /* La primera etiqueta se apoyaba en el borde superior de la tarjeta, justo
+     donde el radio la muerde. `first-child` anula el centrado de las demás, así
+     que hay que devolverle el aire a mano. */
+  .planner-hours span:first-child { transform: translateY(6px); }
+
+  .planner-daychip { min-height: 50px; }
+  .planner-step button, .planner-now-button { min-height: 40px; }
+
+  /* La acción principal del calendario ocupa el resto de la fila de controles;
+     el salto por fecha sobra cuando anterior / Hoy / siguiente ya están al lado. */
+  .planner-jump { display: none; }
+  .page-head > .planner-controls { flex-wrap: nowrap; }
+  /* `height` fija de 34px es geometría de escritorio con ratón: en el pulgar la
+     acción principal necesita alto táctil y aire lateral. */
+  .planner-create { flex: 1 1 auto; justify-content: center; height: auto; min-height: 44px; padding: 10px 20px; }
+  .planner-blank .planner-create { flex: 0 0 auto; }
+
+  .planner-blank { padding: var(--space-lg) var(--space-md) var(--space-md); }
+
+  /* ── Diálogo de bloque ──────────────────────────────────── */
+
+  /* Modal centrado sobre un teclado abierto no cabe: sube desde abajo, como las
+     hojas de `vaul` que ya usa el resto del móvil. */
+  .planner-dialog {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 94dvh;
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    animation: sheet-rise 240ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .planner-dialog form {
+    max-height: inherit;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-md) var(--space-md) calc(var(--space-md) + var(--safe-bottom));
+  }
+
+  .planner-dialog h2 { font-size: 20px; }
+
+  /* Fecha en su propio renglón; las dos horas conviven — apiladas, el formulario
+     pedía scroll antes de llegar al botón de guardar. */
+  .planner-dialog-row, .planner-dialog-row.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .planner-dialog-row.three > label:first-child { grid-column: 1 / -1; }
+
+  /* 16px es el umbral por debajo del cual el navegador hace zoom al enfocar. */
+  .planner-dialog input,
+  .planner-dialog select,
+  .planner-dialog textarea { min-height: 44px; font-size: 16px; }
+
+  .planner-dialog footer { position: sticky; bottom: 0; padding-top: var(--space-xs); background: var(--surface-card); }
+  .planner-dialog footer button { min-height: 44px; }
+  .planner-dialog-save { flex: 1 1 auto; }
+}
+
+/* ── Esqueleto de arranque ───────────────────────────────── */
+
+/*
+  El esqueleto sólo cumple si es la silueta de lo que va a llegar. En el teléfono
+  seguía dibujando el portal de escritorio: la cabecera se metía bajo el reloj, el
+  buscador se encogía a un cuadrado que ya no existe, las portadas de 16/5 ocupaban
+  un tercio de cada tarjeta y no había ni rastro de la barra del pulgar. El
+  resultado era un salto de layout completo al resolver la sesión.
+*/
+@media (max-width: 767px) {
+  .boot-header {
+    min-height: calc(var(--header-height) + var(--safe-top));
+    padding: var(--safe-top) 10px 0;
+  }
+
+  .boot-menu { display: none; }
+  .boot-header img { margin-left: 0; }
+  .boot-search { flex: 1 1 auto; height: 40px; margin-left: 6px; border-radius: var(--radius-full); }
+  .boot-avatar { margin-left: 6px; }
+
+  .boot-main { gap: var(--space-md); padding: var(--space-lg) var(--space-md) var(--space-xl); }
+  .boot-head { gap: 8px; }
+  .boot-title { width: 68%; height: 28px; }
+  .boot-subtitle { width: 86%; }
+  /* Alto real de la ficha de próxima evaluación con su pie. */
+  .boot-strip { height: 128px; }
+  .boot-grid { gap: var(--space-sm); }
+  .boot-card { gap: 8px; padding-bottom: 14px; }
+  .boot-cover { aspect-ratio: auto; height: 8px; }
+  .boot-line.wide { height: 19px; }
+
+  /* La barra del pulgar es lo único fijo de la pantalla: si falta, al resolver la
+     sesión el contenido salta 58px hacia arriba. */
+  .boot-shell::after {
+    content: "";
+    position: fixed;
+    inset: auto 0 0;
+    height: calc(58px + var(--safe-bottom));
+    border-top: 1px solid var(--border-hairline);
+    background: var(--white);
+  }
+}
+
+@keyframes palette-sheet-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes sheet-rise {
+  from { transform: translateY(14px); }
+}
+
+/* ── Tacto: lo que separa una web estrecha de una app ─────── */
+
+/*
+  Sin puntero fino no hay hover: en Android el `:hover` se queda pegado después
+  del toque y la tarjeta pulsada sigue resaltada mientras se navega. Se apagan
+  todos los estados de reposo y la respuesta pasa al momento del toque.
+*/
+@media (hover: none) {
+  .course-card:hover,
+  .next-strip-action:hover,
+  .course-tabs button:hover,
+  .sheet-row:hover,
+  .palette-item:hover,
+  .planner-pill:hover,
+  .planner-block:hover,
+  .planner-due:hover,
+  .icon-button:hover:not(:disabled),
+  .app-brand:hover,
+  .header-search:hover,
+  .account-menu summary:hover { background: none; border-color: var(--border-hairline); box-shadow: none; }
+
+  .course-card:hover { border-color: var(--border-hairline); }
+  .course-card:hover .course-action svg { transform: none; }
+  .header-search:hover { background: var(--canvas-soft); color: var(--text-muted); }
+}
+
+@media (max-width: 767px) {
+  /* Nada de zoom por doble toque ni de destello gris del sistema al pulsar:
+     el acuse de recibo lo damos nosotros, en el mismo frame. */
+  .app-shell[data-mobile="true"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .course-card:active,
+  .sheet-row:active,
+  .palette-item:active,
+  .planner-daychip:active,
+  .planner-pill:active,
+  .course-tabs button:active { background: var(--canvas-soft); }
+
+  .next-strip-action:active,
+  .planner-create:active,
+  .sheet-cta:active,
+  .planner-dialog-save:active { transform: scale(.985); }
+
+  /* El cromo no se selecciona con una pulsación larga: en una app nativa
+     no existe el cursor de texto sobre una pestaña. */
+  .mobile-nav, .course-tabs, .planner-daybar, .app-header { user-select: none; }
+
+  /* Un rebote encadenado entre la rejilla del calendario y la página se lee
+     como un fallo; cada zona de scroll se queda con el suyo. */
+  .planner-grid, .palette-list, .sheet-body { overscroll-behavior: contain; }
+
+  /* ── Densidad y voz tipográfica ─────────────────────────── */
+
+  /* La display editorial de 38–64px es una portada de revista, no una pantalla
+     de app: el título baja a escala de app bar y el contenido gana un pliegue. */
+  .portal-main { padding: var(--space-lg) var(--space-md) var(--space-xl); gap: var(--space-md); }
+  .classroom-layout { padding: var(--space-lg) var(--space-md) var(--space-xl); }
+  .page-head.lead { gap: var(--space-xs); padding-bottom: var(--space-md); }
+  .page-head.lead h1 { font-size: 30px; letter-spacing: -.02em; }
+  .page-head h1 { font-size: 26px; }
+  .page-head p, .page-head.lead p { font-size: 14.5px; }
+  .portal-main > section > .page-head { margin-bottom: var(--space-md); }
+
+  /* ── Próxima evaluación ─────────────────────────────────── */
+
+  /*
+    En escritorio la tira es una sola línea: fecha · asunto · cuenta atrás · acción.
+    Estrechada a un teléfono se partía en dos filas sin relación —la columna de la
+    fecha dejaba un hueco vertical debajo y la acción quedaba flotando— y la única
+    marca del ramo, su color, no aparecía por ninguna parte.
+    Aquí pasa a ficha: filete del ramo al canto, fecha y asunto arriba, y un pie
+    separado por un filete con la cuenta atrás y la entrada al aula.
+  */
+  .next-strip {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "date body" "foot foot";
+    align-items: start;
+    gap: 4px var(--space-sm);
+    padding: 12px 12px 4px;
+    border-radius: var(--radius-lg);
+  }
+
+  .next-strip-date {
+    grid-area: date;
+    min-width: 52px;
+    padding: 6px 8px 7px;
+    background: color-mix(in srgb, var(--course-tone) 14%, #fff);
+  }
+
+  .next-strip-day { font-size: 26px; }
+  .next-strip-month { font-size: 11px; }
+
+  .next-strip-body { grid-area: body; align-content: center; min-height: 54px; gap: 3px; }
+  .next-strip-line { font-size: 13px; letter-spacing: .01em; color: var(--text-muted); }
+
+  /* El asunto de la evaluación es lo que se viene a leer: sube a titular de la
+     ficha y deja de recortarse en una sola línea.
+     El nombre del ramo lleva su color, pero oscurecido contra tinta: los tonos
+     claros de la paleta (el celeste del escudo, el oro) no llegan a 4.5:1 sobre
+     papel blanco. Es la misma mezcla que ya usan las entregas del planificador. */
+  .next-strip-line strong { display: block; font-size: 16px; color: color-mix(in srgb, var(--course-tone) 38%, #0f172a); }
+  .next-strip-sep { display: none; }
+  .next-strip-detail {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-body);
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .next-strip-end {
+    grid-area: foot;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 2px;
+    border-top: 1px solid var(--border-hairline);
+  }
+
+  .next-strip-count {
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--course-tone) 12%, #fff);
+    color: color-mix(in srgb, var(--course-tone) 32%, #0f172a);
+    font-size: 12.5px;
+  }
+
+  .next-strip-action { padding-right: 2px; }
+
+  /* Las tarjetas de ramo se comportan como filas de lista: un ancho, un ritmo.
+     La portada de color se queda en banda de identificación —a 96px de alto se
+     comía un tercio de la tarjeta sin decir nada. */
+  .course-grid { gap: var(--space-sm); }
+  .course-thumb { aspect-ratio: auto; min-height: 0; height: 8px; border-bottom: 0; background: var(--course-tone); }
+  .course-card h3 { font-size: 19px; }
+
+  /* Objetivos táctiles: nada accionable por debajo de 44px de alto. */
+  .next-strip-action, .course-action, .empty-state-action { min-height: 44px; }
+
+  /* ── Barra de aplicación ────────────────────────────────── */
+
+  /* El avatar es el último elemento de la barra y va pegado al margen, como en
+     cualquier app: el galón de despliegue lo separaba del borde y dejaba la foto
+     flotando a media distancia. En táctil el propio avatar ya es el objetivo. */
+  .app-header { padding-right: 10px; }
+  .account-caret { display: none; }
+  .account-menu summary { min-height: 44px; padding: 4px; }
+  .account-popover { right: 0; }
 }
 
 /* ── Hojas inferiores (vaul) ─────────────────────────────── */
@@ -94,7 +456,7 @@
   display: flex;
   flex-direction: column;
   max-height: 88dvh;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-bottom);
   border-radius: 18px 18px 0 0;
   background: var(--surface-card, #fff);
   box-shadow: 0 -8px 30px rgba(15, 23, 42, .16);

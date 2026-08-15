@@ -71,6 +71,14 @@
   /* Barra institucional: papel sobre el lienzo, cerrada por la franja heráldica. */
   --header-height: 62px;
 
+  /* Insets del dispositivo. Android 15 fuerza el borde a borde y `StatusBar.setOverlaysWebView(false)`
+     ya no reserva la franja: la cabecera se dibuja debajo del reloj si no se paga aquí.
+     En escritorio y en la web `env()` resuelve a 0px, así que la misma regla sirve en todas partes. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Alto real que ocupa la cabecera pegajosa, franja de estado incluida. */
+  --header-offset: calc(var(--header-height) + var(--safe-top));
+
   --radius-xs: 4px;
   --radius-sm: 5px;
   --radius-md: 8px;
@@ -312,6 +320,17 @@ img { max-width: 100%; }
 
 /* ── Acceso institucional ─────────────────────────────────── */
 
+/*
+  `env(safe-area-inset-bottom)` mide 0px en la WebView de Android aunque el
+  contenedor sea de borde a borde: Chromium sólo lo rellena con recortes de
+  pantalla, no con la barra de gestos, y los rótulos de la barra inferior quedan
+  tachados por la píldora del sistema. 24px es el alto de esa barra; en iPhone con
+  indicador `env()` devuelve 34px y gana el `max()`.
+*/
+@media (max-width: 767px) {
+  :root { --safe-bottom: max(env(safe-area-inset-bottom, 0px), 24px); }
+}
+
 .access-page {
   min-height: 100vh;
   min-height: 100svh;
@@ -327,7 +346,8 @@ img { max-width: 100%; }
   display: grid;
   align-content: center;
   justify-items: center;
-  padding: clamp(2rem, 4.5vw, 4.5rem);
+  /* El degradado navy sí puede correr bajo el reloj; el escudo y el título, no. */
+  padding: calc(clamp(2rem, 4.5vw, 4.5rem) + var(--safe-top)) clamp(2rem, 4.5vw, 4.5rem) clamp(2rem, 4.5vw, 4.5rem);
   background:
     radial-gradient(120% 85% at 6% -8%, rgba(56, 189, 248, .28), transparent 58%),
     linear-gradient(158deg, #063d78, var(--ubb-midnight-navy) 55%, #001b3c);
@@ -371,7 +391,7 @@ img { max-width: 100%; }
   display: grid;
   align-content: center;
   justify-items: center;
-  padding: clamp(2rem, 5vw, 4rem) clamp(1.3rem, 4vw, 3rem);
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.3rem, 4vw, 3rem) calc(clamp(2rem, 5vw, 4rem) + var(--safe-bottom));
   background: var(--canvas-soft);
 }
 
@@ -515,11 +535,11 @@ img { max-width: 100%; }
   position: sticky;
   top: 0;
   z-index: 40;
-  min-height: var(--header-height);
+  min-height: var(--header-offset);
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 var(--space-md) 0 10px;
+  padding: var(--safe-top) var(--space-md) 0 10px;
   background: var(--canvas);
   color: var(--text-body);
 }
@@ -741,13 +761,13 @@ img { max-width: 100%; }
 .app-sidebar {
   grid-area: sidebar;
   position: sticky;
-  top: var(--header-height);
+  top: var(--header-offset);
   align-self: start;
   /* Ancho fijo: al plegar, la columna del grid se cierra pero los rótulos no
      se reajustan a mitad de la animación. El panel sale deslizándose entero. */
   width: 268px;
   /* dvh: en móvil la barra del navegador no debe empujar la biblioteca fuera de alcance. */
-  height: calc(100dvh - var(--header-height));
+  height: calc(100dvh - var(--header-offset));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -2583,7 +2603,7 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
   .app-shell, .app-shell[data-sidebar="closed"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "header" "main"; }
   .app-sidebar {
     position: fixed;
-    top: var(--header-height);
+    top: var(--header-offset);
     left: 0;
     z-index: 45;
     width: 284px;
@@ -2593,7 +2613,7 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
   .app-shell[data-sidebar="open"] .sidebar-scrim {
     display: block;
     position: fixed;
-    inset: var(--header-height) 0 0;
+    inset: var(--header-offset) 0 0;
     z-index: 44;
     background: rgba(15, 23, 42, .42);
     border: 0;
@@ -2618,18 +2638,24 @@ a.resource-card:focus-visible .resource-icon { background: var(--color-primary);
 }
 
 @media (max-width: 520px) {
-  .planner-jump { display: none; }
-  /* Sin espacio para las dos, el escudo sostiene la marca y el texto pasa a ser el contexto. */
-  .app-brand strong { display: none; }
-  .app-brand { padding: 6px; }
   .header-context-sep { display: none; }
-  .palette { margin-top: 6vh; max-height: 74vh; }
 }
 
-/* La búsqueda pierde el rótulo antes que el rastro de contexto: el atajo ya no cabe. */
-@media (max-width: 1000px) {
+/* La búsqueda pierde el rótulo antes que el rastro de contexto: el atajo ya no cabe.
+   Sólo entre 768px y 1000px: ahí el rastro de contexto todavía compite por el ancho.
+   Por debajo de 768px ese rastro desaparece y la búsqueda recupera su barra —un icono
+   suelto no se lee como buscador, que es justo el reproche que llegó desde el teléfono. */
+@media (min-width: 768px) and (max-width: 1000px) {
   .header-search { flex: 0 0 38px; min-width: 0; padding: 0; justify-content: center; border-radius: var(--radius-md); }
   .header-search > span, .header-search kbd { display: none; }
+}
+
+@media (max-width: 767px) {
+  /* El escudo sostiene la marca; el ancho liberado es el de la barra de búsqueda. */
+  .app-brand strong { display: none; }
+  .app-brand { padding: 6px; }
+  .header-search { flex: 1 1 auto; min-width: 0; height: 40px; }
+  .header-search kbd { display: none; }
 }
 
 @media (max-width: 800px) {
