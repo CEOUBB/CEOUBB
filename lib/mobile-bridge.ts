@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
@@ -128,17 +128,29 @@ export function useExternalLinks() {
  * Botón atrás de Android. `onBack` devuelve `true` cuando ya consumió el gesto;
  * desde una pestaña raíz nadie lo consume y la app se va al fondo — nunca se
  * deja la WebView en blanco navegando fuera del historial.
+ *
+ * El manejador vive en una ref y el listener se registra una sola vez. `onBack`
+ * cambia en cada navegación, y `App.addListener` es asíncrono: volver a suscribir
+ * en cada cambio deja una ventana —entre el `addListener` nuevo y el `remove()`
+ * del anterior— con dos listeners vivos. Una pulsación ahí dentro retrocedería
+ * dos niveles de una vez.
  */
 // Implements: REQ-CAP-15
 export function useHardwareBack(onBack: () => boolean) {
+  const handler = useRef(onBack);
+
+  useEffect(() => {
+    handler.current = onBack;
+  }, [onBack]);
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const listener = App.addListener("backButton", () => {
-      if (onBack()) return;
+      if (handler.current()) return;
       quiet(() => App.minimizeApp());
     });
     return () => {
       void listener.then((handle) => handle.remove()).catch(() => undefined);
     };
-  }, [onBack]);
+  }, []);
 }
