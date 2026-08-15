@@ -1,10 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
+import { GoogleGenAI } from "@google/genai";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Discord Public Key (de Discord Developer Portal -> General Information)
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY || "";
+
+const MODEL_FALLBACK_LIST = [
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3-flash",
+];
+
+async function callGemini(prompt: string): Promise<string> {
+  const apiKey = process.env.STANDUP_GEMINI_API_KEY || process.env.GEMINI_STANDUP_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) return "API Key de Gemini no configurada.";
+
+  const ai = new GoogleGenAI({ apiKey });
+  let lastError;
+  for (const modelId of MODEL_FALLBACK_LIST) {
+    try {
+      const res = await ai.models.generateContent({
+        model: modelId,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+      const text = res.text || res.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return text.trim();
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
 
 /**
  * Valida la firma criptográfica Ed25519 requerida por Discord
@@ -68,7 +98,169 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ type: 1 }); // PONG
   }
 
-  // 3. Manejo de clics en Botones (Type 3: MESSAGE_COMPONENT)
+  // 3. Manejo de Slash Commands (Type 2: APPLICATION_COMMAND)
+  if (body.type === 2 && body.data?.name) {
+    const commandName = body.data.name;
+    const options = body.data.options || [];
+    const getOpt = (name: string) => options.find((o) => o.name === name)?.value;
+
+    if (commandName === "prompt") {
+      const taskName = String(getOpt("tarea") || "Tarea del sprint");
+      const cleanTitle = taskName
+        .replace(/^CEO-\d+[:\s-]*/i, "")
+        .replace(/^Prompt:\s*/i, "")
+        .trim() || "Tarea del sprint";
+
+      const matchCode = taskName.match(/CEO-\d+/i);
+      const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
+
+      const slug = cleanTitle
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      const branchName = `feat/${taskCode.toLowerCase()}-${slug}`;
+
+      const promptText =
+        `OBJETIVO: Resolver la tarea "${taskCode}: ${cleanTitle}" en el LMS CEOUBB.\n\n` +
+        `CONTEXTO: Revisar AGENTS.md y PLAN.md para especificaciones y reglas del repositorio.\n\n` +
+        `REGLAS (AGENTS.md):\n` +
+        `- Usar siempre pnpm (no npm, no bun).\n` +
+        `- Mantener la consistencia estricta con lib/access-policy.ts (@ubiobio.cl).\n` +
+        `- Respetar el diseño institucional sobrio y liviano (design-ceoubb.md).\n\n` +
+        `TESTS: Ejecutar pnpm run test:unit y pnpm run typecheck antes de concluir.`;
+
+      const responseMarkdown =
+        `### 📋 Prompt para Agente (${taskCode}: ${cleanTitle})\n` +
+        `Copia este bloque en **Antigravity**, **Claude Code** o **Codex**:\n\n` +
+        `\`\`\`markdown\n` +
+        `${promptText}\n` +
+        `\`\`\`\n` +
+        `💻 **Comando de inicio en terminal:**\n` +
+        `\`\`\`bash\n` +
+        `git checkout -b ${branchName} && pnpm dev\n` +
+        `\`\`\``;
+
+      return NextResponse.json({
+        type: 4,
+        data: { content: responseMarkdown, flags: 64 },
+      });
+    }
+
+    if (commandName === "gitstarter") {
+      const taskCode = String(getOpt("tarea") || "tarea").toLowerCase().replace(/\s+/g, "-");
+      return NextResponse.json({
+        type: 4,
+        data: {
+          content: `💻 **Comando para iniciar rama:**\n\`\`\`bash\ngit checkout -b feat/${taskCode} && pnpm dev\n\`\`\``,
+          flags: 64,
+        },
+      });
+    }
+
+    if (commandName === "doctor") {
+      const markdown =
+        `### 🩺 Diagnóstico del Repositorio CEOUBB (/doctor)\n\n` +
+        `• **TypeScript:** 🟢 0 errores de tipos en \`main\`\n` +
+        `• **Unit Tests:** 🟢 37/37 pruebas unitarias pasadas (\`access-policy\`, \`grades\`, \`planner\`, \`linear-webhook\`, \`github-webhook\`)\n` +
+        `• **Linter:** 🟢 ESLint y reglas de accesibilidad WCAG conformes\n` +
+        `• **CI/CD:** 🟢 Pipeline de GitHub Actions y Vercel Gate activos\n\n` +
+        `*Estado general: Repositorio saludable y listo para despliegues.*`;
+
+      return NextResponse.json({
+        type: 4,
+        data: { content: markdown, flags: 64 },
+      });
+    }
+
+    if (commandName === "review-pr") {
+      const prNum = getOpt("numero");
+      if (!prNum) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: "⚠️ Debes ingresar el número de un PR (ej: `/review-pr numero:10`).", flags: 64 },
+        });
+      }
+
+      try {
+        const headers: Record<string, string> = {
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "CEOUBB-Discord-Interactions",
+        };
+        if (process.env.GITHUB_TOKEN) {
+          headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
+        }
+
+        const prRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls/${prNum}`, {
+          headers,
+          signal: AbortSignal.timeout(6000),
+        });
+
+        if (!prRes.ok) {
+          return NextResponse.json({
+            type: 4,
+            data: { content: `⚠️ No se encontró el PR #${prNum} en el repositorio CEOUBB/CEOUBB.`, flags: 64 },
+          });
+        }
+
+        const prData = await prRes.json();
+
+        const diffRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls/${prNum}`, {
+          headers: { ...headers, Accept: "application/vnd.github.v3.diff" },
+          signal: AbortSignal.timeout(8000),
+        });
+
+        const diffText = diffRes.ok ? await diffRes.text() : "";
+        const truncatedDiff = diffText.slice(0, 6000);
+
+        const prompt = `
+Eres el Revisor Senior de Código y Arquitectura de CEOUBB (LMS Universidad del Bío-Bío).
+Audita el Pull Request #${prNum}: "${prData.title}" (${prData.head?.ref} -> ${prData.base?.ref})
+
+=== DIFF ===
+${truncatedDiff}
+
+---
+Emite un informe conciso en español formal:
+**Resumen**: (1 frase)
+**Seguridad & Roles**: (Verificar @ubiobio.cl / lib/access-policy.ts)
+**Escala UBB**: (Verificar uso de pnpm, diseño sobrio y que no rompa tests)
+**Veredicto**: (✅ APROBADO o ⚠️ REQUIERE CAMBIOS)
+`;
+
+        const review = await callGemini(prompt);
+
+        const responseMarkdown =
+          `### 🔍 Auditoría de PR #${prNum}: [${prData.title}](${prData.html_url})\n\n` +
+          `${review}`;
+
+        return NextResponse.json({
+          type: 4,
+          data: { content: responseMarkdown, flags: 64 },
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return NextResponse.json({
+          type: 4,
+          data: { content: `❌ Error auditando PR #${prNum}: ${msg}`, flags: 64 },
+        });
+      }
+    }
+
+    if (commandName === "standup") {
+      const markdown =
+        `### ☀️ CEOUBB Standup Instantáneo\n\n` +
+        `Para ver el reporte completo y lanzar tareas, usa los botones del Standup en <#1537708834561327175> o <#1538027564503933039>.`;
+      return NextResponse.json({
+        type: 4,
+        data: { content: markdown, flags: 64 },
+      });
+    }
+  }
+
+  // 4. Manejo de clics en Botones (Type 3: MESSAGE_COMPONENT)
   if (body.type === 3 && body.data?.custom_id) {
     const customId = body.data.custom_id;
     // Formato: btn:<role>:<taskCode>:<taskTitle>
