@@ -475,6 +475,28 @@ async function reviewPullRequestWithAI(prNumber) {
   const diffText = diffRes.ok ? await diffRes.text() : "Diff no disponible.";
   const truncatedDiff = diffText.slice(0, 8000);
 
+  // 3. Obtener comentarios del PR para detectar diagnósticos de React Doctor
+  let reactDoctorNotes = "Sin comentarios de React Doctor detectados en el PR.";
+  try {
+    const commentsRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/issues/${prNumber}/comments`, {
+      headers,
+      signal: AbortSignal.timeout(5000),
+    });
+    if (commentsRes.ok) {
+      const comments = await commentsRes.json();
+      const doctorComments = (comments || []).filter((c) =>
+        c.body?.toLowerCase().includes("react doctor") ||
+        c.body?.toLowerCase().includes("million") ||
+        c.user?.login?.toLowerCase().includes("doctor")
+      );
+      if (doctorComments.length > 0) {
+        reactDoctorNotes = doctorComments.map((c) => c.body).join("\n\n---\n\n").slice(0, 3000);
+      }
+    }
+  } catch {
+    // Ignorar error al consultar comentarios
+  }
+
   const agentsRules = getAgentsRulesContext();
 
   const prompt = `
@@ -493,12 +515,21 @@ Descripción: ${prData.body || "Sin descripción"}
 === DIFF (MÁXIMO 8000 CARACTERES) ===
 ${truncatedDiff}
 
+=== COMENTARIOS DE AUDITORÍA (REACT DOCTOR / CI) ===
+${reactDoctorNotes}
+
 ---
+Instrucciones de auditoría:
+1. Diagnósticos de React Doctor: Revisa si React Doctor dejó advertencias de rendimiento, renderizados innecesarios o accesibilidad. Si React Doctor reportó algún problema, enuméralo detalladamente y EXIGE su resolución antes de aprobar el PR.
+2. Seguridad & Roles: Verificar que la derivación de roles use estrictamente lib/access-policy.ts y dominios @ubiobio.cl.
+3. Escala UBB: Verificar uso de pnpm, diseño sobrio (design-ceoubb.md) y pruebas unitarias.
+
 Emite un informe conciso en español formal estructurado así:
 **Resumen del Cambio**: (1-2 frases)
+**Diagnósticos de React Doctor**: (Detalla si hay problemas reportados por React Doctor o si está limpio)
 **Seguridad & Roles**: (¿Cumple lib/access-policy.ts y dominios @ubiobio.cl / @alumnos.ubiobio.cl?)
 **Escala & Calidad**: (¿Usa pnpm? ¿Respeta diseño sobrio design-ceoubb.md? ¿Hay riesgo a escala?)
-**Veredicto**: (✅ APROBADO o ⚠️ REQUIERE CAMBIOS con puntos exactos)
+**Veredicto**: (✅ APROBADO si todo está limpio, o ⚠️ REQUIERE CAMBIOS exigiendo resolver problemas de React Doctor o arquitectura)
 `;
 
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
