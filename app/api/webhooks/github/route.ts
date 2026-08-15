@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     // Evento de ejecución de CI/CD (GitHub Actions)
     if (event === "workflow_run") {
-      const { action, workflow_run, repository } = payload;
+      const { action, workflow_run } = payload;
       if (action !== "completed" || !workflow_run) {
         return NextResponse.json({ message: "Ignored workflow_run action" }, { status: 200 });
       }

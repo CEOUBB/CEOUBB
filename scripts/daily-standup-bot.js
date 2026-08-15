@@ -15,12 +15,6 @@ import { exec } from "node:child_process";
 import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  ALLOWED_USER_IDS,
-  KNOWN_USER_NAMES,
-  fetchChannelConversationContext,
-} from "./discord-context-helper.js";
-
 const execPromise = util.promisify(exec);
 
 // Load .env.local
@@ -406,7 +400,7 @@ async function runDoctorDiagnostics() {
   }
 
   try {
-    const { stdout } = await execPromise("pnpm run lint");
+    await execPromise("pnpm run lint");
     results.lint = { ok: true, output: "Sin errores de linter ni accesibilidad" };
   } catch (err) {
     results.lint = { ok: false, output: err.stdout || err.message };

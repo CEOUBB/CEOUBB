@@ -142,8 +142,6 @@ client.on("messageCreate", async (message) => {
     sessionStore.setSession(message.channel.id, message.author.id, sessionId);
   }
 
-  const sessionFlag = isExisting ? `-r ${sessionId}` : `--session-id ${sessionId}`;
-
   console.log(`\n📩 Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`);
 
   // Continuously indicate typing while processing
