@@ -45,3 +45,42 @@ jobs:
 
       - name: Run test suite
         run: pnpm test
+
+      - name: Notify Discord on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const channelId = "1536936245643579462"; // #🚨-❙-alertas
+            const botToken = "${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}";
+            const sha = context.sha ? context.sha.slice(0, 7) : "commit";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const actor = context.actor;
+            const ref = context.ref || "main";
+
+            const embed = {
+              title: `🔴 Fallo en Pipeline: ${context.workflow}`,
+              description: `Se detectó un fallo durante la verificación de calidad en \`${ref}\`.\n\n` +
+                `• **Commit:** [\`${sha}\`](${runUrl})\n` +
+                `• **Autor:** @${actor}\n` +
+                `• **Diagnóstico:** Revisa el linter, typecheck o tests en los logs.\n\n` +
+                `🔗 **[Ver detalles del fallo en GitHub Actions](${runUrl})**`,
+              color: 0xef4444,
+              timestamp: new Date().toISOString(),
+              footer: { text: "CEOUBB CI/CD Inspector" }
+            };
+
+            if (botToken) {
+              try {
+                await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bot ${botToken}`,
+                  },
+                  body: JSON.stringify({ embeds: [embed] })
+                });
+              } catch (e) {
+                console.error("Error enviando alerta a Discord:", e);
+              }
+            }
