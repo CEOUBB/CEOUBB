@@ -68,7 +68,7 @@
   --container-max: 1240px;
   --container-pad: 32px;
 
-  /* Barra institucional: papel sobre el lienzo, cerrada por la franja heráldica. */
+  /* Barra institucional: papel sobre el lienzo, cerrada por filete hairline. */
   --header-height: 62px;
 
   /* Insets del dispositivo. Android 15 fuerza el borde a borde y `StatusBar.setOverlaysWebView(false)`
@@ -208,14 +208,7 @@ img { max-width: 100%; }
   gap: 6px;
   padding: 0 var(--space-md) 0 10px;
   background: var(--canvas);
-}
-
-.boot-header::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ubb-royal-blue) 0 42%, var(--shield-sky) 42% 66%, var(--shield-gold) 66% 85%, var(--shield-red) 85%);
+  border-bottom: 1px solid var(--border-hairline);
 }
 
 /* La marca no es un hueso gris: es lo único cierto mientras la sesión resuelve. */
@@ -528,8 +521,8 @@ img { max-width: 100%; }
 .app-shell[data-sidebar="closed"] { --rail-width: 0px; }
 .app-shell[data-sidebar="closed"] .app-sidebar { transform: translateX(-100%); opacity: 0; pointer-events: none; }
 
-/* Cabecera de papel: el lienzo sube hasta el tope y la única nota de color
-   es la franja heráldica del escudo. El contenido del aula manda, no el cromo. */
+/* Cabecera de papel: el lienzo sube hasta el tope, separada por un filete hairline.
+   El contenido del aula manda, no el cromo. */
 .app-header {
   grid-area: header;
   position: sticky;
@@ -542,6 +535,7 @@ img { max-width: 100%; }
   padding: var(--safe-top) var(--space-md) 0 10px;
   background: var(--canvas);
   color: var(--text-body);
+  border-bottom: 1px solid var(--border-hairline);
 }
 
 /* Implements: REQ-CAP-09 */
@@ -560,15 +554,6 @@ img { max-width: 100%; }
       backdrop-filter: saturate(180%) blur(16px);
     }
   }
-}
-
-/* Franja heráldica UBB: azul, celeste, oro y rojo del escudo. */
-.app-header::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ubb-royal-blue) 0 42%, var(--shield-sky) 42% 66%, var(--shield-gold) 66% 85%, var(--shield-red) 85%);
 }
 
 .icon-button {

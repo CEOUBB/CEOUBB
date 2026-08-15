@@ -293,7 +293,7 @@ export function Portal() {
 
 /*
   Carga — el esqueleto del portal, no una pantalla aparte.
-  Reproduce la geometría real del shell (cabecera de papel con la franja heráldica,
+  Reproduce la geometría real del shell (cabecera de papel con filete hairline,
   barra lateral de 268px, rejilla de ramos) con los bloques todavía en gris. Cuando la
   sesión resuelve, el contenido cae exactamente donde ya estaba dibujado: sin salto de
   layout y sin una pantalla intermedia que no se parezca a nada del producto.
