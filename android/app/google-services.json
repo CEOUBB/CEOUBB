@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "411177916202-m7ji444f2lrodkg5sesii1iusdt8h65d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "cl.ubb.centroestudio",
+            "certificate_hash": "426f5b79b15ff807fbb974d207add8ac3216f61f"
+          }
+        },
+        {
           "client_id": "411177916202-d130n7opuu1iec0p3khq11tu2jg4hbt0.apps.googleusercontent.com",
           "client_type": 3
         }
