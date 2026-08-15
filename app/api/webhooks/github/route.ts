@@ -9,8 +9,7 @@ const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET || "";
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_CI_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
 const TARGET_CHANNEL_ID =
   process.env.DISCORD_CI_CHANNEL_ID ||
-  process.env.DISCORD_STANDUP_CHANNEL_ID ||
-  "1537708834561327175";
+  "1536936245643579462"; // #🚨-❙-alertas
 
 const MODEL_FALLBACK_LIST = [
   "gemini-3.7-flash",
