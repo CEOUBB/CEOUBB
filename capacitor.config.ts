@@ -19,8 +19,6 @@ const config: CapacitorConfig = {
   appName: "CEOUBB",
   webDir: "capacitor/www",
   server: {
-    // url: "https://ceoubb.com"
-    // cleartext: false
     url: serverUrl,
     androidScheme: "https",
     cleartext: isCleartext,

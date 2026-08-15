@@ -24,15 +24,36 @@ async function exists(path: string) {
   }
 }
 
+/*
+  Se afirma sobre el objeto resuelto, no sobre el texto del archivo. Desde que
+  `server.url` y `server.cleartext` se derivan de `CAPACITOR_SERVER_URL`, una
+  comprobación por expresión regular pasaría con la línea correcta comentada y no
+  demostraría nada sobre lo que realmente se compila en el AAB.
+*/
 // REQ-CAP-01
 test("the Capacitor config points the WebView at the deployed portal", async () => {
-  const source = await read("../capacitor.config.ts");
-  assert.match(source, new RegExp(`appId:\\s*"${APP_ID}"`), "appId must stay canonical");
-  assert.match(source, /appName:\s*"CEOUBB"/);
-  assert.match(source, /webDir:\s*"capacitor\/www"/);
-  assert.match(source, /url:\s*"https:\/\/ceoubb\.com"/);
-  assert.match(source, /cleartext:\s*false/, "the bridge must never fall back to cleartext");
+  const config = (await import("../capacitor.config.ts")).default;
+  assert.equal(config.appId, APP_ID, "appId must stay canonical");
+  assert.equal(config.appName, "CEOUBB");
+  assert.equal(config.webDir, "capacitor/www");
   assert.ok(await exists("../capacitor/www/index.html"), "webDir must contain the offline fallback document");
+
+  const url = config.server?.url ?? "";
+  // Sólo un override explícito de desarrollo puede apuntar fuera de producción.
+  if (!process.env.CAPACITOR_SERVER_URL) {
+    assert.equal(url, "https://ceoubb.com", "the shipped default must be the production portal");
+  }
+  assert.equal(
+    config.server?.cleartext ?? false,
+    url.startsWith("http://"),
+    "cleartext may only be on for an explicit http:// override, never for the shipped config",
+  );
+});
+
+// REQ-CAP-01 — el override es una comodidad de desarrollo; el valor por defecto es el contrato.
+test("falls back to the production portal when no override is set", async () => {
+  const source = await read("../capacitor.config.ts");
+  assert.match(source, /process\.env\.CAPACITOR_SERVER_URL\s*\|\|\s*"https:\/\/ceoubb\.com"/, "the fallback origin must stay https://ceoubb.com");
 });
 
 // REQ-CAP-02
