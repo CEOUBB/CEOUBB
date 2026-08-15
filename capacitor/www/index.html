@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#002b5c" />
+    <title>Centro de Estudio UBB · Sin conexión</title>
+    <!-- Implements: REQ-CAP-01 — documento de respaldo del webDir; la app real vive en https://ceoubb.com -->
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas-soft: #f4f6f9;
+        --white: #ffffff;
+        --ink: #0f172a;
+        --muted: #475569;
+        --royal-blue: #0055b8;
+        --midnight: #002b5c;
+        --hairline: rgba(15, 23, 42, 0.1);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100dvh;
+        padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+        background: var(--canvas-soft);
+        color: var(--ink);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: 100%;
+        max-width: 380px;
+        padding: 28px 24px;
+        background: var(--white);
+        border: 1px solid var(--hairline);
+        border-radius: 18px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+        text-align: center;
+      }
+      .rule {
+        display: block;
+        width: 44px;
+        height: 3px;
+        margin: 0 auto 18px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--royal-blue) 0 42%, #38bdf8 42% 66%, #f59e0b 66% 85%, #e31b23 85%);
+      }
+      h1 {
+        font-size: 21px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--midnight);
+      }
+      p { margin-top: 10px; font-size: 15px; line-height: 1.5; color: var(--muted); }
+      button {
+        margin-top: 20px;
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--royal-blue);
+        color: var(--white);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:active { transform: translateY(1px); }
+      small { display: block; margin-top: 18px; font-size: 12px; line-height: 1.45; color: var(--muted); }
+      @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="rule" aria-hidden="true"></span>
+      <h1>Sin conexión</h1>
+      <p>No pudimos abrir Centro de Estudio UBB. Revisa tu red y vuelve a intentarlo.</p>
+      <button type="button" onclick="location.replace('https://ceoubb.com')">Reintentar</button>
+      <small>Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío.</small>
+    </main>
+  </body>
+</html>
