@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-const scriptSrc = process.env.NODE_ENV === "production" ? "'self' 'unsafe-inline' https://apis.google.com" : "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400";
+/*
+  La WebView de Capacitor sirve el bridge desde `capacitor://localhost` (Android) y
+  `https://localhost` (iOS): sin esos orígenes el puente muere y la app queda en blanco.
+  Sólo se amplían `default-src`, `script-src` y `connect-src`; ninguna otra directiva cambia.
+*/
+// Implements: REQ-CAP-14
+const capacitorBridgeOrigins = "capacitor://localhost https://localhost";
+const scriptSrc = process.env.NODE_ENV === "production" ? `'self' 'unsafe-inline' https://apis.google.com ${capacitorBridgeOrigins}` : `'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400 ${capacitorBridgeOrigins}`;
 const remoteConnectSrc = "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io";
-const connectSrc = process.env.NODE_ENV === "production" ? `'self' ${remoteConnectSrc}` : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc}`;
+const connectSrc = process.env.NODE_ENV === "production" ? `'self' ${remoteConnectSrc} ${capacitorBridgeOrigins}` : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc} ${capacitorBridgeOrigins}`;
 
 const contentSecurityPolicy = [
-  "default-src 'self'",
+  `default-src 'self' ${capacitorBridgeOrigins}`,
   `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
