@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     locale: "es_CL",
   },
   twitter: { card: "summary_large_image", title: "Centro de Estudio UBB", description: "Aula y biblioteca académica de Ingeniería Mecánica UBB." },
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-192.png" },
+  icons: { icon: "/brand/ubb-shield.webp", apple: "/brand/ubb-shield.webp" },
 };
 
 export const viewport: Viewport = {
