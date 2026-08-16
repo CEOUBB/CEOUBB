@@ -1,0 +1,31 @@
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr_agent_job:
+    runs-on: ubuntu-latest
+    name: Run PR Agent
+    if: ${{ github.event.sender.type != 'Bot' }}
+    steps:
+      - name: PR Agent Action
+        uses: qodo-ai/pr-agent@main
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG.MODEL: "gemini-2.5-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini-1.5-flash"]'
