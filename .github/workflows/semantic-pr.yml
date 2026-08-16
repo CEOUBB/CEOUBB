@@ -1,0 +1,36 @@
+# Implements: REQ-CICD-05, REQ-CICD-06
+name: Semantic Pull Request
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+  statuses: write
+
+jobs:
+  validate-title:
+    name: Validate PR Title (Conventional Commits & Spanish)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Conventional Commits Title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^(?!(?:[Aa]dd|[Uu]pdate|[Ff]ix|[Cc]hange|[Rr]emove|[Dd]elete|[Cc]reate|[Ii]mplement|[Rr]efactor|[Aa]dded|[Uu]pdated|[Ff]ixed|[Rr]emoved)\b).+$
+          subjectPatternError: "El título del PR debe estar escrito en Español según AGENTS.md (ej: 'feat(portal): rediseño de cabecera', 'fix(auth): corregir derivación de rol docente')."
