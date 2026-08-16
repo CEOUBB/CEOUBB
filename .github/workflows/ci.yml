@@ -34,8 +34,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
       - name: Check Firebase Functions syntax
         run: pnpm run check:functions
+
+      - name: Check Firebase Security Rules
+        run: pnpm run check:rules
+
+      - name: Fast unit test suite
+        run: pnpm run test:unit
 
       - name: TypeScript typecheck
         run: pnpm run typecheck
@@ -43,23 +58,32 @@ jobs:
       - name: Lint code
         run: pnpm run lint
 
-      - name: Run test suite
+      - name: Full test suite (including build & rendered HTML)
         run: pnpm test
 
       - name: Notify Discord on Failure
         if: failure()
         uses: actions/github-script@v9
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
             const channelId = "1536936245643579462"; // #🚨-❙-alertas
-            const botToken = "${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}";
-            const sha = context.sha ? context.sha.slice(0, 7) : "commit";
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const actor = context.actor;
-            const ref = context.ref || "main";
+            const botToken = process.env.DISCORD_BOT_TOKEN;
+            const rawSha = process.env.COMMIT_SHA || "";
+            const sha = rawSha ? rawSha.slice(0, 7) : "commit";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.RUN_ID}`;
+            const actor = process.env.ACTOR || "desconocido";
+            const ref = process.env.REF_NAME || "main";
+            const workflow = process.env.WORKFLOW_NAME || "CI/CD";
 
             const embed = {
-              title: `🔴 Fallo en Pipeline: ${context.workflow}`,
+              title: `🔴 Fallo en Pipeline: ${workflow}`,
               description: `Se detectó un fallo durante la verificación de calidad en \`${ref}\`.\n\n` +
                 `• **Commit:** [\`${sha}\`](${runUrl})\n` +
                 `• **Autor:** @${actor}\n` +

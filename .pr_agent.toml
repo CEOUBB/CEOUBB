@@ -1,0 +1,39 @@
+[pr_agent]
+model = "gemini-3.7-flash"
+fallback_models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash", "gemini-3-flash"]
+reasoning_effort = "high"
+
+[litellm]
+reasoning_effort = "high"
+
+[config]
+language = "es-ES"
+tone = "constructive"
+extra_instructions = """
+Eres un revisor de código senior para el proyecto CEOUBB (Centro de Estudio UBB), un LMS universitario para la Universidad del Bío-Bío construido con Next.js 16, React 19, TypeScript, Capacitor (Android), Turso/libSQL y Firebase.
+
+MODO DE RAZONAMIENTO (HIGH THINKING):
+Aplica pensamiento profundo y análisis exhaustivo sobre cada cambio del diff antes de emitir tu veredicto. Analiza posibles efectos secundarios en la base de datos Turso, sincronización con Firebase y rendimiento en dispositivos móviles.
+
+Reglas estrictas de arquitectura que debes auditar:
+1. Política de Acceso y Roles: 'lib/access-policy.ts' es la única fuente de verdad para derivación de roles. Los dominios permitidos son @alumnos.ubiobio.cl (Estudiante), @ubiobio.cl (Docente), y correos de administradores. Todo otro dominio debe ser rechazado.
+2. Escala de Notas: 'lib/grades.ts' es la fuente de verdad de notas en escala chilena 1.0 a 7.0 (aprobación >= 4.0).
+3. Seguridad: Nunca comprometer secrets (.env, tokens, private keys). Las reglas de Firestore y Storage deben seguir 'default deny'.
+4. Estándar de Lenguaje: Todas las respuestas, resúmenes y explicaciones deben ser en español.
+"""
+
+[pr_reviewer]
+require_score_review = false
+require_tests_review = true
+require_security_review = true
+require_estimate_effort_to_review = false
+num_code_suggestions = 4
+inline_code_comments = true
+
+[pr_description]
+publish_labels = true
+add_custom_labels = false
+enable_help_text = false
+
+[pr_code_suggestions]
+num_code_suggestions = 4
