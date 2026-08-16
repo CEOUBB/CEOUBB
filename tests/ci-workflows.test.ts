@@ -14,6 +14,8 @@ const REQUIRED_WORKFLOWS = [
   ".github/workflows/bundle-analysis.yml",
   ".github/workflows/react-doctor.yml",
   ".github/workflows/semgrep.yml",
+  ".github/workflows/draft-release.yml",
+  ".github/workflows/release-android.yml",
 ];
 
 async function exists(path: string): Promise<boolean> {
