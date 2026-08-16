@@ -14,6 +14,7 @@
     "test:unit": "node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/planner.test.ts tests/linear-webhook.test.ts tests/github-webhook.test.ts tests/discord-interactions.test.ts tests/capacitor-config.test.ts tests/mobile-bridge.test.ts tests/mobile-performance-budget.test.ts tests/native-services.test.ts tests/firebase-mappers.test.ts tests/admin-api.test.ts tests/services.test.ts",
     "typecheck": "tsc --noEmit",
     "check:functions": "node --check firebase/functions/index.js",
+    "check:rules": "node -e \"const fs = require('fs'); const fr = fs.readFileSync('firebase/firestore.rules', 'utf8'); const sr = fs.readFileSync('firebase/storage.rules', 'utf8'); if (!fr.includes('rules_version') || !sr.includes('rules_version')) throw new Error('Invalid Firebase rules'); console.log('Firebase rules verified.');\"",
     "lint": "eslint .",
     "doctor": "react-doctor",
     "db:generate": "drizzle-kit generate",
