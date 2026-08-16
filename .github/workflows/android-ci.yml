@@ -1,26 +1,50 @@
-name: CI
+# Implements: REQ-CICD-01, REQ-CICD-02
+name: Android CI
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android-ci.yml'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android-ci.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: android-ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Lint, Typecheck & Test
+  build-android:
+    name: Build & Lint Android APK (Capacitor)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -34,32 +58,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Next.js build cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+      - name: Sync Capacitor Android
+        run: pnpm exec cap sync android
 
-      - name: Check Firebase Functions syntax
-        run: pnpm run check:functions
-
-      - name: Check Firebase Security Rules
-        run: pnpm run check:rules
-
-      - name: Fast unit test suite
-        run: pnpm run test:unit
-
-      - name: TypeScript typecheck
-        run: pnpm run typecheck
-
-      - name: Lint code
-        run: pnpm run lint
-
-      - name: Full test suite (including build & rendered HTML)
-        run: pnpm test
+      - name: Assemble Debug APK & Lint
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug lintDebug --no-daemon --stacktrace
 
       - name: Notify Discord on Failure
         if: failure()
@@ -80,18 +86,18 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.RUN_ID}`;
             const actor = process.env.ACTOR || "desconocido";
             const ref = process.env.REF_NAME || "main";
-            const workflow = process.env.WORKFLOW_NAME || "CI/CD";
+            const workflow = process.env.WORKFLOW_NAME || "Android CI";
 
             const embed = {
               title: `🔴 Fallo en Pipeline: ${workflow}`,
-              description: `Se detectó un fallo durante la verificación de calidad en \`${ref}\`.\n\n` +
+              description: `Se detectó un fallo durante la compilación/lint nativo de Android en \`${ref}\`.\n\n` +
                 `• **Commit:** [\`${sha}\`](${runUrl})\n` +
                 `• **Autor:** @${actor}\n` +
-                `• **Diagnóstico:** Revisa el linter, typecheck o tests en los logs.\n\n` +
+                `• **Diagnóstico:** Revisa los logs de Gradle (assembleDebug / lintDebug).\n\n` +
                 `🔗 **[Ver detalles del fallo en GitHub Actions](${runUrl})**`,
               color: 0xef4444,
               timestamp: new Date().toISOString(),
-              footer: { text: "CEOUBB CI/CD Inspector" }
+              footer: { text: "CEOUBB Android CI Inspector" }
             };
 
             if (botToken) {
