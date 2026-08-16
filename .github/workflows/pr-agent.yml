@@ -27,5 +27,6 @@ jobs:
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CONFIG.MODEL: "gemini-2.5-flash"
-          CONFIG.FALLBACK_MODELS: '["gemini-1.5-flash"]'
+          CONFIG.MODEL: "gemini-3.7-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash", "gemini-3-flash"]'
+          LITELLM.REASONING_EFFORT: "high"
