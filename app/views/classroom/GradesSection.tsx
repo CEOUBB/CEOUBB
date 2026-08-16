@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
+  ClassroomStudent,
   saveGradebook,
   saveSimulation,
   saveStudentScores,
@@ -24,6 +25,8 @@ import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
+
+const EMPTY_SCORES: GradeScores = {};
 
 export function GradesSection({
   course,
@@ -353,17 +356,20 @@ export function TeacherGrades({
     }
   };
 
-  const setScore = async (userId: string, itemId: string, value: string) => {
-    const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-    const next = { ...(classScores[userId] ?? {}) };
-    if (isValidGrade(score)) next[itemId] = score;
-    else delete next[itemId];
-    try {
-      await saveStudentScores(course.id, userId, next);
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
-    }
-  };
+  const handleSetScore = useCallback(
+    async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
+      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+      const next = { ...currentScores };
+      if (isValidGrade(score)) next[itemId] = score;
+      else delete next[itemId];
+      try {
+        await saveStudentScores(course.id, userId, next);
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
+      }
+    },
+    [course.id, note]
+  );
 
   return (
     <section className="grades-teacher">
@@ -460,35 +466,15 @@ export function TeacherGrades({
               Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
             </p>
           )}
-          {students.map((student) => {
-            const scores = classScores[student.userId] ?? {};
-            const summary = summarize(gradebook, scores);
-            return (
-              <div className="grades-matrix-row" key={student.userId}>
-                <span>
-                  <b>{student.name}</b>
-                  <small>{student.email}</small>
-                </span>
-                {gradebook.map((item) => (
-                  <span key={item.id}>
-                    <input
-                      aria-label={`${item.name} de ${student.name}`}
-                      defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
-                      key={`${item.id}-${scores[item.id] ?? ""}`}
-                      max={MAX_GRADE}
-                      min={MIN_GRADE}
-                      onBlur={(event) => setScore(student.userId, item.id, event.target.value)}
-                      step="0.1"
-                      type="number"
-                    />
-                  </span>
-                ))}
-                <span className="grades-official">
-                  {summary.average === null ? "—" : formatGrade(summary.average)}
-                </span>
-              </div>
-            );
-          })}
+          {students.map((student) => (
+            <TeacherStudentRow
+              gradebook={gradebook}
+              key={student.userId}
+              onSetScore={handleSetScore}
+              scores={classScores[student.userId] ?? EMPTY_SCORES}
+              student={student}
+            />
+          ))}
         </div>
       )}
       {status.text && (
@@ -499,3 +485,43 @@ export function TeacherGrades({
     </section>
   );
 }
+
+// Implements: REQ-PERF-08
+export const TeacherStudentRow = React.memo(function TeacherStudentRow({
+  student,
+  gradebook,
+  scores,
+  onSetScore,
+}: {
+  student: ClassroomStudent;
+  gradebook: GradeItem[];
+  scores: GradeScores;
+  onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
+}) {
+  const summary = summarize(gradebook, scores);
+  return (
+    <div className="grades-matrix-row">
+      <span>
+        <b>{student.name}</b>
+        <small>{student.email}</small>
+      </span>
+      {gradebook.map((item) => (
+        <span key={item.id}>
+          <input
+            aria-label={`${item.name} de ${student.name}`}
+            defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
+            key={`${item.id}-${scores[item.id] ?? ""}`}
+            max={MAX_GRADE}
+            min={MIN_GRADE}
+            onBlur={(event) => onSetScore(student.userId, item.id, event.target.value, scores)}
+            step="0.1"
+            type="number"
+          />
+        </span>
+      ))}
+      <span className="grades-official">
+        {summary.average === null ? "—" : formatGrade(summary.average)}
+      </span>
+    </div>
+  );
+});

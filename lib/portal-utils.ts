@@ -238,14 +238,33 @@ export async function loadCurrentSession(): Promise<User | null> {
   }
 }
 
-export async function loadAdminUsers(): Promise<User[]> {
+export type AdminUsersResponse = {
+  users: User[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
+
+export async function loadAdminUsers(
+  page = 1,
+  limit = 50,
+  query = ""
+): Promise<AdminUsersResponse> {
   try {
-    const response = await fetch("/api/admin/users", { cache: "no-store" });
-    if (!response.ok) return [];
-    const data = (await response.json()) as { users?: User[] };
-    return data.users ?? [];
+    const response = await fetch(
+      `/api/admin/users?page=${page}&limit=${limit}&q=${encodeURIComponent(query)}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return { users: [], total: 0, page, totalPages: 1 };
+    const data = (await response.json()) as AdminUsersResponse;
+    return {
+      users: data.users ?? [],
+      total: Number(data.total ?? 0),
+      page: Number(data.page ?? page),
+      totalPages: Number(data.totalPages ?? 1),
+    };
   } catch {
-    return [];
+    return { users: [], total: 0, page, totalPages: 1 };
   }
 }
 

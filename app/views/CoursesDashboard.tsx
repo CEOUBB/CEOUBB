@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import * as m from "motion/react-m";
 import { ArrowRight } from "@phosphor-icons/react";
 import { Course, PERIOD } from "../../lib/courses";
@@ -14,7 +15,6 @@ import {
   rise,
   shortDate,
   stagger,
-  unseenCount,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
 
@@ -36,6 +36,43 @@ export function CoursesDashboard({
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
+
+  // Implements: REQ-PERF-07
+  const activitySummaryByCourse = useMemo(() => {
+    const map = new Map<
+      string,
+      { total: number; unseen: number; upcoming: CalendarEntry | undefined }
+    >();
+
+    const activityMap = new Map<string, { total: number; unseen: number }>();
+    for (const item of activity) {
+      const current = activityMap.get(item.courseId) ?? { total: 0, unseen: 0 };
+      current.total += 1;
+      const seenAt = seen[item.courseId];
+      if (!seenAt || item.createdAt > seenAt) {
+        current.unseen += 1;
+      }
+      activityMap.set(item.courseId, current);
+    }
+
+    const upcomingMap = new Map<string, CalendarEntry>();
+    for (const entry of entries) {
+      if (entry.date >= todayISO && !upcomingMap.has(entry.courseId)) {
+        upcomingMap.set(entry.courseId, entry);
+      }
+    }
+
+    for (const course of courses) {
+      const counts = activityMap.get(course.id) ?? { total: 0, unseen: 0 };
+      map.set(course.id, {
+        total: counts.total,
+        unseen: counts.unseen,
+        upcoming: upcomingMap.get(course.id),
+      });
+    }
+
+    return map;
+  }, [courses, activity, seen, entries, todayISO]);
 
   return (
     <>
@@ -95,11 +132,10 @@ export function CoursesDashboard({
       </div>
       <m.section animate="show" className="course-grid" initial="hidden" variants={stagger}>
         {courses.map((course) => {
-          const upcoming = entries.find(
-            (entry) => entry.courseId === course.id && entry.date >= todayISO
-          );
-          const total = activity.filter((item) => item.courseId === course.id).length;
-          const unseen = unseenCount(activity, course.id, seen[course.id]);
+          const summary = activitySummaryByCourse.get(course.id);
+          const upcoming = summary?.upcoming;
+          const total = summary?.total ?? 0;
+          const unseen = summary?.unseen ?? 0;
           return (
             <m.article
               className="course-card"

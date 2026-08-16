@@ -4028,6 +4028,119 @@ a.resource-card:focus-visible .resource-icon {
   color: #047857;
 }
 
+.admin-toolbar {
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.admin-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 380px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.admin-search-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 36px 6px 38px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-search-input:focus {
+  border-color: var(--ubb-royal-blue);
+  box-shadow: 0 0 0 2px var(--color-primary-wash);
+}
+
+.admin-search-clear {
+  position: absolute;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: var(--canvas-soft);
+  color: var(--text-faint);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.admin-search-clear:hover {
+  background: var(--border-hairline);
+  color: var(--ink);
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-sm);
+}
+
+.admin-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-page-btn:hover:not(:disabled) {
+  background: var(--canvas-soft);
+  border-color: var(--text-faint);
+}
+
+.admin-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-page-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.admin-page-info b {
+  color: var(--ink);
+}
+
 /* ── Notas ───────────────────────────────────────────────── */
 
 .grades-view {

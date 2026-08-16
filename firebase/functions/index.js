@@ -54,6 +54,7 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
   }
 );
 
+// Implements: REQ-PERF-09
 exports.deleteMyAccount = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid)
@@ -64,20 +65,34 @@ exports.deleteMyAccount = onCall(async (request) => {
     db.collectionGroup("posts").where("authorId", "==", uid).get(),
     db.collectionGroup("progress").where("uid", "==", uid).get(),
   ]);
-  await Promise.all([
-    Promise.all(
-      posts.docs.map(async (document) => {
-        const storagePath = text(document.get("storagePath"), "", 900);
-        if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
-          await bucket.file(storagePath).delete({ ignoreNotFound: true });
-        }
-        await document.ref.delete();
-      })
-    ),
-    Promise.all(progress.docs.map((document) => document.ref.delete())),
-    bucket.deleteFiles({ prefix: `courses/estatica/${uid}/` }),
-    db.collection("users").doc(uid).delete(),
-  ]);
+
+  // Clean up storage files dynamically
+  const storageDeletions = [];
+  for (const document of posts.docs) {
+    const storagePath = text(document.get("storagePath"), "", 900);
+    if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
+      storageDeletions.push(bucket.file(storagePath).delete({ ignoreNotFound: true }));
+    }
+  }
+  await Promise.all(storageDeletions);
+
+  // Batch delete Firestore documents in chunks of up to 400 operations
+  const allDocRefs = [
+    ...posts.docs.map((doc) => doc.ref),
+    ...progress.docs.map((doc) => doc.ref),
+    db.collection("users").doc(uid),
+  ];
+
+  const BATCH_SIZE = 400;
+  for (let i = 0; i < allDocRefs.length; i += BATCH_SIZE) {
+    const chunk = allDocRefs.slice(i, i + BATCH_SIZE);
+    const batch = db.batch();
+    for (const ref of chunk) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+
   await getAuth().deleteUser(uid);
   return { deleted: true };
 });

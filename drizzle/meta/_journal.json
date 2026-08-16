@@ -22,6 +22,13 @@
       "when": 1786329103452,
       "tag": "0002_drop_rut_password_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786868260463,
+      "tag": "0003_stormy_mach_iv",
+      "breakpoints": true
     }
   ]
 }
