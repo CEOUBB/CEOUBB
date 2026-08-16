@@ -1,0 +1,137 @@
+name: Release Android APK
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag o Release existente donde subir la APK (ej: v1.1.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload-apk:
+    name: Build & Upload Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync Capacitor Android
+        run: pnpm exec cap sync android
+
+      - name: Configure Keystore (Optional)
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Configurando firma de producción..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore.jks
+            cat <<EOF > android/keystore.properties
+            storeFile=keystore.jks
+            storePassword=$KEYSTORE_PASSWORD
+            keyAlias=$KEY_ALIAS
+            keyPassword=$KEY_PASSWORD
+          EOF
+            echo "has_signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No se encontraron secrets de firma; se compilará APK en modo standard/debug."
+            echo "has_signing=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Android APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          if [ "${{ steps.keystore.outputs.has_signing }}" = "true" ]; then
+            ./gradlew assembleRelease --no-daemon --stacktrace
+            cp app/build/outputs/apk/release/app-release.apk ../ceoubb-release.apk
+          else
+            ./gradlew assembleDebug --no-daemon --stacktrace
+            cp app/build/outputs/apk/debug/app-debug.apk ../ceoubb-debug.apk
+          fi
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
+          files: |
+            ceoubb-release.apk
+            ceoubb-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord on New Release
+        if: success()
+        uses: actions/github-script@v7
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
+          TAG_NAME: ${{ github.event.inputs.tag_name || github.event.release.tag_name || 'v1.x' }}
+          RELEASE_URL: ${{ github.event.release.html_url || format('https://github.com/{0}/{1}/releases/tag/{2}', context.repo.owner, context.repo.repo, github.event.inputs.tag_name) }}
+          ACTOR: ${{ github.actor }}
+        with:
+          script: |
+            const channelId = "1536934842741301321"; // #💬-❙-general
+            const botToken = process.env.DISCORD_BOT_TOKEN;
+            const tag = process.env.TAG_NAME;
+            const releaseUrl = process.env.RELEASE_URL;
+            const actor = process.env.ACTOR || "desconocido";
+
+            if (!botToken) {
+              console.log("No Discord token configured; skipping release notification.");
+              return;
+            }
+
+            const embed = {
+              title: `Nueva Versión Publicada: ${tag}`,
+              description: `Una nueva versión de CEOUBB para Android se encuentra disponible.\n\n` +
+                `• **Versión:** \`${tag}\`\n` +
+                `• **Publicado por:** @${actor}\n` +
+                `• **Distribución:** Paquete APK adjunto en la sección de descargas del release.\n\n` +
+                `[Descargar APK y ver notas de la versión](${releaseUrl})`,
+              color: 0x0055b8, // UBB Royal Blue
+              timestamp: new Date().toISOString(),
+              footer: { text: "CEOUBB Release Publisher" }
+            };
+
+            try {
+              await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bot ${botToken}`,
+                },
+                body: JSON.stringify({ embeds: [embed] })
+              });
+            } catch (e) {
+              console.error("Error enviando anuncio a Discord:", e);
+            }

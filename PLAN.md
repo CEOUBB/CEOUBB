@@ -28,6 +28,12 @@ Companion files:
 
 ## Active work
 
+- [ACTIVE] **Automatización de Releases y Distribución de APK (2026-08-16).** Rama `feat/android-releases-workflow`:
+  - `.github/release-drafter.yml` y `.github/workflows/draft-release.yml` para acumulación automática de cambios y categorización formal de PRs en borradores de release.
+  - `.github/workflows/release-android.yml` para compilación nativa de APK en publicación de release, soporte opcional de Keystore en secrets de CI, subida de binarios a Assets de GitHub Releases y anuncio a Discord.
+  - `tests/ci-workflows.test.ts` ampliado con validación de los nuevos workflows.
+  - Verificación: `pnpm run test:unit` (100/100), `pnpm run lint` y `pnpm run typecheck` en verde.
+
 - [DONE] **P6 — Automatizaciones de CI/CD y Calidad de Integración (2026-08-16).** Rama `feat/ci-cd-automations`. Spec [`docs/specs/p6-ci-cd-automation-enhancements.md`](docs/specs/p6-ci-cd-automation-enhancements.md) (`VERIFICADA`):
   - **TASK-01 (REQ-CICD-07)**: `.github/labeler.yml` y `.github/workflows/labeler.yml` con `actions/labeler@v5` para etiquetado automático por rutas (`📱 mobile / android`, `🔥 firebase / backend`, `🌐 web / frontend`, `📝 documentation`, `⚙️ ci / cd`).
   - **TASK-02 (REQ-CICD-05, REQ-CICD-06)**: `.github/workflows/semantic-pr.yml` con `amannn/action-semantic-pull-request@v5` para control de Conventional Commits y títulos en Español.
