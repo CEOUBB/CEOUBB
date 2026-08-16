@@ -8,6 +8,7 @@ reasoning_effort = "high"
 
 [config]
 language = "es-ES"
+response_language = "es-ES"
 tone = "constructive"
 custom_model_max_tokens = 64000
 max_model_tokens = 64000

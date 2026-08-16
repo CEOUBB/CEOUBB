@@ -32,4 +32,5 @@ jobs:
           CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash", "gemini/gemini-3.5-flash", "gemini/gemini-3.1-flash", "gemini/gemini-3-flash"]'
           CONFIG.CUSTOM_MODEL_MAX_TOKENS: 64000
           CONFIG.MAX_MODEL_TOKENS: 64000
+          CONFIG.RESPONSE_LANGUAGE: "es-ES"
           LITELLM.REASONING_EFFORT: "high"
