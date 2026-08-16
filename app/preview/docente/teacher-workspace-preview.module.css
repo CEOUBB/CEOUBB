@@ -328,8 +328,20 @@
 
 /* ── Actividades ──────────────────────────────────────────── */
 
-.activityHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }
+.activityHead { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); }
 .activityHead small { display: block; font-size: 13px; color: var(--text-muted); }
+.activityHead > :global(.content-actions) { flex: none; }
+
+/* Los botones de `.content-actions` no fijan su eje: con el icono dentro y la
+   columna estrecha el rótulo caía a una segunda línea. */
+.activityHead :global(.content-actions) button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
 
 .activityMeta { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-xl); }
 .activityMeta > div { display: flex; flex-direction: column; gap: 2px; }
@@ -554,7 +566,9 @@
 
 /* `.planner-dialog` pone la caja, el velo y los campos; el editor sólo pide
    más ancho y un cuerpo con scroll propio. */
-:global(.planner-dialog).editorDialog { width: min(860px, calc(100vw - 32px)); }
+/* El cuerpo del editor ya hace su propio scroll: sin `overflow: hidden` el
+   diálogo añade una segunda barra por su `max-height`. */
+:global(.planner-dialog).editorDialog { width: min(860px, calc(100vw - 32px)); overflow: hidden; }
 
 :global(.planner-dialog).editorDialog form {
   gap: 0;
@@ -575,6 +589,8 @@
 :global(.planner-dialog) .dialogHead p { font-size: 14px; color: var(--text-muted); }
 
 .dialogBody {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -632,8 +648,8 @@
 
 /* Vista estudiante: la banda navy y las tarjetas de aula del portal, en modo
    sólo lectura, para que el docente compare contra lo que ya conoce. */
-:global(.planner-dialog).studentDialog { width: min(720px, calc(100vw - 32px)); padding: 0; }
-.studentBody { max-height: calc(100dvh - 180px); overflow-y: auto; overscroll-behavior: contain; background: var(--canvas-soft); }
+:global(.planner-dialog).studentDialog { width: min(720px, calc(100vw - 32px)); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.studentBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--canvas-soft); }
 .studentHero { border-radius: 0; padding: var(--space-lg); }
 .studentHero h3 { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -.025em; }
 .studentHero p { font-size: 14px; }
