@@ -2,7 +2,7 @@
 
 **Status:** `VERIFICADA` · **Target:** `.github/workflows/`, `.github/labeler.yml`, `scripts/`  
 **Autor:** Antigravity / Claude Code · **Reviewer:** Pipe / Joaquín  
-**Framework:** GitHub Actions, Node.js 22, pnpm, Next.js 16, Gradle 8.11, Capacitor 8  
+**Framework:** GitHub Actions, Node.js 22, pnpm, Next.js 16, Gradle 8.11, Capacitor 8
 
 ---
 
@@ -20,18 +20,22 @@ CEOUBB cuenta actualmente con pipelines básicos para linting, typecheck, tests 
 ## 1. Requisitos Formales (EARS & RFC 2119)
 
 ### A. CI para Compilación Nativa Android (Capacitor)
+
 - **REQ-CICD-01 (Event-Driven):** WHEN un pull request o push a `main` modifique archivos en `android/**`, `capacitor.config.ts`, `package.json` o `pnpm-lock.yaml`, el pipeline `android-ci.yml` SHALL configurar Java 21 (Temurin), sincronizar Capacitor (`cap sync android`) y ejecutar `./gradlew assembleDebug lintDebug`.
 - **REQ-CICD-02 (Event-Driven):** IF la compilación nativa de Android o el linter de Gradle falla en GitHub Actions, THEN el pipeline SHALL despachar una alerta con formato Embed al canal `#🚨-❙-alertas` de Discord (`1536936245643579462`).
 
 ### B. Análisis y Presupuesto de Tamaño de Bundle (Next.js)
+
 - **REQ-CICD-03 (Event-Driven):** WHEN se ejecute el build de Next.js en CI para un pull request, el sistema SHALL analizar los manifiestos de `.next` (`build-manifest.json` / `app-build-manifest.json`) y generar un resumen estructurado en el `GITHUB_STEP_SUMMARY`.
 - **REQ-CICD-04 (Unwanted Behavior):** IF el First Load JS compartido o el chunk individual de cualquier ruta cliente supera el presupuesto límite configurado (250 kB gzipped / 800 kB sin comprimir), THEN el chequeo de bundle SHALL fallar o emitir un warning explícito bloqueante en CI.
 
 ### C. Linter Semántico de Títulos de PR en Español
+
 - **REQ-CICD-05 (Event-Driven):** WHEN un PR sea abierto, editado o sincronizado, el pipeline `semantic-pr.yml` SHALL verificar que el título cumpla el estándar Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `perf:`, `build:`, `ci:`, `revert:`).
 - **REQ-CICD-06 (Event-Driven):** El título del PR SHALL incluir una descripción coherente y estar escrito en **Español** según las reglas de `AGENTS.md`, rechazando títulos con prefijos o verbos genéricos en inglés.
 
 ### D. Etiquetado Automático de PRs (PR Labeler)
+
 - **REQ-CICD-07 (Event-Driven):** WHEN se reciba un evento de Pull Request, el pipeline `labeler.yml` (`actions/labeler@v5`) SHALL asignar automáticamente etiquetas contextuales según las rutas de archivos modificadas:
   - `📱 mobile / android`: `android/**`, `capacitor.config.ts`, `capacitor/**`, `lib/mobile-bridge.ts`, `lib/native-files.ts`, `lib/push-notifications.ts`, `app/mobile-shell.tsx`.
   - `🔥 firebase / backend`: `firebase/**`, `db/**`, `drizzle/**`, `app/api/**`.
@@ -40,6 +44,7 @@ CEOUBB cuenta actualmente con pipelines básicos para linting, typecheck, tests 
   - `⚙️ ci / cd`: `.github/**`, `package.json`, `pnpm-lock.yaml`, `tsconfig.json`.
 
 ### E. Integridad y Pruebas Unitarias
+
 - **REQ-CICD-08 (Ubiquitous):** La suite de pruebas automatizadas SHALL incluir `tests/ci-workflows.test.ts` para verificar la existencia sintáctica, consistencia de permisos y configuración de todos los workflows y del archivo `.github/labeler.yml`.
 
 ---
@@ -95,11 +100,11 @@ graph TD
 
 ### Matriz de Permisos Mínimos Requeridos
 
-| Workflow | Evento | Permisos GHA requeridos |
-| :--- | :--- | :--- |
-| `android-ci.yml` | `pull_request`, `push` | `contents: read` |
-| `semantic-pr.yml` | `pull_request_target` | `pull-requests: read`, `statuses: write` |
-| `labeler.yml` | `pull_request_target` | `contents: read`, `pull-requests: write` |
+| Workflow              | Evento                 | Permisos GHA requeridos                               |
+| :-------------------- | :--------------------- | :---------------------------------------------------- |
+| `android-ci.yml`      | `pull_request`, `push` | `contents: read`                                      |
+| `semantic-pr.yml`     | `pull_request_target`  | `pull-requests: read`, `statuses: write`              |
+| `labeler.yml`         | `pull_request_target`  | `contents: read`, `pull-requests: write`              |
 | `bundle-analysis.yml` | `pull_request`, `push` | `contents: read`, `pull-requests: write` (si comenta) |
 
 ---

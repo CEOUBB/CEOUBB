@@ -68,7 +68,10 @@ function collectDeclarations(css: string) {
 
 function ruleBodiesFor(css: string, selector: string) {
   const bodies: string[] = [];
-  const pattern = new RegExp(`(?:^|[},])\\s*${selector.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}\\s*\\{([^{}]*)\\}`, "g");
+  const pattern = new RegExp(
+    `(?:^|[},])\\s*${selector.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}\\s*\\{([^{}]*)\\}`,
+    "g"
+  );
   for (const match of css.matchAll(pattern)) bodies.push(match[1]);
   return bodies;
 }
@@ -79,19 +82,19 @@ const declarations = collectDeclarations(css);
 // REQ-CAP-09: ninguna regla con `backdrop-filter` puede quedar activa en viewport móvil.
 test("REQ-CAP-09: todo backdrop-filter vive tras un @media min-width >= 768px", () => {
   const blurs = declarations.filter((declaration) =>
-    /^-?(?:webkit-)?backdrop-filter\s*:/i.test(declaration.text),
+    /^-?(?:webkit-)?backdrop-filter\s*:/i.test(declaration.text)
   );
 
   assert.ok(
     blurs.length > 0,
-    "El parser no encontró ninguna declaración de backdrop-filter: el guard quedaría vacío y dejaría de proteger nada.",
+    "El parser no encontró ninguna declaración de backdrop-filter: el guard quedaría vacío y dejaría de proteger nada."
   );
 
   const unguarded = blurs.filter((declaration) => !declaration.ancestors.some(guardsMobile));
   assert.deepEqual(
     unguarded.map((declaration) => declaration.text),
     [],
-    "Estas declaraciones de backdrop-filter se aplican en móvil; envuélvelas en @media (min-width: 768px).",
+    "Estas declaraciones de backdrop-filter se aplican en móvil; envuélvelas en @media (min-width: 768px)."
   );
 });
 
@@ -100,13 +103,13 @@ test("REQ-CAP-09: el velo de .app-header conserva su @supports dentro del media 
   const headerBlur = declarations.find(
     (declaration) =>
       /^backdrop-filter\s*:/i.test(declaration.text) &&
-      declaration.ancestors.some((prelude) => prelude.includes(".app-header")),
+      declaration.ancestors.some((prelude) => prelude.includes(".app-header"))
   );
 
   assert.ok(headerBlur, "Se perdió el velo de .app-header.");
   assert.ok(
     headerBlur.ancestors.some((prelude) => /^@supports\b/i.test(prelude.trim())),
-    "El velo de .app-header debe seguir detrás de un @supports: sin él, los navegadores sin backdrop-filter se quedan con una cabecera semitransparente ilegible.",
+    "El velo de .app-header debe seguir detrás de un @supports: sin él, los navegadores sin backdrop-filter se quedan con una cabecera semitransparente ilegible."
   );
 });
 
@@ -122,7 +125,7 @@ test("REQ-CAP-08: las filas del feed declaran content-visibility y su alto estim
     assert.match(
       body,
       /contain-intrinsic-size\s*:\s*auto\s+\d+px/,
-      `\`${selector}\` necesita un contain-intrinsic-size con keyword \`auto\`; sin la pista de tamaño la barra de scroll salta al pintar cada fila.`,
+      `\`${selector}\` necesita un contain-intrinsic-size con keyword \`auto\`; sin la pista de tamaño la barra de scroll salta al pintar cada fila.`
     );
   }
 });

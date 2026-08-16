@@ -5,7 +5,10 @@ import test from "node:test";
 import { verifyGitHubSignature } from "../lib/github-signature.ts";
 
 const SECRET = "gh_wh_test_secret";
-const BODY = JSON.stringify({ action: "completed", workflow_run: { id: 123, conclusion: "failure" } });
+const BODY = JSON.stringify({
+  action: "completed",
+  workflow_run: { id: 123, conclusion: "failure" },
+});
 const HASH = createHmac("sha256", SECRET).update(BODY).digest("hex");
 const SIGNATURE_HEADER = `sha256=${HASH}`;
 

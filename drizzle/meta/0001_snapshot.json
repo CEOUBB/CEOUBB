@@ -70,12 +70,8 @@
           "name": "files_author_id_users_id_fk",
           "tableFrom": "files",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -108,12 +104,8 @@
           "name": "notification_reads_user_id_users_id_fk",
           "tableFrom": "notification_reads",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -185,10 +177,7 @@
       "indexes": {
         "idx_notifications_course_created": {
           "name": "idx_notifications_course_created",
-          "columns": [
-            "course_id",
-            "created_at"
-          ],
+          "columns": ["course_id", "created_at"],
           "isUnique": false
         }
       },
@@ -197,12 +186,8 @@
           "name": "notifications_actor_id_users_id_fk",
           "tableFrom": "notifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -274,10 +259,7 @@
       "indexes": {
         "idx_posts_id_course": {
           "name": "idx_posts_id_course",
-          "columns": [
-            "id",
-            "course_id"
-          ],
+          "columns": ["id", "course_id"],
           "isUnique": true
         }
       },
@@ -286,12 +268,8 @@
           "name": "posts_author_id_users_id_fk",
           "tableFrom": "posts",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -347,22 +325,15 @@
           "name": "progress_user_id_users_id_fk",
           "tableFrom": "progress",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "progress_user_id_course_id_pk": {
-          "columns": [
-            "user_id",
-            "course_id"
-          ],
+          "columns": ["user_id", "course_id"],
           "name": "progress_user_id_course_id_pk"
         }
       },
@@ -407,12 +378,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -484,16 +451,12 @@
       "indexes": {
         "idx_users_rut": {
           "name": "idx_users_rut",
-          "columns": [
-            "rut"
-          ],
+          "columns": ["rut"],
           "isUnique": false
         },
         "idx_users_email": {
           "name": "idx_users_email",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },

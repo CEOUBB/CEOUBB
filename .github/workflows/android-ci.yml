@@ -6,21 +6,21 @@ on:
     branches:
       - main
     paths:
-      - 'android/**'
-      - 'capacitor.config.ts'
-      - 'capacitor/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/android-ci.yml'
+      - "android/**"
+      - "capacitor.config.ts"
+      - "capacitor/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android-ci.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'android/**'
-      - 'capacitor.config.ts'
-      - 'capacitor/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/android-ci.yml'
+      - "android/**"
+      - "capacitor.config.ts"
+      - "capacitor/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android-ci.yml"
 
 permissions:
   contents: read
@@ -40,8 +40,8 @@ jobs:
       - name: Setup Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -53,7 +53,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

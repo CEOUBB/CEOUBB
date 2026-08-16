@@ -19,7 +19,8 @@ export type CalendarEntry = {
   tone: string;
 };
 
-export const APK_URL = "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
+export const APK_URL =
+  "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
 export const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
@@ -60,7 +61,14 @@ export function roleLabel(role: Role): string {
 }
 
 export function initials(value: string): string {
-  return value.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "CE";
+  return (
+    value
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "CE"
+  );
 }
 
 export function firstName(value: string): string {
@@ -69,10 +77,17 @@ export function firstName(value: string): string {
 
 export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]): CalendarEntry[] {
   const entries = courses.flatMap((course) => {
-    const dated = gradebooks.find((entry) => entry.courseId === course.id)?.items.filter((item) => item.date) ?? [];
-    const source = dated.length > 0
-      ? dated.map((item) => ({ id: item.id, name: `${item.name} · ${item.weight}% de la nota`, date: item.date }))
-      : course.evaluations;
+    const dated =
+      gradebooks.find((entry) => entry.courseId === course.id)?.items.filter((item) => item.date) ??
+      [];
+    const source =
+      dated.length > 0
+        ? dated.map((item) => ({
+            id: item.id,
+            name: `${item.name} · ${item.weight}% de la nota`,
+            date: item.date,
+          }))
+        : course.evaluations;
     return source.map((item) => ({
       key: `${course.id}-${item.id}`,
       courseId: course.id,
@@ -88,15 +103,42 @@ export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]
 const TIME_ZONE = "America/Santiago";
 const LOCALE = "es-CL";
 
-const shortFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "short", timeZone: TIME_ZONE });
+const shortFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "2-digit",
+  month: "short",
+  timeZone: TIME_ZONE,
+});
 const dayFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", timeZone: TIME_ZONE });
-const monthYearFormat = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "numeric", timeZone: TIME_ZONE });
+const monthYearFormat = new Intl.DateTimeFormat(LOCALE, {
+  month: "long",
+  year: "numeric",
+  timeZone: TIME_ZONE,
+});
 const monthFormat = new Intl.DateTimeFormat(LOCALE, { month: "short", timeZone: TIME_ZONE });
-const dateFormat = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "short", year: "numeric", timeZone: TIME_ZONE });
-const isoDateFormat = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TIME_ZONE });
+const dateFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  timeZone: TIME_ZONE,
+});
+const isoDateFormat = new Intl.DateTimeFormat("en-CA", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: TIME_ZONE,
+});
 const weekdayFormat = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: TIME_ZONE });
-const rangeFormat = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "long", timeZone: TIME_ZONE });
-const clockFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TIME_ZONE });
+const rangeFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "long",
+  timeZone: TIME_ZONE,
+});
+const clockFormat = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: TIME_ZONE,
+});
 
 export function getSantiagoDateISO(date: Date = new Date()): string {
   return isoDateFormat.format(date);
@@ -131,8 +173,14 @@ export function nextEntry(entries: CalendarEntry[]): CalendarEntry | null {
   return entries.find((entry) => entry.date >= today) ?? entries[entries.length - 1] ?? null;
 }
 
-export function unseenCount(activity: CourseActivity[], courseId: string, seenAt: string | undefined): number {
-  return activity.filter((item) => item.courseId === courseId && (!seenAt || item.createdAt > seenAt)).length;
+export function unseenCount(
+  activity: CourseActivity[],
+  courseId: string,
+  seenAt: string | undefined
+): number {
+  return activity.filter(
+    (item) => item.courseId === courseId && (!seenAt || item.createdAt > seenAt)
+  ).length;
 }
 
 export function countdown(value: string): string {
@@ -160,7 +208,10 @@ export function monthLabel(value: string): string {
 }
 
 export function monthOf(value: string): string {
-  return monthFormat.format(new Date(`${value}T12:00:00`)).replace(".", "").toUpperCase();
+  return monthFormat
+    .format(new Date(`${value}T12:00:00`))
+    .replace(".", "")
+    .toUpperCase();
 }
 
 export function formatDate(value: string): string {

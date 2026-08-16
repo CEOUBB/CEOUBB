@@ -80,9 +80,17 @@ export async function POST(req: NextRequest) {
         waitUntil(
           (async () => {
             try {
-              const aiResponse = await processGeminiQueryWithTools(userPrompt, userDisplayName, channelId);
+              const aiResponse = await processGeminiQueryWithTools(
+                userPrompt,
+                userDisplayName,
+                channelId
+              );
               const header = `> **Consulta:** ${userPrompt}\n\n`;
-              await updateOriginalDiscordMessage(applicationId, interactionToken, `${header}${aiResponse}`);
+              await updateOriginalDiscordMessage(
+                applicationId,
+                interactionToken,
+                `${header}${aiResponse}`
+              );
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
               await updateOriginalDiscordMessage(
@@ -120,7 +128,9 @@ export async function POST(req: NextRequest) {
 
     // COMANDO: /gitstarter (Comando git checkout para nueva rama de tarea)
     if (commandName === "gitstarter") {
-      const { taskCode, cleanTitle } = await resolveTaskAndTitle(String(getOpt("tarea") || "tarea"));
+      const { taskCode, cleanTitle } = await resolveTaskAndTitle(
+        String(getOpt("tarea") || "tarea")
+      );
       const branchName = buildBranchName(taskCode, cleanTitle);
 
       return NextResponse.json({
@@ -147,7 +157,10 @@ export async function POST(req: NextRequest) {
       if (!prNum) {
         return NextResponse.json({
           type: 4,
-          data: { content: "⚠️ Debes ingresar el número de un PR (ej: `/review-pr numero:10`).", flags: 64 },
+          data: {
+            content: "⚠️ Debes ingresar el número de un PR (ej: `/review-pr numero:10`).",
+            flags: 64,
+          },
         });
       }
 

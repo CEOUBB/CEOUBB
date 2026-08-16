@@ -28,9 +28,7 @@ export function PlannerRibbon({
             key={day}
           >
             {ribbon.map((item) => {
-              const course = item.courseId
-                ? courseById.get(item.courseId)
-                : undefined;
+              const course = item.courseId ? courseById.get(item.courseId) : undefined;
               return (
                 <button
                   className="planner-due"

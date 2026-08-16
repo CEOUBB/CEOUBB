@@ -56,7 +56,9 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^(\d{1,2}):(\d{2})/;
 
 export function isIsoDate(value: unknown): value is string {
-  return typeof value === "string" && ISO_DATE.test(value) && !Number.isNaN(atNoon(value).getTime());
+  return (
+    typeof value === "string" && ISO_DATE.test(value) && !Number.isNaN(atNoon(value).getTime())
+  );
 }
 
 function atNoon(iso: string): Date {
@@ -110,14 +112,22 @@ export function normalizeDueDate(value: unknown): string {
 export function dueDateParts(value: string): { date: string; time: string | null } | null {
   const normalized = normalizeDueDate(value);
   if (!normalized) return null;
-  return { date: normalized.slice(0, 10), time: normalized.length > 10 ? normalized.slice(11, 16) : null };
+  return {
+    date: normalized.slice(0, 10),
+    time: normalized.length > 10 ? normalized.slice(11, 16) : null,
+  };
 }
 
 /**
  * Mensaje de error en español, o `null` cuando el bloque es válido.
  * Único punto de validación: lo usan el formulario y el cliente Firestore.
  */
-export function validateBlock(input: { title: string; date: string; startTime: string; endTime: string }): string | null {
+export function validateBlock(input: {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}): string | null {
   if (!input.title.trim()) return "Escribe un título para el bloque.";
   if (!isIsoDate(input.date)) return "Elige una fecha válida.";
   const start = normalizeTime(input.startTime);
@@ -209,10 +219,12 @@ export function plannerItems(input: {
     });
   }
 
-  return items.sort((first, second) =>
-    first.date.localeCompare(second.date)
-    || (first.startTime ?? "").localeCompare(second.startTime ?? "")
-    || first.title.localeCompare(second.title));
+  return items.sort(
+    (first, second) =>
+      first.date.localeCompare(second.date) ||
+      (first.startTime ?? "").localeCompare(second.startTime ?? "") ||
+      first.title.localeCompare(second.title)
+  );
 }
 
 export function dayItems(items: PlannerItem[], date: string) {
@@ -232,9 +244,18 @@ export function placeBlocks(items: PlannerItem[]): PlacedBlock[] {
   const timed: PlacedBlock[] = [];
   for (const item of items) {
     if (!item.startTime || !item.endTime) continue;
-    timed.push({ ...item, startMinutes: minutesOf(item.startTime), endMinutes: minutesOf(item.endTime), column: 0, columns: 1 });
+    timed.push({
+      ...item,
+      startMinutes: minutesOf(item.startTime),
+      endMinutes: minutesOf(item.endTime),
+      column: 0,
+      columns: 1,
+    });
   }
-  timed.sort((first, second) => first.startMinutes - second.startMinutes || first.endMinutes - second.endMinutes);
+  timed.sort(
+    (first, second) =>
+      first.startMinutes - second.startMinutes || first.endMinutes - second.endMinutes
+  );
 
   const placed: PlacedBlock[] = [];
   let cluster: PlacedBlock[] = [];

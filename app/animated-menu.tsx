@@ -12,12 +12,24 @@ const lineTransition = { type: "spring", stiffness: 200, damping: 20 } as const;
 
 const lineVariants: Variants = {
   initial: { rotate: 0, x: 0, y: 0, transformOrigin: "top right" },
-  active: { rotate: -45, x: -2.35, y: 0.35, transformOrigin: "top right", transition: lineTransition },
+  active: {
+    rotate: -45,
+    x: -2.35,
+    y: 0.35,
+    transformOrigin: "top right",
+    transition: lineTransition,
+  },
 };
 
 const lastLineVariants: Variants = {
   initial: { rotate: 0, x: 0, y: 0, transformOrigin: "bottom right" },
-  active: { rotate: 45, x: -2.35, y: -0.35, transformOrigin: "bottom right", transition: lineTransition },
+  active: {
+    rotate: 45,
+    x: -2.35,
+    y: -0.35,
+    transformOrigin: "bottom right",
+    transition: lineTransition,
+  },
 };
 
 export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
@@ -37,7 +49,16 @@ export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
       {...props}
     >
       <m.line x1={4} x2={20} y1={6} y2={6} variants={lineVariants} />
-      <m.line x1={4} x2={20} y1={12} y2={12} variants={{ initial: { opacity: 1 }, active: { opacity: 0, transition: { ease: "easeInOut", duration: 0.2 } } }} />
+      <m.line
+        x1={4}
+        x2={20}
+        y1={12}
+        y2={12}
+        variants={{
+          initial: { opacity: 1 },
+          active: { opacity: 0, transition: { ease: "easeInOut", duration: 0.2 } },
+        }}
+      />
       <m.line x1={4} x2={20} y1={18} y2={18} variants={lastLineVariants} />
     </m.svg>
   );

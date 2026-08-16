@@ -4,16 +4,28 @@ import { type AccountRole, roleForEmail } from "../access-policy.ts";
 
 const auth = getAuth(firebaseApp);
 
-let firestoreHandle: Promise<{ sdk: typeof import("firebase/firestore"); db: ReturnType<typeof import("firebase/firestore").getFirestore> }> | null = null;
-let storageHandle: Promise<{ sdk: typeof import("firebase/storage"); storage: ReturnType<typeof import("firebase/storage").getStorage> }> | null = null;
+let firestoreHandle: Promise<{
+  sdk: typeof import("firebase/firestore");
+  db: ReturnType<typeof import("firebase/firestore").getFirestore>;
+}> | null = null;
+let storageHandle: Promise<{
+  sdk: typeof import("firebase/storage");
+  storage: ReturnType<typeof import("firebase/storage").getStorage>;
+}> | null = null;
 
 export function firestore() {
-  firestoreHandle ??= import("firebase/firestore").then((sdk) => ({ sdk, db: sdk.getFirestore(firebaseApp) }));
+  firestoreHandle ??= import("firebase/firestore").then((sdk) => ({
+    sdk,
+    db: sdk.getFirestore(firebaseApp),
+  }));
   return firestoreHandle;
 }
 
 export function cloudStorage() {
-  storageHandle ??= import("firebase/storage").then((sdk) => ({ sdk, storage: sdk.getStorage(firebaseApp) }));
+  storageHandle ??= import("firebase/storage").then((sdk) => ({
+    sdk,
+    storage: sdk.getStorage(firebaseApp),
+  }));
   return storageHandle;
 }
 

@@ -1,0 +1,75 @@
+name: "Reporte de Error / Bug Report"
+description: "Informa sobre un error o comportamiento inesperado en CEOUBB"
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar este problema.
+        Verifica que no exista un reporte similar abierto antes de enviar este formulario.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Plataforma / Entorno
+      description: Selecciona la plataforma donde ocurre el error.
+      options:
+        - "Portal Web (Navegador)"
+        - "App Android (Capacitor)"
+        - "Firebase / Cloud Functions / Backend"
+        - "Infraestructura CI/CD / Tooling"
+        - "Multiplataforma (Web + Móvil)"
+    validations:
+      required: true
+  - type: input
+    id: environment_details
+    attributes:
+      label: Dispositivo / Navegador / Versión de SO
+      description: "Ejemplo: Chrome 133 en Windows 11, Samsung Galaxy A54 (Android 14)."
+      placeholder: "Ej: Firefox 135 en macOS / Android 14"
+    validations:
+      required: false
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Pasos para reproducir
+      description: Describe paso a paso cómo reproducir el problema.
+      placeholder: |
+        1. Iniciar sesión con cuenta institucional `@alumnos.ubiobio.cl`
+        2. Navegar a la sección de Calificaciones
+        3. Hacer clic en...
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Comportamiento esperado
+      description: ¿Qué debería haber ocurrido?
+      placeholder: "La ponderación de notas debería calcularse automáticamente respetando el promedio ponderado chileno (1.0 a 7.0)."
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Comportamiento actual
+      description: ¿Qué ocurrió en su lugar?
+      placeholder: "Aparece un error en pantalla o los valores no se actualizan."
+    validations:
+      required: true
+  - type: textarea
+    id: logs_or_screenshots
+    attributes:
+      label: Logs, Capturas o Trazas de Error
+      description: Pega aquí los logs de consola, respuestas de red o capturas de pantalla (sin exponer credenciales).
+      placeholder: "Pega trazas o arrastra imágenes aquí..."
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Checklist de Validación
+      options:
+        - label: He verificado que este error no ha sido reportado previamente.
+          required: true
+        - label: He confirmado que no incluyo contraseñas, tokens ni información personal confidencial de estudiantes.
+          required: true

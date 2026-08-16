@@ -5,7 +5,7 @@
 - **Status**: Ready for Implementation (Gated by SDD)
 - **Baseline Score**: 40 / 100 (Critical — 1 Error, 67 Warnings, 10 Design Diagnostics)
 - **Target Score**: 100 / 100 (Clean Zero-Diagnostic Baseline)
-- **Methodology**: Spec-Driven Development (SDD) — *Spec First, Code Second, Machine-Verifiable Acceptance Criteria*
+- **Methodology**: Spec-Driven Development (SDD) — _Spec First, Code Second, Machine-Verifiable Acceptance Criteria_
 
 ---
 
@@ -153,30 +153,36 @@ graph TD
 ```
 
 ### Phase 1: Module Extraction & Fast Refresh Architecture
+
 - [ ] Create [`lib/portal-utils.ts`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/lib/portal-utils.ts) to house pure utilities, date formatters, and lookup maps.
 - [ ] Refactor [`app/portal-ui.tsx`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/app/portal-ui.tsx) and [`app/portal-views.tsx`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/app/portal-views.tsx) to export React components only.
 
 ### Phase 2: Security & Authorization Hardening
+
 - [ ] Harden write payload structures in [`lib/firebase-classroom-client.ts`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/lib/firebase-classroom-client.ts).
 - [ ] Configure `minimumReleaseAge` and `trustPolicy` in `pnpm-workspace.yaml`.
 - [ ] Sanitize dynamic HTML insertion sinks in WebView assets.
 
 ### Phase 3: Hydration & SSR Determinism
+
 - [ ] Pin `timeZone: 'America/Santiago'` and `locale: 'es-CL'` across all Intl formatters.
 - [ ] Guard `window` / `localStorage` module-level evaluations in asset scripts.
 - [ ] Add safe null/fallback guards for numeric parses and `.find()` queries.
 
 ### Phase 4: Routing & Asset Optimization
+
 - [ ] Convert all internal `<a>` tags in `Portal.tsx` and `Classroom.tsx` to `next/link`.
 - [ ] Convert static `<img>` elements to `next/image` with reserved dimension properties.
 - [ ] Add `response.ok` pre-checks to fetch consumers.
 
 ### Phase 5: Bundle & Performance Optimization
+
 - [ ] Switch chained `.map().filter()` to `.flatMap()` / `.reduce()`.
 - [ ] Modernize motion transforms for compositor acceleration.
 - [ ] Parallelize Cloud Function async calls in `firebase/functions/index.js`.
 
 ### Phase 6: Automated Verification & Sign-off
+
 - [ ] Execute `pnpm run lint`
 - [ ] Execute `pnpm run typecheck`
 - [ ] Execute `pnpm test`

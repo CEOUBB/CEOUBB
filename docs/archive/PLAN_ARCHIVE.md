@@ -89,20 +89,19 @@ Verified at merge: `pnpm run lint` clean for `app/` (pre-existing `no-img-elemen
 - Deployed `notifyStudentsOnCoursePost` and `deleteMyAccount` successfully.
 - Enabled automatic cleanup for old Functions container images.
 
-
 ## Recent implementation history
 
-| Commit | Result |
-|---|---|
+| Commit    | Result                                                                         |
+| --------- | ------------------------------------------------------------------------------ |
 | `0681499` | Deployed Firebase Functions with Node.js 22 and Functions Framework dependency |
-| `ab2d960` | Refined institutional login layout |
-| `0f6242b` | Removed standalone APK download from login |
-| `6a6384e` | Added mobile store placeholders |
-| `fbf4ea9` | Authorized the developer collaborator |
-| `37dc261` | Adopted UBB institutional visual identity |
-| `d99f935` | Fixed Firebase Google sign-in loop |
-| `dd040ea` | Added Android app and Firebase backend |
-| `540fce3` | Unified Firebase classroom work and store-compliance preparation |
+| `ab2d960` | Refined institutional login layout                                             |
+| `0f6242b` | Removed standalone APK download from login                                     |
+| `6a6384e` | Added mobile store placeholders                                                |
+| `fbf4ea9` | Authorized the developer collaborator                                          |
+| `37dc261` | Adopted UBB institutional visual identity                                      |
+| `d99f935` | Fixed Firebase Google sign-in loop                                             |
+| `dd040ea` | Added Android app and Firebase backend                                         |
+| `540fce3` | Unified Firebase classroom work and store-compliance preparation               |
 
 ## Handoff template for future agents
 
@@ -275,7 +274,6 @@ Production deployed: yes. The clean Vercel deployment is active and DNS now rout
 Known risks: OpenAI Sites, D1, R2, and the two `_cf-custom-hostname` TXT records remain available as a rollback path. Do not remove them until authentication and the role matrix pass against the production hostname.
 Next recommended action: test owner, collaborator, teacher, student, rejected account, and signed-out flows on `https://ceoubb.com`; after they pass, remove the obsolete Sites validation TXT records and deliberately decommission the old Sites infrastructure.
 
-
 ---
 
 Date: 2026-08-09
@@ -360,6 +358,7 @@ Branch / commit: working tree on `main`. Not committed.
 Goal: complete transition from npm to pnpm and remove npm entirely across the project, enforce pnpm policy in `AGENTS.md`, update lockfile and dev environment scripts.
 
 Files changed:
+
 - `package-lock.json`: deleted.
 - `pnpm-lock.yaml`: generated and updated via `pnpm install` / `pnpm approve-builds`.
 - `package.json`: added `"packageManager": "pnpm@11.18.0"`.
@@ -386,6 +385,7 @@ Goal: raise the visual and interaction quality of the web portal without introdu
 Approach: targeted evolution inside the design system documented in `AGENTS.md` ("Web design system"). No UI kit, animation library, or icon set was added. The existing Tailwind-preflight + CSS custom properties + Motion + Phosphor + Geist stack was kept, because adding shadcn/HeroUI/GSAP here would have created exactly the templated look the request asked to remove, and `AGENTS.md` prefers targeted changes over broad rewrites.
 
 Files changed:
+
 - `app/globals.css`: `--ink-3` darkened from `#6b8ba3` to `#517488`; form placeholder switched from `#93aec2` to `--ink-3`; deleted the dead `.icon-action`, `.notification-menu`, `.notification-popover`, `.notification-kind` and `.unit-menu` rule sets; `.course-sidecards` replaced by `.course-facts`; `.resource-cards`/`.coverage` replaced by `.resource-layout`/`.resource-primary`/`.resource-aside`/`.coverage-list`; added `.math`, `.course-head`, `.timeline-when`, `.tool-status.ok`, `.tool-status.bad`; course-card spacing tightened; `.materials-view` given `align-items: start` and `.teacher-tools` made sticky; store badges lifted from `grayscale(1)/opacity .55` to `grayscale(1) contrast(.9)/opacity .78`; `.course-cover h2` selector updated to `h1`; matching updates in the 1100px and 800px breakpoints.
 - `app/Portal.tsx`: removed the `NotificationMenu` component, the `NotificationItem` type, its header instance and the `Bell` import; removed the four dead "Actividades" sidebar buttons that all called `setTab("home")`; the four learning-outcome equations and the three cover equations are now native MathML instead of monospace text; the three eyebrow-labelled sidecards became one `<dl>` facts panel; the redundant `<h1>Portada del curso</h1>` is suppressed on the course home tab and the cover heading promoted to `h1`; course cards gained a per-course next-evaluation line via the new `nextForCourse`/`shortDate` helpers and moved the notice count into a card head row; calendar rows gained a computed `countdown` value; `ResourcesView` rewritten from three equal cards into an asymmetric primary/secondary layout that absorbs the former standalone "Cobertura del banco" section; classroom status messages carry a `Note` tone (`info`/`ok`/`bad`) instead of a bare string, so failures no longer render identically to successes, and the element gained `role="status"`; `0 inscritos` replaced by `studentCount()`; the admin role `<select>` gained an `aria-label`.
 - `mathml.d.ts`: new. Declares the MathML intrinsic elements used, because `@types/react` 19.2 does not ship them. Runtime support is already in React 19 and in all current browsers.
@@ -401,6 +401,7 @@ Checks not run: no institutional Google sign-in, so the classroom was inspected 
 Production deployed: no.
 
 Known risks:
+
 - `mathml.d.ts` augments the React JSX namespace. If `@types/react` later ships MathML elements, this file should be deleted rather than left to conflict.
 - The classroom equations are decorative-adjacent but are now real MathML; if the Android bundled library is ever brought onto this theme, it needs the same treatment rather than a third notation style.
 - `window.prompt`/`window.confirm` are still used for editing posts and renaming files. They are the largest remaining polish gap in the teacher flow and were left alone deliberately: replacing them is a dialog-system change, not a styling change, and is worth its own scoped task.
@@ -416,6 +417,7 @@ Branch / commit: `claude/perf-plans`, branched from `76f20bb`.
 Goal: execute the six performance plans generated by the `improve` skill in `plans/` (that directory is gitignored, so it is not part of this branch).
 
 Files changed:
+
 - `app/layout.tsx` (plan 001, 006): `generateMetadata()` and its `headers()` call replaced by a static `export const metadata` with `metadataBase: new URL("https://ceoubb.com")`. Reading request headers in the root layout was opting every route in the app into dynamic rendering. The hand-written `openGraph.images` and `twitter.images` entries were removed in favour of the file convention.
 - `app/opengraph-image.jpg`, `app/opengraph-image.alt.txt` (plan 006): new. `public/og.png` (1 540 663 B, 1730 × 909) deleted and replaced by a 1200 × 630 JPEG of 64 555 B, re-encoded from the same artwork with `pnpm dlx sharp-cli` (not added to `package.json`). The PNG candidate came out at 857 435 B, so the plan's ≤ 300 000 B decision rule selected JPEG. Next.js now derives `og:image:type`, `og:image:width` and `og:image:height` from the file, which also fixes the previously declared 1728 × 920 against a real 1730 × 909.
 - `next.config.ts` (plan 002): four `Cache-Control` entries appended after the existing security-header entry — `/sw.js` `no-cache, no-store, must-revalidate`; `/biblioteca/:path*` `max-age=300, stale-while-revalidate=86400`; `/biblioteca/assets/vendor/:path*` `max-age=31536000, immutable`; `/:path(brand|icons)/:file*` `max-age=86400, stale-while-revalidate=604800`.
@@ -427,6 +429,7 @@ Files changed:
 - `app/Portal.tsx`, `app/globals.css`, `mathml.d.ts`, `.gitignore`: carry the previous session's uncommitted design work, now committed alongside the split because plan 003 moved parts of that work into the two new files and the two changes can no longer be separated.
 
 Measured result:
+
 - `/` and `/privacidad` are prerendered again (`○` in the route table; both present in `.next/prerender-manifest.json`). Before: all ten routes `ƒ`.
 - Chunks referenced by `/`: 1 349 048 B raw / 407 045 B gzipped before, 840 949 B / 259 289 B after — 147 756 gzipped bytes removed (−36.3 %). The Firestore/Storage SDK is no longer requested by `/` at all. The drop is 1.5 % under plan 003's stated 150 000 B threshold because removing Firestore forced Turbopack to emit `firebase/auth` (66 364 B gzipped) as its own chunk, which `/` still requests deliberately — the login button needs it. That 66 KB was never Firestore's to give back.
 - Social preview image: 1 540 663 B → 64 555 B, and the declared dimensions now match the file.
@@ -438,6 +441,7 @@ Checks passed: `pnpm test` — 28/28 (production build compiles and type checks,
 Note for the plans: `pnpm dlx tsc` resolves to an unrelated squatted `tsc@2.0.4` package that exits nonzero. Use `pnpm exec tsc` instead.
 
 Checks not run (manual, need a real browser or real Firebase accounts):
+
 - Plan 003 step 8, the 13-row classroom matrix. Rows 3 (lazy chunk arrives on entering the classroom), 12 (leave the classroom before the chunk resolves) and 4 (progress write through the new `await firestore()` path) are the ones this change actually puts at risk.
 - Plan 004 step 4, the 8-row service-worker matrix, especially row 6: the library must still render fully offline.
 - Plan 005's browser matrix for the incremental-render change.
@@ -446,6 +450,7 @@ Checks not run (manual, need a real browser or real Firebase accounts):
 Production deployed: no. Nothing was deployed; no DNS, Firebase rule, Functions or billing change was made.
 
 Known risks:
+
 - `https://ceoubb.com/og.png` now 404s. Social platforms cache preview images for days to weeks, so already-shared links keep showing the old card until their cache expires.
 - The service worker's caching policy and the new `Cache-Control` headers are two layers of one policy. Changing either without the other produces either a wasted header or a stale-content bug.
 - The classroom is a live surface with no automated coverage. The 13-row matrix is the real gate on plan 003, not `pnpm test`.
@@ -482,8 +487,6 @@ Checks not run: none.
 Production deployed: no.
 Known risks: none.
 Next recommended action: merge the opened Pull Request to `main`.
-
-
 
 ## 2026-08-11 — Multi-course engine, gradebook and live badges
 
@@ -573,7 +576,7 @@ Three things that are correct at six courses and wrong at university scale, to b
 2. `watchGradebooks` reads every published gradebook in the database with no limit, on every portal load. Six document reads today, thousands per session at scale. Fix: same filter.
 3. `isMember()` in `firebase/firestore.rules` grants any signed-in UBB account read access to every course's posts and gradebook. Harmless while one cohort shares the same six ramos; a privacy problem the moment unrelated carreras or facultades share the project. Fix: gate course reads on an enrollment check in the rules. This is the item to treat as release-blocking before the platform is opened beyond the pilot cohort.
 
-*Superseded on 2026-08-11 (second revision).* This addendum left the catalogue location open and warned that splitting it across Turso and Firestore "is the option that will hurt". That question is now settled the other way: Turso is the system of record and Firestore holds a narrow, single-writer enrollment projection so the rules can call `exists()`. See "P1 — Academic data model (canonical spec)" above, which supersedes this addendum wherever the two disagree — including the entity list, which now covers facultades, departamentos, carreras, periodos and secciones rather than just courses and enrollments.
+_Superseded on 2026-08-11 (second revision)._ This addendum left the catalogue location open and warned that splitting it across Turso and Firestore "is the option that will hurt". That question is now settled the other way: Turso is the system of record and Firestore holds a narrow, single-writer enrollment projection so the rules can call `exists()`. See "P1 — Academic data model (canonical spec)" above, which supersedes this addendum wherever the two disagree — including the entity list, which now covers facultades, departamentos, carreras, periodos and secciones rather than just courses and enrollments.
 
 ### Next recommended step (revised)
 
@@ -611,7 +614,7 @@ Documentation only. No code, rules, schema or dependency changed, so no test run
 
 ### Remaining risks
 
-Unchanged by this pass, and now written down rather than implied: no enrollment model, no audit trail, no backups, no CI, no staging, no capacity or cost figures, no institutional agreement. The capacity table in P0.7 is deliberately left as *to define* — those numbers need the owner.
+Unchanged by this pass, and now written down rather than implied: no enrollment model, no audit trail, no backups, no CI, no staging, no capacity or cost figures, no institutional agreement. The capacity table in P0.7 is deliberately left as _to define_ — those numbers need the owner.
 
 ### Next recommended step
 
@@ -635,4 +638,32 @@ Unchanged for the code: deploy the two rules sets and run the manual matrix. In 
 - DONE — Pipe / Claude Code, `feat/portal-header-search-and-resources-hub`: Rediseño de los bloques de IA y beneficios en Recursos. Las fichas de IA pierden la descripción por herramienta y pasan a chips de marca (`.brand-chip` / `.chip-grid`); la condición de uso se explica una sola vez en el encabezado del grupo (`Gratis, sin cuotas` / `Gratis, con cuotas`), lo que retira el sistema de notas al pie con `*` y `**`. Los beneficios dejan de ser una lista continua de siete filas y se agrupan en dos mosaicos rotulados (`Gratis mientras estudias` / `Tarifa estudiante`) reutilizando `.brand-tile`, con una línea de beneficio por servicio y la verificación resumida en una sola nota de bloque; se eliminan `.perk-list`, `.perk-row` y `.perk-mark`. Verificado con `pnpm run typecheck`, `pnpm run lint` y `pnpm test` (build + 53/53). La verificación visual en navegador no se pudo ejecutar: el panel de vista previa rechazó la navegación en esa sesión. `app/portal-views.tsx`, `app/globals.css`.
 - DONE — Pipe / Antigravity / Claude Code, `portal-header-redesign`: Portal Header Redesign + Global Command Palette. Migrated header from solid navy to paper canvas translucent header (`backdrop-filter: blur(16px)`), heraldic rule separator, context trail, responsive collapses, and native `<details>` account menu with outside-click & Escape dismissal. Added native `<dialog>` global command palette (`app/command-palette.tsx`, `Ctrl`/`⌘` + `K`) with keyboard navigation and focus trapping. Added sidebar polish with `inert` attribute when closed, fixed 268px sliding rail, 18px icons, and two-line clamped course names. `app/Portal.tsx`, `app/command-palette.tsx`, `app/globals.css`.
 
+## Completed active-work entries (moved out of `PLAN.md` 2026-08-16)
 
+- DONE — Pipe / Antigravity / Claude Code, `feat/ci-cd-automations`: **P6 — Automatizaciones de CI/CD y Calidad de Integración.** Spec `docs/specs/p6-ci-cd-automation-enhancements.md` (`VERIFICADA`):
+  - `.github/labeler.yml` y `.github/workflows/labeler.yml` con `actions/labeler@v5` para etiquetado automático por rutas (`📱 mobile / android`, `🔥 firebase / backend`, `🌐 web / frontend`, `📝 documentation`, `⚙️ ci / cd`).
+  - `.github/workflows/semantic-pr.yml` con `amannn/action-semantic-pull-request@v5` para control de Conventional Commits y títulos en Español.
+  - `.github/workflows/android-ci.yml` para compilación nativa de Capacitor (`assembleDebug lintDebug`) con JDK 21 (Temurin), caché Gradle y alerta de Discord en `#🚨-❙-alertas`.
+  - `scripts/check-bundle-size.mjs` y `.github/workflows/bundle-analysis.yml` para presupuesto de First Load JS y reporte en `GITHUB_STEP_SUMMARY`.
+  - `tests/ci-workflows.test.ts` con cobertura de sintaxis de workflows, configuración de labeler, linter de títulos y presupuesto de bundle.
+  - Verificación: `pnpm run test:unit` (100/100), `pnpm test` (123/123), `pnpm run typecheck`, `pnpm run lint`, `check:functions` y `check:rules` en verde.
+
+- DONE — Pipe / Antigravity, `feat/code-structure-refactor`: **Refactorización de Arquitectura, Modularidad y Tests.** Ejecución consolidada de los planes de mejora estructural:
+  - Plan 010: Modularización de `app/Classroom.tsx` en vistas dedicadas bajo `app/views/classroom/` (`ClassroomView.tsx`, `PostsSection.tsx`, `MaterialsSection.tsx`, `GradesSection.tsx`, `ProgressSection.tsx`, `PeopleSection.tsx`, `classroom-utils.ts`).
+  - Plan 011: Desacoplamiento de `app/api/discord/interactions/route.ts` en módulos `lib/discord/` (`signature.ts`, `agent-prompt.ts`, `messages.ts`, `pr-reviewer.ts`, `diagnostics.ts`, `gemini-copilot.ts`) y eliminación de plantillas duplicadas.
+  - Plan 012: Creación de clientes compartidos en `lib/services/` (`linear.ts`, `github.ts`, `gemini.ts`) para centralizar integraciones externas y fallbacks de IA.
+  - Plan 013: Descomposición de `lib/firebase-classroom-client.ts` en dominios desacoplados (`lib/firebase/posts.ts`, `storage.ts`, `grades.ts`, `calendar.ts`, `profile.ts`, `mappers.ts`, `sdk.ts`) con re-exportación retrocompatible.
+  - Plan 014: Limpieza de stubs 410 obsoletos (`app/api/auth/login`, `app/api/auth/register`) y unificación de `doctor.config.json`.
+  - Plan 015: Ampliación de pruebas unitarias en `tests/` (`admin-api.test.ts`, `firebase-mappers.test.ts`, `discord-interactions.test.ts`, `services.test.ts`), elevando la suite unitaria a 95 tests (118 totales en `pnpm test`).
+  - Verificación: `pnpm run lint`, `pnpm run typecheck`, `pnpm run check:functions`, `pnpm run test:unit` (95/95) y `pnpm test` (118/118) en verde.
+
+- DONE — Pipe / Claude Code, `claude/mobile-ux-polish`: **P6 — Pase de UI/UX móvil sobre el portal.** Verificado en emulador de Android Studio (API 36, 1080×2400):
+  - Áreas seguras (`--safe-top`, `--safe-bottom`, `--header-offset`) con soporte para Android 15 edge-to-edge.
+  - Barra de búsqueda móvil completa (<768px) en cabecera y hoja modal con aspa de cierre.
+  - Integración de `useHardwareBack` con soporte prioritario para modales y diálogos `<dialog open>`.
+  - Rediseño de calendario en móvil (carril horizontal con máscara, franja horaria de 54px, diálogo `BlockDialog` desde abajo).
+  - Pestaña de navegación móvil «Recursos» apuntando a la vista de estudio institucional.
+  - Ficha de próxima evaluación rediseñada para teléfonos con color oscurecido contra tinta (`color-mix`).
+  - Tacto y densidad con `@media (hover: none)`, objetivos de 44px, `touch-action: manipulation`, `overscroll-behavior: contain`.
+  - Bloqueo de orientación vertical en `AndroidManifest.xml` e `Info.plist`.
+  - Verificación: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit` (58/58) y `pnpm test` (81/81) en verde.

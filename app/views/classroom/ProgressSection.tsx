@@ -54,7 +54,11 @@ export function ProgressSection({
                 <input
                   checked={index < completed}
                   onChange={(event) =>
-                    updateProgress(event.target.checked ? Math.max(completed, index + 1) : Math.min(completed, index))
+                    updateProgress(
+                      event.target.checked
+                        ? Math.max(completed, index + 1)
+                        : Math.min(completed, index)
+                    )
                   }
                   type="checkbox"
                 />
@@ -72,7 +76,9 @@ export function ProgressSection({
             <span>Última actividad</span>
           </div>
           {students.length === 0 && (
-            <p className="empty-row">Los estudiantes aparecerán cuando creen su cuenta institucional.</p>
+            <p className="empty-row">
+              Los estudiantes aparecerán cuando creen su cuenta institucional.
+            </p>
           )}
           {students.map((student) => (
             <div className="progress-table-row" key={student.userId}>
@@ -88,7 +94,9 @@ export function ProgressSection({
                   <m.em
                     animate={{
                       scaleX:
-                        student.total && typeof student.completed === "number" && !Number.isNaN(student.completed)
+                        student.total &&
+                        typeof student.completed === "number" &&
+                        !Number.isNaN(student.completed)
                           ? Math.min(1, Math.max(0, student.completed / student.total))
                           : 0,
                     }}

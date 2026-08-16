@@ -129,13 +129,20 @@ export function personalKind(value: unknown): PersonalEventKind {
 
 export function postKind(value: string): ClassroomPostKind {
   const normalized = value.toLowerCase();
-  if (normalized === "assessment" || normalized === "evaluacion" || normalized === "dictamen") return "assessment";
+  if (normalized === "assessment" || normalized === "evaluacion" || normalized === "dictamen")
+    return "assessment";
   if (normalized === "guide" || normalized === "guia") return "guide";
   if (normalized === "resource" || normalized === "recurso") return "resource";
   return "notice";
 }
 
 export function iso(value: unknown) {
-  if (value && typeof value === "object" && "toDate" in value && typeof (value as { toDate?: unknown }).toDate === "function") return (value as { toDate: () => Date }).toDate().toISOString();
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  )
+    return (value as { toDate: () => Date }).toDate().toISOString();
   return new Date().toISOString();
 }

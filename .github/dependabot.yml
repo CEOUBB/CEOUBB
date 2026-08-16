@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Mantener dependencias de npm/pnpm actualizadas con parches de seguridad
+  # Mantener dependencias de npm/pnpm actualizadas con parches de seguridad (raíz)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -19,5 +19,27 @@ updates:
     open-pull-requests-limit: 3
     groups:
       actions-dependencies:
+        patterns:
+          - "*"
+
+  # Monitorización de dependencias de Firebase Functions (Node.js/npm)
+  - package-ecosystem: "npm"
+    directory: "/firebase/functions"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      firebase-dependencies:
+        patterns:
+          - "*"
+
+  # Monitorización de dependencias y plugins de Gradle en Android
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      android-dependencies:
         patterns:
           - "*"

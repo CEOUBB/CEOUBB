@@ -53,9 +53,7 @@ export async function generateContentWithFallback(
   config?: GenerateContentOptions
 ): Promise<GenerateContentResult> {
   const normalizedContents =
-    typeof contents === "string"
-      ? [{ role: "user", parts: [{ text: contents }] }]
-      : contents;
+    typeof contents === "string" ? [{ role: "user", parts: [{ text: contents }] }] : contents;
 
   let lastError: unknown;
 
@@ -79,6 +77,11 @@ export async function generateContentWithFallback(
     }
   }
 
-  const finalError = lastError instanceof Error ? lastError : new Error(String(lastError || "No se pudo obtener respuesta de ningún modelo de fallback de Gemini"));
+  const finalError =
+    lastError instanceof Error
+      ? lastError
+      : new Error(
+          String(lastError || "No se pudo obtener respuesta de ningún modelo de fallback de Gemini")
+        );
   throw finalError;
 }

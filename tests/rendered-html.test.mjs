@@ -11,9 +11,24 @@ const PORT = 3123;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const SESSION_COOKIE = "centro_estudio_session";
 
-const OWNER = { id: "firebase:test-owner", email: "felipearce.2004@gmail.com", name: "Owner De Prueba", role: "owner" };
-const TEACHER = { id: "firebase:test-teacher", email: "docente@ubiobio.cl", name: "Docente De Prueba", role: "teacher" };
-const STUDENT = { id: "firebase:test-student", email: "estudiante@alumnos.ubiobio.cl", name: "Estudiante De Prueba", role: "student" };
+const OWNER = {
+  id: "firebase:test-owner",
+  email: "felipearce.2004@gmail.com",
+  name: "Owner De Prueba",
+  role: "owner",
+};
+const TEACHER = {
+  id: "firebase:test-teacher",
+  email: "docente@ubiobio.cl",
+  name: "Docente De Prueba",
+  role: "teacher",
+};
+const STUDENT = {
+  id: "firebase:test-student",
+  email: "estudiante@alumnos.ubiobio.cl",
+  name: "Estudiante De Prueba",
+  role: "student",
+};
 
 let server;
 let workspace;
@@ -67,11 +82,15 @@ before(async () => {
   await migrate(db);
   for (const user of [OWNER, TEACHER, STUDENT]) await seedUser(user);
 
-  server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
-    cwd: new URL("..", import.meta.url),
-    stdio: "ignore",
-    env: { ...process.env, TURSO_DATABASE_URL: url },
-  });
+  server = spawn(
+    process.execPath,
+    ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)],
+    {
+      cwd: new URL("..", import.meta.url),
+      stdio: "ignore",
+      env: { ...process.env, TURSO_DATABASE_URL: url },
+    }
+  );
   for (let attempt = 0; attempt < 120; attempt += 1) {
     try {
       await fetch(ORIGIN, { method: "HEAD" });
@@ -90,7 +109,8 @@ after(async () => {
     server.kill();
     await stopped;
   }
-  if (workspace) await rm(workspace, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  if (workspace)
+    await rm(workspace, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 });
 
 test("renders Centro de Estudio UBB", async () => {
@@ -119,17 +139,26 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
       .split(";")
       .map((entry) => entry.trim())
       .filter(Boolean)
-      .map((entry) => [entry.split(/\s+/)[0], entry]),
+      .map((entry) => [entry.split(/\s+/)[0], entry])
   );
   for (const name of ["default-src", "script-src", "connect-src"]) {
-    assert.match(directives.get(name) ?? "", /capacitor:\/\/localhost/, `${name} must admit the Android bridge origin`);
-    assert.match(directives.get(name) ?? "", /https:\/\/localhost/, `${name} must admit the iOS bridge origin`);
+    assert.match(
+      directives.get(name) ?? "",
+      /capacitor:\/\/localhost/,
+      `${name} must admit the Android bridge origin`
+    );
+    assert.match(
+      directives.get(name) ?? "",
+      /https:\/\/localhost/,
+      `${name} must admit the iOS bridge origin`
+    );
   }
   const untouched = {
     "style-src": "style-src 'self' 'unsafe-inline'",
     "img-src": "img-src 'self' data: blob: https:",
     "font-src": "font-src 'self' data:",
-    "frame-src": "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
+    "frame-src":
+      "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
     "worker-src": "worker-src 'self' blob:",
     "manifest-src": "manifest-src 'self'",
     "object-src": "object-src 'none'",
@@ -138,7 +167,11 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
     "frame-ancestors": "frame-ancestors 'none'",
   };
   for (const [name, value] of Object.entries(untouched)) {
-    assert.equal(directives.get(name), value, `${name} must not differ from the pre-migration policy`);
+    assert.equal(
+      directives.get(name),
+      value,
+      `${name} must not differ from the pre-migration policy`
+    );
   }
 });
 
@@ -162,7 +195,12 @@ test("returns the signed-in account without RUT or credential fields", async () 
   const response = await request("/api/auth/me", { cookie: await signIn(STUDENT) });
   assert.equal(response.status, 200);
   const { user } = await response.json();
-  assert.deepEqual(user, { id: STUDENT.id, email: STUDENT.email, name: STUDENT.name, role: STUDENT.role });
+  assert.deepEqual(user, {
+    id: STUDENT.id,
+    email: STUDENT.email,
+    name: STUDENT.name,
+    role: STUDENT.role,
+  });
 });
 
 test("ignores an expired session", async () => {
@@ -183,7 +221,11 @@ test("logout destroys the session server side", async () => {
   assert.match(setCookie, /Max-Age=0/);
   assert.match(setCookie, /HttpOnly/);
   assert.match(setCookie, /SameSite=Lax/);
-  assert.match(setCookie, /Secure/, "next start runs in production mode, so the cookie must be Secure");
+  assert.match(
+    setCookie,
+    /Secure/,
+    "next start runs in production mode, so the cookie must be Secure"
+  );
   assert.deepEqual(await (await request("/api/auth/me", { cookie })).json(), { user: null });
 });
 
@@ -201,12 +243,13 @@ test("restricts account administration to the owner role", async () => {
 
 test("refuses to change the rank of a developer account", async () => {
   const cookie = await signIn(OWNER);
-  const patch = (body) => request("/api/admin/users", {
-    method: "PATCH",
-    cookie,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const patch = (body) =>
+    request("/api/admin/users", {
+      method: "PATCH",
+      cookie,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
   assert.equal((await patch({ userId: OWNER.id, role: "student" })).status, 400);
   assert.equal((await patch({ userId: STUDENT.id, role: "owner" })).status, 400);
   assert.equal((await patch({ userId: STUDENT.id, role: "teacher" })).status, 200);
@@ -236,21 +279,44 @@ test("uses the Google sign-in popup, never a redirect", async () => {
 });
 
 test("does not persist Firebase Storage download URLs", async () => {
-  const source = await readFile(new URL("../lib/firebase-classroom-client.ts", import.meta.url), "utf8");
+  const source = await readFile(
+    new URL("../lib/firebase-classroom-client.ts", import.meta.url),
+    "utf8"
+  );
   assert.doesNotMatch(source, /const fileUrl = await getDownloadURL/);
   assert.match(source, /export async function classroomFileUrl/);
 });
 
 test("keeps profile deletion and course paths locked down", async () => {
-  const firestoreRules = await readFile(new URL("../firebase/firestore.rules", import.meta.url), "utf8");
-  const storageRules = await readFile(new URL("../firebase/storage.rules", import.meta.url), "utf8");
+  const firestoreRules = await readFile(
+    new URL("../firebase/firestore.rules", import.meta.url),
+    "utf8"
+  );
+  const storageRules = await readFile(
+    new URL("../firebase/storage.rules", import.meta.url),
+    "utf8"
+  );
   assert.match(firestoreRules, /allow delete: if isOwner\(\);/);
   assert.match(firestoreRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
   assert.match(storageRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
-  assert.equal(firestoreRules.match(/validCourse\(courseId\)/g).length, 5, "every course write path must be guarded by validCourse");
-  assert.equal(storageRules.match(/validCourse\(courseId\)/g).length, 2, "every course upload path must be guarded by validCourse");
-  assert.match(firestoreRules, /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if isTeacher\(\)/);
-  assert.match(firestoreRules, /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if isTeacher\(\)/);
+  assert.equal(
+    firestoreRules.match(/validCourse\(courseId\)/g).length,
+    5,
+    "every course write path must be guarded by validCourse"
+  );
+  assert.equal(
+    storageRules.match(/validCourse\(courseId\)/g).length,
+    2,
+    "every course upload path must be guarded by validCourse"
+  );
+  assert.match(
+    firestoreRules,
+    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if isTeacher\(\)/
+  );
+  assert.match(
+    firestoreRules,
+    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if isTeacher\(\)/
+  );
 });
 
 test("serves the public pages as cacheable static responses", async () => {
@@ -272,12 +338,20 @@ test("caches the vendored library assets and keeps the service worker fresh", as
 
   const data = await request("/biblioteca/assets/data.js");
   assert.match(data.headers.get("cache-control") ?? "", /stale-while-revalidate/);
-  assert.doesNotMatch(data.headers.get("cache-control") ?? "", /immutable/, "library content is not content-hashed");
+  assert.doesNotMatch(
+    data.headers.get("cache-control") ?? "",
+    /immutable/,
+    "library content is not content-hashed"
+  );
 
   const worker = await request("/sw.js");
   assert.match(worker.headers.get("cache-control") ?? "", /no-store/);
 
-  assert.match(vendor.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/, "security headers must survive the cache rules");
+  assert.match(
+    vendor.headers.get("content-security-policy") ?? "",
+    /frame-ancestors 'none'/,
+    "security headers must survive the cache rules"
+  );
 });
 
 test("serves a non-blocking service worker", async () => {
@@ -292,20 +366,39 @@ test("serves a non-blocking service worker", async () => {
 // REQ-CAP-19 — la biblioteca deja de estar duplicada: sólo el service worker la cubre sin conexión.
 test("covers the library offline from the service worker alone", async () => {
   const source = await (await request("/sw.js")).text();
-  assert.match(source, /"\/biblioteca\/index\.html"/, "the library entry point must be precached on install");
-  assert.match(source, /biblioteca\\\/assets\\\/vendor\\\//, "the immutable library assets must be served cache-first");
+  assert.match(
+    source,
+    /"\/biblioteca\/index\.html"/,
+    "the library entry point must be precached on install"
+  );
+  assert.match(
+    source,
+    /biblioteca\\\/assets\\\/vendor\\\//,
+    "the immutable library assets must be served cache-first"
+  );
 
   const duplicated = new URL("../android/app/src/main/assets/www/", import.meta.url);
-  await assert.rejects(access(duplicated), "the duplicated Android library tree must not come back");
+  await assert.rejects(
+    access(duplicated),
+    "the duplicated Android library tree must not come back"
+  );
 });
 
 test("keeps the Firestore and Storage SDKs out of the initial page bundle", async () => {
   const html = await (await request("/")).text();
-  const chunks = [...new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"]+?\.js/g)].map((match) => match[0]))];
+  const chunks = [
+    ...new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"]+?\.js/g)].map((match) => match[0])),
+  ];
   assert.ok(chunks.length > 0, "the page must reference at least one client chunk");
   for (const chunk of chunks) {
     const source = await (await request(chunk)).text();
-    assert.ok(!source.includes("firestore.googleapis.com"), `${chunk} still ships the Firestore SDK`);
-    assert.ok(!source.includes("firebasestorage.googleapis.com"), `${chunk} still ships the Cloud Storage SDK`);
+    assert.ok(
+      !source.includes("firestore.googleapis.com"),
+      `${chunk} still ships the Firestore SDK`
+    );
+    assert.ok(
+      !source.includes("firebasestorage.googleapis.com"),
+      `${chunk} still ships the Cloud Storage SDK`
+    );
   }
 });

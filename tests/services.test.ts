@@ -118,12 +118,9 @@ test("services/gemini: generateContentWithFallback lanza excepción si todos los
     },
   } as unknown as GoogleGenAI;
 
-  await assert.rejects(
-    async () => {
-      await generateContentWithFallback(mockAi, "Test");
-    },
-    /All quotas exhausted/
-  );
+  await assert.rejects(async () => {
+    await generateContentWithFallback(mockAi, "Test");
+  }, /All quotas exhausted/);
 });
 
 test("services/linear: getLinearApiKey retorna valor configurado o null", () => {

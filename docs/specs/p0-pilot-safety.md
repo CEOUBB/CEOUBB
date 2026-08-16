@@ -70,15 +70,15 @@ Context: the callable Function and Android invocation exist, but `/eliminar-cuen
 
 No capacity target is stated anywhere in the repository, so "production-ready" is untestable and no scale item has an acceptance criterion. Fill in with owner-approved numbers, then treat as acceptance criteria for the scale work in [`p1-academic-model.md`](p1-academic-model.md).
 
-| Target | Value | Notes |
-|---|---|---|
-| Concurrent students at peak (exam week) | *to define* | Drives read/write budget |
-| Active course-sections per period | *to define* | Drives the sweep fixes |
-| Total enrolled students | *to define* | Drives Turso sizing and import design |
-| Firestore reads per portal load | *to define* | Today unbounded; grows with total courses in the DB |
-| Storage GB stored and GB downloaded per month | *to define* | Dominated by "Mi Bodega" if ever built |
-| **Cost per student per year** | *to define* | The number an institutional decision turns on; benchmark against what Moodle UBB costs UBB today |
-| Uptime target, RPO and RTO | *to define* | Required for any service agreement |
+| Target                                        | Value       | Notes                                                                                            |
+| --------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Concurrent students at peak (exam week)       | _to define_ | Drives read/write budget                                                                         |
+| Active course-sections per period             | _to define_ | Drives the sweep fixes                                                                           |
+| Total enrolled students                       | _to define_ | Drives Turso sizing and import design                                                            |
+| Firestore reads per portal load               | _to define_ | Today unbounded; grows with total courses in the DB                                              |
+| Storage GB stored and GB downloaded per month | _to define_ | Dominated by "Mi Bodega" if ever built                                                           |
+| **Cost per student per year**                 | _to define_ | The number an institutional decision turns on; benchmark against what Moodle UBB costs UBB today |
+| Uptime target, RPO and RTO                    | _to define_ | Required for any service agreement                                                               |
 
 Acceptance: numbers exist, owner-approved, and a load check has run against the two highest-risk ones (concurrent students, reads per portal load).
 

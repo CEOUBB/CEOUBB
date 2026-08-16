@@ -36,7 +36,10 @@ test("the Capacitor config points the WebView at the deployed portal", async () 
   assert.equal(config.appId, APP_ID, "appId must stay canonical");
   assert.equal(config.appName, "CEOUBB");
   assert.equal(config.webDir, "capacitor/www");
-  assert.ok(await exists("../capacitor/www/index.html"), "webDir must contain the offline fallback document");
+  assert.ok(
+    await exists("../capacitor/www/index.html"),
+    "webDir must contain the offline fallback document"
+  );
 
   const url = config.server?.url ?? "";
   // Sólo un override explícito de desarrollo puede apuntar fuera de producción.
@@ -46,21 +49,31 @@ test("the Capacitor config points the WebView at the deployed portal", async () 
   assert.equal(
     config.server?.cleartext ?? false,
     url.startsWith("http://"),
-    "cleartext may only be on for an explicit http:// override, never for the shipped config",
+    "cleartext may only be on for an explicit http:// override, never for the shipped config"
   );
 });
 
 // REQ-CAP-01 — el override es una comodidad de desarrollo; el valor por defecto es el contrato.
 test("falls back to the production portal when no override is set", async () => {
   const source = await read("../capacitor.config.ts");
-  assert.match(source, /process\.env\.CAPACITOR_SERVER_URL\s*\|\|\s*"https:\/\/ceoubb\.com"/, "the fallback origin must stay https://ceoubb.com");
+  assert.match(
+    source,
+    /process\.env\.CAPACITOR_SERVER_URL\s*\|\|\s*"https:\/\/ceoubb\.com"/,
+    "the fallback origin must stay https://ceoubb.com"
+  );
 });
 
 // REQ-CAP-02
 test("google-services.json survives the regeneration untouched", async () => {
   const services = JSON.parse(await read("../android/app/google-services.json"));
-  const packageNames = services.client.map((client: { client_info: { android_client_info: { package_name: string } } }) => client.client_info.android_client_info.package_name);
-  assert.ok(packageNames.includes(APP_ID), `google-services.json must declare package_name ${APP_ID}`);
+  const packageNames = services.client.map(
+    (client: { client_info: { android_client_info: { package_name: string } } }) =>
+      client.client_info.android_client_info.package_name
+  );
+  assert.ok(
+    packageNames.includes(APP_ID),
+    `google-services.json must declare package_name ${APP_ID}`
+  );
   assert.equal(services.project_info.project_id, "centro-de-estudio-ubb");
 });
 
@@ -75,9 +88,21 @@ test("the regenerated Gradle project stays publishable", async () => {
   const versionCode = Number(appGradle.match(/versionCode\s+(\d+)/)?.[1]);
   assert.ok(versionCode > 13, `versionCode must exceed the published 13, got ${versionCode}`);
 
-  assert.match(appGradle, /keystoreProperties\.load/, "the release key must come from keystore.properties");
-  assert.match(appGradle, /signingConfigs\s*\{[\s\S]*?release\s*\{/, "a release signingConfig must exist");
-  assert.match(appGradle, /signingConfig\s+signingConfigs\.release/, "the release build type must use it");
+  assert.match(
+    appGradle,
+    /keystoreProperties\.load/,
+    "the release key must come from keystore.properties"
+  );
+  assert.match(
+    appGradle,
+    /signingConfigs\s*\{[\s\S]*?release\s*\{/,
+    "a release signingConfig must exist"
+  );
+  assert.match(
+    appGradle,
+    /signingConfig\s+signingConfigs\.release/,
+    "the release build type must use it"
+  );
 
   const minSdk = Number(variables.match(/minSdkVersion\s*=\s*(\d+)/)?.[1]);
   assert.equal(minSdk, 26, "minSdk 26 is the published floor");
@@ -91,11 +116,17 @@ test("the verified App Links survive in the manifest and on the web", async () =
   assert.match(manifest, /android:host="www\.ceoubb\.com"/);
 
   const statements = JSON.parse(await read("../public/.well-known/assetlinks.json"));
-  const android = statements.find((statement: { target: { package_name?: string } }) => statement.target.package_name === APP_ID);
+  const android = statements.find(
+    (statement: { target: { package_name?: string } }) => statement.target.package_name === APP_ID
+  );
   assert.ok(android, `assetlinks.json must list ${APP_ID}`);
   assert.ok(android.relation.includes("delegate_permission/common.handle_all_urls"));
   assert.equal(android.target.sha256_cert_fingerprints.length, 1);
-  assert.match(android.target.sha256_cert_fingerprints[0], /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/, "the release fingerprint must be a SHA-256 in Play's format");
+  assert.match(
+    android.target.sha256_cert_fingerprints[0],
+    /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/,
+    "the release fingerprint must be a SHA-256 in Play's format"
+  );
 });
 
 // REQ-CAP-10
@@ -106,6 +137,12 @@ test("the runtime notification permission is declared", async () => {
 
 // REQ-CAP-03
 test("the iOS target exists as a versioned scaffold", async () => {
-  assert.ok(await exists("../ios/App/App.xcodeproj/project.pbxproj"), "the iOS project must be versioned");
-  assert.ok(await exists("../ios/App/Podfile"), "the Podfile must be versioned even though pods are never installed on Windows");
+  assert.ok(
+    await exists("../ios/App/App.xcodeproj/project.pbxproj"),
+    "the iOS project must be versioned"
+  );
+  assert.ok(
+    await exists("../ios/App/Podfile"),
+    "the Podfile must be versioned even though pods are never installed on Windows"
+  );
 });

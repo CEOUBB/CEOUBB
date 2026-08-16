@@ -1,13 +1,13 @@
 blockExoticSubdeps: true
 allowBuilds:
-  '@firebase/util': true
-  '@google/genai': true
-  '@sentry/cli': true
+  "@firebase/util": true
+  "@google/genai": true
+  "@sentry/cli": true
   esbuild: true
   protobufjs: true
 onlyBuiltDependencies:
-  - '@firebase/util'
-  - '@google/genai'
-  - '@sentry/cli'
+  - "@firebase/util"
+  - "@google/genai"
+  - "@sentry/cli"
   - esbuild
   - protobufjs

@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { ACCESS_CASES, DEVELOPER_EMAILS, STUDENT_DOMAIN, TEACHER_DOMAIN, isDeveloperEmail, roleForEmail } from "../lib/access-policy.ts";
+import {
+  ACCESS_CASES,
+  DEVELOPER_EMAILS,
+  STUDENT_DOMAIN,
+  TEACHER_DOMAIN,
+  isDeveloperEmail,
+  roleForEmail,
+} from "../lib/access-policy.ts";
 
 const OWNER_SURFACES = [
   "../firebase/firestore.rules",
@@ -15,10 +22,7 @@ const OWNER_SURFACES = [
   cuatro espejos de la política — `lib/access-policy.ts`, las dos reglas de Firebase y
   `firebase.xml`, que sigue enumerando a los owners.
 */
-const DOMAIN_SURFACES = [
-  "../firebase/firestore.rules",
-  "../firebase/storage.rules",
-];
+const DOMAIN_SURFACES = ["../firebase/firestore.rules", "../firebase/storage.rules"];
 
 const POLICY_CONSUMERS = [
   "../app/Portal.tsx",
@@ -33,7 +37,11 @@ function readSurface(path: string) {
 
 test("resolves every access case to its institutional role", () => {
   for (const item of ACCESS_CASES) {
-    assert.equal(roleForEmail(item.email), item.role, `${item.email || "(empty)"} must resolve to ${item.role}`);
+    assert.equal(
+      roleForEmail(item.email),
+      item.role,
+      `${item.email || "(empty)"} must resolve to ${item.role}`
+    );
   }
 });
 
@@ -72,14 +80,24 @@ test("every enforcement surface grants owner access to the same addresses", asyn
 test("every enforcement surface recognises the same institutional domains", async () => {
   for (const path of DOMAIN_SURFACES) {
     const source = (await readSurface(path)).replace(/\\/g, "");
-    assert.ok(source.includes(STUDENT_DOMAIN.slice(1)), `${path} does not recognise ${STUDENT_DOMAIN}`);
-    assert.ok(source.includes(TEACHER_DOMAIN.slice(1)), `${path} does not recognise ${TEACHER_DOMAIN}`);
+    assert.ok(
+      source.includes(STUDENT_DOMAIN.slice(1)),
+      `${path} does not recognise ${STUDENT_DOMAIN}`
+    );
+    assert.ok(
+      source.includes(TEACHER_DOMAIN.slice(1)),
+      `${path} does not recognise ${TEACHER_DOMAIN}`
+    );
   }
 });
 
 test("the web modules derive roles through the access policy only", async () => {
   for (const path of POLICY_CONSUMERS) {
     const source = await readSurface(path);
-    assert.doesNotMatch(source, /endsWith\(\s*["'`]@/, `${path} re-derives a role from an email domain`);
+    assert.doesNotMatch(
+      source,
+      /endsWith\(\s*["'`]@/,
+      `${path} re-derives a role from an email domain`
+    );
   }
 });
