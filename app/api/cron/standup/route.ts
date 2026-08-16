@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import {
+  getRecentCommits,
+  listActiveLinearIssues,
+  listCompletedLinearIssues,
+  getGeminiClient,
+  generateContentWithFallback,
+} from "../../../../lib/services/index.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 60s max para Vercel Serverless
@@ -9,66 +15,11 @@ const PIPE_DISCORD_ID = "1150176313974460457";
 const JOAQUIN_DISCORD_ID = "662149246631542816";
 const TARGET_CHANNEL_ID = process.env.DISCORD_STANDUP_CHANNEL_ID || "1537708834561327175";
 
-// Modelos Gemini 3.x modernos
-const MODEL_FALLBACK_LIST = [
-  "gemini-3.7-flash",
-  "gemini-3.6-flash",
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3-flash",
-];
-
-async function callGemini(ai: GoogleGenAI, prompt: string) {
-  let lastError;
-  for (const modelId of MODEL_FALLBACK_LIST) {
-    try {
-      const res = await ai.models.generateContent({
-        model: modelId,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      });
-      const text = res.text || res.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return { text, usedModel: modelId };
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.warn(`⚠️ Model '${modelId}' falló en Vercel Cron: ${errorMsg}`);
-      lastError = err;
-    }
-  }
-  throw lastError;
-}
-
 /**
- * Obtener commits recientes desde la API de GitHub en la nube
- */
-async function getRecentGitHubCommits() {
-  try {
-    const res = await fetch("https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=10", {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "CEOUBB-Standup-Bot-Vercel",
-        ...(process.env.GITHUB_TOKEN ? { Authorization: `token ${process.env.GITHUB_TOKEN}` } : {}),
-      },
-      signal: AbortSignal.timeout(6000),
-      next: { revalidate: 0 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((c: { sha: string; commit: { author: { name: string }; message: string } }) => ({
-      hash: c.sha.slice(0, 7),
-      author: c.commit?.author?.name || "Desarrollador",
-      message: c.commit?.message?.split("\n")[0] || "",
-    }));
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Obtener issues de Linear
+ * Obtener issues de Linear con fallback en caso de no contar con API key configurada
  */
 async function getLinearIssues() {
-  const apiKey = process.env.LINEAR_API_KEY;
-  if (!apiKey) {
+  if (!process.env.LINEAR_API_KEY) {
     return {
       active: [
         { id: "CEO-38", title: "Migración de modelo académico (Asignatura × Período × Sección)", assignee: "Pipe" },
@@ -80,41 +31,11 @@ async function getLinearIssues() {
   }
 
   try {
-    const query = `
-      query {
-        active: issues(filter: { state: { type: { in: ["started", "unstarted", "backlog"] } } }, first: 15) {
-          nodes {
-            identifier
-            title
-            assignee { name }
-          }
-        }
-        completed: issues(filter: { state: { type: { eq: "completed" } } }, first: 5) {
-          nodes {
-            identifier
-            title
-          }
-        }
-      }
-    `;
-    const res = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: apiKey },
-      body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(6000),
-    });
-    const data = await res.json();
-    return {
-      active: (data?.data?.active?.nodes || []).map((n: { identifier: string; title: string; assignee?: { name: string } }) => ({
-        id: n.identifier,
-        title: n.title,
-        assignee: n.assignee?.name || "Sin asignar",
-      })),
-      completed: (data?.data?.completed?.nodes || []).map((n: { identifier: string; title: string }) => ({
-        id: n.identifier,
-        title: n.title,
-      })),
-    };
+    const [active, completed] = await Promise.all([
+      listActiveLinearIssues(15),
+      listCompletedLinearIssues(5),
+    ]);
+    return { active, completed };
   } catch {
     return { active: [], completed: [] };
   }
@@ -162,17 +83,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") || "morning"; // 'morning' (12:00) o 'night' (00:00)
 
-  const geminiApiKey =
-    process.env.STANDUP_GEMINI_API_KEY ||
-    process.env.GEMINI_STANDUP_API_KEY ||
-    process.env.GEMINI_API_KEY;
-
-  if (!geminiApiKey) {
+  const ai = getGeminiClient();
+  if (!ai) {
     return NextResponse.json({ error: "Falta STANDUP_GEMINI_API_KEY" }, { status: 500 });
   }
 
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-  const commits = await getRecentGitHubCommits();
+  const commits = await getRecentCommits(10);
   const linear = await getLinearIssues();
 
   if (type === "morning") {
@@ -184,7 +100,7 @@ Genera el **Daily Standup de Apertura (12:00 PM)** para Pipe y Joaquín con tare
 ${commits.map((c: { hash: string; author: string; message: string }) => `- [${c.hash}] ${c.author}: ${c.message}`).join("\n") || "- Sin commits recientes"}
 
 === ISSUES DE LINEAR ===
-${linear.active.map((i: { id: string; title: string; assignee: string }) => `- [${i.id}] ${i.title} (${i.assignee})`).join("\n")}
+${linear.active.map((i: { id: string; title: string; assignee?: string }) => `- [${i.id}] ${i.title} (${i.assignee || "Sin asignar"})`).join("\n")}
 
 REGLAS DE ESTILO:
 - Tono sobrio, técnico, directo y profesional. Cero exceso de emojis.
@@ -232,7 +148,7 @@ Devuelve estrictamente un JSON válido:
 }
 `;
 
-    const { text, usedModel } = await callGemini(ai, prompt);
+    const { text, usedModel } = await generateContentWithFallback(ai, prompt);
 
     let summaryText = text.trim();
     let tasks: Array<{ id: string; buttonLabel: string; taskTitle?: string }> = [
@@ -316,7 +232,7 @@ ESTRUCTURA:
 ¡Buen descanso!
 `;
 
-    const { text, usedModel } = await callGemini(ai, prompt);
+    const { text, usedModel } = await generateContentWithFallback(ai, prompt);
 
     const embed = {
       title: "🌙 CEOUBB Daily Standup — Cierre de Jornada (00:00 AM)",

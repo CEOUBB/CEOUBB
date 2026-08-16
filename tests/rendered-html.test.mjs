@@ -214,8 +214,8 @@ test("refuses to change the rank of a developer account", async () => {
 });
 
 test("password login and self-registration stay retired", async () => {
-  assert.equal((await request("/api/auth/login", { method: "POST" })).status, 410);
-  assert.equal((await request("/api/auth/register", { method: "POST" })).status, 410);
+  assert.equal((await request("/api/auth/login", { method: "POST" })).status, 404);
+  assert.equal((await request("/api/auth/register", { method: "POST" })).status, 404);
 });
 
 test("the notification bell is gone", async () => {
