@@ -56,12 +56,7 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Configurando firma de producción..."
             echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore.jks
-            cat <<EOF > android/keystore.properties
-            storeFile=keystore.jks
-            storePassword=$KEYSTORE_PASSWORD
-            keyAlias=$KEY_ALIAS
-            keyPassword=$KEY_PASSWORD
-          EOF
+            printf "storeFile=keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
             echo "has_signing=true" >> "$GITHUB_OUTPUT"
           else
             echo "No se encontraron secrets de firma; se compilará APK en modo standard/debug."
@@ -84,9 +79,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
-          files: |
-            ceoubb-release.apk
-            ceoubb-debug.apk
+          files: ceoubb-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,14 +89,14 @@ jobs:
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
           TAG_NAME: ${{ github.event.inputs.tag_name || github.event.release.tag_name || 'v1.x' }}
-          RELEASE_URL: ${{ github.event.release.html_url || format('https://github.com/{0}/{1}/releases/tag/{2}', context.repo.owner, context.repo.repo, github.event.inputs.tag_name) }}
+          RELEASE_URL: ${{ github.event.release.html_url || '' }}
           ACTOR: ${{ github.actor }}
         with:
           script: |
             const channelId = "1536934842741301321"; // #💬-❙-general
             const botToken = process.env.DISCORD_BOT_TOKEN;
             const tag = process.env.TAG_NAME;
-            const releaseUrl = process.env.RELEASE_URL;
+            const releaseUrl = process.env.RELEASE_URL || `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`;
             const actor = process.env.ACTOR || "desconocido";
 
             if (!botToken) {
