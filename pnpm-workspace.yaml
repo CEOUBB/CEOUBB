@@ -11,3 +11,19 @@ onlyBuiltDependencies:
   - "@sentry/cli"
   - esbuild
   - protobufjs
+overrides:
+  tar: ">=7.5.22"
+  "undici@>=5.0.0 <5.29.0": ">=5.29.0"
+  "undici@>=6.0.0 <6.28.0": ">=6.28.0"
+  "path-to-regexp@>=4.0.0 <6.3.0": ">=6.3.0"
+  "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0"
+  js-yaml: ">=4.3.1"
+  esbuild: ">=0.28.1"
+  "minimatch@>=10.0.0 <10.2.6": ">=10.2.6"
+  "minimatch@<3.1.4": ">=3.1.4"
+  "eslint-plugin-jsx-a11y>minimatch": "3.1.5"
+  "eslint-plugin-react>minimatch": "3.1.5"
+  "ajv@>=7.0.0 <8.18.0": ">=8.18.0"
+  smol-toml: ">=1.6.1"
+  "@tootallnate/once": ">=2.0.1"
+  uuid: ">=11.1.1"
