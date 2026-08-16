@@ -3,15 +3,9 @@ import path from "node:path";
 import { GoogleGenAI, Type, type FunctionDeclaration } from "@google/genai";
 import { fetchDiscordChannelHistory } from "./messages.ts";
 import { fetchLatestCIDiagnostics } from "./diagnostics.ts";
-import {
-  getGeminiApiKey,
-  MODEL_FALLBACK_LIST,
-  getLinearApiKey,
-  getLinearIssue,
-  listActiveLinearIssues,
-  getRecentCommits,
-  listPullRequests,
-} from "../services/index.ts";
+import { getGeminiApiKey, MODEL_FALLBACK_LIST } from "../services/gemini.ts";
+import { getLinearApiKey, getLinearIssue, listActiveLinearIssues } from "../services/linear.ts";
+import { getRecentCommits, listPullRequests } from "../services/github.ts";
 
 /**
  * Carga contexto del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md) para grounding del LLM.
@@ -193,19 +187,20 @@ ${channelHistory}`;
       const functionCalls = firstCandidateContent?.parts?.filter((p) => p.functionCall) || [];
 
       if (functionCalls.length > 0 && firstCandidateContent) {
-        const toolResponseParts = [];
-        for (const callPart of functionCalls) {
-          if (!callPart.functionCall) continue;
-          const toolCall = callPart.functionCall;
-          const toolName = toolCall.name || "";
-          const toolResult = await executeGeminiToolCall(toolName, (toolCall.args as Record<string, unknown>) || {});
-          toolResponseParts.push({
-            functionResponse: {
-              name: toolName,
-              response: typeof toolResult === "object" && toolResult !== null ? (toolResult as Record<string, unknown>) : { result: toolResult },
-            },
-          });
-        }
+        const validCalls = functionCalls.filter((p) => Boolean(p.functionCall));
+        const toolResponseParts = await Promise.all(
+          validCalls.map(async (callPart) => {
+            const toolCall = callPart.functionCall!;
+            const toolName = toolCall.name || "";
+            const toolResult = await executeGeminiToolCall(toolName, (toolCall.args as Record<string, unknown>) || {});
+            return {
+              functionResponse: {
+                name: toolName,
+                response: typeof toolResult === "object" && toolResult !== null ? (toolResult as Record<string, unknown>) : { result: toolResult },
+              },
+            };
+          })
+        );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const followUpContents: any[] = [

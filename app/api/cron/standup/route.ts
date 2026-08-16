@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getRecentCommits,
-  listActiveLinearIssues,
-  listCompletedLinearIssues,
-  getGeminiClient,
-  generateContentWithFallback,
-} from "../../../../lib/services/index.ts";
+import { getRecentCommits } from "../../../../lib/services/github.ts";
+import { listActiveLinearIssues, listCompletedLinearIssues } from "../../../../lib/services/linear.ts";
+import { getGeminiClient, generateContentWithFallback } from "../../../../lib/services/gemini.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 60s max para Vercel Serverless

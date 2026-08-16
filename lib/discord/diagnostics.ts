@@ -1,4 +1,4 @@
-import { getLatestWorkflowRun } from "../services/index.ts";
+import { getLatestWorkflowRun } from "../services/github.ts";
 
 /**
  * Diagnóstico en vivo de pipelines CI/CD de GitHub Actions en la rama main.

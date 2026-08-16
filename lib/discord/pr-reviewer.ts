@@ -2,9 +2,8 @@ import {
   getPullRequest,
   getPullRequestDiff,
   getPullRequestComments,
-  getGeminiClient,
-  generateContentWithFallback,
-} from "../services/index.ts";
+} from "../services/github.ts";
+import { getGeminiClient, generateContentWithFallback } from "../services/gemini.ts";
 
 /**
  * Realiza una auditoría completa de un Pull Request de GitHub utilizando Gemini y reglas del repositorio.

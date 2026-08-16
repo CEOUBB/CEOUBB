@@ -1,8 +1,6 @@
 import { ChartBar, Files, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
-import * as m from "motion/react-m";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../../../lib/courses";
 import { ClassroomFile, ClassroomPost, ClassroomState } from "../../../lib/firebase-classroom-client";
-import { ease } from "../../../lib/portal-utils";
 
 export type Tab = "home" | "materials" | "grades" | "progress" | "people";
 
@@ -27,11 +25,6 @@ export const emptyClassroom: ClassroomState = {
   simulation: {},
   classScores: {},
 };
-
-export function Bar({ ratio }: { ratio: number }) {
-  const safeRatio = typeof ratio === "number" && !Number.isNaN(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
-  return <m.span animate={{ scaleX: safeRatio }} initial={{ scaleX: 0 }} style={{ transformOrigin: "left" }} transition={{ duration: 0.6, ease }} />;
-}
 
 export function groupByFolder(course: Course, files: ClassroomFile[]) {
   const groups = new Map<string, ClassroomFile[]>();

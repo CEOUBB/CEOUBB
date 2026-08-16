@@ -1,4 +1,4 @@
-import { getLinearIssue } from "../services/index.ts";
+import { getLinearIssue } from "../services/linear.ts";
 
 /**
  * Generador y formateador de prompts y nombres de rama para agentes de IA (Antigravity, Claude Code, Codex).

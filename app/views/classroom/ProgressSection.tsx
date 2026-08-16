@@ -4,7 +4,7 @@ import * as m from "motion/react-m";
 import { Course } from "../../../lib/courses";
 import { ClassroomStudent } from "../../../lib/firebase-classroom-client";
 import { ease, formatDate } from "../../../lib/portal-utils";
-import { Bar } from "./classroom-utils";
+import { Bar } from "./ProgressBar";
 
 export function ProgressSection({
   units,
