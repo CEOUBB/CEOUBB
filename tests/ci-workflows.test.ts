@@ -118,6 +118,13 @@ test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target an
 
   assert.match(androidCiContent, /1536936245643579462/, "Debe apuntar al canal de Discord #🚨-❙-alertas");
   assert.match(androidCiContent, /if:\s*failure\(\)/);
+
+  // Invariante de portabilidad de entorno Android / Gradle
+  const gradleProperties = await readText("android/gradle.properties");
+  assert.ok(
+    !gradleProperties.includes("org.gradle.java.home"),
+    "android/gradle.properties no debe contener org.gradle.java.home con rutas locales absolutas que rompan CI",
+  );
 });
 
 test("REQ-CICD-03, REQ-CICD-04: Bundle analysis workflow and size budgeting script", async () => {
