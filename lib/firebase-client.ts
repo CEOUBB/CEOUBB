@@ -2,7 +2,7 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signInWithPopup, signOut } from "firebase/auth";
 import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
-import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy";
+import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy.ts";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
