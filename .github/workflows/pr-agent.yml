@@ -29,4 +29,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONFIG.MODEL: "gemini-3.7-flash"
           CONFIG.FALLBACK_MODELS: '["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash", "gemini-3-flash"]'
+          CONFIG.CUSTOM_MODEL_MAX_TOKENS: 64000
+          CONFIG.MAX_MODEL_TOKENS: 64000
           LITELLM.REASONING_EFFORT: "high"
