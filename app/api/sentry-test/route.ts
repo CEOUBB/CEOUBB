@@ -7,6 +7,10 @@ export async function GET() {
   } catch (error) {
     const eventId = Sentry.captureException(error);
     await Sentry.flush(2000);
-    return NextResponse.json({ success: true, eventId, message: "Error enviado a Sentry desde el Servidor" });
+    return NextResponse.json({
+      success: true,
+      eventId,
+      message: "Error enviado a Sentry desde el Servidor",
+    });
   }
 }

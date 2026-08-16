@@ -14,7 +14,15 @@ export type PaletteItem = {
 };
 
 /** Búsqueda global del portal: filtra vistas y ramos, se abre con Ctrl/⌘ + K. */
-export function CommandPalette({ open, items, onClose }: { open: boolean; items: PaletteItem[]; onClose: () => void }) {
+export function CommandPalette({
+  open,
+  items,
+  onClose,
+}: {
+  open: boolean;
+  items: PaletteItem[];
+  onClose: () => void;
+}) {
   if (!open) return null;
   return <CommandPaletteDialog items={items} onClose={onClose} />;
 }
@@ -28,7 +36,9 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return items;
-    return items.filter((item) => `${item.label} ${item.hint ?? ""} ${item.group}`.toLowerCase().includes(needle));
+    return items.filter((item) =>
+      `${item.label} ${item.hint ?? ""} ${item.group}`.toLowerCase().includes(needle)
+    );
   }, [items, query]);
 
   // El cursor se recorta al leerlo: si el filtro achica la lista, Enter nunca
@@ -78,7 +88,12 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
   let lastGroup = "";
 
   return (
-    <dialog aria-label="Buscar en Centro de Estudio UBB" className="palette" onClose={onClose} ref={dialogRef}>
+    <dialog
+      aria-label="Buscar en Centro de Estudio UBB"
+      className="palette"
+      onClose={onClose}
+      ref={dialogRef}
+    >
       <div className="palette-field">
         <MagnifyingGlass size={18} aria-hidden="true" />
         <input
@@ -107,13 +122,21 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
         <kbd>Esc</kbd>
         {/* En el teléfono no hay tecla Escape y el botón atrás lo intercepta el
             contenedor nativo: la búsqueda necesita una salida a la vista. */}
-        <button aria-label="Cerrar la búsqueda" className="palette-close" onClick={onClose} type="button">
+        <button
+          aria-label="Cerrar la búsqueda"
+          className="palette-close"
+          onClick={onClose}
+          type="button"
+        >
           <X size={18} weight="bold" aria-hidden="true" />
         </button>
       </div>
       <div className="palette-list">
         {matches.length === 0 ? (
-          <p className="palette-empty">Sin resultados para <strong>{query.trim()}</strong>. Prueba con el nombre o el código del ramo.</p>
+          <p className="palette-empty">
+            Sin resultados para <strong>{query.trim()}</strong>. Prueba con el nombre o el código
+            del ramo.
+          </p>
         ) : (
           matches.map((item, index) => {
             const heading = item.group === lastGroup ? null : (lastGroup = item.group);
@@ -125,7 +148,9 @@ function CommandPaletteDialog({ items, onClose }: { items: PaletteItem[]; onClos
                   data-active={index === active}
                   onClick={() => choose(item)}
                   onPointerMove={() => setCursor(index)}
-                  style={item.tone ? ({ "--course-tone": item.tone } as React.CSSProperties) : undefined}
+                  style={
+                    item.tone ? ({ "--course-tone": item.tone } as React.CSSProperties) : undefined
+                  }
                   type="button"
                 >
                   <span className="palette-icon">{item.icon}</span>

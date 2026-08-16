@@ -57,11 +57,7 @@ export function PlannerBlockArticle({
           <Check aria-hidden="true" size={10} weight="bold" />
         </m.span>
       </button>
-      <button
-        className="planner-block-open"
-        onClick={() => onEdit(block)}
-        type="button"
-      >
+      <button className="planner-block-open" onClick={() => onEdit(block)} type="button">
         <strong>{block.title}</strong>
         <small>
           {block.startTime}–{block.endTime}

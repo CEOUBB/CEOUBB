@@ -1,0 +1,33 @@
+# Global owners
+* @FelipeArce @elpapijuaco325
+
+# CI/CD and Tooling
+/.github/ @FelipeArce @elpapijuaco325
+/.github/workflows/ @FelipeArce @elpapijuaco325
+/package.json @FelipeArce @elpapijuaco325
+/tsconfig.json @FelipeArce @elpapijuaco325
+/.prettierrc.json @FelipeArce @elpapijuaco325
+
+# Security, Access Policy & Authentication
+/lib/access-policy.ts @FelipeArce @elpapijuaco325
+/lib/auth.ts @FelipeArce @elpapijuaco325
+/tests/access-policy.test.ts @FelipeArce @elpapijuaco325
+
+# Firebase, Rules and Cloud Functions
+/firebase/ @FelipeArce @elpapijuaco325
+/firebase/functions/ @FelipeArce @elpapijuaco325
+/firebase/firestore.rules @FelipeArce @elpapijuaco325
+/firebase/storage.rules @FelipeArce @elpapijuaco325
+
+# Mobile & Capacitor Seam
+/android/ @FelipeArce @elpapijuaco325
+/ios/ @FelipeArce @elpapijuaco325
+/capacitor.config.ts @FelipeArce @elpapijuaco325
+/lib/mobile-bridge.ts @FelipeArce @elpapijuaco325
+/lib/push-notifications.ts @FelipeArce @elpapijuaco325
+
+# Web Portal & Classroom Views
+/app/ @FelipeArce @elpapijuaco325
+/lib/ @FelipeArce @elpapijuaco325
+/db/ @FelipeArce @elpapijuaco325
+/public/ @FelipeArce @elpapijuaco325

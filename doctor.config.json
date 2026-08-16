@@ -1,9 +1,6 @@
 {
   "$schema": "https://react.doctor/schema.json",
   "ignore": {
-    "paths": [
-      "android/**",
-      ".next/**"
-    ]
+    "paths": ["android/**", ".next/**"]
   }
 }

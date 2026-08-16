@@ -34,7 +34,9 @@ export function MobileBottomNav({ items }: { items: MobileTab[] }) {
       {items.map(({ key, label, Icon, active, href, onSelect }) => {
         const content = (
           <>
-            <span aria-hidden="true" className="mobile-nav-icon"><Icon size={22} weight={active ? "fill" : "regular"} /></span>
+            <span aria-hidden="true" className="mobile-nav-icon">
+              <Icon size={22} weight={active ? "fill" : "regular"} />
+            </span>
             <span className="mobile-nav-label">{label}</span>
           </>
         );
@@ -44,7 +46,9 @@ export function MobileBottomNav({ items }: { items: MobileTab[] }) {
           onSelect?.();
         };
         return href ? (
-          <Link className="mobile-nav-item" href={href} key={key} onClick={tap}>{content}</Link>
+          <Link className="mobile-nav-item" href={href} key={key} onClick={tap}>
+            {content}
+          </Link>
         ) : (
           <button
             aria-current={active ? "page" : undefined}
@@ -67,7 +71,13 @@ export function MobileBottomNav({ items }: { items: MobileTab[] }) {
  * scroll y el `aria-modal`; reimplementarlo sería más código y peor accesibilidad.
  */
 // Implements: REQ-CAP-05
-export function MobileSheet({ open, onOpenChange, title, description, children }: {
+export function MobileSheet({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;

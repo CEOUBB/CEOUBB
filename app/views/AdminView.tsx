@@ -34,9 +34,7 @@ export function AdminView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role }),
       });
-      setMessage(
-        response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.",
-      );
+      setMessage(response.ok ? "Rol actualizado." : "No fue posible actualizar el rol.");
       if (response.ok) {
         await refreshAccounts();
       }
@@ -52,9 +50,7 @@ export function AdminView() {
         <p>
           <span>
             <b>{accounts.length}</b>{" "}
-            {accounts.length === 1
-              ? "cuenta registrada"
-              : "cuentas registradas"}
+            {accounts.length === 1 ? "cuenta registrada" : "cuentas registradas"}
           </span>
           <span>·</span>
           <span>el rango se asigna por dominio institucional</span>
@@ -67,9 +63,7 @@ export function AdminView() {
           <span>Acción</span>
         </div>
         {accounts.length === 0 && (
-          <p className="empty-row">
-            Todavía no hay cuentas institucionales registradas.
-          </p>
+          <p className="empty-row">Todavía no hay cuentas institucionales registradas.</p>
         )}
         {accounts.map((account) => (
           <div className="admin-row" key={account.id}>
@@ -77,19 +71,14 @@ export function AdminView() {
               <b>{account.name}</b>
               <small>{account.email}</small>
             </span>
-            <span className={`role-chip ${account.role}`}>
-              {roleLabel(account.role)}
-            </span>
+            <span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span>
             <span>
               {account.role !== "owner" && (
                 <select
                   aria-label={`Cambiar rango de ${account.name}`}
                   value={account.role}
                   onChange={(event) =>
-                    changeRole(
-                      account.id,
-                      event.target.value as "teacher" | "student",
-                    )
+                    changeRole(account.id, event.target.value as "teacher" | "student")
                   }
                 >
                   <option value="student">Estudiante</option>

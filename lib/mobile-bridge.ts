@@ -47,7 +47,7 @@ export function useIsMobileApp() {
     subscribeViewport,
     () => Capacitor.isNativePlatform() || window.matchMedia(MOBILE_VIEWPORT).matches,
     // En el servidor no hay viewport: el HTML se emite con el shell de escritorio.
-    () => false,
+    () => false
   );
 }
 
@@ -68,7 +68,7 @@ export function hapticError() {
 
 /**
  * Franja de estado: navy institucional sobre las bandas heroicas, papel sobre el
- * resto del portal. Los dos valores son los tokens de `design-ceoubb.md`.
+ * resto del portal. Los dos valores son los tokens de `DESIGN.md`.
  */
 // Implements: REQ-CAP-07
 export function useStatusBar(tone: "hero" | "canvas") {

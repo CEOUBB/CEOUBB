@@ -10,6 +10,7 @@
 Transform the static, linear evaluation list (`CalendarView`) into an **interactive Academic Time-Blocking Planner** (inspired by Notion Calendar, Cron/Notion, and Sunsama), purpose-built for Universidad del Bío-Bío students and teachers.
 
 The system combines:
+
 1. **Teacher-Driven Deadlines & Assessments**: Automatic propagation of exam dates (`gradebook`) and assignment/task deadlines (`dueDate` on posts/activities).
 2. **Top-Level Due Dates Ribbon**: All-day / due-date bar displaying deadlines, exams, and milestones at the top of each day column.
 3. **Weekly Time-Blocking Grid (08:00 – 21:00)**: Interactive timetable for classes, study sessions, group work, and personal blocks with completion checkboxes (`○`/`✓`).
@@ -27,7 +28,7 @@ The system combines:
   1. Course Gradebook evaluations (`courses/{courseId}/meta/gradebook` `items.date`)
   2. Course Posts/Tasks with due dates (`courses/{courseId}/posts` with `dueDate`)
   3. Student Personal Blocks (`users/{userId}/calendar_events/{eventId}`)  
-  into a unified, reactive timetable feed.
+     into a unified, reactive timetable feed.
 
 - **REQ-CAL-02 (Event-Driven - Teacher Gradebook Sync)**  
   WHEN a teacher adds or edits an evaluation date in a course gradebook, the system SHALL immediately reflect that evaluation on the all-day / due-date header and/or time slot for all students enrolled in that course without requiring page refresh.
@@ -119,7 +120,7 @@ export type UnifiedPlannerItem = {
   detail?: string;
   date: string; // YYYY-MM-DD
   startTime?: string; // "08:30" (optional; if missing, rendered in all-day ribbon)
-  endTime?: string;   // "10:00"
+  endTime?: string; // "10:00"
   courseId?: string;
   courseName?: string;
   tone: string;
@@ -135,7 +136,7 @@ export type UserPersonalEvent = {
   detail?: string;
   date: string; // YYYY-MM-DD
   startTime: string; // "14:00"
-  endTime: string;   // "15:30"
+  endTime: string; // "15:30"
   courseId?: string | null;
   kind: "study" | "personal" | "task";
   completed: boolean;

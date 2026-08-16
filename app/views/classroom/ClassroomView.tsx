@@ -50,7 +50,10 @@ export function ClassroomView({
   } = useClassroomHandlers(course, user);
 
   return (
-    <div className="classroom-layout" style={{ "--course-tone": course.tone } as React.CSSProperties}>
+    <div
+      className="classroom-layout"
+      style={{ "--course-tone": course.tone } as React.CSSProperties}
+    >
       <main className="classroom-main">
         <header className="classroom-top">
           <div>
@@ -64,7 +67,9 @@ export function ClassroomView({
           </div>
           <div className="classroom-meta">
             <button
-              aria-label={copiedCourseReference ? "Código copiado" : `Copiar código ${courseReference}`}
+              aria-label={
+                copiedCourseReference ? "Código copiado" : `Copiar código ${courseReference}`
+              }
               className="course-reference"
               onClick={copyCourseReference}
               title={copiedCourseReference ? "Código copiado" : "Copiar código del ramo"}

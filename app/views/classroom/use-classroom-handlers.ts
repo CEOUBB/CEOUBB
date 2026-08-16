@@ -89,11 +89,8 @@ export function useClassroomHandlers(course: Course, user: User) {
     const file = form.get("file");
     if (!(file instanceof File)) return note("Selecciona un archivo.", "bad");
     try {
-      await uploadClassroomFile(
-        course.id,
-        file,
-        String(form.get("folder") ?? ""),
-        (percent) => note(`Subiendo archivo… ${percent}%`)
+      await uploadClassroomFile(course.id, file, String(form.get("folder") ?? ""), (percent) =>
+        note(`Subiendo archivo… ${percent}%`)
       );
       formElement.reset();
       note("Archivo disponible y notificado al curso.", "ok");
@@ -137,10 +134,7 @@ export function useClassroomHandlers(course: Course, user: User) {
           "bad"
         );
       }
-      note(
-        "No se pudo abrir con el visor del sistema; se intentará en el navegador.",
-        "info"
-      );
+      note("No se pudo abrir con el visor del sistema; se intentará en el navegador.", "info");
     }
     const tab = window.open("", "_blank");
     if (tab) tab.opener = null;

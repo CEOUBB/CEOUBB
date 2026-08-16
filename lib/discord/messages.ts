@@ -27,7 +27,10 @@ export async function updateOriginalDiscordMessage(
     });
 
     if (!res.ok) {
-      console.error(`❌ Error al actualizar mensaje diferido en Discord (${res.status}):`, await res.text());
+      console.error(
+        `❌ Error al actualizar mensaje diferido en Discord (${res.status}):`,
+        await res.text()
+      );
     }
   } catch (err) {
     console.error("❌ Error en updateOriginalDiscordMessage:", err);
@@ -45,13 +48,16 @@ export async function fetchDiscordChannelHistory(channelId?: string, limit = 12)
   if (!botToken || !channelId) return "";
 
   try {
-    const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`, {
-      headers: {
-        Authorization: `Bot ${botToken}`,
-        "User-Agent": "CEOUBB-Discord-Interactions",
-      },
-      signal: AbortSignal.timeout(4000),
-    });
+    const res = await fetch(
+      `https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+          "User-Agent": "CEOUBB-Discord-Interactions",
+        },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
 
     if (!res.ok) return "";
     const messages = await res.json();
@@ -63,7 +69,9 @@ export async function fetchDiscordChannelHistory(channelId?: string, limit = 12)
     for (const msg of reversed) {
       if (!msg.content && (!msg.embeds || msg.embeds.length === 0)) continue;
       const authorName = msg.author?.global_name || msg.author?.username || "Usuario";
-      const cleanContent = (msg.content || "[Mensaje con archivo/embed]").replace(/<@!?\d+>/g, "").trim();
+      const cleanContent = (msg.content || "[Mensaje con archivo/embed]")
+        .replace(/<@!?\d+>/g, "")
+        .trim();
       if (!cleanContent) continue;
       const snippet = cleanContent.length > 300 ? `${cleanContent.slice(0, 300)}...` : cleanContent;
       lines.push(`• @${authorName}: ${snippet}`);

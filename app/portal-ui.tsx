@@ -8,14 +8,26 @@ import { cachedPhoto, ease, initials, rememberPhoto } from "../lib/portal-utils"
 
 function useGooglePhoto(email: string) {
   const [photo, setPhoto] = useState<string | null>(() => cachedPhoto(email));
-  useEffect(() => watchGooglePhoto((url) => {
-    if (url) rememberPhoto(email, url);
-    setPhoto(url ?? cachedPhoto(email));
-  }), [email]);
+  useEffect(
+    () =>
+      watchGooglePhoto((url) => {
+        if (url) rememberPhoto(email, url);
+        setPhoto(url ?? cachedPhoto(email));
+      }),
+    [email]
+  );
   return [photo, () => setPhoto(null)] as const;
 }
 
-export function Avatar({ email, name, large = false }: { email: string; name: string; large?: boolean }) {
+export function Avatar({
+  email,
+  name,
+  large = false,
+}: {
+  email: string;
+  name: string;
+  large?: boolean;
+}) {
   const [photo, dropPhoto] = useGooglePhoto(email);
   const size = large ? 44 : 32;
   return (

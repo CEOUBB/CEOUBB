@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag o Release existente donde subir la APK (ej: v1.1.0)'
+        description: "Tag o Release existente donde subir la APK (ej: v1.1.0)"
         required: false
-        default: ''
+        default: ""
 
 permissions:
   contents: write
@@ -24,8 +24,8 @@ jobs:
       - name: Setup Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

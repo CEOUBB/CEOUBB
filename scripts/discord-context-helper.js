@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 // Authorized maintainers
 export const ALLOWED_USER_IDS = new Set([
   "1150176313974460457", // Pipe (pipe.os)
-  "662149246631542816",  // Joaquín (Juvko0)
+  "662149246631542816", // Joaquín (Juvko0)
 ]);
 
 // Friendly user name mapping & aliases
@@ -19,7 +19,13 @@ export const KNOWN_USER_NAMES = {
  */
 export function getFriendlyAuthorName(author, member) {
   if (!author) return "Usuario";
-  return KNOWN_USER_NAMES[author.id] || member?.displayName || author.globalName || author.username || "Usuario";
+  return (
+    KNOWN_USER_NAMES[author.id] ||
+    member?.displayName ||
+    author.globalName ||
+    author.username ||
+    "Usuario"
+  );
 }
 
 /**
@@ -61,14 +67,13 @@ export async function fetchChannelConversationContext(message, client, limit = 8
       if (msg.embeds?.length > 0 && !msg.content) continue;
 
       const authorName = getFriendlyAuthorName(msg.author, msg.member);
-      const cleanContent = (msg.content || "")
-        .replace(/<@!?\d+>/g, "")
-        .trim();
+      const cleanContent = (msg.content || "").replace(/<@!?\d+>/g, "").trim();
 
       if (!cleanContent) continue;
 
       // Limitar cada mensaje a un tamaño razonable para no saturar
-      const truncated = cleanContent.length > 300 ? `${cleanContent.slice(0, 300)}...` : cleanContent;
+      const truncated =
+        cleanContent.length > 300 ? `${cleanContent.slice(0, 300)}...` : cleanContent;
       formattedLines.push(`• ${authorName}: ${truncated}`);
     }
 

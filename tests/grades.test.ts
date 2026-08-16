@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { MAX_GRADE, normalizeItems, normalizeScores, requiredGrade, summarize } from "../lib/grades.ts";
+import {
+  MAX_GRADE,
+  normalizeItems,
+  normalizeScores,
+  requiredGrade,
+  summarize,
+} from "../lib/grades.ts";
 import type { GradeItem } from "../lib/grades.ts";
 
 const SCHEME: GradeItem[] = [
@@ -60,7 +66,11 @@ test("normalizeScores descarta notas fuera de la escala 1,0 a 7,0", () => {
 });
 
 test("normalizeItems descarta filas sin ponderacion", () => {
-  const items = normalizeItems([{ id: "a", name: "A", weight: 20, date: "" }, { id: "b", name: "B", weight: 0, date: "" }, null]);
+  const items = normalizeItems([
+    { id: "a", name: "A", weight: 20, date: "" },
+    { id: "b", name: "B", weight: 0, date: "" },
+    null,
+  ]);
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "a");
 });

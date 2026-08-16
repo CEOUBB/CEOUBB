@@ -1,6 +1,6 @@
 # P0B — Institutional adoption dossier
 
-Objective: UBB adopts CEOUBB as its official LMS. That decision is made against the criteria below, not against a feature table. Every item is currently unbuilt or unspecified. Section 7 of `ceoubb_moodle_adecca_comparison.md` carries the detail and rationale; section 8 there is the recommended path.
+Objective: UBB adopts CEOUBB as its official LMS. That decision is made against the criteria below, not against a feature table. Every item is currently unbuilt or unspecified. Section 7 of `docs/institutional/moodle-adecca-comparison.md` carries the detail and rationale; section 8 there is the recommended path.
 
 None of this can be produced in the week before a presentation, so it starts now and runs alongside the pilot ([`p0-pilot-safety.md`](p0-pilot-safety.md)).
 
@@ -10,7 +10,7 @@ None of this can be produced in the week before a presentation, so it starts now
 2. Role from directory membership, not the email suffix.
 3. Per-enrollment roles (docente, ayudante, estudiante, coordinador, administrativo), so one person can teach one course and study another.
 4. Remove the two hardcoded personal Gmail owner exceptions, replaced by directory-backed administrator accounts.
-5. Re-document the domain-to-role rule in `AGENTS.md` as an *authentication* invariant for the pilot, with authorization moved to enrollment records. A deliberate amendment to a stated invariant: one commit, tests updated.
+5. Re-document the domain-to-role rule in `AGENTS.md` as an _authentication_ invariant for the pilot, with authorization moved to enrollment records. A deliberate amendment to a stated invariant: one commit, tests updated.
 
 Acceptance: no role decision anywhere in the stack depends on parsing an email address, and no permanent superuser is bound to a personal consumer account.
 

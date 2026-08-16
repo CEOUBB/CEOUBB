@@ -1,93 +1,74 @@
-# Centro de Estudio UBB — plan and agent handoff
+# Centro de Estudio UBB: Plan y Agent Handoff
 
-Last verified 2026-08-14 · baseline `0d7c97b` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
+Last verified 2026-08-16 · baseline `0d7c97b` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
-**Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `ceoubb_moodle_adecca_comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment and verification.
+**Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment and verification.
 
 ## How to use
 
-Read `AGENTS.md` first — invariants, setup, commands and identifiers live there and are not repeated here. Update this file after any material feature, infra change, deploy, store submission, security change or architectural decision.
+Read `AGENTS.md` first: invariants, setup, commands and identifiers live there and are not repeated here. Update this file after any material feature, infra change, deploy, store submission, security change or architectural decision.
 
 Status labels: `DONE` (implemented and verified at the level stated) · `ACTIVE` (owner working on it) · `NEXT` (ready and prioritized) · `BLOCKED` (needs an external decision, account, approval or credential) · `BACKLOG` (valuable, not release-critical).
 
-Before starting: add a row to Active work with task, branch, owner and files. Remove it when merged (completed rows go to `PLAN_ARCHIVE.md`).
+Before starting: add a row to Active work with task, branch, owner and files. Remove it when merged (completed rows go to `docs/archive/PLAN_ARCHIVE.md`).
 
 Companion files:
 
-- [`PLAN_ARCHIVE.md`](PLAN_ARCHIVE.md) — completed work, implemented milestones, full handoff history.
-- [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md) — P0.1–P0.11 detail and acceptance criteria.
-- [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md) — P0B.1–P0B.7 institutional adoption dossier.
-- [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md) — React Doctor quality & frontend reliability remediation spec (SDD).
-- [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md) — canonical academic data model / enrollment migration spec.
-- [`docs/specs/p2-academic-time-blocking-planner.md`](docs/specs/p2-academic-time-blocking-planner.md) — Academic Time-Blocking Planner & deadline sync spec (SDD).
-- [`docs/specs/p3-study-resources-hub.md`](docs/specs/p3-study-resources-hub.md) — Study Resources Hub, AI Models & UBB Perks spec (SDD).
-- [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md) — portal views modularization spec (SDD). Implemented 2026-08-14: `app/portal-views.tsx` is now a four-line barrel over `app/views/` (`CoursesDashboard.tsx`, `AdminView.tsx`, `calendar/`, `resources/`). Public exports and behaviour unchanged; `pnpm run typecheck`, `pnpm run lint` and `pnpm test` (53/53) pass.
-- [`docs/specs/p5-capacitor-mobile-migration.md`](docs/specs/p5-capacitor-mobile-migration.md) — Capacitor mobile architecture migration & mobile-first UX spec (SDD). **Implemented 2026-08-15 on `claude/capacitor-migration`; §7.1 green, §7.2 (device) pending.** The hand-rolled `android/` WebView (`StudyBridge`, `ClassroomService.java`, 1 261 lines of Java) was replaced by a Capacitor 7 runtime, remote-first against `https://ceoubb.com`. Reapplied on the regenerated Gradle project: release `signingConfig` from `keystore.properties`, `versionCode 14` / `versionName 1.1.0`, `minSdk 26`, byte-identical `google-services.json`, verified App Links `intent-filter`, `POST_NOTIFICATIONS`. New seam: `lib/mobile-bridge.ts` (platform, haptics, status bar, hardware back, external links), `lib/push-notifications.ts`, `lib/native-files.ts`, `app/mobile-shell.tsx` + `app/mobile-shell.css` (bottom nav, `vaul` sheets). Native Google Sign-In via `@capacitor-firebase/authentication` + `signInWithCredential`; the browser keeps `signInWithPopup` and both branches derive the role from `roleForEmail`. CSP admits `capacitor://localhost` and `https://localhost` in `default-src`/`script-src`/`connect-src` and nothing else changed. The duplicated `android/app/src/main/assets/www/` tree (3.5 MB) is gone; `public/sw.js` (`v7`) is the only offline coverage of `/biblioteca`. `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit` (57/57) and `pnpm test` (80/80) pass.
-- [`docs/specs/p6-ci-cd-automation-enhancements.md`](docs/specs/p6-ci-cd-automation-enhancements.md) — CI/CD Automations & Integration Quality Enhancement spec (SDD). **Implemented 2026-08-16 on `feat/ci-cd-automations`:** PR category auto-labeling (`.github/labeler.yml`, `labeler.yml`), Conventional Commits & Spanish PR title validation (`semantic-pr.yml`), Android Capacitor native compilation in CI with Discord failure alert (`android-ci.yml`), Next.js bundle size budget analyzer and CI report (`scripts/check-bundle-size.mjs`, `bundle-analysis.yml`), and workflow integrity test suite (`tests/ci-workflows.test.ts`). `pnpm run test:unit` (100/100), `pnpm test` (123/123), `typecheck` y `lint` limpios.
-- **Discord AI Bridges & Automation Suite** (Implemented 2026-08-14 / 2026-08-15): Inyección de contexto histórico del canal en bridges locales, persistencia de sesiones en disco (`.cache/`), ejecución de comandos `/doctor`, `/review-pr` y webhook de CI/CD en `app/api/webhooks/github/route.ts`. **Asistente Cloud 24/7 en Vercel Serverless** implementado en `app/api/discord/interactions/route.ts`: soporta comando `/gemini` (y `/consultar`) con respuesta diferida (`type: 5`), inyección de contexto en vivo (`AGENTS.md`, `PLAN.md`, `design-ceoubb.md`), *Function Calling* nativo hacia Linear (`LINEAR_API_KEY`) y GitHub (`GITHUB_TOKEN`), y script de registro global/guild `scripts/register-discord-commands.js`. 37/37 unit tests pasados, `pnpm run typecheck`, `pnpm run lint` y `next build` limpios.
+- [`docs/archive/PLAN_ARCHIVE.md`](docs/archive/PLAN_ARCHIVE.md): completed work, implemented milestones, full handoff history.
+- [`docs/institutional/moodle-adecca-comparison.md`](docs/institutional/moodle-adecca-comparison.md): Moodle & Adecca institutional comparison and adoption dossier.
+- [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md): P0.1-P0.11 detail and acceptance criteria.
+- [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md): P0B.1-P0B.7 institutional adoption dossier.
+- [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md): React Doctor quality & frontend reliability remediation spec (SDD).
+- [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md): canonical academic data model / enrollment migration spec.
+- [`docs/specs/p2-academic-time-blocking-planner.md`](docs/specs/p2-academic-time-blocking-planner.md): Academic Time-Blocking Planner & deadline sync spec (SDD).
+- [`docs/specs/p3-study-resources-hub.md`](docs/specs/p3-study-resources-hub.md): Study Resources Hub, AI Models & UBB Perks spec (SDD).
+- [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md): portal views modularization spec (SDD). Implemented 2026-08-14: `app/portal-views.tsx` is now a four-line barrel over `app/views/` (`CoursesDashboard.tsx`, `AdminView.tsx`, `calendar/`, `resources/`). Public exports and behaviour unchanged; `pnpm run typecheck`, `pnpm run lint` and `pnpm test` (53/53) pass.
+- [`docs/specs/p5-capacitor-mobile-migration.md`](docs/specs/p5-capacitor-mobile-migration.md): Capacitor mobile architecture migration & mobile-first UX spec (SDD). Implemented 2026-08-15 on `claude/capacitor-migration`. The hand-rolled `android/` WebView (`StudyBridge`, `ClassroomService.java`, 1 261 lines of Java) was replaced by a Capacitor 7 runtime, remote-first against `https://ceoubb.com`. Reapplied on the regenerated Gradle project: release `signingConfig` from `keystore.properties`, `versionCode 14` / `versionName 1.1.0`, `minSdk 26`, byte-identical `google-services.json`, verified App Links `intent-filter`, `POST_NOTIFICATIONS`. New seam: `lib/mobile-bridge.ts` (platform, haptics, status bar, hardware back, external links), `lib/push-notifications.ts`, `lib/native-files.ts`, `app/mobile-shell.tsx` + `app/mobile-shell.css` (bottom nav, `vaul` sheets). Native Google Sign-In via `@capacitor-firebase/authentication` + `signInWithCredential`; the browser keeps `signInWithPopup` and both branches derive the role from `roleForEmail`. CSP admits `capacitor://localhost` and `https://localhost` in `default-src`/`script-src`/`connect-src` and nothing else changed. The duplicated `android/app/src/main/assets/www/` tree (3.5 MB) is gone; `public/sw.js` (`v7`) is the only offline coverage of `/biblioteca`. `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit` (57/57) and `pnpm test` (80/80) pass.
+- [`docs/specs/p6-ci-cd-automation-enhancements.md`](docs/specs/p6-ci-cd-automation-enhancements.md): CI/CD Automations & Integration Quality Enhancement spec (SDD). Implemented 2026-08-16 on `feat/ci-cd-automations`. PR category auto-labeling (`.github/labeler.yml`, `labeler.yml`), Conventional Commits & Spanish PR title validation (`semantic-pr.yml`), Android Capacitor native compilation in CI with Discord failure alert (`android-ci.yml`), Next.js bundle size budget analyzer and CI report (`scripts/check-bundle-size.mjs`, `bundle-analysis.yml`), and workflow integrity test suite (`tests/ci-workflows.test.ts`). `pnpm run test:unit` (100/100), `pnpm test` (123/123), `typecheck` y `lint` limpios.
+- [`docs/specs/p7-enterprise-repository-standards.md`](docs/specs/p7-enterprise-repository-standards.md): Enterprise Repository Standards, Document Architecture & Governance spec (SDD).
+- **Discord AI Bridges & Automation Suite** (Implemented 2026-08-14 / 2026-08-15): Inyección de contexto histórico del canal en bridges locales, persistencia de sesiones en disco (`.cache/`), ejecución de comandos `/doctor`, `/review-pr` y webhook de CI/CD en `app/api/webhooks/github/route.ts`. Asistente Cloud 24/7 en Vercel Serverless implementado en `app/api/discord/interactions/route.ts`: soporta comando `/gemini` (y `/consultar`) con respuesta diferida (`type: 5`), inyección de contexto en vivo (`AGENTS.md`, `PLAN.md`, `DESIGN.md`), _Function Calling_ nativo hacia Linear (`LINEAR_API_KEY`) y GitHub (`GITHUB_TOKEN`), y script de registro global/guild `scripts/register-discord-commands.js`. 37/37 unit tests pasados, `pnpm run typecheck`, `pnpm run lint` y `next build` limpios.
 
 ## Active work
+
+- [ACTIVE] **P7: Estandarización Enterprise del Repositorio y Arquitectura Documental (2026-08-16).** Rama `feat/enterprise-repo-standards`. Spec [`docs/specs/p7-enterprise-repository-standards.md`](docs/specs/p7-enterprise-repository-standards.md):
+  - **TASK-01 (REQ-ENT-01, REQ-ENT-02, REQ-ENT-03)**: Unificación del sistema de diseño en `DESIGN.md`, eliminación de duplicado `design-ceoubb.md`, reubicación de dossier a `docs/institutional/` y archivo a `docs/archive/`, rotación de tareas completadas de `PLAN.md` a `docs/archive/PLAN_ARCHIVE.md`.
+  - **TASK-02 (REQ-ENT-04)**: Gobernanza de repositorio (`.editorconfig`, `.gitattributes`, `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `.github/CODEOWNERS`, `README.md` enriquecido).
+  - **TASK-03 (REQ-ENT-05, REQ-ENT-06)** [DONE]: Formularios de GitHub Issues (`.github/ISSUE_TEMPLATE/bug_report.yml`, `feature_request.yml`, `config.yml`), plantilla enterprise de Pull Request (`.github/PULL_REQUEST_TEMPLATE.md`) con compuertas de seguridad, a11y y mobile seam, y monitorización multi-ecosistema en `.github/dependabot.yml` (raíz npm, github-actions, `/firebase/functions` npm, `/android` gradle).
+  - **TASK-04 (REQ-ENT-07)** [DONE]: Tooling y formateo de código unificado (`.prettierrc.json`, `.prettierignore`, scripts `format` y `format:check` en `package.json`, y `forceConsistentCasingInFileNames: true` en `tsconfig.json`).
+  - **TASK-05 (REQ-ENT-08)**: Registro de Decisiones de Arquitectura (ADRs) en `docs/adr/` (`0001-turso-firestore-split.md`, `0002-capacitor-mobile-runtime.md`, `0003-domain-role-derivation.md`).
+  - **TASK-06 (REQ-ENT-09)** [DONE]: Suite de pruebas y validación integral en `tests/ci-workflows.test.ts` con cobertura completa para todos los artefactos de gobernanza, templates y tooling. Verificación exitosa: 106 unit tests (100% pass), `typecheck` limpio, `lint` limpio, `format:check` limpio y `pnpm test` pasando.
 
 - [ACTIVE] **Automatización de Releases y Distribución de APK (2026-08-16).** Rama `feat/android-releases-workflow`:
   - `.github/release-drafter.yml` y `.github/workflows/draft-release.yml` para acumulación automática de cambios y categorización formal de PRs en borradores de release.
   - `.github/workflows/release-android.yml` para compilación nativa de APK en publicación de release, soporte opcional de Keystore en secrets de CI, subida de binarios a Assets de GitHub Releases y anuncio a Discord.
   - `tests/ci-workflows.test.ts` ampliado con validación de los nuevos workflows.
-  - Verificación: `pnpm run test:unit` (100/100), `pnpm run lint` y `pnpm run typecheck` en verde.
+  - Verificación: `pnpm run test:unit` (106/106), `pnpm run lint` y `pnpm run typecheck` en verde.
 
-- [DONE] **P6 — Automatizaciones de CI/CD y Calidad de Integración (2026-08-16).** Rama `feat/ci-cd-automations`. Spec [`docs/specs/p6-ci-cd-automation-enhancements.md`](docs/specs/p6-ci-cd-automation-enhancements.md) (`VERIFICADA`):
-  - **TASK-01 (REQ-CICD-07)**: `.github/labeler.yml` y `.github/workflows/labeler.yml` con `actions/labeler@v5` para etiquetado automático por rutas (`📱 mobile / android`, `🔥 firebase / backend`, `🌐 web / frontend`, `📝 documentation`, `⚙️ ci / cd`).
-  - **TASK-02 (REQ-CICD-05, REQ-CICD-06)**: `.github/workflows/semantic-pr.yml` con `amannn/action-semantic-pull-request@v5` para control de Conventional Commits y títulos en Español.
-  - **TASK-03 (REQ-CICD-01, REQ-CICD-02)**: `.github/workflows/android-ci.yml` para compilación nativa de Capacitor (`assembleDebug lintDebug`) con JDK 21 (Temurin), caché Gradle y alerta de Discord en `#🚨-❙-alertas`.
-  - **TASK-04 (REQ-CICD-03, REQ-CICD-04)**: `scripts/check-bundle-size.mjs` y `.github/workflows/bundle-analysis.yml` para presupuesto de First Load JS y generación de reporte en `GITHUB_STEP_SUMMARY`.
-  - **TASK-05 (REQ-CICD-08)**: `tests/ci-workflows.test.ts` con cobertura de sintaxis de workflows, configuración de labeler, linter de títulos y presupuesto de bundle. Registrado en `package.json`.
-  - Verificación: `pnpm run test:unit` (100/100), `pnpm test` (123/123), `pnpm run typecheck`, `pnpm run lint`, `check:functions` y `check:rules` todos en verde.
-
-- [DONE] **Refactorización de Arquitectura, Modularidad y Tests (2026-08-15).** Rama `feat/code-structure-refactor`. Ejecución consolidada de los planes de mejora estructural:
-  - **Plan 010**: Modularización de `app/Classroom.tsx` (700 líneas) en vistas dedicadas bajo `app/views/classroom/` (`ClassroomView.tsx`, `PostsSection.tsx`, `MaterialsSection.tsx`, `GradesSection.tsx`, `ProgressSection.tsx`, `PeopleSection.tsx`, `classroom-utils.ts`).
-  - **Plan 011**: Desacoplamiento de `app/api/discord/interactions/route.ts` (de 961 a 193 líneas) en módulos `lib/discord/` (`signature.ts`, `agent-prompt.ts`, `messages.ts`, `pr-reviewer.ts`, `diagnostics.ts`, `gemini-copilot.ts`) y eliminación de plantillas de prompts duplicadas.
-  - **Plan 012**: Creación de clientes compartidos en `lib/services/` (`linear.ts`, `github.ts`, `gemini.ts`) para centralizar integraciones externas y fallbacks de IA.
-  - **Plan 013**: Descomposición de `lib/firebase-classroom-client.ts` en dominios desacoplados (`lib/firebase/posts.ts`, `storage.ts`, `grades.ts`, `calendar.ts`, `profile.ts`, `mappers.ts`, `sdk.ts`) con re-exportación retrocompatible.
-  - **Plan 014**: Limpieza de stubs 410 obsoletos (`app/api/auth/login`, `app/api/auth/register`) y unificación de `doctor.config.json`.
-  - **Plan 015**: Ampliación de pruebas unitarias en `tests/` (`admin-api.test.ts`, `firebase-mappers.test.ts`, `discord-interactions.test.ts`, `services.test.ts`), elevando la suite unitaria a 95 tests (118 totales en `pnpm test`).
-  - Verificación: `pnpm run lint`, `pnpm run typecheck`, `pnpm run check:functions`, `pnpm run test:unit` (95/95) y `pnpm test` (118/118) en verde.
-
-- [DONE] **P6 — Pase de UI/UX móvil sobre el portal (2026-08-15).** Verificado en el emulador de Android Studio (API 36, 1080×2400, dpr 2.625) con la WebView apuntando a `http://localhost:3000` vía `adb reverse` y `CAPACITOR_SERVER_URL`. Cambios:
-  - **Áreas seguras.** `--safe-top` / `--safe-bottom` / `--header-offset` en `:root`; la cabecera pegajosa, el riel lateral, su cortina y la pantalla de acceso las consumen. Android 15 fuerza el borde a borde y `StatusBar.setOverlaysWebView(false)` ya no reserva la franja: sin esto la cabecera se dibujaba bajo el reloj. `env(safe-area-inset-bottom)` mide 0px en la WebView de Android aunque el contenedor sea de borde a borde —Chromium sólo lo rellena con recortes de pantalla, no con la barra de gestos—, así que por debajo de 768px `--safe-bottom` es `max(env(...), 24px)`; los rótulos de la barra inferior salían tachados por la píldora del sistema.
-  - **Búsqueda.** Por debajo de 768px la cabecera recupera la barra de búsqueda (antes se encogía a un icono suelto desde 1000px, que no se lee como buscador) y la paleta pasa a hoja de pantalla completa con aspa de cierre. Corregido además un cierre inmediato: `dialog.close()` en la limpieza del efecto emitía un evento `close` diferido que llegaba a `onClose` después del segundo montaje de StrictMode, y la paleta se cerraba en el frame en que se abría. La limpieza desapareció —quitar el nodo del DOM ya lo saca de la capa superior— y `showModal()` queda guardado por `!dialog.open` aquí y en `BlockDialog`.
-  - **Botón atrás.** `useHardwareBack` cierra primero cualquier `<dialog open>`. Capacitor reemplaza el gesto por completo: con la búsqueda o el editor de bloques abiertos, atrás mandaba la app al fondo en vez de cerrarlos.
-  - **Calendario.** Se retira la cabecera de días de la rejilla (duplicaba la barra de chips y costaba 56px de horas útiles), los filtros de ramo pasan a carril horizontal con máscara en los extremos, la canaleta sube a 54px para que quepa «08:00» sin que el radio la muerda y `Nuevo bloque` ocupa el resto de la fila con alto táctil. `BlockDialog` deja de ser modal centrado y sube desde abajo con pie pegajoso, entradas de 16px y `Fecha` a renglón completo sobre `Desde`/`Hasta`.
-  - **Rótulos.** La cuarta pestaña inferior decía «Biblioteca» y abría el HTML estático mientras la vista «Recursos de estudio» no tenía pestaña y dejaba la barra sin nada activo. Ahora la pestaña es «Recursos» y apunta a esa vista; la biblioteca académica entra desde su primera tarjeta y desde la hoja «Mis ramos».
-  - **Ficha de próxima evaluación.** Rediseñada sólo para teléfono: fecha y asunto arriba, pie con cuenta atrás y entrada al aula separado por filete. El nombre del ramo lleva su color oscurecido contra tinta (`color-mix(... 38%, #0f172a)`) porque los tonos claros de la paleta no llegan a 4.5:1 sobre papel.
-  - **Tacto y densidad.** `@media (hover: none)` apaga los estados de reposo que se quedaban pegados tras el toque; `:active` da el acuse. Objetivos de 44px, `touch-action: manipulation`, `overscroll-behavior: contain` por zona, y la escala tipográfica editorial (38–64px) baja a escala de app.
-  - **Esqueleto de arranque.** Dibujaba el portal de escritorio bajo el reloj; ahora reproduce la silueta móvil real (cabecera con inset, barra de búsqueda, tarjetas de lista, banda de la barra del pulgar) y el salto de layout al resolver la sesión desaparece.
-  - **Orientación bloqueada a vertical.** `android:screenOrientation="portrait"` + `android:windowSoftInputMode="adjustResize"` en `AndroidManifest.xml`, y `UISupportedInterfaceOrientations` reducido a `Portrait` en `ios/App/App/Info.plist`. Ambos son ediciones manuales que hay que reaplicar si se regenera el proyecto nativo (misma lista que `signingConfig`, `versionCode`, `minSdk` y los App Links en `AGENTS.md`).
-  - Verificación: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit` (58/58) y `pnpm test` (81/81) en verde. `app/globals.css`, `app/mobile-shell.css`, `app/Portal.tsx`, `app/command-palette.tsx`, `app/views/CoursesDashboard.tsx`, `app/views/calendar/BlockDialog.tsx`, `android/app/src/main/AndroidManifest.xml`, `ios/App/App/Info.plist`
-- [NEXT] **P6 — deuda declarada: el inset inferior de Android es una constante, no una medida.** `--safe-bottom` usa `max(env(...), 24px)` por debajo de 768px porque la WebView no expone el alto real de la barra de gestos. En un teléfono con navegación de tres botones o sin barra, esos 24px son relleno que nadie pidió. La solución correcta es leer el inset desde el contenedor nativo y publicarlo como variable CSS al arrancar. `app/globals.css`, `lib/mobile-bridge.ts`
-- [ACTIVE] **P5 — Capacitor migration: PR #13 actualizado; compilación local y entorno Android SDK completados.** Rama `claude/capacitor-migration`. Toolchain configurado con OpenJDK 21 LTS y Android SDK 36 (`build-tools 36.0.0`, `platform-tools`). Se añadió soporte dinámico para `CAPACITOR_SERVER_URL` en `capacitor.config.ts` y se registraron las huellas SHA-1/SHA-256 de depuración en Firebase Console y `google-services.json`. `assembleDebug` compiló exitosamente (196 tareas limpias) y generó `CEOUBB-debug.apk` (~6.0 MB). Pendiente: verificación manual en dispositivo físico sobre el despliegue (§7.2 checklist). `android/`, `capacitor.config.ts`
-- [NEXT] **Declared debt from P5 §0.3 — no kill switch.** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this needs a minimum-version / kill-switch endpoint the shell checks on launch. `app/api/`, `capacitor.config.ts`
-- [NEXT] **P5 conditional debt — DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1 500 active nodes, p95 interaction under 200 ms, long tasks under 50 ms during scroll) and `content-visibility: auto` is the current answer. `@tanstack/react-virtual` may only be introduced against a measurement on a low-end device that exceeds those thresholds. `app/globals.css`, `app/Classroom.tsx`
-- [NEXT] **P5 — iOS is a scaffold, not a target.** `ios/` is versioned and consistent but never built: no macOS/Xcode, no `GoogleService-Info.plist`, no Apple Developer enrolment or APNs key. Apple guideline 4.2 (minimum functionality) is the reason push, haptics, downloads and offline library had to land first. `ios/`
+- [NEXT] **P6: deuda declarada: el inset inferior de Android es una constante, no una medida.** `--safe-bottom` usa `max(env(...), 24px)` por debajo de 768px porque la WebView no expone el alto real de la barra de gestos. En un teléfono con navegación de tres botones o sin barra, esos 24px son relleno que nadie pidió. La solución correcta es leer el inset desde el contenedor nativo y publicarlo como variable CSS al arrancar. `app/globals.css`, `lib/mobile-bridge.ts`
+- [ACTIVE] **P5: Capacitor migration: PR #13 actualizado; compilación local y entorno Android SDK completados.** Rama `claude/capacitor-migration`. Toolchain configurado con OpenJDK 21 LTS y Android SDK 36 (`build-tools 36.0.0`, `platform-tools`). Se añadió soporte dinámico para `CAPACITOR_SERVER_URL` en `capacitor.config.ts` y se registraron las huellas SHA-1/SHA-256 de depuración en Firebase Console y `google-services.json`. `assembleDebug` compiló exitosamente (196 tareas limpias) y generó `CEOUBB-debug.apk` (~6.0 MB). Pendiente: verificación manual en dispositivo físico sobre el despliegue (§7.2 checklist). `android/`, `capacitor.config.ts`
+- [NEXT] **Declared debt from P5 §0.3: no kill switch.** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this needs a minimum-version / kill-switch endpoint the shell checks on launch. `app/api/`, `capacitor.config.ts`
+- [NEXT] **P5 conditional debt: DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1 500 active nodes, p95 interaction under 200 ms, long tasks under 50 ms during scroll) and `content-visibility: auto` is the current answer. `@tanstack/react-virtual` may only be introduced against a measurement on a low-end device that exceeds those thresholds. `app/globals.css`, `app/Classroom.tsx`
+- [NEXT] **P5: iOS is a scaffold, not a target.** `ios/` is versioned and consistent but never built: no macOS/Xcode, no `GoogleService-Info.plist`, no Apple Developer enrolment or APNs key. Apple guideline 4.2 (minimum functionality) is the reason push, haptics, downloads and offline library had to land first. `ios/`
 
 - [NEXT] **Teacher promotion is broken by the deployed rules.** `PATCH /api/admin/users` writes `role` to Turso only, while `isTeacher()` in `firestore.rules` now reads `users/{uid}.role` in Firestore, and `syncProfile` writes that field once at account creation and never again. A promoted account therefore gets teacher affordances in the portal UI and `permission-denied` from Firestore. The rules' own update whitelist excludes `role`, so the account cannot self-heal; only an owner-side write can fix it. No victim today (the Turso directory holds one row, the owner), but this breaks the first real docente onboarding. Fix by making the promotion path write both stores. `app/api/admin/users/route.ts`, `lib/firebase-classroom-client.ts`, `firebase/firestore.rules`
 - [NEXT] Run the classroom, gradebook and calendar manual matrix with owner, teacher and student accounts. Rules deployed 2026-08-14; only the verification remains. Firebase
-- [NEXT] Academic data model — course identity becomes *asignatura × periodo × sección*; Turso system of record, Firestore one-way enrollment projection. Spec: [`p1-academic-model.md`](docs/specs/p1-academic-model.md). `db/`, `drizzle/`, `lib/courses.ts`, `app/Portal.tsx`, `firebase/firestore.rules`
+- [NEXT] Academic data model: course identity becomes _asignatura × periodo × sección_; Turso system of record, Firestore one-way enrollment projection. Spec: [`p1-academic-model.md`](docs/specs/p1-academic-model.md). `db/`, `drizzle/`, `lib/courses.ts`, `app/Portal.tsx`, `firebase/firestore.rules`
 - [NEXT] Gate course reads on an enrollment check in the rules. Today any signed-in UBB account reads every course. Release-blocking before the platform opens beyond the pilot cohort. `firebase/firestore.rules`
 - [NEXT] Replace the two database-wide collection-group sweeps (`watchCourseActivity`, `watchGradebooks`) with enrollment-filtered queries. The badge sweep fails silently past a few dozen courses. `lib/firebase-classroom-client.ts`
 - [NEXT] Pagination for posts, files, roster and grade matrix; chunk `saveStudentScores` under the 500-op Firestore batch limit; add the composite indexes enrollment-filtered queries need. `lib/firebase-classroom-client.ts`, `app/Classroom.tsx`, `firebase/firestore.indexes.json`
 - [NEXT] Update `/privacidad` to cover official academic grades before any teacher enters real data. `app/privacidad/page.tsx`
 - [NEXT] Institutional SSO (SAML 2.0 / OIDC / CAS) against the UBB directory, replacing consumer Google sign-in; role from directory membership, not the email suffix (P0B.1). `lib/access-policy.ts`, `lib/auth.ts`, `app/api/`, Firebase Auth
-- [NEXT] Remove the two hardcoded personal Gmail owner exceptions, replaced by directory-backed admin accounts (P0B.1). Three surfaces now, not five — the native domain mirror died with `ClassroomService.java`. `lib/access-policy.ts`, `firebase/*.rules`, `android/app/src/main/res/values/firebase.xml`
+- [NEXT] Remove the two hardcoded personal Gmail owner exceptions, replaced by directory-backed admin accounts (P0B.1). Three surfaces now, not five: the native domain mirror died with `ClassroomService.java`. `lib/access-policy.ts`, `firebase/*.rules`, `android/app/src/main/res/values/firebase.xml`
 - [NEXT] Grade audit trail: author, timestamp, previous value on every score change (P0.9). `lib/firebase-classroom-client.ts`, `firebase/firestore.rules`, `firebase/functions/`
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore export, Turso backup, stated RPO/RTO (P0.8). Sharpest risk in the repository. Firebase, Turso, `firebase/functions/`
 - [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as merge gate (P0.10). `tests/`, `firebase/`
 - [NEXT] Staging Firebase project and seeded emulator dataset (P0.11). Every deploy instruction targets production today. Firebase, `firebase/`
 - [NEXT] Define and record the P0.7 capacity and cost targets, then load-check against them. Without numbers, "production-ready" is untestable. `docs/specs/p0-pilot-safety.md`, Google Cloud billing
-- ~~Retheme `android/app/src/main/assets/www/`~~ — obsolete. That tree was removed by P5: the shell loads the deployed portal and `public/sw.js` covers `/biblioteca` offline, so there is only one copy of the library to theme.
-- [NEXT] Run the production authentication, Storage and notification test matrix (P0.1–P0.3). Web, Android, Firebase
+- [NEXT] Run the production authentication, Storage and notification test matrix (P0.1-P0.3). Web, Android, Firebase
 - [NEXT] Configure billing budget alerts and App Check rollout (P0.4, P0.5). Google Cloud, Firebase
-- [BLOCKED] Project owner — **written authorization for an institutional pilot** with one departamento or carrera: named academic sponsor, one semester, real students, signed data-processing annex. No agent can do this; every adoption item depends on it. UBB (DTI, VRA, jurídica)
-- [BLOCKED] Project owner — Google Play verification and official listing URL. Play Console
-- [BLOCKED] Project owner — choose and fund the native iOS strategy and Apple Developer enrollment. App Store Connect
+- [BLOCKED] Project owner: **written authorization for an institutional pilot** with one departamento or carrera: named academic sponsor, one semester, real students, signed data-processing annex. No agent can do this; every adoption item depends on it. UBB (DTI, VRA, jurídica)
+- [BLOCKED] Project owner: Google Play verification and official listing URL. Play Console
+- [BLOCKED] Project owner: choose and fund the native iOS strategy and Apple Developer enrollment. App Store Connect
 - [BACKLOG] Assignment submissions against an evaluation + teacher feedback text per grade. `lib/firebase-classroom-client.ts`, `app/Classroom.tsx`, `firebase/*.rules`
 - [BACKLOG] "Mi Bodega" personal file locker. Deferred by decision; needs a per-student quota and a Storage cost estimate first. Firebase Storage, `firebase/storage.rules`
 - [BACKLOG] Participants directory: `Ayudantes` role, roster search/filter, contact actions. `app/Classroom.tsx`
@@ -95,63 +76,63 @@ Companion files:
 - [BACKLOG] Load real learning outcomes and evaluation schedules for the five non-Estática ramos. `lib/courses.ts`
 - [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI, IMS Common Cartridge, QTI, Moodle `.mbz` importer (P0B.3). Required for adoption; nothing exists. New surface
 - [BACKLOG] WCAG 2.2 AA audit and published conformance statement (P0B.5). Legal obligation for a state body. Web portal, `public/biblioteca/`
-- [BACKLOG] Project owner — tenancy, licensing and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (P0B.6). Governance
+- [BACKLOG] Project owner: tenancy, licensing and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (P0B.6). Governance
 
-## Production inventory — what is NOT done
+## Production inventory: what is NOT done
 
-Everything not listed here is done and verified; the full inventory lives in `PLAN_ARCHIVE.md`. Deployed and working today: `ceoubb.com` on Vercel with Turso, Firebase Auth with the institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
+Everything not listed here is done and verified; the full inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and working today: `ceoubb.com` on Vercel with Turso, Firebase Auth with the institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
 
 - Web: store badges have no listing URLs (placeholders, non-clickable); no public account-deletion entry page; the local portal/library redesign is uncommitted and undeployed.
 - Android: release AAB install, Google sign-in, upload/download, role behaviour, account deletion and FCM delivery **not verified** on a clean physical device. Bundled library still on the old dark maroon theme.
-- iOS: nothing exists — no Xcode project, bundle ID, APNs config or iOS Firebase app. Badge is a placeholder and must not be linked.
+- iOS: nothing exists: no Xcode project, bundle ID, APNs config or iOS Firebase app. Badge is a placeholder and must not be linked.
 - Firebase/GCP: App Check not configured; no web push VAPID key; no Emulator Suite rule tests; no Cloud Billing budgets or alerts; billing trial/paid status still **pending verification**.
-- GitHub: no CI workflow; branch protection and required review not documented as enabled.
+- GitHub: branch protection and required review not documented as enabled.
 
 ## Architectural risks and technical debt
 
 Detail and remediation live in the spec files; this is the index.
 
-- **Static catalogue, no enrollment model** — the blocking debt. `courseId` carries no section and no period, so paralelos and successive years collide in one collection; roles are global and email-derived; no bulk enrollment path. Cost rises with every day of real pilot data. → [`p1-academic-model.md`](docs/specs/p1-academic-model.md)
-- **No grade audit trail** — `grades/{uid}` overwritten in place. Disqualifying for an official gradebook. → P0.9
-- **No backups, no proven restore** — no Firestore export, no Turso backup, no restore ever performed. → P0.8
-- **Consumer identity and personal-account superusers** — two hardcoded Gmail owners across web, both rules files and the Android service. → P0B.1
-- **Single environment, no CI** — one Firebase project, deploys go straight to it, rules have no emulator tests. → P0.10, P0.11
-- **No capacity or cost model** — "production-ready" is untestable and cost per student does not exist. → P0.7
-- **Governance and continuity** — personal Firebase/Vercel/Turso accounts, no license, no data-processing agreement, no accessibility statement, no external pentest, bus factor of two. → P0B.6
-- **Account deletion compliance gap** — backend Function and Android invocation exist; the public `/eliminar-cuenta` route was removed from the web UI. → P0.6
-- **Web/Android library divergence** — `assets/data.js` matches; HTML, JS, styles and the native bridge differ. Academic corrections may reach only one platform. Needs a content-sync script that copies portable content and verifies hashes without overwriting native-only behaviour.
-- **Test coverage gap** — no Firebase rule emulator tests, no Android unit/instrumentation tests, no end-to-end multi-role tests.
-- **Store distribution gap** — Play approval, testing tracks, listing assets, policy declarations and final AAB verification remain; no iOS app.
-- **D1 leftovers** — `posts`, `files`, `progress` tables still physically exist in the imported Turso copy, unreferenced. Drop only after confirming the rows are not needed.
+- **Static catalogue, no enrollment model**: the blocking debt. `courseId` carries no section and no period, so paralelos and successive years collide in one collection; roles are global and email-derived; no bulk enrollment path. Cost rises with every day of real pilot data. -> [`p1-academic-model.md`](docs/specs/p1-academic-model.md)
+- **No grade audit trail**: `grades/{uid}` overwritten in place. Disqualifying for an official gradebook. -> P0.9
+- **No backups, no proven restore**: no Firestore export, no Turso backup, no restore ever performed. -> P0.8
+- **Consumer identity and personal-account superusers**: two hardcoded Gmail owners across web, both rules files and the Android service. -> P0B.1
+- **Single environment, no CI**: one Firebase project, deploys go straight to it, rules have no emulator tests. -> P0.10, P0.11
+- **No capacity or cost model**: "production-ready" is untestable and cost per student does not exist. -> P0.7
+- **Governance and continuity**: personal Firebase/Vercel/Turso accounts, no license, no data-processing agreement, no accessibility statement, no external pentest, bus factor of two. -> P0B.6
+- **Account deletion compliance gap**: backend Function and Android invocation exist; the public `/eliminar-cuenta` route was removed from the web UI. -> P0.6
+- **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles and the native bridge differ. Academic corrections may reach only one platform. Needs a content-sync script that copies portable content and verifies hashes without overwriting native-only behaviour.
+- **Test coverage gap**: no Firebase rule emulator tests, no Android unit/instrumentation tests, no end-to-end multi-role tests.
+- **Store distribution gap**: Play approval, testing tracks, listing assets, policy declarations and final AAB verification remain; no iOS app.
+- **D1 leftovers**: `posts`, `files`, `progress` tables still physically exist in the imported Turso copy, unreferenced. Drop only after confirming the rows are not needed.
 
-## Remaining work — two parallel tracks
+## Remaining work: two parallel tracks
 
-- **P0 pilot safety** — protects today's students; deployment- and correctness-blocking. → [`p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md)
-- **P0B institutional adoption** — what DTI, Vicerrectoría Académica and jurídica require before CEOUBB can be proposed as official. Cannot be produced in the week before a presentation. → [`p0b-adoption.md`](docs/specs/p0b-adoption.md)
+- **P0 pilot safety**: protects today's students; deployment- and correctness-blocking. -> [`p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md)
+- **P0B institutional adoption**: what DTI, Vicerrectoría Académica and jurídica require before CEOUBB can be proposed as official. Cannot be produced in the week before a presentation. -> [`p0b-adoption.md`](docs/specs/p0b-adoption.md)
 
-### Track A — pilot safety, in order
+### Track A: pilot safety, in order
 
-1. Deploy the wildcard course rules, run P0.1–P0.3 on real accounts and devices, fix functional failures.
+1. Deploy the wildcard course rules, run P0.1-P0.3 on real accounts and devices, fix functional failures.
 2. CI + rules emulator tests (P0.10) and staging (P0.11). Everything after this is verified before production.
-3. Backups and a drilled restore (P0.8) — before teachers enter real grades, not after.
+3. Backups and a drilled restore (P0.8) prior to teachers entering real grades.
 4. P0.4 and P0.5 before inviting a larger beta group.
 5. P0.6 and the `/privacidad` grade update, before store submission or real grades, whichever comes first.
 6. Grade audit trail (P0.9).
 7. Define P0.7 targets, then build the academic data model against them. Course identity lands first; enrollment-gated rules land with it.
-8. Finish the Google Play testing/submission path (below).
-9. Decide and begin the iOS architecture in a separate workstream (below).
+8. Finish the Google Play testing/submission path.
+9. Decide and begin the iOS architecture in a separate workstream.
 
-### Track B — adoption, in order
+### Track B: adoption, in order
 
-1. Owner obtains the written pilot authorization (`BLOCKED`). Items 2–4 can start immediately without it.
+1. Owner obtains the written pilot authorization (`BLOCKED`). Items 2-4 can start immediately without it.
 2. Legal and data protection (P0B.4); ownership, tenancy, continuity (P0B.6).
-3. Institutional identity design (P0B.1) — it constrains the data model, so specify it before P1 work item 2 is written.
+3. Institutional identity design (P0B.1): it constrains the data model, so specify it before P1 work item 2 is written.
 4. Accessibility audit (P0B.5).
-5. Interoperability and the Moodle importer (P0B.3) — largest single item, and the first thing an evaluation asks about.
+5. Interoperability and the Moodle importer (P0B.3): largest single item, and the first thing an evaluation asks about.
 6. Records integration and the actas decision (P0B.2).
 7. Pilot evidence, then the proposal (P0B.7).
 
-## P1 — Google Play release
+## P1: Google Play release
 
 1. Play Console developer identity and phone verification.
 2. Confirm final app name, developer name, support email, country/legal details.
@@ -165,7 +146,7 @@ Detail and remediation live in the spec files; this is the index.
 10. Submit production release.
 11. Replace the Play badge placeholder with the official listing URL only after it works publicly.
 
-## P1 — iOS implementation and App Store release
+## P1: iOS implementation and App Store release
 
 1. Decide architecture (native SwiftUI, shared cross-platform shell, or other maintainable approach); document before scaffolding.
 2. Enroll in the Apple Developer Program, configure App Store Connect.
@@ -177,7 +158,7 @@ Detail and remediation live in the spec files; this is the index.
 8. Submit for App Review.
 9. Link the App Store badge only after the listing is public.
 
-## P2 — Quality, automation, operations
+## P2: Quality, automation, operations
 
 - Android debug build in CI (the GitHub Actions and rules-emulator items were promoted to P0.10).
 - Android unit/instrumentation tests and a release smoke-test checklist.
@@ -189,16 +170,16 @@ Detail and remediation live in the spec files; this is the index.
 - Replace the direct Drive APK link inside the authenticated portal once Play is public.
 - Decide whether browser push is required; configure a VAPID key only if it is.
 
-## Settled decisions — do not relitigate
+## Settled decisions: do not relitigate
 
-1. **Catalogue storage**: Turso is the system of record; Firestore holds a single-writer enrollment projection so rules can call `exists()`. Reverses the earlier warning against splitting.
-2. **Course identity is a section** — asignatura × periodo × sección — and must change before a second cohort exists.
+1. **Catalogue storage**: Turso is the system of record; Firestore holds a single-writer enrollment projection so rules can call `exists()`.
+2. **Course identity is a section**: asignatura × periodo × sección, and must change before a second cohort exists.
 3. **The domain-to-role invariant is authentication only.** Authorization moves to per-enrollment roles. `AGENTS.md` still states it as absolute; amending it is deliberate work in one commit with tests, not drift.
 4. **Do not propose adoption first.** Get a written authorization for a pilot with one departamento or carrera, keep the non-official disclaimer in the UI until it exists, let the pilot produce the evidence.
 
 ## Handoff template
 
-Append completed handoffs to `PLAN_ARCHIVE.md`, not here.
+Append completed handoffs to `docs/archive/PLAN_ARCHIVE.md`, not here.
 
 ```text
 Date:
@@ -219,4 +200,4 @@ Next recommended action:
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
-In parallel, the owner starts P0B.7 item 1 (pilot authorization) and fills in the P0.7 capacity and cost targets — both gate work that otherwise stalls.
+In parallel, the owner starts P0B.7 item 1 (pilot authorization) and fills in the P0.7 capacity and cost targets.

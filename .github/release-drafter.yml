@@ -1,61 +1,61 @@
 # Configuración de Release Drafter para CEOUBB
 # Agrupa los cambios de los PRs fusionados en un borrador de Release formal e institucional.
 
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
 
-change-template: '- $TITLE (@$AUTHOR) en #$NUMBER'
+change-template: "- $TITLE (@$AUTHOR) en #$NUMBER"
 change-title-escapes: '\<*_&'
 
 version-resolver:
   major:
     labels:
-      - 'breaking-change'
-      - 'major'
+      - "breaking-change"
+      - "major"
   minor:
     labels:
-      - 'feat'
-      - 'enhancement'
-      - 'feature'
-      - '📱 mobile / android'
-      - 'mobile'
-      - 'android'
+      - "feat"
+      - "enhancement"
+      - "feature"
+      - "📱 mobile / android"
+      - "mobile"
+      - "android"
   patch:
     labels:
-      - 'fix'
-      - 'bug'
-      - 'perf'
-      - 'refactor'
-      - 'chore'
-      - 'documentation'
-      - '📝 documentation'
-      - '⚙️ ci / cd'
+      - "fix"
+      - "bug"
+      - "perf"
+      - "refactor"
+      - "chore"
+      - "documentation"
+      - "📝 documentation"
+      - "⚙️ ci / cd"
   default: patch
 
 categories:
-  - title: 'Aplicación Móvil (Android)'
+  - title: "Aplicación Móvil (Android)"
     labels:
-      - '📱 mobile / android'
-      - 'mobile'
-      - 'android'
-  - title: 'Nuevas Funcionalidades'
+      - "📱 mobile / android"
+      - "mobile"
+      - "android"
+  - title: "Nuevas Funcionalidades"
     labels:
-      - 'feat'
-      - 'enhancement'
-      - 'feature'
-  - title: 'Corrección de Errores'
+      - "feat"
+      - "enhancement"
+      - "feature"
+  - title: "Corrección de Errores"
     labels:
-      - 'fix'
-      - 'bug'
-  - title: 'Rendimiento y Optimización'
+      - "fix"
+      - "bug"
+  - title: "Rendimiento y Optimización"
     labels:
-      - 'perf'
-  - title: 'Mantenimiento y Refactorización'
+      - "perf"
+  - title: "Mantenimiento y Refactorización"
     labels:
-      - 'refactor'
-      - 'chore'
-      - '⚙️ ci / cd'
-      - '📝 documentation'
+      - "refactor"
+      - "chore"
+      - "⚙️ ci / cd"
+      - "📝 documentation"
 
 template: |
   ## Cambios incluidos en esta versión

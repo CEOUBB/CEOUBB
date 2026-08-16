@@ -6,10 +6,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET || "";
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_CI_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
-const TARGET_CHANNEL_ID =
-  process.env.DISCORD_CI_CHANNEL_ID ||
-  "1536936245643579462"; // #🚨-❙-alertas
+const DISCORD_WEBHOOK_URL =
+  process.env.DISCORD_CI_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
+const TARGET_CHANNEL_ID = process.env.DISCORD_CI_CHANNEL_ID || "1536936245643579462"; // #🚨-❙-alertas
 
 const MODEL_FALLBACK_LIST = [
   "gemini-3.7-flash",
@@ -74,7 +73,10 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get("x-hub-signature-256");
 
-    if (GITHUB_WEBHOOK_SECRET && !verifyGitHubSignature(rawBody, signature, GITHUB_WEBHOOK_SECRET)) {
+    if (
+      GITHUB_WEBHOOK_SECRET &&
+      !verifyGitHubSignature(rawBody, signature, GITHUB_WEBHOOK_SECRET)
+    ) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 

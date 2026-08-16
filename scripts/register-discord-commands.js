@@ -127,7 +127,9 @@ async function registerForBot(botName, botToken, commands) {
 
   const meData = await meRes.json();
   const applicationId = meData.id;
-  console.log(`👤 Usuario de Discord: ${meData.username}#${meData.discriminator} (App ID: ${applicationId})`);
+  console.log(
+    `👤 Usuario de Discord: ${meData.username}#${meData.discriminator} (App ID: ${applicationId})`
+  );
 
   // Obtener servidores donde está el bot
   const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
@@ -137,7 +139,9 @@ async function registerForBot(botName, botToken, commands) {
   if (guildsRes.ok) {
     const guilds = await guildsRes.json();
     for (const g of guilds) {
-      console.log(`📡 Registrando ${commands.length} comando(s) en servidor "${g.name}" (${g.id})...`);
+      console.log(
+        `📡 Registrando ${commands.length} comando(s) en servidor "${g.name}" (${g.id})...`
+      );
       const guildUrl = `https://discord.com/api/v10/applications/${applicationId}/guilds/${g.id}/commands`;
       const guildRes = await fetch(guildUrl, {
         method: "PUT",
@@ -151,7 +155,10 @@ async function registerForBot(botName, botToken, commands) {
       if (guildRes.ok) {
         console.log(`✅ Comandos registrados con éxito para ${botName} en "${g.name}".`);
       } else {
-        console.warn(`⚠️ Error registrando comandos en "${g.name}" (${guildRes.status}):`, await guildRes.text());
+        console.warn(
+          `⚠️ Error registrando comandos en "${g.name}" (${guildRes.status}):`,
+          await guildRes.text()
+        );
       }
     }
   }
@@ -175,7 +182,9 @@ async function main() {
   // Registrar para Gemini Bot
   await registerForBot("Gemini Bot (Asistente IA)", GEMINI_BOT_TOKEN, GEMINI_COMMANDS);
 
-  console.log("\n🎉 ¡Registro completado! Cada bot ahora tiene exclusivamente sus propios comandos.");
+  console.log(
+    "\n🎉 ¡Registro completado! Cada bot ahora tiene exclusivamente sus propios comandos."
+  );
 }
 
 main().catch(console.error);

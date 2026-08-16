@@ -5,7 +5,7 @@
 **Enmiendas E1 y E2 durante la ejecución:** ver §8bis.
 **Condiciones de la aprobación:** formalizadas como REQ-CAP-12…19 (§3). Los riesgos aceptados sin mitigar están en §0.3.
 **Alcance aprobado:** Android GA · iOS **scaffold diferido** (ver §2.3)
-**Reviewer & Execution Agent:** Claude Code · **Design Standard:** `design-ceoubb.md` · **Framework:** Next.js 16 (App Router), React 19, TypeScript, Capacitor 7.x
+**Reviewer & Execution Agent:** Claude Code · **Design Standard:** `DESIGN.md` · **Framework:** Next.js 16 (App Router), React 19, TypeScript, Capacitor 7.x
 
 ---
 
@@ -15,13 +15,13 @@
 
 ### 0.1 Bloqueadores encontrados (resueltos)
 
-| # | Activo en riesgo | Evidencia | Requisito que lo cubre |
-|---|---|---|---|
-| B1 | Autenticación: `signInWithPopup` no funciona en WebView nativo (ni `signInWithRedirect`, por particionado de almacenamiento). La app legacy usa Credential Manager nativo. | `lib/firebase-client.ts:2,22`; `android/app/build.gradle` (`androidx.credentials`, `googleid:1.1.1`) | REQ-CAP-12, 12b |
-| B2 | Clave de firma, `versionCode 13`, `versionName 1.0.6`, `minSdk 26` y `namespace` en `app/build.gradle`. Sin ellos, Play Console rechaza el AAB. | `android/app/build.gradle` | REQ-CAP-13 |
-| B3 | `intent-filter` de App Links verificados, `StudyFileProvider` y `PushNotificationService` en el manifest legacy — no solo `google-services.json`. | `android/app/src/main/AndroidManifest.xml` | REQ-CAP-02, 16 |
-| B4 | Biblioteca offline: `assets/www/` (3,5 MB) es copia de `public/biblioteca/` (3,4 MB). Con `server.url` remoto, Capacitor no sirve assets locales. | `du -sh` de ambos árboles | REQ-CAP-19 |
-| B5 | CSP: `default-src 'self'` bloquea los orígenes `capacitor://localhost` / `https://localhost` que inyecta la WebView. Bridge muerto o pantalla en blanco. | `next.config.ts` | REQ-CAP-14 |
+| #   | Activo en riesgo                                                                                                                                                           | Evidencia                                                                                            | Requisito que lo cubre |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------- |
+| B1  | Autenticación: `signInWithPopup` no funciona en WebView nativo (ni `signInWithRedirect`, por particionado de almacenamiento). La app legacy usa Credential Manager nativo. | `lib/firebase-client.ts:2,22`; `android/app/build.gradle` (`androidx.credentials`, `googleid:1.1.1`) | REQ-CAP-12, 12b        |
+| B2  | Clave de firma, `versionCode 13`, `versionName 1.0.6`, `minSdk 26` y `namespace` en `app/build.gradle`. Sin ellos, Play Console rechaza el AAB.                            | `android/app/build.gradle`                                                                           | REQ-CAP-13             |
+| B3  | `intent-filter` de App Links verificados, `StudyFileProvider` y `PushNotificationService` en el manifest legacy — no solo `google-services.json`.                          | `android/app/src/main/AndroidManifest.xml`                                                           | REQ-CAP-02, 16         |
+| B4  | Biblioteca offline: `assets/www/` (3,5 MB) es copia de `public/biblioteca/` (3,4 MB). Con `server.url` remoto, Capacitor no sirve assets locales.                          | `du -sh` de ambos árboles                                                                            | REQ-CAP-19             |
+| B5  | CSP: `default-src 'self'` bloquea los orígenes `capacitor://localhost` / `https://localhost` que inyecta la WebView. Bridge muerto o pantalla en blanco.                   | `next.config.ts`                                                                                     | REQ-CAP-14             |
 
 ### 0.2 Decisiones de dependencias (justificación de lo que NO se instala)
 
@@ -40,7 +40,7 @@
 
 Reemplazar el código nativo legacy de `android/` (WebView artesanal, `StudyBridge`, `ClassroomService.java`) por una arquitectura móvil estandarizada sobre **Capacitor**, con Android como plataforma publicable y iOS preparado para una segunda fase, bajo el identificador canónico `cl.ubb.centroestudio`.
 
-**Modelo de runtime elegido:** *remote-first*. Next.js 16 con App Router, rutas API (`app/api/**`) y Turso no admite `output: 'export'`; por tanto la WebView carga `https://ceoubb.com` y el `webDir` local sirve únicamente una pantalla de fallback offline. Esta decisión es la que hace que B4 y B5 existan: no es negociable sin reescribir el portal como SPA estática.
+**Modelo de runtime elegido:** _remote-first_. Next.js 16 con App Router, rutas API (`app/api/**`) y Turso no admite `output: 'export'`; por tanto la WebView carga `https://ceoubb.com` y el `webDir` local sirve únicamente una pantalla de fallback offline. Esta decisión es la que hace que B4 y B5 existan: no es negociable sin reescribir el portal como SPA estática.
 
 > [!TIP]
 > **Libertad creativa de implementación:** la estructura de carpetas, los hooks, la ergonomía táctil, las micro-interacciones y la elección de librerías auxiliares quedan a criterio del agente ejecutor, siempre que se respeten los invariantes de §2 y los requisitos formales de §3.
@@ -51,15 +51,15 @@ Reemplazar el código nativo legacy de `android/` (WebView artesanal, `StudyBrid
 
 ### 2.1 Invariantes afectados (`AGENTS.md`)
 
-| Invariante | ¿Tocado? | Cómo se preserva | Requisito |
-| :--- | :--- | :--- | :--- |
-| Identificador canónico `cl.ubb.centroestudio` | sí | `appId` en `capacitor.config.ts`, `applicationId` y `namespace` reaplicados sobre el proyecto regenerado | REQ-CAP-01, 13 |
-| Continuidad de publicación (firma, `versionCode`, `google-services.json`) | sí | Respaldo por tag Git + reaplicación verificada por test | REQ-CAP-02, 13 |
-| SSOT de roles (`lib/access-policy.ts` + 4 espejos) | sí | La rama nativa entrega el `User` de Firebase a `roleForEmail`; la capa nativa no parsea dominios. Los 4 espejos no cambian | REQ-CAP-12, 12b |
-| Seam de notas (`lib/grades.ts`) | no | La capa móvil solo consume; no se duplica aritmética | — |
-| Default-deny en Firestore / Storage | sí | Única ampliación: `fcmToken` sobre el documento propio; ninguna otra regla se relaja | REQ-CAP-18 |
-| Duplicación de biblioteca (`public/biblioteca/` ↔ `assets/www/`) | sí | Se **elimina** la copia Android; la cobertura offline pasa al service worker existente | REQ-CAP-19 |
-| Avisos de plataforma no oficial | sí | Disclaimers preservados en pie de página, ajustes y ficha de tienda | §7.2 |
+| Invariante                                                                | ¿Tocado? | Cómo se preserva                                                                                                           | Requisito       |
+| :------------------------------------------------------------------------ | :------- | :------------------------------------------------------------------------------------------------------------------------- | :-------------- |
+| Identificador canónico `cl.ubb.centroestudio`                             | sí       | `appId` en `capacitor.config.ts`, `applicationId` y `namespace` reaplicados sobre el proyecto regenerado                   | REQ-CAP-01, 13  |
+| Continuidad de publicación (firma, `versionCode`, `google-services.json`) | sí       | Respaldo por tag Git + reaplicación verificada por test                                                                    | REQ-CAP-02, 13  |
+| SSOT de roles (`lib/access-policy.ts` + 4 espejos)                        | sí       | La rama nativa entrega el `User` de Firebase a `roleForEmail`; la capa nativa no parsea dominios. Los 4 espejos no cambian | REQ-CAP-12, 12b |
+| Seam de notas (`lib/grades.ts`)                                           | no       | La capa móvil solo consume; no se duplica aritmética                                                                       | —               |
+| Default-deny en Firestore / Storage                                       | sí       | Única ampliación: `fcmToken` sobre el documento propio; ninguna otra regla se relaja                                       | REQ-CAP-18      |
+| Duplicación de biblioteca (`public/biblioteca/` ↔ `assets/www/`)          | sí       | Se **elimina** la copia Android; la cobertura offline pasa al service worker existente                                     | REQ-CAP-19      |
+| Avisos de plataforma no oficial                                           | sí       | Disclaimers preservados en pie de página, ajustes y ficha de tienda                                                        | §7.2            |
 
 ### 2.2 Alcance incluido (Android GA)
 
@@ -67,7 +67,7 @@ Runtime Capacitor, shell móvil (bottom nav, bottom sheets, safe areas), háptic
 
 ### 2.3 Alcance diferido (iOS)
 
-`npx cap add ios` **se ejecuta y se versiona**, pero iOS queda explícitamente fuera del *Definition of Done* de esta fase. Bloqueadores externos, no de código:
+`npx cap add ios` **se ejecuta y se versiona**, pero iOS queda explícitamente fuera del _Definition of Done_ de esta fase. Bloqueadores externos, no de código:
 
 - El entorno de desarrollo es Windows: `pod install`, compilación y firma requieren macOS + Xcode.
 - No existe `GoogleService-Info.plist` en el repositorio (solo `google-services.json`).
@@ -300,62 +300,63 @@ Feature: Rendimiento en gama baja
 Orden estricto. La carpeta `android/` legacy **no se borra hasta que el proyecto nuevo arranca**; el respaldo es una rama Git, no una copia manual de archivos.
 
 Reglas de ejecución (skill `spec-driven-development` §6):
+
 - Una tarea a la vez. La casilla `[x]` se marca **solo** después de que su comando de verificación pasa.
 - Todo archivo creado o reescrito por una tarea lleva `// Implements: REQ-CAP-XX` sobre la unidad exportada, el route handler, el bloque de reglas o el esquema que introduce. No se retrofitea código legacy intacto.
 - Si un test falla: corregir código, o corregir el test si no refleja el escenario BDD. Si el test contradice la especificación, **detenerse** y pedir enmienda. Nunca debilitar una aserción.
 
 ### Fase 0 — Red de seguridad
 
-- [x] **TASK-01:** Crear la rama `claude/capacitor-migration` y etiquetar el estado legacy (`git tag android-legacy-v13`). El respaldo de `google-services.json`, `AndroidManifest.xml`, `build.gradle` y `assets/www` queda garantizado por el historial, no por copias en `.cache/`. *(REQ-CAP-02, REQ-CAP-13, REQ-CAP-16)*
+- [x] **TASK-01:** Crear la rama `claude/capacitor-migration` y etiquetar el estado legacy (`git tag android-legacy-v13`). El respaldo de `google-services.json`, `AndroidManifest.xml`, `build.gradle` y `assets/www` queda garantizado por el historial, no por copias en `.cache/`. _(REQ-CAP-02, REQ-CAP-13, REQ-CAP-16)_
       Verificación: `git show android-legacy-v13:android/app/google-services.json | head -5`
 
 ### Fase 1 — Runtime Capacitor
 
-- [x] **TASK-02:** Instalar `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`, `@capacitor/haptics`, `@capacitor/status-bar`, `@capacitor/push-notifications`, `@capacitor/filesystem`, `@capacitor/browser`, `@capacitor/app`, `@capacitor-firebase/authentication`, `vaul`. *(REQ-CAP-01, REQ-CAP-06, REQ-CAP-12, REQ-CAP-15)*
+- [x] **TASK-02:** Instalar `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`, `@capacitor/haptics`, `@capacitor/status-bar`, `@capacitor/push-notifications`, `@capacitor/filesystem`, `@capacitor/browser`, `@capacitor/app`, `@capacitor-firebase/authentication`, `vaul`. _(REQ-CAP-01, REQ-CAP-06, REQ-CAP-12, REQ-CAP-15)_
       Verificación: `pnpm exec cap --version`
-- [x] **TASK-03:** Crear `capacitor.config.ts` y el documento de fallback offline que sirve de `webDir` (`capacitor/www/index.html`). Sin un `webDir` existente, `cap add` falla. *(REQ-CAP-01)*
+- [x] **TASK-03:** Crear `capacitor.config.ts` y el documento de fallback offline que sirve de `webDir` (`capacitor/www/index.html`). Sin un `webDir` existente, `cap add` falla. _(REQ-CAP-01)_
       Verificación: `pnpm exec cap doctor`
-- [x] **TASK-04:** Extender el CSP de `next.config.ts` con los orígenes del bridge, sin tocar ninguna otra directiva. *(REQ-CAP-14)*
+- [x] **TASK-04:** Extender el CSP de `next.config.ts` con los orígenes del bridge, sin tocar ninguna otra directiva. _(REQ-CAP-14)_
       Verificación: `pnpm run build` y `node --test tests/rendered-html.test.mjs`
 
 ### Fase 2 — Proyecto Android publicable
 
-- [x] **TASK-05:** Eliminar `android/` y ejecutar `pnpm exec cap add android`. *(REQ-CAP-02)*
+- [x] **TASK-05:** Eliminar `android/` y ejecutar `pnpm exec cap add android`. _(REQ-CAP-02)_
       Verificación: `pnpm exec cap doctor android`
-- [x] **TASK-06:** Reaplicar sobre el proyecto generado: `google-services.json`, `signingConfigs.release` desde `keystore.properties`, `versionCode 14`, `versionName '1.1.0'`, `minSdk 26`, el `intent-filter` de App Links verificados y el permiso `POST_NOTIFICATIONS`. *(REQ-CAP-13, REQ-CAP-16)*
+- [x] **TASK-06:** Reaplicar sobre el proyecto generado: `google-services.json`, `signingConfigs.release` desde `keystore.properties`, `versionCode 14`, `versionName '1.1.0'`, `minSdk 26`, el `intent-filter` de App Links verificados y el permiso `POST_NOTIFICATIONS`. _(REQ-CAP-13, REQ-CAP-16)_
       Verificación: `node --test tests/capacitor-config.test.ts`
-- [x] **TASK-07:** Publicar `/.well-known/assetlinks.json` con la huella SHA-256 de la clave de release. *(REQ-CAP-16)*
+- [x] **TASK-07:** Publicar `/.well-known/assetlinks.json` con la huella SHA-256 de la clave de release. _(REQ-CAP-16)_
       Verificación: `node --test tests/capacitor-config.test.ts` (caso assetlinks) y `pnpm run build`
-- [x] **TASK-08:** Ejecutar `pnpm exec cap add ios` y versionarlo como scaffold no compilado; documentar en `PLAN.md` los tres bloqueadores externos de §2.3. *(REQ-CAP-03)*
+- [x] **TASK-08:** Ejecutar `pnpm exec cap add ios` y versionarlo como scaffold no compilado; documentar en `PLAN.md` los tres bloqueadores externos de §2.3. _(REQ-CAP-03)_
       Verificación: `pnpm exec cap doctor ios` (se admite el fallo de toolchain macOS; el proyecto debe existir)
 
 ### Fase 3 — Puente y autenticación
 
-- [x] **TASK-09:** Crear `lib/mobile-bridge.ts`: detección de plataforma (`useIsMobileApp`), hápticos y status bar, con degradación silenciosa en web. *(REQ-CAP-04, REQ-CAP-06, REQ-CAP-07)*
+- [x] **TASK-09:** Crear `lib/mobile-bridge.ts`: detección de plataforma (`useIsMobileApp`), hápticos y status bar, con degradación silenciosa en web. _(REQ-CAP-04, REQ-CAP-06, REQ-CAP-07)_
       Verificación: `pnpm run typecheck && pnpm run test:unit`
-- [x] **TASK-09b:** Añadir al bridge la navegación nativa: botón atrás de Android por historial con salida solo desde pestaña raíz, y apertura de enlaces externos en `@capacitor/browser`. *(REQ-CAP-15)*
+- [x] **TASK-09b:** Añadir al bridge la navegación nativa: botón atrás de Android por historial con salida solo desde pestaña raíz, y apertura de enlaces externos en `@capacitor/browser`. _(REQ-CAP-15)_
       Verificación: `pnpm run typecheck && pnpm run test:unit`
-- [x] **TASK-10:** Ramificar el inicio de sesión en `lib/firebase-client.ts` hacia credencial nativa en shell Capacitor, conservando `signInWithPopup` en navegador y delegando siempre el rol en `roleForEmail`. *(REQ-CAP-12, REQ-CAP-12b)*
+- [x] **TASK-10:** Ramificar el inicio de sesión en `lib/firebase-client.ts` hacia credencial nativa en shell Capacitor, conservando `signInWithPopup` en navegador y delegando siempre el rol en `roleForEmail`. _(REQ-CAP-12, REQ-CAP-12b)_
       Verificación: `node --test tests/access-policy.test.ts`
 
 ### Fase 4 — Capa de UI móvil
 
-- [x] **TASK-11:** Implementar `MobileBottomNav` con iconos `@phosphor-icons/react`, safe areas e indicador activo; alinear `theme_color` del manifest a `#0055b8` (hoy `#0057a4`, desalineado del token de `design-ceoubb.md`). *(REQ-CAP-04, REQ-CAP-07)*
+- [x] **TASK-11:** Implementar `MobileBottomNav` con iconos `@phosphor-icons/react`, safe areas e indicador activo; alinear `theme_color` del manifest a `#0055b8` (hoy `#0057a4`, desalineado del token de `DESIGN.md`). _(REQ-CAP-04, REQ-CAP-07)_
       Verificación: `pnpm run lint && pnpm run typecheck && node --test tests/rendered-html.test.mjs`
-- [x] **TASK-12:** Integrar bottom sheets `vaul` en detalle de asignatura, desglose de notas y selector de archivos. *(REQ-CAP-05)*
+- [x] **TASK-12:** Integrar bottom sheets `vaul` en detalle de asignatura, desglose de notas y selector de archivos. _(REQ-CAP-05)_
       Verificación: `pnpm run lint && pnpm run typecheck`
-- [x] **TASK-13:** Eliminar los 6 usos de `backdrop-filter` en viewport móvil y aplicar `content-visibility: auto` a las filas de feed. *(REQ-CAP-08, REQ-CAP-09)*
+- [x] **TASK-13:** Eliminar los 6 usos de `backdrop-filter` en viewport móvil y aplicar `content-visibility: auto` a las filas de feed. _(REQ-CAP-08, REQ-CAP-09)_
       Verificación: `node --test tests/mobile-performance-budget.test.ts`
 
 ### Fase 5 — Servicios nativos
 
-- [x] **TASK-14:** Implementar `registerPushNotifications()` con manejo explícito del permiso denegado y persistencia de `users/{uid}.fcmToken`. *(REQ-CAP-10, REQ-CAP-10b)*
+- [x] **TASK-14:** Implementar `registerPushNotifications()` con manejo explícito del permiso denegado y persistencia de `users/{uid}.fcmToken`. _(REQ-CAP-10, REQ-CAP-10b)_
       Verificación: `pnpm run typecheck && pnpm run test:unit`
-- [x] **TASK-15:** Ajustar `firebase/firestore.rules` para permitir escritura de `fcmToken` únicamente sobre el documento propio, sin ampliar ninguna otra regla. *(REQ-CAP-18)*
+- [x] **TASK-15:** Ajustar `firebase/firestore.rules` para permitir escritura de `fcmToken` únicamente sobre el documento propio, sin ampliar ninguna otra regla. _(REQ-CAP-18)_
       Verificación: revisión del diff de reglas + `pnpm run check:functions`
-- [x] **TASK-16:** Descarga y apertura de PDFs con `@capacitor/filesystem` y visor nativo. *(REQ-CAP-11)*
+- [x] **TASK-16:** Descarga y apertura de PDFs con `@capacitor/filesystem` y visor nativo. _(REQ-CAP-11)_
       Verificación: `pnpm run typecheck && pnpm run lint`
-- [x] **TASK-17:** Confirmar la cobertura offline de `/biblioteca` por service worker y eliminar definitivamente el árbol duplicado `assets/www` del historial activo. *(REQ-CAP-19)*
+- [x] **TASK-17:** Confirmar la cobertura offline de `/biblioteca` por service worker y eliminar definitivamente el árbol duplicado `assets/www` del historial activo. _(REQ-CAP-19)_
       Verificación: `pnpm run build && node --test tests/rendered-html.test.mjs`; el árbol `android/app/src/main/assets/www/` no debe existir
 
 ### Fase 6 — Verificación y cierre
@@ -410,8 +411,8 @@ Para cumplir el piso de `targetSdk 36` que Play exige desde agosto de 2026, AGP 
 
 ## 8. Historial de versiones
 
-| Versión | Cambio |
-|---|---|
-| v1 | Propuesta inicial (14 tareas). No ejecutable: cinco bloqueadores (§0.1). |
-| v2 | Bloqueadores formalizados como REQ-CAP-12…19; REQ-CAP-03 degradado a scaffold iOS; REQ-CAP-08 reescrito como presupuesto medible; REQ-CAP-17 retirado; respaldo por tag Git; `@tanstack/react-virtual` condicionado a medición. |
-| v3 | Auditada contra la skill `spec-driven-development` v3.0.0: invariantes de `AGENTS.md` tabulados (§2.1), escenarios BDD trazados a su requisito y añadidos los que faltaban (CSP, App Links, regla `fcmToken`, PDF, scaffold iOS), comando de verificación en las 21 tareas, TASK-09 dividida, marcadores `Implements:` exigidos y auditados en TASK-20. |
+| Versión | Cambio                                                                                                                                                                                                                                                                                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1      | Propuesta inicial (14 tareas). No ejecutable: cinco bloqueadores (§0.1).                                                                                                                                                                                                                                                                                |
+| v2      | Bloqueadores formalizados como REQ-CAP-12…19; REQ-CAP-03 degradado a scaffold iOS; REQ-CAP-08 reescrito como presupuesto medible; REQ-CAP-17 retirado; respaldo por tag Git; `@tanstack/react-virtual` condicionado a medición.                                                                                                                         |
+| v3      | Auditada contra la skill `spec-driven-development` v3.0.0: invariantes de `AGENTS.md` tabulados (§2.1), escenarios BDD trazados a su requisito y añadidos los que faltaban (CSP, App Links, regla `fcmToken`, PDF, scaffold iOS), comando de verificación en las 21 tareas, TASK-09 dividida, marcadores `Implements:` exigidos y auditados en TASK-20. |

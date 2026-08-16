@@ -5,22 +5,55 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Archive, Books, CalendarBlank, CaretDown, FolderSimple, House, MagnifyingGlass, SignOut, Sliders, Stack } from "@phosphor-icons/react";
+import {
+  Archive,
+  Books,
+  CalendarBlank,
+  CaretDown,
+  FolderSimple,
+  House,
+  MagnifyingGlass,
+  SignOut,
+  Sliders,
+  Stack,
+} from "@phosphor-icons/react";
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
-import { useExternalLinks, useHardwareBack, useIsMobileApp, useStatusBar } from "../lib/mobile-bridge";
+import {
+  useExternalLinks,
+  useHardwareBack,
+  useIsMobileApp,
+  useStatusBar,
+} from "../lib/mobile-bridge";
 import { MobileBottomNav, MobileSheet, type MobileTab } from "./mobile-shell";
 import { registerPushNotifications } from "../lib/push-notifications";
 import { COURSES, Course, courseById } from "../lib/courses";
-import { CourseActivity, CourseGradebook, watchCourseActivity, watchGradebooks } from "../lib/firebase-classroom-client";
+import {
+  CourseActivity,
+  CourseGradebook,
+  watchCourseActivity,
+  watchGradebooks,
+} from "../lib/firebase-classroom-client";
 import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
 import { Avatar, Screen } from "./portal-ui";
-import { calendarEntries, firstName, forgetPhoto, loadCurrentSession, rememberPhoto, roleLabel, type User } from "../lib/portal-utils";
+import {
+  calendarEntries,
+  firstName,
+  forgetPhoto,
+  loadCurrentSession,
+  rememberPhoto,
+  roleLabel,
+  type User,
+} from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 import { CommandPalette, type PaletteItem } from "./command-palette";
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
-  loading: () => <div className="empty-state"><strong>Abriendo el aula…</strong></div>,
+  loading: () => (
+    <div className="empty-state">
+      <strong>Abriendo el aula…</strong>
+    </div>
+  ),
 });
 
 const SEEN_KEY = "ceoubb:seen";
@@ -38,7 +71,7 @@ function readSeen(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
     const saved = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "{}");
-    return saved && typeof saved === "object" ? saved as Record<string, string> : {};
+    return saved && typeof saved === "object" ? (saved as Record<string, string>) : {};
   } catch {
     return {};
   }
@@ -72,7 +105,8 @@ export function Portal() {
       .finally(() => {
         if (active) setChecking(false);
       });
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if ("serviceWorker" in navigator)
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     return () => {
       active = false;
     };
@@ -109,18 +143,20 @@ export function Portal() {
   useStatusBar(user ? "canvas" : "hero");
   // Implements: REQ-CAP-15
   useExternalLinks();
-  useHardwareBack(useCallback(() => {
-    /* Capacitor reemplaza el gesto atrás por completo: sin esto un `<dialog>` abierto
+  useHardwareBack(
+    useCallback(() => {
+      /* Capacitor reemplaza el gesto atrás por completo: sin esto un `<dialog>` abierto
        —la búsqueda, el editor de bloques— manda la app al fondo en vez de cerrarse.
        Se resuelve una vez aquí, donde pasa cualquier diálogo nativo del portal. */
-    const dialog = document.querySelector("dialog[open]");
-    if (dialog instanceof HTMLDialogElement) return dialog.close(), true;
-    if (preview) return setPreview(null), true;
-    if (coursesSheet) return setCoursesSheet(false), true;
-    if (screen !== "courses") return setScreen("courses"), true;
-    // Desde la pestaña raíz nadie consume el gesto: la app se va al fondo.
-    return false;
-  }, [coursesSheet, preview, screen]));
+      const dialog = document.querySelector("dialog[open]");
+      if (dialog instanceof HTMLDialogElement) return (dialog.close(), true);
+      if (preview) return (setPreview(null), true);
+      if (coursesSheet) return (setCoursesSheet(false), true);
+      if (screen !== "courses") return (setScreen("courses"), true);
+      // Desde la pestaña raíz nadie consume el gesto: la app se va al fondo.
+      return false;
+    }, [coursesSheet, preview, screen])
+  );
 
   const courses = COURSES;
   const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
@@ -166,9 +202,10 @@ export function Portal() {
 
   const openedCourse = course ?? courseById(COURSES[0].id);
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
-  const context = screen === "course" && openedCourse
-    ? openedCourse.name
-    : views.find((item) => item.key === screen)?.label ?? "Área personal";
+  const context =
+    screen === "course" && openedCourse
+      ? openedCourse.name
+      : (views.find((item) => item.key === screen)?.label ?? "Área personal");
 
   const paletteItems: PaletteItem[] = [
     ...views.map(({ key, label, Icon }) => ({
@@ -197,16 +234,44 @@ export function Portal() {
     Ahora el rótulo nombra su destino y la biblioteca entra desde la primera tarjeta.
   */
   const mobileTabs: MobileTab[] = [
-    { key: "courses", label: "Inicio", Icon: House, active: screen === "courses", onSelect: () => setScreen("courses") },
-    { key: "list", label: "Cursos", Icon: Stack, active: screen === "course", onSelect: () => setCoursesSheet(true) },
-    { key: "calendar", label: "Calendario", Icon: CalendarBlank, active: screen === "calendar", onSelect: () => setScreen("calendar") },
-    { key: "resources", label: "Recursos", Icon: Books, active: screen === "resources", onSelect: () => setScreen("resources") },
+    {
+      key: "courses",
+      label: "Inicio",
+      Icon: House,
+      active: screen === "courses",
+      onSelect: () => setScreen("courses"),
+    },
+    {
+      key: "list",
+      label: "Cursos",
+      Icon: Stack,
+      active: screen === "course",
+      onSelect: () => setCoursesSheet(true),
+    },
+    {
+      key: "calendar",
+      label: "Calendario",
+      Icon: CalendarBlank,
+      active: screen === "calendar",
+      onSelect: () => setScreen("calendar"),
+    },
+    {
+      key: "resources",
+      label: "Recursos",
+      Icon: Books,
+      active: screen === "resources",
+      onSelect: () => setScreen("resources"),
+    },
   ];
 
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
-        <div className="app-shell" data-mobile={mobile} data-sidebar={sidebarOpen ? "open" : "closed"}>
+        <div
+          className="app-shell"
+          data-mobile={mobile}
+          data-sidebar={sidebarOpen ? "open" : "closed"}
+        >
           <PortalHeader
             context={context}
             onHome={() => setScreen("courses")}
@@ -216,7 +281,11 @@ export function Portal() {
             toggleSidebar={() => setSidebarOpen((open) => !open)}
             user={user}
           />
-          <CommandPalette items={paletteItems} onClose={() => setSearchOpen(false)} open={searchOpen} />
+          <CommandPalette
+            items={paletteItems}
+            onClose={() => setSearchOpen(false)}
+            open={searchOpen}
+          />
           <PortalSidebar
             courses={courses}
             open={sidebarOpen}
@@ -226,16 +295,43 @@ export function Portal() {
             setScreen={setScreen}
             user={user}
           />
-          <button aria-label="Cerrar el menú" className="sidebar-scrim" onClick={() => setSidebarOpen(false)} type="button" />
+          <button
+            aria-label="Cerrar el menú"
+            className="sidebar-scrim"
+            onClick={() => setSidebarOpen(false)}
+            type="button"
+          />
           <main className="app-main">
             <AnimatePresence initial={false} mode="wait">
               {screen === "course" && openedCourse ? (
-                <Screen key={`course-${openedCourse.id}`}><Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} /></Screen>
+                <Screen key={`course-${openedCourse.id}`}>
+                  <Classroom
+                    course={openedCourse}
+                    user={user}
+                    goBack={() => setScreen("courses")}
+                  />
+                </Screen>
               ) : (
                 <Screen key={screen}>
                   <div className="portal-main">
-                    {screen === "courses" && <CoursesDashboard user={user} courses={courses} activity={activity} seen={seen} entries={entries} openCourse={openCourse} />}
-                    {screen === "calendar" && <CalendarView courses={courses} gradebooks={gradebooks} activity={activity} openCourse={openCourse} />}
+                    {screen === "courses" && (
+                      <CoursesDashboard
+                        user={user}
+                        courses={courses}
+                        activity={activity}
+                        seen={seen}
+                        entries={entries}
+                        openCourse={openCourse}
+                      />
+                    )}
+                    {screen === "calendar" && (
+                      <CalendarView
+                        courses={courses}
+                        gradebooks={gradebooks}
+                        activity={activity}
+                        openCourse={openCourse}
+                      />
+                    )}
                     {screen === "resources" && <ResourcesView />}
                     {screen === "admin" && user.role === "owner" && <AdminView />}
                   </div>
@@ -245,9 +341,18 @@ export function Portal() {
           </main>
           {mobile && <MobileBottomNav items={mobileTabs} />}
           {mobile && (
-            <MobileSheet onOpenChange={setCoursesSheet} open={coursesSheet} title="Mis ramos" description={courses[0]?.period ?? ""}>
+            <MobileSheet
+              onOpenChange={setCoursesSheet}
+              open={coursesSheet}
+              title="Mis ramos"
+              description={courses[0]?.period ?? ""}
+            >
               <div className="sheet-list">
-                {courses.length === 0 && <p className="side-empty">Sin ramos en este período. Aparecerán aquí al quedar inscritos.</p>}
+                {courses.length === 0 && (
+                  <p className="side-empty">
+                    Sin ramos en este período. Aparecerán aquí al quedar inscritos.
+                  </p>
+                )}
                 {courses.map((item) => (
                   <button
                     className="sheet-row"
@@ -257,17 +362,38 @@ export function Portal() {
                     style={{ "--course-tone": item.tone } as React.CSSProperties}
                     type="button"
                   >
-                    <span className="sheet-row-icon"><FolderSimple size={20} weight="fill" /></span>
-                    <span>{item.name}<small>{item.code}</small></span>
+                    <span className="sheet-row-icon">
+                      <FolderSimple size={20} weight="fill" />
+                    </span>
+                    <span>
+                      {item.name}
+                      <small>{item.code}</small>
+                    </span>
                   </button>
                 ))}
-                <Link className="sheet-row" href="/biblioteca/index.html" prefetch={false} onClick={() => setCoursesSheet(false)}>
-                  <span className="sheet-row-icon"><Archive size={20} /></span>
+                <Link
+                  className="sheet-row"
+                  href="/biblioteca/index.html"
+                  prefetch={false}
+                  onClick={() => setCoursesSheet(false)}
+                >
+                  <span className="sheet-row-icon">
+                    <Archive size={20} />
+                  </span>
                   <span>Biblioteca académica</span>
                 </Link>
                 {user.role === "owner" && (
-                  <button className="sheet-row" onClick={() => { setCoursesSheet(false); setScreen("admin"); }} type="button">
-                    <span className="sheet-row-icon"><Sliders size={20} /></span>
+                  <button
+                    className="sheet-row"
+                    onClick={() => {
+                      setCoursesSheet(false);
+                      setScreen("admin");
+                    }}
+                    type="button"
+                  >
+                    <span className="sheet-row-icon">
+                      <Sliders size={20} />
+                    </span>
                     <span>Administración</span>
                   </button>
                 )}
@@ -275,14 +401,33 @@ export function Portal() {
             </MobileSheet>
           )}
           {mobile && preview && (
-            <MobileSheet onOpenChange={(open) => !open && setPreview(null)} open title={preview.name} description={preview.eyebrow}>
+            <MobileSheet
+              onOpenChange={(open) => !open && setPreview(null)}
+              open
+              title={preview.name}
+              description={preview.eyebrow}
+            >
               <dl className="sheet-facts">
-                <div><dt>Código</dt><dd>{preview.code}</dd></div>
-                <div><dt>Sección</dt><dd>{preview.section}</dd></div>
-                <div><dt>Período</dt><dd>{preview.period}</dd></div>
-                <div><dt>Docente</dt><dd>{preview.teacher}</dd></div>
+                <div>
+                  <dt>Código</dt>
+                  <dd>{preview.code}</dd>
+                </div>
+                <div>
+                  <dt>Sección</dt>
+                  <dd>{preview.section}</dd>
+                </div>
+                <div>
+                  <dt>Período</dt>
+                  <dd>{preview.period}</dd>
+                </div>
+                <div>
+                  <dt>Docente</dt>
+                  <dd>{preview.teacher}</dd>
+                </div>
               </dl>
-              <button className="sheet-cta" onClick={() => enterCourse(preview)} type="button">Entrar al aula</button>
+              <button className="sheet-cta" onClick={() => enterCourse(preview)} type="button">
+                Entrar al aula
+              </button>
             </MobileSheet>
           )}
         </div>
@@ -307,32 +452,59 @@ const SKELETON_SIDE_COURSES = [0, 1, 2, 3, 4];
 function LoadingScreen() {
   return (
     <div aria-busy="true" className="boot-shell">
-      <p className="sr-only" role="status">Abriendo Centro de Estudio UBB…</p>
+      <p className="sr-only" role="status">
+        Abriendo Centro de Estudio UBB…
+      </p>
       <header className="boot-header">
         <span className="sk sk-round boot-menu" />
-        <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} priority />
+        <Image
+          src="/brand/ubb-shield.webp"
+          alt=""
+          aria-hidden="true"
+          width={388}
+          height={594}
+          priority
+        />
         <strong>Centro de Estudio UBB</strong>
         <span className="sk boot-search" style={{ "--sk-delay": "80ms" } as React.CSSProperties} />
-        <span className="sk sk-round boot-avatar" style={{ "--sk-delay": "120ms" } as React.CSSProperties} />
+        <span
+          className="sk sk-round boot-avatar"
+          style={{ "--sk-delay": "120ms" } as React.CSSProperties}
+        />
       </header>
       <aside className="boot-side">
         {SKELETON_NAV.map((row) => (
-          <span className="sk boot-row" key={`nav-${row}`} style={{ "--sk-delay": `${row * 45}ms` } as React.CSSProperties} />
+          <span
+            className="sk boot-row"
+            key={`nav-${row}`}
+            style={{ "--sk-delay": `${row * 45}ms` } as React.CSSProperties}
+          />
         ))}
         <span className="sk boot-legend" style={{ "--sk-delay": "180ms" } as React.CSSProperties} />
         {SKELETON_SIDE_COURSES.map((row) => (
-          <span className="sk boot-row" key={`course-${row}`} style={{ "--sk-delay": `${220 + row * 45}ms` } as React.CSSProperties} />
+          <span
+            className="sk boot-row"
+            key={`course-${row}`}
+            style={{ "--sk-delay": `${220 + row * 45}ms` } as React.CSSProperties}
+          />
         ))}
       </aside>
       <main className="boot-main">
         <div className="boot-head">
           <span className="sk boot-title" style={{ "--sk-delay": "60ms" } as React.CSSProperties} />
-          <span className="sk boot-subtitle" style={{ "--sk-delay": "110ms" } as React.CSSProperties} />
+          <span
+            className="sk boot-subtitle"
+            style={{ "--sk-delay": "110ms" } as React.CSSProperties}
+          />
         </div>
         <span className="sk boot-strip" style={{ "--sk-delay": "160ms" } as React.CSSProperties} />
         <div className="boot-grid">
           {SKELETON_COURSES.map((card) => (
-            <article className="boot-card" key={card} style={{ "--sk-delay": `${220 + card * 70}ms` } as React.CSSProperties}>
+            <article
+              className="boot-card"
+              key={card}
+              style={{ "--sk-delay": `${220 + card * 70}ms` } as React.CSSProperties}
+            >
               <span className="sk boot-cover" />
               <span className="sk boot-line wide" />
               <span className="sk boot-line" />
@@ -349,26 +521,29 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
-  const finishGoogleAccess = useCallback(async (idToken: string) => {
-    const response = await fetch("/api/auth/firebase", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
-    if (!response.ok) {
-      let errorMessage = "No fue posible continuar.";
-      try {
-        const errorData = await response.json();
-        if (errorData?.error) errorMessage = errorData.error;
-      } catch {
-        // Non-JSON response
+  const finishGoogleAccess = useCallback(
+    async (idToken: string) => {
+      const response = await fetch("/api/auth/firebase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!response.ok) {
+        let errorMessage = "No fue posible continuar.";
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) errorMessage = errorData.error;
+        } catch {
+          // Non-JSON response
+        }
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
-    }
-    const data = await response.json();
-    if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
-    onSignedIn(data.user);
-  }, [onSignedIn]);
+      const data = await response.json();
+      if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
+      onSignedIn(data.user);
+    },
+    [onSignedIn]
+  );
 
   const googleAccess = async () => {
     setError("");
@@ -388,44 +563,109 @@ function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
     <main className="access-page">
       <section className="access-brand">
         <div className="access-brand-lockup">
-          <Image src="/brand/ubb-shield.webp" alt="Escudo de la Universidad del Bío-Bío" width={388} height={594} priority />
-          <h1>Centro de <strong>Estudio UBB</strong></h1>
+          <Image
+            src="/brand/ubb-shield.webp"
+            alt="Escudo de la Universidad del Bío-Bío"
+            width={388}
+            height={594}
+            priority
+          />
+          <h1>
+            Centro de <strong>Estudio UBB</strong>
+          </h1>
         </div>
       </section>
       <section className="access-panel">
         <div className="access-panel-inner">
-
           <div className="login-card" id="inicio">
             <span className="login-rule" aria-hidden="true" />
             <h2>Ingresa con tu correo institucional</h2>
-            <button className="google-button" disabled={working} onClick={googleAccess} type="button">
-              {working ? <span className="google-spinner" aria-hidden="true" /> : <Image src="/brand/google-g.webp" alt="" aria-hidden="true" width={256} height={256} />}
+            <button
+              className="google-button"
+              disabled={working}
+              onClick={googleAccess}
+              type="button"
+            >
+              {working ? (
+                <span className="google-spinner" aria-hidden="true" />
+              ) : (
+                <Image
+                  src="/brand/google-g.webp"
+                  alt=""
+                  aria-hidden="true"
+                  width={256}
+                  height={256}
+                />
+              )}
               {working ? "Verificando cuenta…" : "Continuar con Google"}
             </button>
-            {error && <p className="form-error" role="alert">{error}</p>}
-            <p className="institution-note"><strong>Acceso exclusivo UBB.</strong> Usa tu cuenta @alumnos.ubiobio.cl o @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.</p>
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
+            <p className="institution-note">
+              <strong>Acceso exclusivo UBB.</strong> Usa tu cuenta @alumnos.ubiobio.cl o
+              @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.
+            </p>
           </div>
           <div className="store-block">
-            <div className="store-badges" role="group" aria-label="Aplicaciones móviles próximamente disponibles">
+            <div
+              className="store-badges"
+              role="group"
+              aria-label="Aplicaciones móviles próximamente disponibles"
+            >
               <div className="store-badge">
-                <Image src="/brand/app-store-badge-es.webp" alt="App Store" width={3840} height={1284} />
+                <Image
+                  src="/brand/app-store-badge-es.webp"
+                  alt="App Store"
+                  width={3840}
+                  height={1284}
+                />
               </div>
               <div className="store-badge">
-                <Image src="/brand/google-play-badge-es.webp" alt="Google Play" width={2214} height={675} />
+                <Image
+                  src="/brand/google-play-badge-es.webp"
+                  alt="Google Play"
+                  width={2214}
+                  height={675}
+                />
               </div>
             </div>
           </div>
 
-          <p className="legal-note">Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link></p>
+          <p className="legal-note">
+            Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
+            Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link>
+          </p>
         </div>
       </section>
     </main>
   );
 }
 
-function PortalHeader({ sidebarOpen, user, context, onLogout, onHome, onSearch, toggleSidebar }: { sidebarOpen: boolean; user: User; context: string; onLogout: () => void; onHome: () => void; onSearch: () => void; toggleSidebar: () => void }) {
+function PortalHeader({
+  sidebarOpen,
+  user,
+  context,
+  onLogout,
+  onHome,
+  onSearch,
+  toggleSidebar,
+}: {
+  sidebarOpen: boolean;
+  user: User;
+  context: string;
+  onLogout: () => void;
+  onHome: () => void;
+  onSearch: () => void;
+  toggleSidebar: () => void;
+}) {
   // El atajo se rotula según el teclado real: ⌘K en Mac, Ctrl K en Windows y Linux.
-  const shortcut = typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl K";
+  const shortcut =
+    typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent)
+      ? "⌘K"
+      : "Ctrl K";
   const account = useRef<HTMLDetailsElement>(null);
 
   // El menú de cuenta es un <details>: el navegador no lo cierra al pulsar fuera ni con Escape.
@@ -451,26 +691,59 @@ function PortalHeader({ sidebarOpen, user, context, onLogout, onHome, onSearch, 
 
   return (
     <header className="app-header">
-      <button aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"} className="icon-button menu-button" onClick={toggleSidebar} type="button"><Menu animate={sidebarOpen} aria-hidden="true" /></button>
-      <button aria-label="Centro de Estudio UBB · ir al área personal" className="app-brand" onClick={onHome} type="button">
+      <button
+        aria-expanded={sidebarOpen}
+        aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"}
+        className="icon-button menu-button"
+        onClick={toggleSidebar}
+        type="button"
+      >
+        <Menu animate={sidebarOpen} aria-hidden="true" />
+      </button>
+      <button
+        aria-label="Centro de Estudio UBB · ir al área personal"
+        className="app-brand"
+        onClick={onHome}
+        type="button"
+      >
         <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
         <strong>Centro de Estudio UBB</strong>
       </button>
       <p className="header-context">
-        <span aria-hidden="true" className="header-context-sep">/</span>
+        <span aria-hidden="true" className="header-context-sep">
+          /
+        </span>
         <span className="header-context-label">{context}</span>
       </p>
       {/* El rótulo se oculta en pantallas angostas: el nombre accesible tiene que sobrevivir a eso. */}
-      <button aria-keyshortcuts="Control+K Meta+K" aria-label="Buscar ramos y vistas" className="header-search" onClick={onSearch} type="button">
+      <button
+        aria-keyshortcuts="Control+K Meta+K"
+        aria-label="Buscar ramos y vistas"
+        className="header-search"
+        onClick={onSearch}
+        type="button"
+      >
         <MagnifyingGlass size={17} aria-hidden="true" />
         <span aria-hidden="true">Buscar ramos y vistas</span>
         <kbd aria-hidden="true">{shortcut}</kbd>
       </button>
       <div className="header-actions">
         <details className="account-menu" ref={account}>
-          <summary><Avatar email={user.email} name={user.name} /><span className="account-copy"><strong>{firstName(user.name)}</strong><small>{roleLabel(user.role)}</small></span><CaretDown className="account-caret" size={13} weight="bold" aria-hidden="true" /></summary>
+          <summary>
+            <Avatar email={user.email} name={user.name} />
+            <span className="account-copy">
+              <strong>{firstName(user.name)}</strong>
+              <small>{roleLabel(user.role)}</small>
+            </span>
+            <CaretDown className="account-caret" size={13} weight="bold" aria-hidden="true" />
+          </summary>
           <div className="account-popover">
-            <strong>{user.name}</strong><span>{user.email}</span><button onClick={onLogout} type="button"><SignOut size={16} />Cerrar sesión</button>
+            <strong>{user.name}</strong>
+            <span>{user.email}</span>
+            <button onClick={onLogout} type="button">
+              <SignOut size={16} />
+              Cerrar sesión
+            </button>
           </div>
         </details>
       </div>
@@ -478,42 +751,79 @@ function PortalHeader({ sidebarOpen, user, context, onLogout, onHome, onSearch, 
   );
 }
 
-function PortalSidebar({ user, screen, courses, open, openCourseId, setScreen, openCourse }: { user: User; screen: Screen; courses: Course[]; open: boolean; openCourseId?: string; setScreen: (screen: Screen) => void; openCourse: (course: Course) => void }) {
+function PortalSidebar({
+  user,
+  screen,
+  courses,
+  open,
+  openCourseId,
+  setScreen,
+  openCourse,
+}: {
+  user: User;
+  screen: Screen;
+  courses: Course[];
+  open: boolean;
+  openCourseId?: string;
+  setScreen: (screen: Screen) => void;
+  openCourse: (course: Course) => void;
+}) {
   return (
     // Con el menú plegado el panel sigue en el DOM para animar: `inert` lo saca del foco y del lector.
     <aside className="app-sidebar" inert={!open}>
       <nav aria-label="Navegación principal" className="side-nav">
-        {navItems.filter((item) => item.key !== "admin" || user.role === "owner").map(({ key, label, Icon }) => {
-          const active = screen === key;
-          return (
-            <button aria-current={active ? "page" : undefined} className={active ? "side-item active" : "side-item"} key={key} onClick={() => setScreen(key)} type="button">
-              <span className="side-icon"><Icon size={18} /></span>
-              <span className="side-label">{label}</span>
-            </button>
-          );
-        })}
+        {navItems
+          .filter((item) => item.key !== "admin" || user.role === "owner")
+          .map(({ key, label, Icon }) => {
+            const active = screen === key;
+            return (
+              <button
+                aria-current={active ? "page" : undefined}
+                className={active ? "side-item active" : "side-item"}
+                key={key}
+                onClick={() => setScreen(key)}
+                type="button"
+              >
+                <span className="side-icon">
+                  <Icon size={18} />
+                </span>
+                <span className="side-label">{label}</span>
+              </button>
+            );
+          })}
       </nav>
       <div className="side-group">
         <span className="eyebrow">Mis ramos</span>
-        {courses.length === 0 && <p className="side-empty">Sin ramos en este período. Aparecerán aquí al quedar inscritos.</p>}
+        {courses.length === 0 && (
+          <p className="side-empty">
+            Sin ramos en este período. Aparecerán aquí al quedar inscritos.
+          </p>
+        )}
         {courses.map((course) => {
           return (
-          <button
-            aria-current={openCourseId === course.id ? "page" : undefined}
-            className={openCourseId === course.id ? "side-item active" : "side-item"}
-            key={course.id}
-            onClick={() => openCourse(course)}
-            style={{ "--course-tone": course.tone } as React.CSSProperties}
-            type="button"
-          >
-            <span className="side-icon tone"><FolderSimple size={18} weight="fill" /></span>
-            <span className="side-label"><span className="side-name">{course.name}</span><small>{course.code}</small></span>
-          </button>
+            <button
+              aria-current={openCourseId === course.id ? "page" : undefined}
+              className={openCourseId === course.id ? "side-item active" : "side-item"}
+              key={course.id}
+              onClick={() => openCourse(course)}
+              style={{ "--course-tone": course.tone } as React.CSSProperties}
+              type="button"
+            >
+              <span className="side-icon tone">
+                <FolderSimple size={18} weight="fill" />
+              </span>
+              <span className="side-label">
+                <span className="side-name">{course.name}</span>
+                <small>{course.code}</small>
+              </span>
+            </button>
           );
         })}
       </div>
       <Link className="side-item side-foot" href="/biblioteca/index.html" prefetch={false}>
-        <span className="side-icon"><Archive size={18} /></span>
+        <span className="side-icon">
+          <Archive size={18} />
+        </span>
         <span className="side-label">Biblioteca académica</span>
       </Link>
     </aside>

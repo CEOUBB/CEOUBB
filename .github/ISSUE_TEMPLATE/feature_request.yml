@@ -1,0 +1,58 @@
+name: "Solicitud de Funcionalidad / Feature Request"
+description: "Propón una nueva característica, mejora o valor institucional para CEOUBB"
+title: "[Feat]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por proponer ideas para la mejora continua de la plataforma académica CEOUBB.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Módulo o Área Afectada
+      description: Selecciona el área principal a la que aplica la propuesta.
+      options:
+        - "Portal Web & Dashboard"
+        - "Aula Virtual & Secciones"
+        - "Sistema de Calificaciones (Escala Chilena 1.0 - 7.0)"
+        - "Biblioteca de Estudio & Recursos"
+        - "App Móvil Android (Capacitor)"
+        - "Notificaciones Push & Discord Integration"
+        - "Infraestructura, Rendimiento & CI/CD"
+        - "Otro"
+    validations:
+      required: true
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problema o Necesidad Académica
+      description: Describe con claridad el problema actual o la necesidad de la comunidad universitaria.
+      placeholder: "Actualmente, los estudiantes requieren..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Solución Propuesta y Valor Institucional
+      description: Explica cómo funcionaría la característica y qué impacto positivo tendrá en docentes o estudiantes.
+      placeholder: "Implementar un selector de período que permita..."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives_considered
+    attributes:
+      label: Alternativas Consideradas
+      description: Describe otras soluciones o enfoques que hayas considerado.
+      placeholder: "Se consideró usar un modal, pero un drawer lateral ofrece mejor ergonomía móvil."
+    validations:
+      required: false
+  - type: checkboxes
+    id: design_system_check
+    attributes:
+      label: Alineación con Estándares CEOUBB
+      options:
+        - label: Esta propuesta se alinea con la escala universitaria (5.000+ estudiantes y múltiples carreras).
+          required: true
+        - label: La propuesta respeta el sistema de diseño (`DESIGN.md`) y la paleta institucional UBB.
+          required: true

@@ -1,13 +1,13 @@
 # P1 — Academic data model (canonical spec)
 
-Canonical description of the courses/enrollments migration. Supersedes the former "P1 — Multi-course collaboration" and "P1 — Backend consolidation" sections of `PLAN.md`, and section 6 of `ceoubb_moodle_adecca_comparison.md` wherever they disagree.
+Canonical description of the courses/enrollments migration. Supersedes the former "P1 — Multi-course collaboration" and "P1 — Backend consolidation" sections of `PLAN.md`, and section 6 of `docs/institutional/moodle-adecca-comparison.md` wherever they disagree.
 
 ## Entities (Turso, via Drizzle)
 
 - `facultades`, `departamentos`, `carreras`, `planes_de_estudio`
 - `asignaturas` — catalogue entry: código, nombre, créditos SCT, departamento, resultados de aprendizaje
 - `periodos` — e.g. `2026-2`, start/end dates, state (abierto, cerrado, archivado)
-- `secciones` — *asignatura × periodo × sección*. **The unit the classroom is keyed on**, not the asignatura.
+- `secciones` — _asignatura × periodo × sección_. **The unit the classroom is keyed on**, not the asignatura.
 - `enrollments` — `userId`, `seccionId`, `role` (docente, ayudante, estudiante, coordinador), `state`
 
 ## Course identity

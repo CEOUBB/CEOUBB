@@ -1,5 +1,5 @@
 allowBuilds:
-  '@firebase/util': true
+  "@firebase/util": true
   protobufjs: true
 onlyBuiltDependencies:
   - "@firebase/util"

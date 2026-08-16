@@ -39,7 +39,8 @@ export async function openDocumentNatively(url: string, fileName: string): Promi
     const download = await Filesystem.downloadFile({ url, path, directory: Directory.Cache });
     // `downloadFile` devuelve la ruta del archivo escrito; si el plugin no la
     // entrega se resuelve el URI del mismo destino que se acaba de pedir.
-    const uri = download.path ?? (await Filesystem.getUri({ path, directory: Directory.Cache })).uri;
+    const uri =
+      download.path ?? (await Filesystem.getUri({ path, directory: Directory.Cache })).uri;
     if (!uri) return false;
 
     await Browser.open({ url: uri });

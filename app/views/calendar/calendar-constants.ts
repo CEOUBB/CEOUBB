@@ -8,11 +8,11 @@ import type { PersonalEventKind } from "../../../lib/planner";
 
 export const SLOT_HOURS = Array.from(
   { length: DAY_END_HOUR - DAY_START_HOUR },
-  (_, index) => DAY_START_HOUR + index,
+  (_, index) => DAY_START_HOUR + index
 );
 export const HOUR_LINES = Array.from(
   { length: DAY_END_HOUR - DAY_START_HOUR + 1 },
-  (_, index) => DAY_START_HOUR + index,
+  (_, index) => DAY_START_HOUR + index
 );
 export const MINUTE_SPAN = DAY_END_MINUTES - DAY_START_MINUTES;
 

@@ -36,9 +36,9 @@ El nombre del producto es Centro de Estudio UBB / CEOUBB. Su voz debe ser acadé
 
 ## Evidence on Hand
 
-- Comparación institucional y dossier de adopción: `ceoubb_moodle_adecca_comparison.md`.
+- Comparación institucional y dossier de adopción: `docs/institutional/moodle-adecca-comparison.md`.
 - Estado, riesgos y hoja de ruta: `PLAN.md` y `docs/specs/`.
-- Sistema visual existente: `design-ceoubb.md`, `app/globals.css` y componentes de `app/`.
+- Sistema visual existente: `DESIGN.md`, `app/globals.css` y componentes de `app/`.
 - No hay autorización escrita para un piloto institucional ni evidencia de una adopción oficial; no se deben inventar respaldos, testimonios ni cifras de impacto.
 
 ## Product Principles

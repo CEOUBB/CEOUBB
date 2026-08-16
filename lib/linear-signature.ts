@@ -5,7 +5,7 @@ export const MAX_TIMESTAMP_SKEW_MS = 60_000;
 export function verifyLinearSignature(
   rawBody: string,
   signature: string | null | undefined,
-  secret: string,
+  secret: string
 ): boolean {
   if (!signature) return false;
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");

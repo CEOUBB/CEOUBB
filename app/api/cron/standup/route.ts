@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecentCommits } from "../../../../lib/services/github.ts";
-import { listActiveLinearIssues, listCompletedLinearIssues } from "../../../../lib/services/linear.ts";
+import {
+  listActiveLinearIssues,
+  listCompletedLinearIssues,
+} from "../../../../lib/services/linear.ts";
 import { getGeminiClient, generateContentWithFallback } from "../../../../lib/services/gemini.ts";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +21,21 @@ async function getLinearIssues() {
   if (!process.env.LINEAR_API_KEY) {
     return {
       active: [
-        { id: "CEO-38", title: "Migración de modelo académico (Asignatura × Período × Sección)", assignee: "Pipe" },
-        { id: "CEO-29", title: "Gating de lecturas en Firestore por matrícula institucional", assignee: "Joaquín" },
+        {
+          id: "CEO-38",
+          title: "Migración de modelo académico (Asignatura × Período × Sección)",
+          assignee: "Pipe",
+        },
+        {
+          id: "CEO-29",
+          title: "Gating de lecturas en Firestore por matrícula institucional",
+          assignee: "Joaquín",
+        },
         { id: "CEO-15", title: "Auditoría de accesibilidad WCAG 2.2", assignee: "General" },
       ],
-      completed: [{ id: "CEO-42", title: "Configurar Sentry SDK e integración de alertas en Discord" }],
+      completed: [
+        { id: "CEO-42", title: "Configurar Sentry SDK e integración de alertas en Discord" },
+      ],
     };
   }
 
@@ -149,8 +162,16 @@ Devuelve estrictamente un JSON válido:
     let summaryText = text.trim();
     let tasks: Array<{ id: string; buttonLabel: string; taskTitle?: string }> = [
       { id: "pipe", buttonLabel: "Prompt: Pipe (CEO-38)", taskTitle: "CEO-38: Modelo Académico" },
-      { id: "joaquin", buttonLabel: "Prompt: Joaquín (CEO-29)", taskTitle: "CEO-29: Reglas Firestore" },
-      { id: "backlog", buttonLabel: "Prompt: Backlog (CEO-15)", taskTitle: "CEO-15: Accesibilidad WCAG" },
+      {
+        id: "joaquin",
+        buttonLabel: "Prompt: Joaquín (CEO-29)",
+        taskTitle: "CEO-29: Reglas Firestore",
+      },
+      {
+        id: "backlog",
+        buttonLabel: "Prompt: Backlog (CEO-15)",
+        taskTitle: "CEO-15: Accesibilidad WCAG",
+      },
     ];
 
     try {

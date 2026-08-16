@@ -34,8 +34,7 @@ export function CoursesDashboard({
   openCourse: (course: Course) => void;
 }) {
   const next = nextEntry(entries);
-  const nextCourse =
-    next && courses.find((course) => course.id === next.courseId);
+  const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
 
   return (
@@ -55,22 +54,16 @@ export function CoursesDashboard({
           </span>
           <span>·</span>
           <span>
-            <b>{entries.length}</b>{" "}
-            {entries.length === 1 ? "evaluación" : "evaluaciones"} en el
+            <b>{entries.length}</b> {entries.length === 1 ? "evaluación" : "evaluaciones"} en el
             calendario
           </span>
         </p>
       </section>
       {next && (
-        <div
-          className="next-strip"
-          style={{ "--course-tone": next.tone } as React.CSSProperties}
-        >
+        <div className="next-strip" style={{ "--course-tone": next.tone } as React.CSSProperties}>
           <div className="next-strip-date">
             <span className="next-strip-day">{dayOf(next.date)}</span>
-            <span className="next-strip-month">
-              {shortDate(next.date).slice(3)}
-            </span>
+            <span className="next-strip-month">{shortDate(next.date).slice(3)}</span>
           </div>
           <div className="next-strip-body">
             {/* El punto medio separa en una línea; en el teléfono el nombre del
@@ -100,19 +93,12 @@ export function CoursesDashboard({
       <div className="section-title">
         <h2>Mis cursos</h2>
       </div>
-      <m.section
-        animate="show"
-        className="course-grid"
-        initial="hidden"
-        variants={stagger}
-      >
+      <m.section animate="show" className="course-grid" initial="hidden" variants={stagger}>
         {courses.map((course) => {
           const upcoming = entries.find(
-            (entry) => entry.courseId === course.id && entry.date >= todayISO,
+            (entry) => entry.courseId === course.id && entry.date >= todayISO
           );
-          const total = activity.filter(
-            (item) => item.courseId === course.id,
-          ).length;
+          const total = activity.filter((item) => item.courseId === course.id).length;
           const unseen = unseenCount(activity, course.id, seen[course.id]);
           return (
             <m.article
@@ -149,11 +135,7 @@ export function CoursesDashboard({
                     <span className="course-open">Material disponible</span>
                   )}
                 </div>
-                <button
-                  className="course-action"
-                  onClick={() => openCourse(course)}
-                  type="button"
-                >
+                <button className="course-action" onClick={() => openCourse(course)} type="button">
                   Entrar al aula <ArrowRight size={15} />
                 </button>
               </div>

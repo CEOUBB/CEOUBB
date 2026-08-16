@@ -1,6 +1,6 @@
 # Rule: Discord Notifications Protocol for AI Agents
 
-**CRITICAL REQUIREMENT**: An AI assistant (Codex, Claude Code, or Antigravity) MUST ONLY post a message/embed to Discord or tag a teammate WHEN THE USER EXPLICITLY REQUESTS IT in their prompt (e.g., *"when done, post to Discord tagging Joaquín"* or *"notify on Discord"*). If the user DOES NOT explicitly ask to send a Discord message, DO NOT post anything to Discord.
+**CRITICAL REQUIREMENT**: An AI assistant (Codex, Claude Code, or Antigravity) MUST ONLY post a message/embed to Discord or tag a teammate WHEN THE USER EXPLICITLY REQUESTS IT in their prompt (e.g., _"when done, post to Discord tagging Joaquín"_ or _"notify on Discord"_). If the user DOES NOT explicitly ask to send a Discord message, DO NOT post anything to Discord.
 
 When explicitly requested by the user, the agent MUST format the notification according to these exact rules:
 

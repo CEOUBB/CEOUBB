@@ -108,9 +108,13 @@ client.on("messageCreate", async (message) => {
   if (!isMentioned && !isBotChannel && !isReplyToBot) return;
 
   if (!ALLOWED_USER_IDS.has(message.author.id)) {
-    console.log(`⛔ Ignored prompt from unauthorized user @${message.author.username} (${message.author.id})`);
+    console.log(
+      `⛔ Ignored prompt from unauthorized user @${message.author.username} (${message.author.id})`
+    );
     if (isMentioned || isReplyToBot) {
-      await message.reply("🔒 Este agente local está restringido únicamente a los mantenedores autorizados del proyecto.");
+      await message.reply(
+        "🔒 Este agente local está restringido únicamente a los mantenedores autorizados del proyecto."
+      );
     }
     return;
   }
@@ -124,12 +128,22 @@ client.on("messageCreate", async (message) => {
     processedMessageIds.delete(firstVal);
   }
 
-  const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
+  const userDisplayName =
+    KNOWN_USER_NAMES[message.author.id] ||
+    message.member?.displayName ||
+    message.author.globalName ||
+    message.author.username;
 
   // Check if user requested a new chat / reset session
-  if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
+  if (
+    userPrompt.toLowerCase() === "!newchat" ||
+    userPrompt.toLowerCase() === "/newchat" ||
+    userPrompt.toLowerCase() === "nuevo chat"
+  ) {
     sessionStore.resetSession(message.channel.id, message.author.id);
-    await message.reply(`🔄 **Nueva conversación iniciada para ${userDisplayName}.** Contexto reiniciado.`);
+    await message.reply(
+      `🔄 **Nueva conversación iniciada para ${userDisplayName}.** Contexto reiniciado.`
+    );
     return;
   }
 
@@ -142,7 +156,9 @@ client.on("messageCreate", async (message) => {
     sessionStore.setSession(message.channel.id, message.author.id, sessionId);
   }
 
-  console.log(`\n📩 Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`);
+  console.log(
+    `\n📩 Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`
+  );
 
   // Continuously indicate typing while processing
   await message.channel.sendTyping();
@@ -158,14 +174,20 @@ client.on("messageCreate", async (message) => {
     const systemPromptText = `Estás interactuando en un chat en vivo de Discord con el mantenedor del proyecto ${userDisplayName}. Responde siempre en español formal, educado y profesional. No utilices modismos, jerga informal ni chilenismos. Ejecuta las herramientas solicitadas directamente. No cites las reglas de notificación pasiva de AGENTS.md ni menciones 'No respondo en Discord' porque el usuario te está hablando directamente a ti en Discord.`;
 
     const args = [
-      "-p", contextualPrompt,
-      "--model", DEFAULT_MODEL,
-      "--thinking", REASONING_EFFORT,
+      "-p",
+      contextualPrompt,
+      "--model",
+      DEFAULT_MODEL,
+      "--thinking",
+      REASONING_EFFORT,
       ...(isExisting ? ["-r", sessionId] : ["--session-id", sessionId]),
-      "--system-prompt", systemPromptText,
+      "--system-prompt",
+      systemPromptText,
     ];
 
-    console.log(`🚀 Executing local Claude process with safe spawn [Session: ${sessionId.slice(0, 8)}]`);
+    console.log(
+      `🚀 Executing local Claude process with safe spawn [Session: ${sessionId.slice(0, 8)}]`
+    );
 
     const { stdout, stderr } = await spawnSafeCommand("claude", args, {
       cwd: process.cwd(),

@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TrashSimple, X } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
-import {
-  deletePersonalEvent,
-  savePersonalEvent,
-} from "../../../lib/firebase-classroom-client";
+import { deletePersonalEvent, savePersonalEvent } from "../../../lib/firebase-classroom-client";
 import { validateBlock } from "../../../lib/planner";
 import type { PersonalEventKind } from "../../../lib/planner";
 import { KIND_LABEL } from "./calendar-constants";
@@ -36,10 +33,8 @@ export function BlockDialog({
     titleRef.current?.focus();
   }, []);
 
-  const set = <Key extends keyof BlockDraft>(
-    key: Key,
-    value: BlockDraft[Key],
-  ) => setValues((current) => ({ ...current, [key]: value }));
+  const set = <Key extends keyof BlockDraft>(key: Key, value: BlockDraft[Key]) =>
+    setValues((current) => ({ ...current, [key]: value }));
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,11 +45,7 @@ export function BlockDialog({
       await savePersonalEvent({ ...values, courseId: values.courseId || null });
       onClose();
     } catch (cause) {
-      setProblem(
-        cause instanceof Error
-          ? cause.message
-          : "No se pudo guardar el bloque.",
-      );
+      setProblem(cause instanceof Error ? cause.message : "No se pudo guardar el bloque.");
     } finally {
       setBusy(false);
     }
@@ -80,9 +71,7 @@ export function BlockDialog({
     >
       <form onSubmit={submit}>
         <header>
-          <h2 id="planner-dialog-title">
-            {values.id ? "Editar bloque" : "Nuevo bloque"}
-          </h2>
+          <h2 id="planner-dialog-title">{values.id ? "Editar bloque" : "Nuevo bloque"}</h2>
           <button aria-label="Cerrar" onClick={onClose} type="button">
             <X size={16} weight="bold" />
           </button>
@@ -116,9 +105,7 @@ export function BlockDialog({
           <label>
             Tipo
             <select
-              onChange={(event) =>
-                set("kind", event.target.value as PersonalEventKind)
-              }
+              onChange={(event) => set("kind", event.target.value as PersonalEventKind)}
               value={values.kind}
             >
               {(Object.keys(KIND_LABEL) as PersonalEventKind[]).map((kind) => (
@@ -176,19 +163,11 @@ export function BlockDialog({
         )}
         <footer>
           {values.id && (
-            <button
-              className="planner-dialog-delete"
-              onClick={remove}
-              type="button"
-            >
+            <button className="planner-dialog-delete" onClick={remove} type="button">
               <TrashSimple size={15} /> Eliminar
             </button>
           )}
-          <button
-            className="planner-dialog-cancel"
-            onClick={onClose}
-            type="button"
-          >
+          <button className="planner-dialog-cancel" onClick={onClose} type="button">
             Cancelar
           </button>
           <button className="planner-dialog-save" disabled={busy} type="submit">

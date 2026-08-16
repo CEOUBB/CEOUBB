@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
-import type {
-  CourseActivity,
-  CourseGradebook,
-} from "../../../lib/firebase-classroom-client";
+import type { CourseActivity, CourseGradebook } from "../../../lib/firebase-classroom-client";
 import {
   deletePersonalEvent,
   setPersonalEventCompleted,
@@ -61,11 +58,7 @@ export function CalendarView({
   const [dir, setDir] = useState<number | null>(null);
 
   const days = useMemo(() => weekDates(anchor), [anchor]);
-  const focusDay = days.includes(pickedDay)
-    ? pickedDay
-    : days.includes(today)
-      ? today
-      : days[0];
+  const focusDay = days.includes(pickedDay) ? pickedDay : days.includes(today) ? today : days[0];
 
   /* Si la semana entrante sólo se funde, avanzar y retroceder se ven idénticos.
      El sentido del viaje alimenta la animación; queda nulo hasta la primera
@@ -87,9 +80,9 @@ export function CalendarView({
           setPersonal(events);
           setLoadedWeek(days[0]);
         },
-        setAlert,
+        setAlert
       ),
-    [days],
+    [days]
   );
   const weekLoaded = loadedWeek === days[0];
 
@@ -99,21 +92,15 @@ export function CalendarView({
   const openGrid = useCallback(
     (node: HTMLDivElement | null) => {
       if (!node) return;
-      const target = days.includes(today)
-        ? getSantiagoMinutes() - 60
-        : DAY_START_MINUTES;
-      const ratio =
-        (Math.max(target, DAY_START_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN;
+      const target = days.includes(today) ? getSantiagoMinutes() - 60 : DAY_START_MINUTES;
+      const ratio = (Math.max(target, DAY_START_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN;
       node.scrollTop = node.scrollHeight * ratio;
     },
-    [days, today],
+    [days, today]
   );
 
   useEffect(() => {
-    const timer = window.setInterval(
-      () => setNowMinutes(getSantiagoMinutes()),
-      60000,
-    );
+    const timer = window.setInterval(() => setNowMinutes(getSantiagoMinutes()), 60000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -127,33 +114,28 @@ export function CalendarView({
         from: days[0],
         to: days[6],
       }),
-    [courses, gradebooks, activity, personal, days],
+    [courses, gradebooks, activity, personal, days]
   );
 
   const hiddenCourses = useMemo(() => new Set(hidden), [hidden]);
   const courseById = useMemo(
     () => new Map(courses.map((course) => [course.id, course])),
-    [courses],
+    [courses]
   );
   const visible = useMemo(
-    () =>
-      items.filter(
-        (item) => !item.courseId || !hiddenCourses.has(item.courseId),
-      ),
-    [items, hiddenCourses],
+    () => items.filter((item) => !item.courseId || !hiddenCourses.has(item.courseId)),
+    [items, hiddenCourses]
   );
   const byDay = useMemo(
     () => new Map(days.map((day) => [day, dayItems(visible, day)])),
-    [days, visible],
+    [days, visible]
   );
   const dueCount = visible.filter((item) => !item.startTime).length;
   const blockCount = visible.filter((item) => item.startTime).length;
 
   const toggleCourse = (courseId: string) =>
     setHidden((current) =>
-      current.includes(courseId)
-        ? current.filter((id) => id !== courseId)
-        : [...current, courseId],
+      current.includes(courseId) ? current.filter((id) => id !== courseId) : [...current, courseId]
     );
 
   const newBlock = (date: string, hour: number) =>
@@ -176,22 +158,17 @@ export function CalendarView({
       startTime: item.startTime ?? timeOfMinutes(DAY_START_MINUTES),
       endTime: item.endTime ?? timeOfMinutes(DAY_START_MINUTES + 60),
       courseId: item.courseId ?? "",
-      kind:
-        item.kind === "personal" || item.kind === "task" ? item.kind : "study",
+      kind: item.kind === "personal" || item.kind === "task" ? item.kind : "study",
     });
 
   const toggleDone = (item: PlannerItem) => {
     const next = !item.completed;
     setPersonal((current) =>
-      current.map((event) =>
-        event.id === item.id ? { ...event, completed: next } : event,
-      ),
+      current.map((event) => (event.id === item.id ? { ...event, completed: next } : event))
     );
     setPersonalEventCompleted(item.id, next).catch(() => {
       setPersonal((current) =>
-        current.map((event) =>
-          event.id === item.id ? { ...event, completed: !next } : event,
-        ),
+        current.map((event) => (event.id === item.id ? { ...event, completed: !next } : event))
       );
       setAlert("No se pudo guardar el estado del bloque.");
     });
@@ -202,14 +179,12 @@ export function CalendarView({
      corrige la suscripción, así que aquí no se toca el estado local. */
   const removeBlock = (item: PlannerItem) => {
     if (!window.confirm(`¿Eliminar “${item.title}”?`)) return;
-    deletePersonalEvent(item.id).catch(() =>
-      setAlert("No se pudo eliminar el bloque."),
-    );
+    deletePersonalEvent(item.id).catch(() => setAlert("No se pudo eliminar el bloque."));
   };
 
   const firstFreeHour = Math.min(
     Math.max(Math.floor(nowMinutes / 60), DAY_START_HOUR),
-    DAY_END_HOUR - 1,
+    DAY_END_HOUR - 1
   );
 
   return (
@@ -259,9 +234,7 @@ export function CalendarView({
           <label className="planner-jump">
             <span className="sr-only">Ir a una fecha</span>
             <input
-              onChange={(event) =>
-                isIsoDate(event.target.value) && goWeek(event.target.value)
-              }
+              onChange={(event) => isIsoDate(event.target.value) && goWeek(event.target.value)}
               type="date"
               value={days[0]}
             />
@@ -277,11 +250,7 @@ export function CalendarView({
       </header>
 
       {courses.length > 0 && (
-        <div
-          aria-label="Filtrar por ramo"
-          className="planner-filters"
-          role="group"
-        >
+        <div aria-label="Filtrar por ramo" className="planner-filters" role="group">
           {courses.map((course) => {
             const on = !hiddenCourses.has(course.id);
             return (

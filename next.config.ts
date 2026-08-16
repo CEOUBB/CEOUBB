@@ -8,9 +8,16 @@ import { withSentryConfig } from "@sentry/nextjs";
 */
 // Implements: REQ-CAP-14
 const capacitorBridgeOrigins = "capacitor://localhost https://localhost";
-const scriptSrc = process.env.NODE_ENV === "production" ? `'self' 'unsafe-inline' https://apis.google.com ${capacitorBridgeOrigins}` : `'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400 ${capacitorBridgeOrigins}`;
-const remoteConnectSrc = "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io";
-const connectSrc = process.env.NODE_ENV === "production" ? `'self' ${remoteConnectSrc} ${capacitorBridgeOrigins}` : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc} ${capacitorBridgeOrigins}`;
+const scriptSrc =
+  process.env.NODE_ENV === "production"
+    ? `'self' 'unsafe-inline' https://apis.google.com ${capacitorBridgeOrigins}`
+    : `'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400 ${capacitorBridgeOrigins}`;
+const remoteConnectSrc =
+  "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io";
+const connectSrc =
+  process.env.NODE_ENV === "production"
+    ? `'self' ${remoteConnectSrc} ${capacitorBridgeOrigins}`
+    : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc} ${capacitorBridgeOrigins}`;
 
 const contentSecurityPolicy = [
   `default-src 'self' ${capacitorBridgeOrigins}`,
@@ -39,7 +46,10 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
       },
@@ -49,7 +59,9 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/biblioteca/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=86400" }],
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=86400" },
+        ],
       },
       {
         source: "/biblioteca/assets/vendor/:path*",
@@ -57,7 +69,9 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/:path(brand|icons)/:file*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+        ],
       },
     ];
   },

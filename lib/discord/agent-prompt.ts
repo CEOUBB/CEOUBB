@@ -88,7 +88,7 @@ export function buildAgentPromptResponse(taskCode: string, cleanTitle: string): 
     `REGLAS (AGENTS.md):\n` +
     `- Usar siempre pnpm (no npm, no bun).\n` +
     `- Mantener la consistencia estricta con lib/access-policy.ts (@ubiobio.cl).\n` +
-    `- Respetar el diseño institucional sobrio y liviano (design-ceoubb.md).\n\n` +
+    `- Respetar el diseño institucional sobrio y liviano (DESIGN.md).\n\n` +
     `TESTS: Ejecutar pnpm run test:unit y pnpm run typecheck antes de concluir.`;
 
   return (

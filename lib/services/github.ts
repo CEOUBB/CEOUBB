@@ -202,11 +202,13 @@ export async function getPullRequestComments(
 
     if (!res.ok) return [];
     const data = await res.json();
-    return (data || []).map((c: { body?: string; user?: { login?: string }; created_at?: string }) => ({
-      body: c.body || "",
-      author: c.user?.login || "Desconocido",
-      created_at: c.created_at,
-    }));
+    return (data || []).map(
+      (c: { body?: string; user?: { login?: string }; created_at?: string }) => ({
+        body: c.body || "",
+        author: c.user?.login || "Desconocido",
+        created_at: c.created_at,
+      })
+    );
   } catch (err) {
     console.warn(`⚠️ Error obteniendo comentarios de PR #${number}:`, err);
     return [];
@@ -244,14 +246,21 @@ export async function getLatestWorkflowRun(
           const jobsData = await jobsRes.json();
           const verifyJob = jobsData?.jobs?.[0];
           const relevantSteps = (verifyJob?.steps || []).filter((s: { name: string }) =>
-            ["Check Firebase Functions syntax", "TypeScript typecheck", "Lint code", "Run test suite"].includes(s.name)
+            [
+              "Check Firebase Functions syntax",
+              "TypeScript typecheck",
+              "Lint code",
+              "Run test suite",
+            ].includes(s.name)
           );
 
-          steps = relevantSteps.map((s: { name: string; status: string; conclusion: string | null }) => ({
-            name: s.name,
-            status: s.status,
-            conclusion: s.conclusion,
-          }));
+          steps = relevantSteps.map(
+            (s: { name: string; status: string; conclusion: string | null }) => ({
+              name: s.name,
+              status: s.status,
+              conclusion: s.conclusion,
+            })
+          );
         }
       } catch {
         // Ignorar fallo de detalle de jobs

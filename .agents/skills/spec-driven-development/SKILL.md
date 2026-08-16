@@ -50,12 +50,12 @@ Phase 5: Automated Verification & Quality Gate Sign-Off (Full Test Suite + Linte
 
 An agent MUST NOT approve its own gate. A gate is passed only when a human maintainer states approval in the conversation, and the agent records it by advancing the `Status` field in the spec header:
 
-| Status | Meaning | Who sets it |
-| :--- | :--- | :--- |
-| `BORRADOR` | Draft under construction. No code may be written. | Agent |
-| `APROBADA` | Human signed off on requirements and design. Execution may begin. | Human approval, agent records |
-| `EN EJECUCION` | Phase 4 in progress; task checkboxes advancing. | Agent |
-| `VERIFICADA` | Phase 5 passed: full suite green, spec synchronized. | Agent, after evidence |
+| Status         | Meaning                                                           | Who sets it                   |
+| :------------- | :---------------------------------------------------------------- | :---------------------------- |
+| `BORRADOR`     | Draft under construction. No code may be written.                 | Agent                         |
+| `APROBADA`     | Human signed off on requirements and design. Execution may begin. | Human approval, agent records |
+| `EN EJECUCION` | Phase 4 in progress; task checkboxes advancing.                   | Agent                         |
+| `VERIFICADA`   | Phase 5 passed: full suite green, spec synchronized.              | Agent, after evidence         |
 
 `APROBADA CON CONDICIONES` is permitted when the human approves with recorded caveats; the caveats MUST appear as formal requirements in the spec, not as loose prose.
 
@@ -69,13 +69,13 @@ One feature, one file: `docs/specs/p<N>-<slug>.md` (for example `docs/specs/p5-c
 
 All functional requirements in Phase 1 MUST use one of the 5 EARS patterns combined with RFC 2119 keywords (`MUST`, `SHALL`, `SHOULD`, `MAY`):
 
-| EARS Pattern | Formal Syntax | Example |
-| :--- | :--- | :--- |
-| **Ubiquitous** | The system SHALL [action]. | `REQ-01: The system SHALL persist course records in Turso/libSQL.` |
-| **Event-Driven** | WHEN [trigger], the system SHALL [response]. | `REQ-02: WHEN a teacher publishes an evaluation, the system SHALL record an audit-logged gradebook entry.` |
-| **State-Driven** | WHILE [in state], the system SHALL [response]. | `REQ-03: WHILE a section is in state 'archivado', the system SHALL enforce read-only access.` |
-| **Unwanted Behavior** | IF [invalid condition], THEN the system SHALL [mitigation]. | `REQ-04: IF an unauthorized email domain attempts sign-in, THEN the system SHALL return HTTP 403.` |
-| **Optional Feature** | WHERE [feature enabled], the system SHALL [behavior]. | `REQ-05: WHERE push notifications are enabled, the system SHALL dispatch an FCM payload.` |
+| EARS Pattern          | Formal Syntax                                               | Example                                                                                                    |
+| :-------------------- | :---------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| **Ubiquitous**        | The system SHALL [action].                                  | `REQ-01: The system SHALL persist course records in Turso/libSQL.`                                         |
+| **Event-Driven**      | WHEN [trigger], the system SHALL [response].                | `REQ-02: WHEN a teacher publishes an evaluation, the system SHALL record an audit-logged gradebook entry.` |
+| **State-Driven**      | WHILE [in state], the system SHALL [response].              | `REQ-03: WHILE a section is in state 'archivado', the system SHALL enforce read-only access.`              |
+| **Unwanted Behavior** | IF [invalid condition], THEN the system SHALL [mitigation]. | `REQ-04: IF an unauthorized email domain attempts sign-in, THEN the system SHALL return HTTP 403.`         |
+| **Optional Feature**  | WHERE [feature enabled], the system SHALL [behavior].       | `REQ-05: WHERE push notifications are enabled, the system SHALL dispatch an FCM payload.`                  |
 
 Every requirement MUST be verifiable. If you cannot name the command or assertion that proves it, the requirement is prose and must be rewritten or dropped.
 
@@ -100,6 +100,7 @@ Scenario: Authorized teacher publishes new course assignment
 ## 5. Technical Design Standards (Phase 2)
 
 Technical design sections MUST define:
+
 1. **Component Topology & Sequence**: Visualized via Mermaid diagrams.
 2. **Data Schemas & Contracts**: Exact TypeScript / Zod interfaces, SQL schemas (Drizzle), or API DTOs.
 3. **Error Taxonomy**: Table mapping error types, HTTP status codes, error codes, and retry strategies.
@@ -111,6 +112,7 @@ Technical design sections MUST define:
 ## 6. Task Decomposition Rules & Execution DAG (Phase 3 & 4)
 
 ### 6.1 Task Rules
+
 1. **Strict Dependency Order**: Database models & schemas -> Core business logic/services -> API endpoints -> UI components -> E2E integration tests.
 2. **Traceability**: Every task MUST cite its requirement ID (`REQ-XX`).
 3. **Atomic Scope**: Each task MUST be small (10–50 lines of code changes) to maintain focus and context hygiene.
@@ -123,10 +125,13 @@ Implementation code MUST cite the requirement it satisfies, using a comment on t
 
 ```typescript
 // Implements: REQ-CAP-12
-export async function signInWithNativeCredential() { /* ... */ }
+export async function signInWithNativeCredential() {
+  /* ... */
+}
 ```
 
 This makes two failure modes greppable instead of invisible:
+
 - **Orphan code**: a new exported unit with no `Implements:` marker was not specified. Either it is scope creep, or the spec is missing a requirement.
 - **Orphan requirement**: a `REQ-XX` with no marker anywhere in the tree was never implemented, even if all task checkboxes are ticked.
 
@@ -138,11 +143,11 @@ Markers are required in the files a task's `Files:` list creates or substantiall
 
 SDD earns its cost on high-entropy, multi-file work and loses it on small edits. Producing a specification for a 20-line change costs several times the change itself in tokens and latency, delays the fix, and buries the real diff. Pick the tier honestly.
 
-| Tier | Applies To | Artifact |
-| :--- | :--- | :--- |
-| **Full SDD** | New features, subsystems, or modules; database schema changes & migrations; authentication, authorization, or security rules; API endpoint contracts; cross-cutting refactors; quality/performance remediations. | `docs/specs/p<N>-<slug>.md`, all 5 phases, all 3 gates. |
-| **Lightweight Plan** | Bounded bug fixes, single-file refactors, isolated component changes with no contract or schema impact. | In-conversation plan: root cause, files touched, verification command. No file in `docs/specs/`. A regression test is still mandatory when behavior changed. |
-| **Direct Edit** | Isolated 1–2 line CSS or copy fixes, typos, comment and documentation updates, throwaway scratch scripts. | None. Edit, lint, done. |
+| Tier                 | Applies To                                                                                                                                                                                                       | Artifact                                                                                                                                                     |
+| :------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Full SDD**         | New features, subsystems, or modules; database schema changes & migrations; authentication, authorization, or security rules; API endpoint contracts; cross-cutting refactors; quality/performance remediations. | `docs/specs/p<N>-<slug>.md`, all 5 phases, all 3 gates.                                                                                                      |
+| **Lightweight Plan** | Bounded bug fixes, single-file refactors, isolated component changes with no contract or schema impact.                                                                                                          | In-conversation plan: root cause, files touched, verification command. No file in `docs/specs/`. A regression test is still mandatory when behavior changed. |
+| **Direct Edit**      | Isolated 1–2 line CSS or copy fixes, typos, comment and documentation updates, throwaway scratch scripts.                                                                                                        | None. Edit, lint, done.                                                                                                                                      |
 
 When a Lightweight Plan reveals contract, schema, or auth impact mid-task, stop and escalate to Full SDD rather than continuing.
 
@@ -152,10 +157,10 @@ When a Lightweight Plan reveals contract, schema, or auth impact mid-task, stop 
 
 When a verification command fails, diagnose before editing. The branch determines what may be modified:
 
-| Diagnosis | Action |
-| :--- | :--- |
-| The implementation does not satisfy the approved specification. | Fix the implementation code. Re-run the verification command. |
-| The test does not faithfully encode the specification's BDD scenario. | Fix the test so it asserts exactly the specified criterion. Record why in the task notes. |
+| Diagnosis                                                                                             | Action                                                                                                                                    |
+| :---------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| The implementation does not satisfy the approved specification.                                       | Fix the implementation code. Re-run the verification command.                                                                             |
+| The test does not faithfully encode the specification's BDD scenario.                                 | Fix the test so it asserts exactly the specified criterion. Record why in the task notes.                                                 |
 | The test correctly encodes the specification, and the specification itself is wrong or contradictory. | **STOP.** Do not weaken, skip, or delete the assertion. Report the contradiction and request a formal spec amendment with human approval. |
 
 Deleting an assertion, adding `.skip`, loosening a matcher, or widening a tolerance to obtain a green run is a specification violation regardless of the diagnosis.
@@ -165,6 +170,7 @@ Deleting an assertion, adding `.skip`, loosening a matcher, or widening a tolera
 ## 9. Phase 5 Verification Gate
 
 The task is complete only when all of the following hold:
+
 1. `pnpm run lint`, `pnpm run typecheck`, and `pnpm test` pass, with output cited.
 2. Every BDD scenario in the spec maps to a passing automated assertion.
 3. Every `REQ-XX` in the spec has at least one `Implements:` marker in the tree (§6.2).
