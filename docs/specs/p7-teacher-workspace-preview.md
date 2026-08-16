@@ -44,7 +44,7 @@ El repositorio aplica SDD. Mientras el estado sea `BORRADOR`, no se escribirá c
 ### Incluido en este PR después de la aprobación
 
 - Ruta aislada `/preview/docente`, disponible en desarrollo y Vercel Preview.
-- Banner persistente: `Vista previa · datos de ejemplo · nada se guardará`.
+- Marca persistente `Vista previa · datos de ejemplo · nada se guardará`, visible en todas las vistas. Desde el rediseño del 2026-08-15 viaja como píldora dentro del rastro de contexto de la cabecera del portal, en lugar de una barra propia sobre ella; bajo 900 px conserva el rótulo `Vista previa`.
 - Inicio docente con trabajo pendiente y próximos vencimientos.
 - Listado y filtros de actividades.
 - Editor de actividad con borrador, Vista estudiante y publicación simulada.

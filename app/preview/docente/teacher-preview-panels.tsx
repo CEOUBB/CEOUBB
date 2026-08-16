@@ -1,9 +1,7 @@
 import { useMemo, useState, type Dispatch } from "react";
 import {
-  CalendarBlank,
   CaretLeft,
   CaretRight,
-  ChartBar,
   Check,
   CheckCircle,
   Clock,
@@ -18,7 +16,6 @@ import {
   PencilSimple,
   Plus,
   Tray,
-  Users,
   Warning,
 } from "@phosphor-icons/react";
 import type { TeacherView } from "./TeacherWorkspacePreview";
@@ -44,6 +41,7 @@ type HomePanelProps = {
   state: TeacherPreviewState;
   onNavigate: (view: TeacherView, activityId?: string) => void;
   onEditActivity: (activity: TeacherActivityPreview) => void;
+  onCreate: () => void;
 };
 
 type ActivitiesPanelProps = {
@@ -61,7 +59,6 @@ type ReviewPanelProps = {
   onStudentPreview: (submissionId?: string) => void;
 };
 
-const COUNTER_ICONS = { pending: Tray, missing: Users, drafts: FileText } as const;
 const FILTER_OPTIONS: Array<{ value: ReviewFilter; label: string }> = [
   { value: "all", label: "Todos los estados" },
   { value: "submitted", label: "Entregadas" },
@@ -76,22 +73,25 @@ const RUBRIC_ROWS = [
   ["desarrollo", "Desarrollo", 2.2],
   ["comunicacion", "Comunicación", 2.1],
 ] as const;
+const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-function ProgressFlow({ state }: { state: TeacherPreviewState }) {
+function formatGrade(grade: number | null | undefined) {
+  return typeof grade === "number" ? grade.toFixed(1).replace(".", ",") : "—";
+}
+
+function ActivityFlow({ state }: { state: TeacherPreviewState }) {
   const activity = state.activities.find((item) => item.id === "control-1") ?? state.activities[0];
   const submissions = state.submissions.filter((submission) => submission.activityId === activity.id);
   const graded = submissions.filter((submission) => submission.state === "graded").length;
-  const percentage = submissions.length ? Math.round((graded / submissions.length) * 100) : 0;
+  const ratio = submissions.length ? graded / submissions.length : 0;
 
   return (
-    <section className={styles.featurePanel} aria-labelledby="flujo-docente-title">
-      <div className={styles.panelHeading}>
-        <div>
-          <h2 id="flujo-docente-title">Flujo docente unificado</h2>
-          <p>{activity.title}</p>
-        </div>
-        <span className={styles.statusPill} data-tone="review">En corrección</span>
+    <section className={styles.card} aria-labelledby="flujo-docente-title">
+      <div className="section-title compact-title">
+        <h2 id="flujo-docente-title">Flujo de la actividad</h2>
+        <span className={styles.pill} data-tone="review">En corrección</span>
       </div>
+      <p className="grades-note">{activity.title} · una sola definición alimenta agenda, entregas y libro de notas.</p>
       <ol className={styles.flowSteps} aria-label="Etapas de la actividad">
         {PROGRESS_STEPS.map((step, index) => (
           <li data-state={index < 3 ? "done" : index === 3 ? "active" : "pending"} key={step}>
@@ -100,79 +100,115 @@ function ProgressFlow({ state }: { state: TeacherPreviewState }) {
           </li>
         ))}
       </ol>
-      <div className={styles.progressMeta}><span>Calificaciones publicadas</span><strong>{graded} de {submissions.length}</strong></div>
-      <div className={styles.progressTrack} role="progressbar" aria-label="Calificaciones publicadas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
-        <span style={{ width: `${percentage}%` }} />
+      <div>
+        <p className={styles.progressMeta}>
+          <span>Calificaciones publicadas</span>
+          <strong>{graded} de {submissions.length}</strong>
+        </p>
+        <span
+          className="big-progress"
+          role="progressbar"
+          aria-label="Calificaciones publicadas"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(ratio * 100)}
+        >
+          <span style={{ transform: `scaleX(${ratio})` }} />
+        </span>
       </div>
-      <div className={styles.safetyNote}>
+      <p className={styles.safetyNote}>
         <Lock size={18} weight="fill" aria-hidden="true" />
-        <span>Las notas y comentarios permanecen privados hasta que el docente los publica.</span>
-      </div>
+        Las notas y los comentarios permanecen privados hasta que el docente los publica.
+      </p>
     </section>
   );
 }
 
 // Implements: REQ-DOC-04, REQ-DOC-07
-export function HomePanel({ state, onNavigate, onEditActivity }: HomePanelProps) {
+export function HomePanel({ state, onNavigate, onEditActivity, onCreate }: HomePanelProps) {
   const counters = teacherCounters(state);
   const work = prioritizedWork(state);
-  const nextActivity = state.activities.filter((activity) => ["open", "scheduled"].includes(activity.lifecycle)).sort((left, right) => Date.parse(left.dueAt) - Date.parse(right.dueAt))[0];
+  const nextActivity = state.activities
+    .filter((activity) => ["open", "scheduled"].includes(activity.lifecycle))
+    .sort((left, right) => Date.parse(left.dueAt) - Date.parse(right.dueAt))[0];
+  const nextDue = nextActivity ? new Date(nextActivity.dueAt) : null;
 
   return (
-    <div className={styles.viewStack}>
-      <header className={styles.pageHeader}>
+    <section>
+      <header className="page-head">
         <div>
           <h1>Buenos días, docente</h1>
-          <p>Tu sección está ordenada por lo que requiere atención primero.</p>
+          <p>{state.section.name} · {state.section.section} · {state.section.period}</p>
         </div>
-        <span className={styles.sectionChip}>{state.section.name} · {state.section.section}</span>
+        <button className="primary-button" type="button" onClick={onCreate}>
+          <Plus size={18} weight="bold" aria-hidden="true" /> Crear actividad
+        </button>
       </header>
 
-      <section className={styles.metricsGrid} aria-label="Resumen de trabajo docente">
-        {counters.map((counter) => {
-          const Icon = COUNTER_ICONS[counter.id];
-          return (
-            <button className={styles.metricCard} type="button" onClick={() => onNavigate(counter.id === "drafts" ? "activities" : "review")} key={counter.id}>
-              <span className={styles.metricIcon}><Icon size={20} weight="duotone" aria-hidden="true" /></span>
-              <span><small>{counter.label}</small><strong>{counter.value}</strong><em>{counter.detail}</em></span>
+      {nextActivity && nextDue && (
+        <div className="next-strip" style={{ marginBottom: "var(--space-lg)" }}>
+          <span className="next-strip-date">
+            <span className="next-strip-day">{nextDue.getDate()}</span>
+            <span className="next-strip-month">{MONTHS[nextDue.getMonth()]}</span>
+          </span>
+          <span className="next-strip-body">
+            <span className="next-strip-line"><strong>{nextActivity.title}</strong></span>
+            <span className="next-strip-detail">Próximo vencimiento · {formatDateTime(nextActivity.dueAt)} · visible para estudiantes</span>
+          </span>
+          <span className="next-strip-end">
+            <button className="next-strip-action" type="button" onClick={() => onEditActivity(nextActivity)}>
+              <PencilSimple size={16} aria-hidden="true" /> Editar
             </button>
-          );
-        })}
-      </section>
+          </span>
+        </div>
+      )}
 
-      <div className={styles.homeGrid}>
-        <ProgressFlow state={state} />
-        <section className={styles.featurePanel} aria-labelledby="proxima-entrega-title">
-          <div className={styles.panelHeading}>
-            <div><h2 id="proxima-entrega-title">Próximo vencimiento</h2><p>Visible para estudiantes</p></div>
-            <CalendarBlank size={22} weight="duotone" aria-hidden="true" />
-          </div>
-          {nextActivity ? (
-            <div className={styles.deadlineCard}>
-              <span className={styles.deadlineDate}><strong>18</strong><small>AGO</small></span>
-              <div><h3>{nextActivity.title}</h3><p>{formatDateTime(nextActivity.dueAt)}</p></div>
-              <button className={styles.utilityButton} type="button" onClick={() => onEditActivity(nextActivity)}><PencilSimple size={17} aria-hidden="true" /> Editar</button>
-            </div>
-          ) : <p className={styles.emptyCopy}>No hay vencimientos programados.</p>}
-        </section>
+      <div className={styles.pulse}>
+        {counters.map((counter) => (
+          <button
+            className={styles.pulseCell}
+            data-tone={counter.id === "pending" ? "alert" : undefined}
+            type="button"
+            onClick={() => onNavigate(counter.id === "drafts" ? "activities" : "review")}
+            key={counter.id}
+          >
+            <span>{counter.label}</span>
+            <b className={styles.pulseValue}>{counter.value}</b>
+            <small>{counter.detail}</small>
+          </button>
+        ))}
       </div>
 
-      <section className={styles.featurePanel} aria-labelledby="acciones-docentes-title">
-        <div className={styles.panelHeading}>
-          <div><h2 id="acciones-docentes-title">Trabajo pendiente</h2><p>Ordenado por urgencia y contexto de la sección.</p></div>
-          <button className={styles.textButton} type="button" onClick={() => onNavigate("activities")}>Ver todas las actividades</button>
-        </div>
-        <div className={styles.workList}>
-          {work.map((item, index) => (
-            <button className={styles.workRow} type="button" onClick={() => onNavigate(item.kind === "review" ? "review" : "activities", item.activityId)} key={item.id}>
-              <span className={styles.workRank}>{String(index + 1).padStart(2, "0")}</span>
-              <span><strong>{item.title}</strong><small>{item.detail}</small></span>
-              <span className={styles.workWhen}>{item.kind === "review" ? "Corregir ahora" : formatDateTime(item.dueAt)} <CaretRight size={15} aria-hidden="true" /></span>
+      <div className="classroom-columns" style={{ marginTop: "var(--space-lg)" }}>
+        <ActivityFlow state={state} />
+
+        <section className={`${styles.card} ${styles.cardFlush}`} aria-labelledby="trabajo-pendiente-title">
+          <div className="section-title compact-title">
+            <h2 id="trabajo-pendiente-title">Trabajo pendiente</h2>
+            <button className="course-action" type="button" onClick={() => onNavigate("activities")}>
+              Ver actividades <CaretRight size={15} aria-hidden="true" />
             </button>
-          ))}
-        </div>
-      </section>
-    </div>
+          </div>
+          <div className={styles.workList}>
+            {work.map((item, index) => (
+              <button
+                className={styles.workRow}
+                type="button"
+                onClick={() => onNavigate(item.kind === "review" ? "review" : "activities", item.activityId)}
+                key={item.id}
+              >
+                <span className={styles.workRank}>{String(index + 1).padStart(2, "0")}</span>
+                <span><strong>{item.title}</strong><small>{item.detail}</small></span>
+                <span className={styles.workWhen}>
+                  {item.kind === "review" ? "Corregir" : formatDateTime(item.dueAt)}
+                  <CaretRight size={15} aria-hidden="true" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    </section>
   );
 }
 
@@ -186,20 +222,26 @@ export function ActivitiesPanel({ state, onCreate, onEdit, onNavigate, onStudent
   ));
 
   return (
-    <div className={styles.viewStack}>
-      <header className={styles.pageHeader}>
-        <div><h1>Actividades</h1><p>Fechas, evaluación y publicación reunidas en una sola mesa.</p></div>
-        <button className={styles.primaryButton} type="button" onClick={onCreate}><Plus size={18} weight="bold" aria-hidden="true" /> Nueva actividad</button>
+    <section>
+      <header className="page-head">
+        <div>
+          <h1>Actividades</h1>
+          <p>Fechas, evaluación y publicación reunidas en una sola mesa.</p>
+        </div>
+        <button className="primary-button" type="button" onClick={onCreate}>
+          <Plus size={18} weight="bold" aria-hidden="true" /> Nueva actividad
+        </button>
       </header>
+
       <div className={styles.toolbar}>
-        <label className={styles.searchField}>
-          <span className={styles.srOnly}>Buscar actividad</span>
+        <label className={styles.field}>
+          <span className="sr-only">Buscar actividad</span>
           <MagnifyingGlass size={18} aria-hidden="true" />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar actividad" type="search" />
         </label>
-        <label className={styles.selectField}>
+        <label className={`${styles.field} ${styles.fieldNarrow}`}>
           <Funnel size={17} aria-hidden="true" />
-          <span className={styles.srOnly}>Filtrar por estado</span>
+          <span className="sr-only">Filtrar por estado</span>
           <select value={lifecycle} onChange={(event) => setLifecycle(event.target.value as typeof lifecycle)}>
             <option value="all">Todos los estados</option>
             <option value="draft">Borradores</option>
@@ -209,19 +251,34 @@ export function ActivitiesPanel({ state, onCreate, onEdit, onNavigate, onStudent
             <option value="archived">Archivadas</option>
           </select>
         </label>
-        <button className={styles.utilityButton} type="button" onClick={onStudentPreview}><Eye size={17} aria-hidden="true" /> Vista estudiante</button>
+        <button className="secondary-button" type="button" onClick={onStudentPreview}>
+          <Eye size={17} aria-hidden="true" /> Vista estudiante
+        </button>
       </div>
-      <div className={styles.activityList}>
+
+      <div className="post-list" style={{ marginTop: "var(--space-md)" }}>
         {filtered.map((activity) => {
           const activitySubmissions = state.submissions.filter((submission) => submission.activityId === activity.id);
           const pending = activitySubmissions.filter((submission) => ["submitted", "late", "review_draft"].includes(submission.state)).length;
           return (
-            <article className={styles.activityCard} key={activity.id}>
-              <div className={styles.activityStripe} data-state={activity.lifecycle} />
-              <div className={styles.activityBody}>
-                <div className={styles.activityTitleRow}>
-                  <div><span className={styles.activityUnit}>{activity.unit}</span><h2>{activity.title}</h2></div>
-                  <span className={styles.statusPill} data-tone={activity.lifecycle}>{ACTIVITY_LIFECYCLE_LABELS[activity.lifecycle]}</span>
+            <article key={activity.id}>
+              <span className={styles.pill} data-tone={activity.lifecycle}>{ACTIVITY_LIFECYCLE_LABELS[activity.lifecycle]}</span>
+              <div>
+                <div className={styles.activityHead}>
+                  <div>
+                    <h3>{activity.title}</h3>
+                    <small>{activity.unit}</small>
+                  </div>
+                  <span className="content-actions">
+                    {pending > 0 && (
+                      <button type="button" onClick={() => onNavigate("review", activity.id)}>
+                        <Tray size={15} aria-hidden="true" /> Corregir {pending}
+                      </button>
+                    )}
+                    <button type="button" onClick={() => onEdit(activity)}>
+                      <PencilSimple size={15} aria-hidden="true" /> Editar
+                    </button>
+                  </span>
                 </div>
                 <p>{activity.instructions}</p>
                 <dl className={styles.activityMeta}>
@@ -230,16 +287,17 @@ export function ActivitiesPanel({ state, onCreate, onEdit, onNavigate, onStudent
                   <div><dt>Entregas</dt><dd>{activitySubmissions.length ? `${activitySubmissions.length} registradas` : "Aún no abiertas"}</dd></div>
                 </dl>
               </div>
-              <div className={styles.activityActions}>
-                {pending > 0 && <button className={styles.utilityButton} type="button" onClick={() => onNavigate("review", activity.id)}><Tray size={17} aria-hidden="true" /> Corregir {pending}</button>}
-                <button className={styles.utilityButton} type="button" onClick={() => onEdit(activity)}><PencilSimple size={17} aria-hidden="true" /> Editar</button>
-              </div>
             </article>
           );
         })}
-        {!filtered.length && <div className={styles.emptyState}><MagnifyingGlass size={28} aria-hidden="true" /><strong>No encontramos actividades</strong><span>Prueba con otro nombre o estado.</span></div>}
+        {!filtered.length && (
+          <div className="empty-state">
+            <strong>No encontramos actividades</strong>
+            <p>Ninguna actividad de la sección coincide con ese nombre o estado. Prueba con otro filtro.</p>
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -269,20 +327,35 @@ function ReviewEditor({ state, submission, dispatch, onAnnouncement, onStudentPr
     onAnnouncement(`Nota y retroalimentación de ${submission.studentAlias} publicadas juntas.`);
   };
 
-  if (!submission) return <div className={styles.emptyState}><Tray size={28} aria-hidden="true" /><strong>No hay entregas en esta página</strong><span>Cambia el filtro para continuar.</span></div>;
+  if (!submission) {
+    return (
+      <div className="empty-state">
+        <strong>No hay entregas en esta página</strong>
+        <p>Cambia el filtro o vuelve a la primera página para continuar corrigiendo.</p>
+      </div>
+    );
+  }
 
   return (
-    <section className={styles.reviewEditor} aria-labelledby="correccion-title">
-      <div className={styles.editorHeader}>
-        <div><span className={styles.studentAlias}>{submission.studentAlias}</span><h2 id="correccion-title">Mesa de corrección</h2></div>
-        <span className={styles.statusPill} data-tone={submission.state}>{SUBMISSION_STATE_LABELS[submission.state]}</span>
+    <section aria-labelledby="correccion-title">
+      <div className="section-title compact-title">
+        <h2 id="correccion-title">Mesa de corrección · {submission.studentAlias}</h2>
+        <span className={styles.pill} data-tone={submission.state}>{SUBMISSION_STATE_LABELS[submission.state]}</span>
       </div>
-      {errors.submission && <p className={styles.formError} role="alert"><Warning size={17} weight="fill" aria-hidden="true" />{errors.submission}</p>}
-      <div className={styles.reviewColumns}>
-        <section className={styles.documentPreview} aria-label="Entrega ficticia">
-          <div className={styles.documentBar}><FileText size={18} aria-hidden="true" /><strong>{submission.fileName ?? "Sin archivo"}</strong><span>PDF ficticio</span></div>
+
+      <div className={styles.reviewGrid} style={{ marginTop: "var(--space-md)" }}>
+        <section className={styles.documentPane} aria-label="Entrega ficticia">
+          <div className={styles.documentBar}>
+            <FileText size={18} aria-hidden="true" />
+            <strong>{submission.fileName ?? "Sin archivo"}</strong>
+            <span>PDF ficticio</span>
+          </div>
           {submission.state === "missing" ? (
-            <div className={styles.documentEmpty}><Warning size={30} aria-hidden="true" /><strong>Sin entrega</strong><span>No se puede calificar hasta recibir un trabajo.</span></div>
+            <div className={styles.documentEmpty}>
+              <Warning size={28} aria-hidden="true" />
+              <strong>Sin entrega</strong>
+              <p>No se puede calificar hasta recibir un trabajo del estudiante.</p>
+            </div>
           ) : (
             <div className={styles.documentSheet} aria-hidden="true">
               <span className={styles.documentTitle} />
@@ -292,33 +365,80 @@ function ReviewEditor({ state, submission, dispatch, onAnnouncement, onStudentPr
             </div>
           )}
         </section>
-        <section className={styles.feedbackPanel} aria-label="Nota y retroalimentación">
-          <div className={styles.rubricBlock}>
-            <div className={styles.subheading}><h3>Rúbrica simple</h3><span>6,5 puntos sugeridos</span></div>
-            {RUBRIC_ROWS.map(([key, label, max]) => (
-              <label className={styles.rubricRow} key={key}>
-                <span>{label}<small>máx. {String(max).replace(".", ",")}</small></span>
-                <input min="0" max={max} step="0.1" type="number" value={rubric[key]} onChange={(event) => { const value = event.currentTarget.valueAsNumber; setRubric((current) => ({ ...current, [key]: Number.isFinite(value) ? value : 0 })); }} disabled={submission.state === "missing"} />
-              </label>
-            ))}
-          </div>
-          <label className={styles.fieldLabel}>
-            <span>Nota final <small>Escala 1,0–7,0</small></span>
-            <input className={styles.gradeInput} inputMode="decimal" value={grade} onChange={(event) => setGrade(event.target.value)} aria-invalid={Boolean(errors.grade)} aria-describedby={errors.grade ? "review-grade-error" : undefined} disabled={submission.state === "missing"} />
-          </label>
-          {errors.grade && <p className={styles.fieldError} id="review-grade-error" role="alert">{errors.grade}</p>}
-          <label className={styles.fieldLabel}>
-            <span>Retroalimentación <small>Se publica junto con la nota</small></span>
-            <textarea rows={5} value={feedback} onChange={(event) => setFeedback(event.target.value)} aria-invalid={Boolean(errors.feedback)} aria-describedby={errors.feedback ? "review-feedback-error" : undefined} disabled={submission.state === "missing"} />
-          </label>
-          {errors.feedback && <p className={styles.fieldError} id="review-feedback-error" role="alert">{errors.feedback}</p>}
-          <div className={styles.editorActions}>
-            <button className={styles.utilityButton} type="button" onClick={saveDraft} disabled={submission.state === "missing"}><FloppyDisk size={17} aria-hidden="true" /> Guardar borrador</button>
-            <button className={styles.primaryButton} type="button" onClick={publish} disabled={submission.state === "missing"}><PaperPlaneTilt size={17} weight="fill" aria-hidden="true" /> Publicar calificación</button>
-          </div>
-          <button className={styles.textButton} type="button" onClick={() => onStudentPreview(submission.id)}><Eye size={17} aria-hidden="true" /> Comprobar Vista estudiante</button>
-          {savedReview?.history.length ? <p className={styles.historyLine}><Clock size={15} aria-hidden="true" /> {savedReview.history.length} evento{savedReview.history.length === 1 ? "" : "s"} en el historial simulado</p> : null}
-        </section>
+
+        <aside className={`teacher-tools ${styles.reviewForm}`} aria-label="Nota y retroalimentación">
+          <h2>Rúbrica y nota</h2>
+          {errors.submission && (
+            <p className={styles.formError} role="alert">
+              <Warning size={17} weight="fill" aria-hidden="true" />{errors.submission}
+            </p>
+          )}
+          <form onSubmit={(event) => event.preventDefault()}>
+            <div className={styles.rubric}>
+              {RUBRIC_ROWS.map(([key, label, max]) => (
+                <label className={styles.rubricRow} key={key}>
+                  <span>{label}<small>máx. {String(max).replace(".", ",")}</small></span>
+                  <input
+                    min="0"
+                    max={max}
+                    step="0.1"
+                    type="number"
+                    value={rubric[key]}
+                    onChange={(event) => {
+                      const value = event.currentTarget.valueAsNumber;
+                      setRubric((current) => ({ ...current, [key]: Number.isFinite(value) ? value : 0 }));
+                    }}
+                    disabled={submission.state === "missing"}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <label>
+              <span className={styles.fieldHead}>Nota final <small>Escala 1,0–7,0</small></span>
+              <input
+                className={styles.gradeInput}
+                inputMode="decimal"
+                value={grade}
+                onChange={(event) => setGrade(event.target.value)}
+                aria-invalid={Boolean(errors.grade)}
+                aria-describedby={errors.grade ? "review-grade-error" : undefined}
+                disabled={submission.state === "missing"}
+              />
+            </label>
+            {errors.grade && <p className={styles.fieldError} id="review-grade-error" role="alert">{errors.grade}</p>}
+
+            <label>
+              <span className={styles.fieldHead}>Retroalimentación <small>Se publica junto con la nota</small></span>
+              <textarea
+                rows={5}
+                value={feedback}
+                onChange={(event) => setFeedback(event.target.value)}
+                aria-invalid={Boolean(errors.feedback)}
+                aria-describedby={errors.feedback ? "review-feedback-error" : undefined}
+                disabled={submission.state === "missing"}
+              />
+            </label>
+            {errors.feedback && <p className={styles.fieldError} id="review-feedback-error" role="alert">{errors.feedback}</p>}
+
+            <div className={styles.reviewActions}>
+              <button className="secondary-button" type="button" onClick={saveDraft} disabled={submission.state === "missing"}>
+                <FloppyDisk size={17} aria-hidden="true" /> Guardar borrador
+              </button>
+              <button className="primary-button" type="button" onClick={publish} disabled={submission.state === "missing"}>
+                <PaperPlaneTilt size={17} weight="fill" aria-hidden="true" /> Publicar
+              </button>
+            </div>
+          </form>
+          <button className={styles.linkButton} type="button" onClick={() => onStudentPreview(submission.id)}>
+            <Eye size={17} aria-hidden="true" /> Comprobar Vista estudiante
+          </button>
+          {savedReview?.history.length ? (
+            <p className={styles.historyLine}>
+              <Clock size={15} aria-hidden="true" /> {savedReview.history.length} evento{savedReview.history.length === 1 ? "" : "s"} en el historial simulado
+            </p>
+          ) : null}
+        </aside>
       </div>
     </section>
   );
@@ -342,34 +462,68 @@ export function ReviewPanel({ state, dispatch, onAnnouncement, onStudentPreview 
   };
 
   return (
-    <div className={styles.viewStack}>
-      <header className={styles.pageHeader}>
-        <div><h1>Por corregir</h1><p>Entrega, rúbrica, nota y feedback sin perder el contexto de la actividad.</p></div>
-        <span className={styles.sectionChip}>{pageData.total} resultado{pageData.total === 1 ? "" : "s"}</span>
-      </header>
-      <div className={styles.reviewToolbar}>
-        <label className={styles.selectFieldWide}><span>Actividad</span><select value={state.selectedActivityId} onChange={(event) => chooseActivity(event.target.value)}>{activities.map((activity) => <option value={activity.id} key={activity.id}>{activity.title}</option>)}</select></label>
-        <label className={styles.searchField}><span className={styles.srOnly}>Buscar estudiante ficticio</span><MagnifyingGlass size={18} aria-hidden="true" /><input type="search" placeholder="Buscar alias" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
-        <label className={styles.selectField}><Funnel size={17} aria-hidden="true" /><span className={styles.srOnly}>Filtrar entregas</span><select value={filter} onChange={(event) => { setFilter(event.target.value as ReviewFilter); setPage(1); }}>{FILTER_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-      </div>
-      <section className={styles.queuePanel} aria-labelledby="cola-entregas-title">
-        <div className={styles.panelHeading}>
-          <div><h2 id="cola-entregas-title">Cola de entregas</h2><p>{selectedActivity?.title ?? "Actividad"} · página {pageData.page} de {pageData.pageCount}</p></div>
-          <span className={styles.statusPill} data-tone="review">{pageData.total} en el filtro</span>
+    <section>
+      <header className="page-head">
+        <div>
+          <h1>Por corregir</h1>
+          <p>Entrega, rúbrica, nota y retroalimentación sin perder el contexto de la actividad.</p>
         </div>
-        <div className={styles.tableScroll}>
-          <table className={styles.submissionTable}>
-            <thead><tr><th>Estudiante</th><th>Entrega</th><th>Estado</th><th>Nota</th><th><span className={styles.srOnly}>Acción</span></th></tr></thead>
+        <span className={styles.pill} data-tone="count">{pageData.total} resultado{pageData.total === 1 ? "" : "s"}</span>
+      </header>
+
+      <div className={styles.toolbar}>
+        <label className={styles.labelledField}>
+          <span>Actividad</span>
+          <span className={styles.field}>
+            <select value={state.selectedActivityId} onChange={(event) => chooseActivity(event.target.value)}>
+              {activities.map((activity) => <option value={activity.id} key={activity.id}>{activity.title}</option>)}
+            </select>
+          </span>
+        </label>
+        <label className={styles.field}>
+          <span className="sr-only">Buscar estudiante ficticio</span>
+          <MagnifyingGlass size={18} aria-hidden="true" />
+          <input type="search" placeholder="Buscar alias" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} />
+        </label>
+        <label className={`${styles.field} ${styles.fieldNarrow}`}>
+          <Funnel size={17} aria-hidden="true" />
+          <span className="sr-only">Filtrar entregas</span>
+          <select value={filter} onChange={(event) => { setFilter(event.target.value as ReviewFilter); setPage(1); }}>
+            {FILTER_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+      </div>
+
+      <section className={`${styles.card} ${styles.cardFlush}`} style={{ marginTop: "var(--space-md)" }} aria-labelledby="cola-entregas-title">
+        <div className="section-title compact-title">
+          <h2 id="cola-entregas-title">Cola de entregas</h2>
+          <span className="grades-note">{selectedActivity?.title ?? "Actividad"} · página {pageData.page} de {pageData.pageCount}</span>
+        </div>
+        <div className={styles.queue}>
+          <table className={styles.queueTable}>
+            <thead>
+              <tr><th>Estudiante</th><th>Entrega</th><th>Estado</th><th>Nota</th><th><span className="sr-only">Acción</span></th></tr>
+            </thead>
             <tbody>
               {pageData.items.map((submission) => {
                 const review = state.reviews[submission.id];
+                const current = selected?.id === submission.id;
                 return (
-                  <tr data-selected={selected?.id === submission.id} key={submission.id}>
-                    <td><span className={styles.aliasAvatar} aria-hidden="true">{submission.studentAlias.slice(-2)}</span><strong>{submission.studentAlias}</strong></td>
+                  <tr data-selected={current} key={submission.id}>
+                    <td><span className="avatar" aria-hidden="true">{submission.studentAlias.slice(-2)}</span>{submission.studentAlias}</td>
                     <td>{submission.submittedAt ? formatDateTime(submission.submittedAt) : "—"}</td>
-                    <td><span className={styles.statusPill} data-tone={submission.state}>{SUBMISSION_STATE_LABELS[submission.state]}</span></td>
-                    <td className={styles.numericCell}>{review?.grade ? review.grade.toFixed(1).replace(".", ",") : "—"}</td>
-                    <td><button className={styles.rowButton} type="button" onClick={() => dispatch({ type: "select_submission", submissionId: submission.id })}>{selected?.id === submission.id ? "Abierta" : "Corregir"}</button></td>
+                    <td><span className={styles.pill} data-tone={submission.state}>{SUBMISSION_STATE_LABELS[submission.state]}</span></td>
+                    <td className={styles.numericCell}>{formatGrade(review?.grade)}</td>
+                    <td>
+                      <button
+                        className={styles.rowButton}
+                        data-current={current}
+                        type="button"
+                        onClick={() => dispatch({ type: "select_submission", submissionId: submission.id })}
+                      >
+                        {current ? "Abierta" : "Corregir"}
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -377,13 +531,20 @@ export function ReviewPanel({ state, dispatch, onAnnouncement, onStudentPreview 
           </table>
         </div>
         <div className={styles.pagination}>
-          <button className={styles.iconButton} type="button" aria-label="Página anterior" disabled={pageData.page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}><CaretLeft size={18} aria-hidden="true" /></button>
+          <button className="icon-button" type="button" aria-label="Página anterior" disabled={pageData.page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+            <CaretLeft size={18} aria-hidden="true" />
+          </button>
           <span>Página {pageData.page} de {pageData.pageCount}</span>
-          <button className={styles.iconButton} type="button" aria-label="Página siguiente" disabled={pageData.page >= pageData.pageCount} onClick={() => setPage((value) => Math.min(pageData.pageCount, value + 1))}><CaretRight size={18} aria-hidden="true" /></button>
+          <button className="icon-button" type="button" aria-label="Página siguiente" disabled={pageData.page >= pageData.pageCount} onClick={() => setPage((value) => Math.min(pageData.pageCount, value + 1))}>
+            <CaretRight size={18} aria-hidden="true" />
+          </button>
         </div>
       </section>
-      <ReviewEditor key={selected?.id ?? "empty"} state={state} submission={selected} dispatch={dispatch} onAnnouncement={onAnnouncement} onStudentPreview={onStudentPreview} />
-    </div>
+
+      <div style={{ marginTop: "var(--space-lg)" }}>
+        <ReviewEditor key={selected?.id ?? "empty"} state={state} submission={selected} dispatch={dispatch} onAnnouncement={onAnnouncement} onStudentPreview={onStudentPreview} />
+      </div>
+    </section>
   );
 }
 
@@ -392,32 +553,52 @@ export function GradebookPanel({ state }: { state: TeacherPreviewState }) {
   const overview = gradebookOverview(state);
 
   return (
-    <div className={styles.viewStack}>
-      <header className={styles.pageHeader}>
-        <div><h1>Calificaciones</h1><p>Ponderaciones, borradores privados y publicación controlada para la sección.</p></div>
-        <button className={styles.utilityButton} type="button"><DownloadSimple size={17} aria-hidden="true" /> Exportar simulación</button>
+    <section>
+      <header className="page-head">
+        <div>
+          <h1>Calificaciones</h1>
+          <p>Ponderaciones, borradores privados y publicación controlada para la sección.</p>
+        </div>
+        <button className="secondary-button" type="button">
+          <DownloadSimple size={17} aria-hidden="true" /> Exportar simulación
+        </button>
       </header>
-      <section className={styles.gradeSummary} aria-label="Resumen del libro de calificaciones">
-        <div className={styles.averageCard}><span>Promedio de notas publicadas</span><strong>{overview.average}</strong><small>Escala chilena 1,0–7,0</small></div>
-        <div className={styles.gradeStat}><CheckCircle size={22} weight="duotone" aria-hidden="true" /><span><strong>{overview.gradedCount}</strong><small>Publicadas</small></span></div>
-        <div className={styles.gradeStat}><Clock size={22} weight="duotone" aria-hidden="true" /><span><strong>{overview.pendingCount}</strong><small>Pendientes</small></span></div>
-      </section>
-      <section className={styles.featurePanel} aria-labelledby="ponderaciones-title">
-        <div className={styles.panelHeading}>
-          <div><h2 id="ponderaciones-title">Esquema de evaluación</h2><p>Los resultados provienen exclusivamente de los fixtures publicados.</p></div>
-          <ChartBar size={23} weight="duotone" aria-hidden="true" />
+
+      <div className="grades-summary">
+        <div className="grades-average">
+          <strong>{overview.average}</strong>
+          <div>
+            <h3>Promedio de notas publicadas</h3>
+            <p>Escala chilena 1,0–7,0 · sólo entregas ya publicadas</p>
+          </div>
         </div>
-        <div className={styles.gradeItems}>
-          {overview.items.map((item) => (
-            <article className={styles.gradeItem} key={item.id}>
-              <span className={styles.gradeWeight}>{item.weight}%</span>
-              <div><h3>{item.name}</h3><p>{ACTIVITY_LIFECYCLE_LABELS[item.lifecycle]}</p></div>
-              <div className={styles.gradeAverage}><small>Promedio</small><strong>{item.average ?? "—"}</strong></div>
-            </article>
-          ))}
+        <div className={styles.gradeStats}>
+          <div><CheckCircle size={20} weight="duotone" aria-hidden="true" /><strong>{overview.gradedCount}</strong> publicadas</div>
+          <div><Clock size={20} weight="duotone" aria-hidden="true" /><strong>{overview.pendingCount}</strong> pendientes</div>
         </div>
-        <div className={styles.safetyNote}><Lock size={18} weight="fill" aria-hidden="true" /><span>Las correcciones en borrador no participan del promedio ni aparecen en la Vista estudiante.</span></div>
+      </div>
+
+      <section className="grades-table" style={{ marginTop: "var(--space-lg)" }} aria-labelledby="ponderaciones-title">
+        <div className="grades-head">
+          <span id="ponderaciones-title">Esquema de evaluación</span>
+          <span>Ponderación</span>
+          <span>Estado</span>
+          <span>Promedio</span>
+        </div>
+        {overview.items.map((item) => (
+          <div className="grades-row" key={item.id}>
+            <span><b>{item.name}</b></span>
+            <span className={styles.weightChip}>{item.weight}%</span>
+            <span className="grades-weight">{ACTIVITY_LIFECYCLE_LABELS[item.lifecycle]}</span>
+            <span className="grades-official">{item.average ?? "—"}</span>
+          </div>
+        ))}
       </section>
-    </div>
+
+      <p className={styles.safetyNote} style={{ marginTop: "var(--space-md)" }}>
+        <Lock size={18} weight="fill" aria-hidden="true" />
+        Las correcciones en borrador no participan del promedio ni aparecen en la Vista estudiante.
+      </p>
+    </section>
   );
 }
