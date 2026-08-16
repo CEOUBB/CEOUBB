@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: deploy-vercel-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   deploy:
@@ -47,14 +47,17 @@ jobs:
       - name: Check Firebase Functions syntax
         run: pnpm run check:functions
 
+      - name: Check Firebase Security Rules
+        run: pnpm run check:rules
+
+      - name: Fast unit test suite
+        run: pnpm run test:unit
+
       - name: TypeScript typecheck
         run: pnpm run typecheck
 
       - name: Lint code
         run: pnpm run lint
-
-      - name: Run test suite
-        run: pnpm test
 
       - name: Pull Vercel Environment Information (Production)
         if: github.event_name == 'push'
@@ -67,7 +70,7 @@ jobs:
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Pull Vercel Environment Information (Preview)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
         run: pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -87,7 +90,7 @@ jobs:
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Build Project Artifacts (Preview)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
         run: pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -111,7 +114,7 @@ jobs:
 
       - name: Deploy Preview Artifacts to Vercel
         id: deploy-preview
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
         run: |
           PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }} | grep -E '^https?://' | tail -n 1)
           echo "url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
@@ -123,12 +126,14 @@ jobs:
           VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Comment Preview URL on PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != '' && steps.deploy-preview.outputs.url != ''
         uses: actions/github-script@v9
+        env:
+          PREVIEW_URL: ${{ steps.deploy-preview.outputs.url }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const previewUrl = '${{ steps.deploy-preview.outputs.url }}';
+            const previewUrl = process.env.PREVIEW_URL || '';
             const commentHeader = '### 🚀 Vercel Preview Deployment';
             const body = `${commentHeader}\n\n| Attribute | Details |\n| --- | --- |\n| 🔨 **Commit** | \`${context.sha.slice(0, 7)}\` |\n| 🌐 **Preview Link** | [${previewUrl}](${previewUrl}) |\n\n*Deployed via GitHub Actions*`;
 
@@ -159,17 +164,26 @@ jobs:
       - name: Notify Discord on Failure
         if: failure()
         uses: actions/github-script@v9
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
             const channelId = "1536936245643579462"; // #🚨-❙-alertas
-            const botToken = "${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}";
-            const sha = context.sha ? context.sha.slice(0, 7) : "commit";
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const actor = context.actor;
-            const ref = context.ref || "main";
+            const botToken = process.env.DISCORD_BOT_TOKEN;
+            const rawSha = process.env.COMMIT_SHA || "";
+            const sha = rawSha ? rawSha.slice(0, 7) : "commit";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.RUN_ID}`;
+            const actor = process.env.ACTOR || "desconocido";
+            const ref = process.env.REF_NAME || "main";
+            const workflow = process.env.WORKFLOW_NAME || "CI/CD";
 
             const embed = {
-              title: `🔴 Fallo en Pipeline: ${context.workflow}`,
+              title: `🔴 Fallo en Pipeline: ${workflow}`,
               description: `Se detectó un fallo durante la verificación de calidad en \`${ref}\`.\n\n` +
                 `• **Commit:** [\`${sha}\`](${runUrl})\n` +
                 `• **Autor:** @${actor}\n` +
