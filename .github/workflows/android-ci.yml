@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Java 21 (Temurin)
         uses: actions/setup-java@v4
@@ -47,10 +47,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: 'pnpm'
@@ -63,12 +63,13 @@ jobs:
 
       - name: Assemble Debug APK & Lint
         run: |
+          chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug lintDebug --no-daemon --stacktrace
 
       - name: Notify Discord on Failure
         if: failure()
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
           COMMIT_SHA: ${{ github.sha }}

@@ -40,6 +40,12 @@ test("REQ-CICD-08: All required GitHub Actions workflows exist and are non-empty
     assert.match(content, /^on:\s+/m, `${workflowPath} debe declarar un bloque 'on'`);
     assert.match(content, /^jobs:\s+/m, `${workflowPath} debe declarar un bloque 'jobs'`);
     assert.ok(!content.includes("\t"), `${workflowPath} no debe contener tabulaciones (YAML inválido)`);
+
+    // Invariante de versiones oficiales válidas de GitHub Actions
+    assert.ok(!content.includes("actions/checkout@v7"), `${workflowPath} debe usar actions/checkout@v4`);
+    assert.ok(!content.includes("actions/setup-node@v7"), `${workflowPath} debe usar actions/setup-node@v4`);
+    assert.ok(!content.includes("actions/github-script@v9"), `${workflowPath} debe usar actions/github-script@v7`);
+    assert.ok(!content.includes("pnpm/action-setup@v6"), `${workflowPath} debe usar pnpm/action-setup@v4`);
   }
 });
 
@@ -107,6 +113,7 @@ test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target an
   assert.match(androidCiContent, /java-version:\s*'21'/);
   assert.match(androidCiContent, /gradle\/actions\/setup-gradle@v4/);
   assert.match(androidCiContent, /cap sync android/);
+  assert.match(androidCiContent, /chmod \+x android\/gradlew/);
   assert.match(androidCiContent, /assembleDebug lintDebug/);
 
   assert.match(androidCiContent, /1536936245643579462/, "Debe apuntar al canal de Discord #🚨-❙-alertas");
