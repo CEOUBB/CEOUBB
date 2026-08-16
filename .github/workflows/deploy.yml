@@ -24,7 +24,7 @@ jobs:
       url: ${{ steps.deploy-prod.outputs.url || steps.deploy-preview.outputs.url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configure Git Author for Vercel Hobby Plan
         run: |
@@ -33,10 +33,10 @@ jobs:
           git commit --amend --author="CEOUBB <elpapijuaco325@gmail.com>" --no-edit
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: 'pnpm'
@@ -124,7 +124,7 @@ jobs:
 
       - name: Comment Preview URL on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -158,7 +158,7 @@ jobs:
 
       - name: Notify Discord on Failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const channelId = "1536936245643579462"; // #🚨-❙-alertas

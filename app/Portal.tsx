@@ -261,7 +261,7 @@ export function Portal() {
                     <span>{item.name}<small>{item.code}</small></span>
                   </button>
                 ))}
-                <Link className="sheet-row" href="/biblioteca/index.html" onClick={() => setCoursesSheet(false)}>
+                <Link className="sheet-row" href="/biblioteca/index.html" prefetch={false} onClick={() => setCoursesSheet(false)}>
                   <span className="sheet-row-icon"><Archive size={20} /></span>
                   <span>Biblioteca académica</span>
                 </Link>
@@ -512,7 +512,7 @@ function PortalSidebar({ user, screen, courses, open, openCourseId, setScreen, o
           );
         })}
       </div>
-      <Link className="side-item side-foot" href="/biblioteca/index.html">
+      <Link className="side-item side-foot" href="/biblioteca/index.html" prefetch={false}>
         <span className="side-icon"><Archive size={18} /></span>
         <span className="side-label">Biblioteca académica</span>
       </Link>
