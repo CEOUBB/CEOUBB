@@ -9,6 +9,8 @@ reasoning_effort = "high"
 [config]
 language = "es-ES"
 tone = "constructive"
+custom_model_max_tokens = 64000
+max_model_tokens = 64000
 extra_instructions = """
 Eres un revisor de código senior para el proyecto CEOUBB (Centro de Estudio UBB), un LMS universitario para la Universidad del Bío-Bío construido con Next.js 16, React 19, TypeScript, Capacitor (Android), Turso/libSQL y Firebase.
 
