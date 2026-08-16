@@ -1,0 +1,115 @@
+# Implements: REQ-CICD-01, REQ-CICD-02
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android-ci.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Build & Lint Android APK (Capacitor)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync Capacitor Android
+        run: pnpm exec cap sync android
+
+      - name: Assemble Debug APK & Lint
+        run: |
+          cd android
+          ./gradlew assembleDebug lintDebug --no-daemon --stacktrace
+
+      - name: Notify Discord on Failure
+        if: failure()
+        uses: actions/github-script@v9
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_CEOUBB_BOT_TOKEN || secrets.DISCORD_BOT_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const channelId = "1536936245643579462"; // #🚨-❙-alertas
+            const botToken = process.env.DISCORD_BOT_TOKEN;
+            const rawSha = process.env.COMMIT_SHA || "";
+            const sha = rawSha ? rawSha.slice(0, 7) : "commit";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.RUN_ID}`;
+            const actor = process.env.ACTOR || "desconocido";
+            const ref = process.env.REF_NAME || "main";
+            const workflow = process.env.WORKFLOW_NAME || "Android CI";
+
+            const embed = {
+              title: `🔴 Fallo en Pipeline: ${workflow}`,
+              description: `Se detectó un fallo durante la compilación/lint nativo de Android en \`${ref}\`.\n\n` +
+                `• **Commit:** [\`${sha}\`](${runUrl})\n` +
+                `• **Autor:** @${actor}\n` +
+                `• **Diagnóstico:** Revisa los logs de Gradle (assembleDebug / lintDebug).\n\n` +
+                `🔗 **[Ver detalles del fallo en GitHub Actions](${runUrl})**`,
+              color: 0xef4444,
+              timestamp: new Date().toISOString(),
+              footer: { text: "CEOUBB Android CI Inspector" }
+            };
+
+            if (botToken) {
+              try {
+                await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bot ${botToken}`,
+                  },
+                  body: JSON.stringify({ embeds: [embed] })
+                });
+              } catch (e) {
+                console.error("Error enviando alerta a Discord:", e);
+              }
+            }
