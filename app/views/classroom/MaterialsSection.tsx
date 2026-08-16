@@ -106,7 +106,7 @@ export function MaterialsSection({
         <div className="section-title compact-title">
           <h2>Archivos compartidos</h2>
         </div>
-        <Link className="material-row featured" href="/biblioteca/index.html">
+        <Link className="material-row featured" href="/biblioteca/index.html" prefetch={false}>
           <span className="file-icon">
             <Sigma size={20} />
           </span>

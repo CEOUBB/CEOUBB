@@ -33,7 +33,7 @@ export function PostsSection({
               Publicar primer aviso <ArrowRight size={15} />
             </button>
           ) : (
-            <Link className="empty-state-action" href="/biblioteca/index.html">
+            <Link className="empty-state-action" href="/biblioteca/index.html" prefetch={false}>
               Abrir biblioteca académica <ArrowRight size={15} />
             </Link>
           )}
