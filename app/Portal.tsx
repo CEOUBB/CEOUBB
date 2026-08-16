@@ -33,7 +33,7 @@ import {
   watchCourseActivity,
   watchGradebooks,
 } from "../lib/firebase-classroom-client";
-import { AdminView, CalendarView, CoursesDashboard, ResourcesView } from "./portal-views";
+import { CoursesDashboard } from "./views/CoursesDashboard";
 import { Avatar, Screen } from "./portal-ui";
 import {
   calendarEntries,
@@ -46,6 +46,40 @@ import {
 } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 import { CommandPalette, type PaletteItem } from "./command-palette";
+
+// Implements: REQ-PERF-06
+const CalendarView = dynamic(
+  () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="empty-state">
+        <strong>Cargando calendario…</strong>
+      </div>
+    ),
+  }
+);
+
+const ResourcesView = dynamic(
+  () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="empty-state">
+        <strong>Cargando recursos…</strong>
+      </div>
+    ),
+  }
+);
+
+const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
+  ssr: false,
+  loading: () => (
+    <div className="empty-state">
+      <strong>Cargando administración…</strong>
+    </div>
+  ),
+});
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
