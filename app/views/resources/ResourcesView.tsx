@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import {
@@ -10,7 +11,13 @@ import {
   DeviceMobile,
   DownloadSimple,
 } from "@phosphor-icons/react";
-import { APK_URL, ease, rise, stagger } from "../../../lib/portal-utils";
+import {
+  APK_URL,
+  instantTransition,
+  rise,
+  springDefault,
+  stagger,
+} from "../../../lib/portal-utils";
 import { AI_TIERS, BRAND, PERK_GROUPS, UBB_PORTALS } from "./resources-data";
 import type { Brand } from "./resources-data";
 
@@ -25,8 +32,15 @@ function BrandMark({ brand }: { brand: Brand }) {
 }
 
 export function ResourcesView() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <m.section animate="show" className="resources-hub" initial="hidden" variants={stagger}>
+    <m.section
+      animate="show"
+      className="resources-hub"
+      initial={shouldReduceMotion ? "show" : "hidden"}
+      variants={shouldReduceMotion ? undefined : stagger}
+    >
       <div className="page-head lead">
         <h1>Recursos de estudio</h1>
         <p>
@@ -37,12 +51,20 @@ export function ResourcesView() {
         </p>
       </div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Ecosistema CEOUBB</h2>
         </div>
         <div className="resource-layout">
-          <m.a className="resource-card" href="/biblioteca/index.html" whileHover={{ y: -1 }}>
+          <m.a
+            className="resource-card"
+            href="/biblioteca/index.html"
+            whileHover={shouldReduceMotion ? undefined : { y: -1 }}
+          >
             <span className="resource-icon">
               <Books size={22} />
             </span>
@@ -108,7 +130,11 @@ export function ResourcesView() {
         </div>
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Asistentes de inteligencia artificial</h2>
         </div>
@@ -138,7 +164,11 @@ export function ResourcesView() {
         ))}
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Beneficios con tu correo institucional</h2>
         </div>
@@ -170,7 +200,11 @@ export function ResourcesView() {
         ))}
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Portales y servicios oficiales UBB</h2>
         </div>

@@ -22,8 +22,12 @@ export type CalendarEntry = {
 export const APK_URL =
   "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
-export const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
-export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
+export const springDefault = { type: "spring", stiffness: 340, damping: 28, mass: 0.8 } as const;
+export const springSnappy = { type: "spring", stiffness: 400, damping: 30, mass: 0.6 } as const;
+export const instantTransition = { duration: 0.01 } as const;
+
+export const rise = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.045 } } };
 export const ease = [0.16, 1, 0.3, 1] as const;
 
 const PHOTO_KEY = "ceoubb:photo";

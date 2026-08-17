@@ -84,7 +84,14 @@ To optimize semantic density and prevent context contamination, the following gl
 3. **NO ANY OR TYPE BYPASS:** Prohibited use of `any`, `@ts-ignore`, or unsafe type assertions (`as unknown as T`) without a deterministic validation parser (Zod).
 4. **NO UNBOUNDED QUERIES:** All database queries must include explicit `.limit()` clauses and indexed pagination cursors.
 5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively. Running `npm`, `yarn`, or `bun` is prohibited. Installing new packages without explicit authorization is forbidden.
-6. **NO FRONTEND AI SLOP:** Prohibited use of generic purple/indigo gradients on dark backgrounds, harsh black canvases, symmetric unprioritized bento boxes, or custom inline SVG icons.
+6. **NO FRONTEND AI SLOP (HIGH-CRAFT DESIGN GOVERNANCE):**
+   - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
+   - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via micro-borders (`border border-surface-border`) and layered micro-shadows.
+   - **Badges & Emojis:** Prohibited use of pulsating pill badges with `animate-ping` and decorative emojis (✨, 🚀, ⚡) as icons.
+   - **Motion & Physics:** Prohibited use of `transition: all` or `transition-all duration-300 ease-in-out`. Specify exact properties (`transform`, `opacity`) with critically damped spring physics (`stiffness: 340, damping: 28`) or micro-times ($\le 150\text{ms}$). Keyboard actions must be instantaneous ($0\text{ms}$).
+   - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle $y$ translation).
+   - **Data & Numerals:** Mandatory application of `font-variant-numeric: tabular-nums lining-nums` (`.num`) on all tables, grades, counters, and dates.
+   - **Iconography:** Mandatory exclusive use of `@phosphor-icons/react`. Do not hand-roll raw inline SVG icons.
 
 ---
 

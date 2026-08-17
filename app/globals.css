@@ -1,34 +1,88 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   CEOUBB Design System — tokens
-   Source: claude.ai/design · "CEOUBB Design System" (1730f6d2)
-   tokens/colors.css · typography.css · spacing.css · elevation.css
+   CEOUBB Design System — Tokens Perceptuales OKLCH & @theme
+   Gobernanza Contra AI Slop Frontend · High-Craft Design Engineering
    ───────────────────────────────────────────────────────────── */
 
+@theme {
+  /* Escala de Neutros Cálidos (OKLCH - Hue 60: Piedra Natural / Documento) */
+  --color-stone-50: oklch(0.985 0.002 60);
+  --color-stone-100: oklch(0.965 0.004 60);
+  --color-stone-200: oklch(0.92 0.006 60);
+  --color-stone-300: oklch(0.86 0.008 60);
+  --color-stone-400: oklch(0.7 0.01 60);
+  --color-stone-500: oklch(0.54 0.012 60);
+  --color-stone-600: oklch(0.42 0.01 60);
+  --color-stone-700: oklch(0.32 0.008 60);
+  --color-stone-800: oklch(0.22 0.006 60);
+  --color-stone-900: oklch(0.16 0.005 60);
+  --color-stone-950: oklch(0.12 0.004 60);
+
+  /* Acento Institucional UBB Calibrado (Hue 255: Azul Real de Alta Precisión) */
+  --color-brand-blue: oklch(0.48 0.18 255);
+  --color-brand-blue-active: oklch(0.38 0.16 255);
+  --color-brand-navy: oklch(0.24 0.09 255);
+
+  /* Paleta Heráldica y Académica UBB (OKLCH Perceptual) */
+  --color-shield-sky: oklch(0.75 0.14 235);
+  --color-shield-gold: oklch(0.75 0.16 75);
+  --color-shield-red: oklch(0.55 0.22 25);
+  --color-shield-red-deep: oklch(0.42 0.2 25);
+  --color-academic-emerald: oklch(0.7 0.17 155);
+  --color-academic-teal: oklch(0.58 0.12 185);
+  --color-academic-purple: oklch(0.62 0.22 300);
+  --color-academic-purple-deep: oklch(0.35 0.2 300);
+  --color-academic-pink: oklch(0.65 0.22 350);
+  --color-academic-bronze: oklch(0.38 0.12 60);
+
+  /* Tokens Semánticos de Superficie */
+  --color-surface-base: oklch(0.975 0.005 240);
+  --color-surface-raised: #ffffff;
+  --color-surface-overlay: oklch(0.965 0.004 60);
+  --color-surface-border: oklch(0.92 0.006 60);
+
+  /* Tokens Semánticos de Texto */
+  --color-text-primary: oklch(0.2 0.03 260);
+  --color-text-secondary: oklch(0.36 0.03 255);
+  --color-text-muted: oklch(0.48 0.03 250);
+  --color-text-faint: oklch(0.58 0.03 250);
+
+  /* Tipografías del Sistema */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Escala de Tiempos y Curvas de Aceleración */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+}
+
 :root {
-  --ubb-royal-blue: #0055b8;
-  --ubb-royal-blue-active: #003d82;
-  --ubb-midnight-navy: #002b5c;
-  --white: #ffffff;
-  --paper: #f4f6f9;
-  --hairline: #e2e8f0;
+  --ubb-royal-blue: var(--color-brand-blue, oklch(0.48 0.18 255));
+  --ubb-royal-blue-active: var(--color-brand-blue-active, oklch(0.38 0.16 255));
+  --ubb-midnight-navy: var(--color-brand-navy, oklch(0.24 0.09 255));
+  --white: var(--color-surface-raised, #ffffff);
+  --paper: var(--color-surface-base, oklch(0.975 0.005 240));
+  --hairline: var(--color-surface-border, oklch(0.92 0.006 60));
 
-  --ink-900: #0f172a;
-  --ink-700: #334155;
-  --ink-500: #57657a;
-  --ink-400: #616f85;
+  --ink-900: var(--color-text-primary, oklch(0.2 0.03 260));
+  --ink-700: var(--color-text-secondary, oklch(0.36 0.03 255));
+  --ink-500: var(--color-text-muted, oklch(0.48 0.03 250));
+  --ink-400: var(--color-text-faint, oklch(0.58 0.03 250));
 
-  --shield-sky: #38bdf8;
-  --shield-gold: #f59e0b;
-  --shield-red: #e31b23;
-  --shield-red-deep: #991b1b;
-  --academic-emerald: #10b981;
-  --academic-teal: #0d9488;
-  --academic-purple: #8b5cf6;
-  --academic-purple-deep: #4c1d95;
-  --academic-pink: #ec4899;
-  --academic-bronze: #78350f;
+  --shield-sky: var(--color-shield-sky, oklch(0.75 0.14 235));
+  --shield-gold: var(--color-shield-gold, oklch(0.75 0.16 75));
+  --shield-red: var(--color-shield-red, oklch(0.55 0.22 25));
+  --shield-red-deep: var(--color-shield-red-deep, oklch(0.42 0.2 25));
+  --academic-emerald: var(--color-academic-emerald, oklch(0.7 0.17 155));
+  --academic-teal: var(--color-academic-teal, oklch(0.58 0.12 185));
+  --academic-purple: var(--color-academic-purple, oklch(0.62 0.22 300));
+  --academic-purple-deep: var(--color-academic-purple-deep, oklch(0.35 0.2 300));
+  --academic-pink: var(--color-academic-pink, oklch(0.65 0.22 350));
+  --academic-bronze: var(--color-academic-bronze, oklch(0.38 0.12 60));
 
   --color-primary: var(--ubb-royal-blue);
   --color-primary-active: var(--ubb-royal-blue-active);
@@ -137,9 +191,11 @@ h5,
 h6 {
   margin: 0;
   color: var(--text-body);
+  text-wrap: balance;
 }
 p {
   margin: 0;
+  text-wrap: pretty;
 }
 
 button,
