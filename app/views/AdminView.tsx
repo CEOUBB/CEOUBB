@@ -72,13 +72,19 @@ export function AdminView() {
       });
       if (response.ok) {
         // Dual-store sync: ensure Firestore projection is updated concurrently by the owner
+        let syncSuccess = true;
         try {
           const { updateRemoteUserRole } = await import("../../lib/firebase/profile");
           await updateRemoteUserRole(userId, role);
-        } catch {
-          // Fallback if client Firestore SDK is not loaded or offline
+        } catch (err) {
+          console.error("[AdminView] Error sincronizando proyección de Firestore:", err);
+          syncSuccess = false;
         }
-        setMessage("Rol actualizado.");
+        setMessage(
+          syncSuccess
+            ? "Rol actualizado exitosamente en Turso y Firestore."
+            : "Rol actualizado en Turso, pero ocurrió una advertencia al sincronizar con Firestore."
+        );
         await fetchAccounts(page, searchQuery);
       } else {
         setMessage("No fue posible actualizar el rol.");

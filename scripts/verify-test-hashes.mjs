@@ -72,7 +72,7 @@ async function main() {
       }
     }
 
-    if (mismatches.length > 0 || missing.length > 0) {
+    if (mismatches.length > 0 || missing.length > 0 || untracked.length > 0) {
       console.error("[Test-Locking ERROR] Violacion de inmutabilidad de pruebas detectada:");
       if (mismatches.length > 0) {
         console.error("  Archivos con aserciones modificadas o alteradas:");
@@ -82,11 +82,15 @@ async function main() {
         console.error("  Archivos de prueba eliminados:");
         for (const file of missing) console.error(`    - ${file}`);
       }
+      if (untracked.length > 0) {
+        console.error("  Archivos de prueba nuevos no registrados en el snapshot:");
+        for (const file of untracked) console.error(`    - ${file}`);
+      }
       console.error(
-        "  Directiva de Gobernanza: Esta estrictamente prohibido alterar pruebas existentes durante la fase de ejecucion."
+        "  Directiva de Gobernanza: Esta estrictamente prohibido alterar o anadir pruebas sin registrar su snapshot SHA-256."
       );
       console.error(
-        "  Si la especificacion fue formalmente enmendada, ejecute: node scripts/verify-test-hashes.mjs --generate"
+        "  Si la especificacion fue formalmente aprobada o enmendada, ejecute: node scripts/verify-test-hashes.mjs --generate"
       );
       process.exit(1);
     }
