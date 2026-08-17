@@ -81,6 +81,7 @@ export function PortalHeader({
       }
       if ((event as KeyboardEvent).key !== "Escape") return;
       menu.open = false;
+      menu.querySelector("summary")?.focus();
     };
     window.addEventListener("pointerdown", dismiss);
     window.addEventListener("keydown", dismiss);
@@ -92,63 +93,67 @@ export function PortalHeader({
 
   return (
     <header className="app-header">
-      <div className="app-header-left">
-        <button
-          aria-label={sidebarOpen ? "Ocultar panel lateral" : "Mostrar panel lateral"}
-          aria-expanded={sidebarOpen}
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          type="button"
-        >
-          <Menu animate={sidebarOpen} size={20} />
-        </button>
-        <button className="app-brand" onClick={onHome} type="button">
-          <Image
-            src="/brand/ubb-shield.webp"
-            alt=""
-            aria-hidden="true"
-            width={388}
-            height={594}
-            priority
-          />
-          <span className="brand-copy">
-            <strong>Centro de Estudio UBB</strong>
-            <small>{context}</small>
-          </span>
-        </button>
-      </div>
-      <div className="app-header-right">
-        <button
-          aria-keyshortcuts="Control+k Meta+k"
-          aria-label="Abrir buscador rápido (Ctrl K)"
-          className="search-trigger"
-          onClick={onSearch}
-          type="button"
-        >
-          <MagnifyingGlass size={15} />
-          <span>Buscar…</span>
-          <kbd>{shortcut}</kbd>
-        </button>
+      <button
+        aria-expanded={sidebarOpen}
+        aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"}
+        className="icon-button menu-button"
+        onClick={toggleSidebar}
+        type="button"
+      >
+        <Menu animate={sidebarOpen} aria-hidden="true" />
+      </button>
+      <button
+        aria-label="Centro de Estudio UBB · ir al área personal"
+        className="app-brand"
+        onClick={onHome}
+        type="button"
+      >
+        <Image
+          src="/brand/ubb-shield.webp"
+          alt=""
+          aria-hidden="true"
+          width={388}
+          height={594}
+          priority
+        />
+        <strong>Centro de Estudio UBB</strong>
+      </button>
+      {/* El contexto vive en su propia miga: pegarlo dentro de la marca deja el rótulo sin separación. */}
+      <p className="header-context">
+        <span aria-hidden="true" className="header-context-sep">
+          /
+        </span>
+        <span className="header-context-label">{context}</span>
+      </p>
+      {/* El rótulo se oculta en pantallas angostas: el nombre accesible tiene que sobrevivir a eso. */}
+      <button
+        aria-keyshortcuts="Control+K Meta+K"
+        aria-label="Buscar ramos y vistas"
+        className="header-search"
+        onClick={onSearch}
+        type="button"
+      >
+        <MagnifyingGlass size={17} aria-hidden="true" />
+        <span aria-hidden="true">Buscar ramos y vistas</span>
+        <kbd aria-hidden="true">{shortcut}</kbd>
+      </button>
+      <div className="header-actions">
         <details className="account-menu" ref={account}>
-          <summary aria-label={`Cuenta de ${user.name}`} className="account-trigger">
+          <summary aria-label={`Cuenta de ${user.name}`}>
             <Avatar email={user.email} name={user.name} />
-            <span className="account-name">{firstName(user.name)}</span>
-            <CaretDown className="account-caret" size={13} />
+            <span className="account-copy">
+              <strong>{firstName(user.name)}</strong>
+              <small>{roleLabel(user.role)}</small>
+            </span>
+            <CaretDown className="account-caret" size={13} weight="bold" aria-hidden="true" />
           </summary>
           <div className="account-popover">
-            <div className="account-profile">
-              <Avatar email={user.email} large name={user.name} />
-              <div>
-                <strong>{user.name}</strong>
-                <small>{user.email}</small>
-                <span className="account-role-pill">{roleLabel(user.role)}</span>
-              </div>
-            </div>
-            <div className="account-actions">
-              <button className="account-signout" onClick={onLogout} type="button">
-                <SignOut size={16} /> Cerrar sesión
-              </button>
-            </div>
+            <strong>{user.name}</strong>
+            <span>{user.email}</span>
+            <button onClick={onLogout} type="button">
+              <SignOut size={16} />
+              Cerrar sesión
+            </button>
           </div>
         </details>
       </div>
@@ -175,19 +180,15 @@ export function PortalSidebar({
 }) {
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   return (
-    <aside
-      aria-label="Navegación principal"
-      className="app-sidebar"
-      data-open={open}
-      inert={!open ? true : undefined}
-    >
-      <nav className="side-group">
+    // Con el menú plegado el panel sigue en el DOM para animar: `inert` lo saca del foco y del lector.
+    <aside className="app-sidebar" inert={!open ? true : undefined}>
+      <nav aria-label="Navegación principal" className="side-nav">
         {views.map(({ key, label, Icon }) => {
           const active = screen === key;
           return (
             <button
-              className="side-link"
-              data-active={active}
+              aria-current={active ? "page" : undefined}
+              className={active ? "side-item active" : "side-item"}
               key={key}
               onClick={() => setScreen(key)}
               type="button"
@@ -195,57 +196,53 @@ export function PortalSidebar({
               <span className="side-icon">
                 <Icon size={18} />
               </span>
-              <span>{label}</span>
+              <span className="side-label">{label}</span>
             </button>
           );
         })}
       </nav>
 
-      <div className="side-courses">
-        <div className="side-courses-header">
-          <span className="side-courses-title">Mis ramos</span>
-          <span className="side-courses-period">{courses[0]?.period ?? ""}</span>
-        </div>
-        <div className="side-courses-list">
-          {courses.length === 0 && (
-            <p className="side-empty">
-              Sin ramos en este período. Aparecerán aquí al quedar inscritos.
-            </p>
-          )}
-          {courses.map((course) => {
-            const active = screen === "course" && openCourseId === course.id;
-            return (
-              <button
-                className="side-course-card"
-                data-active={active}
-                key={course.id}
-                onClick={() => openCourse(course)}
-                style={{ "--course-tone": course.tone } as React.CSSProperties}
-                type="button"
-              >
-                <span className="side-course-icon">
-                  <FolderSimple size={18} weight="fill" />
-                </span>
-                <span className="side-course-text">
-                  <span className="side-course-name">{course.name}</span>
-                  <span className="side-course-code">{course.code}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="side-group">
+        <span className="eyebrow">Mis ramos</span>
+        {courses.length === 0 && (
+          <p className="side-empty">
+            Sin ramos en este período. Aparecerán aquí al quedar inscritos.
+          </p>
+        )}
+        {courses.map((course) => {
+          const active = screen === "course" && openCourseId === course.id;
+          return (
+            <button
+              aria-current={active ? "page" : undefined}
+              className={active ? "side-item active" : "side-item"}
+              key={course.id}
+              onClick={() => openCourse(course)}
+              style={{ "--course-tone": course.tone } as React.CSSProperties}
+              type="button"
+            >
+              <span className="side-icon tone">
+                <FolderSimple size={18} weight="fill" />
+              </span>
+              <span className="side-label">
+                <span className="side-name">{course.name}</span>
+                <small>{course.code}</small>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <div className="side-footer">
-        <Link
-          className="side-footer-link"
-          href="/biblioteca/index.html"
-          prefetch={false}
-          title="Biblioteca de Estudio (abre en la misma pestaña)"
-        >
-          <Archive size={16} /> Biblioteca de Estudio
-        </Link>
-      </div>
+      <Link
+        className="side-item side-foot"
+        href="/biblioteca/index.html"
+        prefetch={false}
+        title="Biblioteca de Estudio (abre en la misma pestaña)"
+      >
+        <span className="side-icon">
+          <Archive size={18} />
+        </span>
+        <span className="side-label">Biblioteca de Estudio</span>
+      </Link>
     </aside>
   );
 }
