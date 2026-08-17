@@ -114,7 +114,7 @@ export function AdminView() {
           <input
             type="search"
             className="admin-search-input"
-            placeholder="Buscar por nombre o correo..."
+            placeholder="Buscar por nombre o correo…"
             value={searchQuery}
             onChange={(event) => {
               setSearchQuery(event.target.value);

@@ -6,8 +6,8 @@ export function Bar({ ratio }: { ratio: number }) {
     typeof ratio === "number" && !Number.isNaN(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
   return (
     <m.span
-      animate={{ scaleX: safeRatio }}
-      initial={{ scaleX: 0 }}
+      animate={{ transform: `scaleX(${safeRatio})` }}
+      initial={{ transform: "scaleX(0)" }}
       style={{ transformOrigin: "left" }}
       transition={{ duration: 0.6, ease }}
     />

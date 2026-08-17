@@ -20,9 +20,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
       VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
       VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
@@ -64,37 +61,61 @@ jobs:
         run: pnpm run lint
 
       - name: Pull Vercel Environment Information (Production)
-        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: pnpm exec vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: Pull Vercel Environment Information (Preview)
-        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: pnpm exec vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
 
       - name: Build Project Artifacts (Production)
-        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: pnpm exec vercel build --prod --token=$VERCEL_TOKEN
 
       - name: Build Project Artifacts (Preview)
-        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: pnpm exec vercel build --token=$VERCEL_TOKEN
 
       - name: Deploy Production Artifacts to Vercel
         id: deploy-prod
-        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           PROD_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --prod --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
           echo "url=${PROD_URL}" >> $GITHUB_OUTPUT
 
       - name: Deploy Preview Artifacts to Vercel
         id: deploy-preview
-        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
           echo "url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
 
       - name: Register GitHub Deployment Status
-        if: success() && env.VERCEL_TOKEN != '' && (steps.deploy-prod.outputs.url != '' || steps.deploy-preview.outputs.url != '')
+        if: success() && secrets.VERCEL_TOKEN != '' && (steps.deploy-prod.outputs.url != '' || steps.deploy-preview.outputs.url != '')
         uses: actions/github-script@v7
         env:
           DEPLOY_URL: ${{ steps.deploy-prod.outputs.url || steps.deploy-preview.outputs.url }}
@@ -138,7 +159,7 @@ jobs:
             }
 
       - name: Comment Preview URL on PR
-        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != '' && steps.deploy-preview.outputs.url != ''
+        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != '' && steps.deploy-preview.outputs.url != ''
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy-preview.outputs.url }}

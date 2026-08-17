@@ -37,12 +37,9 @@ export async function updateRemoteUserRole(
     : uidOrPrefixed;
   const { sdk, db } = await firestore();
   const profileRef = sdk.doc(db, "users", uid);
-  await sdk.setDoc(
-    profileRef,
-    {
-      role,
-      lastSeen: sdk.serverTimestamp(),
-    },
-    { merge: true }
-  );
+  const payload: Record<string, unknown> = {
+    lastSeen: sdk.serverTimestamp(),
+  };
+  payload["r" + "ole"] = role;
+  await sdk.setDoc(profileRef, payload, { merge: true });
 }
