@@ -26,3 +26,23 @@ export async function syncProfile(): Promise<FirebaseUser> {
   }
   return user;
 }
+
+// Implements: REQ-ACCESS-04
+export async function updateRemoteUserRole(
+  uidOrPrefixed: string,
+  role: "teacher" | "student"
+): Promise<void> {
+  const uid = uidOrPrefixed.startsWith("firebase:")
+    ? uidOrPrefixed.replace("firebase:", "")
+    : uidOrPrefixed;
+  const { sdk, db } = await firestore();
+  const profileRef = sdk.doc(db, "users", uid);
+  await sdk.setDoc(
+    profileRef,
+    {
+      role,
+      lastSeen: sdk.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}

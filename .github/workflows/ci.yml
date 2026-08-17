@@ -43,14 +43,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
+      - name: Fast-feedback security invariants & rules check
+        run: pnpm run verify:invariants
+
+      - name: Fast unit tests & SHA-256 test-locking verification
+        run: pnpm run verify:fast
+
+      - name: Check code formatting
+        run: pnpm run format:check
+
       - name: Check Firebase Functions syntax
         run: pnpm run check:functions
 
       - name: Check Firebase Security Rules
         run: pnpm run check:rules
-
-      - name: Fast unit test suite
-        run: pnpm run test:unit
 
       - name: TypeScript typecheck
         run: pnpm run typecheck

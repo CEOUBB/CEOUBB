@@ -1,0 +1,22 @@
+---
+description: "Standards and constraints for Turso libSQL database and Drizzle ORM"
+globs: "db/**,drizzle/**,app/api/**"
+alwaysApply: false
+---
+
+# Governance Rule: Relational Database (Turso/libSQL & Drizzle)
+
+This rule is automatically applied when creating or modifying schemas, migrations, or database queries on the System of Record (SoR).
+
+## 1. Core Principles & Persistence Contracts
+1. **System of Record (SoR):** Turso/libSQL manages the relational academic structure (`facultades`, `carreras`, `asignaturas`, `secciones`, `inscripciones`, `usuarios`).
+2. **ACID Transactions:** Any operation involving multiple tables or dependent foreign key insertions MUST be wrapped in `db.transaction(async (tx) => { ... })`.
+3. **Mandatory Pagination & Query Bounds:**
+   - Writing `SELECT` queries without an explicit `.limit(N)` clause is strictly PROHIBITED.
+   - The default limit for list endpoints is 50, with an absolute maximum of 100 records.
+   - Tables with continuous growth must maintain composite indexes on foreign keys (`user_id`, `section_id`, `created_at`).
+
+## 2. Strict Negative Constraints ("Do NOTs")
+- DO NOT perform in-memory filtering or slicing (`Array.filter()`, `Array.slice()`) on full table dumps.
+- DO NOT use raw string-concatenated SQL queries (SQL injection vulnerability). Always use Drizzle's typed `sql` tagged template.
+- DO NOT apply destructive schema migrations (`DROP TABLE`, `DROP COLUMN`) without a formal rollback plan and staging verification.

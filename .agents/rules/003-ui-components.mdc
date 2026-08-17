@@ -1,0 +1,28 @@
+---
+description: "User interface standards, design tokens, and anti-slop directives"
+globs: "app/**/*.tsx,components/**/*.tsx,app/globals.css"
+alwaysApply: false
+---
+
+# Governance Rule: UI Components & Design System (DESIGN.md)
+
+This rule is automatically applied when creating or editing UI components, pages, or global styling.
+
+## 1. Design Tokens & Canvas
+- **Main Canvas:** Use `--canvas-soft` (`#f4f6f9` / `oklch(0.97 0.01 240)`). A calm, paper-soft background designed for extended reading. Do not use pure harsh black or stark clinical white backgrounds.
+- **Single Structural Accent:** UBB Royal Blue (`--brand-blue` / `#0055b8` / `oklch(0.48 0.18 255)`), reserved **strictly** for primary action buttons (CTAs), active navigation links, and focus rings.
+- **Hero Band:** UBB Midnight Navy (`--brand-navy` / `#002b5c` / `oklch(0.24 0.09 255)`), reserved for hero sections and dark classroom headers.
+- **Academic Palette:** Use heraldic accent colors (Gold `#f59e0b`, Red `#e31b23`, Sky `#38bdf8`, Emerald `#10b981`, Purple `#8b5cf6`) solely to categorize subjects, evaluation statuses, and tags. NEVER use category accents to fill primary CTAs.
+
+## 2. Typography & Micro-Interactions
+- **Display Headlines & Covers:** `Source Serif 4` with negative display tracking (`-0.02em`).
+- **Operational UI:** `Inter` for buttons, navigation, data tables, forms, and metadata.
+- **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums`.
+- **Motion Physics:** Use `motion/react` with spring physics (`stiffness: 300, damping: 30`). Prohibited use of slow linear CSS transitions.
+- **Accessibility:** Wrap motion effects in `@media (prefers-reduced-motion: reduce)`.
+- **Iconography:** Use `@phosphor-icons/react` exclusively. Do not hand-roll raw inline SVG icons.
+
+## 3. Anti-Slop Directives ("Do NOTs")
+- DO NOT use generic purple-to-indigo gradients on dark backgrounds (`from-purple-600 to-indigo-600`).
+- DO NOT use unstyled, symmetrical bento box grids without clear information hierarchy.
+- DO NOT add glowing borders, pulsating neon accents, or noise mesh overlays.

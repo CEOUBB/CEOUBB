@@ -466,3 +466,28 @@ test("REQ-PERF-05: AdminView and portal-utils client contract verification", asy
   assert.match(adminViewSource, /Anterior/);
   assert.match(adminViewSource, /Siguiente/);
 });
+
+test("REQ-ACCESS-04: Dual-store user role mutation contract (Turso + Firestore projection)", async () => {
+  const profileSource = await readFile(
+    new URL("../lib/firebase/profile.ts", import.meta.url),
+    "utf8"
+  );
+  assert.match(profileSource, /Implements:\s*REQ-ACCESS-04/);
+  assert.match(profileSource, /export async function updateRemoteUserRole/);
+  assert.match(profileSource, /profileRef/);
+  assert.match(profileSource, /merge:\s*true/);
+
+  const adminViewSource = await readFile(
+    new URL("../app/views/AdminView.tsx", import.meta.url),
+    "utf8"
+  );
+  assert.match(adminViewSource, /updateRemoteUserRole/);
+  assert.match(adminViewSource, /Dual-store sync/);
+
+  const rulesSource = await readFile(
+    new URL("../firebase/firestore.rules", import.meta.url),
+    "utf8"
+  );
+  assert.match(rulesSource, /isOwner\(\)\s*\|\|\s*signedIn\(\)/);
+  assert.match(rulesSource, /match \/users\/\{userId\}/);
+});
