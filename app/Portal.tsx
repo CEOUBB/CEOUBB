@@ -28,6 +28,7 @@ import {
   calendarEntries,
   forgetPhoto,
   loadCurrentSession,
+  loadEnrolledSectionIds,
   rememberPhoto,
   type User,
 } from "../lib/portal-utils";
@@ -255,6 +256,7 @@ export function Portal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
+  const [sectionIds, setSectionIds] = useState<string[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
 
   const mobile = useIsMobileApp();
@@ -321,15 +323,27 @@ export function Portal() {
 
   const courses = useMemo(() => COURSES, []);
 
+  // Implements: REQ-PERF-01
   useEffect(() => {
     if (!user) return;
-    return watchCourseActivity(setActivity, () => {});
+    let alive = true;
+    loadEnrolledSectionIds().then((ids) => {
+      if (alive) setSectionIds(ids);
+    });
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    return watchGradebooks(setGradebooks, () => {});
-  }, [user]);
+    return watchCourseActivity(sectionIds, setActivity, () => {});
+  }, [user, sectionIds]);
+
+  useEffect(() => {
+    if (!user) return;
+    return watchGradebooks(sectionIds, setGradebooks, () => {});
+  }, [user, sectionIds]);
 
   useEffect(() => {
     if (!user) return;

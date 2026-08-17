@@ -25,16 +25,20 @@ Role derivation is strictly deterministic and governed exclusively by institutio
 
 - `@alumnos.ubiobio.cl` $\rightarrow$ **Student**
 - `@ubiobio.cl` $\rightarrow$ **Teacher**
-- `elpapijuaco325@gmail.com` $\rightarrow$ **Owner / Superuser**
-- `felipearce.2004@gmail.com` $\rightarrow$ **Collaborator / Superuser**
 - _Any other domain MUST be immediately rejected with HTTP 403 / Domain Error._
+
+**No hardcoded personal accounts (SPEC-010 / REQ-SEC-01):** the **Owner / Superuser** rank is NOT derived from an email address. It is an administrative state stored in Turso (`users.role = 'owner'`) and projected to Firestore (`users/{uid}.role`); both rule files read it through `role()`. Introducing a personal address into source code or security rules is a governance violation, not a shortcut.
 
 **Single Source of Truth (SSOT):** `lib/access-policy.ts` -> `roleForEmail()`. Reimplementing regex parsing or domain checks in UI components, API routes, or native code is strictly prohibited. This policy is synchronized across four mirrors:
 
 1. `lib/access-policy.ts`
 2. `firebase/firestore.rules`
 3. `firebase/storage.rules`
-4. `android/app/src/main/res/values/firebase.xml` (owner accounts only)
+4. `android/app/src/main/res/values/firebase.xml` (institutional Firebase identifiers only)
+
+### 2.1.1 Section Isolation (SPEC-010 / REQ-SEC-02)
+
+Access to course data is granted **if and only if** an active enrollment projection exists at `enrollments/{uid}/sections/{seccionId}`. Firestore and Storage rules enforce it with `exists()`; the projection is written server-side by `lib/services/enrollment-projection.ts` and is read-only for every client. Collection-group wildcard reads (`match /{path=**}/...`) are prohibited: they reopen every section of the university.
 
 ### 2.2 Data Partitioning & Persistence
 

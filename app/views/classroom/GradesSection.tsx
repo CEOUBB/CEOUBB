@@ -1,13 +1,19 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import { CheckCircle, Paperclip } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
   ClassroomStudent,
+  MAX_SUBMISSION_BYTES,
+  StudentSubmission,
   saveGradebook,
   saveSimulation,
   saveStudentScores,
+  uploadStudentSubmission,
+  watchOwnSubmissions,
 } from "../../../lib/firebase-classroom-client";
 import {
   DEFAULT_EXEMPTION_GRADE,
@@ -22,7 +28,7 @@ import {
   summarize,
 } from "../../../lib/grades";
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
-import { formatDay } from "../../../lib/portal-utils";
+import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
 
@@ -77,6 +83,8 @@ function StudentGrades({
   const [typed, setTyped] = useState<Record<string, string> | null>(null);
   const mobile = useIsMobileApp();
   const [detail, setDetail] = useState<GradeItem | null>(null);
+  const submissions = useOwnSubmissions(course.id);
+  const upload = useSubmissionUpload(course.id, note);
   const draft =
     typed ??
     Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
@@ -159,6 +167,7 @@ function StudentGrades({
                 <small>
                   {item.weight}% ·{" "}
                   {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
+                  {submissions.has(item.id) ? " · entregado" : ""}
                 </small>
               </span>
             </button>
@@ -218,8 +227,19 @@ function StudentGrades({
                 : "Simulación"}
               {simulationField(detail)}
             </label>
+            {/* Implements: REQ-EVAL-01 */}
+            <div className="sheet-field">
+              Entrega
+              <SubmissionSlot
+                item={detail}
+                onPick={upload.pick}
+                percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
+                receipt={submissions.get(detail.id)}
+              />
+            </div>
           </MobileSheet>
         )}
+        {upload.field}
       </section>
     );
   }
@@ -232,6 +252,7 @@ function StudentGrades({
           <span>Pondera</span>
           <span>Nota oficial</span>
           <span>Simulación</span>
+          <span>Entrega</span>
         </div>
         {gradebook.map((item) => (
           <div className="grades-row" key={item.id}>
@@ -244,6 +265,15 @@ function StudentGrades({
               {isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}
             </span>
             <span>{simulationField(item)}</span>
+            {/* Implements: REQ-EVAL-01 */}
+            <span className="grades-submission">
+              <SubmissionSlot
+                item={item}
+                onPick={upload.pick}
+                percent={upload.state?.evalId === item.id ? upload.state.percent : null}
+                receipt={submissions.get(item.id)}
+              />
+            </span>
           </div>
         ))}
       </div>
@@ -266,7 +296,8 @@ function StudentGrades({
         </dl>
         <p className="grades-note">
           La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-          editar aquí.
+          editar aquí. Cada entrega admite hasta {formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el
+          equipo docente del ramo.
         </p>
         {status.text && (
           <p className={`tool-status ${status.tone}`} role="status">
@@ -274,7 +305,159 @@ function StudentGrades({
           </p>
         )}
       </aside>
+      {upload.field}
     </section>
+  );
+}
+
+/*
+  Buzón de entregas del estudiante. Vive dentro de la fila de la evaluación
+  porque una entrega no es una pantalla aparte: es el estado de esa evaluación.
+  La celda muestra sólo un estado a la vez —adjuntar, enviando o comprobante—
+  para que la tabla siga leyéndose de un vistazo.
+*/
+// Implements: REQ-EVAL-01
+function useOwnSubmissions(courseId: string) {
+  /*
+    El identificador del ramo viaja junto a los comprobantes: al cambiar de aula
+    la lista anterior deja de coincidir y se descarta al derivar, sin reiniciar
+    estado durante el render.
+  */
+  const [state, setState] = useState<{ courseId: string; items: StudentSubmission[] }>({
+    courseId,
+    items: [],
+  });
+  useEffect(
+    () =>
+      watchOwnSubmissions(
+        courseId,
+        (items) => setState({ courseId, items }),
+        () => setState({ courseId, items: [] })
+      ),
+    [courseId]
+  );
+  return useMemo(() => {
+    const rows = state.courseId === courseId ? state.items : [];
+    return new Map(rows.map((item) => [item.evalId, item]));
+  }, [courseId, state]);
+}
+
+// Implements: REQ-EVAL-01
+function useSubmissionUpload(courseId: string, note: (text: string, tone?: Note["tone"]) => void) {
+  const input = useRef<HTMLInputElement | null>(null);
+  const pending = useRef("");
+  const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
+
+  const pick = useCallback((evalId: string) => {
+    pending.current = evalId;
+    input.current?.click();
+  }, []);
+
+  const send = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      const evalId = pending.current;
+      event.target.value = "";
+      pending.current = "";
+      if (!file || !evalId) return;
+      if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES) {
+        note(`La entrega debe pesar entre 1 byte y ${formatBytes(MAX_SUBMISSION_BYTES)}.`, "bad");
+        return;
+      }
+      setState({ evalId, percent: 0 });
+      try {
+        await uploadStudentSubmission(courseId, evalId, file, (percent) =>
+          setState({ evalId, percent })
+        );
+        note("Entrega recibida. El comprobante queda en la evaluación.", "ok");
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No se pudo enviar la entrega.", "bad");
+      } finally {
+        setState(null);
+      }
+    },
+    [courseId, note]
+  );
+
+  const field = (
+    <input
+      aria-hidden="true"
+      className="sr-only"
+      onChange={send}
+      ref={input}
+      tabIndex={-1}
+      type="file"
+    />
+  );
+
+  return { field, pick, state };
+}
+
+// Implements: REQ-EVAL-01
+function SubmissionSlot({
+  item,
+  receipt,
+  percent,
+  onPick,
+}: {
+  item: GradeItem;
+  receipt: StudentSubmission | undefined;
+  percent: number | null;
+  onPick: (evalId: string) => void;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (percent !== null) {
+    return (
+      <span className="grades-upload">
+        <span className="grades-upload-track">
+          <span
+            className="grades-upload-fill"
+            style={{
+              transform: `scaleX(${percent / 100})`,
+              transition: shouldReduceMotion ? "none" : undefined,
+            }}
+          />
+        </span>
+        <small className="num" role="status">
+          Enviando {percent}%
+        </small>
+      </span>
+    );
+  }
+
+  if (receipt) {
+    return (
+      <span className="grades-receipt">
+        <b title={receipt.fileName}>
+          <CheckCircle aria-hidden="true" size={14} weight="fill" />
+          {receipt.fileName}
+        </b>
+        <small className="num">
+          {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
+        </small>
+        <button
+          aria-label={`Reemplazar la entrega de ${item.name}`}
+          className="grades-attach"
+          onClick={() => onPick(item.id)}
+          type="button"
+        >
+          Reemplazar
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      aria-label={`Adjuntar la entrega de ${item.name}`}
+      className="grades-attach"
+      onClick={() => onPick(item.id)}
+      type="button"
+    >
+      <Paperclip aria-hidden="true" size={14} />
+      Adjuntar
+    </button>
   );
 }
 

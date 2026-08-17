@@ -12,7 +12,7 @@ This rule is automatically applied when creating, refactoring, or reviewing Next
 1. **Server-Side Session Verification:** Any protected API route MUST extract and verify the user session using `getSessionUser(request)` from `lib/auth.ts`.
 2. **Deterministic Role Guards:** Never trust role claims sent in client JSON payloads. Check `user.role` against the verified session record.
 3. **Institutional Boundary Enforcement:** Reject unauthenticated calls with HTTP 401 and unauthorized roles with HTTP 403.
-4. **Developer Account Protection:** Developer superuser accounts (`felipearce.2004@gmail.com`, `elpapijuaco325@gmail.com`) cannot be modified or downgraded by regular administrative mutations.
+4. **Owner Rank Protection:** any account whose stored record is `users.role === 'owner'` cannot be modified or downgraded by regular administrative mutations. The guard reads the rank from the database, never from an email allowlist (SPEC-010 / REQ-SEC-01).
 
 ## 2. Request Parsing, Schema Validation & Responses
 1. **Strict Payload Validation:** Validate incoming JSON structures using Zod schemas or explicit boundary checks before executing mutations.

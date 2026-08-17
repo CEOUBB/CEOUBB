@@ -198,3 +198,84 @@ test("services/github: helpers manejan errores de red o llamadas sin fallar ruid
   const latestRun = await getLatestWorkflowRun("main");
   assert.equal(typeof latestRun === "object", true);
 });
+
+/*
+  Proyección de matrículas Turso -> Firestore (REQ-ACAD-02). La escritura real
+  necesita una cuenta de servicio, así que aquí se fija lo determinista: la ruta
+  del marcador, la validación de entrada y el particionado en lotes.
+*/
+
+// Implements: REQ-ACAD-02
+test("the enrollment marker lands at /enrollments/{uid}/sections/{seccionId}", async () => {
+  const { enrollmentDocumentPath } = await import("../lib/services/enrollment-projection.ts");
+  assert.equal(
+    enrollmentDocumentPath("usr_soto", "440299-2026-2-1", "centro-de-estudio-ubb"),
+    "projects/centro-de-estudio-ubb/databases/(default)/documents/enrollments/usr_soto/sections/440299-2026-2-1"
+  );
+});
+
+// Implements: REQ-ACAD-02
+test("an active enrollment writes the marker and any other state removes it", async () => {
+  const { toFirestoreWrite } = await import("../lib/services/enrollment-projection.ts");
+
+  const active = toFirestoreWrite(
+    {
+      seccionId: "440299-2026-2-1",
+      userId: "usr_soto",
+      role: "student",
+      status: "activa",
+      updatedAt: "2026-08-17T12:00:00.000Z",
+    },
+    "centro-de-estudio-ubb"
+  );
+  assert.ok("update" in active);
+  assert.deepEqual(active.update.fields, {
+    seccionId: { stringValue: "440299-2026-2-1" },
+    role: { stringValue: "student" },
+    status: { stringValue: "activa" },
+    updatedAt: { stringValue: "2026-08-17T12:00:00.000Z" },
+  });
+  assert.deepEqual(active.updateMask.fieldPaths, ["seccionId", "role", "status", "updatedAt"]);
+
+  for (const status of ["retirada", "congelada"] as const) {
+    const dropped = toFirestoreWrite(
+      { seccionId: "440299-2026-2-1", userId: "usr_soto", role: "student", status },
+      "centro-de-estudio-ubb"
+    );
+    assert.ok("delete" in dropped, `a ${status} enrollment must delete its marker`);
+  }
+});
+
+// Implements: REQ-ACAD-02
+test("a malformed enrollment never reaches Firestore", async () => {
+  const { parseEnrollmentProjection } = await import("../lib/services/enrollment-projection.ts");
+  const valid = { seccionId: "s-1", userId: "u-1", role: "student", status: "activa" };
+
+  assert.deepEqual(parseEnrollmentProjection(valid).seccionId, "s-1");
+  for (const broken of [
+    {},
+    { ...valid, seccionId: "" },
+    { ...valid, seccionId: "con/barra" },
+    { ...valid, userId: "con espacio" },
+    { ...valid, role: "owner" },
+    { ...valid, status: "vigente" },
+  ]) {
+    assert.throws(() => parseEnrollmentProjection(broken), /matrícula/);
+  }
+});
+
+// Implements: REQ-ACAD-02, REQ-PERF-02
+test("bulk enrollment projections are partitioned below the Firestore commit limit", async () => {
+  const { chunkWrites, MAX_WRITES_PER_COMMIT } =
+    await import("../lib/services/enrollment-projection.ts");
+  assert.equal(MAX_WRITES_PER_COMMIT, 400);
+
+  const rows = Array.from({ length: 950 }, (_, index) => index);
+  const batches = chunkWrites(rows);
+  assert.deepEqual(
+    batches.map((batch) => batch.length),
+    [400, 400, 150]
+  );
+  assert.deepEqual(batches.flat(), rows);
+  assert.deepEqual(chunkWrites([]), []);
+});

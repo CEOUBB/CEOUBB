@@ -10,10 +10,6 @@ service firebase.storage {
       return signedIn() ? request.auth.token.email.lower() : '';
     }
 
-    function isOwner() {
-      return email() == 'elpapijuaco325@gmail.com' || email() == 'felipearce.2004@gmail.com';
-    }
-
     function isStudent() {
       return email().matches('^[^@]+@alumnos\\.ubiobio\\.cl$');
     }
@@ -22,22 +18,56 @@ service firebase.storage {
       return email().matches('^[^@]+@ubiobio\\.cl$');
     }
 
+    // Implements: REQ-SEC-01 — mismo criterio que Firestore: el rango sale del
+    // documento del usuario, nunca de correos personales escritos en la regla.
+    function role() {
+      return signedIn() && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isOwner() {
+      return role() == 'owner';
+    }
+
     function isTeacher() {
-      return isOwner() || isTeacherEmail();
+      return isOwner() || isTeacherEmail() && role() == 'teacher';
     }
 
     function isMember() {
-      return isOwner() || isStudent() || isTeacherEmail();
+      return isOwner() || isStudent() && role() == 'student' || isTeacherEmail() && role() == 'teacher';
     }
 
     function validCourse(courseId) {
-      return courseId.matches('^[a-z][a-z0-9-]{1,30}$');
+      return courseId.matches('^[a-z0-9][a-z0-9-]{1,60}$');
     }
 
+    // Implements: REQ-SEC-02
+    function isEnrolled(seccionId) {
+      return signedIn() && firestore.exists(/databases/(default)/documents/enrollments/$(request.auth.uid)/sections/$(seccionId));
+    }
+
+    function teachesSection(seccionId) {
+      return isOwner() || isTeacher() && isEnrolled(seccionId);
+    }
+
+    // Material del curso publicado por el equipo docente.
     match /courses/{courseId}/{userId}/{fileName} {
-      allow read: if isMember();
-      allow create, update: if isTeacher() && validCourse(courseId) && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
-      allow delete: if isOwner() || isTeacher() && request.auth.uid == userId;
+      allow read: if isOwner() || isMember() && isEnrolled(courseId);
+      allow create, update: if teachesSection(courseId) && validCourse(courseId) && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
+      allow delete: if isOwner() || teachesSection(courseId) && request.auth.uid == userId;
+    }
+
+    /*
+      Buzón de entregas. Cada estudiante matriculado escribe únicamente bajo su
+      propio UID y el docente de la sección puede leer para corregir. 25 MB es
+      el techo por archivo: un informe con imágenes cabe, un video no.
+    */
+    // Implements: REQ-EVAL-01
+    match /courses/{courseId}/submissions/{evalId}/{userId}/{fileName} {
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024;
+      allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
     }
   }
 }

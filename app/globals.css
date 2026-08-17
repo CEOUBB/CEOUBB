@@ -4217,7 +4217,7 @@ a.resource-card:focus-visible .resource-icon {
 .grades-head,
 .grades-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 90px 110px 110px;
+  grid-template-columns: minmax(0, 2fr) 84px 104px 104px minmax(148px, 176px);
   gap: var(--space-md);
   align-items: center;
   padding: var(--space-sm) var(--space-md);
@@ -4279,6 +4279,106 @@ a.resource-card:focus-visible .resource-icon {
   background: var(--canvas-soft);
   color: var(--text-faint);
   cursor: not-allowed;
+}
+
+/* Aula · entregas del estudiante (REQ-EVAL-01) */
+
+.grades-submission {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.grades-attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: start;
+  min-height: 32px;
+  padding: 4px 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.grades-attach:hover {
+  background: var(--canvas-soft);
+  border-color: var(--color-primary);
+}
+.grades-attach:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.grades-receipt {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  align-items: flex-start;
+}
+.grades-receipt b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grades-receipt b svg {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900));
+}
+.grades-receipt small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.grades-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grades-upload-track {
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  overflow: hidden;
+}
+.grades-upload-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transform-origin: left center;
+  transition: transform var(--transition-base);
+}
+.grades-upload small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grades-upload-fill {
+    transition: none;
+  }
+  .grades-attach {
+    transition: none;
+  }
 }
 
 .grades-summary {
@@ -4784,9 +4884,13 @@ a.resource-card:focus-visible .resource-icon {
   .grades-row {
     grid-template-columns: minmax(0, 1fr) 70px 70px;
   }
-  .grades-head span:last-child,
-  .grades-row span:last-child {
+  /* Simulación y entrega no caben junto a la ponderación: bajan a línea propia. */
+  .grades-head span:nth-child(n + 4),
+  .grades-row span:nth-child(n + 4) {
     grid-column: 1 / -1;
+  }
+  .grades-head span:nth-child(n + 4) {
+    display: none;
   }
   .grades-editor-row {
     grid-template-columns: minmax(0, 1fr) 1fr;

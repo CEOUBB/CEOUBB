@@ -242,6 +242,24 @@ export async function loadCurrentSession(): Promise<User | null> {
   }
 }
 
+/*
+  Identificadores de sección con matrícula activa. Si la consulta falla el
+  portal se queda sin escuchas en vez de caer al barrido global: es preferible
+  una bandeja vacía a leer secciones ajenas.
+*/
+// Implements: REQ-PERF-01
+export async function loadEnrolledSectionIds(): Promise<string[]> {
+  try {
+    const response = await fetch("/api/enrollments/me", { cache: "no-store" });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { sectionIds?: unknown };
+    if (!Array.isArray(data.sectionIds)) return [];
+    return data.sectionIds.filter((value): value is string => typeof value === "string");
+  } catch {
+    return [];
+  }
+}
+
 export type AdminUsersResponse = {
   users: User[];
   total: number;
