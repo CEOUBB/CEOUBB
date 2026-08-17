@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import dynamic from "next/dynamic";
-import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from "motion/react";
+import Image from "next/image";
+import Link from "next/link";
+import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import { Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
   useExternalLinks,
@@ -19,89 +20,222 @@ import {
   watchCourseActivity,
   watchGradebooks,
 } from "../lib/firebase-classroom-client";
-import { CoursesDashboard } from "./views/CoursesDashboard";
-import { Screen as PortalScreen } from "./portal-ui";
-import { AccessScreen, LoadingScreen } from "./portal-screens";
-import { PortalHeader, PortalSidebar } from "./portal-shell";
+import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
-import { navItems, type NavAction, type NavState, type Screen } from "./portal-types";
-import { calendarEntries, forgetPhoto, loadCurrentSession, type User } from "../lib/portal-utils";
+import {
+  SEEN_KEY,
+  navItems,
+  navReducer,
+  readSeen,
+  type Screen,
+} from "./portal-types";
+import {
+  calendarEntries,
+  forgetPhoto,
+  loadCurrentSession,
+  rememberPhoto,
+  type User,
+} from "../lib/portal-utils";
 import { CommandPalette, type PaletteItem } from "./command-palette";
 
-const ViewSkeleton = ({ label }: { label: string }) => (
-  <div className="boot-head" aria-busy="true" aria-label={label} role="status">
-    <span className="boot-title sk" />
-    <span className="boot-subtitle sk" />
-    <div className="boot-strip sk" style={{ marginTop: "1rem" }} />
-  </div>
-);
+const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
+const SKELETON_NAV = [0, 1, 2];
+const SKELETON_SIDE_COURSES = [0, 1, 2, 3, 4];
 
-// Implements: REQ-PERF-06
-const CalendarView = dynamic(
-  () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
-  {
-    ssr: false,
-    loading: () => <ViewSkeleton label="Cargando calendario…" />,
-  }
-);
-
-const ResourcesView = dynamic(
-  () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
-  {
-    ssr: false,
-    loading: () => <ViewSkeleton label="Cargando recursos…" />,
-  }
-);
-
-const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
-  ssr: false,
-  loading: () => <ViewSkeleton label="Cargando administración…" />,
-});
-
-const Classroom = dynamic(() => import("./Classroom"), {
-  ssr: false,
-  loading: () => <ViewSkeleton label="Abriendo el aula…" />,
-});
-
-const SEEN_KEY = "ceoubb:seen";
-
-function navReducer(state: NavState, action: NavAction): NavState {
-  switch (action.type) {
-    case "SET_SCREEN":
-      return { ...state, screen: action.screen };
-    case "ENTER_COURSE":
-      return {
-        ...state,
-        screen: "course",
-        course: action.course,
-        preview: null,
-        coursesSheet: false,
-      };
-    case "SET_PREVIEW":
-      return { ...state, preview: action.preview };
-    case "SET_COURSES_SHEET":
-      return { ...state, coursesSheet: action.open };
-    case "LOGOUT":
-      return {
-        ...state,
-        screen: "courses",
-        course: null,
-        preview: null,
-        coursesSheet: false,
-      };
-    default:
-      return state;
-  }
+export function LoadingScreen() {
+  return (
+    <div aria-busy="true" className="boot-shell">
+      <p className="sr-only" role="status">
+        Abriendo Centro de Estudio UBB…
+      </p>
+      <header className="boot-header">
+        <span className="sk sk-round boot-menu" />
+        <Image
+          src="/brand/ubb-shield.webp"
+          alt=""
+          aria-hidden="true"
+          width={388}
+          height={594}
+          priority
+        />
+        <strong>Centro de Estudio UBB</strong>
+        <span className="sk boot-search" style={{ "--sk-delay": "80ms" } as React.CSSProperties} />
+        <span
+          className="sk sk-round boot-avatar"
+          style={{ "--sk-delay": "120ms" } as React.CSSProperties}
+        />
+      </header>
+      <aside className="boot-side">
+        {SKELETON_NAV.map((row) => (
+          <span
+            className="sk boot-row"
+            key={`nav-${row}`}
+            style={{ "--sk-delay": `${row * 45}ms` } as React.CSSProperties}
+          />
+        ))}
+        <span className="sk boot-legend" style={{ "--sk-delay": "180ms" } as React.CSSProperties} />
+        {SKELETON_SIDE_COURSES.map((row) => (
+          <span
+            className="sk boot-row"
+            key={`course-${row}`}
+            style={{ "--sk-delay": `${220 + row * 45}ms` } as React.CSSProperties}
+          />
+        ))}
+      </aside>
+      <main className="boot-main">
+        <div className="boot-head">
+          <span className="sk boot-title" style={{ "--sk-delay": "60ms" } as React.CSSProperties} />
+          <span
+            className="sk boot-subtitle"
+            style={{ "--sk-delay": "110ms" } as React.CSSProperties}
+          />
+        </div>
+        <span className="sk boot-strip" style={{ "--sk-delay": "160ms" } as React.CSSProperties} />
+        <div className="boot-grid">
+          {SKELETON_COURSES.map((card) => (
+            <article
+              className="boot-card"
+              key={card}
+              style={{ "--sk-delay": `${220 + card * 70}ms` } as React.CSSProperties}
+            >
+              <span className="sk boot-cover" />
+              <span className="sk boot-line wide" />
+              <span className="sk boot-line" />
+              <span className="sk boot-line short" />
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 }
 
-function readSeen(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "{}");
-    return saved && typeof saved === "object" ? (saved as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
+export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+
+  const finishGoogleAccess = useCallback(
+    async (idToken: string) => {
+      const response = await fetch("/api/auth/firebase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!response.ok) {
+        let errorMessage = "No fue posible continuar.";
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) errorMessage = errorData.error;
+        } catch {
+          // Non-JSON response
+        }
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
+      onSignedIn(data.user);
+    },
+    [onSignedIn]
+  );
+
+  const googleAccess = async () => {
+    setError("");
+    setWorking(true);
+    try {
+      const idToken = await signInWithInstitutionalGoogle();
+      await finishGoogleAccess(idToken);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "No fue posible continuar.";
+      setError(message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <main className="access-page">
+      <section className="access-brand">
+        <div className="access-brand-lockup">
+          <Image
+            src="/brand/ubb-shield.webp"
+            alt="Escudo de la Universidad del Bío-Bío"
+            width={388}
+            height={594}
+            priority
+          />
+          <h1>
+            Centro de <strong>Estudio UBB</strong>
+          </h1>
+        </div>
+      </section>
+      <section className="access-panel">
+        <div className="access-panel-inner">
+          <div className="login-card" id="inicio">
+            <span className="login-rule" aria-hidden="true" />
+            <h2>Ingresa con tu correo institucional</h2>
+            <button
+              className="google-button"
+              disabled={working}
+              onClick={googleAccess}
+              type="button"
+            >
+              {working ? (
+                <span className="google-spinner" aria-hidden="true" />
+              ) : (
+                <Image
+                  src="/brand/google-g.webp"
+                  alt=""
+                  aria-hidden="true"
+                  width={256}
+                  height={256}
+                />
+              )}
+              {working ? "Verificando cuenta…" : "Continuar con Google"}
+            </button>
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
+            <p className="institution-note">
+              <strong>Acceso exclusivo UBB.</strong> Usa tu cuenta @alumnos.ubiobio.cl o
+              @ubiobio.cl. Cualquier otra universidad o correo personal será rechazado.
+            </p>
+          </div>
+          <div className="store-block">
+            <div
+              className="store-badges"
+              role="group"
+              aria-label="Aplicaciones móviles próximamente disponibles"
+            >
+              <div className="store-badge">
+                <Image
+                  src="/brand/app-store-badge-es.webp"
+                  alt="App Store"
+                  width={3840}
+                  height={1284}
+                />
+              </div>
+              <div className="store-badge">
+                <Image
+                  src="/brand/google-play-badge-es.webp"
+                  alt="Google Play"
+                  width={2214}
+                  height={675}
+                />
+              </div>
+            </div>
+          </div>
+
+          <p className="legal-note">
+            Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
+            Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link>
+          </p>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 export function Portal() {
@@ -134,6 +268,11 @@ export function Portal() {
   useExternalLinks();
 
   const handleHardwareBack = useCallback(() => {
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog instanceof HTMLDialogElement) {
+      dialog.close();
+      return true;
+    }
     if (coursesSheet) {
       setCoursesSheet(false);
       return true;
@@ -341,44 +480,18 @@ export function Portal() {
             onClick={() => setSidebarOpen(false)}
             type="button"
           />
-          <main className="app-main">
-            <AnimatePresence initial={false} mode="wait">
-              {screen === "course" && openedCourse ? (
-                <PortalScreen key={`course-${openedCourse.id}`}>
-                  <Classroom
-                    course={openedCourse}
-                    user={user}
-                    goBack={() => setScreen("courses")}
-                  />
-                </PortalScreen>
-              ) : (
-                <PortalScreen key={screen}>
-                  <div className="portal-main">
-                    {screen === "courses" && (
-                      <CoursesDashboard
-                        user={user}
-                        courses={courses}
-                        activity={activity}
-                        seen={seen}
-                        entries={entries}
-                        openCourse={openCourse}
-                      />
-                    )}
-                    {screen === "calendar" && (
-                      <CalendarView
-                        courses={courses}
-                        gradebooks={gradebooks}
-                        activity={activity}
-                        openCourse={openCourse}
-                      />
-                    )}
-                    {screen === "resources" && <ResourcesView />}
-                    {screen === "admin" && user.role === "owner" && <AdminView />}
-                  </div>
-                </PortalScreen>
-              )}
-            </AnimatePresence>
-          </main>
+          <PortalMainView
+            activity={activity}
+            courses={courses}
+            entries={entries}
+            gradebooks={gradebooks}
+            openCourse={openCourse}
+            openedCourse={openedCourse}
+            screen={screen}
+            seen={seen}
+            setScreen={setScreen}
+            user={user}
+          />
           {mobile && <MobileBottomNav items={mobileTabs} />}
           {mobile && (
             <MobileCoursesSheet

@@ -23,3 +23,44 @@ export const navItems = [
   { key: "resources", label: "Recursos", Icon: Books },
   { key: "admin", label: "Administración", Icon: Sliders },
 ] as const;
+
+export const SEEN_KEY = "ceoubb:seen";
+
+export function navReducer(state: NavState, action: NavAction): NavState {
+  switch (action.type) {
+    case "SET_SCREEN":
+      return { ...state, screen: action.screen };
+    case "ENTER_COURSE":
+      return {
+        ...state,
+        screen: "course",
+        course: action.course,
+        preview: null,
+        coursesSheet: false,
+      };
+    case "SET_PREVIEW":
+      return { ...state, preview: action.preview };
+    case "SET_COURSES_SHEET":
+      return { ...state, coursesSheet: action.open };
+    case "LOGOUT":
+      return {
+        ...state,
+        screen: "courses",
+        course: null,
+        preview: null,
+        coursesSheet: false,
+      };
+    default:
+      return state;
+  }
+}
+
+export function readSeen(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "{}");
+    return saved && typeof saved === "object" ? (saved as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}

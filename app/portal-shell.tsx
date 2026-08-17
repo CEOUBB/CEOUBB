@@ -5,10 +5,48 @@ import Image from "next/image";
 import Link from "next/link";
 import { Archive, CaretDown, FolderSimple, MagnifyingGlass, SignOut } from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
-import { Avatar } from "./portal-ui";
-import { firstName, roleLabel, type User } from "../lib/portal-utils";
+import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
+import { AnimatePresence } from "motion/react";
+import dynamic from "next/dynamic";
+import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
+import { Avatar, Screen as PortalScreen } from "./portal-ui";
+import { CoursesDashboard } from "./views/CoursesDashboard";
+
+const ViewSkeleton = ({ label }: { label: string }) => (
+  <div className="boot-head" aria-busy="true" aria-label={label} role="status">
+    <span className="boot-title sk" />
+    <span className="boot-subtitle sk" />
+    <div className="boot-strip sk" style={{ marginTop: "1rem" }} />
+  </div>
+);
+
+const CalendarView = dynamic(
+  () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
+  {
+    ssr: false,
+    loading: () => <ViewSkeleton label="Cargando calendario…" />,
+  }
+);
+
+const ResourcesView = dynamic(
+  () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
+  {
+    ssr: false,
+    loading: () => <ViewSkeleton label="Cargando recursos…" />,
+  }
+);
+
+const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
+  ssr: false,
+  loading: () => <ViewSkeleton label="Cargando administración…" />,
+});
+
+const Classroom = dynamic(() => import("./Classroom"), {
+  ssr: false,
+  loading: () => <ViewSkeleton label="Abriendo el aula…" />,
+});
 
 export function PortalHeader({
   sidebarOpen,
@@ -137,7 +175,12 @@ export function PortalSidebar({
 }) {
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   return (
-    <aside aria-label="Navegación principal" className="app-sidebar" data-open={open}>
+    <aside
+      aria-label="Navegación principal"
+      className="app-sidebar"
+      data-open={open}
+      inert={!open ? true : undefined}
+    >
       <nav className="side-group">
         {views.map(({ key, label, Icon }) => {
           const active = screen === key;
@@ -204,5 +247,66 @@ export function PortalSidebar({
         </Link>
       </div>
     </aside>
+  );
+}
+
+export function PortalMainView({
+  screen,
+  openedCourse,
+  user,
+  courses,
+  activity,
+  gradebooks,
+  seen,
+  entries,
+  openCourse,
+  setScreen,
+}: {
+  screen: Screen;
+  openedCourse: Course | null;
+  user: User;
+  courses: Course[];
+  activity: CourseActivity[];
+  gradebooks: CourseGradebook[];
+  seen: Record<string, string>;
+  entries: ReturnType<typeof calendarEntries>;
+  openCourse: (course: Course) => void;
+  setScreen: (screen: Screen) => void;
+}) {
+  return (
+    <main className="app-main">
+      <AnimatePresence initial={false} mode="wait">
+        {screen === "course" && openedCourse ? (
+          <PortalScreen key={`course-${openedCourse.id}`}>
+            <Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} />
+          </PortalScreen>
+        ) : (
+          <PortalScreen key={screen}>
+            <div className="portal-main">
+              {screen === "courses" && (
+                <CoursesDashboard
+                  user={user}
+                  courses={courses}
+                  activity={activity}
+                  seen={seen}
+                  entries={entries}
+                  openCourse={openCourse}
+                />
+              )}
+              {screen === "calendar" && (
+                <CalendarView
+                  courses={courses}
+                  gradebooks={gradebooks}
+                  activity={activity}
+                  openCourse={openCourse}
+                />
+              )}
+              {screen === "resources" && <ResourcesView />}
+              {screen === "admin" && user.role === "owner" && <AdminView />}
+            </div>
+          </PortalScreen>
+        )}
+      </AnimatePresence>
+    </main>
   );
 }
