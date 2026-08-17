@@ -58,6 +58,260 @@ function finiteInputValue(value: number, fallback: number) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+type ActivitySectionProps = {
+  draft: TeacherActivityPreview;
+  errors: ActivityValidationErrors;
+  update: <Key extends keyof TeacherActivityPreview>(
+    key: Key,
+    value: TeacherActivityPreview[Key]
+  ) => void;
+};
+
+type SubmissionConfigSectionProps = {
+  draft: TeacherActivityPreview;
+  update: <Key extends keyof TeacherActivityPreview>(
+    key: Key,
+    value: TeacherActivityPreview[Key]
+  ) => void;
+  toggleAcceptedType: (type: string, checked: boolean) => void;
+};
+
+function ActivityEssentialsSection({ draft, errors, update }: ActivitySectionProps) {
+  return (
+    <div className={styles.formBlock}>
+      <div className="section-title compact-title">
+        <h2>Lo esencial</h2>
+      </div>
+      <label htmlFor="activity-title">
+        Título
+        <input
+          id="activity-title"
+          value={draft.title}
+          onChange={(event) => update("title", event.target.value)}
+          aria-invalid={Boolean(errors.title)}
+          aria-describedby={errors.title ? "activity-title-error" : undefined}
+        />
+      </label>
+      {errors.title && (
+        <p className={styles.fieldError} id="activity-title-error" role="alert">
+          {errors.title}
+        </p>
+      )}
+      <label htmlFor="activity-instructions">
+        Instrucciones
+        <textarea
+          id="activity-instructions"
+          rows={5}
+          value={draft.instructions}
+          onChange={(event) => update("instructions", event.target.value)}
+          aria-invalid={Boolean(errors.instructions)}
+          aria-describedby={errors.instructions ? "activity-instructions-error" : undefined}
+        />
+      </label>
+      {errors.instructions && (
+        <p className={styles.fieldError} id="activity-instructions-error" role="alert">
+          {errors.instructions}
+        </p>
+      )}
+      <div className={styles.formGrid}>
+        <label htmlFor="activity-unit">
+          Unidad
+          <input
+            id="activity-unit"
+            value={draft.unit}
+            onChange={(event) => update("unit", event.target.value)}
+          />
+        </label>
+        <label htmlFor="activity-outcome">
+          Resultado de aprendizaje
+          <input
+            id="activity-outcome"
+            value={draft.learningOutcome}
+            onChange={(event) => update("learningOutcome", event.target.value)}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function ActivityScheduleGradeSection({ draft, errors, update }: ActivitySectionProps) {
+  return (
+    <div className={styles.formBlock}>
+      <div className="section-title compact-title">
+        <h2>Calendario y evaluación</h2>
+      </div>
+      <p className="grades-note">
+        Una sola definición alimenta la actividad, la agenda y el libro de notas.
+      </p>
+      <div className={styles.dateGrid}>
+        <label htmlFor="activity-opens">
+          Apertura
+          <input
+            id="activity-opens"
+            type="datetime-local"
+            value={draft.opensAt}
+            onChange={(event) => update("opensAt", event.target.value)}
+            aria-invalid={Boolean(errors.opensAt)}
+            aria-describedby={errors.opensAt ? "activity-opens-error" : undefined}
+          />
+        </label>
+        <label htmlFor="activity-due">
+          Vencimiento
+          <input
+            id="activity-due"
+            type="datetime-local"
+            value={draft.dueAt}
+            onChange={(event) => update("dueAt", event.target.value)}
+            aria-invalid={Boolean(errors.dueAt)}
+            aria-describedby={errors.dueAt ? "activity-due-error" : undefined}
+          />
+        </label>
+        <label htmlFor="activity-cutoff">
+          Cierre
+          <input
+            id="activity-cutoff"
+            type="datetime-local"
+            value={draft.cutoffAt}
+            onChange={(event) => update("cutoffAt", event.target.value)}
+            aria-invalid={Boolean(errors.cutoffAt)}
+            aria-describedby={errors.cutoffAt ? "activity-cutoff-error" : undefined}
+          />
+        </label>
+      </div>
+      {errors.opensAt && (
+        <p className={styles.fieldError} id="activity-opens-error" role="alert">
+          {errors.opensAt}
+        </p>
+      )}
+      {errors.dueAt && (
+        <p className={styles.fieldError} id="activity-due-error" role="alert">
+          {errors.dueAt}
+        </p>
+      )}
+      {errors.cutoffAt && (
+        <p className={styles.fieldError} id="activity-cutoff-error" role="alert">
+          {errors.cutoffAt}
+        </p>
+      )}
+      <div className={styles.formGrid}>
+        <label htmlFor="activity-grade-item">
+          Vinculación de nota
+          <select
+            id="activity-grade-item"
+            value={draft.gradeItemId ? "graded" : "none"}
+            onChange={(event) =>
+              update("gradeItemId", event.target.value === "graded" ? draft.id : null)
+            }
+          >
+            <option value="graded">Crear ítem de calificación</option>
+            <option value="none">Actividad sin nota</option>
+          </select>
+        </label>
+        <label className={styles.suffixField} htmlFor="activity-weight">
+          Ponderación
+          <input
+            id="activity-weight"
+            type="number"
+            min="0"
+            max="100"
+            value={draft.gradeWeight}
+            onChange={(event) =>
+              update("gradeWeight", finiteInputValue(event.currentTarget.valueAsNumber, 0))
+            }
+            aria-invalid={Boolean(errors.gradeWeight)}
+            aria-describedby={errors.gradeWeight ? "activity-weight-error" : undefined}
+            disabled={!draft.gradeItemId}
+          />
+          <em aria-hidden="true">%</em>
+        </label>
+      </div>
+      {errors.gradeWeight && (
+        <p className={styles.fieldError} id="activity-weight-error" role="alert">
+          {errors.gradeWeight}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ActivitySubmissionConfigSection({
+  draft,
+  update,
+  toggleAcceptedType,
+}: SubmissionConfigSectionProps) {
+  return (
+    <details className={styles.advanced}>
+      <summary>
+        <span>
+          <strong>Configuración de entrega</strong>
+          <small>Intentos, formato y archivos aceptados</small>
+        </span>
+        <Info size={19} aria-hidden="true" />
+      </summary>
+      <div className={styles.advancedBody}>
+        <div className={styles.formGrid}>
+          <label htmlFor="activity-mode">
+            Modalidad
+            <select
+              id="activity-mode"
+              value={draft.submissionMode}
+              onChange={(event) => update("submissionMode", event.target.value as SubmissionMode)}
+            >
+              <option value="file">Archivo</option>
+              <option value="text">Texto en línea</option>
+              <option value="file_or_text">Archivo o texto</option>
+            </select>
+          </label>
+          <label htmlFor="activity-attempts">
+            Intentos máximos
+            <input
+              id="activity-attempts"
+              type="number"
+              min="1"
+              max="10"
+              value={draft.maxAttempts}
+              onChange={(event) =>
+                update(
+                  "maxAttempts",
+                  Math.max(1, finiteInputValue(event.currentTarget.valueAsNumber, 1))
+                )
+              }
+            />
+          </label>
+        </div>
+        <fieldset className={styles.checkboxGroup}>
+          <legend>Tipos de archivo permitidos</legend>
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.acceptedTypes.includes("application/pdf")}
+              onChange={(event) => toggleAcceptedType("application/pdf", event.target.checked)}
+            />{" "}
+            PDF
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.acceptedTypes.includes("image/png")}
+              onChange={(event) => toggleAcceptedType("image/png", event.target.checked)}
+            />{" "}
+            PNG
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.acceptedTypes.includes("image/jpeg")}
+              onChange={(event) => toggleAcceptedType("image/jpeg", event.target.checked)}
+            />{" "}
+            JPG
+          </label>
+        </fieldset>
+      </div>
+    </details>
+  );
+}
+
 // Implements: REQ-DOC-05, REQ-DOC-06, REQ-DOC-11, REQ-DOC-12
 export function ActivityEditorDialog({ activity, onClose, onSave }: ActivityEditorDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -136,229 +390,13 @@ export function ActivityEditorDialog({ activity, onClose, onSave }: ActivityEdit
         </header>
 
         <div className={styles.dialogBody}>
-          <div className={styles.formBlock}>
-            <div className="section-title compact-title">
-              <h2>Lo esencial</h2>
-            </div>
-            <label htmlFor="activity-title">
-              Título
-              <input
-                id="activity-title"
-                value={draft.title}
-                onChange={(event) => update("title", event.target.value)}
-                aria-invalid={Boolean(errors.title)}
-                aria-describedby={errors.title ? "activity-title-error" : undefined}
-              />
-            </label>
-            {errors.title && (
-              <p className={styles.fieldError} id="activity-title-error" role="alert">
-                {errors.title}
-              </p>
-            )}
-            <label htmlFor="activity-instructions">
-              Instrucciones
-              <textarea
-                id="activity-instructions"
-                rows={5}
-                value={draft.instructions}
-                onChange={(event) => update("instructions", event.target.value)}
-                aria-invalid={Boolean(errors.instructions)}
-                aria-describedby={errors.instructions ? "activity-instructions-error" : undefined}
-              />
-            </label>
-            {errors.instructions && (
-              <p className={styles.fieldError} id="activity-instructions-error" role="alert">
-                {errors.instructions}
-              </p>
-            )}
-            <div className={styles.formGrid}>
-              <label htmlFor="activity-unit">
-                Unidad
-                <input
-                  id="activity-unit"
-                  value={draft.unit}
-                  onChange={(event) => update("unit", event.target.value)}
-                />
-              </label>
-              <label htmlFor="activity-outcome">
-                Resultado de aprendizaje
-                <input
-                  id="activity-outcome"
-                  value={draft.learningOutcome}
-                  onChange={(event) => update("learningOutcome", event.target.value)}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className={styles.formBlock}>
-            <div className="section-title compact-title">
-              <h2>Calendario y evaluación</h2>
-            </div>
-            <p className="grades-note">
-              Una sola definición alimenta la actividad, la agenda y el libro de notas.
-            </p>
-            <div className={styles.dateGrid}>
-              <label htmlFor="activity-opens">
-                Apertura
-                <input
-                  id="activity-opens"
-                  type="datetime-local"
-                  value={draft.opensAt}
-                  onChange={(event) => update("opensAt", event.target.value)}
-                  aria-invalid={Boolean(errors.opensAt)}
-                  aria-describedby={errors.opensAt ? "activity-opens-error" : undefined}
-                />
-              </label>
-              <label htmlFor="activity-due">
-                Vencimiento
-                <input
-                  id="activity-due"
-                  type="datetime-local"
-                  value={draft.dueAt}
-                  onChange={(event) => update("dueAt", event.target.value)}
-                  aria-invalid={Boolean(errors.dueAt)}
-                  aria-describedby={errors.dueAt ? "activity-due-error" : undefined}
-                />
-              </label>
-              <label htmlFor="activity-cutoff">
-                Cierre
-                <input
-                  id="activity-cutoff"
-                  type="datetime-local"
-                  value={draft.cutoffAt}
-                  onChange={(event) => update("cutoffAt", event.target.value)}
-                  aria-invalid={Boolean(errors.cutoffAt)}
-                  aria-describedby={errors.cutoffAt ? "activity-cutoff-error" : undefined}
-                />
-              </label>
-            </div>
-            {errors.opensAt && (
-              <p className={styles.fieldError} id="activity-opens-error" role="alert">
-                {errors.opensAt}
-              </p>
-            )}
-            {errors.dueAt && (
-              <p className={styles.fieldError} id="activity-due-error" role="alert">
-                {errors.dueAt}
-              </p>
-            )}
-            {errors.cutoffAt && (
-              <p className={styles.fieldError} id="activity-cutoff-error" role="alert">
-                {errors.cutoffAt}
-              </p>
-            )}
-            <div className={styles.formGrid}>
-              <label htmlFor="activity-grade-item">
-                Vinculación de nota
-                <select
-                  id="activity-grade-item"
-                  value={draft.gradeItemId ? "graded" : "none"}
-                  onChange={(event) =>
-                    update("gradeItemId", event.target.value === "graded" ? draft.id : null)
-                  }
-                >
-                  <option value="graded">Crear ítem de calificación</option>
-                  <option value="none">Actividad sin nota</option>
-                </select>
-              </label>
-              <label className={styles.suffixField} htmlFor="activity-weight">
-                Ponderación
-                <input
-                  id="activity-weight"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={draft.gradeWeight}
-                  onChange={(event) =>
-                    update("gradeWeight", finiteInputValue(event.currentTarget.valueAsNumber, 0))
-                  }
-                  aria-invalid={Boolean(errors.gradeWeight)}
-                  aria-describedby={errors.gradeWeight ? "activity-weight-error" : undefined}
-                  disabled={!draft.gradeItemId}
-                />
-                <em aria-hidden="true">%</em>
-              </label>
-            </div>
-            {errors.gradeWeight && (
-              <p className={styles.fieldError} id="activity-weight-error" role="alert">
-                {errors.gradeWeight}
-              </p>
-            )}
-          </div>
-
-          <details className={styles.advanced}>
-            <summary>
-              <span>
-                <strong>Configuración de entrega</strong>
-                <small>Intentos, formato y archivos aceptados</small>
-              </span>
-              <Info size={19} aria-hidden="true" />
-            </summary>
-            <div className={styles.advancedBody}>
-              <div className={styles.formGrid}>
-                <label htmlFor="activity-mode">
-                  Modalidad
-                  <select
-                    id="activity-mode"
-                    value={draft.submissionMode}
-                    onChange={(event) =>
-                      update("submissionMode", event.target.value as SubmissionMode)
-                    }
-                  >
-                    <option value="file">Archivo</option>
-                    <option value="text">Texto en línea</option>
-                    <option value="file_or_text">Archivo o texto</option>
-                  </select>
-                </label>
-                <label htmlFor="activity-attempts">
-                  Intentos máximos
-                  <input
-                    id="activity-attempts"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={draft.maxAttempts}
-                    onChange={(event) =>
-                      update(
-                        "maxAttempts",
-                        Math.max(1, finiteInputValue(event.currentTarget.valueAsNumber, 1))
-                      )
-                    }
-                  />
-                </label>
-              </div>
-              <fieldset className={styles.checkboxGroup}>
-                <legend>Tipos de archivo permitidos</legend>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.acceptedTypes.includes("application/pdf")}
-                    onChange={(event) =>
-                      toggleAcceptedType("application/pdf", event.target.checked)
-                    }
-                  />{" "}
-                  PDF
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.acceptedTypes.includes("image/png")}
-                    onChange={(event) => toggleAcceptedType("image/png", event.target.checked)}
-                  />{" "}
-                  PNG
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.acceptedTypes.includes("image/jpeg")}
-                    onChange={(event) => toggleAcceptedType("image/jpeg", event.target.checked)}
-                  />{" "}
-                  JPG
-                </label>
-              </fieldset>
-            </div>
-          </details>
+          <ActivityEssentialsSection draft={draft} errors={errors} update={update} />
+          <ActivityScheduleGradeSection draft={draft} errors={errors} update={update} />
+          <ActivitySubmissionConfigSection
+            draft={draft}
+            update={update}
+            toggleAcceptedType={toggleAcceptedType}
+          />
         </div>
 
         <footer className={styles.dialogFoot}>
