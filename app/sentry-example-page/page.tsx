@@ -81,9 +81,26 @@ export default function SentryExamplePage() {
   return (
     <main style={pageStyle}>
       <div style={cardStyle}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: "bold", color: "#0f172a", marginBottom: "0.5rem" }}>Verificación Sentry (CEOUBB)</h1>
-        <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "1.75rem", lineHeight: 1.5 }}>
-          Si recién agregaste el DSN a <code>.env.local</code>, asegúrate de <strong>reiniciar el servidor (pnpm dev)</strong> para que Next.js cargue las variables.
+        <h1
+          style={{
+            fontSize: "1.75rem",
+            fontWeight: "bold",
+            color: "#0f172a",
+            marginBottom: "0.5rem",
+          }}
+        >
+          Verificación Sentry (CEOUBB)
+        </h1>
+        <p
+          style={{
+            color: "#64748b",
+            fontSize: "0.95rem",
+            marginBottom: "1.75rem",
+            lineHeight: 1.5,
+          }}
+        >
+          Si recién agregaste el DSN a <code>.env.local</code>, asegúrate de{" "}
+          <strong>reiniciar el servidor (pnpm dev)</strong> para que Next.js cargue las variables.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -100,17 +117,23 @@ export default function SentryExamplePage() {
             {loading ? "Enviando error…" : "⚡ Enviar Error de Servidor (API Route)"}
           </button>
 
-          <button
-            type="button"
-            onClick={handleClientError}
-            style={clientBtnStyle}
-          >
+          <button type="button" onClick={handleClientError} style={clientBtnStyle}>
             🔥 Disparar Error de Cliente (Browser)
           </button>
         </div>
 
         {status && (
-          <div style={{ marginTop: "1.5rem", padding: "1rem", borderRadius: "8px", backgroundColor: "#f1f5f9", color: "#0f172a", fontSize: "0.875rem", fontWeight: 500 }}>
+          <div
+            style={{
+              marginTop: "1.5rem",
+              padding: "1rem",
+              borderRadius: "8px",
+              backgroundColor: "#f1f5f9",
+              color: "#0f172a",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+            }}
+          >
             {status}
           </div>
         )}

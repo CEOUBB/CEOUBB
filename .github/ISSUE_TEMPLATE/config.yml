@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 Comunidad & Consultas en Discord"
+    url: "https://discord.com/channels/1336934842741301321"
+    about: "Para dudas generales, soporte técnico o coordinar contribuciones antes de abrir un issue."
+  - name: "🔒 Seguridad y Divulgación Responsable"
+    url: "https://github.com/CEOUBB/CEOUBB/security/policy"
+    about: "Para reportar vulnerabilidades de seguridad de forma privada y responsable (Ley 19.628 / 21.719)."

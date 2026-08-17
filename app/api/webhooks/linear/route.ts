@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   try {
     if (!LINEAR_WEBHOOK_SECRET || !DISCORD_WEBHOOK_URL) {
       console.error(
-        "[Linear Webhook] LINEAR_WEBHOOK_SECRET or DISCORD_LINEAR_WEBHOOK_URL is not configured",
+        "[Linear Webhook] LINEAR_WEBHOOK_SECRET or DISCORD_LINEAR_WEBHOOK_URL is not configured"
       );
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
     }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       !verifyLinearSignature(
         rawBody,
         request.headers.get("linear-signature"),
-        LINEAR_WEBHOOK_SECRET,
+        LINEAR_WEBHOOK_SECRET
       )
     ) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
@@ -50,8 +50,7 @@ export async function POST(request: Request) {
       const issueUrl = url || data.url || `https://linear.app/ceoubb/issue/${issueIdentifier}`;
       const stateName = data.state?.name || "Actualizado";
       const updatedFrom = payload.updatedFrom;
-      const prevStateName =
-        updatedFrom?.state?.name || updatedFrom?.stateName || null;
+      const prevStateName = updatedFrom?.state?.name || updatedFrom?.stateName || null;
 
       const stateLower = stateName.toLowerCase();
 
@@ -62,13 +61,26 @@ export async function POST(request: Request) {
         title = `🗑️ Issue Eliminado: [${issueIdentifier}] ${issueTitle}`;
         color = 0xef4444;
       } else if (action === "update") {
-        if (stateLower.includes("done") || stateLower.includes("complet") || stateLower.includes("resuelto") || stateLower.includes("closed")) {
+        if (
+          stateLower.includes("done") ||
+          stateLower.includes("complet") ||
+          stateLower.includes("resuelto") ||
+          stateLower.includes("closed")
+        ) {
           title = `✅ Issue Completado: [${issueIdentifier}] ${issueTitle}`;
           color = 0x10b981; // Green
-        } else if (stateLower.includes("progress") || stateLower.includes("progreso") || stateLower.includes("review")) {
+        } else if (
+          stateLower.includes("progress") ||
+          stateLower.includes("progreso") ||
+          stateLower.includes("review")
+        ) {
           title = `🚀 Issue en Progreso: [${issueIdentifier}] ${issueTitle}`;
           color = 0xf59e0b; // Amber / Orange
-        } else if (stateLower.includes("todo") || stateLower.includes("backlog") || stateLower.includes("pendiente")) {
+        } else if (
+          stateLower.includes("todo") ||
+          stateLower.includes("backlog") ||
+          stateLower.includes("pendiente")
+        ) {
           title = `📋 Issue Movido a Pendiente: [${issueIdentifier}] ${issueTitle}`;
           color = 0x3b82f6; // Blue
         } else {

@@ -50,7 +50,8 @@ export function MaterialsSection({
       </datalist>
       <form onSubmit={publish}>
         <label>
-          Título<input name="title" required />
+          Título
+          <input name="title" required />
         </label>
         <label>
           Tipo
@@ -62,17 +63,23 @@ export function MaterialsSection({
           </select>
         </label>
         <label>
-          Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
+          Carpeta
+          <input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
         </label>
         <label>
-          Mensaje<textarea name="body" rows={4} required />
+          Mensaje
+          <textarea name="body" rows={4} required />
         </label>
         <label>
-          Enlace Drive opcional<input name="linkUrl" type="url" placeholder="https://…" />
+          Enlace Drive opcional
+          <input name="linkUrl" type="url" placeholder="https://…" />
         </label>
         <label>
-          Fecha de entrega opcional<input name="dueDate" type="datetime-local" />
-          <small className="field-hint">Aparece en el calendario de cada estudiante del ramo.</small>
+          Fecha de entrega opcional
+          <input name="dueDate" type="datetime-local" />
+          <small className="field-hint">
+            Aparece en el calendario de cada estudiante del ramo.
+          </small>
         </label>
         <button className="primary-button" type="submit">
           Publicar aviso o enlace
@@ -83,10 +90,12 @@ export function MaterialsSection({
       </div>
       <form onSubmit={upload}>
         <label>
-          PDF, PPT, DOCX, XLSX, ZIP o imagen<input name="file" type="file" required />
+          PDF, PPT, DOCX, XLSX, ZIP o imagen
+          <input name="file" type="file" required />
         </label>
         <label>
-          Carpeta<input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
+          Carpeta
+          <input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
         </label>
         <button className="secondary-button" type="submit">
           Subir al curso
@@ -134,7 +143,8 @@ export function MaterialsSection({
             </summary>
             {items.map((file) => {
               const canManage =
-                user.role === "owner" || file.authorEmail.toLowerCase() === user.email.toLowerCase();
+                user.role === "owner" ||
+                file.authorEmail.toLowerCase() === user.email.toLowerCase();
               return (
                 <div className="material-row" key={file.id}>
                   <span className="file-icon">{fileExtension(file.name)}</span>

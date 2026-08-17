@@ -110,12 +110,19 @@ export async function listActiveLinearIssues(limit: number = 10): Promise<Linear
     const data = await res.json();
     const nodes = data?.data?.issues?.nodes || [];
 
-    return nodes.map((i: { identifier: string; title: string; state?: { name: string }; assignee?: { name: string } }) => ({
-      id: i.identifier,
-      title: i.title,
-      status: i.state?.name || "Pendiente",
-      assignee: i.assignee?.name || "Sin asignar",
-    }));
+    return nodes.map(
+      (i: {
+        identifier: string;
+        title: string;
+        state?: { name: string };
+        assignee?: { name: string };
+      }) => ({
+        id: i.identifier,
+        title: i.title,
+        status: i.state?.name || "Pendiente",
+        assignee: i.assignee?.name || "Sin asignar",
+      })
+    );
   } catch (err) {
     console.warn("⚠️ Error listando issues activos de Linear:", err);
     return [];
@@ -159,12 +166,19 @@ export async function listCompletedLinearIssues(limit: number = 5): Promise<Line
     const data = await res.json();
     const nodes = data?.data?.issues?.nodes || [];
 
-    return nodes.map((i: { identifier: string; title: string; state?: { name: string }; assignee?: { name: string } }) => ({
-      id: i.identifier,
-      title: i.title,
-      status: i.state?.name || "Completada",
-      assignee: i.assignee?.name || "Sin asignar",
-    }));
+    return nodes.map(
+      (i: {
+        identifier: string;
+        title: string;
+        state?: { name: string };
+        assignee?: { name: string };
+      }) => ({
+        id: i.identifier,
+        title: i.title,
+        status: i.state?.name || "Completada",
+        assignee: i.assignee?.name || "Sin asignar",
+      })
+    );
   } catch (err) {
     console.warn("⚠️ Error listando issues completados de Linear:", err);
     return [];

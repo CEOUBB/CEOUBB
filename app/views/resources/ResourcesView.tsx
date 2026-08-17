@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import {
@@ -10,18 +11,19 @@ import {
   DeviceMobile,
   DownloadSimple,
 } from "@phosphor-icons/react";
-import { APK_URL, ease, rise, stagger } from "../../../lib/portal-utils";
+import {
+  APK_URL,
+  instantTransition,
+  rise,
+  springDefault,
+  stagger,
+} from "../../../lib/portal-utils";
 import { AI_TIERS, BRAND, PERK_GROUPS, UBB_PORTALS } from "./resources-data";
 import type { Brand } from "./resources-data";
 
 function BrandMark({ brand }: { brand: Brand }) {
   return (
-    <svg
-      aria-hidden="true"
-      className="brand-mark"
-      focusable="false"
-      viewBox="0 0 24 24"
-    >
+    <svg aria-hidden="true" className="brand-mark" focusable="false" viewBox="0 0 24 24">
       {BRAND[brand].map((path) => (
         <path d={path.d} fill={path.fill} key={path.d} />
       ))}
@@ -30,28 +32,29 @@ function BrandMark({ brand }: { brand: Brand }) {
 }
 
 export function ResourcesView() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <m.section
       animate="show"
       className="resources-hub"
-      initial="hidden"
-      variants={stagger}
+      initial={shouldReduceMotion ? "show" : "hidden"}
+      variants={shouldReduceMotion ? undefined : stagger}
     >
       <div className="page-head lead">
         <h1>Recursos de estudio</h1>
         <p>
           <span>
-            Biblioteca colaborativa, asistentes de inteligencia artificial y
-            beneficios con tu correo institucional, para cualquier carrera de la
-            Universidad del Bío-Bío.
+            Biblioteca colaborativa, asistentes de inteligencia artificial y beneficios con tu
+            correo institucional, para cualquier carrera de la Universidad del Bío-Bío.
           </span>
         </p>
       </div>
 
       <m.div
         className="resource-block"
-        transition={{ duration: 0.4, ease }}
-        variants={rise}
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
       >
         <div className="section-title">
           <h2>Ecosistema CEOUBB</h2>
@@ -60,28 +63,28 @@ export function ResourcesView() {
           <m.a
             className="resource-card"
             href="/biblioteca/index.html"
-            whileHover={{ y: -1 }}
+            whileHover={shouldReduceMotion ? undefined : { y: -1 }}
           >
             <span className="resource-icon">
               <Books size={22} />
             </span>
             <h3>Biblioteca académica</h3>
             <p>
-              Banco colaborativo de certámenes, controles y apuntes que la
-              comunidad va sumando período a período.
+              Banco colaborativo de certámenes, controles y apuntes que la comunidad va sumando
+              período a período.
             </p>
             <ul className="resource-points">
               <li>
-                <Check size={15} weight="bold" /> Evaluaciones completas con
-                puntaje y tiempo real de aplicación.
+                <Check size={15} weight="bold" /> Evaluaciones completas con puntaje y tiempo real
+                de aplicación.
               </li>
               <li>
-                <Check size={15} weight="bold" /> Pautas desarrolladas paso a
-                paso, no sólo la alternativa correcta.
+                <Check size={15} weight="bold" /> Pautas desarrolladas paso a paso, no sólo la
+                alternativa correcta.
               </li>
               <li>
-                <Check size={15} weight="bold" /> Abierta a todas las
-                facultades: se amplía con lo que aportan estudiantes y docentes.
+                <Check size={15} weight="bold" /> Abierta a todas las facultades: se amplía con lo
+                que aportan estudiantes y docentes.
               </li>
             </ul>
             <b>
@@ -93,9 +96,7 @@ export function ResourcesView() {
               <DeviceMobile size={22} />
             </span>
             <h3>CEOUBB Móvil</h3>
-            <p>
-              La biblioteca de estudio viaja contigo y funciona sin conexión.
-            </p>
+            <p>La biblioteca de estudio viaja contigo y funciona sin conexión.</p>
             <div
               className="store-badges"
               role="group"
@@ -119,8 +120,8 @@ export function ResourcesView() {
               </div>
             </div>
             <em>
-              Publicación en tiendas en preparación. Mientras tanto, el APK de
-              Android está disponible.
+              Publicación en tiendas en preparación. Mientras tanto, el APK de Android está
+              disponible.
             </em>
             <a className="resource-inline" href={APK_URL}>
               <DownloadSimple size={15} /> Descargar APK para Android
@@ -131,8 +132,8 @@ export function ResourcesView() {
 
       <m.div
         className="resource-block"
-        transition={{ duration: 0.4, ease }}
-        variants={rise}
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
       >
         <div className="section-title">
           <h2>Asistentes de inteligencia artificial</h2>
@@ -165,8 +166,8 @@ export function ResourcesView() {
 
       <m.div
         className="resource-block"
-        transition={{ duration: 0.4, ease }}
-        variants={rise}
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
       >
         <div className="section-title">
           <h2>Beneficios con tu correo institucional</h2>
@@ -201,16 +202,16 @@ export function ResourcesView() {
 
       <m.div
         className="resource-block"
-        transition={{ duration: 0.4, ease }}
-        variants={rise}
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
       >
         <div className="section-title">
           <h2>Portales y servicios oficiales UBB</h2>
         </div>
         <div className="portal-panel">
           <p>
-            Sistemas administrados por la Universidad del Bío-Bío. CEOUBB es una
-            plataforma estudiantil independiente y no los reemplaza.
+            Sistemas administrados por la Universidad del Bío-Bío. CEOUBB es una plataforma
+            estudiantil independiente y no los reemplaza.
           </p>
           <ul className="portal-links">
             {UBB_PORTALS.map((portal) => (

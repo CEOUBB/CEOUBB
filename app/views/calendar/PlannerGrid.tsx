@@ -2,11 +2,7 @@
 
 import { AnimatePresence } from "motion/react";
 import { Plus } from "@phosphor-icons/react";
-import {
-  DAY_END_MINUTES,
-  DAY_START_MINUTES,
-  timeOfMinutes,
-} from "../../../lib/planner";
+import { DAY_END_MINUTES, DAY_START_MINUTES, timeOfMinutes } from "../../../lib/planner";
 import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
 import { HOUR_LINES, MINUTE_SPAN, SLOT_HOURS, offsetOf } from "./calendar-constants";
@@ -52,10 +48,7 @@ export function PlannerGrid({
         {days.includes(today) &&
           nowMinutes >= DAY_START_MINUTES &&
           nowMinutes <= DAY_END_MINUTES && (
-            <b
-              className="planner-hours-now"
-              style={{ top: offsetOf(nowMinutes) }}
-            >
+            <b className="planner-hours-now" style={{ top: offsetOf(nowMinutes) }}>
               {timeOfMinutes(nowMinutes)}
             </b>
           )}
@@ -78,9 +71,7 @@ export function PlannerGrid({
                 style={
                   {
                     "--planner-spent": String(
-                      (Math.min(nowMinutes, DAY_END_MINUTES) -
-                        DAY_START_MINUTES) /
-                        MINUTE_SPAN,
+                      (Math.min(nowMinutes, DAY_END_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN
                     ),
                   } as React.CSSProperties
                 }
@@ -109,15 +100,13 @@ export function PlannerGrid({
                 />
               ))}
             </AnimatePresence>
-            {isToday &&
-              nowMinutes >= DAY_START_MINUTES &&
-              nowMinutes <= DAY_END_MINUTES && (
-                <div
-                  aria-hidden="true"
-                  className="planner-now"
-                  style={{ top: offsetOf(nowMinutes) }}
-                />
-              )}
+            {isToday && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
+              <div
+                aria-hidden="true"
+                className="planner-now"
+                style={{ top: offsetOf(nowMinutes) }}
+              />
+            )}
           </div>
         );
       })}
@@ -126,8 +115,8 @@ export function PlannerGrid({
           <div>
             <strong>Tu semana está vacía.</strong>
             <p>
-              Elige una hora y resérvala para estudiar. El calendario la
-              recuerda y la sincroniza con las entregas de tus ramos.
+              Elige una hora y resérvala para estudiar. El calendario la recuerda y la sincroniza
+              con las entregas de tus ramos.
             </p>
             <button
               className="planner-create"

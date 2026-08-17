@@ -28,7 +28,9 @@ export type GradeTarget =
   | { state: "needed"; grade: number };
 
 export function isValidGrade(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= MIN_GRADE && value <= MAX_GRADE;
+  return (
+    typeof value === "number" && Number.isFinite(value) && value >= MIN_GRADE && value <= MAX_GRADE
+  );
 }
 
 export function normalizeScores(value: unknown): GradeScores {
@@ -49,12 +51,14 @@ export function normalizeItems(value: unknown): GradeItem[] {
     const record = item as Record<string, unknown>;
     const weight = Math.max(0, Number(record.weight ?? 0));
     if (weight <= 0) return [];
-    return [{
-      id: String(record.id ?? `item-${index}`),
-      name: String(record.name ?? "Evaluación"),
-      weight,
-      date: String(record.date ?? ""),
-    }];
+    return [
+      {
+        id: String(record.id ?? `item-${index}`),
+        name: String(record.name ?? "Evaluación"),
+        weight,
+        date: String(record.date ?? ""),
+      },
+    ];
   });
 }
 
@@ -79,7 +83,11 @@ export function summarize(items: GradeItem[], scores: GradeScores): GradeSummary
   };
 }
 
-export function requiredGrade(items: GradeItem[], scores: GradeScores, target: number): GradeTarget {
+export function requiredGrade(
+  items: GradeItem[],
+  scores: GradeScores,
+  target: number
+): GradeTarget {
   const { totalWeight, pendingWeight, earned } = summarize(items, scores);
   if (totalWeight === 0 || pendingWeight === 0) return { state: "closed", grade: null };
   const needed = ceil1((target * totalWeight - earned) / pendingWeight);

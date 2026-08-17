@@ -27,7 +27,8 @@ if (fs.existsSync(envPath)) {
 }
 
 // Tokens & Config
-const DISCORD_BOT_TOKEN = process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
+const DISCORD_BOT_TOKEN =
+  process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!DISCORD_BOT_TOKEN) {
@@ -95,7 +96,10 @@ const toolDeclarations = [
       type: "OBJECT",
       properties: {
         summary: { type: "STRING", description: "Título de la reunión" },
-        startDateTime: { type: "STRING", description: "Fecha y hora de inicio (ISO format, ej. 2026-08-23T15:00:00-04:00)" },
+        startDateTime: {
+          type: "STRING",
+          description: "Fecha y hora de inicio (ISO format, ej. 2026-08-23T15:00:00-04:00)",
+        },
         durationMinutes: { type: "NUMBER", description: "Duración en minutos (por defecto 60)" },
       },
       required: ["summary", "startDateTime"],
@@ -149,10 +153,13 @@ async function executeToolCall(toolCall) {
         headers.Authorization = `token ${process.env.GITHUB_TOKEN || process.env.GH_TOKEN}`;
       }
 
-      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/pulls?state=${state}&per_page=5`, {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
+      const res = await fetch(
+        `https://api.github.com/repos/CEOUBB/CEOUBB/pulls?state=${state}&per_page=5`,
+        {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        }
+      );
 
       if (res.ok) {
         const prs = await res.json();
@@ -196,10 +203,13 @@ async function executeToolCall(toolCall) {
         headers.Authorization = `token ${process.env.GITHUB_TOKEN || process.env.GH_TOKEN}`;
       }
 
-      const res = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${count}`, {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
+      const res = await fetch(
+        `https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${count}`,
+        {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        }
+      );
 
       if (res.ok) {
         const commits = await res.json();
@@ -298,7 +308,9 @@ client.on("clientReady", () => {
   console.log(`📚 Project Knowledge: Enabled (AGENTS.md & PLAN.md loaded)`);
   console.log(`🛠️ Tools Enabled: Google Calendar MCP & GitHub MCP`);
   console.log(`💾 Persistent Sessions: Enabled (.cache/sessions-antigravity.json)`);
-  console.log(`🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`);
+  console.log(
+    `🔑 Gemini API Key Status: ${GEMINI_API_KEY ? "Configured ✅" : "Missing ⚠️ (Set GEMINI_API_KEY in .env.local)"}`
+  );
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
 
@@ -325,9 +337,13 @@ client.on("messageCreate", async (message) => {
   if (!isMentioned && !isBotChannel && !isReplyToBot) return;
 
   if (!ALLOWED_USER_IDS.has(message.author.id)) {
-    console.log(`⛔ Ignored prompt from unauthorized user @${message.author.username} (${message.author.id})`);
+    console.log(
+      `⛔ Ignored prompt from unauthorized user @${message.author.username} (${message.author.id})`
+    );
     if (isMentioned || isReplyToBot) {
-      await message.reply("🔒 Este agente local de Antigravity / Gemini está restringido únicamente a los mantenedores autorizados del proyecto.");
+      await message.reply(
+        "🔒 Este agente local de Antigravity / Gemini está restringido únicamente a los mantenedores autorizados del proyecto."
+      );
     }
     return;
   }
@@ -341,21 +357,36 @@ client.on("messageCreate", async (message) => {
     processedMessageIds.delete(firstVal);
   }
 
-  const userDisplayName = KNOWN_USER_NAMES[message.author.id] || message.member?.displayName || message.author.globalName || message.author.username;
+  const userDisplayName =
+    KNOWN_USER_NAMES[message.author.id] ||
+    message.member?.displayName ||
+    message.author.globalName ||
+    message.author.username;
 
-  if (userPrompt.toLowerCase() === "!newchat" || userPrompt.toLowerCase() === "/newchat" || userPrompt.toLowerCase() === "nuevo chat") {
+  if (
+    userPrompt.toLowerCase() === "!newchat" ||
+    userPrompt.toLowerCase() === "/newchat" ||
+    userPrompt.toLowerCase() === "nuevo chat"
+  ) {
     sessionStore.resetSession(message.channel.id, message.author.id);
-    await message.reply(`🔄 **Nueva conversación de Gemini / Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`);
+    await message.reply(
+      `🔄 **Nueva conversación de Gemini / Antigravity iniciada para ${userDisplayName}.** Contexto reiniciado.`
+    );
     return;
   }
 
   const sessionResult = sessionStore.getSession(message.channel.id, message.author.id);
-  const sessionHistory = sessionResult.isExisting && Array.isArray(sessionResult.data) ? sessionResult.data : [];
+  const sessionHistory =
+    sessionResult.isExisting && Array.isArray(sessionResult.data) ? sessionResult.data : [];
 
-  console.log(`\n📩 Antigravity Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`);
+  console.log(
+    `\n📩 Antigravity Prompt received from ${userDisplayName} (@${message.author.username}): "${userPrompt}"`
+  );
 
   if (!process.env.GEMINI_API_KEY) {
-    await message.reply("⚠️ **Falta la clave API de Gemini (`GEMINI_API_KEY`).**\n\nPor favor, obtén una clave gratuita en [aistudio.google.com](https://aistudio.google.com) y agrégala a tu `.env.local`:\n```env\nGEMINI_API_KEY=tu_api_key_aqui\n```");
+    await message.reply(
+      "⚠️ **Falta la clave API de Gemini (`GEMINI_API_KEY`).**\n\nPor favor, obtén una clave gratuita en [aistudio.google.com](https://aistudio.google.com) y agrégala a tu `.env.local`:\n```env\nGEMINI_API_KEY=tu_api_key_aqui\n```"
+    );
     return;
   }
 
@@ -380,14 +411,11 @@ ${channelContext}`;
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const firstCall = await generateContentWithFallback(ai, {
-      contents: [
-        ...sessionHistory,
-        { role: "user", parts: [{ text: userPrompt }] }
-      ],
+      contents: [...sessionHistory, { role: "user", parts: [{ text: userPrompt }] }],
       config: {
         systemInstruction,
         tools: [{ functionDeclarations: toolDeclarations }],
-      }
+      },
     });
 
     let response = firstCall.response;
@@ -395,7 +423,7 @@ ${channelContext}`;
     // Check if Gemini invoked tool calls
     const candidates = response.candidates || [];
     const firstCandidateContent = candidates[0]?.content;
-    const functionCalls = firstCandidateContent?.parts?.filter(p => p.functionCall) || [];
+    const functionCalls = firstCandidateContent?.parts?.filter((p) => p.functionCall) || [];
 
     if (functionCalls.length > 0) {
       const toolResponseParts = [];
@@ -406,7 +434,7 @@ ${channelContext}`;
           functionResponse: {
             name: toolCall.name,
             response: toolResult,
-          }
+          },
         });
       }
 
@@ -417,9 +445,9 @@ ${channelContext}`;
           ...sessionHistory,
           { role: "user", parts: [{ text: userPrompt }] },
           firstCandidateContent,
-          { role: "user", parts: toolResponseParts }
+          { role: "user", parts: toolResponseParts },
         ],
-        config: { systemInstruction }
+        config: { systemInstruction },
       });
     }
 
@@ -444,7 +472,9 @@ ${channelContext}`;
       }
     }
 
-    console.log(`✅ Sent ${chunks.length} plain text Antigravity response message(s) to ${userDisplayName}.`);
+    console.log(
+      `✅ Sent ${chunks.length} plain text Antigravity response message(s) to ${userDisplayName}.`
+    );
   } catch (error) {
     clearInterval(typingInterval);
     console.error("❌ Error executing Antigravity / Gemini request:", error);

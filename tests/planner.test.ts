@@ -20,7 +20,17 @@ const COURSES = [
 const WEEK = { from: "2026-08-17", to: "2026-08-23" };
 
 function block(id: string, startTime: string, endTime: string, date = "2026-08-19"): PersonalEvent {
-  return { id, title: id, detail: "", date, startTime, endTime, courseId: null, kind: "study", completed: false };
+  return {
+    id,
+    title: id,
+    detail: "",
+    date,
+    startTime,
+    endTime,
+    courseId: null,
+    kind: "study",
+    completed: false,
+  };
 }
 
 test("weekDates devuelve lunes a domingo desde cualquier dia de la semana", () => {
@@ -28,7 +38,11 @@ test("weekDates devuelve lunes a domingo desde cualquier dia de la semana", () =
   assert.equal(fromWednesday.length, 7);
   assert.equal(fromWednesday[0], "2026-08-17");
   assert.equal(fromWednesday[6], "2026-08-23");
-  assert.deepEqual(weekDates("2026-08-23"), fromWednesday, "el domingo pertenece a la semana que empieza el lunes anterior");
+  assert.deepEqual(
+    weekDates("2026-08-23"),
+    fromWednesday,
+    "el domingo pertenece a la semana que empieza el lunes anterior"
+  );
   assert.deepEqual(weekDates("2026-08-17"), fromWednesday);
 });
 
@@ -47,10 +61,15 @@ test("normalizeDueDate acepta fecha sola o fecha con hora y descarta basura", ()
 test("plannerItems une gradebook, entregas y bloques personales de la semana", () => {
   const items = plannerItems({
     courses: COURSES,
-    gradebooks: [{ courseId: "estatica", items: [
-      { id: "c1", name: "Certamen 1", weight: 30, date: "2026-08-20" },
-      { id: "c2", name: "Certamen 2", weight: 30, date: "2026-09-30" },
-    ] }],
+    gradebooks: [
+      {
+        courseId: "estatica",
+        items: [
+          { id: "c1", name: "Certamen 1", weight: 30, date: "2026-08-20" },
+          { id: "c2", name: "Certamen 2", weight: 30, date: "2026-09-30" },
+        ],
+      },
+    ],
     deadlines: [
       { id: "p1", courseId: "estatica", title: "Entrega Informe 1", dueDate: "2026-08-18T23:59" },
       { id: "p2", courseId: "estatica", title: "Fuera de semana", dueDate: "2026-07-01" },
@@ -60,7 +79,10 @@ test("plannerItems une gradebook, entregas y bloques personales de la semana", (
     ...WEEK,
   });
 
-  assert.deepEqual(items.map((item) => item.id), ["due-p1", "b1", "eval-estatica-c1"]);
+  assert.deepEqual(
+    items.map((item) => item.id),
+    ["due-p1", "b1", "eval-estatica-c1"]
+  );
   assert.equal(items[0].tone, "#38bdf8", "la entrega toma el tono de Estática");
   assert.equal(items[0].detail, "Entrega 23:59");
   assert.equal(items[1].tone, "#8b5cf6", "el bloque personal toma el tono de EDO");
@@ -72,23 +94,41 @@ test("plannerItems descarta bloques con horas invalidas o invertidas", () => {
     courses: COURSES,
     gradebooks: [],
     deadlines: [],
-    personal: [block("ok", "09:00", "10:00"), block("invertido", "12:00", "11:00"), block("vacio", "", "")],
+    personal: [
+      block("ok", "09:00", "10:00"),
+      block("invertido", "12:00", "11:00"),
+      block("vacio", "", ""),
+    ],
     ...WEEK,
   });
-  assert.deepEqual(items.map((item) => item.id), ["ok"]);
+  assert.deepEqual(
+    items.map((item) => item.id),
+    ["ok"]
+  );
 });
 
 test("dayItems separa el ribbon de los bloques con hora", () => {
   const items = plannerItems({
     courses: COURSES,
-    gradebooks: [{ courseId: "estatica", items: [{ id: "c1", name: "Certamen 1", weight: 30, date: "2026-08-19" }] }],
+    gradebooks: [
+      {
+        courseId: "estatica",
+        items: [{ id: "c1", name: "Certamen 1", weight: 30, date: "2026-08-19" }],
+      },
+    ],
     deadlines: [],
     personal: [block("b1", "15:00", "17:00")],
     ...WEEK,
   });
   const wednesday = dayItems(items, "2026-08-19");
-  assert.deepEqual(wednesday.ribbon.map((item) => item.id), ["eval-estatica-c1"]);
-  assert.deepEqual(wednesday.blocks.map((item) => item.id), ["b1"]);
+  assert.deepEqual(
+    wednesday.ribbon.map((item) => item.id),
+    ["eval-estatica-c1"]
+  );
+  assert.deepEqual(
+    wednesday.blocks.map((item) => item.id),
+    ["b1"]
+  );
   assert.equal(dayItems(items, "2026-08-20").blocks.length, 0);
 });
 
@@ -122,7 +162,11 @@ test("placeBlocks reutiliza la columna liberada por un bloque ya terminado", () 
   ]);
   const byId = new Map(placed.map((item) => [item.id, item]));
 
-  assert.equal(byId.get("corto1")!.column, byId.get("corto2")!.column, "corto2 hereda la columna que corto1 dejo libre");
+  assert.equal(
+    byId.get("corto1")!.column,
+    byId.get("corto2")!.column,
+    "corto2 hereda la columna que corto1 dejo libre"
+  );
   assert.equal(byId.get("largo")!.columns, 2);
 });
 

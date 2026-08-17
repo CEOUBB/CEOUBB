@@ -1,206 +1,131 @@
-# AGENTS.md — Instructions for AI Coding Assistants
+# AGENTS.md — AI Agent Governance Protocol and System Directives
 
-## Purpose and Scope
-
-This file contains repository-wide instructions and guardrails for every coding agent working on **Centro de Estudio UBB (CEOUBB)** (including OpenAI Codex, Claude Code, Antigravity, and peer agents). It follows the open [AGENTS.md format](https://agents.md/).
-
-Read this file and `PLAN.md` completely before editing code. A direct user instruction overrides this file. 
-
-`ceoubb_moodle_adecca_comparison.md` at the repository root compares CEOUBB against Moodle UBB and Adecca UBB, and contains the institutional adoption dossier. Consult it when proposing new product capabilities.
+> **PROTOCOL STATUS:** MANDATORY AND BINDING.
+> This document governs architectural invariants, security policies, negative constraints, and quality gates for all AI coding agents (Antigravity, Claude Code, Codex, Cursor) operating on **Centro de Estudio UBB (CEOUBB)**.
+> Direct instructions from the user in the prompt take precedence, except when they violate security invariants or role derivation policies established herein.
 
 ---
 
-## Project Summary & Strategic Mission
+## 1. System Mission & Institutional Boundaries
 
-Centro de Estudio UBB is an independent Learning Management System (LMS) for Universidad del Bío-Bío students and teachers.
+Centro de Estudio UBB is an independent Learning Management System (LMS) designed for students and faculty of Universidad del Bío-Bío.
 
-**Mission: Present CEOUBB to Universidad del Bío-Bío as the next official LMS**, replacing Moodle UBB and Adecca UBB at scale (thousands of students, thousands of course sections, multiple faculties).
-
-### Strategic Directives for Agents:
-1. **Scale-First Architecture**: Evaluate every architectural and data decision against university scale ($5,000+$ students, thousands of sections), not against a single-cohort pilot. Code that only works for six courses is technical debt and must be explicitly documented as such in `PLAN.md`.
-2. **Non-Official Disclaimer Guardrail**: Until a formal institutional agreement exists, the platform remains independent. Preserve the UI disclaimers, keep store badges as non-clickable placeholders, and never present CEOUBB as an officially endorsed university service.
-
-### Product Surfaces:
-- **Web Portal**: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, deployed on Vercel (`https://ceoubb.com`).
-- **Mobile App**: Capacitor 7 runtime (`cl.ubb.centroestudio`) — Android is the publishable target, `ios/` is a versioned non-built scaffold. Remote-first: the WebView loads `https://ceoubb.com`; `capacitor/www/` only holds the offline fallback document.
-- **Firebase Infrastructure**: Authentication, Firestore, Storage, Cloud Functions, and Messaging in region `southamerica-west1`.
+- **Strategic Mission:** Position CEOUBB as the next official LMS of Universidad del Bío-Bío, replacing Moodle UBB and Adecca UBB at institutional scale (>5,000 students, thousands of course sections, multiple faculties).
+- **Scale-First Architecture:** Every data and interface decision must be evaluated against the complete institutional scale, not against a single-cohort pilot.
+- **Independence Disclaimer Guardrail:** Preserve independent platform disclaimers across the UI; app store badges remain non-clickable placeholders until a formal institutional agreement exists.
+- **Strict Language Policy for Commits & PRs:** All commit messages, Pull Request titles, and PR descriptions MUST BE WRITTEN STRICTLY IN SPANISH following Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
 
 ---
 
-## Canonical Infrastructure Identifiers
+## 2. Non-Negotiable Architectural Invariants (SSOT)
 
-Treat these identifiers as fixed configuration:
+### 2.1 Role Policy & Authentication
 
-| Resource | Identifier / Value |
-| :--- | :--- |
-| **Firebase Project ID** | `centro-de-estudio-ubb` |
-| **Messaging Sender ID** | `411177916202` |
-| **Firebase Region** | `southamerica-west1` |
-| **Default Storage Bucket** | `centro-de-estudio-ubb.firebasestorage.app` |
-| **Android Application ID** | `cl.ubb.centroestudio` |
-| **Web Hosting** | Vercel (zero-config Next.js project) |
-| **Web Database** | Turso/libSQL (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`) |
-| **Canonical Repository** | `https://github.com/CEOUBB/CEOUBB.git` (branch `main`) |
+Role derivation is strictly deterministic and governed exclusively by institutional email domain:
 
----
-
-## Agent Collaboration & Git Protocol
-
-Maintainers collaborate using different AI assistants with GitHub as the shared source of truth.
-
-### Outcome-Based Git Guidelines:
-- **Tree Synchronization**: Always verify local files are in sync with `origin/main` before making code changes.
-- **Branching Strategy**: Use feature branches (`codex/<task>` or `claude/<task>`). Do not make direct commits to `main` for non-trivial features.
-- **Conflict Prevention**: Do not edit files being actively modified by another maintainer/agent. Keep commits small, logical, and formatted with Conventional Commits (`feat:`, `fix:`, `test:`, `refactor:`).
-- **Language Policy for Commits & Pull Requests**: All commit messages, PR titles, and PR descriptions **MUST ALWAYS BE WRITTEN IN SPANISH** (e.g., `feat(portal): rediseño de cabecera`, `fix(auth): corregir derivación de rol docente`). Standard Conventional Commit prefixes (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`) are retained, but all descriptive summary text and PR bodies must strictly be in Spanish.
-- **Discord Notifications**: Send Discord notifications **ONLY WHEN EXPLICITLY INSTRUCTED BY THE USER** in their prompt. When requested, post an embed to `#💬-❙-general` (`1536934842741301321`) titled `<Agent Name> | <User>`, cross-tagging Pipe (`<@1150176313974460457>`) or Joaquín (`<@662149246631542816>`). See `.agents/rules/discord_notifications.md`.
-
----
-
-## Repository Map
-
-- `app/`: Next.js web routes, shell (`Portal.tsx`), views (`portal-views.tsx`), classroom (`Classroom.tsx`), and API endpoints (`app/api/`).
-- `lib/`: Shared authentication, access policy (`access-policy.ts`), course scaffolding (`courses.ts`), grade math (`grades.ts`), and Firebase client (`firebase-classroom-client.ts`).
-- `public/biblioteca/`: Browser-accessible study library and academic resources.
-- `db/`, `drizzle/`: Turso/libSQL schema and migrations for web sessions and user directory.
-- `capacitor.config.ts`, `capacitor/www/`: Capacitor runtime configuration and the offline fallback document that serves as `webDir`.
-- `android/`, `ios/`: Capacitor-generated native projects. `android/` is regenerable — the publishable bits reapplied on top are the release `signingConfig`, `versionCode`, `minSdk 26`, `google-services.json`, `res/values/firebase.xml` and the verified App Links `intent-filter`.
-- `lib/mobile-bridge.ts`, `lib/push-notifications.ts`, `lib/native-files.ts`, `app/mobile-shell.tsx`: the mobile seam. Every entry point degrades to a silent no-op on the web.
-- `firebase/`: Firestore rules (`firestore.rules`), Storage rules (`storage.rules`), indexes, and Cloud Functions (`firebase/functions/`).
-- `tests/`: Automated unit and HTTP suite (`access-policy.test.ts`, `grades.test.ts`, `linear-webhook.test.ts`, `rendered-html.test.mjs`).
-- `.github/workflows/`: CI merge gate (`ci.yml`), Vercel deployment pipeline with pre-flight gates (`deploy.yml`), and diagnostics (`react-doctor.yml`).
-- `design-ceoubb.md`: Root repository design system spec (tokens, typography, components, Do's & Don'ts).
-- `PLAN.md`: Active project handoff plan and backlog (`PLAN_ARCHIVE.md` holds completed history).
-
----
-
-## Architectural Guardrails & Invariants
-
-### 1. Authentication & Role Policy (Non-Negotiable Guardrail)
-Role derivation is strictly governed by institutional email domain:
 - `@alumnos.ubiobio.cl` $\rightarrow$ **Student**
 - `@ubiobio.cl` $\rightarrow$ **Teacher**
 - `elpapijuaco325@gmail.com` $\rightarrow$ **Owner / Superuser**
 - `felipearce.2004@gmail.com` $\rightarrow$ **Collaborator / Superuser**
-- *All other domains must be rejected.*
+- _Any other domain MUST be immediately rejected with HTTP 403 / Domain Error._
 
-**Single Source of Truth**: `lib/access-policy.ts` implements `roleForEmail`. No other TypeScript file may re-implement domain parsing. This policy must stay synchronized across:
+**Single Source of Truth (SSOT):** `lib/access-policy.ts` -> `roleForEmail()`. Reimplementing regex parsing or domain checks in UI components, API routes, or native code is strictly prohibited. This policy is synchronized across four mirrors:
+
 1. `lib/access-policy.ts`
 2. `firebase/firestore.rules`
 3. `firebase/storage.rules`
-4. `android/app/src/main/res/values/firebase.xml` (owner addresses only)
+4. `android/app/src/main/res/values/firebase.xml` (owner accounts only)
 
-`tests/access-policy.test.ts` asserts this synchronization.
+### 2.2 Data Partitioning & Persistence
 
-Since the Capacitor migration (P5), the native layer no longer parses email domains: `ClassroomService.java` was removed with the hand-rolled WebView, and the app hands the Firebase `User` straight to `roleForEmail` (REQ-CAP-12). Four mirrors, not five. Re-adding domain parsing to native code is a regression.
+- **System of Record (SoR):** Turso/libSQL with Drizzle ORM stores the relational academic structure (`facultades`, `carreras`, `secciones`, `inscripciones`, `usuarios`).
+- **Operational Projection:** Firestore holds real-time posts, notifications, files, and the one-way membership projection used by `exists()` in security rules.
+- **Course Identity:** A course is always a **Section** (_subject $\times$ academic period $\times$ section_), never a plain unstructured string.
+- **Grade Arithmetic:** `lib/grades.ts` is the single source of truth for the Chilean 1.0–7.0 scale and weighted average calculations.
 
-### 2. Classroom Data & Database Split
-- **System of Record**: Turso/libSQL stores academic structure (`facultades`, `carreras`, `secciones`, `enrollments`).
-- **Firestore Projection**: Firestore holds operational classroom posts, progress, files, and a narrow one-way projection of enrollments used by security rules via `exists()`.
-- **Course Identity**: Course identity is a **section** (*asignatura $\times$ período $\times$ sección*), not a generic course name.
-- **Grade Math Seam**: `lib/grades.ts` is the sole source of truth for Chilean 1.0–7.0 scale calculations and weighted averages. Do not duplicate grade arithmetic elsewhere.
+### 2.3 Mobile Seam & Study Library
 
-### 3. Study Library — Single Copy
-`public/biblioteca/` is the only copy of the study library. The duplicated Android tree (`android/app/src/main/assets/www/`) was removed by the Capacitor migration (REQ-CAP-19): the native shell loads `https://ceoubb.com` and offline coverage comes from `public/sw.js`, which precaches `/biblioteca/index.html` and serves the vendored assets cache-first. Do not regenerate that tree — `tests/rendered-html.test.mjs` fails if it comes back.
-
-### 4. Spec-Driven Development (SDD) Guardrail (Non-Negotiable)
-- **Spec First, Code Second**: No agent may generate code for non-trivial features, migrations, API changes, or cross-cutting remediations without an approved specification in `docs/specs/`.
-- **Formal Requirements**: Use EARS syntax (*Ubiquitous, Event-Driven, State-Driven, Unwanted Behavior, Optional*) and RFC 2119 keywords.
-- **BDD & Test Protection**: Define testable Gherkin acceptance criteria. Agents are strictly forbidden from weakening or deleting test assertions to pass builds.
-- **Skill Reference**: Read `.agents/skills/spec-driven-development/SKILL.md` before initiating non-trivial tasks.
+- **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
+- **Single Library Copy:** `public/biblioteca/` is the only valid copy of the study library. Do not regenerate duplicated asset trees under `android/`.
 
 ---
 
-## Development Setup & Commands
+## 3. Canonical Infrastructure Identifiers
 
-Always use `pnpm` (`no npm`, `no bun`). `npx` is permitted only for standalone CLI executions.
+| Resource                   | Identifier / Value                                      |
+| :------------------------- | :------------------------------------------------------ |
+| **Firebase Project ID**    | `centro-de-estudio-ubb`                                 |
+| **Messaging Sender ID**    | `411177916202`                                          |
+| **Firebase Region**        | `southamerica-west1`                                    |
+| **Default Storage Bucket** | `centro-de-estudio-ubb.firebasestorage.app`             |
+| **Android Application ID** | `cl.ubb.centroestudio` (minSdk 26)                      |
+| **Web Hosting**            | Vercel (`https://ceoubb.com`)                           |
+| **Web Database**           | Turso/libSQL (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`) |
+| **Canonical Repository**   | `https://github.com/CEOUBB/CEOUBB.git` (branch `main`)  |
 
-### Web Application:
+---
+
+## 4. Modular Context Rules (.agents/rules/*.mdc)
+
+To optimize semantic density and prevent context contamination, the following glob-scoped modular rules apply:
+
+- `.agents/rules/001-database-turso.mdc`: Drizzle transactions, mandatory `.limit()` clauses, and database pagination.
+- `.agents/rules/002-access-security.mdc`: Four-mirror security synchronization and dual-store mutations (Turso + Firestore) in user administration.
+- `.agents/rules/003-ui-components.mdc`: OKLCH tokens from `DESIGN.md`, typography pairings (`Source Serif 4` vs `Inter`), spring physics, and zero inline SVG icons.
+- `.agents/rules/004-mobile-capacitor.mdc`: Capacitor bridge, dynamic safe areas, and silent no-op degradation on the web.
+- `.agents/rules/005-api-webhooks.mdc`: Next.js API route handlers, Zod schema validation, and structured JSON error responses.
+
+---
+
+## 5. Strict Negative Constraints ("Do NOTs")
+
+1. **NO PLACEHOLDERS OR TRUNCATED CODE:** Generating code blocks with `// TODO`, `/* rest of code */`, or partial diffs is strictly prohibited. Every emitted block must be fully functional and compilable.
+2. **NO TEST WEAKENING (TEST-LOCKING):** Agents are strictly forbidden from weakening assertions, deleting tests, adding `.skip()`, or widening thresholds in `tests/` to force builds to pass.
+3. **NO ANY OR TYPE BYPASS:** Prohibited use of `any`, `@ts-ignore`, or unsafe type assertions (`as unknown as T`) without a deterministic validation parser (Zod).
+4. **NO UNBOUNDED QUERIES:** All database queries must include explicit `.limit()` clauses and indexed pagination cursors.
+5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively. Running `npm`, `yarn`, or `bun` is prohibited. Installing new packages without explicit authorization is forbidden.
+6. **NO FRONTEND AI SLOP (HIGH-CRAFT DESIGN GOVERNANCE):**
+   - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
+   - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via micro-borders (`border border-surface-border`) and layered micro-shadows.
+   - **Badges & Emojis:** Prohibited use of pulsating pill badges with `animate-ping` and decorative emojis (✨, 🚀, ⚡) as icons.
+   - **Motion & Physics:** Prohibited use of `transition: all` or `transition-all duration-300 ease-in-out`. Specify exact properties (`transform`, `opacity`) with critically damped spring physics (`stiffness: 340, damping: 28`) or micro-times ($\le 150\text{ms}$). Keyboard actions must be instantaneous ($0\text{ms}$).
+   - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle $y$ translation).
+   - **Data & Numerals:** Mandatory application of `font-variant-numeric: tabular-nums lining-nums` (`.num`) on all tables, grades, counters, and dates.
+   - **Iconography:** Mandatory exclusive use of `@phosphor-icons/react`. Do not hand-roll raw inline SVG icons.
+
+---
+
+## 6. Gold Standard References (GSR)
+
+When implementing or refactoring entities, clone the architectural patterns of these canonical files:
+
+- **Server Action / Secure Mutation:** `app/api/admin/users/route.ts` (Zod schema validation, server-side session, transactional mutation).
+- **Pure Domain Logic:** `lib/grades.ts` (pure mathematical functions, Chilean rounding, test suite in `tests/grades.test.ts`).
+- **Dashboard Component (React 19):** `app/views/CoursesDashboard.tsx` (semantic tokens consumption, dynamic code-splitting, accessibility).
+
+---
+
+## 7. Fast-Verification Harness & Definition of Done (DoD)
+
+### 7.1 Local Verification Pipeline
+
 ```bash
-pnpm install
-pnpm run dev
-pnpm run lint
-pnpm run typecheck
-pnpm run test:unit      # Fast unit tests (<150ms: access-policy, grades, webhooks)
-pnpm test               # Full build + integration tests
+pnpm run verify:fast         # 1. Typecheck + Unit Tests + SHA-256 Test-Locking Check (<3.0s)
+pnpm run verify:invariants   # 2. Security Invariants + Firebase Rules Validation (<500ms)
+pnpm test                    # 3. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
 
-### Firebase Functions & Rules:
-```bash
-pnpm run check:functions  # Root syntax check
-# or from subfolder:
-cd firebase/functions && pnpm install --frozen-lockfile && pnpm run check
+### 7.2 Contractual Definition of Done (DoD)
 
-# Selective Deploys (run from firebase/ directory with authorization)
-pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only firestore
-pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only storage
-pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only functions --force
-```
+A task is considered complete ONLY when:
 
-### Mobile Application (Capacitor):
-```bash
-pnpm exec cap sync android     # after changing capacitor.config.ts or adding a plugin
-pnpm exec cap doctor android
-cd android && ./gradlew :app:assembleDebug
-```
-`ios/` is a versioned scaffold only: `pod install`, compilation and signing need macOS + Xcode, and `GoogleService-Info.plist` is not in the repository. Do not add iOS build steps to CI.
-
----
-
-## Web Design System
-
-The visual design system for CEOUBB is light, paper-calm, and academic.
-
-### Sources of Truth:
-1. `design-ceoubb.md` at the repository root.
-2. `app/globals.css` (portal custom properties and utilities).
-3. The CEOUBB Design System on `claude.ai/design` (project `1730f6d2-1697-4fd1-bad0-f4e0b2863cd8`).
-
-### Core Aesthetic Principles:
-- **Canvas & Tone**: Paper-soft light canvas `--canvas-soft` (`#f4f6f9`), white card surfaces (`#ffffff`), near-black ink (`#0f172a`). No dark modes on portal views, no heavy gradients, no noise background textures.
-- **Primary Structural Accent**: UBB Royal Blue (`#0055b8`) is reserved **strictly** for primary actions, CTAs, active tab indicators, and inline links.
-- **Hero Band**: UBB Midnight Navy (`#002b5c`) is reserved for dark institutional hero bands (access panel, classroom cover).
-- **Academic Palette**: Accent colors (gold `#f59e0b`, red `#e31b23`, sky `#38bdf8`, emerald `#10b981`, purple `#8b5cf6`) tag courses, grades, and statuses. Never use accent colors to fill primary CTAs.
-- **Typography & Motion**: `Inter` font family with tight negative tracking on display headings. Animations (`motion/react`) must be subtle, fast (120–260ms), and respect `prefers-reduced-motion`.
-- **Icons**: Use `@phosphor-icons/react` exclusively. Do not hand-roll raw SVG icons.
-
----
-
-## Security, Privacy & Data Protection
-
-- **Default Deny**: Rules in Firestore and Storage default to deny and grant minimal necessary permissions.
-- **Data Protection Compliance**: Student records and grades fall under Ley 19.628 and Ley 21.719. Keep Firebase resources in `southamerica-west1`.
-- **Zero Committed Secrets**: Never commit `.env` files, keystores, service account JSONs, or API credentials.
-- **Append-Only History Preparedness**: Any new grade write path must assume audit logging/history is required.
-
----
-
-## Self-Verification & Quality Assurance (Auto-QA)
-
-As an advanced AI agent, **you are responsible for verifying your own output** before presenting a task as completed. Avoid delivering untested prototypes or unverified code.
-
-### Mandatory Self-Verification Steps:
-1. **Automated Checks**: Run `pnpm run lint` and `pnpm test` to verify build and unit correctness.
-2. **Security Invariant Verification**: If changing authentication or access code, run `tests/access-policy.test.ts` and test across the full role matrix (Student, Teacher, Owner, Collaborator, Rejected Gmail).
-3. **Scale & Edge Case Stress-Thinking**:
-   - Will this query/component perform cleanly with 5,000 active students and hundreds of course sections?
-   - Is pagination enforced?
-   - Does file upload respect the 50 MiB boundary?
-   - Are errors gracefully caught and presented to the user in clean Chilean Spanish?
-4. **Handoff Documentation**: Update `PLAN.md` with what changed, verification results, deployment status, and remaining risks.
-
----
-
-## Definition of Done
-
-A task is complete ONLY when:
-1. Requested functionality is fully implemented and tested.
-2. All automated linting and unit test suites pass (`pnpm run lint`, `pnpm test`).
-3. Security and domain role invariants remain strictly enforced.
-4. Scale implications (pagination, bounded queries) are addressed or documented as pilot debt in `PLAN.md`.
-5. Product disclaimers and non-official status remain preserved.
-6. Documentation and `PLAN.md` are updated with clear handoff details.
-7. Commit messages and pull request descriptions are strictly written in Spanish.
+1. Every requirement `REQ-XX` from the specification carries its code-level traceability marker `// Implements: REQ-XX`.
+2. `pnpm run typecheck` and `pnpm run lint` terminate with exit code `0` (zero errors, zero warnings).
+3. All unit and integration tests pass with zero test assertions modified or weakened in `tests/`.
+4. Security policies and trans-store synchronization remain fully intact.
+5. Database queries implement strict limits and bounded pagination.
+6. `PLAN.md` is updated with structured handoff notes.
+7. Commit messages and Pull Request titles are written **strictly in Spanish** with Conventional Commits.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

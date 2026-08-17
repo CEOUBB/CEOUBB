@@ -4,40 +4,40 @@
 "📱 mobile / android":
   - changed-files:
       - any-glob-to-any-file:
-          - 'android/**'
-          - 'capacitor.config.ts'
-          - 'capacitor/**'
-          - 'lib/mobile-bridge.ts'
-          - 'lib/native-files.ts'
-          - 'lib/push-notifications.ts'
-          - 'app/mobile-shell.tsx'
+          - "android/**"
+          - "capacitor.config.ts"
+          - "capacitor/**"
+          - "lib/mobile-bridge.ts"
+          - "lib/native-files.ts"
+          - "lib/push-notifications.ts"
+          - "app/mobile-shell.tsx"
 
 "🔥 firebase / backend":
   - changed-files:
       - any-glob-to-any-file:
-          - 'firebase/**'
-          - 'db/**'
-          - 'drizzle/**'
-          - 'app/api/**'
+          - "firebase/**"
+          - "db/**"
+          - "drizzle/**"
+          - "app/api/**"
 
 "🌐 web / frontend":
   - changed-files:
       - any-glob-to-any-file:
-          - 'app/**'
-          - 'lib/**'
-          - 'public/**'
+          - "app/**"
+          - "lib/**"
+          - "public/**"
 
 "📝 documentation":
   - changed-files:
       - any-glob-to-any-file:
-          - 'docs/**'
-          - '*.md'
-          - '.agents/**'
+          - "docs/**"
+          - "*.md"
+          - ".agents/**"
 
 "⚙️ ci / cd":
   - changed-files:
       - any-glob-to-any-file:
-          - '.github/**'
-          - 'package.json'
-          - 'pnpm-lock.yaml'
-          - 'tsconfig.json'
+          - ".github/**"
+          - "package.json"
+          - "pnpm-lock.yaml"
+          - "tsconfig.json"

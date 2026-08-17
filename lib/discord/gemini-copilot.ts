@@ -8,7 +8,7 @@ import { getLinearApiKey, getLinearIssue, listActiveLinearIssues } from "../serv
 import { getRecentCommits, listPullRequests } from "../services/github.ts";
 
 /**
- * Carga contexto del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md) para grounding del LLM.
+ * Carga contexto del repositorio (AGENTS.md, PLAN.md, DESIGN.md) para grounding del LLM.
  */
 export function getProjectContext(): string {
   let context = "";
@@ -23,9 +23,9 @@ export function getProjectContext(): string {
       context += `\n--- ACTIVE PLAN & SPRINT (PLAN.md) ---\n${fs.readFileSync(planPath, "utf-8").slice(0, 3500)}\n`;
     }
 
-    const designPath = path.join(process.cwd(), "design-ceoubb.md");
+    const designPath = path.join(process.cwd(), "DESIGN.md");
     if (fs.existsSync(designPath)) {
-      context += `\n--- DESIGN SYSTEM RULES (design-ceoubb.md) ---\n${fs.readFileSync(designPath, "utf-8").slice(0, 1500)}\n`;
+      context += `\n--- DESIGN SYSTEM RULES (DESIGN.md) ---\n${fs.readFileSync(designPath, "utf-8").slice(0, 1500)}\n`;
     }
   } catch (err) {
     console.warn("⚠️ Error leyendo archivos de contexto del proyecto:", err);
@@ -39,7 +39,8 @@ export function getProjectContext(): string {
 export const geminiToolsDeclarations: FunctionDeclaration[] = [
   {
     name: "linear_get_issue",
-    description: "Obtener información detallada de un issue o tarea de Linear mediante su identificador (ej: CEO-38)",
+    description:
+      "Obtener información detallada de un issue o tarea de Linear mediante su identificador (ej: CEO-38)",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -54,7 +55,10 @@ export const geminiToolsDeclarations: FunctionDeclaration[] = [
     parameters: {
       type: Type.OBJECT,
       properties: {
-        limit: { type: Type.NUMBER, description: "Cantidad máxima de issues a retornar (por defecto 10)" },
+        limit: {
+          type: Type.NUMBER,
+          description: "Cantidad máxima de issues a retornar (por defecto 10)",
+        },
       },
     },
   },
@@ -74,13 +78,17 @@ export const geminiToolsDeclarations: FunctionDeclaration[] = [
     parameters: {
       type: Type.OBJECT,
       properties: {
-        state: { type: Type.STRING, description: "Estado de los PRs: open, closed o all (por defecto open)" },
+        state: {
+          type: Type.STRING,
+          description: "Estado de los PRs: open, closed o all (por defecto open)",
+        },
       },
     },
   },
   {
     name: "github_ci_status",
-    description: "Consultar el estado del último pipeline de CI/CD (GitHub Actions) en la rama main",
+    description:
+      "Consultar el estado del último pipeline de CI/CD (GitHub Actions) en la rama main",
     parameters: {
       type: Type.OBJECT,
       properties: {},
@@ -91,7 +99,10 @@ export const geminiToolsDeclarations: FunctionDeclaration[] = [
 /**
  * Ejecutor de herramientas conectadas a Linear y GitHub
  */
-export async function executeGeminiToolCall(name: string, args: Record<string, unknown>): Promise<unknown> {
+export async function executeGeminiToolCall(
+  name: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
   if (name === "linear_get_issue") {
     const issueId = String(args.issueId || "").toUpperCase();
     if (!getLinearApiKey()) return { error: "LINEAR_API_KEY no configurada en Vercel." };
@@ -122,7 +133,8 @@ export async function executeGeminiToolCall(name: string, args: Record<string, u
   }
 
   if (name === "github_list_prs") {
-    const state = (typeof args.state === "string" ? args.state : "open") as "open" | "closed" | "all";
+    const state = (typeof args.state === "string" ? args.state : "open") as
+      "open" | "closed" | "all";
     const prs = await listPullRequests(state, 5);
     return prs;
   }
@@ -155,7 +167,7 @@ export async function processGeminiQueryWithTools(
 
   const systemInstruction = `Eres el Asistente de IA Senior y Copiloto de Desarrollo de CEOUBB (Centro de Estudio UBB - LMS Universidad del Bío-Bío).
 Estás interactuando en Discord con el mantenedor del proyecto (${userDisplayName}).
-Tienes conocimiento profundo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md, PLAN.md, design-ceoubb.md).
+Tienes conocimiento profundo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md, PLAN.md, DESIGN.md).
 Tienes acceso a herramientas para consultar Linear (issues, sprints) y GitHub (commits, PRs, CI).
 Si el usuario pregunta por temas conversados previamente en el canal o acuerdos recientes, revisa el historial reciente de conversación en este canal.
 
@@ -163,7 +175,7 @@ Reglas indispensables de CEOUBB:
 - Stack: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, Firebase southamerica-west1.
 - Paquetes: Usar SIEMPRE pnpm (no npm, no bun).
 - Auth & Roles: Gobernado estrictamente por lib/access-policy.ts (@ubiobio.cl docente, @alumnos.ubiobio.cl estudiante).
-- Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (design-ceoubb.md).
+- Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (DESIGN.md).
 - Idioma: Responde siempre en español formal, técnico y educado.
 
 ${projectContext}
@@ -192,11 +204,17 @@ ${channelHistory}`;
           validCalls.map(async (callPart) => {
             const toolCall = callPart.functionCall!;
             const toolName = toolCall.name || "";
-            const toolResult = await executeGeminiToolCall(toolName, (toolCall.args as Record<string, unknown>) || {});
+            const toolResult = await executeGeminiToolCall(
+              toolName,
+              (toolCall.args as Record<string, unknown>) || {}
+            );
             return {
               functionResponse: {
                 name: toolName,
-                response: typeof toolResult === "object" && toolResult !== null ? (toolResult as Record<string, unknown>) : { result: toolResult },
+                response:
+                  typeof toolResult === "object" && toolResult !== null
+                    ? (toolResult as Record<string, unknown>)
+                    : { result: toolResult },
               },
             };
           })
@@ -215,7 +233,8 @@ ${channelHistory}`;
           config: { systemInstruction },
         });
 
-        const followUpText = followUpRes.text || followUpRes.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const followUpText =
+          followUpRes.text || followUpRes.candidates?.[0]?.content?.parts?.[0]?.text || "";
         if (followUpText) return followUpText.trim();
       }
 

@@ -43,8 +43,7 @@ const GEMINI_API_KEY =
   process.env.GEMINI_API_KEY;
 
 const LINEAR_API_KEY = process.env.LINEAR_API_KEY;
-const TARGET_CHANNEL_ID =
-  process.env.DISCORD_STANDUP_CHANNEL_ID || "1537708834561327175"; // #🧪-❙-standup-testing
+const TARGET_CHANNEL_ID = process.env.DISCORD_STANDUP_CHANNEL_ID || "1537708834561327175"; // #🧪-❙-standup-testing
 const GUILD_ID = process.env.DISCORD_GUILD_ID || "1536934841680011385";
 
 // User IDs
@@ -84,7 +83,7 @@ async function getGitActivity(hours = 12) {
   try {
     const sinceDate = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
     const { stdout: commitsRaw } = await execPromise(
-      `git log --since="${sinceDate}" --pretty=format:"%h|%an|%s|%cd" -n 30`,
+      `git log --since="${sinceDate}" --pretty=format:"%h|%an|%s|%cd" -n 30`
     );
 
     const commits = commitsRaw
@@ -152,9 +151,24 @@ async function getLinearActivity(hours = 12) {
   if (!LINEAR_API_KEY) {
     return {
       activeIssues: [
-        { id: "CEO-38", title: "Migración de modelo de cursos (Asignatura × Período × Sección)", assignee: "Pipe", priority: "Alta" },
-        { id: "CEO-29", title: "Gating de lecturas en Firestore por matrícula institucional", assignee: "Joaquín", priority: "Seguridad" },
-        { id: "CEO-15", title: "Auditoría de accesibilidad WCAG 2.2 y optimización web", assignee: "General", priority: "Media" },
+        {
+          id: "CEO-38",
+          title: "Migración de modelo de cursos (Asignatura × Período × Sección)",
+          assignee: "Pipe",
+          priority: "Alta",
+        },
+        {
+          id: "CEO-29",
+          title: "Gating de lecturas en Firestore por matrícula institucional",
+          assignee: "Joaquín",
+          priority: "Seguridad",
+        },
+        {
+          id: "CEO-15",
+          title: "Auditoría de accesibilidad WCAG 2.2 y optimización web",
+          assignee: "General",
+          priority: "Media",
+        },
       ],
       completedIssues: [
         { id: "CEO-42", title: "Configurar Sentry SDK e integración de alertas en Discord" },
@@ -195,17 +209,19 @@ async function getLinearActivity(hours = 12) {
     });
     const data = await res.json();
     return {
-      activeIssues: data?.data?.active?.nodes?.map((n) => ({
-        id: n.identifier,
-        title: n.title,
-        assignee: n.assignee?.name || "Sin asignar",
-        priority: n.priorityLabel || "Normal",
-      })) || [],
-      completedIssues: data?.data?.completed?.nodes?.map((n) => ({
-        id: n.identifier,
-        title: n.title,
-        assignee: n.assignee?.name,
-      })) || [],
+      activeIssues:
+        data?.data?.active?.nodes?.map((n) => ({
+          id: n.identifier,
+          title: n.title,
+          assignee: n.assignee?.name || "Sin asignar",
+          priority: n.priorityLabel || "Normal",
+        })) || [],
+      completedIssues:
+        data?.data?.completed?.nodes?.map((n) => ({
+          id: n.identifier,
+          title: n.title,
+          assignee: n.assignee?.name,
+        })) || [],
       isMock: false,
     };
   } catch {
@@ -339,21 +355,24 @@ Devuelve estrictamente un JSON válido con esta estructura:
           buttonLabel: "Prompt: Pipe (CEO-38)",
           taskTitle: "CEO-38: Modelo Académico (Pipe)",
           branchCmd: "git checkout -b feat/ceo-38-academic-model && pnpm dev",
-          agentPrompt: "OBJETIVO: Migrar modelo académico a Asignatura × Período × Sección.\\nARCHIVOS: lib/courses.ts, app/Portal.tsx.\\nTESTS: pnpm run test:unit.",
+          agentPrompt:
+            "OBJETIVO: Migrar modelo académico a Asignatura × Período × Sección.\\nARCHIVOS: lib/courses.ts, app/Portal.tsx.\\nTESTS: pnpm run test:unit.",
         },
         {
           id: "joaquin",
           buttonLabel: "Prompt: Joaquín (CEO-29)",
           taskTitle: "CEO-29: Reglas Firestore (Joaquín)",
           branchCmd: "git checkout -b feat/ceo-29-firestore-gating && pnpm dev",
-          agentPrompt: "OBJETIVO: Reforzar reglas de Firestore por matrícula institucional.\\nARCHIVOS: firebase/firestore.rules.\\nTESTS: pnpm run test:unit.",
+          agentPrompt:
+            "OBJETIVO: Reforzar reglas de Firestore por matrícula institucional.\\nARCHIVOS: firebase/firestore.rules.\\nTESTS: pnpm run test:unit.",
         },
         {
           id: "backlog",
           buttonLabel: "Prompt: Backlog (CEO-15)",
           taskTitle: "CEO-15: Accesibilidad WCAG (General)",
           branchCmd: "git checkout -b feat/ceo-15-wcag-audit && pnpm dev",
-          agentPrompt: "OBJETIVO: Auditoría de accesibilidad WCAG 2.2.\\nARCHIVOS: app/Portal.tsx, public/biblioteca/.\\nTESTS: pnpm run test:unit.",
+          agentPrompt:
+            "OBJETIVO: Auditoría de accesibilidad WCAG 2.2.\\nARCHIVOS: app/Portal.tsx, public/biblioteca/.\\nTESTS: pnpm run test:unit.",
         },
       ],
     };
@@ -424,7 +443,11 @@ async function runDoctorDiagnostics() {
   try {
     const { stdout } = await execPromise("pnpm run test:unit");
     const countMatch = stdout.match(/pass\s+(\d+)/i) || stdout.match(/ok/i);
-    results.unitTests = { ok: true, output: "4 suites de pruebas pasadas", passedCount: countMatch ? 4 : 1 };
+    results.unitTests = {
+      ok: true,
+      output: "4 suites de pruebas pasadas",
+      passedCount: countMatch ? 4 : 1,
+    };
   } catch (err) {
     results.unitTests = { ok: false, output: err.stdout || err.message, passedCount: 0 };
   }
@@ -478,19 +501,26 @@ async function reviewPullRequestWithAI(prNumber) {
   // 3. Obtener comentarios del PR para detectar diagnósticos de React Doctor
   let reactDoctorNotes = "Sin comentarios de React Doctor detectados en el PR.";
   try {
-    const commentsRes = await fetch(`https://api.github.com/repos/CEOUBB/CEOUBB/issues/${prNumber}/comments`, {
-      headers,
-      signal: AbortSignal.timeout(5000),
-    });
+    const commentsRes = await fetch(
+      `https://api.github.com/repos/CEOUBB/CEOUBB/issues/${prNumber}/comments`,
+      {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      }
+    );
     if (commentsRes.ok) {
       const comments = await commentsRes.json();
-      const doctorComments = (comments || []).filter((c) =>
-        c.body?.toLowerCase().includes("react doctor") ||
-        c.body?.toLowerCase().includes("million") ||
-        c.user?.login?.toLowerCase().includes("doctor")
+      const doctorComments = (comments || []).filter(
+        (c) =>
+          c.body?.toLowerCase().includes("react doctor") ||
+          c.body?.toLowerCase().includes("million") ||
+          c.user?.login?.toLowerCase().includes("doctor")
       );
       if (doctorComments.length > 0) {
-        reactDoctorNotes = doctorComments.map((c) => c.body).join("\n\n---\n\n").slice(0, 3000);
+        reactDoctorNotes = doctorComments
+          .map((c) => c.body)
+          .join("\n\n---\n\n")
+          .slice(0, 3000);
       }
     }
   } catch {
@@ -522,13 +552,13 @@ ${reactDoctorNotes}
 Instrucciones de auditoría:
 1. Diagnósticos de React Doctor: Revisa si React Doctor dejó advertencias de rendimiento, renderizados innecesarios o accesibilidad. Si React Doctor reportó algún problema, enuméralo detalladamente y EXIGE su resolución antes de aprobar el PR.
 2. Seguridad & Roles: Verificar que la derivación de roles use estrictamente lib/access-policy.ts y dominios @ubiobio.cl.
-3. Escala UBB: Verificar uso de pnpm, diseño sobrio (design-ceoubb.md) y pruebas unitarias.
+3. Escala UBB: Verificar uso de pnpm, diseño sobrio (DESIGN.md) y pruebas unitarias.
 
 Emite un informe conciso en español formal estructurado así:
 **Resumen del Cambio**: (1-2 frases)
 **Diagnósticos de React Doctor**: (Detalla si hay problemas reportados por React Doctor o si está limpio)
 **Seguridad & Roles**: (¿Cumple lib/access-policy.ts y dominios @ubiobio.cl / @alumnos.ubiobio.cl?)
-**Escala & Calidad**: (¿Usa pnpm? ¿Respeta diseño sobrio design-ceoubb.md? ¿Hay riesgo a escala?)
+**Escala & Calidad**: (¿Usa pnpm? ¿Respeta diseño sobrio DESIGN.md? ¿Hay riesgo a escala?)
 **Veredicto**: (✅ APROBADO si todo está limpio, o ⚠️ REQUIERE CAMBIOS exigiendo resolver problemas de React Doctor o arquitectura)
 `;
 
@@ -553,28 +583,39 @@ async function registerSlashCommands(client) {
         .setName("standup")
         .setDescription("Generar un reporte de Standup instantáneo")
         .addIntegerOption((opt) =>
-          opt.setName("horas").setDescription("Horas de historial a revisar (por defecto 12)").setRequired(false),
+          opt
+            .setName("horas")
+            .setDescription("Horas de historial a revisar (por defecto 12)")
+            .setRequired(false)
         ),
       new SlashCommandBuilder()
         .setName("prompt")
         .setDescription("Generar un prompt listo para tu Agente IA a partir de una tarea")
         .addStringOption((opt) =>
-          opt.setName("tarea").setDescription("Código de Linear (ej: CEO-38) o descripción de la tarea").setRequired(true),
+          opt
+            .setName("tarea")
+            .setDescription("Código de Linear (ej: CEO-38) o descripción de la tarea")
+            .setRequired(true)
         ),
       new SlashCommandBuilder()
         .setName("gitstarter")
         .setDescription("Obtener el comando de git checkout para iniciar una tarea")
         .addStringOption((opt) =>
-          opt.setName("tarea").setDescription("Código de la tarea (ej: CEO-38)").setRequired(true),
+          opt.setName("tarea").setDescription("Código de la tarea (ej: CEO-38)").setRequired(true)
         ),
       new SlashCommandBuilder()
         .setName("doctor")
-        .setDescription("Ejecutar diagnóstico de TypeScript, Unit Tests y Linter en el repositorio"),
+        .setDescription(
+          "Ejecutar diagnóstico de TypeScript, Unit Tests y Linter en el repositorio"
+        ),
       new SlashCommandBuilder()
         .setName("review-pr")
         .setDescription("Auditar un Pull Request con Gemini 3.7 y las reglas de AGENTS.md")
         .addIntegerOption((opt) =>
-          opt.setName("numero").setDescription("Número del Pull Request en GitHub (ej: 1, 2, 3...)").setRequired(true),
+          opt
+            .setName("numero")
+            .setDescription("Número del Pull Request en GitHub (ej: 1, 2, 3...)")
+            .setRequired(true)
         ),
     ].map((c) => c.toJSON());
 
@@ -582,7 +623,9 @@ async function registerSlashCommands(client) {
     await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), {
       body: commands,
     });
-    console.log("✅ Slash Commands (/standup, /prompt, /gitstarter, /doctor, /review-pr) registrados con éxito.");
+    console.log(
+      "✅ Slash Commands (/standup, /prompt, /gitstarter, /doctor, /review-pr) registrados con éxito."
+    );
   } catch (err) {
     console.warn("⚠️ No se pudieron registrar los Slash Commands:", err.message);
   }
@@ -610,9 +653,9 @@ async function publishMorningStandup(client) {
       .setTitle("☀️ CEOUBB Daily Standup — Apertura de Jornada (12:00 PM)")
       .setDescription(
         `${summary}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `**Lanzador de Tareas para Agentes IA:**\n` +
-        `Presiona cualquier botón para recibir el prompt o comando git listo para usar.\n`
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `**Lanzador de Tareas para Agentes IA:**\n` +
+          `Presiona cualquier botón para recibir el prompt o comando git listo para usar.\n`
       )
       .setColor(0x0055b8)
       .setFooter({ text: `CEOUBB LMS • Powered by Gemini (${usedModel})` })
@@ -630,11 +673,16 @@ async function publishMorningStandup(client) {
         new ButtonBuilder()
           .setCustomId(btnId)
           .setLabel((task.buttonLabel || task.taskTitle).slice(0, 80))
-          .setStyle(i === 0 ? ButtonStyle.Primary : i === 1 ? ButtonStyle.Success : ButtonStyle.Secondary)
+          .setStyle(
+            i === 0 ? ButtonStyle.Primary : i === 1 ? ButtonStyle.Success : ButtonStyle.Secondary
+          )
       );
     }
 
-    const message = await channel.send({ embeds: [embed], components: row.components.length > 0 ? [row] : [] });
+    const message = await channel.send({
+      embeds: [embed],
+      components: row.components.length > 0 ? [row] : [],
+    });
     console.log("✅ Standup de Apertura (12:00 PM) publicado en Discord.");
 
     // Collector para los botones
@@ -761,7 +809,9 @@ async function main() {
       const planContext = getPlanContext();
       const linearData = await getLinearActivity(hours);
       const { summary } = await generateMorningStandup({ gitData, planContext, linearData });
-      await interaction.editReply({ content: `**Standup de las últimas ${hours} horas:**\n\n${summary}` });
+      await interaction.editReply({
+        content: `**Standup de las últimas ${hours} horas:**\n\n${summary}`,
+      });
     }
 
     if (interaction.commandName === "prompt") {
@@ -794,7 +844,7 @@ async function main() {
       const promptText =
         `OBJETIVO: Resolver la tarea "${taskCode}: ${cleanTitle}" en el LMS CEOUBB.\n\n` +
         `CONTEXTO: Revisar AGENTS.md y PLAN.md para especificaciones y requisitos.\n\n` +
-        `REGLAS (AGENTS.md):\n- Usar pnpm (no npm, no bun).\n- Mantener consistencia con lib/access-policy.ts (@ubiobio.cl).\n- Respetar el diseño institucional sobrio (design-ceoubb.md).\n\n` +
+        `REGLAS (AGENTS.md):\n- Usar pnpm (no npm, no bun).\n- Mantener consistencia con lib/access-policy.ts (@ubiobio.cl).\n- Respetar el diseño institucional sobrio (DESIGN.md).\n\n` +
         `TESTS: Ejecutar pnpm run test:unit y pnpm run typecheck al finalizar.`;
 
       await interaction.editReply({
@@ -807,9 +857,7 @@ async function main() {
       const matchCode = taskInput.match(/CEO-\d+/i);
       const taskCode = matchCode ? matchCode[0].toUpperCase() : "CEO-TASK";
 
-      let cleanTitle = taskInput
-        .replace(/^CEO-\d+[:\s-]*/i, "")
-        .trim();
+      let cleanTitle = taskInput.replace(/^CEO-\d+[:\s-]*/i, "").trim();
 
       if (!cleanTitle && matchCode) {
         const linearTitle = await getLinearIssueTitle(taskCode);
@@ -838,9 +886,27 @@ async function main() {
         .setTitle("🩺 Diagnóstico del Repositorio CEOUBB (/doctor)")
         .setColor(allGreen ? 0x10b981 : 0xef4444)
         .addFields(
-          { name: "TypeScript (Typecheck)", value: diag.typecheck.ok ? "🟢 Sin errores de tipos" : `🔴 Error:\n\`\`\`${diag.typecheck.output.slice(0, 300)}\`\`\``, inline: true },
-          { name: "Unit Tests (Node Test Runner)", value: diag.unitTests.ok ? `🟢 ${diag.unitTests.output}` : `🔴 Fallo:\n\`\`\`${diag.unitTests.output.slice(0, 300)}\`\`\``, inline: true },
-          { name: "Linter & A11y (ESLint)", value: diag.lint.ok ? "🟢 Linter limpio" : `🟡 Advertencias:\n\`\`\`${diag.lint.output.slice(0, 300)}\`\`\``, inline: true }
+          {
+            name: "TypeScript (Typecheck)",
+            value: diag.typecheck.ok
+              ? "🟢 Sin errores de tipos"
+              : `🔴 Error:\n\`\`\`${diag.typecheck.output.slice(0, 300)}\`\`\``,
+            inline: true,
+          },
+          {
+            name: "Unit Tests (Node Test Runner)",
+            value: diag.unitTests.ok
+              ? `🟢 ${diag.unitTests.output}`
+              : `🔴 Fallo:\n\`\`\`${diag.unitTests.output.slice(0, 300)}\`\`\``,
+            inline: true,
+          },
+          {
+            name: "Linter & A11y (ESLint)",
+            value: diag.lint.ok
+              ? "🟢 Linter limpio"
+              : `🟡 Advertencias:\n\`\`\`${diag.lint.output.slice(0, 300)}\`\`\``,
+            inline: true,
+          }
         )
         .setFooter({ text: "CEOUBB LMS • Auto-QA System" })
         .setTimestamp();
@@ -863,7 +929,9 @@ async function main() {
 
         await interaction.editReply({ embeds: [embed] });
       } catch (err) {
-        await interaction.editReply({ content: `❌ Error auditando el PR #${prNum}: ${err.message}` });
+        await interaction.editReply({
+          content: `❌ Error auditando el PR #${prNum}: ${err.message}`,
+        });
       }
     }
   });

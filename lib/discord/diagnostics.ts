@@ -17,10 +17,10 @@ export async function fetchLatestCIDiagnostics(): Promise<string> {
           s.conclusion === "success"
             ? "🟢"
             : s.conclusion === "failure"
-            ? "🔴"
-            : s.status === "in_progress"
-            ? "🟡 (En ejecución)"
-            : "⚪ (Pendiente)";
+              ? "🔴"
+              : s.status === "in_progress"
+                ? "🟡 (En ejecución)"
+                : "⚪ (Pendiente)";
         return `• **${s.name}:** ${icon}`;
       })
       .join("\n");
@@ -29,8 +29,8 @@ export async function fetchLatestCIDiagnostics(): Promise<string> {
       latestRun.conclusion === "success"
         ? "🟢 Exitoso"
         : latestRun.conclusion === "failure"
-        ? "🔴 Falló"
-        : `🟡 ${latestRun.status}`;
+          ? "🔴 Falló"
+          : `🟡 ${latestRun.status}`;
 
     return (
       `### 🩺 Diagnóstico Real de CI/CD (/doctor)\n\n` +

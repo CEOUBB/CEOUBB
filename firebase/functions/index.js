@@ -15,63 +15,84 @@ function text(value, fallback, limit) {
   return (normalized || fallback).slice(0, limit);
 }
 
-exports.notifyStudentsOnCoursePost = onDocumentCreated("courses/{courseId}/posts/{postId}", async (event) => {
-  if (!event.data) return;
-  const post = event.data.data();
-  const courseId = event.params.courseId;
-  const postId = event.params.postId;
-  const topicCourse = courseId.replace(/[^a-zA-Z0-9-_.~%]/g, "_");
-  const title = text(post.title, "Nuevo material del curso", 100);
-  const body = text(post.body, "Tu profesor publicó un aviso o archivo nuevo.", 240);
-  await getMessaging().send({
-    topic: `course_${topicCourse}_students`,
-    data: {
-      title,
-      body,
-      courseId,
-      postId,
-      kind: text(post.kind, "material", 40),
-      target: `course:${courseId}`
-    },
-    android: {
-      priority: "high",
-      notification: {
-        channelId: "course_updates",
-        sound: "default"
-      }
-    },
-    apns: {
-      payload: {
-        aps: {
-          alert: { title, body },
-          sound: "default"
-        }
-      }
-    }
-  });
-});
+exports.notifyStudentsOnCoursePost = onDocumentCreated(
+  "courses/{courseId}/posts/{postId}",
+  async (event) => {
+    if (!event.data) return;
+    const post = event.data.data();
+    const courseId = event.params.courseId;
+    const postId = event.params.postId;
+    const topicCourse = courseId.replace(/[^a-zA-Z0-9-_.~%]/g, "_");
+    const title = text(post.title, "Nuevo material del curso", 100);
+    const body = text(post.body, "Tu profesor publicó un aviso o archivo nuevo.", 240);
+    await getMessaging().send({
+      topic: `course_${topicCourse}_students`,
+      data: {
+        title,
+        body,
+        courseId,
+        postId,
+        kind: text(post.kind, "material", 40),
+        target: `course:${courseId}`,
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channelId: "course_updates",
+          sound: "default",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            alert: { title, body },
+            sound: "default",
+          },
+        },
+      },
+    });
+  }
+);
 
+// Implements: REQ-PERF-09
 exports.deleteMyAccount = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
-  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión para eliminar tu cuenta.");
+  if (!uid)
+    throw new HttpsError("unauthenticated", "Debes iniciar sesión para eliminar tu cuenta.");
   const db = getFirestore();
   const bucket = getStorage().bucket();
   const [posts, progress] = await Promise.all([
     db.collectionGroup("posts").where("authorId", "==", uid).get(),
     db.collectionGroup("progress").where("uid", "==", uid).get(),
   ]);
-  await Promise.all([
-    Promise.all(posts.docs.map(async (document) => {
-      const storagePath = text(document.get("storagePath"), "", 900);
-      if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
-        await bucket.file(storagePath).delete({ ignoreNotFound: true });
-      }
-      await document.ref.delete();
-    })),
-    Promise.all(progress.docs.map((document) => document.ref.delete())),
-    bucket.deleteFiles({ prefix: `courses/estatica/${uid}/` }),
-    db.collection("users").doc(uid).delete(),
-  ]);
+
+  // Clean up storage files dynamically
+  const storageDeletions = [];
+  for (const document of posts.docs) {
+    const storagePath = text(document.get("storagePath"), "", 900);
+    if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
+      storageDeletions.push(bucket.file(storagePath).delete({ ignoreNotFound: true }));
+    }
+  }
+  await Promise.all(storageDeletions);
+
+  // Batch delete Firestore documents in chunks of up to 400 operations
+  const allDocRefs = [
+    ...posts.docs.map((doc) => doc.ref),
+    ...progress.docs.map((doc) => doc.ref),
+    db.collection("users").doc(uid),
+  ];
+
+  const BATCH_SIZE = 400;
+  for (let i = 0; i < allDocRefs.length; i += BATCH_SIZE) {
+    const chunk = allDocRefs.slice(i, i + BATCH_SIZE);
+    const batch = db.batch();
+    for (const ref of chunk) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+
   await getAuth().deleteUser(uid);
   return { deleted: true };
 });

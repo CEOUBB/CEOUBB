@@ -1,7 +1,7 @@
 # P3 — Hub de Recursos de Estudio, Asistentes de IA y Ecosistema UBB (SDD Specification)
 
 **Status:** APPROVED FOR IMPLEMENTATION · **Target:** Web Portal (`app/portal-views.tsx`, `app/globals.css`)  
-**Design Standard:** `design-ceoubb.md` · **Execution Agent:** Claude Code / Antigravity
+**Design Standard:** `DESIGN.md` · **Execution Agent:** Claude Code / Antigravity
 
 ---
 
@@ -11,7 +11,7 @@ Transformar la vista estática y restringida de Recursos de Estudio (`ResourcesV
 
 > [!TIP]
 > **Directiva de Libertad Creativa y Técnica para Claude Code:**  
-> El agente ejecutor cuenta con **total libertad creativa y arquitectónica** para diseñar componentes, modularizar código, estructurar estilos CSS, añadir micro-interacciones sutiles con `motion/react`, refinar el layout responsivo y pulir la tipografía y contrastes, siempre que cumpla con los requisitos funcionales EARS y los lineamientos base de `design-ceoubb.md`.
+> El agente ejecutor cuenta con **total libertad creativa y arquitectónica** para diseñar componentes, modularizar código, estructurar estilos CSS, añadir micro-interacciones sutiles con `motion/react`, refinar el layout responsivo y pulir la tipografía y contrastes, siempre que cumpla con los requisitos funcionales EARS y los lineamientos base de `DESIGN.md`.
 
 ---
 
@@ -72,7 +72,7 @@ El flujo visual de la página SHALL estructurarse en **4 grandes bloques temáti
   WHILE rendering the AI Hub, the system SHALL segregate the 6 AI platforms into two distinct groups:
   1. `100% Gratis`: DeepSeek, Kimi, Qwen.
   2. `Plan gratuito*`: ChatGPT\*\*, Claude, Google Gemini.  
-  And SHALL render the corresponding explanatory footnotes for `*` (cuotas de uso) and `**` (acceso conversacional ilimitado en modelos base).
+     And SHALL render the corresponding explanatory footnotes for `*` (cuotas de uso) and `**` (acceso conversacional ilimitado en modelos base).
 
 - **REQ-RES-06 (State-Driven - Logos Vectoriales Oficiales)**  
   WHILE rendering third-party platforms (AI tools and student perks), the system SHALL use sharp, clean, self-contained SVG vectors for each brand logo (OpenAI, Anthropic, DeepSeek, Google, Moonshot, Alibaba Qwen, GitHub, Notion, Microsoft 365, Autodesk, Spotify, Apple Music, YouTube Music).
@@ -121,7 +121,7 @@ Feature: Study Resources & Academic Hub
    - Usar animaciones de entrada fluidas y sutiles con `motion/react` (`stagger`, `rise`, `duration: 0.25–0.4s`).
 2. **Estilos (`app/globals.css`)**:
    - Tarjetas sobre `--surface-card` (`#ffffff`), bordes `--border-hairline` (`#e2e8f0`), sutil elevación al hover.
-   - Badges con estilo pill (`border-radius: 9999px`) usando los acentos de `design-ceoubb.md` (azul UBB `#0055b8` para oficiales, verde suave para 100% gratis, ámbar para descuentos).
+   - Badges con estilo pill (`border-radius: 9999px`) usando los acentos de `DESIGN.md` (azul UBB `#0055b8` para oficiales, verde suave para 100% gratis, ámbar para descuentos).
    - Layout 100% responsivo (grid flexible de 1 columna en móvil, 2 en tablet, 3-4 en desktop grande).
 3. **Verificación de Calidad**:
    - `pnpm run lint`

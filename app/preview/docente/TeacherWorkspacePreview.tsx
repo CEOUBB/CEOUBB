@@ -2,16 +2,7 @@
 
 import { useCallback, useReducer, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import {
-  ChartBar,
-  Eye,
-  FolderSimple,
-  House,
-  List,
-  Notebook,
-  Tray,
-  X,
-} from "@phosphor-icons/react";
+import { ChartBar, Eye, FolderSimple, House, List, Notebook, Tray, X } from "@phosphor-icons/react";
 import { ActivitiesPanel, GradebookPanel, HomePanel, ReviewPanel } from "./teacher-preview-panels";
 import { ActivityEditorDialog, StudentPreviewDialog } from "./teacher-preview-dialogs";
 import {
@@ -36,7 +27,11 @@ function useNarrowViewport() {
     query.addEventListener("change", notify);
     return () => query.removeEventListener("change", notify);
   }, []);
-  return useSyncExternalStore(subscribe, () => window.matchMedia(NARROW).matches, () => false);
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(NARROW).matches,
+    () => false
+  );
 }
 
 const NAVIGATION = [
@@ -48,7 +43,11 @@ const NAVIGATION = [
 
 // Implements: REQ-DOC-02, REQ-DOC-03, REQ-DOC-04, REQ-DOC-07, REQ-DOC-11, REQ-DOC-12, REQ-DOC-13
 export function TeacherWorkspacePreview() {
-  const [state, dispatch] = useReducer(teacherPreviewReducer, undefined, createInitialTeacherPreviewState);
+  const [state, dispatch] = useReducer(
+    teacherPreviewReducer,
+    undefined,
+    createInitialTeacherPreviewState
+  );
   const [view, setView] = useState<TeacherView>("home");
   const [manualSidebar, setManualSidebar] = useState<boolean | null>(null);
   const [editingActivity, setEditingActivity] = useState<TeacherActivityPreview | null>(null);
@@ -58,33 +57,49 @@ export function TeacherWorkspacePreview() {
   const narrow = useNarrowViewport();
   const sidebarOpen = manualSidebar ?? !narrow;
 
-  const pendingReviews = state.submissions.filter((submission) => ["submitted", "late", "review_draft"].includes(submission.state)).length;
+  const pendingReviews = state.submissions.filter((submission) =>
+    ["submitted", "late", "review_draft"].includes(submission.state)
+  ).length;
 
   const navigate = (nextView: TeacherView, activityId?: string) => {
     const requestedActivityId = activityId ?? state.selectedActivityId;
-    const reviewActivityId = nextView === "review" && !state.submissions.some((submission) => submission.activityId === requestedActivityId)
-      ? state.activities.find((activity) => state.submissions.some((submission) => submission.activityId === activity.id))?.id
-      : requestedActivityId;
+    const reviewActivityId =
+      nextView === "review" &&
+      !state.submissions.some((submission) => submission.activityId === requestedActivityId)
+        ? state.activities.find((activity) =>
+            state.submissions.some((submission) => submission.activityId === activity.id)
+          )?.id
+        : requestedActivityId;
     if (reviewActivityId) {
       dispatch({ type: "select_activity", activityId: reviewActivityId });
-      const firstSubmission = state.submissions.find((submission) => submission.activityId === reviewActivityId);
-      if (nextView === "review" && firstSubmission) dispatch({ type: "select_submission", submissionId: firstSubmission.id });
+      const firstSubmission = state.submissions.find(
+        (submission) => submission.activityId === reviewActivityId
+      );
+      if (nextView === "review" && firstSubmission)
+        dispatch({ type: "select_submission", submissionId: firstSubmission.id });
     }
     setView(nextView);
     if (narrow) setManualSidebar(false);
-    setAnnouncement(`Sección ${NAVIGATION.find((item) => item.id === nextView)?.label ?? "docente"} abierta.`);
+    setAnnouncement(
+      `Sección ${NAVIGATION.find((item) => item.id === nextView)?.label ?? "docente"} abierta.`
+    );
   };
 
   const openStudentPreview = (submissionId?: string) => {
-    const fallback = state.submissions.find((submission) => publishedStudentReview(state, submission.id));
+    const fallback = state.submissions.find((submission) =>
+      publishedStudentReview(state, submission.id)
+    );
     setStudentPreviewSubmissionId(submissionId ?? fallback?.id ?? state.selectedSubmissionId);
   };
 
-  const openNewActivity = () => setEditingActivity(emptyActivity(state.section.id, state.activities.length + 1));
+  const openNewActivity = () =>
+    setEditingActivity(emptyActivity(state.section.id, state.activities.length + 1));
 
   return (
     <div className="app-shell" data-sidebar={sidebarOpen ? "open" : "closed"}>
-      <a className={styles.skipLink} href="#espacio-docente">Saltar al contenido docente</a>
+      <a className={styles.skipLink} href="#espacio-docente">
+        Saltar al contenido docente
+      </a>
 
       <header className="app-header">
         <button
@@ -101,7 +116,9 @@ export function TeacherWorkspacePreview() {
           <strong>Centro de Estudio UBB</strong>
         </span>
         <p className="header-context">
-          <span aria-hidden="true" className="header-context-sep">/</span>
+          <span aria-hidden="true" className="header-context-sep">
+            /
+          </span>
           <span className="header-context-label">Espacio docente</span>
           <span className={styles.previewChip}>
             <i aria-hidden="true" />
@@ -109,18 +126,31 @@ export function TeacherWorkspacePreview() {
           </span>
         </p>
         <div className="header-actions">
-          <button className={styles.headerAction} type="button" onClick={() => openStudentPreview()}>
+          <button
+            className={styles.headerAction}
+            type="button"
+            onClick={() => openStudentPreview()}
+          >
             <Eye size={17} aria-hidden="true" />
             <span>Vista estudiante</span>
           </button>
           <span className={styles.headerIdentity}>
-            <span className="avatar" aria-hidden="true">DE</span>
-            <span className="account-copy"><strong>Docente</strong><small>{state.section.section}</small></span>
+            <span className="avatar" aria-hidden="true">
+              DE
+            </span>
+            <span className="account-copy">
+              <strong>Docente</strong>
+              <small>{state.section.section}</small>
+            </span>
           </span>
         </div>
       </header>
 
-      <aside className="app-sidebar" aria-label="Navegación del espacio docente" inert={!sidebarOpen}>
+      <aside
+        className="app-sidebar"
+        aria-label="Navegación del espacio docente"
+        inert={!sidebarOpen}
+      >
         <nav aria-label="Herramientas docentes" className="side-nav">
           {NAVIGATION.map(({ id, label, Icon }) => {
             const active = view === id;
@@ -133,9 +163,15 @@ export function TeacherWorkspacePreview() {
                 onClick={() => navigate(id)}
                 type="button"
               >
-                <span className="side-icon"><Icon size={18} weight={active ? "fill" : "regular"} /></span>
+                <span className="side-icon">
+                  <Icon size={18} weight={active ? "fill" : "regular"} />
+                </span>
                 <span className="side-label">{label}</span>
-                {id === "review" && pendingReviews > 0 && <span className={styles.sideCount} aria-hidden="true">{pendingReviews}</span>}
+                {id === "review" && pendingReviews > 0 && (
+                  <span className={styles.sideCount} aria-hidden="true">
+                    {pendingReviews}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -144,16 +180,22 @@ export function TeacherWorkspacePreview() {
         <div className="side-group">
           <span className="eyebrow">Sección a cargo</span>
           <p className={styles.sideSection}>
-            <span className="side-icon tone" aria-hidden="true"><FolderSimple size={18} weight="fill" /></span>
+            <span className="side-icon tone" aria-hidden="true">
+              <FolderSimple size={18} weight="fill" />
+            </span>
             <span>
               <b>{state.section.name}</b>
-              <small>{state.section.code} · {state.section.section}</small>
+              <small>
+                {state.section.code} · {state.section.section}
+              </small>
             </span>
           </p>
         </div>
 
         <div className={styles.sideTeacher}>
-          <span className="avatar" aria-hidden="true">DE</span>
+          <span className="avatar" aria-hidden="true">
+            DE
+          </span>
           <div>
             <strong>Docente de ejemplo</strong>
             <small>{state.section.period}</small>
@@ -161,11 +203,18 @@ export function TeacherWorkspacePreview() {
         </div>
       </aside>
 
-      <button aria-label="Cerrar el menú" className="sidebar-scrim" onClick={() => setManualSidebar(false)} type="button" />
+      <button
+        aria-label="Cerrar el menú"
+        className="sidebar-scrim"
+        onClick={() => setManualSidebar(false)}
+        type="button"
+      />
 
       <main className="app-main" id="espacio-docente">
         <div className="portal-main">
-          <p className="sr-only" aria-live="polite">{announcement}</p>
+          <p className="sr-only" aria-live="polite">
+            {announcement}
+          </p>
           {view === "home" && (
             <HomePanel
               state={state}
@@ -193,7 +242,8 @@ export function TeacherWorkspacePreview() {
           )}
           {view === "grades" && <GradebookPanel state={state} />}
           <p className={styles.disclaimer}>
-            CEOUBB es una iniciativa independiente y esta vista no representa un servicio oficial de la Universidad del Bío-Bío.
+            CEOUBB es una iniciativa independiente y esta vista no representa un servicio oficial de
+            la Universidad del Bío-Bío.
           </p>
         </div>
       </main>

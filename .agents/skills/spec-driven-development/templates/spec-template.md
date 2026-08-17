@@ -1,6 +1,6 @@
 # P[N] — [Feature / Module Name] (SDD Specification)
 
-**Status:** BORRADOR · **Target:** `[paths]` · **Execution Agent:** [agent] · **Design Standard:** `design-ceoubb.md`
+**Status:** BORRADOR · **Target:** `[paths]` · **Execution Agent:** [agent] · **Design Standard:** `DESIGN.md`
 
 > One feature, one file. Keep narrative prose at 200 lines or fewer — tables and code blocks, not paragraphs. Gherkin blocks (§4) and the task DAG (§6) do not count against that budget.
 > Status lifecycle: `BORRADOR` -> `APROBADA` (human sign-off) -> `EN EJECUCION` -> `VERIFICADA`.
@@ -15,8 +15,8 @@
 
 ## 2. Domain Glossary
 
-| Term | Definition | Boundary / Scope |
-| :--- | :--- | :--- |
+| Term       | Definition   | Boundary / Scope       |
+| :--------- | :----------- | :--------------------- |
 | `[Entity]` | [Definition] | [Domain layer / Model] |
 
 ## 3. Functional Requirements (EARS Syntax)
@@ -67,7 +67,7 @@ sequenceDiagram
 ### 5.2 Data Models & Type Contracts
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const ExampleSchema = z.object({
   id: z.string().uuid(),
@@ -80,21 +80,21 @@ export type Example = z.infer<typeof ExampleSchema>;
 
 ### 5.3 Error Taxonomy & Status Mapping
 
-| Error Type | Trigger Condition | HTTP Status | Error Code | Mitigation Strategy |
-| :--- | :--- | :--- | :--- | :--- |
-| `ValidationError` | Invalid input payload | 400 | `BAD_REQUEST` | Return validation error array |
-| `UnauthorizedError` | Non-institutional session | 403 | `UNAUTHORIZED_DOMAIN` | Redirect to domain policy notice |
-| `NotFoundError` | Entity not found in DB | 404 | `NOT_FOUND` | Return 404 with error message |
+| Error Type          | Trigger Condition         | HTTP Status | Error Code            | Mitigation Strategy              |
+| :------------------ | :------------------------ | :---------- | :-------------------- | :------------------------------- |
+| `ValidationError`   | Invalid input payload     | 400         | `BAD_REQUEST`         | Return validation error array    |
+| `UnauthorizedError` | Non-institutional session | 403         | `UNAUTHORIZED_DOMAIN` | Redirect to domain policy notice |
+| `NotFoundError`     | Entity not found in DB    | 404         | `NOT_FOUND`           | Return 404 with error message    |
 
 ### 5.4 Affected Invariants (from `AGENTS.md`)
 
-| Invariant | Touched? | How it is preserved |
-| :--- | :--- | :--- |
-| Role derivation SSOT (`lib/access-policy.ts` + 4 mirrors) | [yes/no] | [mechanism] |
-| Grade math seam (`lib/grades.ts`) | [yes/no] | [mechanism] |
-| Firestore / Storage default-deny | [yes/no] | [mechanism] |
-| Study library duplication (`public/biblioteca/`) | [yes/no] | [mechanism] |
-| Non-official disclaimers | [yes/no] | [mechanism] |
+| Invariant                                                 | Touched? | How it is preserved |
+| :-------------------------------------------------------- | :------- | :------------------ |
+| Role derivation SSOT (`lib/access-policy.ts` + 4 mirrors) | [yes/no] | [mechanism]         |
+| Grade math seam (`lib/grades.ts`)                         | [yes/no] | [mechanism]         |
+| Firestore / Storage default-deny                          | [yes/no] | [mechanism]         |
+| Study library duplication (`public/biblioteca/`)          | [yes/no] | [mechanism]         |
+| Non-official disclaimers                                  | [yes/no] | [mechanism]         |
 
 ### 5.5 Scale, Security & Performance Budgets
 

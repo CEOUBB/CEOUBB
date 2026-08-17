@@ -10,7 +10,5 @@ Sentry.init({
 
   enableLogs: true,
 
-  integrations: [
-    Sentry.replayIntegration(),
-  ],
+  integrations: [Sentry.replayIntegration()],
 });

@@ -1,0 +1,35 @@
+# Artefactos y compilados
+.next
+dist
+build
+coverage
+.cache
+.wrangler
+.vinext
+graphify-out
+
+# Directorios de agentes, skills y configuración local
+.agents
+.claude
+.codex
+.impeccable
+.grepai
+
+# Dependencias y bloqueos
+node_modules
+pnpm-lock.yaml
+
+# Proyectos nativos móviles y recursos estáticos
+android
+ios
+public/biblioteca
+
+# Bases de datos y archivos binarios
+*.db
+*.sqlite
+*.sqlite3
+local.db
+
+# Minificados
+*.min.js
+*.min.css

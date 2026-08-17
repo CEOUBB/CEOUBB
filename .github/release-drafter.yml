@@ -1,0 +1,68 @@
+# Configuración de Release Drafter para CEOUBB
+# Agrupa los cambios de los PRs fusionados en un borrador de Release formal e institucional.
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+change-template: "- $TITLE (@$AUTHOR) en #$NUMBER"
+change-title-escapes: '\<*_&'
+
+version-resolver:
+  major:
+    labels:
+      - "breaking-change"
+      - "major"
+  minor:
+    labels:
+      - "feat"
+      - "enhancement"
+      - "feature"
+      - "📱 mobile / android"
+      - "mobile"
+      - "android"
+  patch:
+    labels:
+      - "fix"
+      - "bug"
+      - "perf"
+      - "refactor"
+      - "chore"
+      - "documentation"
+      - "📝 documentation"
+      - "⚙️ ci / cd"
+  default: patch
+
+categories:
+  - title: "Aplicación Móvil (Android)"
+    labels:
+      - "📱 mobile / android"
+      - "mobile"
+      - "android"
+  - title: "Nuevas Funcionalidades"
+    labels:
+      - "feat"
+      - "enhancement"
+      - "feature"
+  - title: "Corrección de Errores"
+    labels:
+      - "fix"
+      - "bug"
+  - title: "Rendimiento y Optimización"
+    labels:
+      - "perf"
+  - title: "Mantenimiento y Refactorización"
+    labels:
+      - "refactor"
+      - "chore"
+      - "⚙️ ci / cd"
+      - "📝 documentation"
+
+template: |
+  ## Cambios incluidos en esta versión
+
+  $CHANGES
+
+  ---
+  ### Distribución de la Aplicación Android (.apk)
+  Los binarios compilados para dispositivos Android se encuentran disponibles en la sección de **Assets** adjunta:
+  - **`ceoubb-release.apk`**: Paquete de instalación para Android.

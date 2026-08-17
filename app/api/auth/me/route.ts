@@ -17,5 +17,8 @@ export async function DELETE(request: Request) {
   const db = getDb();
   await db.delete(sessions).where(eq(sessions.userId, user.id));
   await db.delete(users).where(eq(users.id, user.id));
-  return Response.json({ deleted: true }, { headers: { "Set-Cookie": await destroySession(request) } });
+  return Response.json(
+    { deleted: true },
+    { headers: { "Set-Cookie": await destroySession(request) } }
+  );
 }

@@ -75,9 +75,15 @@ test("verifyDiscordRequestSignature: valida contra lista de claves", () => {
   const rawBody = JSON.stringify({ type: 1 });
   const timestamp = "1723766400";
   const signature = crypto.sign(null, Buffer.from(timestamp + rawBody), privateKey).toString("hex");
-  const rawPublicKeyHex = publicKey.export({ type: "spki", format: "der" }).subarray(12).toString("hex");
+  const rawPublicKeyHex = publicKey
+    .export({ type: "spki", format: "der" })
+    .subarray(12)
+    .toString("hex");
 
-  const keys = ["otherkey12345678901234567890123456789012345678901234567890123456", rawPublicKeyHex];
+  const keys = [
+    "otherkey12345678901234567890123456789012345678901234567890123456",
+    rawPublicKeyHex,
+  ];
   const valid = verifyDiscordRequestSignature(rawBody, signature, timestamp, keys);
   assert.equal(valid, true);
 });
@@ -90,7 +96,10 @@ test("sanitizeTaskTitle: limpia prefijos de Linear y prompts correctamente", () 
 });
 
 test("slugifyTitle: genera slugs limpios y sin acentos", () => {
-  assert.equal(slugifyTitle("Gestión de Calificaciones & Evaluaciones"), "gestion-de-calificaciones-evaluaciones");
+  assert.equal(
+    slugifyTitle("Gestión de Calificaciones & Evaluaciones"),
+    "gestion-de-calificaciones-evaluaciones"
+  );
   assert.equal(slugifyTitle(""), "tarea");
 });
 
@@ -99,10 +108,7 @@ test("buildBranchName: deriva nombres de rama canónicos con formato feat/ceo-xx
     buildBranchName("CEO-38", "Sistema de calificaciones"),
     "feat/ceo-38-sistema-de-calificaciones"
   );
-  assert.equal(
-    buildBranchName("", ""),
-    "feat/ceo-task-tarea"
-  );
+  assert.equal(buildBranchName("", ""), "feat/ceo-task-tarea");
 });
 
 test("buildAgentPromptResponse: genera plantilla estructurada con reglas de AGENTS.md", () => {
@@ -111,6 +117,6 @@ test("buildAgentPromptResponse: genera plantilla estructurada con reglas de AGEN
   assert.ok(response.includes("feat/ceo-42-refactorizacion-de-interacciones"));
   assert.ok(response.includes("pnpm"));
   assert.ok(response.includes("lib/access-policy.ts"));
-  assert.ok(response.includes("design-ceoubb.md"));
+  assert.ok(response.includes("DESIGN.md"));
   assert.ok(response.includes("pnpm run test:unit"));
 });

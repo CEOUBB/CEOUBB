@@ -1,7 +1,7 @@
 # P4 — Modularización de Vistas del Portal (SDD Specification)
 
 **Status:** APPROVED FOR IMPLEMENTATION · **Target:** `app/portal-views.tsx` $\rightarrow$ `app/views/` (o estructura modular equivalente)  
-**Execution Agent:** Claude Code · **Design Standard:** `design-ceoubb.md` · **Framework:** Next.js 16 (App Router), React 19, TypeScript
+**Execution Agent:** Claude Code · **Design Standard:** `DESIGN.md` · **Framework:** Next.js 16 (App Router), React 19, TypeScript
 
 ---
 
@@ -35,7 +35,7 @@ El archivo [`app/portal-views.tsx`](file:///c:/Users/Pipe/Documents/Proyectos/We
   The system SHALL export only React components from component files (`react-refresh/only-export-components`), maintaining pure utilities and types in separate or specialized modules.
 
 - **REQ-MOD-06 (Ubiquitous - Integridad de Animaciones y Tokens de Diseño)**  
-  The system SHALL preserve all Framer Motion configurations (`LazyMotion`, `motion/react-m`, `AnimatePresence`, `stagger`, `rise`, `ease`) and CSS Custom Properties (`--course-tone`, `--planner-rows`, `--planner-dir`) per [`design-ceoubb.md`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/design-ceoubb.md).
+  The system SHALL preserve all Framer Motion configurations (`LazyMotion`, `motion/react-m`, `AnimatePresence`, `stagger`, `rise`, `ease`) and CSS Custom Properties (`--course-tone`, `--planner-rows`, `--planner-dir`) per [`DESIGN.md`](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/CEOUBB/DESIGN.md).
 
 - **REQ-MOD-07 (Unwanted Behavior - Protección ante Errores de Red en Administración)**  
   IF the user role change request fails in `AdminView`, THEN the system SHALL capture the error and render user-facing feedback without crashing the table.
@@ -90,13 +90,13 @@ Feature: Modular Portal Views
 ```mermaid
 graph TD
     Portal["app/Portal.tsx"] --> PortalViews["app/portal-views.tsx (Barrel / Re-export)"]
-    
+
     subgraph Views ["app/views/ (o subcarpeta dedicada)"]
         PortalViews --> CD["CoursesDashboard.tsx"]
         PortalViews --> CV["calendar/CalendarView.tsx"]
         PortalViews --> RV["resources/ResourcesView.tsx"]
         PortalViews --> AV["AdminView.tsx"]
-        
+
         subgraph CalendarModule ["Módulo Calendario"]
             CV --> PG["PlannerGrid.tsx"]
             CV --> PR["PlannerRibbon.tsx"]
@@ -104,7 +104,7 @@ graph TD
             CV --> BD["BlockDialog.tsx"]
             CV --> CC["calendar-constants.ts"]
         end
-        
+
         subgraph ResourcesModule ["Módulo Recursos"]
             RV --> RD["resources-data.ts (SVG paths, AI tiers, Perks)"]
             RV --> BM["BrandMark.tsx"]
@@ -139,25 +139,25 @@ app/
 - [x] **Task 1: Extracción del Módulo de Recursos** (`REQ-MOD-03`)
   - Extraer `resources-data.ts` (constantes `BRAND`, `AI_TIERS`, `PERK_GROUPS`, `UBB_PORTALS`, tipos `Brand`, `Tone`).
   - Crear `ResourcesView.tsx` (componente principal `ResourcesView` y `BrandMark`).
-  - *Verificación:* `pnpm run typecheck`
+  - _Verificación:_ `pnpm run typecheck`
 
 - [x] **Task 2: Extracción del Módulo de Calendario / Planificador** (`REQ-MOD-02`, `REQ-MOD-04`, `REQ-MOD-06`)
   - Extraer `calendar-constants.ts` (`SLOT_HOURS`, `HOUR_LINES`, `MINUTE_SPAN`, `KIND_LABEL`, `offsetOf`, tipo `BlockDraft`).
   - Crear subcomponentes aislados: `BlockDialog.tsx`, `PlannerBlock.tsx`, `PlannerRibbon.tsx`, `PlannerGrid.tsx`.
   - Crear `CalendarView.tsx` integrando los subcomponentes y conservando los hooks y suscripciones de Firestore.
-  - *Verificación:* `pnpm run typecheck`
+  - _Verificación:_ `pnpm run typecheck`
 
 - [x] **Task 3: Extracción de Dashboard y Administración** (`REQ-MOD-01`, `REQ-MOD-05`, `REQ-MOD-07`)
   - Crear `CoursesDashboard.tsx` con su animación `stagger`/`rise`.
   - Crear `AdminView.tsx` con sus handlers de role update.
-  - *Verificación:* `pnpm run typecheck`
+  - _Verificación:_ `pnpm run typecheck`
 
 - [x] **Task 4: Configuración del Barrel File y Compatibilidad Total** (`REQ-MOD-01`)
   - Actualizar `app/portal-views.tsx` como barrel export que re-exporta `CoursesDashboard`, `CalendarView`, `ResourcesView` y `AdminView`.
   - Verificar que `app/Portal.tsx` no requiere cambios o resuelve sus imports con total normalidad.
-  - *Verificación:* `pnpm run typecheck && pnpm run lint`
+  - _Verificación:_ `pnpm run typecheck && pnpm run lint`
 
 - [x] **Task 5: Verificación Integral de Suite de Pruebas y Build** (`REQ-MOD-01` a `REQ-MOD-07`)
   - Ejecutar tests unitarios (`pnpm run test:unit`) y tests completos de integración (`pnpm test`).
   - Verificar que no existan advertencias de React Doctor ni errores de bundle.
-  - *Verificación:* `pnpm test`
+  - _Verificación:_ `pnpm test`

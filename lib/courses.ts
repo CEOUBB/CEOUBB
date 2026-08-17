@@ -38,13 +38,23 @@ export const COURSES: Course[] = [
     tone: "#38bdf8",
     eyebrow: "Aula piloto colaborativa",
     headline: "Estática",
-    summary: "Cuatro resultados de aprendizaje: sistemas de fuerzas, equilibrio de cuerpos rígidos, fricción seca y propiedades de área y masa.",
+    summary:
+      "Cuatro resultados de aprendizaje: sistemas de fuerzas, equilibrio de cuerpos rígidos, fricción seca y propiedades de área y masa.",
     facts: ["6 créditos SCT", "Semestral", "Presencial y digital"],
     units: [
-      { title: "RA1 · Sistemas de fuerzas", subtitle: "Vectores, leyes de Newton, resultantes y sistemas equivalentes" },
-      { title: "RA2 · Cuerpos rígidos y estructuras", subtitle: "Diagramas de cuerpo libre, reacciones y equilibrio en 2D/3D" },
+      {
+        title: "RA1 · Sistemas de fuerzas",
+        subtitle: "Vectores, leyes de Newton, resultantes y sistemas equivalentes",
+      },
+      {
+        title: "RA2 · Cuerpos rígidos y estructuras",
+        subtitle: "Diagramas de cuerpo libre, reacciones y equilibrio en 2D/3D",
+      },
       { title: "RA3 · Fricción seca", subtitle: "Cuñas, tornillos, correas, descansos y rodadura" },
-      { title: "RA4 · Propiedades de área y masa", subtitle: "Centroide, centro de gravedad, inercia y teorema de Steiner" },
+      {
+        title: "RA4 · Propiedades de área y masa",
+        subtitle: "Centroide, centro de gravedad, inercia y teorema de Steiner",
+      },
     ],
     evaluations: [
       { id: "practica-ra1", name: "Práctica de sistemas de fuerzas", date: "2026-08-18" },
@@ -60,7 +70,8 @@ export const COURSES: Course[] = [
     tone: "#8b5cf6",
     eyebrow: "Aula del curso",
     headline: "Ecuaciones Diferenciales",
-    summary: "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
+    summary:
+      "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
     facts: [],
     units: [],
     evaluations: [],
@@ -75,7 +86,8 @@ export const COURSES: Course[] = [
     tone: "#10b981",
     eyebrow: "Aula del curso",
     headline: "Estadística",
-    summary: "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
+    summary:
+      "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
     facts: [],
     units: [],
     evaluations: [],
@@ -90,7 +102,8 @@ export const COURSES: Course[] = [
     tone: "#ec4899",
     eyebrow: "Aula del curso",
     headline: "Inglés Comunicacional I",
-    summary: "La biblioteca académica cubre este ramo. El aula queda disponible para que el docente publique material y evaluaciones.",
+    summary:
+      "La biblioteca académica cubre este ramo. El aula queda disponible para que el docente publique material y evaluaciones.",
     facts: [],
     units: [],
     evaluations: [],
@@ -105,13 +118,18 @@ export const COURSES: Course[] = [
     tone: "#e31b23",
     eyebrow: "Aula del curso",
     headline: "Termodinámica Aplicada",
-    summary: "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
+    summary:
+      "La biblioteca académica cubre este ramo con desarrollo completo. El aula queda disponible para que el docente publique material y evaluaciones.",
     facts: [],
     units: [],
     evaluations: [
       { id: "test-01", name: "Test 01", date: "2026-09-01" },
       { id: "evaluacion-01", name: "Evaluación 01 · Primera y Segunda ley", date: "2026-10-08" },
-      { id: "evaluacion-02", name: "Evaluación 02 · Combustión y ciclos de vapor", date: "2026-11-26" },
+      {
+        id: "evaluacion-02",
+        name: "Evaluación 02 · Combustión y ciclos de vapor",
+        date: "2026-11-26",
+      },
     ],
   },
   {
@@ -124,7 +142,8 @@ export const COURSES: Course[] = [
     tone: "#f59e0b",
     eyebrow: "Aula del curso",
     headline: "Programación en Ingeniería",
-    summary: "El laboratorio de código cubre este ramo. El aula queda disponible para que el docente publique material y evaluaciones.",
+    summary:
+      "El laboratorio de código cubre este ramo. El aula queda disponible para que el docente publique material y evaluaciones.",
     facts: [],
     units: [],
     evaluations: [],

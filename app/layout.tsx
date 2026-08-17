@@ -7,7 +7,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "sw
 
 /** Voz institucional: la serif académica sólo firma títulos y nombres de ramo. */
 const sourceSerif = Source_Serif_4({
-  variable: "--font-serif",
+  variable: "--font-source-serif",
   subsets: ["latin"],
   display: "swap",
   weight: ["600", "700"],
@@ -17,10 +17,17 @@ const sourceSerif = Source_Serif_4({
 export const metadata: Metadata = {
   metadataBase: new URL("https://ceoubb.com"),
   title: "Centro de Estudio UBB | Ingeniería Mecánica",
-  description: "Aula, certámenes, ejercicios resueltos, apuntes y recursos para estudiantes de Ingeniería Mecánica UBB.",
+  description:
+    "Aula, certámenes, ejercicios resueltos, apuntes y recursos para estudiantes de Ingeniería Mecánica UBB.",
   applicationName: "Centro de Estudio UBB",
   manifest: "/manifest.webmanifest",
-  keywords: ["centro de estudios UBB", "Ingeniería Mecánica UBB", "Estática", "Termodinámica Aplicada", "MATLAB"],
+  keywords: [
+    "centro de estudios UBB",
+    "Ingeniería Mecánica UBB",
+    "Estática",
+    "Termodinámica Aplicada",
+    "MATLAB",
+  ],
   robots: { index: true, follow: true },
   openGraph: {
     title: "Centro de Estudio UBB",
@@ -28,7 +35,11 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_CL",
   },
-  twitter: { card: "summary_large_image", title: "Centro de Estudio UBB", description: "Aula y biblioteca académica de Ingeniería Mecánica UBB." },
+  twitter: {
+    card: "summary_large_image",
+    title: "Centro de Estudio UBB",
+    description: "Aula y biblioteca académica de Ingeniería Mecánica UBB.",
+  },
   icons: {
     icon: [
       { url: "/icons/icon-32.webp", sizes: "32x32", type: "image/webp" },

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
+  ClassroomStudent,
   saveGradebook,
   saveSimulation,
   saveStudentScores,
@@ -25,6 +26,8 @@ import { formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
 
+const EMPTY_SCORES: GradeScores = {};
+
 export function GradesSection({
   course,
   classroom,
@@ -39,7 +42,8 @@ export function GradesSection({
   status: Note;
 }) {
   const { gradebook, exemption } = classroom;
-  if (canTeach) return <TeacherGrades course={course} classroom={classroom} note={note} status={status} />;
+  if (canTeach)
+    return <TeacherGrades course={course} classroom={classroom} note={note} status={status} />;
   return (
     <StudentGrades
       course={course}
@@ -73,13 +77,17 @@ export function StudentGrades({
   const [typed, setTyped] = useState<Record<string, string> | null>(null);
   const mobile = useIsMobileApp();
   const [detail, setDetail] = useState<GradeItem | null>(null);
-  const draft = typed ?? Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
-  const setDraft = (update: (current: Record<string, string>) => Record<string, string>) => setTyped(update(draft));
+  const draft =
+    typed ??
+    Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
+  const setDraft = (update: (current: Record<string, string>) => Record<string, string>) =>
+    setTyped(update(draft));
 
   const scores: GradeScores = {};
   for (const item of gradebook) {
     const rawSim = draft[item.id];
-    const simulated = typeof rawSim === "string" && rawSim.trim() !== "" ? Number(rawSim) : Number.NaN;
+    const simulated =
+      typeof rawSim === "string" && rawSim.trim() !== "" ? Number(rawSim) : Number.NaN;
     if (isValidGrade(officialScores[item.id])) scores[item.id] = officialScores[item.id];
     else if (isValidGrade(simulated)) scores[item.id] = simulated;
   }
@@ -104,7 +112,10 @@ export function StudentGrades({
     return (
       <div className="empty-state">
         <strong>El docente aún no publica la ponderación del ramo.</strong>
-        <p>Cuando cargue las evaluaciones y sus porcentajes podrás ver tu promedio y simular la nota que necesitas.</p>
+        <p>
+          Cuando cargue las evaluaciones y sus porcentajes podrás ver tu promedio y simular la nota
+          que necesitas.
+        </p>
       </div>
     );
   }
@@ -146,7 +157,8 @@ export function StudentGrades({
               <span>
                 {item.name}
                 <small>
-                  {item.weight}% · {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
+                  {item.weight}% ·{" "}
+                  {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
                 </small>
               </span>
             </button>
@@ -164,10 +176,14 @@ export function StudentGrades({
           </div>
           <dl className="grades-targets">
             <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
-            <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
+            <TargetLine
+              label={`Para eximirte con ${formatGrade(exemptionTarget)}`}
+              target={exempt}
+            />
           </dl>
           <p className="grades-note">
-            La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden editar aquí.
+            La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
+            editar aquí.
           </p>
           {status.text && (
             <p className={`tool-status ${status.tone}`} role="status">
@@ -185,11 +201,15 @@ export function StudentGrades({
             <dl className="sheet-facts">
               <div>
                 <dt>Ponderación</dt>
-                <dd>{detail.weight}%</dd>
+                <dd className="num">{detail.weight}%</dd>
               </div>
               <div>
                 <dt>Nota oficial</dt>
-                <dd>{isValidGrade(officialScores[detail.id]) ? formatGrade(officialScores[detail.id]) : "—"}</dd>
+                <dd className="num">
+                  {isValidGrade(officialScores[detail.id])
+                    ? formatGrade(officialScores[detail.id])
+                    : "—"}
+                </dd>
               </div>
             </dl>
             <label className="sheet-field">
@@ -219,8 +239,8 @@ export function StudentGrades({
               <b>{item.name}</b>
               {item.date && <small>{formatDay(item.date)}</small>}
             </span>
-            <span className="grades-weight">{item.weight}%</span>
-            <span className="grades-official">
+            <span className="grades-weight num">{item.weight}%</span>
+            <span className="grades-official num">
               {isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}
             </span>
             <span>{simulationField(item)}</span>
@@ -229,11 +249,14 @@ export function StudentGrades({
       </div>
       <aside className="grades-summary">
         <div className="grades-average">
-          <strong>{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+          <strong className="num">
+            {summary.average === null ? "—" : formatGrade(summary.average)}
+          </strong>
           <div>
             <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
             <p>
-              {summary.gradedWeight}% de {summary.totalWeight}% ya tiene nota
+              <span className="num">{summary.gradedWeight}%</span> de{" "}
+              <span className="num">{summary.totalWeight}%</span> ya tiene nota
             </p>
           </div>
         </div>
@@ -242,7 +265,8 @@ export function StudentGrades({
           <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
         </dl>
         <p className="grades-note">
-          La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden editar aquí.
+          La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
+          editar aquí.
         </p>
         {status.text && (
           <p className={`tool-status ${status.tone}`} role="status">
@@ -254,7 +278,13 @@ export function StudentGrades({
   );
 }
 
-export function TargetLine({ label, target }: { label: string; target: ReturnType<typeof requiredGrade> }) {
+export function TargetLine({
+  label,
+  target,
+}: {
+  label: string;
+  target: ReturnType<typeof requiredGrade>;
+}) {
   const copy =
     target.state === "closed"
       ? "Ya no quedan evaluaciones pendientes."
@@ -322,21 +352,27 @@ export function TeacherGrades({
       setDraftExempt(null);
       note("Ponderación guardada. Los estudiantes ya la ven.", "ok");
     } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible guardar la ponderación.", "bad");
+      note(
+        cause instanceof Error ? cause.message : "No fue posible guardar la ponderación.",
+        "bad"
+      );
     }
   };
 
-  const setScore = async (userId: string, itemId: string, value: string) => {
-    const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-    const next = { ...(classScores[userId] ?? {}) };
-    if (isValidGrade(score)) next[itemId] = score;
-    else delete next[itemId];
-    try {
-      await saveStudentScores(course.id, userId, next);
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
-    }
-  };
+  const handleSetScore = useCallback(
+    async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
+      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+      const next = { ...currentScores };
+      if (isValidGrade(score)) next[itemId] = score;
+      else delete next[itemId];
+      try {
+        await saveStudentScores(course.id, userId, next);
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
+      }
+    },
+    [course.id, note]
+  );
 
   return (
     <section className="grades-teacher">
@@ -349,7 +385,10 @@ export function TeacherGrades({
           <div className="grades-editor-row" key={item.id}>
             <label>
               Evaluación
-              <input onChange={(event) => patch(item.id, { name: event.target.value })} value={item.name} />
+              <input
+                onChange={(event) => patch(item.id, { name: event.target.value })}
+                value={item.name}
+              />
             </label>
             <label>
               Pondera %
@@ -359,7 +398,9 @@ export function TeacherGrades({
                 onChange={(event) => {
                   const raw = event.target.value.trim();
                   const parsed = raw === "" ? 0 : Number(raw);
-                  patch(item.id, { weight: Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0 });
+                  patch(item.id, {
+                    weight: Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0,
+                  });
                 }}
                 type="number"
                 value={item.weight}
@@ -394,7 +435,9 @@ export function TeacherGrades({
               value={exempt}
             />
           </label>
-          <span className={totalWeight === 100 ? "weight-total ok" : "weight-total"}>Suma {totalWeight}%</span>
+          <span className={totalWeight === 100 ? "weight-total ok num" : "weight-total num"}>
+            Suma {totalWeight}%
+          </span>
           <button className="secondary-button" onClick={addItem} type="button">
             Agregar evaluación
           </button>
@@ -422,35 +465,19 @@ export function TeacherGrades({
             <span>Promedio</span>
           </div>
           {students.length === 0 && (
-            <p className="empty-row">Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.</p>
+            <p className="empty-row">
+              Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
+            </p>
           )}
-          {students.map((student) => {
-            const scores = classScores[student.userId] ?? {};
-            const summary = summarize(gradebook, scores);
-            return (
-              <div className="grades-matrix-row" key={student.userId}>
-                <span>
-                  <b>{student.name}</b>
-                  <small>{student.email}</small>
-                </span>
-                {gradebook.map((item) => (
-                  <span key={item.id}>
-                    <input
-                      aria-label={`${item.name} de ${student.name}`}
-                      defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
-                      key={`${item.id}-${scores[item.id] ?? ""}`}
-                      max={MAX_GRADE}
-                      min={MIN_GRADE}
-                      onBlur={(event) => setScore(student.userId, item.id, event.target.value)}
-                      step="0.1"
-                      type="number"
-                    />
-                  </span>
-                ))}
-                <span className="grades-official">{summary.average === null ? "—" : formatGrade(summary.average)}</span>
-              </div>
-            );
-          })}
+          {students.map((student) => (
+            <TeacherStudentRow
+              gradebook={gradebook}
+              key={student.userId}
+              onSetScore={handleSetScore}
+              scores={classScores[student.userId] ?? EMPTY_SCORES}
+              student={student}
+            />
+          ))}
         </div>
       )}
       {status.text && (
@@ -461,3 +488,43 @@ export function TeacherGrades({
     </section>
   );
 }
+
+// Implements: REQ-PERF-08
+export const TeacherStudentRow = React.memo(function TeacherStudentRow({
+  student,
+  gradebook,
+  scores,
+  onSetScore,
+}: {
+  student: ClassroomStudent;
+  gradebook: GradeItem[];
+  scores: GradeScores;
+  onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
+}) {
+  const summary = summarize(gradebook, scores);
+  return (
+    <div className="grades-matrix-row">
+      <span>
+        <b>{student.name}</b>
+        <small>{student.email}</small>
+      </span>
+      {gradebook.map((item) => (
+        <span key={item.id}>
+          <input
+            aria-label={`${item.name} de ${student.name}`}
+            defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
+            key={`${item.id}-${scores[item.id] ?? ""}`}
+            max={MAX_GRADE}
+            min={MIN_GRADE}
+            onBlur={(event) => onSetScore(student.userId, item.id, event.target.value, scores)}
+            step="0.1"
+            type="number"
+          />
+        </span>
+      ))}
+      <span className="grades-official num">
+        {summary.average === null ? "—" : formatGrade(summary.average)}
+      </span>
+    </div>
+  );
+});

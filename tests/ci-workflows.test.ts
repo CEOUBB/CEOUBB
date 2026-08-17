@@ -14,6 +14,8 @@ const REQUIRED_WORKFLOWS = [
   ".github/workflows/bundle-analysis.yml",
   ".github/workflows/react-doctor.yml",
   ".github/workflows/semgrep.yml",
+  ".github/workflows/draft-release.yml",
+  ".github/workflows/release-android.yml",
 ];
 
 async function exists(path: string): Promise<boolean> {
@@ -39,13 +41,28 @@ test("REQ-CICD-08: All required GitHub Actions workflows exist and are non-empty
     assert.match(content, /^name:\s+/m, `${workflowPath} debe declarar un 'name'`);
     assert.match(content, /^on:\s+/m, `${workflowPath} debe declarar un bloque 'on'`);
     assert.match(content, /^jobs:\s+/m, `${workflowPath} debe declarar un bloque 'jobs'`);
-    assert.ok(!content.includes("\t"), `${workflowPath} no debe contener tabulaciones (YAML inválido)`);
+    assert.ok(
+      !content.includes("\t"),
+      `${workflowPath} no debe contener tabulaciones (YAML inválido)`
+    );
 
     // Invariante de versiones oficiales válidas de GitHub Actions
-    assert.ok(!content.includes("actions/checkout@v7"), `${workflowPath} debe usar actions/checkout@v4`);
-    assert.ok(!content.includes("actions/setup-node@v7"), `${workflowPath} debe usar actions/setup-node@v4`);
-    assert.ok(!content.includes("actions/github-script@v9"), `${workflowPath} debe usar actions/github-script@v7`);
-    assert.ok(!content.includes("pnpm/action-setup@v6"), `${workflowPath} debe usar pnpm/action-setup@v4`);
+    assert.ok(
+      !content.includes("actions/checkout@v7"),
+      `${workflowPath} debe usar actions/checkout@v4`
+    );
+    assert.ok(
+      !content.includes("actions/setup-node@v7"),
+      `${workflowPath} debe usar actions/setup-node@v4`
+    );
+    assert.ok(
+      !content.includes("actions/github-script@v9"),
+      `${workflowPath} debe usar actions/github-script@v7`
+    );
+    assert.ok(
+      !content.includes("pnpm/action-setup@v6"),
+      `${workflowPath} debe usar pnpm/action-setup@v4`
+    );
   }
 });
 
@@ -65,12 +82,15 @@ test("REQ-CICD-07: .github/labeler.yml and .github/workflows/labeler.yml are pro
   for (const label of requiredLabels) {
     assert.ok(
       labelerConfig.includes(label),
-      `.github/labeler.yml debe definir la etiqueta "${label}"`,
+      `.github/labeler.yml debe definir la etiqueta "${label}"`
     );
   }
 
   assert.ok(labelerConfig.includes("android/**"), "Mobile label must map android/**");
-  assert.ok(labelerConfig.includes("capacitor.config.ts"), "Mobile label must map capacitor.config.ts");
+  assert.ok(
+    labelerConfig.includes("capacitor.config.ts"),
+    "Mobile label must map capacitor.config.ts"
+  );
   assert.ok(labelerConfig.includes("firebase/**"), "Firebase label must map firebase/**");
   assert.ok(labelerConfig.includes("app/**"), "Web label must map app/**");
   assert.ok(labelerConfig.includes("docs/**"), "Docs label must map docs/**");
@@ -90,18 +110,27 @@ test("REQ-CICD-05, REQ-CICD-06: Semantic PR workflow enforces Conventional Commi
   assert.match(semanticPrContent, /pull-requests:\s*read/);
   assert.match(semanticPrContent, /statuses:\s*write/);
 
-  const types = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"];
+  const types = [
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "perf",
+    "test",
+    "build",
+    "ci",
+    "chore",
+    "revert",
+  ];
   for (const type of types) {
-    assert.ok(
-      semanticPrContent.includes(type),
-      `semantic-pr.yml debe admitir el tipo '${type}'`,
-    );
+    assert.ok(semanticPrContent.includes(type), `semantic-pr.yml debe admitir el tipo '${type}'`);
   }
 
   assert.match(
     semanticPrContent,
     /subjectPattern/,
-    "semantic-pr.yml debe validar el patrón de asunto para exigir idioma coherente / español",
+    "semantic-pr.yml debe validar el patrón de asunto para exigir idioma coherente / español"
   );
 });
 
@@ -109,21 +138,25 @@ test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target an
   const androidCiContent = await readText(".github/workflows/android-ci.yml");
 
   assert.match(androidCiContent, /actions\/setup-java@v4/);
-  assert.match(androidCiContent, /distribution:\s*'temurin'/);
-  assert.match(androidCiContent, /java-version:\s*'21'/);
+  assert.match(androidCiContent, /distribution:\s*['"]temurin['"]/);
+  assert.match(androidCiContent, /java-version:\s*['"]21['"]/);
   assert.match(androidCiContent, /gradle\/actions\/setup-gradle@v4/);
   assert.match(androidCiContent, /cap sync android/);
   assert.match(androidCiContent, /chmod \+x android\/gradlew/);
   assert.match(androidCiContent, /assembleDebug lintDebug/);
 
-  assert.match(androidCiContent, /1536936245643579462/, "Debe apuntar al canal de Discord #🚨-❙-alertas");
+  assert.match(
+    androidCiContent,
+    /1536936245643579462/,
+    "Debe apuntar al canal de Discord #🚨-❙-alertas"
+  );
   assert.match(androidCiContent, /if:\s*failure\(\)/);
 
   // Invariante de portabilidad de entorno Android / Gradle
   const gradleProperties = await readText("android/gradle.properties");
   assert.ok(
     !gradleProperties.includes("org.gradle.java.home"),
-    "android/gradle.properties no debe contener org.gradle.java.home con rutas locales absolutas que rompan CI",
+    "android/gradle.properties no debe contener org.gradle.java.home con rutas locales absolutas que rompan CI"
   );
 });
 
@@ -168,4 +201,233 @@ test("REQ-CICD-03, REQ-CICD-04: Bundle analysis workflow and size budgeting scri
     assert.ok(strictResult.errors.length >= 2);
     assert.ok(strictResult.markdown.includes("❌ Errores Bloqueantes"));
   }
+});
+
+test("REQ-ENT-04: Repository governance files exist and contain required enterprise content", async () => {
+  const governanceFiles = [
+    ".editorconfig",
+    ".gitattributes",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "LICENSE",
+    ".github/CODEOWNERS",
+  ];
+
+  for (const file of governanceFiles) {
+    const fileExists = await exists(file);
+    assert.ok(fileExists, `El archivo de gobernanza requerido no existe: ${file}`);
+    const content = await readText(file);
+    assert.ok(content.trim().length > 0, `El archivo de gobernanza está vacío: ${file}`);
+  }
+
+  // Verificar directivas clave de .editorconfig
+  const editorConfig = await readText(".editorconfig");
+  assert.match(editorConfig, /root\s*=\s*true/);
+  assert.match(editorConfig, /end_of_line\s*=\s*lf/);
+  assert.match(editorConfig, /indent_size\s*=\s*2/);
+  assert.match(editorConfig, /charset\s*=\s*utf-8/);
+
+  // Verificar normalización y binarios en .gitattributes
+  const gitAttributes = await readText(".gitattributes");
+  assert.match(gitAttributes, /\*\s+text=auto\s+eol=lf/);
+  assert.match(gitAttributes, /\*\.jks\s+binary/);
+  assert.match(gitAttributes, /\*\.db\s+binary/);
+
+  // Verificar guías de contribución y seguridad
+  const contributing = await readText("CONTRIBUTING.md");
+  assert.match(contributing, /Conventional Commits/i);
+  assert.match(contributing, /pnpm/);
+
+  const security = await readText("SECURITY.md");
+  assert.match(security, /19\.628/);
+  assert.match(security, /21\.719/);
+  assert.match(security, /felipearce\.2004@gmail\.com/);
+
+  const codeowners = await readText(".github/CODEOWNERS");
+  assert.match(codeowners, /\/android\//);
+  assert.match(codeowners, /\/firebase\//);
+  assert.match(codeowners, /\/lib\/access-policy\.ts/);
+});
+
+test("REQ-ENT-05: GitHub Issue Templates and PR Template are properly configured", async () => {
+  const issueTemplates = [
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/feature_request.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+  ];
+
+  for (const templatePath of issueTemplates) {
+    const fileExists = await exists(templatePath);
+    assert.ok(fileExists, `La plantilla requerida no existe: ${templatePath}`);
+    const content = await readText(templatePath);
+    assert.ok(content.trim().length > 0, `La plantilla está vacía: ${templatePath}`);
+  }
+
+  // Verificar estructura de bug_report.yml
+  const bugReport = await readText(".github/ISSUE_TEMPLATE/bug_report.yml");
+  assert.match(bugReport, /name:\s+/);
+  assert.match(bugReport, /title:\s*"\[Bug\]:\s*"/);
+  assert.match(bugReport, /id:\s*platform/);
+  assert.match(bugReport, /id:\s*steps_to_reproduce/);
+  assert.match(bugReport, /id:\s*expected_behavior/);
+  assert.match(bugReport, /id:\s*actual_behavior/);
+
+  // Verificar estructura de feature_request.yml
+  const featureRequest = await readText(".github/ISSUE_TEMPLATE/feature_request.yml");
+  assert.match(featureRequest, /name:\s+/);
+  assert.match(featureRequest, /title:\s*"\[Feat\]:\s*"/);
+  assert.match(featureRequest, /id:\s*category/);
+  assert.match(featureRequest, /id:\s*problem_statement/);
+  assert.match(featureRequest, /id:\s*proposed_solution/);
+
+  // Verificar config.yml (deshabilitar issues en blanco)
+  const configYml = await readText(".github/ISSUE_TEMPLATE/config.yml");
+  assert.match(configYml, /blank_issues_enabled:\s*false/);
+  assert.match(configYml, /contact_links:/);
+
+  // Verificar PULL_REQUEST_TEMPLATE.md enterprise
+  const prTemplate = await readText(".github/PULL_REQUEST_TEMPLATE.md");
+  assert.match(prTemplate, /Resumen del Cambio/i);
+  assert.match(prTemplate, /Checklist Técnico/i);
+  assert.match(prTemplate, /Seguridad, Privacidad y Gobernanza/i);
+  assert.match(prTemplate, /Accesibilidad\s*\(WCAG 2\.2 AA\)/i);
+  assert.match(prTemplate, /Consideraciones Móviles/i);
+});
+
+test("REQ-ENT-06: Dependabot monitors root npm, GitHub Actions, Firebase Functions, and Android Gradle", async () => {
+  const dependabotExists = await exists(".github/dependabot.yml");
+  assert.ok(dependabotExists, ".github/dependabot.yml debe existir");
+
+  const dependabotContent = await readText(".github/dependabot.yml");
+  assert.match(dependabotContent, /version:\s*2/);
+
+  // Verificar los 4 ecosistemas/directorios requeridos
+  assert.ok(
+    dependabotContent.includes('directory: "/"') &&
+      dependabotContent.includes('package-ecosystem: "npm"'),
+    "Dependabot debe monitorizar npm en la raíz /"
+  );
+  assert.ok(
+    dependabotContent.includes('package-ecosystem: "github-actions"'),
+    "Dependabot debe monitorizar github-actions en /"
+  );
+  assert.ok(
+    dependabotContent.includes('directory: "/firebase/functions"'),
+    "Dependabot debe monitorizar /firebase/functions"
+  );
+  assert.ok(
+    dependabotContent.includes('directory: "/android"') &&
+      dependabotContent.includes('package-ecosystem: "gradle"'),
+    "Dependabot debe monitorizar gradle en /android"
+  );
+});
+
+test("REQ-ENT-07: Code formatting and TypeScript casing configurations", async () => {
+  const prettierrcExists = await exists(".prettierrc.json");
+  assert.ok(prettierrcExists, ".prettierrc.json debe existir");
+
+  const prettierrcContent = await readText(".prettierrc.json");
+  const prettierConfig = JSON.parse(prettierrcContent);
+  assert.equal(prettierConfig.semi, true);
+  assert.equal(prettierConfig.singleQuote, false);
+  assert.equal(prettierConfig.tabWidth, 2);
+  assert.equal(prettierConfig.trailingComma, "es5");
+  assert.equal(prettierConfig.printWidth, 100);
+
+  const prettierignoreExists = await exists(".prettierignore");
+  assert.ok(prettierignoreExists, ".prettierignore debe existir");
+  const prettierignoreContent = await readText(".prettierignore");
+  assert.match(prettierignoreContent, /\.next/);
+  assert.match(prettierignoreContent, /node_modules/);
+  assert.match(prettierignoreContent, /android/);
+  assert.match(prettierignoreContent, /pnpm-lock\.yaml/);
+
+  const packageJsonContent = await readText("package.json");
+  const packageJson = JSON.parse(packageJsonContent);
+  assert.ok(packageJson.scripts["format:check"], "package.json debe definir script 'format:check'");
+  assert.ok(packageJson.scripts["format"], "package.json debe definir script 'format'");
+
+  const tsconfigContent = await readText("tsconfig.json");
+  assert.match(
+    tsconfigContent,
+    /"forceConsistentCasingInFileNames":\s*true/,
+    "tsconfig.json debe configurar forceConsistentCasingInFileNames en true"
+  );
+});
+
+test("REQ-ENT-01, REQ-ENT-02, REQ-ENT-03: Documentation consolidation and unified Design System", async () => {
+  // REQ-ENT-01: DESIGN.md unificado y design-ceoubb.md eliminado
+  const designExists = await exists("DESIGN.md");
+  assert.ok(
+    designExists,
+    "DESIGN.md debe existir como la única fuente canónica del sistema de diseño"
+  );
+  const oldDesignExists = await exists("design-ceoubb.md");
+  assert.equal(oldDesignExists, false, "design-ceoubb.md debe haber sido eliminado");
+
+  const designContent = await readText("DESIGN.md");
+  assert.match(designContent, /CEOUBB Design System/i);
+  assert.match(designContent, /canvas-soft/);
+  assert.match(designContent, /primary/);
+  assert.match(designContent, /Source Serif 4/);
+
+  // REQ-ENT-02: Dossier y Archive organizados bajo docs/
+  const comparisonExists = await exists("docs/institutional/moodle-adecca-comparison.md");
+  assert.ok(comparisonExists, "docs/institutional/moodle-adecca-comparison.md debe existir");
+  const oldComparisonExists = await exists("ceoubb_moodle_adecca_comparison.md");
+  assert.equal(
+    oldComparisonExists,
+    false,
+    "ceoubb_moodle_adecca_comparison.md en la raíz debe haberse movido"
+  );
+
+  const planArchiveExists = await exists("docs/archive/PLAN_ARCHIVE.md");
+  assert.ok(planArchiveExists, "docs/archive/PLAN_ARCHIVE.md debe existir");
+  const oldPlanArchiveExists = await exists("PLAN_ARCHIVE.md");
+  assert.equal(oldPlanArchiveExists, false, "PLAN_ARCHIVE.md en la raíz debe haberse movido");
+
+  // REQ-ENT-03: PLAN.md referencia las nuevas ubicaciones
+  const planContent = await readText("PLAN.md");
+  assert.match(planContent, /docs\/institutional\/moodle-adecca-comparison\.md/);
+  assert.match(planContent, /docs\/archive\/PLAN_ARCHIVE\.md/);
+  assert.match(planContent, /DESIGN\.md/);
+});
+
+test("REQ-ENT-08: Architectural Decision Records (ADRs) exist and follow formal structure", async () => {
+  const adrFiles = [
+    "docs/adr/0001-turso-firestore-split.md",
+    "docs/adr/0002-capacitor-mobile-runtime.md",
+    "docs/adr/0003-domain-role-derivation.md",
+  ];
+
+  for (const adrPath of adrFiles) {
+    const fileExists = await exists(adrPath);
+    assert.ok(fileExists, `El ADR requerido no existe: ${adrPath}`);
+    const content = await readText(adrPath);
+    assert.ok(content.trim().length > 0, `El ADR está vacío: ${adrPath}`);
+    assert.match(content, /## Contexto/i, `El ADR ${adrPath} debe contener sección Contexto`);
+    assert.match(content, /## Decisión/i, `El ADR ${adrPath} debe contener sección Decisión`);
+    assert.match(
+      content,
+      /## Consecuencias/i,
+      `El ADR ${adrPath} debe contener sección Consecuencias`
+    );
+  }
+
+  // Verificaciones de contenido específico por ADR
+  const adr1 = await readText("docs/adr/0001-turso-firestore-split.md");
+  assert.match(adr1, /Turso/i);
+  assert.match(adr1, /Firestore/i);
+  assert.match(adr1, /System of Record/i);
+
+  const adr2 = await readText("docs/adr/0002-capacitor-mobile-runtime.md");
+  assert.match(adr2, /Capacitor/i);
+  assert.match(adr2, /Service Worker/i);
+  assert.match(adr2, /Remote-First/i);
+
+  const adr3 = await readText("docs/adr/0003-domain-role-derivation.md");
+  assert.match(adr3, /access-policy\.ts/);
+  assert.match(adr3, /@ubiobio\.cl/);
+  assert.match(adr3, /@alumnos\.ubiobio\.cl/);
 });

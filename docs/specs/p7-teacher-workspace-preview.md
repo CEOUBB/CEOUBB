@@ -240,13 +240,13 @@ type ReviewPreview = {
 
 ### Taxonomía de errores
 
-| Código | Condición | Respuesta del preview | Reintento |
-|---|---|---|---|
-| `PREVIEW_DISABLED` | Entorno productivo | 404 sin contenido del preview | No |
-| `REQUIRED_FIELD` | Título o instrucciones vacíos | Mensaje asociado y foco | Sí |
-| `INVALID_DATE_ORDER` | Apertura, vencimiento o cierre invertidos | Bloquear publicación, conservar borrador | Sí |
-| `INVALID_GRADE` | Nota fuera de 1,0–7,0 | Error en línea; no publicar | Sí |
-| `NOTHING_TO_PUBLISH` | Corrección vacía o sin entrega | Explicación contextual | Sí |
+| Código               | Condición                                 | Respuesta del preview                    | Reintento |
+| -------------------- | ----------------------------------------- | ---------------------------------------- | --------- |
+| `PREVIEW_DISABLED`   | Entorno productivo                        | 404 sin contenido del preview            | No        |
+| `REQUIRED_FIELD`     | Título o instrucciones vacíos             | Mensaje asociado y foco                  | Sí        |
+| `INVALID_DATE_ORDER` | Apertura, vencimiento o cierre invertidos | Bloquear publicación, conservar borrador | Sí        |
+| `INVALID_GRADE`      | Nota fuera de 1,0–7,0                     | Error en línea; no publicar              | Sí        |
+| `NOTHING_TO_PUBLISH` | Corrección vacía o sin entrega            | Explicación contextual                   | Sí        |
 
 ### Seguridad, privacidad y presupuesto
 
@@ -261,15 +261,15 @@ type ReviewPreview = {
 
 ### Invariantes preservados
 
-| Invariante | Tratamiento |
-|---|---|
-| Plataforma independiente | Se mantiene el disclaimer y el banner declara demostración |
-| Rama docente | No se crea superficie editable de alumnado |
-| Roles y autorización | No se consultan ni modifican |
-| Course identity | `sectionId` sólo existe en fixtures; no se persiste deuda nueva |
-| Grade math seam | Escala 1,0–7,0 mediante `lib/grades.ts` |
-| Firebase productivo | No se importa ni se llama |
-| Canvas AGPLv3 | Referencia conceptual únicamente; cero código o activos reutilizados |
+| Invariante               | Tratamiento                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| Plataforma independiente | Se mantiene el disclaimer y el banner declara demostración           |
+| Rama docente             | No se crea superficie editable de alumnado                           |
+| Roles y autorización     | No se consultan ni modifican                                         |
+| Course identity          | `sectionId` sólo existe en fixtures; no se persiste deuda nueva      |
+| Grade math seam          | Escala 1,0–7,0 mediante `lib/grades.ts`                              |
+| Firebase productivo      | No se importa ni se llama                                            |
+| Canvas AGPLv3            | Referencia conceptual únicamente; cero código o activos reutilizados |
 
 ## 7. DAG de ejecución
 

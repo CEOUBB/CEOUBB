@@ -85,16 +85,18 @@ test("toPost derives authorRole according to institutional access policy", () =>
 });
 
 test("toFile builds ClassroomFile metadata from post and raw document data", () => {
-  const post = toPost(mockDoc("p-file", {
-    authorId: "author-1",
-    authorEmail: "docente@ubiobio.cl",
-    authorName: "Docente",
-    title: "Presentación",
-    folder: "Clases",
-    linkUrl: "https://storage.googleapis.com/download",
-    storagePath: "courses/math/slides.pdf",
-    createdAt: { toDate: () => new Date("2026-08-01T10:00:00.000Z") },
-  }));
+  const post = toPost(
+    mockDoc("p-file", {
+      authorId: "author-1",
+      authorEmail: "docente@ubiobio.cl",
+      authorName: "Docente",
+      title: "Presentación",
+      folder: "Clases",
+      linkUrl: "https://storage.googleapis.com/download",
+      storagePath: "courses/math/slides.pdf",
+      createdAt: { toDate: () => new Date("2026-08-01T10:00:00.000Z") },
+    })
+  );
 
   const file = toFile(post, {
     fileName: "Clase_01.pdf",
@@ -206,34 +208,34 @@ test("toGradebookState parses items and numeric exemption boundary conditions", 
 test("personalEventError translates Firestore error codes to user-friendly Spanish", () => {
   assert.equal(
     personalEventError({ code: "permission-denied" }, "leer"),
-    "Tu calendario personal todavía no está habilitado en el servidor. Avisa al equipo de CEOUBB.",
+    "Tu calendario personal todavía no está habilitado en el servidor. Avisa al equipo de CEOUBB."
   );
   assert.equal(
     personalEventError({ code: "firestore/permission-denied" }, "guardar"),
-    "Tu calendario personal todavía no está habilitado en el servidor. Avisa al equipo de CEOUBB.",
+    "Tu calendario personal todavía no está habilitado en el servidor. Avisa al equipo de CEOUBB."
   );
   assert.equal(
     personalEventError({ code: "unavailable" }, "leer"),
-    "Sin conexión con el servidor. Revisa tu red e inténtalo otra vez.",
+    "Sin conexión con el servidor. Revisa tu red e inténtalo otra vez."
   );
   assert.equal(
     personalEventError({ code: "network-request-failed" }, "guardar"),
-    "Sin conexión con el servidor. Revisa tu red e inténtalo otra vez.",
+    "Sin conexión con el servidor. Revisa tu red e inténtalo otra vez."
   );
   assert.equal(
     personalEventError({ code: "unauthenticated" }, "eliminar"),
-    "Tu sesión expiró. Cierra sesión y vuelve a ingresar.",
+    "Tu sesión expiró. Cierra sesión y vuelve a ingresar."
   );
   assert.equal(
     personalEventError(new Error("unknown"), "leer"),
-    "No se pudieron sincronizar tus bloques de estudio.",
+    "No se pudieron sincronizar tus bloques de estudio."
   );
   assert.equal(
     personalEventError(new Error("unknown"), "guardar"),
-    "No se pudo guardar el bloque.",
+    "No se pudo guardar el bloque."
   );
   assert.equal(
     personalEventError(new Error("unknown"), "eliminar"),
-    "No se pudo eliminar el bloque.",
+    "No se pudo eliminar el bloque."
   );
 });

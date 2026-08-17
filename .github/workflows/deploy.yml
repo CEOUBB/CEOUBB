@@ -19,9 +19,13 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.event_name == 'push' && 'Production' || 'Preview' }}
-      url: ${{ steps.deploy-prod.outputs.url || steps.deploy-preview.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
+      VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
+      VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,7 +43,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -60,73 +64,81 @@ jobs:
         run: pnpm run lint
 
       - name: Pull Vercel Environment Information (Production)
-        if: github.event_name == 'push'
-        run: pnpm exec vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
+        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
+        run: pnpm exec vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: Pull Vercel Environment Information (Preview)
-        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
-        run: pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
+        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
+        run: pnpm exec vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
 
       - name: Build Project Artifacts (Production)
-        if: github.event_name == 'push'
-        run: pnpm exec vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
+        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
+        run: pnpm exec vercel build --prod --token=$VERCEL_TOKEN
 
       - name: Build Project Artifacts (Preview)
-        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
-        run: pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
+        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
+        run: pnpm exec vercel build --token=$VERCEL_TOKEN
 
       - name: Deploy Production Artifacts to Vercel
         id: deploy-prod
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && env.VERCEL_TOKEN != ''
         run: |
-          PROD_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --prod --token=${{ secrets.VERCEL_TOKEN }} | grep -E '^https?://' | tail -n 1)
+          PROD_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --prod --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
           echo "url=${PROD_URL}" >> $GITHUB_OUTPUT
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
 
       - name: Deploy Preview Artifacts to Vercel
         id: deploy-preview
-        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
+        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != ''
         run: |
-          PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }} | grep -E '^https?://' | tail -n 1)
+          PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
           echo "url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+
+      - name: Register GitHub Deployment Status
+        if: success() && env.VERCEL_TOKEN != '' && (steps.deploy-prod.outputs.url != '' || steps.deploy-preview.outputs.url != '')
+        uses: actions/github-script@v7
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-          VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
+          DEPLOY_URL: ${{ steps.deploy-prod.outputs.url || steps.deploy-preview.outputs.url }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const deployUrl = process.env.DEPLOY_URL;
+            if (!deployUrl) return;
+
+            const isProd = context.eventName === 'push';
+            const environment = isProd ? 'Production' : 'Preview';
+
+            try {
+              const deployment = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.sha,
+                environment: environment,
+                description: `Despliegue de ${environment} en Vercel`,
+                auto_merge: false,
+                required_contexts: [],
+                transient_environment: !isProd,
+                production_environment: isProd,
+              });
+
+              if (deployment.data && deployment.data.id) {
+                await github.rest.repos.createDeploymentStatus({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: deployment.data.id,
+                  state: 'success',
+                  environment_url: deployUrl,
+                  log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                  description: `Desplegado exitosamente en ${environment} (${deployUrl})`,
+                  auto_inactive: isProd,
+                });
+                console.log(`GitHub Deployment registrado exitosamente para ${environment}: ${deployUrl}`);
+              }
+            } catch (err) {
+              console.error('Error registrando GitHub Deployment:', err.message);
+            }
 
       - name: Comment Preview URL on PR
-        if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != '' && steps.deploy-preview.outputs.url != ''
+        if: github.event_name == 'pull_request' && env.VERCEL_TOKEN != '' && steps.deploy-preview.outputs.url != ''
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy-preview.outputs.url }}

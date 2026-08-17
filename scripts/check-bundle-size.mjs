@@ -42,7 +42,9 @@ export function checkBundleSize(options = {}) {
 
   const buildManifestPath = join(nextDir, "build-manifest.json");
   if (!existsSync(buildManifestPath)) {
-    throw new Error(`No se encontró el manifiesto de build en "${buildManifestPath}". Ejecuta 'next build' primero.`);
+    throw new Error(
+      `No se encontró el manifiesto de build en "${buildManifestPath}". Ejecuta 'next build' primero.`
+    );
   }
 
   const buildManifest = JSON.parse(readFileSync(buildManifestPath, "utf8"));
@@ -104,7 +106,13 @@ export function checkBundleSize(options = {}) {
   for (const [appKey, routePath] of Object.entries(routeEntries)) {
     // Check if route has dedicated manifest
     let routeChunkFiles = [];
-    const serverAppBuildManifest = join(nextDir, "server", "app", appKey.replace(/^\//, ""), "build-manifest.json");
+    const serverAppBuildManifest = join(
+      nextDir,
+      "server",
+      "app",
+      appKey.replace(/^\//, ""),
+      "build-manifest.json"
+    );
     if (existsSync(serverAppBuildManifest)) {
       try {
         const sm = JSON.parse(readFileSync(serverAppBuildManifest, "utf8"));
@@ -170,13 +178,19 @@ export function checkBundleSize(options = {}) {
   const warnings = [];
 
   if (isSharedGzipOver) {
-    errors.push(`First Load JS compartido (${formatKb(sharedGzipBytes)}) supera el límite de ${budgets.maxSharedGzipKb} kB gzipped.`);
+    errors.push(
+      `First Load JS compartido (${formatKb(sharedGzipBytes)}) supera el límite de ${budgets.maxSharedGzipKb} kB gzipped.`
+    );
   }
   if (isSharedRawOver) {
-    errors.push(`First Load JS compartido (${formatKb(sharedRawBytes)}) supera el límite de ${budgets.maxSharedRawKb} kB sin comprimir.`);
+    errors.push(
+      `First Load JS compartido (${formatKb(sharedRawBytes)}) supera el límite de ${budgets.maxSharedRawKb} kB sin comprimir.`
+    );
   }
   if (isSharedGzipWarn && !isSharedGzipOver) {
-    warnings.push(`First Load JS compartido (${formatKb(sharedGzipBytes)}) está cerca del límite (${budgets.maxSharedGzipKb} kB).`);
+    warnings.push(
+      `First Load JS compartido (${formatKb(sharedGzipBytes)}) está cerca del límite (${budgets.maxSharedGzipKb} kB).`
+    );
   }
 
   const passed = errors.length === 0;
@@ -251,8 +265,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     console.log("\n🔍 Verificando presupuesto de tamaño de bundle Next.js...\n");
     const result = checkBundleSize();
 
-    console.log(`• First Load JS Compartido: ${formatKb(result.shared.rawBytes)} raw / ${formatKb(result.shared.gzipBytes)} gzip (${result.shared.status})`);
-    console.log(`• Chunks Estáticos Totales: ${result.totalChunks.count} archivos, ${formatKb(result.totalChunks.rawBytes)} raw / ${formatKb(result.totalChunks.gzipBytes)} gzip`);
+    console.log(
+      `• First Load JS Compartido: ${formatKb(result.shared.rawBytes)} raw / ${formatKb(result.shared.gzipBytes)} gzip (${result.shared.status})`
+    );
+    console.log(
+      `• Chunks Estáticos Totales: ${result.totalChunks.count} archivos, ${formatKb(result.totalChunks.rawBytes)} raw / ${formatKb(result.totalChunks.gzipBytes)} gzip`
+    );
     console.log(`• Rutas analizadas: ${result.routes.length}`);
 
     if (result.warnings.length > 0) {
@@ -266,7 +284,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
       process.exit(1);
     }
 
-    console.log("\n✅ Verificación de tamaño de bundle exitosa. Todos los presupuestos se cumplen.\n");
+    console.log(
+      "\n✅ Verificación de tamaño de bundle exitosa. Todos los presupuestos se cumplen.\n"
+    );
   } catch (error) {
     console.error("\n❌ Error ejecutando chequeo de bundle:", error.message);
     process.exit(1);

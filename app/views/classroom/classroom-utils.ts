@@ -1,6 +1,10 @@
 import { ChartBar, Files, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../../../lib/courses";
-import { ClassroomFile, ClassroomPost, ClassroomState } from "../../../lib/firebase-classroom-client";
+import {
+  ClassroomFile,
+  ClassroomPost,
+  ClassroomState,
+} from "../../../lib/firebase-classroom-client";
 
 export type Tab = "home" | "materials" | "grades" | "progress" | "people";
 
@@ -38,7 +42,13 @@ export function groupByFolder(course: Course, files: ClassroomFile[]) {
 }
 
 export function kindLabel(kind: ClassroomPost["kind"]) {
-  return kind === "assessment" ? "Evaluación" : kind === "guide" ? "Guía" : kind === "resource" ? "Recurso" : "Aviso";
+  return kind === "assessment"
+    ? "Evaluación"
+    : kind === "guide"
+      ? "Guía"
+      : kind === "resource"
+        ? "Recurso"
+        : "Aviso";
 }
 
 export function tabTitle(tab: Tab) {
@@ -54,7 +64,8 @@ export function tabTitle(tab: Tab) {
 }
 
 export function studentCount(total: number) {
-  const safeTotal = typeof total === "number" && !Number.isNaN(total) ? Math.max(0, Math.floor(total)) : 0;
+  const safeTotal =
+    typeof total === "number" && !Number.isNaN(total) ? Math.max(0, Math.floor(total)) : 0;
   if (safeTotal === 0) return "Sin estudiantes aún";
   return `${safeTotal} inscrito${safeTotal > 1 ? "s" : ""}`;
 }
