@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Clock, FolderSimple } from "@phosphor-icons/react";
+import { Archive, FolderSimple } from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
 import { MobileSheet } from "./mobile-shell";
 
@@ -85,45 +85,36 @@ export function MobileCoursePreviewSheet({
       onOpenChange={(open) => !open && onClose()}
       open={Boolean(preview)}
       title={preview.name}
-      description={preview.code}
+      description={preview.eyebrow}
     >
-      <div className="course-sheet-body">
-        <div
-          className="course-sheet-badge"
-          style={{ "--course-tone": preview.tone } as React.CSSProperties}
-        >
-          <FolderSimple size={32} weight="fill" />
-          <div>
-            <strong>{preview.name}</strong>
-            <span>{preview.section ? `Sección ${preview.section}` : preview.code}</span>
-          </div>
+      <dl className="sheet-facts">
+        <div>
+          <dt>Código</dt>
+          <dd>{preview.code}</dd>
         </div>
-        <div className="course-sheet-meta">
-          <div className="course-sheet-row">
-            <span className="meta-label">Profesor</span>
-            <span className="meta-value">{preview.teacher}</span>
-          </div>
-          <div className="course-sheet-row">
-            <span className="meta-label">Período</span>
-            <span className="meta-value">
-              <Clock size={14} />
-              {preview.period}
-            </span>
-          </div>
+        <div>
+          <dt>Sección</dt>
+          <dd>{preview.section}</dd>
         </div>
-        <div className="course-sheet-actions">
-          <button
-            className="button primary block"
-            onClick={() => {
-              enterCourse(preview);
-              onClose();
-            }}
-            type="button"
-          >
-            Entrar al aula
-          </button>
+        <div>
+          <dt>Período</dt>
+          <dd>{preview.period}</dd>
         </div>
-      </div>
+        <div>
+          <dt>Docente</dt>
+          <dd>{preview.teacher}</dd>
+        </div>
+      </dl>
+      <button
+        className="sheet-cta"
+        onClick={() => {
+          enterCourse(preview);
+          onClose();
+        }}
+        type="button"
+      >
+        Entrar al aula
+      </button>
     </MobileSheet>
   );
 }
