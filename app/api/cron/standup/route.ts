@@ -97,8 +97,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Falta STANDUP_GEMINI_API_KEY" }, { status: 500 });
   }
 
-  const commits = await getRecentCommits(10);
-  const linear = await getLinearIssues();
+  const [commits, linear] = await Promise.all([getRecentCommits(10), getLinearIssues()]);
 
   if (type === "morning") {
     const prompt = `

@@ -57,7 +57,7 @@ export function GradesSection({
   );
 }
 
-export function StudentGrades({
+function StudentGrades({
   course,
   gradebook,
   exemption,
@@ -278,7 +278,7 @@ export function StudentGrades({
   );
 }
 
-export function TargetLine({
+function TargetLine({
   label,
   target,
 }: {
@@ -301,7 +301,7 @@ export function TargetLine({
   );
 }
 
-export function TeacherGrades({
+function TeacherGrades({
   course,
   classroom,
   note,
@@ -490,7 +490,7 @@ export function TeacherGrades({
 }
 
 // Implements: REQ-PERF-08
-export const TeacherStudentRow = React.memo(function TeacherStudentRow({
+const TeacherStudentRow = React.memo(function TeacherStudentRow({
   student,
   gradebook,
   scores,

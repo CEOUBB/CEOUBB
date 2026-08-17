@@ -93,14 +93,15 @@ export function ProgressSection({
                 <i>
                   <m.em
                     animate={{
-                      scaleX:
+                      transform: `scaleX(${
                         student.total &&
                         typeof student.completed === "number" &&
                         !Number.isNaN(student.completed)
                           ? Math.min(1, Math.max(0, student.completed / student.total))
-                          : 0,
+                          : 0
+                      })`,
                     }}
-                    initial={{ scaleX: 0 }}
+                    initial={{ transform: "scaleX(0)" }}
                     style={{ transformOrigin: "left" }}
                     transition={{ duration: 0.6, ease }}
                   />

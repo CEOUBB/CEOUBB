@@ -19,11 +19,11 @@ export function PlannerBlockArticle({
 }) {
   return (
     <m.article
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ opacity: 1, transform: "scale(1)" }}
       className="planner-block"
       data-done={block.completed ? "true" : undefined}
-      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
-      initial={{ opacity: 0, scale: 0.94 }}
+      exit={{ opacity: 0, transform: "scale(0.96)", transition: { duration: 0.12 } }}
+      initial={{ opacity: 0, transform: "scale(0.94)" }}
       key={block.id}
       style={
         {
@@ -49,7 +49,7 @@ export function PlannerBlockArticle({
       >
         <m.span
           animate={{
-            scale: block.completed ? 1 : 0.2,
+            transform: block.completed ? "scale(1)" : "scale(0.2)",
             opacity: block.completed ? 1 : 0,
           }}
           transition={{ type: "spring", stiffness: 620, damping: 26 }}

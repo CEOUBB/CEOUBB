@@ -33,13 +33,11 @@
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.4.0",
-    "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.5.0",
     "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/status-bar": "^8.0.3",
     "@google/genai": "^2.17.0",
@@ -57,7 +55,9 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@eslint/js": "9.39.5",
     "@next/eslint-plugin-next": "16.3.0",
     "@tailwindcss/postcss": "4.3.3",

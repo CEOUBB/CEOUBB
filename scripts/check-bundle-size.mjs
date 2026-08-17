@@ -11,6 +11,14 @@ export const DEFAULT_BUDGETS = {
   maxRouteRawKb: Number(process.env.BUNDLE_MAX_ROUTE_RAW_KB) || 1400,
 };
 
+// Platform packages validation for tooling
+export async function checkPlatformDependencies() {
+  return Promise.allSettled([
+    import("@capacitor/android/package.json", { with: { type: "json" } }),
+    import("@capacitor/ios/package.json", { with: { type: "json" } }),
+  ]);
+}
+
 /**
  * Format bytes to readable kilobytes (kB)
  */

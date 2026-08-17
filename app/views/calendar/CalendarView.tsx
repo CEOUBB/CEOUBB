@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import type { CourseActivity, CourseGradebook } from "../../../lib/firebase-classroom-client";
 import {
@@ -14,9 +13,7 @@ import {
   DAY_START_HOUR,
   DAY_START_MINUTES,
   dayItems,
-  isIsoDate,
   plannerItems,
-  shiftDate,
   timeOfMinutes,
   weekDates,
 } from "../../../lib/planner";
@@ -25,12 +22,12 @@ import {
   dayOf,
   getSantiagoDateISO,
   getSantiagoMinutes,
-  weekRangeLabel,
   weekdayOf,
 } from "../../../lib/portal-utils";
 import { MINUTE_SPAN, SLOT_HOURS } from "./calendar-constants";
 import type { BlockDraft } from "./calendar-constants";
 import { BlockDialog } from "./BlockDialog";
+import { CalendarDayBar, CalendarFilters, CalendarHeader } from "./CalendarHeader";
 import { PlannerGrid } from "./PlannerGrid";
 import { PlannerRibbon } from "./PlannerRibbon";
 
@@ -60,17 +57,11 @@ export function CalendarView({
   const days = useMemo(() => weekDates(anchor), [anchor]);
   const focusDay = days.includes(pickedDay) ? pickedDay : days.includes(today) ? today : days[0];
 
-  /* Si la semana entrante sólo se funde, avanzar y retroceder se ven idénticos.
-     El sentido del viaje alimenta la animación; queda nulo hasta la primera
-     navegación para que el montaje no arrastre una entrada de más. */
   const goWeek = (date: string) => {
     setDir(date > days[0] ? 1 : date < days[0] ? -1 : 0);
     setAnchor(date);
   };
 
-  /* Los bloques de la semana entrante tardan lo que tarde Firestore, y hasta que
-     llegan `plannerItems` no encuentra ninguno: sin esta marca la rejilla anuncia
-     «Tu semana está vacía» durante ese segundo y luego se desdice. */
   useEffect(
     () =>
       watchPersonalEvents(
@@ -86,9 +77,6 @@ export function CalendarView({
   );
   const weekLoaded = loadedWeek === days[0];
 
-  /* La grilla arranca a las 08:00 y la hora útil suele estar más abajo. Al montar
-     la semana la abrimos una hora antes de «ahora»; el callback sólo cambia de
-     identidad al cambiar de semana, así que nunca roba el scroll al usuario. */
   const openGrid = useCallback(
     (node: HTMLDivElement | null) => {
       if (!node) return;
@@ -174,9 +162,6 @@ export function CalendarView({
     });
   };
 
-  /* Borrar desde la tarjeta ahorra abrir el diálogo, pero sigue pidiendo
-     confirmación: no hay deshacer y el bloque se va de Firestore. La lista la
-     corrige la suscripción, así que aquí no se toca el estado local. */
   const removeBlock = (item: PlannerItem) => {
     if (!window.confirm(`¿Eliminar “${item.title}”?`)) return;
     deletePersonalEvent(item.id).catch(() => setAlert("No se pudo eliminar el bloque."));
@@ -189,86 +174,23 @@ export function CalendarView({
 
   return (
     <section className="planner">
-      <header className="page-head planner-bar">
-        <div className="planner-lead">
-          <h1>Calendario</h1>
-          <p>
-            <span>{weekRangeLabel(days[0], days[6])}</span>
-            <span>·</span>
-            <span>
-              <b>{dueCount}</b> {dueCount === 1 ? "entrega" : "entregas"}
-            </span>
-            <span>·</span>
-            <span>
-              <b>{blockCount}</b> {blockCount === 1 ? "bloque" : "bloques"}
-            </span>
-          </p>
-        </div>
-        <div className="planner-controls">
-          <div className="planner-step">
-            <button
-              aria-label="Semana anterior"
-              onClick={() => goWeek(shiftDate(days[0], -7))}
-              type="button"
-            >
-              <CaretLeft size={16} weight="bold" />
-            </button>
-            <button
-              className="planner-now-button"
-              onClick={() => {
-                goWeek(today);
-                setPickedDay(today);
-              }}
-              type="button"
-            >
-              Hoy
-            </button>
-            <button
-              aria-label="Semana siguiente"
-              onClick={() => goWeek(shiftDate(days[0], 7))}
-              type="button"
-            >
-              <CaretRight size={16} weight="bold" />
-            </button>
-          </div>
-          <label className="planner-jump">
-            <span className="sr-only">Ir a una fecha</span>
-            <input
-              onChange={(event) => isIsoDate(event.target.value) && goWeek(event.target.value)}
-              type="date"
-              value={days[0]}
-            />
-          </label>
-          <button
-            className="planner-create"
-            onClick={() => newBlock(focusDay, firstFreeHour)}
-            type="button"
-          >
-            <Plus size={15} weight="bold" /> Nuevo bloque
-          </button>
-        </div>
-      </header>
+      <CalendarHeader
+        blockCount={blockCount}
+        days={days}
+        dueCount={dueCount}
+        firstFreeHour={firstFreeHour}
+        focusDay={focusDay}
+        goWeek={goWeek}
+        newBlock={newBlock}
+        setPickedDay={setPickedDay}
+        today={today}
+      />
 
-      {courses.length > 0 && (
-        <div aria-label="Filtrar por ramo" className="planner-filters" role="group">
-          {courses.map((course) => {
-            const on = !hiddenCourses.has(course.id);
-            return (
-              <button
-                aria-pressed={on}
-                className="planner-pill"
-                key={course.id}
-                onClick={() => toggleCourse(course.id)}
-                style={{ "--course-tone": course.tone } as React.CSSProperties}
-                type="button"
-              >
-                <span aria-hidden="true" className="planner-pill-dot" />
-                {course.name}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <CalendarFilters
+        courses={courses}
+        hiddenCourses={hiddenCourses}
+        toggleCourse={toggleCourse}
+      />
 
       {alert && (
         <p className="planner-alert" role="status">
@@ -276,21 +198,7 @@ export function CalendarView({
         </p>
       )}
 
-      <nav aria-label="Día visible" className="planner-daybar">
-        {days.map((day) => (
-          <button
-            aria-current={day === focusDay ? "date" : undefined}
-            className="planner-daychip"
-            data-today={day === today ? "true" : undefined}
-            key={day}
-            onClick={() => setPickedDay(day)}
-            type="button"
-          >
-            <small>{weekdayOf(day)}</small>
-            <b>{dayOf(day)}</b>
-          </button>
-        ))}
-      </nav>
+      <CalendarDayBar days={days} focusDay={focusDay} setPickedDay={setPickedDay} today={today} />
 
       <div
         className="planner-frame"

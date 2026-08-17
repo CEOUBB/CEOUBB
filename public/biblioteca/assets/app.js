@@ -248,23 +248,70 @@ function formatBytes(bytes) {
 
 function renderMaterials() {
   if (!elements.material) return;
+  elements.material.textContent = '';
   if (state.activeCourse === 'all') {
-    elements.material.innerHTML = '<p class="material-intro">Selecciona un ramo para ver sus guías, certámenes, presentaciones, formularios y plantillas. Todo está incluido dentro de esta carpeta y abre sin conexión.</p>';
+    const p = document.createElement('p');
+    p.className = 'material-intro';
+    p.textContent = 'Selecciona un ramo para ver sus guías, certámenes, presentaciones, formularios y plantillas. Todo está incluido dentro de esta carpeta y abre sin conexión.';
+    elements.material.appendChild(p);
     return;
   }
   const course = courses.find(item => item.id === state.activeCourse);
   if (!course) {
-    elements.material.innerHTML = '<p class="material-intro">Ramo no encontrado.</p>';
+    const p = document.createElement('p');
+    p.className = 'material-intro';
+    p.textContent = 'Ramo no encontrado.';
+    elements.material.appendChild(p);
     return;
   }
-  const links = (course.materials || []).map(file => `<a class="material-link" href="${encodeURI(file.path)}" target="_blank" data-material="${escapeHtml(file.path)}"><span class="file-type">${escapeHtml(file.type)}</span><span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span><span class="file-size">${formatBytes(file.size)}</span></a>`).join('');
-  elements.material.innerHTML = `<p class="material-intro">${escapeHtml(course.sourceNote || '')} Los originales del Escritorio fueron copiados sin cambios.</p><div class="material-grid">${links || '<span>No hay archivos adicionales.</span>'}</div>`;
-  elements.material.querySelectorAll('[data-material]').forEach(link => link.addEventListener('click', event => {
-    if (typeof window !== 'undefined' && window.StudyBridge && typeof window.StudyBridge.openAsset === 'function') {
-      event.preventDefault();
-      window.StudyBridge.openAsset(link.dataset.material);
+  const intro = document.createElement('p');
+  intro.className = 'material-intro';
+  intro.textContent = `${course.sourceNote ? course.sourceNote + ' ' : ''}Los originales del Escritorio fueron copiados sin cambios.`;
+  elements.material.appendChild(intro);
+
+  const grid = document.createElement('div');
+  grid.className = 'material-grid';
+
+  const materials = course.materials || [];
+  if (materials.length === 0) {
+    const emptySpan = document.createElement('span');
+    emptySpan.textContent = 'No hay archivos adicionales.';
+    grid.appendChild(emptySpan);
+  } else {
+    for (const file of materials) {
+      const a = document.createElement('a');
+      a.className = 'material-link';
+      a.href = encodeURI(file.path);
+      a.target = '_blank';
+      a.dataset.material = file.path;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'file-type';
+      typeSpan.textContent = file.type || '';
+      a.appendChild(typeSpan);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'file-name';
+      nameSpan.title = file.name || '';
+      nameSpan.textContent = file.name || '';
+      a.appendChild(nameSpan);
+
+      const sizeSpan = document.createElement('span');
+      sizeSpan.className = 'file-size';
+      sizeSpan.textContent = formatBytes(file.size);
+      a.appendChild(sizeSpan);
+
+      a.addEventListener('click', event => {
+        if (typeof window !== 'undefined' && window.StudyBridge && typeof window.StudyBridge.openAsset === 'function') {
+          event.preventDefault();
+          window.StudyBridge.openAsset(a.dataset.material);
+        }
+      });
+
+      grid.appendChild(a);
     }
-  }));
+  }
+  elements.material.appendChild(grid);
 }
 
 function renderProgress() {
