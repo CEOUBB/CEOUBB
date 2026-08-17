@@ -149,10 +149,13 @@ test("rejects attempts to downgrade any account holding the owner rank with 400"
     email: "ayudante@ubiobio.cl",
     role: "teacher",
   };
-  assert.deepEqual(evaluateRoleChangeGuard(owner, { userId: "user-777", role: "student" }, regularTarget), {
-    allowed: true,
-    status: 200,
-  });
+  assert.deepEqual(
+    evaluateRoleChangeGuard(owner, { userId: "user-777", role: "student" }, regularTarget),
+    {
+      allowed: true,
+      status: 200,
+    }
+  );
 });
 
 test("accepts valid role changes for regular users when initiated by owner", () => {

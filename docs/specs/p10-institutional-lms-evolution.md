@@ -12,7 +12,8 @@
 Centro de Estudio UBB (CEOUBB) is evolving into the official Learning Management System (LMS) and curriculum delivery platform for Universidad del Bío-Bío, targeting over 12,000 students and hundreds of faculty across Concepción and Chillán campuses.
 
 To replace legacy systems (Moodle UBB and Adecca UBB EOL PHP 5.6), the platform must transition from a single-cohort prototype into an institutional-scale architecture:
-1. Establish a relational System of Record (SoR) in Turso/Drizzle for faculties, departments, degree programs (*carreras*), study plans, subjects (*asignaturas*), academic periods, sections (*secciones*), and enrollments (*matrículas*).
+
+1. Establish a relational System of Record (SoR) in Turso/Drizzle for faculties, departments, degree programs (_carreras_), study plans, subjects (_asignaturas_), academic periods, sections (_secciones_), and enrollments (_matrículas_).
 2. Project enrollment state unidirectionally to Cloud Firestore (`/enrollments/{uid}/sections/{seccionId}`) so declarative security rules enforce strict course boundary isolation via `exists()`.
 3. Eliminate hardcoded personal superuser exceptions (`DEVELOPER_EMAILS`) in favor of deterministic RBAC.
 4. Mitigate unbounded realtime collection-group sweeps (`watchCourseActivity`, `watchGradebooks`) in favor of scoped queries targeting the user's active enrollments.
@@ -88,13 +89,17 @@ export const facultades = sqliteTable("facultades", {
 
 export const departamentos = sqliteTable("departamentos", {
   id: text("id").primaryKey(),
-  facultadId: text("facultad_id").notNull().references(() => facultades.id),
+  facultadId: text("facultad_id")
+    .notNull()
+    .references(() => facultades.id),
   nombre: text("nombre").notNull(),
 });
 
 export const carreras = sqliteTable("carreras", {
   id: text("id").primaryKey(),
-  departamentoId: text("departamento_id").notNull().references(() => departamentos.id),
+  departamentoId: text("departamento_id")
+    .notNull()
+    .references(() => departamentos.id),
   codigo: text("codigo").notNull().unique(),
   nombre: text("nombre").notNull(),
 });
@@ -104,7 +109,9 @@ export const asignaturas = sqliteTable("asignaturas", {
   codigo: text("codigo").notNull().unique(),
   nombre: text("nombre").notNull(),
   creditosSct: integer("creditos_sct").notNull().default(0),
-  departamentoId: text("departamento_id").notNull().references(() => departamentos.id),
+  departamentoId: text("departamento_id")
+    .notNull()
+    .references(() => departamentos.id),
 });
 
 export const periodos = sqliteTable("periodos", {
@@ -112,45 +119,81 @@ export const periodos = sqliteTable("periodos", {
   nombre: text("nombre").notNull(),
   fechaInicio: text("fecha_inicio").notNull(),
   fechaFin: text("fecha_fin").notNull(),
-  estado: text("estado", { enum: ["abierto", "cerrado", "archivado"] }).notNull().default("abierto"),
+  estado: text("estado", { enum: ["abierto", "cerrado", "archivado"] })
+    .notNull()
+    .default("abierto"),
 });
 
-export const secciones = sqliteTable("secciones", {
-  id: text("id").primaryKey(), // e.g. "440299-2026-2-1"
-  asignaturaId: text("asignatura_id").notNull().references(() => asignaturas.id),
-  periodoId: text("periodo_id").notNull().references(() => periodos.id),
-  numeroSeccion: integer("numero_seccion").notNull().default(1),
-  docenteId: text("docente_id").notNull().references(() => users.id),
-  createdAt: text("created_at").notNull(),
-}, (table) => [
-  uniqueIndex("idx_seccion_asignatura_periodo_num").on(table.asignaturaId, table.periodoId, table.numeroSeccion),
-]);
+export const secciones = sqliteTable(
+  "secciones",
+  {
+    id: text("id").primaryKey(), // e.g. "440299-2026-2-1"
+    asignaturaId: text("asignatura_id")
+      .notNull()
+      .references(() => asignaturas.id),
+    periodoId: text("periodo_id")
+      .notNull()
+      .references(() => periodos.id),
+    numeroSeccion: integer("numero_seccion").notNull().default(1),
+    docenteId: text("docente_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_seccion_asignatura_periodo_num").on(
+      table.asignaturaId,
+      table.periodoId,
+      table.numeroSeccion
+    ),
+  ]
+);
 
-export const matriculas = sqliteTable("matriculas", {
-  id: text("id").primaryKey(),
-  seccionId: text("seccion_id").notNull().references(() => secciones.id),
-  usuarioId: text("usuario_id").notNull().references(() => users.id),
-  rolSeccion: text("rol_seccion", { enum: ["teacher", "student", "assistant", "coordinator"] }).notNull(),
-  estado: text("estado", { enum: ["activa", "retirada", "congelada"] }).notNull().default("activa"),
-  createdAt: text("created_at").notNull(),
-}, (table) => [
-  uniqueIndex("idx_matriculas_seccion_usuario").on(table.seccionId, table.usuarioId),
-  index("idx_matriculas_usuario").on(table.usuarioId),
-]);
+export const matriculas = sqliteTable(
+  "matriculas",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id),
+    usuarioId: text("usuario_id")
+      .notNull()
+      .references(() => users.id),
+    rolSeccion: text("rol_seccion", {
+      enum: ["teacher", "student", "assistant", "coordinator"],
+    }).notNull(),
+    estado: text("estado", { enum: ["activa", "retirada", "congelada"] })
+      .notNull()
+      .default("activa"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_matriculas_seccion_usuario").on(table.seccionId, table.usuarioId),
+    index("idx_matriculas_usuario").on(table.usuarioId),
+  ]
+);
 
-export const gradeAuditLogs = sqliteTable("grade_audit_logs", {
-  id: text("id").primaryKey(),
-  seccionId: text("seccion_id").notNull().references(() => secciones.id),
-  evaluacionId: text("evaluacion_id").notNull(),
-  studentId: text("student_id").notNull().references(() => users.id),
-  actorId: text("actor_id").notNull().references(() => users.id),
-  prevScore: real("prev_score"),
-  newScore: real("new_score").notNull(),
-  timestamp: text("timestamp").notNull(),
-  ipAddress: text("ip_address"),
-}, (table) => [
-  index("idx_grade_audit_seccion_student").on(table.seccionId, table.studentId),
-]);
+export const gradeAuditLogs = sqliteTable(
+  "grade_audit_logs",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id),
+    evaluacionId: text("evaluacion_id").notNull(),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => users.id),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => users.id),
+    prevScore: real("prev_score"),
+    newScore: real("new_score").notNull(),
+    timestamp: text("timestamp").notNull(),
+    ipAddress: text("ip_address"),
+  },
+  (table) => [index("idx_grade_audit_seccion_student").on(table.seccionId, table.studentId)]
+);
 ```
 
 ### 4.2 File Mapping & Blast Radius

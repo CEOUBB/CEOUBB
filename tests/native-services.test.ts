@@ -132,13 +132,18 @@ test("downloads documents with Filesystem and bails out off-device", async () =>
 
 // Implements: REQ-EVAL-01
 test("a submission lands under its own section, evaluation and uid", async () => {
-  const { submissionStoragePath, safeFileName, MAX_SUBMISSION_BYTES } = await import(
-    "../lib/firebase/storage.ts"
-  );
+  const { submissionStoragePath, safeFileName, MAX_SUBMISSION_BYTES } =
+    await import("../lib/firebase/storage.ts");
 
   assert.equal(MAX_SUBMISSION_BYTES, 25 * 1024 * 1024);
   assert.equal(
-    submissionStoragePath("440299-2026-2-1", "eval_informe_1", "usr_soto", "informe.pdf", 1755400000000),
+    submissionStoragePath(
+      "440299-2026-2-1",
+      "eval_informe_1",
+      "usr_soto",
+      "informe.pdf",
+      1755400000000
+    ),
     "courses/440299-2026-2-1/submissions/eval_informe_1/usr_soto/1755400000000_informe.pdf"
   );
 
@@ -176,5 +181,9 @@ test("storage rules isolate every submission behind an active enrollment", async
   assert.match(block[0], /request\.auth\.uid == userId/);
   assert.match(block[0], /request\.resource\.size <= 25 \* 1024 \* 1024/);
   assert.match(block[0], /allow read: if isOwner\(\) \|\| teachesSection\(courseId\)/);
-  assert.doesNotMatch(block[0], /50 \* 1024 \* 1024/, "a submission never gets the teacher ceiling");
+  assert.doesNotMatch(
+    block[0],
+    /50 \* 1024 \* 1024/,
+    "a submission never gets the teacher ceiling"
+  );
 });

@@ -266,9 +266,8 @@ test("a malformed enrollment never reaches Firestore", async () => {
 
 // Implements: REQ-ACAD-02, REQ-PERF-02
 test("bulk enrollment projections are partitioned below the Firestore commit limit", async () => {
-  const { chunkWrites, MAX_WRITES_PER_COMMIT } = await import(
-    "../lib/services/enrollment-projection.ts"
-  );
+  const { chunkWrites, MAX_WRITES_PER_COMMIT } =
+    await import("../lib/services/enrollment-projection.ts");
   assert.equal(MAX_WRITES_PER_COMMIT, 400);
 
   const rows = Array.from({ length: 950 }, (_, index) => index);

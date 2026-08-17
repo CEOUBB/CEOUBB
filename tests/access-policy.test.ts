@@ -144,8 +144,14 @@ test("firestore rules gate course data on an active enrollment projection", asyn
     /match \/\{path=\*\*\}\//,
     "a collection-group wildcard would reopen every section of the university"
   );
-  assert.match(source, /match \/courses\/\{courseId\}\/posts\/\{postId\}[\s\S]*?allow read: if isOwner\(\) \|\| isMember\(\) && isEnrolled\(courseId\)/);
-  assert.match(source, /match \/courses\/\{courseId\}\/meta\/\{documentId\}[\s\S]*?allow read: if isOwner\(\) \|\| isMember\(\) && isEnrolled\(courseId\)/);
+  assert.match(
+    source,
+    /match \/courses\/\{courseId\}\/posts\/\{postId\}[\s\S]*?allow read: if isOwner\(\) \|\| isMember\(\) && isEnrolled\(courseId\)/
+  );
+  assert.match(
+    source,
+    /match \/courses\/\{courseId\}\/meta\/\{documentId\}[\s\S]*?allow read: if isOwner\(\) \|\| isMember\(\) && isEnrolled\(courseId\)/
+  );
 });
 
 // Implements: REQ-SEC-02
@@ -160,8 +166,14 @@ test("the enrollment projection is read-only for every client", async () => {
 // Implements: REQ-EVAL-01
 test("storage rules let an enrolled student submit up to 25 MB under their own uid", async () => {
   const source = await readSurface("../firebase/storage.rules");
-  assert.match(source, /match \/courses\/\{courseId\}\/submissions\/\{evalId\}\/\{userId\}\/\{fileName\}/);
-  assert.match(source, /request\.auth\.uid == userId && request\.resource\.size > 0 && request\.resource\.size <= 25 \* 1024 \* 1024/);
+  assert.match(
+    source,
+    /match \/courses\/\{courseId\}\/submissions\/\{evalId\}\/\{userId\}\/\{fileName\}/
+  );
+  assert.match(
+    source,
+    /request\.auth\.uid == userId && request\.resource\.size > 0 && request\.resource\.size <= 25 \* 1024 \* 1024/
+  );
   assert.match(source, /allow create, update: if isMember\(\) && isEnrolled\(courseId\)/);
 });
 

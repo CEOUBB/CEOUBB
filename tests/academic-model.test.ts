@@ -12,7 +12,11 @@ import {
   periodos,
   secciones,
 } from "../db/schema.ts";
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, boundedLimit } from "../lib/services/academic-catalog.ts";
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  boundedLimit,
+} from "../lib/services/academic-catalog.ts";
 
 function columns(table: Parameters<typeof getTableConfig>[0]) {
   return new Set(getTableConfig(table).columns.map((column) => column.name));
@@ -78,20 +82,17 @@ test("an enrollment is unique per section and user and carries a lifecycle state
 });
 
 test("the grade audit log records the full mutation tuple", () => {
-  assert.deepEqual(
-    [...columns(gradeAuditLogs)].sort(),
-    [
-      "actor_id",
-      "evaluacion_id",
-      "id",
-      "ip_address",
-      "new_score",
-      "prev_score",
-      "seccion_id",
-      "student_id",
-      "timestamp",
-    ]
-  );
+  assert.deepEqual([...columns(gradeAuditLogs)].sort(), [
+    "actor_id",
+    "evaluacion_id",
+    "id",
+    "ip_address",
+    "new_score",
+    "prev_score",
+    "seccion_id",
+    "student_id",
+    "timestamp",
+  ]);
   assert.ok(indexNames(gradeAuditLogs).has("idx_grade_audit_seccion_student"));
   const prevScore = getTableConfig(gradeAuditLogs).columns.find(
     (column) => column.name === "prev_score"
@@ -143,9 +144,9 @@ test("the academic catalog never issues a query without a limit", async () => {
 test("the academic tables are materialized in a generated migration", async () => {
   const dir = new URL("../drizzle/", import.meta.url);
   const files = (await readdir(dir)).filter((name) => name.endsWith(".sql"));
-  const sql = (
-    await Promise.all(files.map((name) => readFile(new URL(name, dir), "utf8")))
-  ).join("\n");
+  const sql = (await Promise.all(files.map((name) => readFile(new URL(name, dir), "utf8")))).join(
+    "\n"
+  );
   for (const table of [
     "facultades",
     "departamentos",

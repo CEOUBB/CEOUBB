@@ -31,12 +31,17 @@ export type EnrollmentProjection = {
 };
 
 type FirestoreWrite =
-  | { update: { name: string; fields: Record<string, { stringValue: string }> }; updateMask: { fieldPaths: string[] } }
+  | {
+      update: { name: string; fields: Record<string, { stringValue: string }> };
+      updateMask: { fieldPaths: string[] };
+    }
   | { delete: string };
 
 /** Un segmento de ruta de Firestore no puede ir vacío ni contener separadores. */
 export function isValidPathSegment(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0 && value.length <= 1500 && !/[/\s]/.test(value);
+  return (
+    typeof value === "string" && value.length > 0 && value.length <= 1500 && !/[/\s]/.test(value)
+  );
 }
 
 export function parseEnrollmentProjection(value: unknown): EnrollmentProjection {
