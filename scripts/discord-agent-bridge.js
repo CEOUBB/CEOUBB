@@ -1,7 +1,4 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import fs from "node:fs";
-import path from "node:path";
-import crypto from "node:crypto";
 import {
   ALLOWED_USER_IDS,
   KNOWN_USER_NAMES,
@@ -10,30 +7,54 @@ import {
   spawnSafeCommand,
 } from "./discord-context-helper.js";
 
-// Load .env.local if present
-const envPath = path.join(process.cwd(), ".env.local");
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf-8");
-  for (const line of envContent.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
-      const [key, ...valParts] = trimmed.split("=");
-      process.env[key.trim()] = valParts.join("=").trim();
-    }
-  }
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // .env.local is optional: the process may already carry the variables.
 }
 
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_CEOUBB_BOT_TOKEN;
+/*
+  Un único puente para los agentes de línea de comandos que hablan por Discord.
+  Cada agente solo difiere en binario, modelo y bandera de razonamiento, así que
+  se declara aquí en lugar de clonar el archivo por cada CLI nueva.
+*/
+const AGENTS = {
+  claude: {
+    label: "Claude",
+    command: "claude",
+    tokenVars: ["DISCORD_BOT_TOKEN", "DISCORD_CEOUBB_BOT_TOKEN"],
+    model: "claude-sonnet-5",
+    effortFlag: "--thinking",
+    effort: "adaptive",
+  },
+  codex: {
+    label: "Codex",
+    command: "codex",
+    tokenVars: ["DISCORD_CODEX_BOT_TOKEN", "DISCORD_BOT_TOKEN"],
+    model: "gpt-5.6-luna",
+    effortFlag: "--reasoning-effort",
+    effort: "high",
+  },
+};
 
-if (!DISCORD_BOT_TOKEN) {
-  console.error("❌ Error: DISCORD_BOT_TOKEN is not set in .env.local or environment.");
+const agentName = process.argv[2] ?? "claude";
+const agent = AGENTS[agentName];
+
+if (!agent) {
+  console.error(
+    `❌ Error: unknown agent "${agentName}". Available: ${Object.keys(AGENTS).join(", ")}.`
+  );
   process.exit(1);
 }
 
-const DEFAULT_MODEL = "claude-sonnet-5";
-const REASONING_EFFORT = "adaptive";
+const DISCORD_BOT_TOKEN = agent.tokenVars.map((name) => process.env[name]).find(Boolean);
 
-const sessionStore = new PersistentSessionStore("claude");
+if (!DISCORD_BOT_TOKEN) {
+  console.error(`❌ Error: ${agent.tokenVars[0]} is not set in .env.local or environment.`);
+  process.exit(1);
+}
+
+const sessionStore = new PersistentSessionStore(agentName);
 
 const client = new Client({
   intents: [
@@ -76,10 +97,10 @@ function chunkText(text, limit = 1900) {
 }
 
 client.on("clientReady", () => {
-  console.log(`🤖 CEOUBB Claude Local Bridge connected as ${client.user.tag}`);
+  console.log(`🤖 CEOUBB ${agent.label} Local Bridge connected as ${client.user.tag}`);
   console.log(`💬 Mode: Raw Text Reply (Human style with user context & reply detection)`);
-  console.log(`🧠 Model: ${DEFAULT_MODEL} (Reasoning: ${REASONING_EFFORT})`);
-  console.log(`💾 Persistent Sessions: Enabled (.cache/sessions-claude.json)`);
+  console.log(`🧠 Model: ${agent.model} (Reasoning: ${agent.effort})`);
+  console.log(`💾 Persistent Sessions: Enabled (.cache/sessions-${agentName}.json)`);
   console.log(`🔒 Authorized Users: ${Array.from(ALLOWED_USER_IDS).join(", ")}`);
 });
 
@@ -113,7 +134,7 @@ client.on("messageCreate", async (message) => {
     );
     if (isMentioned || isReplyToBot) {
       await message.reply(
-        "🔒 Este agente local está restringido únicamente a los mantenedores autorizados del proyecto."
+        `🔒 Este agente local de ${agent.label} está restringido únicamente a los mantenedores autorizados del proyecto.`
       );
     }
     return;
@@ -142,7 +163,7 @@ client.on("messageCreate", async (message) => {
   ) {
     sessionStore.resetSession(message.channel.id, message.author.id);
     await message.reply(
-      `🔄 **Nueva conversación iniciada para ${userDisplayName}.** Contexto reiniciado.`
+      `🔄 **Nueva conversación de ${agent.label} iniciada para ${userDisplayName}.** Contexto reiniciado.`
     );
     return;
   }
@@ -157,7 +178,7 @@ client.on("messageCreate", async (message) => {
   }
 
   console.log(
-    `\n📩 Prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`
+    `\n📩 ${agent.label} prompt received from ${userDisplayName} (@${message.author.username}) [Session: ${sessionId.slice(0, 8)}... (${isExisting ? "resume" : "new"})]: "${userPrompt}"`
   );
 
   // Continuously indicate typing while processing
@@ -177,19 +198,19 @@ client.on("messageCreate", async (message) => {
       "-p",
       contextualPrompt,
       "--model",
-      DEFAULT_MODEL,
-      "--thinking",
-      REASONING_EFFORT,
+      agent.model,
+      agent.effortFlag,
+      agent.effort,
       ...(isExisting ? ["-r", sessionId] : ["--session-id", sessionId]),
       "--system-prompt",
       systemPromptText,
     ];
 
     console.log(
-      `🚀 Executing local Claude process with safe spawn [Session: ${sessionId.slice(0, 8)}]`
+      `🚀 Executing local ${agent.label} process with safe spawn [Session: ${sessionId.slice(0, 8)}]`
     );
 
-    const { stdout, stderr } = await spawnSafeCommand("claude", args, {
+    const { stdout, stderr } = await spawnSafeCommand(agent.command, args, {
       cwd: process.cwd(),
     });
 
@@ -207,12 +228,14 @@ client.on("messageCreate", async (message) => {
       }
     }
 
-    console.log(`✅ Sent ${chunks.length} plain text response message(s) to ${userDisplayName}.`);
+    console.log(
+      `✅ Sent ${chunks.length} plain text ${agent.label} response message(s) to ${userDisplayName}.`
+    );
   } catch (error) {
     clearInterval(typingInterval);
-    console.error("❌ Error executing local Claude process:", error);
+    console.error(`❌ Error executing local ${agent.label} process:`, error);
     await message.reply({
-      content: `❌ **Error al procesar con Claude:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
+      content: `❌ **Error al procesar con ${agent.label}:**\n\`\`\`\n${error.message.slice(0, 1800)}\n\`\`\``,
     });
   }
 });
