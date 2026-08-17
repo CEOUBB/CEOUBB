@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
     "**/assets/vendor/**",
     "android/**",
     "firebase/**",
+    ".claude/**",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
