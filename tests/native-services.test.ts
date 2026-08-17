@@ -174,7 +174,7 @@ test("the upload client refuses anything outside 1 byte to 25 MB", async () => {
 test("storage rules isolate every submission behind an active enrollment", async () => {
   const rules = await read("firebase/storage.rules");
   const block = rules.match(
-    /match \/courses\/\{courseId\}\/submissions\/\{evalId\}\/\{userId\}\/\{fileName\} \{[\s\S]*?\n    \}/
+    /match \/courses\/\{courseId\}\/submissions\/\{evalId\}\/\{userId\}\/\{fileName\} \{[\s\S]*?\n {4}\}/
   );
   assert.ok(block, "the submissions path must be declared");
   assert.match(block[0], /allow create, update: if isMember\(\) && isEnrolled\(courseId\)/);

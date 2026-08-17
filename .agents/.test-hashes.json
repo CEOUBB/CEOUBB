@@ -11,7 +11,7 @@
   "tests/linear-webhook.test.ts": "1908e23b0b79bd38a8328ef16b9e8595a72e6b7577a5fe9caa7b0fb32f369d28",
   "tests/mobile-bridge.test.ts": "6110fa0598cc9afebaee327df61811bbbf21c518036143997457207402cf2e23",
   "tests/mobile-performance-budget.test.ts": "2865b256b95599a7499ec28f6be93c40d4c8e408d1ae59170af4fb5388cb7790",
-  "tests/native-services.test.ts": "c40f6400f6db7419787b7c5c58a55d79b05fb784064a9862012dd2b73e807773",
+  "tests/native-services.test.ts": "b4440fc31771cf11a85fbc0daaf9f9b606047d2a1c57580fc85a3156676e91d7",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/rendered-html.test.mjs": "9739502e0267b96de0d9eb53e4735c6381415a93b424174b116713ba995c6f5f",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
