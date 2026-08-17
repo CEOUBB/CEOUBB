@@ -31,6 +31,9 @@ export type { ClassroomState, CourseActivity } from "./firebase/posts.ts";
 export {
   watchClassroom,
   watchCourseActivity,
+  watchableSections,
+  mergeActivity,
+  MAX_WATCHED_SECTIONS,
   publishClassroomPost,
   editClassroomPost,
   moveClassroomPost,
@@ -39,13 +42,23 @@ export {
 
 import { classroomFileUrl as getFileUrl } from "./firebase/storage.ts";
 
-export { uploadClassroomFile, renameClassroomFile } from "./firebase/storage.ts";
+export type { StudentSubmission } from "./firebase/storage.ts";
+
+export {
+  uploadClassroomFile,
+  renameClassroomFile,
+  uploadStudentSubmission,
+  watchOwnSubmissions,
+  submissionStoragePath,
+  safeFileName,
+  MAX_SUBMISSION_BYTES,
+} from "./firebase/storage.ts";
 
 export async function classroomFileUrl(storagePath: string) {
   return getFileUrl(storagePath);
 }
 
-export type { CourseGradebook } from "./firebase/grades.ts";
+export type { CourseGradebook, StudentScoreRow } from "./firebase/grades.ts";
 
 export {
   watchGradebooks,
@@ -53,6 +66,9 @@ export {
   saveSimulation,
   saveGradebook,
   saveStudentScores,
+  saveSectionScores,
+  chunkOperations,
+  MAX_BATCH_OPERATIONS,
 } from "./firebase/grades.ts";
 
 export type { PersonalEventInput } from "./firebase/calendar.ts";
