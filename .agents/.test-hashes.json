@@ -12,6 +12,7 @@
   "tests/mobile-performance-budget.test.ts": "2865b256b95599a7499ec28f6be93c40d4c8e408d1ae59170af4fb5388cb7790",
   "tests/native-services.test.ts": "5a5d3393d555535ad756d78a02c5aca436801f4636c2a5c8da0d359290fe657b",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
-  "tests/rendered-html.test.mjs": "bf4be57816dcd20be25f5f618dce8138caa2c2c5af6dc083f0c808236cb83f14",
-  "tests/services.test.ts": "818a54614027bc2f42832198e9b81a7c0c684c31ac556d302ced3893da1d591c"
+  "tests/rendered-html.test.mjs": "eb41ee1d89ddcc97876066e0bcd8dc68102fe540b94673af3e50239d45f7b845",
+  "tests/services.test.ts": "818a54614027bc2f42832198e9b81a7c0c684c31ac556d302ced3893da1d591c",
+  "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb"
 }
