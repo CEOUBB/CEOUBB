@@ -1,7 +1,6 @@
 import { eq, like, or, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
-import { isDeveloperEmail } from "../../../../lib/access-policy";
 import { getSessionUser } from "../../../../lib/auth";
 
 // Implements: REQ-PERF-03, REQ-PERF-04
@@ -67,14 +66,19 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Datos inválidos." }, { status: 400 });
   if (payload.userId === actor.id)
     return Response.json({ error: "La cuenta propietaria no puede degradarse." }, { status: 400 });
+  /*
+    La protección ya no mira el correo: mira el rango administrativo guardado en
+    Turso. Ninguna cuenta personal está codificada en el servidor.
+  */
+  // Implements: REQ-SEC-01
   const target = await getDb()
-    .select({ email: users.email })
+    .select({ role: users.role })
     .from(users)
     .where(eq(users.id, payload.userId))
     .limit(1);
-  if (target[0] && isDeveloperEmail(target[0].email))
+  if (target[0]?.role === "owner")
     return Response.json(
-      { error: "Las cuentas de desarrollador no pueden cambiar de rango." },
+      { error: "Las cuentas propietarias no pueden cambiar de rango." },
       { status: 400 }
     );
   await getDb()

@@ -5,7 +5,6 @@ import { like, or, sql } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
 import { getDb } from "../db/index.ts";
 import { sessions, users } from "../db/schema.ts";
-import { DEVELOPER_EMAILS, isDeveloperEmail } from "../lib/access-policy.ts";
 import type { AccountRole } from "../lib/access-policy.ts";
 import { pruneExpiredSessions } from "../lib/auth.ts";
 
@@ -37,11 +36,12 @@ function evaluateRoleChangeGuard(
   if (payload.userId === actor.id) {
     return { allowed: false, status: 400, error: "La cuenta propietaria no puede degradarse." };
   }
-  if (targetUser && isDeveloperEmail(targetUser.email)) {
+  // Implements: REQ-SEC-01 — el rango protegido sale de la base, no del correo.
+  if (targetUser && targetUser.role === "owner") {
     return {
       allowed: false,
       status: 400,
-      error: "Las cuentas de desarrollador no pueden cambiar de rango.",
+      error: "Las cuentas propietarias no pueden cambiar de rango.",
     };
   }
   return { allowed: true, status: 200 };
@@ -81,7 +81,7 @@ test("rejects unauthenticated or non-owner callers with 403", () => {
 });
 
 test("rejects payloads missing userId or containing invalid target roles with 400", () => {
-  const owner: Actor = { id: "owner-1", role: "owner", email: "elpapijuaco325@gmail.com" };
+  const owner: Actor = { id: "owner-1", role: "owner", email: "coordinacion@ubiobio.cl" };
   const target: TargetUser = {
     id: "user-456",
     email: "alumno@alumnos.ubiobio.cl",
@@ -109,10 +109,10 @@ test("rejects payloads missing userId or containing invalid target roles with 40
 });
 
 test("rejects attempts to downgrade the active owner account with 400", () => {
-  const owner: Actor = { id: "owner-1", role: "owner", email: "elpapijuaco325@gmail.com" };
+  const owner: Actor = { id: "owner-1", role: "owner", email: "coordinacion@ubiobio.cl" };
   const selfTarget: TargetUser = {
     id: "owner-1",
-    email: "elpapijuaco325@gmail.com",
+    email: "coordinacion@ubiobio.cl",
     role: "owner",
   };
 
@@ -122,34 +122,41 @@ test("rejects attempts to downgrade the active owner account with 400", () => {
   assert.equal(result.error, "La cuenta propietaria no puede degradarse.");
 });
 
-test("rejects attempts to modify developer superusers with 400", () => {
-  const owner: Actor = { id: "owner-1", role: "owner", email: "elpapijuaco325@gmail.com" };
+// Implements: REQ-SEC-01
+test("rejects attempts to downgrade any account holding the owner rank with 400", () => {
+  const owner: Actor = { id: "owner-1", role: "owner", email: "coordinacion@ubiobio.cl" };
 
-  for (const devEmail of DEVELOPER_EMAILS) {
-    const devTarget: TargetUser = { id: "dev-999", email: devEmail, role: "owner" };
+  for (const targetRole of ["student", "teacher"] as const) {
+    const protectedTarget: TargetUser = {
+      id: "owner-2",
+      email: "direccion.dti@ubiobio.cl",
+      role: "owner",
+    };
     const result = evaluateRoleChangeGuard(
       owner,
-      { userId: "dev-999", role: "student" },
-      devTarget
+      { userId: "owner-2", role: targetRole },
+      protectedTarget
     );
     assert.equal(result.allowed, false);
     assert.equal(result.status, 400);
-    assert.equal(result.error, "Las cuentas de desarrollador no pueden cambiar de rango.");
-
-    // Uppercase variation
-    const upperTarget: TargetUser = { id: "dev-999", email: devEmail.toUpperCase(), role: "owner" };
-    const upperResult = evaluateRoleChangeGuard(
-      owner,
-      { userId: "dev-999", role: "teacher" },
-      upperTarget
-    );
-    assert.equal(upperResult.allowed, false);
-    assert.equal(upperResult.status, 400);
+    assert.equal(result.error, "Las cuentas propietarias no pueden cambiar de rango.");
   }
+
+  // El correo ya no protege a nadie: una cuenta institucional sin rango de
+  // propietario sigue siendo administrable.
+  const regularTarget: TargetUser = {
+    id: "user-777",
+    email: "ayudante@ubiobio.cl",
+    role: "teacher",
+  };
+  assert.deepEqual(evaluateRoleChangeGuard(owner, { userId: "user-777", role: "student" }, regularTarget), {
+    allowed: true,
+    status: 200,
+  });
 });
 
 test("accepts valid role changes for regular users when initiated by owner", () => {
-  const owner: Actor = { id: "owner-1", role: "owner", email: "elpapijuaco325@gmail.com" };
+  const owner: Actor = { id: "owner-1", role: "owner", email: "coordinacion@ubiobio.cl" };
   const target: TargetUser = {
     id: "user-456",
     email: "alumno@alumnos.ubiobio.cl",
@@ -185,13 +192,14 @@ test("admin users endpoint source strictly enforces every guard contract", async
   assert.match(source, /payload\.userId === actor\.id/, "must block owner account downgrade");
   assert.match(source, /"La cuenta propietaria no puede degradarse\."/);
 
-  // Prevent modification of developer emails
+  // Prevent modification of any account holding the owner rank
   assert.match(
     source,
-    /isDeveloperEmail\(target\[0\]\.email\)/,
-    "must use isDeveloperEmail to protect developers"
+    /target\[0\]\?\.role === "owner"/,
+    "must protect the owner rank from the stored record"
   );
-  assert.match(source, /"Las cuentas de desarrollador no pueden cambiar de rango\."/);
+  assert.match(source, /"Las cuentas propietarias no pueden cambiar de rango\."/);
+  assert.doesNotMatch(source, /@gmail\.com/, "no personal address may survive in the endpoint");
 });
 
 test("REQ-PERF-01: sessions table defines idx_sessions_user_id index on userId", async () => {
@@ -339,8 +347,8 @@ test("REQ-PERF-03, REQ-PERF-04: GET /api/admin/users pagination, limit clamping 
       },
       {
         id: "u-5",
-        email: "elpapijuaco325@gmail.com",
-        name: "Joaquin Owner",
+        email: "coordinacion@ubiobio.cl",
+        name: "Coordinacion DTI",
         role: "owner" as const,
         createdAt: "2026-01-05T10:00:00.000Z",
       },

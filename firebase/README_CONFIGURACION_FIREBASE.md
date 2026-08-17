@@ -4,12 +4,23 @@ El proyecto usa Firebase Authentication, Cloud Firestore, Cloud Storage y Cloud 
 
 ## Cuentas y roles
 
-- `elpapijuaco325@gmail.com`: desarrollador principal protegido.
-- `felipearce.2004@gmail.com`: desarrollador colaborador protegido.
 - `@alumnos.ubiobio.cl`: estudiante automático.
 - `@ubiobio.cl`: profesor automático.
 - Cualquier otro dominio queda rechazado.
-- El propietario puede suspender o restablecer cuentas desde la administración.
+- El rango `owner` no se deriva del correo (SPEC-010 / REQ-SEC-01): se guarda en Turso (`users.role = 'owner'`), se proyecta a `users/{uid}.role` en Firestore y las reglas lo leen con `role()`. Para promover una cuenta hay que actualizar ambos registros.
+- El propietario puede suspender o restablecer cuentas desde la administración, pero no puede degradar a otra cuenta con rango `owner`.
+
+## Aislamiento por matrícula
+
+Las reglas de Firestore y Storage sólo abren `courses/{seccionId}/**` si existe el marcador `enrollments/{uid}/sections/{seccionId}`. Ese marcador lo escribe el servidor con credenciales de cuenta de servicio (`lib/services/enrollment-projection.ts`) y para el cliente es de sólo lectura.
+
+Variables necesarias en el entorno del portal web:
+
+- `FIREBASE_SERVICE_ACCOUNT_EMAIL`
+- `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`
+- `FIREBASE_PROJECT_ID` (opcional; por defecto `centro-de-estudio-ubb`)
+
+Sin secciones proyectadas, el portal no abre ninguna escucha y el aula queda vacía: la proyección debe ejecutarse antes de habilitar el acceso.
 
 ## Proyecto conectado
 
