@@ -23,13 +23,7 @@ import {
 import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
-import {
-  SEEN_KEY,
-  navItems,
-  navReducer,
-  readSeen,
-  type Screen,
-} from "./portal-types";
+import { SEEN_KEY, navItems, navReducer, readSeen, type Screen } from "./portal-types";
 import {
   calendarEntries,
   forgetPhoto,
