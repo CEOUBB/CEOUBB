@@ -32,6 +32,7 @@ Companion files:
 
 ## Active work
 
+- [DONE] **React Doctor 100 Health Score & Frontend Reliability Remediations (2026-08-17).** PR #31 (`feat/react-doctor-100-health-score`). Planes 028, 029 y 030 completados. 100/100 en React Doctor con 0 advertencias, 0 errores y 0 reglas suprimidas o ignoradas. Modularización de `app/Portal.tsx` (`portal-screens.tsx`, `portal-shell.tsx`, `portal-sheets.tsx`, `portal-types.ts`), `CalendarView.tsx` (`CalendarHeader.tsx`), migración de animaciones layout a GPU transforms, unificación de estado atómico con `useReducer`, limpieza de código muerto y exports no utilizados, eliminación de mutaciones de autorización desde cliente, e integración determinista de listeners Capacitor en `useHardwareBack`.
 - [DONE] **P9: Evolución del Arnés de Desarrollo, Gobernanza de Contexto y SDD Enterprise (2026-08-17).** Spec [`docs/specs/p9-enterprise-harness-evolution.md`](docs/specs/p9-enterprise-harness-evolution.md).
 - [DONE] **Dual-store user role mutation sync (2026-08-17).** Resolved teacher promotion desynchronization between Turso (`users.role`) and Firestore (`users/{uid}.role`) via `updateRemoteUserRole` and `AdminView.tsx`. Verified with `tests/admin-api.test.ts` (REQ-ACCESS-04).
 - [DONE] **P8: Optimizaciones de Rendimiento, Escalabilidad y Desacoplamiento de Carga (2026-08-16).** Rama `feat/perf-and-scalability-remediations`. Spec [`docs/specs/p8-performance-and-scalability-remediations.md`](docs/specs/p8-performance-and-scalability-remediations.md).
