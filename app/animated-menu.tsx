@@ -56,7 +56,7 @@ export function Menu({ animate = false, size = 20, ...props }: MenuProps) {
         y2={12}
         variants={{
           initial: { opacity: 1 },
-          active: { opacity: 0, transition: { ease: "easeInOut", duration: 0.2 } },
+          active: { opacity: 0, transition: lineTransition },
         }}
       />
       <m.line x1={4} x2={20} y1={18} y2={18} variants={lastLineVariants} />

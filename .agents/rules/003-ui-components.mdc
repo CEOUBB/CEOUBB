@@ -15,14 +15,19 @@ This rule is automatically applied when creating or editing UI components, pages
 - **Academic Palette:** Use heraldic accent colors (Gold `#f59e0b`, Red `#e31b23`, Sky `#38bdf8`, Emerald `#10b981`, Purple `#8b5cf6`) solely to categorize subjects, evaluation statuses, and tags. NEVER use category accents to fill primary CTAs.
 
 ## 2. Typography & Micro-Interactions
-- **Display Headlines & Covers:** `Source Serif 4` with negative display tracking (`-0.02em`).
+- **Display Headlines & Covers:** `Source Serif 4` with negative display tracking (`-0.025em` to `-0.035em`) and `text-wrap: balance`.
 - **Operational UI:** `Inter` for buttons, navigation, data tables, forms, and metadata.
-- **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums`.
-- **Motion Physics:** Use `motion/react` with spring physics (`stiffness: 300, damping: 30`). Prohibited use of slow linear CSS transitions.
-- **Accessibility:** Wrap motion effects in `@media (prefers-reduced-motion: reduce)`.
+- **Editorial Reading:** Apply `text-wrap: pretty` to body text and explanatory paragraphs to avoid typographical orphans.
+- **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums` (`.num`).
+- **Motion Physics:** Use `motion/react` with critically damped spring physics (`type: "spring", stiffness: 340, damping: 28, mass: 0.8`). Prohibited use of slow linear CSS transitions (`ease-in-out` / `transition-all`).
+- **Accessibility:** Wrap motion effects in `useReducedMotion()` in React and `@media (prefers-reduced-motion: reduce)` in CSS.
 - **Iconography:** Use `@phosphor-icons/react` exclusively. Do not hand-roll raw inline SVG icons.
 
-## 3. Anti-Slop Directives ("Do NOTs")
-- DO NOT use generic purple-to-indigo gradients on dark backgrounds (`from-purple-600 to-indigo-600`).
+## 3. Strict Anti-Slop Directives ("Do NOTs")
+- DO NOT use pure `#000000`, `bg-black`, or `bg-zinc-950` with saturated neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`).
+- DO NOT use generic purple-to-indigo gradients on dark backgrounds or continuous text gradient fills (`bg-clip-text text-transparent`).
 - DO NOT use unstyled, symmetrical bento box grids without clear information hierarchy.
 - DO NOT add glowing borders, pulsating neon accents, or noise mesh overlays.
+- DO NOT use magic pill badges with `animate-ping` and decorative emojis (✨, 🚀, ⚡) as icon substitutes.
+- DO NOT scale modal or dialog entrances from `scale(0)`; initiate from `scale(0.96)` or subtle $y$ translation.
+- DO NOT declare `transition: all` or `transition-all duration-300 ease-in-out`; animate strictly `transform` and `opacity`.

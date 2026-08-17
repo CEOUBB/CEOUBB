@@ -201,11 +201,11 @@ export function StudentGrades({
             <dl className="sheet-facts">
               <div>
                 <dt>Ponderación</dt>
-                <dd>{detail.weight}%</dd>
+                <dd className="num">{detail.weight}%</dd>
               </div>
               <div>
                 <dt>Nota oficial</dt>
-                <dd>
+                <dd className="num">
                   {isValidGrade(officialScores[detail.id])
                     ? formatGrade(officialScores[detail.id])
                     : "—"}
@@ -239,8 +239,8 @@ export function StudentGrades({
               <b>{item.name}</b>
               {item.date && <small>{formatDay(item.date)}</small>}
             </span>
-            <span className="grades-weight">{item.weight}%</span>
-            <span className="grades-official">
+            <span className="grades-weight num">{item.weight}%</span>
+            <span className="grades-official num">
               {isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}
             </span>
             <span>{simulationField(item)}</span>
@@ -249,11 +249,14 @@ export function StudentGrades({
       </div>
       <aside className="grades-summary">
         <div className="grades-average">
-          <strong>{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+          <strong className="num">
+            {summary.average === null ? "—" : formatGrade(summary.average)}
+          </strong>
           <div>
             <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
             <p>
-              {summary.gradedWeight}% de {summary.totalWeight}% ya tiene nota
+              <span className="num">{summary.gradedWeight}%</span> de{" "}
+              <span className="num">{summary.totalWeight}%</span> ya tiene nota
             </p>
           </div>
         </div>
@@ -432,7 +435,7 @@ export function TeacherGrades({
               value={exempt}
             />
           </label>
-          <span className={totalWeight === 100 ? "weight-total ok" : "weight-total"}>
+          <span className={totalWeight === 100 ? "weight-total ok num" : "weight-total num"}>
             Suma {totalWeight}%
           </span>
           <button className="secondary-button" onClick={addItem} type="button">
@@ -519,7 +522,7 @@ export const TeacherStudentRow = React.memo(function TeacherStudentRow({
           />
         </span>
       ))}
-      <span className="grades-official">
+      <span className="grades-official num">
         {summary.average === null ? "—" : formatGrade(summary.average)}
       </span>
     </div>

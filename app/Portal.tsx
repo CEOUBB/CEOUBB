@@ -47,16 +47,20 @@ import {
 import { Menu } from "./animated-menu";
 import { CommandPalette, type PaletteItem } from "./command-palette";
 
+const ViewSkeleton = ({ label }: { label: string }) => (
+  <div className="boot-head" aria-busy="true" aria-label={label} role="status">
+    <span className="boot-title sk" />
+    <span className="boot-subtitle sk" />
+    <div className="boot-strip sk" style={{ marginTop: "1rem" }} />
+  </div>
+);
+
 // Implements: REQ-PERF-06
 const CalendarView = dynamic(
   () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
   {
     ssr: false,
-    loading: () => (
-      <div className="empty-state">
-        <strong>Cargando calendario…</strong>
-      </div>
-    ),
+    loading: () => <ViewSkeleton label="Cargando calendario…" />,
   }
 );
 
@@ -64,30 +68,18 @@ const ResourcesView = dynamic(
   () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
   {
     ssr: false,
-    loading: () => (
-      <div className="empty-state">
-        <strong>Cargando recursos…</strong>
-      </div>
-    ),
+    loading: () => <ViewSkeleton label="Cargando recursos…" />,
   }
 );
 
 const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
   ssr: false,
-  loading: () => (
-    <div className="empty-state">
-      <strong>Cargando administración…</strong>
-    </div>
-  ),
+  loading: () => <ViewSkeleton label="Cargando administración…" />,
 });
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
-  loading: () => (
-    <div className="empty-state">
-      <strong>Abriendo el aula…</strong>
-    </div>
-  ),
+  loading: () => <ViewSkeleton label="Abriendo el aula…" />,
 });
 
 const SEEN_KEY = "ceoubb:seen";

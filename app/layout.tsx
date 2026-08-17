@@ -7,7 +7,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "sw
 
 /** Voz institucional: la serif académica sólo firma títulos y nombres de ramo. */
 const sourceSerif = Source_Serif_4({
-  variable: "--font-serif",
+  variable: "--font-source-serif",
   subsets: ["latin"],
   display: "swap",
   weight: ["600", "700"],
