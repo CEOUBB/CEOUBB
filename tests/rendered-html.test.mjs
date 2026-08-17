@@ -13,7 +13,7 @@ const SESSION_COOKIE = "centro_estudio_session";
 
 const OWNER = {
   id: "firebase:test-owner",
-  email: "felipearce.2004@gmail.com",
+  email: "coordinacion@ubiobio.cl",
   name: "Owner De Prueba",
   role: "owner",
 };
@@ -282,7 +282,8 @@ test("restricts account administration to the owner role", async () => {
   assert.ok(users.every((item) => !("rut" in item)));
 });
 
-test("refuses to change the rank of a developer account", async () => {
+// Implements: REQ-SEC-01 — el rango protegido sale de `users.role`, no del correo.
+test("refuses to change the rank of an account holding the owner rank", async () => {
   const cookie = await signIn(OWNER);
   const patch = (body) =>
     request("/api/admin/users", {
@@ -340,23 +341,36 @@ test("keeps profile deletion and course paths locked down", async () => {
   assert.match(firestoreRules, /allow delete: if isOwner\(\);/);
   assert.match(firestoreRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
   assert.match(storageRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
+  /*
+    Los conteos incluyen la definición de la función. SPEC-010 añadió el buzón de
+    entregas, así que Firestore pasa de 5 a 6 (posts, progress, meta, grades,
+    submissions) y Storage de 2 a 3 (material docente, entregas).
+  */
   assert.equal(
     firestoreRules.match(/validCourse\(courseId\)/g).length,
-    5,
+    6,
     "every course write path must be guarded by validCourse"
   );
   assert.equal(
     storageRules.match(/validCourse\(courseId\)/g).length,
-    2,
+    3,
     "every course upload path must be guarded by validCourse"
   );
+  /*
+    SPEC-010 endurece la escritura: ya no basta con ser docente, hay que dictar
+    esa sección. `teachesSection(courseId)` es `isOwner() || isTeacher() && isEnrolled(courseId)`.
+  */
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if isTeacher\(\)/
+    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if teachesSection\(courseId\)/
   );
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if isTeacher\(\)/
+    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if teachesSection\(courseId\)/
+  );
+  assert.match(
+    firestoreRules,
+    /function teachesSection\(seccionId\) \{\s*return isOwner\(\) \|\| isTeacher\(\) && isEnrolled\(seccionId\);/
   );
 });
 

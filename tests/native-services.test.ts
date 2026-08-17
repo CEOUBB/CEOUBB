@@ -43,17 +43,28 @@ test("keeps every other guard on the users update rule", async () => {
   );
 });
 
-// REQ-CAP-18 — la superficie de reglas no crece: sólo se editó una lista de campos.
-test("does not add any allow rule to the ruleset", async () => {
+/*
+  La superficie de reglas está congelada: cualquier `allow` nuevo debe pasar por
+  una spec aprobada. SPEC-010 la movió de 18 a 21 —entran matrículas (2) y
+  entregas (3), y salen los dos comodines de collection group— y la vuelve a
+  congelar aquí.
+*/
+// REQ-CAP-18, REQ-SEC-02
+test("keeps the allow surface frozen at the approved count", async () => {
   const rules = await read("firebase/firestore.rules");
   assert.equal(
     (rules.match(/^\s*allow /gm) ?? []).length,
-    18,
-    "the ruleset must keep exactly 18 allow rules"
+    21,
+    "the ruleset must keep exactly 21 allow rules"
   );
   // No hay regla comodín: lo que no está listado queda denegado por defecto.
   assert.doesNotMatch(rules, /allow .*: if true;/, "no rule may grant unconditional access");
   assert.doesNotMatch(rules, /match \/\{document=\*\*\}/, "no catch-all match may be introduced");
+  assert.doesNotMatch(
+    rules,
+    /match \/\{path=\*\*\}\//,
+    "a collection-group wildcard would reopen every section of the university"
+  );
 });
 
 // REQ-CAP-10b — un permiso denegado no se vuelve a pedir ni bloquea la app.
@@ -111,4 +122,59 @@ test("downloads documents with Filesystem and bails out off-device", async () =>
     "the file must be handed off to the native viewer"
   );
   assert.match(source, /catch \{\s*return false;/, "any failure must degrade instead of throwing");
+});
+
+/*
+  Buzón de entregas del estudiante (REQ-EVAL-01). La subida real vive en el
+  navegador, así que aquí se fija lo verificable: la ruta aislada por sección,
+  evaluación y UID, el saneo del nombre y el techo de 25 MB en las reglas.
+*/
+
+// Implements: REQ-EVAL-01
+test("a submission lands under its own section, evaluation and uid", async () => {
+  const { submissionStoragePath, safeFileName, MAX_SUBMISSION_BYTES } = await import(
+    "../lib/firebase/storage.ts"
+  );
+
+  assert.equal(MAX_SUBMISSION_BYTES, 25 * 1024 * 1024);
+  assert.equal(
+    submissionStoragePath("440299-2026-2-1", "eval_informe_1", "usr_soto", "informe.pdf", 1755400000000),
+    "courses/440299-2026-2-1/submissions/eval_informe_1/usr_soto/1755400000000_informe.pdf"
+  );
+
+  // Ningún nombre de archivo puede escaparse de su carpeta.
+  const traversal = submissionStoragePath("c-1", "e-1", "uid-1", "../../otro/nota.pdf", 1);
+  assert.equal(traversal, "courses/c-1/submissions/e-1/uid-1/1_.._.._otro_nota.pdf");
+  assert.doesNotMatch(traversal.split("/").pop() ?? "", /[/\\]/);
+
+  assert.equal(safeFileName("informe final (v2).pdf"), "informe_final__v2_.pdf");
+  assert.equal(safeFileName("Álgebra 1.tex"), "Álgebra_1.tex");
+  assert.equal(safeFileName("///"), "___");
+  assert.equal(safeFileName(""), "entrega");
+  assert.equal(safeFileName("a".repeat(400)).length, 120);
+});
+
+// Implements: REQ-EVAL-01
+test("the upload client refuses anything outside 1 byte to 25 MB", async () => {
+  const source = await read("lib/firebase/storage.ts");
+  assert.match(
+    source,
+    /if \(file\.size <= 0 \|\| file\.size > MAX_SUBMISSION_BYTES\)/,
+    "the guard must reject empty and oversized files before touching the network"
+  );
+  assert.match(source, /La entrega debe pesar entre 1 byte y 25 MB\./);
+});
+
+// Implements: REQ-EVAL-01
+test("storage rules isolate every submission behind an active enrollment", async () => {
+  const rules = await read("firebase/storage.rules");
+  const block = rules.match(
+    /match \/courses\/\{courseId\}\/submissions\/\{evalId\}\/\{userId\}\/\{fileName\} \{[\s\S]*?\n    \}/
+  );
+  assert.ok(block, "the submissions path must be declared");
+  assert.match(block[0], /allow create, update: if isMember\(\) && isEnrolled\(courseId\)/);
+  assert.match(block[0], /request\.auth\.uid == userId/);
+  assert.match(block[0], /request\.resource\.size <= 25 \* 1024 \* 1024/);
+  assert.match(block[0], /allow read: if isOwner\(\) \|\| teachesSection\(courseId\)/);
+  assert.doesNotMatch(block[0], /50 \* 1024 \* 1024/, "a submission never gets the teacher ceiling");
 });
