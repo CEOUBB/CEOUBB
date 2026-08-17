@@ -1,0 +1,1332 @@
+/* ─────────────────────────────────────────────────────────────
+   Espacio docente · vista previa
+
+   El cromo entero (shell, cabecera, sidebar, botones, campos, tablas de notas,
+   estados vacíos y diálogos) sale de `app/globals.css`: la preview usa las
+   mismas clases que el portal para que docentes y estudiantes vean un solo
+   producto. Aquí abajo sólo vive lo que el portal todavía no tiene: la marca de
+   preview, el pulso de la sección, el flujo de la actividad, la cola de
+   entregas y la mesa de corrección.
+   ───────────────────────────────────────────────────────────── */
+
+.skipLink {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-160%);
+  transition: transform var(--transition-fast);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+/* ── Cabecera ─────────────────────────────────────────────── */
+
+/* La marca de preview viaja en el rastro de contexto, no en una barra propia:
+   el aviso tiene que seguir al docente por todas las vistas sin inventar un
+   cromo que el portal no usa. */
+.previewChip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--shield-gold) 42%, white);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--shield-gold) 14%, white);
+  color: var(--academic-bronze);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  white-space: nowrap;
+}
+
+.previewChip i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--shield-gold);
+  font-style: normal;
+}
+
+/* Mismo peso visual que `.header-search`: la acción vive en la cabecera sin
+   competir con el botón primario de cada vista. */
+.headerAction {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  font-weight: 500;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.headerAction:hover {
+  background: var(--canvas);
+  border-color: var(--text-faint);
+  color: var(--text-body);
+}
+
+/* La marca no navega dentro de la preview: se ve igual que en el portal pero
+   sin prometer un clic que no existe. */
+:global(.app-brand).brandStatic:hover {
+  background: transparent;
+}
+
+.headerIdentity {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-left: var(--space-xxs);
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+
+.sideCount {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--shield-red) 12%, white);
+  color: var(--shield-red-deep);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: var(--num);
+  text-align: center;
+}
+
+:global(.side-item.active) .sideCount {
+  background: var(--canvas);
+}
+
+/* La sección no es un destino: es el encabezado del riel. Se lee como una fila
+   del sidebar pero no finge ser un botón. */
+.sideSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  color: var(--text-secondary);
+}
+
+.sideSection > span:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.sideSection b {
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sideSection small {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.sideTeacher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: var(--space-sm) 10px 0;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.sideTeacher > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.sideTeacher strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.sideTeacher small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Superficies propias ──────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+}
+
+.cardFlush {
+  padding: var(--space-lg) 0 var(--space-sm);
+}
+.cardFlush > :global(.section-title) {
+  padding: 0 var(--space-lg);
+}
+
+/* Pulso de la sección: una sola tira con tres lecturas, no tres tarjetas
+   iguales compitiendo por la misma jerarquía. */
+.pulse {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.pulseCell {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-md) var(--space-lg);
+  border-left: 1px solid var(--border-hairline);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.pulseCell:first-child {
+  border-left: 0;
+}
+.pulseCell:hover {
+  background: var(--canvas-soft);
+}
+.pulseCell > span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pulseValue {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: var(--num);
+}
+
+.pulseCell small {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.pulseCell[data-tone="alert"] .pulseValue {
+  color: var(--color-primary);
+}
+
+/* ── Flujo de la actividad ────────────────────────────────── */
+
+.flowSteps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flowSteps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+.flowSteps li > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--canvas-soft);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: var(--num);
+}
+
+.flowSteps li[data-state="done"] {
+  color: #047857;
+}
+.flowSteps li[data-state="done"] > span {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+}
+.flowSteps li[data-state="active"] {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.flowSteps li[data-state="active"] > span {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.progressMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.progressMeta strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-body);
+  font-variant-numeric: var(--num);
+}
+
+/* Aviso de privacidad: mismo lenguaje que `.empty-state`, tono oro porque
+   informa de una regla del producto, no de un error. */
+.safetyNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--shield-gold) 34%, white);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-gold) 9%, white);
+  color: var(--academic-bronze);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.safetyNote svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ── Trabajo pendiente ────────────────────────────────────── */
+
+.workList {
+  display: flex;
+  flex-direction: column;
+}
+
+.workRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  border-top: 1px solid var(--border-hairline);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.workRow:first-child {
+  border-top: 0;
+}
+.workRow:hover {
+  background: var(--canvas-soft);
+}
+.workRow > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.workRow strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.workRow small {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.workRank {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-faint);
+  font-variant-numeric: var(--num);
+}
+
+.workWhen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+  font-variant-numeric: var(--num);
+}
+
+.workRow:hover .workWhen svg {
+  transform: translateX(3px);
+}
+.workWhen svg {
+  transition: transform var(--transition-fast);
+}
+
+/* ── Filtros ──────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+.field {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-muted);
+}
+
+.field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+.field input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  color: var(--text-body);
+}
+.field input::placeholder {
+  color: var(--text-faint);
+}
+.fieldNarrow {
+  flex: 0 1 240px;
+}
+
+.labelledField {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.labelledField > span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.labelledField .field {
+  flex: 1 1 auto;
+}
+
+/* ── Píldoras de estado ───────────────────────────────────── */
+
+/* Mismo molde que `.post-kind` del aula: píldora llena, 12px, sin borde. */
+.pill {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  white-space: nowrap;
+}
+
+.pill[data-tone="draft"],
+.pill[data-tone="missing"] {
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+}
+.pill[data-tone="scheduled"],
+.pill[data-tone="submitted"] {
+  background: rgba(56, 189, 248, 0.16);
+  color: #0369a1;
+}
+.pill[data-tone="open"],
+.pill[data-tone="graded"] {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+.pill[data-tone="closed"],
+.pill[data-tone="review"],
+.pill[data-tone="review_draft"] {
+  background: rgba(139, 92, 246, 0.14);
+  color: var(--academic-purple-deep);
+}
+.pill[data-tone="late"] {
+  background: rgba(227, 27, 35, 0.1);
+  color: var(--shield-red-deep);
+}
+.pill[data-tone="count"] {
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+  font-variant-numeric: var(--num);
+}
+
+/* ── Actividades ──────────────────────────────────────────── */
+
+.activityHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+}
+.activityHead small {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.activityHead > :global(.content-actions) {
+  flex: none;
+}
+
+/* Los botones de `.content-actions` no fijan su eje: con el icono dentro y la
+   columna estrecha el rótulo caía a una segunda línea. */
+.activityHead :global(.content-actions) button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.activityMeta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-xl);
+}
+.activityMeta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activityMeta dt {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.activityMeta dd {
+  margin: 0;
+  font-size: 15px;
+  font-variant-numeric: var(--num);
+}
+
+/* ── Cola de entregas ─────────────────────────────────────── */
+
+.queue {
+  overflow-x: auto;
+}
+.queueTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.queueTable th {
+  padding: var(--space-xs) var(--space-lg);
+  background: var(--canvas-soft);
+  border-block: 1px solid var(--border-hairline);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.queueTable td {
+  padding: var(--space-sm) var(--space-lg);
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 15px;
+  color: var(--text-body);
+}
+
+.queueTable tr[data-selected="true"] td {
+  background: var(--color-primary-wash);
+}
+.queueTable tr:hover td {
+  background: var(--canvas-soft);
+}
+.queueTable tr[data-selected="true"]:hover td {
+  background: var(--color-primary-wash);
+}
+.queueTable td:first-child {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 500;
+}
+.queueTable td:nth-child(2),
+.numericCell {
+  color: var(--text-secondary);
+  font-variant-numeric: var(--num);
+}
+.numericCell {
+  font-weight: 600;
+  color: var(--text-body);
+}
+.queueTable td:last-child {
+  text-align: right;
+}
+
+.rowButton {
+  min-height: 34px;
+  padding: 4px 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background var(--transition-fast);
+}
+
+.rowButton:hover {
+  background: var(--color-primary-wash);
+}
+.rowButton[data-current="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-wash);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg) 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-variant-numeric: var(--num);
+}
+
+/* ── Mesa de corrección ───────────────────────────────────── */
+
+.reviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.documentPane {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+}
+
+.documentBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 10px var(--space-md);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface-card);
+  font-size: 14px;
+}
+
+.documentBar strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.documentBar span {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.documentSheet {
+  width: min(100%, 520px);
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin: 0 auto;
+  padding: 48px 44px;
+  border: 1px solid var(--border-hairline);
+  border-top: 0;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-1);
+}
+
+.documentSheet > span {
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: #dce3ea;
+}
+.documentTitle {
+  width: 68%;
+  height: 15px;
+  margin-bottom: var(--space-xs);
+  background: #aab7c4 !important;
+}
+.shortLine {
+  width: 62%;
+}
+
+.fakeDiagram {
+  position: relative;
+  height: 140px;
+  margin: var(--space-sm) 0;
+  border-bottom: 2px solid #8fa0b2;
+}
+.fakeDiagram::before {
+  position: absolute;
+  inset: 34px 13% 0;
+  border: 2px solid #8fa0b2;
+  border-bottom: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  content: "";
+}
+.fakeDiagram i {
+  position: absolute;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+.fakeDiagram i:first-child {
+  left: 12%;
+}
+.fakeDiagram i:nth-child(2) {
+  left: 49%;
+}
+.fakeDiagram i:last-child {
+  right: 12%;
+}
+
+.documentEmpty {
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-lg);
+  border: 1px solid var(--border-hairline);
+  border-top: 0;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.documentEmpty strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+.documentEmpty p {
+  max-width: 34ch;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* `.teacher-tools` ya trae la ficha docente del aula: campos, foco y tipografía.
+   Aquí sólo se afloja el pegado, porque la mesa vive bajo una cola paginada. */
+/* Las reglas de `.teacher-tools` ganan por especificidad, así que lo que se
+   ajusta aquí vuelve a nombrarlas en lugar de pelear con `!important`. */
+:global(.teacher-tools).reviewForm {
+  top: calc(var(--header-offset) + var(--space-md));
+}
+:global(.teacher-tools).reviewForm > form {
+  gap: var(--space-md);
+}
+
+.rubric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+:global(.teacher-tools) .rubricRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.rubricRow > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rubricRow small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+:global(.teacher-tools) .rubricRow input {
+  min-height: 40px;
+  text-align: right;
+  font-variant-numeric: var(--num);
+}
+
+.fieldHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.fieldHead small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+:global(.teacher-tools) .gradeInput {
+  min-height: 52px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: var(--num);
+}
+.fieldError {
+  font-size: 14px;
+  color: var(--shield-red-deep);
+}
+
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-red) 7%, white);
+  color: var(--shield-red-deep);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.formError svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.reviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+.reviewActions > button {
+  flex: 1 1 150px;
+}
+
+.linkButton {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.historyLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ── Libro de calificaciones ──────────────────────────────── */
+
+.gradeStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-hairline);
+}
+.gradeStats > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.gradeStats strong {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-body);
+  font-variant-numeric: var(--num);
+}
+
+.weightChip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 52px;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: var(--num);
+}
+
+.disclaimer {
+  margin-top: var(--space-lg);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+/* ── Diálogos ─────────────────────────────────────────────── */
+
+/* `.planner-dialog` pone la caja, el velo y los campos; el editor sólo pide
+   más ancho y un cuerpo con scroll propio. */
+/* El cuerpo del editor ya hace su propio scroll: sin `overflow: hidden` el
+   diálogo añade una segunda barra por su `max-height`. */
+:global(.planner-dialog).editorDialog {
+  width: min(860px, calc(100vw - 32px));
+  overflow: hidden;
+}
+
+:global(.planner-dialog).editorDialog form {
+  gap: 0;
+  padding: 0;
+  max-height: inherit;
+}
+
+:global(.planner-dialog) .dialogHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+:global(.planner-dialog) .dialogHead h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+:global(.planner-dialog) .dialogHead p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.dialogBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:global(.planner-dialog) .dialogFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border-hairline);
+  background: var(--canvas-soft);
+}
+
+.dialogFoot > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.dialogFoot > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.formBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+.dateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.suffixField {
+  position: relative;
+}
+.suffixField input {
+  padding-right: 32px;
+}
+.suffixField em {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.advanced {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.advanced summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  list-style: none;
+}
+
+.advanced summary::-webkit-details-marker {
+  display: none;
+}
+.advanced summary > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.advanced summary strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.advanced summary small {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.advanced[open] summary {
+  border-bottom: 1px solid var(--border-hairline);
+}
+.advancedBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--canvas-soft);
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.checkboxGroup legend {
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+:global(.planner-dialog) .checkboxGroup label {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 34px;
+  font-size: 15px;
+}
+:global(.planner-dialog) .checkboxGroup input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--color-primary);
+}
+
+/* Vista estudiante: la banda navy y las tarjetas de aula del portal, en modo
+   sólo lectura, para que el docente compare contra lo que ya conoce. */
+:global(.planner-dialog).studentDialog {
+  width: min(720px, calc(100vw - 32px));
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.studentBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--canvas-soft);
+}
+.studentHero {
+  border-radius: 0;
+  padding: var(--space-lg);
+}
+.studentHero h3 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.studentHero p {
+  font-size: 14px;
+}
+.studentHero span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--shield-sky);
+}
+.studentContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.studentRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.studentRow:first-of-type {
+  border-top: 0;
+}
+.studentRow > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.studentRow strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.studentRow small,
+.studentRow > span:last-child {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: var(--num);
+}
+
+.studentIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+
+.publishedGrade {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: var(--radius-md);
+  background: rgba(16, 185, 129, 0.09);
+  color: #065f46;
+}
+
+.publishedGrade small {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+}
+.publishedGrade strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #047857;
+  font-variant-numeric: var(--num);
+}
+.publishedGrade p {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #14543f;
+}
+.publishedGrade > svg {
+  margin-top: 3px;
+  color: #047857;
+}
+
+/* ── Responsivo ───────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .reviewGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reviewForm {
+    position: static;
+  }
+}
+
+/* La coletilla de la píldora cede antes que el rastro de contexto: el rótulo de
+   la vista no debe recortarse para que quepa el aviso completo. */
+@media (max-width: 1200px) {
+  .previewChip span {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .headerAction span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .headerAction {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .pulse {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pulseCell {
+    border-left: 0;
+    border-top: 1px solid var(--border-hairline);
+  }
+  .pulseCell:first-child {
+    border-top: 0;
+  }
+  .flowSteps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .formGrid,
+  .dateGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: var(--space-md);
+  }
+  .cardFlush {
+    padding: var(--space-md) 0 var(--space-xs);
+  }
+  .cardFlush > :global(.section-title) {
+    padding: 0 var(--space-md);
+  }
+  .workRow {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding-inline: var(--space-md);
+  }
+  .workWhen {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .queueTable th,
+  .queueTable td {
+    padding-inline: var(--space-md);
+  }
+  .pagination {
+    padding-inline: var(--space-md);
+  }
+  .flowSteps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .documentPane {
+    padding: var(--space-sm);
+  }
+  .documentSheet {
+    min-height: 320px;
+    padding: 32px 24px;
+  }
+  .dialogHead,
+  .dialogBody,
+  .dialogFoot {
+    padding: var(--space-md);
+  }
+  .dialogFoot > div,
+  .dialogFoot > div > button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workWhen svg,
+  .headerAction,
+  .rowButton,
+  .pulseCell,
+  .workRow {
+    transition: none;
+  }
+}
