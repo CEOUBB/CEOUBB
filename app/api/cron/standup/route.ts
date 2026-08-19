@@ -84,8 +84,10 @@ async function sendDiscordEmbed(embed: Record<string, unknown>, components: unkn
 
 export async function GET(req: NextRequest) {
   // Verificación de seguridad de Vercel Cron
+  // Implements: REQ-SEC-03
+  const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

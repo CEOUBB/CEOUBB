@@ -47,6 +47,7 @@ export async function destroySession(request: Request) {
   return `${SESSION_COOKIE}=; HttpOnly${SESSION_SECURE}; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
+// Implements: REQ-TYPE-01
 export async function getSessionUser(request: Request): Promise<PublicUser | null> {
   const rawToken = readCookie(request, SESSION_COOKIE);
   if (!rawToken) return null;
@@ -64,10 +65,17 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
     .innerJoin(users, eq(sessions.userId, users.id))
     .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)))
     .limit(1);
-  return (rows[0] as PublicUser | undefined) ?? null;
+  const user = rows[0];
+  return user ? publicUser(user) : null;
 }
 
-export function publicUser(user: typeof users.$inferSelect): PublicUser {
+export function publicUser(user: {
+  id: string;
+  email: string;
+  name: string;
+  role: AccountRole;
+  carrera?: string | null;
+}): PublicUser {
   return { id: user.id, email: user.email, name: user.name, role: user.role };
 }
 

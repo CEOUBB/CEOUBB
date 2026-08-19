@@ -60,9 +60,9 @@ test("verifyDiscordSignature: maneja entradas vacías o malformadas sin lanzar e
   assert.equal(verifyDiscordSignature("{}", "invalid-sig", "123", "invalid-pk"), false);
 });
 
-test("verifyDiscordRequestSignature: permite peticiones si no hay claves configuradas", () => {
+test("verifyDiscordRequestSignature: rechaza peticiones si no hay claves configuradas (fail-closed)", () => {
   const allowed = verifyDiscordRequestSignature("{}", "sig", "123", []);
-  assert.equal(allowed, true);
+  assert.equal(allowed, false);
 });
 
 test("getDiscordPublicKeys: retorna un array de claves públicas configuradas", () => {

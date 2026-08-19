@@ -47,9 +47,10 @@ export interface GenerateContentOptions {
 /**
  * Ejecuta la generación de contenido en Gemini recorriendo automáticamente la lista de modelos de fallback ante errores de cuota o indisponibilidad.
  */
+// Implements: REQ-TYPE-01
 export async function generateContentWithFallback(
   ai: GoogleGenAI,
-  contents: string | Array<Record<string, unknown>>,
+  contents: string | Array<{ role?: string; parts: Array<{ text?: string }> }>,
   config?: GenerateContentOptions
 ): Promise<GenerateContentResult> {
   const normalizedContents =
@@ -61,8 +62,7 @@ export async function generateContentWithFallback(
     try {
       const res = await ai.models.generateContent({
         model: modelId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        contents: normalizedContents as any,
+        contents: normalizedContents,
         config: config as Record<string, unknown> | undefined,
       });
 
