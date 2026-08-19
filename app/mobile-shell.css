@@ -681,7 +681,12 @@
   border-radius: 18px 18px 0 0;
   background: var(--surface-card, #fff);
   box-shadow: 0 -8px 30px rgba(15, 23, 42, 0.16);
-  outline: none;
+}
+
+/* Implements: REQ-DELIB-04 */
+.sheet-content:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .sheet-handle {

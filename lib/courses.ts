@@ -67,7 +67,8 @@ export const COURSES: Course[] = [
     section: "1",
     teacher: "Biblioteca académica",
     period: `Semestre ${PERIOD}`,
-    tone: "#8b5cf6",
+    // Implements: REQ-DELIB-07
+    tone: "oklch(0.62 0.22 300)",
     eyebrow: "Aula del curso",
     headline: "Ecuaciones Diferenciales",
     summary:

@@ -109,9 +109,10 @@ function ActivityFlow({ state }: { state: TeacherPreviewState }) {
         ))}
       </ol>
       <div>
+        {/* Implements: REQ-DELIB-02 */}
         <p className={styles.progressMeta}>
           <span>Calificaciones publicadas</span>
-          <strong>
+          <strong className="num">
             {graded} de {submissions.length}
           </strong>
         </p>
@@ -193,7 +194,7 @@ export function HomePanel({ state, onNavigate, onEditActivity, onCreate }: HomeP
             key={counter.id}
           >
             <span>{counter.label}</span>
-            <b className={styles.pulseValue}>{counter.value}</b>
+            <b className={`${styles.pulseValue} num`}>{counter.value}</b>
             <small>{counter.detail}</small>
           </button>
         ))}
@@ -226,7 +227,7 @@ export function HomePanel({ state, onNavigate, onEditActivity, onCreate }: HomeP
                 }
                 key={item.id}
               >
-                <span className={styles.workRank}>{String(index + 1).padStart(2, "0")}</span>
+                <span className={`${styles.workRank} num`}>{String(index + 1).padStart(2, "0")}</span>
                 <span>
                   <strong>{item.title}</strong>
                   <small>{item.detail}</small>

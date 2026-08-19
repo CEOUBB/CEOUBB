@@ -202,8 +202,9 @@ export function PortalSidebar({
         })}
       </nav>
 
+      {/* Implements: REQ-DELIB-08 */}
       <div className="side-group">
-        <span className="eyebrow">Mis ramos</span>
+        <span className="side-group-title">Mis ramos</span>
         {courses.length === 0 && (
           <p className="side-empty">
             Sin ramos en este período. Aparecerán aquí al quedar inscritos.
