@@ -1,0 +1,41 @@
+schema: spec-driven
+
+context: |
+  Proyecto: Centro de Estudio UBB (CEOUBB) - Sistema LMS institucional para la Universidad del Bío-Bío.
+  Stack Tecnológico:
+    - Frontend: Next.js 16 (App Router, Server Components, React 19, Motion, Phosphor Icons, Tailwind CSS v4, OKLCH tokens).
+    - Base de Datos Relacional (SoR): Turso / libSQL con Drizzle ORM (Transacciones ACID, paginación con .limit()).
+    - Proyección Operacional: Cloud Firestore (Notificaciones, chat de secciones, proyecciones de membresía unidireccionales).
+    - Móvil: Capacitor 7 Runtime (cl.ubb.centroestudio), puente nativo con degradación segura en web.
+    - Autenticación y Roles (SSOT): lib/access-policy.ts determinista (@alumnos.ubiobio.cl -> Student, @ubiobio.cl -> Teacher, rol 'owner' administrativo en BD).
+    - Escala de Calificaciones: lib/grades.ts (Escala chilena 1.0 - 7.0, redondeo a 1 decimal).
+  Gobernanza y Reglas:
+    - Toda especificación funcional DEBE usar sintaxis formal EARS (SHALL, WHEN, WHILE, IF, WHERE).
+    - Todo requerimiento debe acompañarse de escenarios BDD Given-When-Then (Gherkin).
+    - Código generado debe incluir marcadores de trazabilidad '// Implements: REQ-XX'.
+    - Las pruebas unitarias están protegidas con SHA-256 Test-Locking (scripts/verify-test-hashes.mjs).
+    - Commits y Pull Requests se redactan estrictamente en español siguiendo Conventional Commits.
+
+rules:
+  proposal:
+    - Incluir resumen ejecutivo, justificación técnica y límites del cambio.
+    - Definir explícitamente "Non-goals" o exclusiones del alcance.
+  specs:
+    - Usar palabras clave RFC 2119 (MUST, SHALL, SHOULD) en requerimientos EARS.
+    - Formular escenarios BDD Gherkin vinculados 1:1 con aserciones ejecutables.
+  design:
+    - Incluir esquemas Drizzle/Zod, diagramas Mermaid y análisis de blast radius (archivos afectados).
+  tasks:
+    - Descomponer en DAG ordenado: Modelos BD -> Lógica de Dominio -> API Routes -> UI -> E2E.
+    - Cada tarea debe incluir un comando de verificación explícito (pnpm run verify:fast).
+
+operations:
+  apply:
+    guidance:
+      - Seguir ciclo TDD: RED (tests) -> GREEN (código) -> REFACTOR.
+      - Mantener las pruebas bloqueadas bajo hash SHA-256.
+      - No utilizar tipos 'any', '@ts-ignore' ni aserciones no seguras.
+  archive:
+    guidance:
+      - Sincronizar y consolidar las especificaciones maestras en openspec/specs/.
+      - Validar el arnés completo con pnpm run verify:fast y pnpm test.
