@@ -8,6 +8,7 @@ export type PublicUser = {
   email: string;
   name: string;
   role: AccountRole;
+  carrera?: string | null;
 };
 
 const SESSION_COOKIE = "centro_estudio_session";

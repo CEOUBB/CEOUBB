@@ -12,15 +12,8 @@ import {
   useStatusBar,
 } from "../lib/mobile-bridge";
 import { MobileBottomNav, type MobileTab } from "./mobile-shell";
-import { registerPushNotifications } from "../lib/push-notifications";
 import { COURSES, Course, courseById } from "../lib/courses";
-import {
-  CourseActivity,
-  CourseGradebook,
-  watchCourseActivity,
-  watchGradebooks,
-} from "../lib/firebase-classroom-client";
-import { signInWithInstitutionalGoogle } from "../lib/firebase-client";
+import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
 import { SEEN_KEY, navItems, navReducer, readSeen, type Screen } from "./portal-types";
@@ -138,6 +131,7 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
     setError("");
     setWorking(true);
     try {
+      const { signInWithInstitutionalGoogle } = await import("../lib/firebase-client");
       const idToken = await signInWithInstitutionalGoogle();
       await finishGoogleAccess(idToken);
     } catch (cause) {
@@ -306,9 +300,10 @@ export function Portal() {
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
-      .then((current) => {
+      .then(({ user: current, sectionIds: currentSectionIds }) => {
         if (!alive) return;
         setUser(current);
+        if (currentSectionIds.length > 0) setSectionIds(currentSectionIds);
         setChecking(false);
       })
       .catch(() => {
@@ -325,29 +320,49 @@ export function Portal() {
 
   // Implements: REQ-PERF-01
   useEffect(() => {
-    if (!user) return;
+    if (!user || sectionIds.length > 0) return;
     let alive = true;
     loadEnrolledSectionIds().then((ids) => {
-      if (alive) setSectionIds(ids);
+      if (alive && ids.length > 0) setSectionIds(ids);
     });
     return () => {
       alive = false;
     };
-  }, [user]);
+  }, [user, sectionIds.length]);
 
   useEffect(() => {
-    if (!user) return;
-    return watchCourseActivity(sectionIds, setActivity, () => {});
+    if (!user || sectionIds.length === 0) return;
+    let alive = true;
+    let unsub: (() => void) | undefined;
+    import("../lib/firebase-classroom-client").then(({ watchCourseActivity }) => {
+      if (!alive) return;
+      unsub = watchCourseActivity(sectionIds, setActivity, () => {});
+    });
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [user, sectionIds]);
+
+  useEffect(() => {
+    if (!user || sectionIds.length === 0) return;
+    let alive = true;
+    let unsub: (() => void) | undefined;
+    import("../lib/firebase-classroom-client").then(({ watchGradebooks }) => {
+      if (!alive) return;
+      unsub = watchGradebooks(sectionIds, setGradebooks, () => {});
+    });
+    return () => {
+      alive = false;
+      unsub?.();
+    };
   }, [user, sectionIds]);
 
   useEffect(() => {
     if (!user) return;
-    return watchGradebooks(sectionIds, setGradebooks, () => {});
-  }, [user, sectionIds]);
-
-  useEffect(() => {
-    if (!user) return;
-    registerPushNotifications().catch(() => {});
+    import("../lib/push-notifications").then(({ registerPushNotifications }) => {
+      registerPushNotifications().catch(() => {});
+    });
   }, [user]);
 
   useEffect(() => {

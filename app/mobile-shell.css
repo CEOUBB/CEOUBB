@@ -241,13 +241,6 @@
     font-size: 13.5px;
   }
 
-  /* La primera etiqueta se apoyaba en el borde superior de la tarjeta, justo
-     donde el radio la muerde. `first-child` anula el centrado de las demás, así
-     que hay que devolverle el aire a mano. */
-  .planner-hours span:first-child {
-    transform: translateY(6px);
-  }
-
   .planner-daychip {
     min-height: 50px;
   }

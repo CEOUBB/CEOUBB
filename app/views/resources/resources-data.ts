@@ -6,7 +6,7 @@
 
 type BrandPath = { d: string; fill: string };
 
-const INK = "#0f172a";
+const INK = "currentColor";
 
 export const BRAND: Record<string, BrandPath[]> = {
   chatgpt: [
@@ -93,6 +93,12 @@ export const BRAND: Record<string, BrandPath[]> = {
       d: "M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm0 19.104c-3.924 0-7.104-3.18-7.104-7.104S8.076 4.896 12 4.896s7.104 3.18 7.104 7.104-3.18 7.104-7.104 7.104zm0-13.332c-3.432 0-6.228 2.796-6.228 6.228S8.568 18.228 12 18.228s6.228-2.796 6.228-6.228S15.432 5.772 12 5.772zM9.684 15.54V8.46L15.816 12l-6.132 3.54z",
     },
   ],
+  perplexity: [
+    {
+      fill: "#22B8CD",
+      d: "M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.392 24v-6.465H1.5V7.188h2.884V0l7.053 6.494V.19h1.09v6.49L19.786 0zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397zm-1.099-.08l-5.946 5.398v7.235l5.946-5.234V8.965zm8.136 7.58h1.844V8.349H13.46l6.105 5.54v2.655zm-8.982-8.28H2.59v8.195h1.8v-2.576l6.192-5.62zM5.475 2.476v4.71h5.115l-5.115-4.71zm13.219 0l-5.115 4.71h5.115v-4.71z",
+    },
+  ],
 };
 
 export type Brand = keyof typeof BRAND;
@@ -105,13 +111,13 @@ export const AI_TIERS: {
   label: string;
   tone: Tone;
   note: string;
-  tools: { brand: Brand; name: string; url: string }[];
+  tools: { brand?: Brand; image?: string; name: string; url: string }[];
 }[] = [
   {
     id: "gratis",
-    label: "Gratis, sin limites",
+    label: "Gratis, sin límites",
     tone: "free",
-    note: "Conversación ilimitada con una cuenta gratuita.",
+    note: "* Conversación ilimitada con una cuenta gratuita.",
     tools: [
       { brand: "deepseek", name: "DeepSeek", url: "https://chat.deepseek.com" },
       { brand: "qwen", name: "Qwen", url: "https://chat.qwen.ai" },
@@ -119,9 +125,9 @@ export const AI_TIERS: {
   },
   {
     id: "plan",
-    label: "Gratis, con limites",
+    label: "Gratis, con límites",
     tone: "plan",
-    note: "El plan gratuito tiene un límite de uso: al agotarlo hay que esperar a que se reinicie o pasar a un plan de pago. En ChatGPT la cuota afecta sólo a los modelos avanzados.",
+    note: "* En ChatGPT los limites afectan sólo a los modelos avanzados y a la subida de archivos.",
     tools: [
       { brand: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com" },
       { brand: "claude", name: "Claude", url: "https://claude.ai" },
@@ -130,7 +136,17 @@ export const AI_TIERS: {
         name: "Google Gemini",
         url: "https://gemini.google.com",
       },
+      {
+        image: "/brand/gemini-notebook.webp",
+        name: "Gemini Notebook",
+        url: "https://notebooklm.google.com",
+      },
       { brand: "kimi", name: "Kimi", url: "https://www.kimi.com" },
+      {
+        brand: "perplexity",
+        name: "Perplexity AI",
+        url: "https://www.perplexity.ai",
+      },
     ],
   },
 ];
@@ -151,7 +167,7 @@ export const PERK_GROUPS: {
       {
         brand: "github",
         name: "GitHub Student Pack",
-        note: "Copilot, la suite completa de JetBrains y mucho mas.",
+        note: "Copilot, la suite completa de JetBrains y mucho más.",
         url: "https://education.github.com/pack",
       },
       {
