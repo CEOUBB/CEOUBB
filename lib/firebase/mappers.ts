@@ -62,7 +62,7 @@ export function toGradebookState(value: DocumentData | null) {
 export function toPost(document: QueryDocumentSnapshot<DocumentData>): ClassroomPost {
   const value = document.data();
   const authorEmail = String(value.authorEmail ?? "");
-  const rawLink = String(value.fileUrl ?? value.linkUrl ?? "").trim();
+  const rawLink = String(value.fileUrl || value.linkUrl || "").trim();
   const linkUrl = /^https?:\/\//i.test(rawLink) ? rawLink : null;
   return {
     id: document.id,

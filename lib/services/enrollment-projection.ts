@@ -148,6 +148,7 @@ export async function projectUserRoleToFirestore(
     await commit([write], token);
   } catch (err) {
     console.error("[projectUserRoleToFirestore] Error projecting role to Firestore:", err);
+    throw err;
   }
 }
 
