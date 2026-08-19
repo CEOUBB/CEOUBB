@@ -227,7 +227,9 @@ export function HomePanel({ state, onNavigate, onEditActivity, onCreate }: HomeP
                 }
                 key={item.id}
               >
-                <span className={`${styles.workRank} num`}>{String(index + 1).padStart(2, "0")}</span>
+                <span className={`${styles.workRank} num`}>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <span>
                   <strong>{item.title}</strong>
                   <small>{item.detail}</small>

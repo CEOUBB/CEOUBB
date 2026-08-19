@@ -178,7 +178,9 @@ function StudentGrades({
         </div>
         <aside className="grades-summary">
           <div className="grades-average">
-            <strong className="num">{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+            <strong className="num">
+              {summary.average === null ? "—" : formatGrade(summary.average)}
+            </strong>
             <div>
               <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
               <p>

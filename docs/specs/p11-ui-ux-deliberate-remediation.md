@@ -10,6 +10,7 @@
 ## 1. Executive Summary & Problem Statement
 
 Following the `/deliberate` UI/UX forensic audit of the CEOUBB platform, several inherited defaults, AI tell patterns, and documentation-implementation divergences were identified. This specification establishes binding requirements to:
+
 1. Re-align institutional documentation (`AGENTS.md`, `.agents/rules/*.mdc`, `DESIGN.md`, `README.md`) and tests with the active runtime typography: **Manrope** (Core / Operational UI) and **Merriweather** (Display / Editorial Headlines).
 2. Clean up the generic Generation-2 "Eyebrow" / Kicker micro-label anti-pattern across views.
 3. Enforce tabular numerals (`tabular-nums lining-nums` / `.num`) across all grade, weight, progress, and pagination columns.

@@ -101,7 +101,8 @@ export function AdminView() {
         {/* Implements: REQ-DELIB-02 */}
         <p>
           <span>
-            <b className="num">{total}</b> {total === 1 ? "cuenta registrada" : "cuentas registradas"}
+            <b className="num">{total}</b>{" "}
+            {total === 1 ? "cuenta registrada" : "cuentas registradas"}
             {searchQuery.trim() ? " (filtradas)" : ""}
           </span>
           <span>·</span>

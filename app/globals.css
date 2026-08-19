@@ -51,11 +51,10 @@
   /* Tipografías del Sistema */
   /* Implements: REQ-DELIB-01 */
   --font-sans:
-    var(--font-manrope), "Manrope", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+    var(--font-manrope), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
   --font-serif:
-    var(--font-merriweather), "Merriweather", "Iowan Old Style", "Palatino Linotype", Georgia,
-    serif;
+    var(--font-merriweather), "Merriweather", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Escala de Tiempos y Curvas de Aceleración */
@@ -109,12 +108,11 @@
   --text-link: var(--color-primary);
 
   --font-core:
-    var(--font-manrope, var(--font-sans)), "Manrope", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    var(--font-manrope, var(--font-sans)), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
   /* Voz institucional: firma títulos, nombres de ramo y cifras de portada. */
   --font-display:
-    var(--font-merriweather, var(--font-serif)), "Merriweather", "Iowan Old Style", Georgia,
-    serif;
+    var(--font-merriweather, var(--font-serif)), "Merriweather", "Iowan Old Style", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --num: lining-nums tabular-nums;
 
