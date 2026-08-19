@@ -36,6 +36,16 @@ Companion files:
 
 ## Active work
 
+- [DONE] **P13 — Remediación de Seguridad en Profundidad, Aislamiento de Datos y Blindaje de Invariantes (2026-08-19).** Rama `fix/deep-security-and-isolation-remediation`. Spec [`docs/specs/p13-deep-application-security-and-isolation-remediation.md`](docs/specs/p13-deep-application-security-and-isolation-remediation.md) (`VERIFICADA`):
+  - **Normalización de UID en Proyección de Matrículas (REQ-SEC-07):** Saneamiento del prefijo `firebase:` en `enrollmentDocumentPath` y `parseEnrollmentProjection` de `lib/services/enrollment-projection.ts`, garantizando coincidencia exacta con `request.auth.uid` en reglas `isEnrolled()` de Firestore.
+  - **Protección IDOR en Entregas de Evaluaciones (REQ-SEC-08):** Blindaje de reglas en `firebase/firestore.rules` (`/courses/{courseId}/submissions/{submissionId}`) con comprobación estricta de pertenencia `(resource == null || resource.data.uid == request.auth.uid)` en mutaciones `update`.
+  - **Blindaje contra Inyección de Comandos en Discord Bridge (REQ-SEC-09):** Configuración de `shell: false` en `spawnSafeCommand` (`scripts/discord-context-helper.js`) previniendo RCE sobre Windows ante contenido no confiable de canales.
+  - **Sincronización Dual-Store de Roles en el Servidor (REQ-SEC-10):** Mutación transaccional server-side en `PATCH /api/admin/users` hacia Turso y Firestore (`projectUserRoleToFirestore`) con credenciales de servicio OAuth.
+  - **Aislamiento de Diagnóstico Sentry y Fuga de Variables Locales (REQ-SEC-11):** Desactivación con HTTP 404 de `/api/sentry-test` en producción y condicionamiento de `includeLocalVariables` únicamente a desarrollo en `sentry.server.config.ts`.
+  - **Saneamiento de Protocolos de Enlaces (REQ-SEC-12):** Validación estricta de esquemas `http://` y `https://` en `lib/firebase/mappers.ts`, neutralizando vectores XSS vía `javascript:`.
+  - **Protección de Cuenta Propietaria (REQ-SEC-13):** Bloqueo de auto-eliminación de cuentas con rol `owner` en `DELETE /api/auth/me`.
+  - **Higiene en Webhooks y Firmas Criptográficas (REQ-SEC-14):** Falla cerrada ante secretos vacíos en `lib/linear-signature.ts` y sanitización de mensajes de error en webhooks de GitHub y Linear.
+  - Verificación: `pnpm run verify:fast` (157/157), `pnpm run verify:invariants` (31/31), `pnpm run lint` (0 advertencias, 0 errores), `pnpm test` (182/182) y test-locking SHA-256 completados exitosamente.
 - [DONE] **P11 — Remediación UI/UX Deliberate, SSOT Tipográfica Manrope/Merriweather y Rendimiento de Movimiento (2026-08-19).** Rama `feat/ceo-deliberate-ui-ux-remediation`. Spec [`docs/specs/p11-ui-ux-deliberate-remediation.md`](docs/specs/p11-ui-ux-deliberate-remediation.md) (`VERIFICADA`):
   - **SSOT Tipográfica (REQ-DELIB-01):** Unificación oficial de tipografía en `DESIGN.md`, `AGENTS.md`, `.agents/rules/003-ui-components.mdc`, `README.md` y `tests/ci-workflows.test.ts` a `Merriweather` (Display / Editorial) y `Manrope` (Core UI / Operacional).
   - **Limpieza de Kickers / Eyebrows (REQ-DELIB-08):** Eliminación de anti-patrones de micro-rótulos `.eyebrow` sobre títulos en `portal-shell.tsx`, `TeacherWorkspacePreview.tsx`, `privacidad/page.tsx` y `public/biblioteca/index.html`.

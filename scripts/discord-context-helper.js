@@ -165,11 +165,12 @@ export class PersistentSessionStore {
 /**
  * Ejecución segura de procesos CLI con paso de entrada vía stdin o argumentos
  */
+// Implements: REQ-SEC-09
 export function spawnSafeCommand(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, {
       cwd: options.cwd || process.cwd(),
-      shell: true,
+      shell: false,
       env: { ...process.env, ...options.env },
     });
 

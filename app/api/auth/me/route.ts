@@ -19,10 +19,16 @@ export async function GET(request: Request) {
   return Response.json({ user, sectionIds });
 }
 
-// Implements: REQ-DATA-01, REQ-API-02
+// Implements: REQ-DATA-01, REQ-API-02, REQ-SEC-13
 export async function DELETE(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return Response.json({ error: "Inicia sesión." }, { status: UNAUTHORIZED });
+  if (user.role === "owner") {
+    return Response.json(
+      { error: "La cuenta propietaria no puede eliminarse." },
+      { status: 400 }
+    );
+  }
   try {
     const db = getDb();
     await db.batch([

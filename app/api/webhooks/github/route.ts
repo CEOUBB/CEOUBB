@@ -161,7 +161,6 @@ Genera un diagnóstico en 2 bullets técnicos en español formal:
     return NextResponse.json({ message: "Event processed" }, { status: 200 });
   } catch (error) {
     console.error("[GitHub Webhook Error]:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Error procesando webhook de GitHub" }, { status: 500 });
   }
 }
