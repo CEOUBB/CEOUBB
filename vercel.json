@@ -1,5 +1,5 @@
 {
-  "regions": ["gru1", "scl1"],
+  "regions": ["gru1"],
   "crons": [
     {
       "path": "/api/cron/standup?type=morning",
