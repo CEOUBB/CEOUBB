@@ -132,6 +132,12 @@ export async function projectUserRoleToFirestore(
   role: "teacher" | "student",
   projectId = FIREBASE_PROJECT_ID
 ): Promise<void> {
+  const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
+  const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "";
+  if (!clientEmail || !privateKey) {
+    return;
+  }
+
   const cleanUid = userId.startsWith("firebase:") ? userId.replace("firebase:", "") : userId;
   const name = `projects/${projectId}/databases/(default)/documents/users/${cleanUid}`;
   const write: FirestoreWrite = {
