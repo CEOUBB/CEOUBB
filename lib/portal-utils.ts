@@ -8,6 +8,7 @@ export type User = {
   email: string;
   name: string;
   role: Role;
+  carrera?: string | null;
 };
 
 export type CalendarEntry = {
@@ -231,14 +232,22 @@ export function formatBytes(value: number): string {
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export async function loadCurrentSession(): Promise<User | null> {
+export type SessionState = {
+  user: User | null;
+  sectionIds: string[];
+};
+
+export async function loadCurrentSession(): Promise<SessionState> {
   try {
     const response = await fetch("/api/auth/me", { cache: "no-store" });
-    if (!response.ok) return null;
-    const data = (await response.json()) as { user?: User };
-    return data.user ?? null;
+    if (!response.ok) return { user: null, sectionIds: [] };
+    const data = (await response.json()) as { user?: User | null; sectionIds?: unknown };
+    const sectionIds = Array.isArray(data.sectionIds)
+      ? data.sectionIds.filter((value): value is string => typeof value === "string")
+      : [];
+    return { user: data.user ?? null, sectionIds };
   } catch {
-    return null;
+    return { user: null, sectionIds: [] };
   }
 }
 

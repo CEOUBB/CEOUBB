@@ -49,8 +49,13 @@
   --color-text-faint: oklch(0.58 0.03 250);
 
   /* Tipografías del Sistema */
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: var(--font-source-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans:
+    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-serif:
+    var(--font-merriweather, var(--font-lato, var(--font-playfair, var(--font-source-serif)))),
+    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
+    serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Escala de Tiempos y Curvas de Aceleración */
@@ -104,11 +109,15 @@
   --text-link: var(--color-primary);
 
   --font-core:
-    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  /* Voz institucional: serif académica sólo en títulos, nombres de ramo y cifras de portada. */
+    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Voz institucional: firma títulos, nombres de ramo y cifras de portada. */
   --font-display:
-    var(--font-source-serif, var(--font-serif)), "Iowan Old Style", "Palatino Linotype", Georgia,
+    var(
+      --font-merriweather,
+      var(--font-lato, var(--font-playfair, var(--font-source-serif, var(--font-serif))))
+    ),
+    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
     serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --num: lining-nums tabular-nums;
@@ -266,6 +275,23 @@ img {
   font-family: var(--font-display);
   font-weight: 700;
   font-feature-settings: "lnum" 1;
+}
+
+.manrope-family {
+  font-family: var(--font-manrope, var(--font-sans)), "Manrope", sans-serif;
+}
+
+.merriweather-family {
+  font-family: var(--font-merriweather, var(--font-serif)), "Merriweather", serif;
+  font-weight: 600;
+}
+
+.lato-family {
+  font-family: var(--font-lato, var(--font-display)), "Lato", sans-serif;
+}
+
+.playfair-display-family {
+  font-family: var(--font-playfair, var(--font-serif)), "Playfair Display", serif;
 }
 
 /* ── Carga: esqueleto del portal ──────────────────────────────
@@ -740,17 +766,18 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
 }
 .store-badge {
-  width: 8.5rem;
-  display: block;
+  display: inline-flex;
+  height: 2.45rem;
+  width: auto;
   cursor: default;
 }
 
 .store-badge img {
-  width: 100%;
-  height: 2.55rem;
+  width: auto;
+  height: 2.45rem;
   display: block;
   border-radius: 0.45rem;
   object-fit: contain;
@@ -2989,6 +3016,7 @@ img {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
+  margin-inline-end: -0.06em;
 }
 .planner-headday b {
   font-family: var(--font-display);
@@ -3002,20 +3030,23 @@ img {
   color: var(--color-primary);
 }
 
-/* El disco de hoy necesita aire alrededor del número: la serif apretada dentro
-   de un círculo justo se lee como una pastilla deformada, no como una marca. */
 .planner-headday[data-today="true"] b {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
-  margin: -3px 0;
-  padding-top: 2px; /* las cifras lining de la serif se centran ópticamente altas */
+  margin: -3px auto;
+  padding-top: 1.5px;
   border-radius: 50%;
   background: var(--color-primary);
   color: var(--color-on-primary);
-  font-size: 18px;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: 18.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: normal;
 }
 
 .planner-ribbon {
@@ -3125,17 +3156,10 @@ img {
 .planner-hours span {
   position: absolute;
   right: 10px;
-  transform: translateY(-50%);
+  transform: translateY(6px);
   font-size: 11px;
   color: var(--text-faint);
   font-variant-numeric: var(--num);
-}
-
-.planner-hours span:first-child {
-  transform: none;
-}
-.planner-hours span:last-child {
-  transform: translateY(-100%);
 }
 
 /* La hora actual vive en la canaleta, alineada con la línea roja: sin ella hay
@@ -3706,7 +3730,7 @@ a.resource-card:focus-visible .resource-icon {
   font-style: normal;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 .resource-card > b {
   display: inline-flex;
@@ -3742,7 +3766,8 @@ a.resource-card:focus-visible .resource-icon {
 
 .resource-card .store-badges {
   justify-content: flex-start;
-  margin-top: var(--space-xxs);
+  margin: var(--space-xs) 0;
+  gap: var(--space-xs);
 }
 
 .resource-inline {
@@ -3758,6 +3783,11 @@ a.resource-card:focus-visible .resource-icon {
 .resource-inline:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.resource-inline:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .resource-note {
@@ -3775,43 +3805,43 @@ a.resource-card:focus-visible .resource-icon {
    la condición de uso una sola vez, en lugar de repetirla en cada ficha. */
 .tier-group {
   display: grid;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 .tier-group + .tier-group {
-  margin-top: var(--space-md);
+  margin-top: var(--space-lg);
 }
 .tier-head {
-  display: grid;
+  display: flex;
+  align-items: center;
   gap: var(--space-xxs);
-}
-.tier-head p {
-  max-width: 76ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-muted);
 }
 
 .tier-label {
   justify-self: start;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  border: 1px solid transparent;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.33;
-  letter-spacing: 0.125px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .tier-label.free {
-  background: color-mix(in srgb, var(--academic-emerald) 12%, white);
-  border-color: color-mix(in srgb, var(--academic-emerald) 34%, white);
-  color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900));
+  color: oklch(0.38 0.12 155);
 }
 .tier-label.plan {
-  background: color-mix(in srgb, var(--shield-gold) 14%, white);
-  border-color: color-mix(in srgb, var(--shield-gold) 40%, white);
-  color: var(--academic-bronze);
+  color: oklch(0.44 0.12 75);
+}
+
+.tier-note {
+  margin: 2px 0 0 0;
+  max-width: 76ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
 .brand-grid {
@@ -3849,6 +3879,10 @@ a.resource-card:focus-visible .resource-icon {
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
   color: var(--text-body);
 }
+.brand-tile:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .brand-head {
   display: flex;
   align-items: center;
@@ -3867,7 +3901,7 @@ a.resource-card:focus-visible .resource-icon {
 }
 
 /* Fichas de IA: sólo la marca. Sin descripción, la tarjeta sobra y el
-   contenedor se ajusta al nombre. */
+   contenedor se ajusta al nombre con altura mínima táctil accesible (44px). */
 .chip-grid {
   margin: 0;
   padding: 0;
@@ -3880,8 +3914,9 @@ a.resource-card:focus-visible .resource-icon {
 .brand-chip {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: var(--space-xs);
-  padding: 9px var(--space-sm);
+  padding: 8px var(--space-sm);
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
@@ -3899,6 +3934,10 @@ a.resource-card:focus-visible .resource-icon {
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
   color: var(--text-body);
 }
+.brand-chip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .brand-chip b {
   font-size: 15px;
   font-weight: 600;
@@ -3912,6 +3951,7 @@ a.resource-card:focus-visible .resource-icon {
   width: 22px;
   height: 22px;
   flex: none;
+  object-fit: contain;
 }
 .brand-go {
   flex: none;
@@ -3920,14 +3960,14 @@ a.resource-card:focus-visible .resource-icon {
 }
 .brand-tile:hover .brand-go,
 .brand-chip:hover .brand-go,
-.portal-link:hover .brand-go,
+.portal-card:hover .brand-go,
 .brand-tile:focus-visible .brand-go,
 .brand-chip:focus-visible .brand-go,
-.portal-link:focus-visible .brand-go {
+.portal-card:focus-visible .brand-go {
   color: var(--color-primary);
 }
 
-/* Portales UBB: filete heráldico como sello institucional del bloque de cierre. */
+/* Portales UBB: Panel con filete institucional y cuadrícula de tarjetas de servicios. */
 .portal-panel {
   position: relative;
   display: grid;
@@ -3954,72 +3994,100 @@ a.resource-card:focus-visible .resource-icon {
 }
 
 .portal-panel > p {
+  margin: 0;
   max-width: 76ch;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.55;
   color: var(--text-muted);
 }
+
 .portal-links {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: var(--space-xs);
 }
 
-/* Los nombres largos ocupan dos líneas: alinear arriba mantiene una sola
-   línea base para toda la fila. */
-.portal-link {
+.portal-card {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-xs);
-  height: 100%;
-  padding: 10px var(--space-sm);
+  min-height: 106px;
+  padding: 14px var(--space-md);
   background: var(--canvas-soft);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
   color: var(--text-body);
+  text-decoration: none;
   transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast);
+    transform var(--transition-base),
+    background var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
-.portal-link:hover,
-.portal-link:focus-visible {
-  background: var(--color-primary-wash);
-  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--hairline));
+.portal-card:hover,
+.portal-card:focus-visible {
+  transform: translateY(-2px);
+  background: var(--surface-card);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--border-hairline));
+  box-shadow: var(--shadow-1);
   color: var(--text-body);
 }
-.portal-copy {
-  min-width: 0;
-  flex: 1;
+
+.portal-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
-.portal-link b {
+
+.portal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.portal-card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-xs);
+}
+
+.portal-card-bottom b {
   display: block;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1.35;
 }
-.portal-link small {
+
+.portal-card-bottom small {
   display: block;
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-faint);
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 
 .portal-mark {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
+
 .portal-mark img {
   width: auto;
-  height: 22px;
+  height: 20px;
   object-fit: contain;
+}
+
+.portal-mark .brand-mark {
+  width: 20px;
+  height: 20px;
 }
 
 /* ── Administración ──────────────────────────────────────── */

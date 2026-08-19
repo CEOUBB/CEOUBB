@@ -85,12 +85,10 @@ export function CoursesDashboard({
           {firstName(user.name)}
         </h1>
         <p>
-          <span>
-            Periodo <b className="num">{PERIOD}</b>
-          </span>
+          <span>{user.carrera?.trim() ? user.carrera.trim() : "Sin carrera"}</span>
           <span>·</span>
           <span>
-            <b className="num">{courses.length}</b> ramos activos
+            Periodo <b className="num">{PERIOD}</b>
           </span>
           <span>·</span>
           <span>
