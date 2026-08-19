@@ -36,7 +36,7 @@ This specification formalizes the enterprise harness architecture, test-locking 
 
 - **REQ-HARN-04 (Ubiquitous):** Governance rules in `.agents/rules/*.mdc` SHALL declare YAML frontmatter with explicit `globs` and `alwaysApply: false` for conditional injection.
 - **REQ-HARN-05 (Ubiquitous):** All agent governance documents, rules, skills, and architectural decision records SHALL be written strictly in English to maximize attention bias and prompt density.
-- **REQ-HARN-06 (State-Driven):** WHILE generating UI components, agents SHALL strictly consume semantic tokens from `DESIGN.md` (OKLCH color space, `Source Serif 4` display typography, and `motion/react` spring physics).
+- **REQ-HARN-06 (State-Driven):** WHILE generating UI components, agents SHALL strictly consume semantic tokens from `DESIGN.md` (OKLCH color space, `Merriweather` display typography, and `motion/react` spring physics).
 
 ### C. Trans-Store Synchronization & Security Invariants
 

@@ -2,12 +2,13 @@ import Link from "next/link";
 
 export default function PrivacyPage() {
   return (
+    // Implements: REQ-DELIB-08
     <main className="policy-page">
       <Link className="policy-brand" href="/">
         CE · Centro de Estudio UBB
       </Link>
       <article>
-        <span className="eyebrow">Vigente desde el 8 de agosto de 2026</span>
+        <p className="privacy-date">Vigente desde el 8 de agosto de 2026</p>
         <h1>Política de privacidad</h1>
         <p>
           Centro de Estudio UBB es una plataforma estudiantil independiente y no representa ni

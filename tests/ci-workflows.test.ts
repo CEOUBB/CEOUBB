@@ -370,7 +370,7 @@ test("REQ-ENT-01, REQ-ENT-02, REQ-ENT-03: Documentation consolidation and unifie
   assert.match(designContent, /CEOUBB Design System/i);
   assert.match(designContent, /canvas-soft/);
   assert.match(designContent, /primary/);
-  assert.match(designContent, /Source Serif 4/);
+  assert.match(designContent, /Merriweather/);
 
   // REQ-ENT-02: Dossier y Archive organizados bajo docs/
   const comparisonExists = await exists("docs/institutional/moodle-adecca-comparison.md");

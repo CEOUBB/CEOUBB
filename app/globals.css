@@ -49,13 +49,12 @@
   --color-text-faint: oklch(0.58 0.03 250);
 
   /* Tipografías del Sistema */
+  /* Implements: REQ-DELIB-01 */
   --font-sans:
-    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+    var(--font-manrope), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
   --font-serif:
-    var(--font-merriweather, var(--font-lato, var(--font-playfair, var(--font-source-serif)))),
-    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
-    serif;
+    var(--font-merriweather), "Merriweather", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Escala de Tiempos y Curvas de Aceleración */
@@ -109,16 +108,11 @@
   --text-link: var(--color-primary);
 
   --font-core:
-    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    var(--font-manrope, var(--font-sans)), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
   /* Voz institucional: firma títulos, nombres de ramo y cifras de portada. */
   --font-display:
-    var(
-      --font-merriweather,
-      var(--font-lato, var(--font-playfair, var(--font-source-serif, var(--font-serif))))
-    ),
-    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
-    serif;
+    var(--font-merriweather, var(--font-serif)), "Merriweather", "Iowan Old Style", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --num: lining-nums tabular-nums;
 
@@ -249,13 +243,12 @@ img {
   background: var(--color-primary-tint);
 }
 
+/* Implements: REQ-DELIB-08 */
 .eyebrow {
   display: block;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.33;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -842,6 +835,12 @@ img {
   gap: var(--space-md);
 }
 
+.policy-page .privacy-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: -4px;
+}
+
 .policy-page h1 {
   font-size: 40px;
   font-weight: 700;
@@ -1265,6 +1264,7 @@ img {
   gap: 1px;
 }
 
+.side-group > .side-group-title,
 .side-group > .eyebrow {
   padding: 0 10px 6px;
   margin-top: 2px;
@@ -3176,9 +3176,8 @@ img {
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: var(--num);
-  /* El reloj avanza cada minuto: la etiqueta y su línea se deslizan en vez de
-     saltar, y el día se lee como algo que corre. */
-  transition: top 600ms cubic-bezier(0.2, 0, 0, 1);
+  /* Implements: REQ-DELIB-05 */
+  transition: transform var(--duration-fast) var(--ease-spring);
 }
 
 .planner-col {

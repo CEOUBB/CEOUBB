@@ -162,11 +162,14 @@ function StudentGrades({
               }}
               type="button"
             >
+              {/* Implements: REQ-DELIB-02 */}
               <span>
                 {item.name}
                 <small>
-                  {item.weight}% ·{" "}
-                  {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
+                  <span className="num">{item.weight}%</span> ·{" "}
+                  <span className="num">
+                    {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
+                  </span>
                   {submissions.has(item.id) ? " · entregado" : ""}
                 </small>
               </span>
@@ -175,11 +178,14 @@ function StudentGrades({
         </div>
         <aside className="grades-summary">
           <div className="grades-average">
-            <strong>{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+            <strong className="num">
+              {summary.average === null ? "—" : formatGrade(summary.average)}
+            </strong>
             <div>
               <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
               <p>
-                {summary.gradedWeight}% de {summary.totalWeight}% ya tiene nota
+                <span className="num">{summary.gradedWeight}%</span> de{" "}
+                <span className="num">{summary.totalWeight}%</span> ya tiene nota
               </p>
             </div>
           </div>

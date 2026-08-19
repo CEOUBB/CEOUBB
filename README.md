@@ -150,7 +150,7 @@ pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only sto
 
 ## Documentación y Gobernanza
 
-- **[Sistema de Diseño (`DESIGN.md`)](DESIGN.md):** Tokens de color, tipografía con pairing `Source Serif 4` / `Inter`, micro-sombras y lineamientos de UI.
+- **[Sistema de Diseño (`DESIGN.md`)](DESIGN.md):** Tokens de color, tipografía con pairing `Merriweather` / `Manrope`, micro-sombras y lineamientos de UI.
 - **[Decisiones de Arquitectura (`docs/adr/`)](docs/adr/):**
   - [ADR-0001: Separación de Responsabilidades Turso / Firestore](docs/adr/0001-turso-firestore-split.md)
   - [ADR-0002: Adopción del Runtime Capacitor 7 Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)

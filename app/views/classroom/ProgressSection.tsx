@@ -1,11 +1,13 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { Course } from "../../../lib/courses";
 import { ClassroomStudent } from "../../../lib/firebase-classroom-client";
-import { ease, formatDate } from "../../../lib/portal-utils";
+import { ease, formatDate, instantTransition } from "../../../lib/portal-utils";
 import { Bar } from "./ProgressBar";
 
+// Implements: REQ-DELIB-02, REQ-DELIB-06
 export function ProgressSection({
   units,
   canTeach,
@@ -19,6 +21,7 @@ export function ProgressSection({
   students: ClassroomStudent[];
   updateProgress: (next: number) => void;
 }) {
+  const shouldReduceMotion = useReducedMotion();
   const total = units.length;
   return (
     <section className="progress-view">
@@ -30,7 +33,7 @@ export function ProgressSection({
       )}
       {!canTeach && total > 0 && (
         <div className="personal-progress">
-          <strong>
+          <strong className="num">
             {completed}/{total}
           </strong>
           <div>
@@ -87,7 +90,7 @@ export function ProgressSection({
                 <small>{student.email}</small>
               </span>
               <span>
-                <b>
+                <b className="num">
                   {student.completed}/{student.total}
                 </b>
                 <i>
@@ -103,7 +106,7 @@ export function ProgressSection({
                     }}
                     initial={{ transform: "scaleX(0)" }}
                     style={{ transformOrigin: "left" }}
-                    transition={{ duration: 0.6, ease }}
+                    transition={shouldReduceMotion ? instantTransition : { duration: 0.25, ease }}
                   />
                 </i>
               </span>

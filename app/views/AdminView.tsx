@@ -98,9 +98,11 @@ export function AdminView() {
     <section>
       <div className="page-head lead">
         <h1>Administración de cuentas</h1>
+        {/* Implements: REQ-DELIB-02 */}
         <p>
           <span>
-            <b>{total}</b> {total === 1 ? "cuenta registrada" : "cuentas registradas"}
+            <b className="num">{total}</b>{" "}
+            {total === 1 ? "cuenta registrada" : "cuentas registradas"}
             {searchQuery.trim() ? " (filtradas)" : ""}
           </span>
           <span>·</span>
@@ -189,7 +191,7 @@ export function AdminView() {
             <span>Anterior</span>
           </button>
           <span className="admin-page-info">
-            Página <b>{page}</b> de <b>{totalPages}</b>
+            Página <b className="num">{page}</b> de <b className="num">{totalPages}</b>
           </span>
           <button
             type="button"

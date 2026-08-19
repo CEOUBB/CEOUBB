@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: CEOUBB Design System
-description: An institutional design system for Centro de Estudio UBB: a paper-calm, high-readability academic platform built on a light canvas, a Source Serif 4 display voice over near-black Inter UI typography, and UBB's official royal blue, red, and gold emblem palette.
+description: An institutional design system for Centro de Estudio UBB: a paper-calm, high-readability academic platform built on a light canvas, a Merriweather display voice over near-black Manrope UI typography, and UBB's official royal blue, red, and gold emblem palette.
 
 colors:
   primary: "oklch(0.48 0.18 255)" # UBB Royal Blue #0055b8
@@ -29,67 +29,67 @@ colors:
 
 typography:
   display-1:
-    fontFamily: Source Serif 4
+    fontFamily: Merriweather
     fontSize: 64px
     fontWeight: 700
     lineHeight: 1.0
     letterSpacing: -1.28px
   display-2:
-    fontFamily: Source Serif 4
+    fontFamily: Merriweather
     fontSize: 54px
     fontWeight: 700
     lineHeight: 1.04
     letterSpacing: -1.08px
   heading-1:
-    fontFamily: Source Serif 4
+    fontFamily: Merriweather
     fontSize: 38px
     fontWeight: 700
     lineHeight: 1.1
     letterSpacing: -0.76px
   heading-2:
-    fontFamily: Source Serif 4
+    fontFamily: Merriweather
     fontSize: 23px
     fontWeight: 700
     lineHeight: 1.25
     letterSpacing: -0.345px
   heading-3:
-    fontFamily: Source Serif 4
+    fontFamily: Merriweather
     fontSize: 21px
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: -0.21px
   title:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 20px
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: -0.125px
   body-md:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 16px
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: 0
   body-sm:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 15px
     fontWeight: 400
     lineHeight: 1.33
     letterSpacing: 0
   button:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 16px
     fontWeight: 500
     lineHeight: 1.5
     letterSpacing: 0
   caption:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.43
     letterSpacing: 0
   eyebrow:
-    fontFamily: Inter
+    fontFamily: Manrope
     fontSize: 12px
     fontWeight: 600
     lineHeight: 1.33
@@ -190,7 +190,7 @@ components:
 
 ## Overview
 
-CEOUBB (Centro de Estudio UBB) is structured as a clear academic workspace. The dominant surface is a calm, paper-soft off-white (`{colors.canvas-soft}` / #f4f6f9 / `oklch(0.975 0.005 240)`) that reduces eye strain during extended study sessions and makes course portals read like a structured academic document. Type is set in `Inter` in near-black `{colors.ink}` (oklch(0.20 0.03 260) / #0f172a) at large, tightly-tracked weights, so headlines read as clear, confident statements with zero letter-spacing slack at display sizes (`{typography.display-1}` pulls -2.125px of tracking at 64px). The overall interface uses quiet greys and deep slates, punctuated by a single structural accent: **UBB Royal Blue**, `{colors.primary}` (oklch(0.48 0.18 255) / #0055b8), derived from Universidad del Bío-Bío's official heraldic shield and reserved strictly for primary actions, active navigation states, and inline links.
+CEOUBB (Centro de Estudio UBB) is structured as a clear academic workspace. The dominant surface is a calm, paper-soft off-white (`{colors.canvas-soft}` / #f4f6f9 / `oklch(0.975 0.005 240)`) that reduces eye strain during extended study sessions and makes course portals read like a structured academic document. Type is set in `Manrope` in near-black `{colors.ink}` (oklch(0.20 0.03 260) / #0f172a) at large, tightly-tracked weights, so headlines read as clear, confident statements with zero letter-spacing slack at display sizes (`{typography.display-1}` pulls -2.125px of tracking at 64px). The overall interface uses quiet greys and deep slates, punctuated by a single structural accent: **UBB Royal Blue**, `{colors.primary}` (oklch(0.48 0.18 255) / #0055b8), derived from Universidad del Bío-Bío's official heraldic shield and reserved strictly for primary actions, active navigation states, and inline links.
 
 Against that quiet chrome, CEOUBB utilizes an **academic and shield accent palette** inspired by the UBB crest: UBB Shield Red (`{colors.accent-orange}` / #e31b23), Sun Gold (`{colors.accent-yellow}` / #f59e0b), Sky Blue (`{colors.accent-sky}` / #38bdf8), Academic Emerald (`{colors.accent-green}` / #10b981), Teal (`{colors.accent-teal}` / #0d9488), and Violet (`{colors.accent-purple}` / #8b5cf6). These accents carry course category indicators, evaluation tags, status badges, and academic metrics. They never structure the layout or paint primary CTAs; they categorize and decorate. The interface remains clean and institutional so educational materials and course activity remain the primary focus. The single exception to the light tone is the portal hero, which inverts into a deep UBB Midnight Navy band (`{colors.secondary}` / #002b5c) with white typography as an institutional anchor section.
 
@@ -199,7 +199,7 @@ Surfaces are defined by clean hairlines (`{colors.hairline}` / #e2e8f0) and subt
 **Key Characteristics:**
 
 - Paper-soft light canvas `{colors.canvas-soft}` over pure white, optimized for long academic reading sessions
-- Near-black `{colors.ink}` `Inter` typography with tight negative tracking at display sizes (`{typography.display-1}`)
+- Near-black `{colors.ink}` `Manrope` typography with tight negative tracking at display sizes (`{typography.display-1}`)
 - Exactly one structural accent: UBB Royal Blue `{colors.primary}` (#0055b8), reserved for CTAs, active states, and links
 - An academic category palette (`{colors.accent-yellow}`, `{colors.accent-orange}`, `{colors.accent-sky}`, `{colors.accent-teal}`, `{colors.accent-green}`, `{colors.accent-purple}`) derived from the UBB heraldic shield to tag subjects, grades, and statuses
 - Pill-shaped main CTAs (`{rounded.full}`) contrasted with 8px utility buttons (`{rounded.md}`)
@@ -255,8 +255,8 @@ Status and system feedback map to the academic palette:
 
 CEOUBB runs on a two-family pairing, mirroring the standard university split between printed official acts and administrative forms:
 
-- **`Source Serif 4`** (`--font-display`, fallback `"Iowan Old Style", "Palatino Linotype", Georgia, serif`) signs the institution: page headings, section titles, course names and cover headlines, the brand lockup, and the large grade and progress figures.
-- **`Inter`** (`--font-core`, fallback `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`) carries operational content: navigation, tables, forms, metadata, badges, and body copy.
+- **`Merriweather`** (`--font-display`, fallback `"Iowan Old Style", "Palatino Linotype", Georgia, serif`) signs the institution: page headings, section titles, course names and cover headlines, the brand lockup, and the large grade and progress figures.
+- **`Manrope`** (`--font-core`, fallback `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`) carries operational content: navigation, tables, forms, metadata, badges, and body copy.
 
 Numerals are set with `font-variant-numeric: lining-nums tabular-nums` (`--num`) wherever figures line up in a column: grades, weights, dates, counters. Monospace (`--font-mono`) is reserved for registry identifiers such as course codes (`440299`, `MATLAB`) and file extensions, never as a decorative styling voice.
 
@@ -425,7 +425,7 @@ CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered mic
 - Reserve UBB Royal Blue (`{colors.primary}` / #0055b8) strictly for primary actions, active navigation states, and inline links.
 - Keep page backgrounds on the paper-soft canvas (`{colors.canvas-soft}` / #f4f6f9) for readability.
 - Use the academic shield palette (`{colors.accent-yellow}`, `{colors.accent-orange}`, `{colors.accent-sky}`, etc.) exclusively for category tags, subject badges, and status highlights.
-- Set headings, course names and cover headlines in bold `Source Serif 4` (`{typography.display-1}`, `{typography.heading-1}`) with about -0.02em tracking, and leave every operational surface in `Inter`.
+- Set headings, course names and cover headlines in bold `Merriweather` (`{typography.display-1}`, `{typography.heading-1}`) with about -0.02em tracking, and leave every operational surface in `Manrope`.
 - Give figures that line up in a column (grades, weights, dates, counters) `lining-nums tabular-nums`.
 - Keep the global app bar in UBB Midnight Navy with the heraldic rule closing it; it is the platform's institutional signature.
 - Apply fully pill-shaped radii (`{rounded.full}`) for main CTA buttons and 8px (`{rounded.md}`) for utility buttons.
@@ -439,7 +439,7 @@ CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered mic
 - Don't use full pill radii on text inputs; keep form controls tight at 4px (`{rounded.xs}`).
 - Don't use heavy, dark drop-shadows.
 - Don't set body copy in bold weights; reserve weight 700 for headings.
-- Don't set the serif in interface furniture: buttons, tabs, table cells, form labels, badges and metadata stay in `Inter`.
+- Don't set the serif in interface furniture: buttons, tabs, table cells, form labels, badges and metadata stay in `Manrope`.
 - Don't place an eyebrow or kicker label above a page heading; the heading carries its own weight, and context belongs in the line beneath it or in a chip row.
 - Don't use monospace as a technical costume; it is only for course codes, file extensions and other registry identifiers.
 - Don't use pure clinical white (#ffffff) for full page backgrounds; use `{colors.canvas-soft}` (#f4f6f9).

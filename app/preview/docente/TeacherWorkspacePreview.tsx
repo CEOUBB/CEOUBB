@@ -177,8 +177,9 @@ export function TeacherWorkspacePreview() {
           })}
         </nav>
 
+        {/* Implements: REQ-DELIB-08 */}
         <div className="side-group">
-          <span className="eyebrow">Sección a cargo</span>
+          <span className="side-group-title">Sección a cargo</span>
           <p className={styles.sideSection}>
             <span className="side-icon tone" aria-hidden="true">
               <FolderSimple size={18} weight="fill" />

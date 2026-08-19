@@ -75,7 +75,7 @@ To optimize semantic density and prevent context contamination, the following gl
 
 - `.agents/rules/001-database-turso.mdc`: Drizzle transactions, mandatory `.limit()` clauses, and database pagination.
 - `.agents/rules/002-access-security.mdc`: Four-mirror security synchronization and dual-store mutations (Turso + Firestore) in user administration.
-- `.agents/rules/003-ui-components.mdc`: OKLCH tokens from `DESIGN.md`, typography pairings (`Source Serif 4` vs `Inter`), spring physics, and zero inline SVG icons.
+- `.agents/rules/003-ui-components.mdc`: OKLCH tokens from `DESIGN.md`, typography pairings (`Merriweather` vs `Manrope`), spring physics, and zero inline SVG icons.
 - `.agents/rules/004-mobile-capacitor.mdc`: Capacitor bridge, dynamic safe areas, and silent no-op degradation on the web.
 - `.agents/rules/005-api-webhooks.mdc`: Next.js API route handlers, Zod schema validation, and structured JSON error responses.
 

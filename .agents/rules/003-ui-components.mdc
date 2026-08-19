@@ -15,8 +15,8 @@ This rule is automatically applied when creating or editing UI components, pages
 - **Academic Palette:** Use heraldic accent colors (Gold `#f59e0b`, Red `#e31b23`, Sky `#38bdf8`, Emerald `#10b981`, Purple `#8b5cf6`) solely to categorize subjects, evaluation statuses, and tags. NEVER use category accents to fill primary CTAs.
 
 ## 2. Typography & Micro-Interactions
-- **Display Headlines & Covers:** `Source Serif 4` with negative display tracking (`-0.025em` to `-0.035em`) and `text-wrap: balance`.
-- **Operational UI:** `Inter` for buttons, navigation, data tables, forms, and metadata.
+- **Display Headlines & Covers:** `Merriweather` with negative display tracking (`-0.025em` to `-0.035em`) and `text-wrap: balance`.
+- **Operational UI:** `Manrope` for buttons, navigation, data tables, forms, and metadata.
 - **Editorial Reading:** Apply `text-wrap: pretty` to body text and explanatory paragraphs to avoid typographical orphans.
 - **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums` (`.num`).
 - **Motion Physics:** Use `motion/react` with critically damped spring physics (`type: "spring", stiffness: 340, damping: 28, mass: 0.8`). Prohibited use of slow linear CSS transitions (`ease-in-out` / `transition-all`).

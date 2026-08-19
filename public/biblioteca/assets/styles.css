@@ -43,7 +43,8 @@
   --base: 180ms cubic-bezier(.2, 0, 0, 1);
 }
 
-[data-course="edo"] { --course-tone: #8b5cf6; }
+/* Implements: REQ-DELIB-07 */
+[data-course="edo"] { --course-tone: oklch(0.62 0.22 300); }
 [data-course="estadistica"] { --course-tone: #10b981; }
 [data-course="estatica"] { --course-tone: #38bdf8; }
 [data-course="ingles"] { --course-tone: #ec4899; }
@@ -59,7 +60,7 @@ body {
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -138,9 +139,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nav-count { color: var(--ink-4); font-family: var(--mono); font-variant-numeric: lining-nums tabular-nums; font-size: 12px; }
 
 .sidebar-panel { margin-top: 24px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--card); }
-.eyebrow { color: var(--ink-3); font-size: 12px; font-weight: 600; letter-spacing: .125px; text-transform: uppercase; }
+.sidebar-section-label, .eyebrow { color: var(--ink-3); font-size: 12px; font-weight: 600; }
 .progress-line { height: 6px; margin: 10px 0 8px; overflow: hidden; border-radius: 999px; background: var(--paper); }
-.progress-line span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--blue); transition: width 260ms cubic-bezier(.2, 0, 0, 1); }
+/* Implements: REQ-DELIB-05 */
+.progress-line span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--blue); transform-origin: left; transition: transform var(--transition-fast, 150ms ease-out); }
 .sidebar-panel strong { color: var(--ink); font-size: 15px; font-weight: 600; }
 
 .primary-button, .ghost-button {

@@ -85,6 +85,12 @@
   color: var(--text-body);
 }
 
+/* Implements: REQ-DELIB-03 */
+.headerAction:active {
+  transform: scale(0.98);
+  background: var(--canvas-soft);
+}
+
 /* La marca no navega dentro de la preview: se ve igual que en el portal pero
    sin prometer un clic que no existe. */
 :global(.app-brand).brandStatic:hover {
@@ -213,6 +219,10 @@
 }
 .pulseCell:hover {
   background: var(--canvas-soft);
+}
+/* Implements: REQ-DELIB-03 */
+.pulseCell:active {
+  background: var(--paper);
 }
 .pulseCell > span {
   font-size: 12px;
@@ -346,6 +356,10 @@
   border-top: 0;
 }
 .workRow:hover {
+  background: var(--canvas-soft);
+}
+/* Implements: REQ-DELIB-03 */
+.workRow:active {
   background: var(--canvas-soft);
 }
 .workRow > span:nth-child(2) {
