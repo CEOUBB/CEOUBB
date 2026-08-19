@@ -38,15 +38,22 @@ export async function POST(request: Request) {
     const result = (await verification.json()) as { users?: FirebaseAccount[] };
     const account = result.users?.[0];
     const email = normalizeAccessEmail(account?.email ?? "");
-    const role = roleForEmail(email);
     if (!account?.localId || !account.emailVerified)
       return error("Tu correo de Google debe estar verificado.", 403);
-    if (!role) return error(ACCESS_REJECTION_MESSAGE, 403);
 
     const db = getDb();
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    const name = account.displayName?.trim().replace(/\s+/g, " ") || email.split("@")[0];
     let user = existing[0];
+
+    const derivedRole = roleForEmail(email);
+    // Si la cuenta ya posee rol administrativo 'owner' en la base de datos, se autoriza su acceso.
+    // De lo contrario, se exige que el correo pertenezca a un dominio institucional válido.
+    if (!user || user.role !== "owner") {
+      if (!derivedRole) return error(ACCESS_REJECTION_MESSAGE, 403);
+    }
+
+    const role = user?.role === "owner" ? "owner" : (derivedRole ?? "student");
+    const name = account.displayName?.trim().replace(/\s+/g, " ") || email.split("@")[0];
 
     if (user) {
       await db.update(users).set({ name }).where(eq(users.id, user.id));

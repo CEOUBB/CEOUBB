@@ -1,17 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Serif_4 } from "next/font/google";
+import { Manrope, Merriweather } from "next/font/google";
 import "./globals.css";
 import "./mobile-shell.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
-
-/** Voz institucional: la serif académica sólo firma títulos y nombres de ramo. */
-const sourceSerif = Source_Serif_4({
-  variable: "--font-serif",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
   display: "swap",
-  weight: ["600", "700"],
-  style: ["normal"],
+});
+
+/** Voz institucional: firma títulos y nombres de ramo. */
+const merriweather = Merriweather({
+  variable: "--font-merriweather",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "700", "900"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -64,7 +68,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className={`${inter.variable} ${sourceSerif.variable}`} lang="es">
+    <html className={`${manrope.variable} ${merriweather.variable}`} lang="es">
       <body>{children}</body>
     </html>
   );

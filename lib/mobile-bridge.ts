@@ -4,7 +4,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
-import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 /*
@@ -54,16 +54,6 @@ export function useIsMobileApp() {
 // Implements: REQ-CAP-06
 export function hapticTap() {
   quiet(() => Haptics.impact({ style: ImpactStyle.Light }));
-}
-
-// Implements: REQ-CAP-06
-export function hapticSuccess() {
-  quiet(() => Haptics.notification({ type: NotificationType.Success }));
-}
-
-// Implements: REQ-CAP-06
-export function hapticError() {
-  quiet(() => Haptics.notification({ type: NotificationType.Error }));
 }
 
 /**
@@ -135,8 +125,15 @@ export function useExternalLinks() {
  * del anterior— con dos listeners vivos. Una pulsación ahí dentro retrocedería
  * dos niveles de una vez.
  */
+function subscribeHardwareBack(onPress: () => void): () => void {
+  const handle = App.addListener("backButton", onPress);
+  return () => {
+    void handle.then((h) => h.remove()).catch(() => undefined);
+  };
+}
+
 // Implements: REQ-CAP-15
-export function useHardwareBack(onBack: () => boolean) {
+export function useHardwareBack(onBack: () => boolean): void {
   const handler = useRef(onBack);
 
   useEffect(() => {
@@ -145,12 +142,13 @@ export function useHardwareBack(onBack: () => boolean) {
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    const listener = App.addListener("backButton", () => {
+    const unsubscribe = subscribeHardwareBack(() => {
       if (handler.current()) return;
       quiet(() => App.minimizeApp());
     });
+
     return () => {
-      void listener.then((handle) => handle.remove()).catch(() => undefined);
+      unsubscribe();
     };
   }, []);
 }

@@ -13,7 +13,7 @@ const SESSION_COOKIE = "centro_estudio_session";
 
 const OWNER = {
   id: "firebase:test-owner",
-  email: "felipearce.2004@gmail.com",
+  email: "coordinacion@ubiobio.cl",
   name: "Owner De Prueba",
   role: "owner",
 };
@@ -121,6 +121,47 @@ test("renders Centro de Estudio UBB", async () => {
   assert.match(html, /Centro de Estudio UBB/i);
   assert.match(html, /Ingeniería Mecánica/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+// Implements: REQ-DOC-01, REQ-DOC-02, REQ-DOC-03, REQ-DOC-07, REQ-DOC-11, REQ-DOC-14
+test("renders the isolated teacher preview with noindex and a bounded DOM", async () => {
+  const response = await request("/preview/docente");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Vista previa/i);
+  assert.match(html, /Datos de ejemplo/i);
+  assert.match(html, /Buenos días, docente/i);
+  assert.match(html, /Vista estudiante/i);
+  assert.match(html, /name="robots" content="noindex/i);
+  assert.doesNotMatch(html, /type="file"|Entregar actividad|Adjuntar entrega/i);
+  assert.ok(
+    (html.match(/<[a-z][\w-]*\b/gi) ?? []).length < 1500,
+    "the initial preview DOM must remain below 1500 elements"
+  );
+});
+
+// Implements: REQ-DOC-02, REQ-DOC-14
+test("keeps Firebase, Storage and Turso out of the teacher preview bundle", async () => {
+  const html = await (await request("/preview/docente")).text();
+  const chunks = [
+    ...new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"]+?\.js/g)].map((match) => match[0])),
+  ];
+  assert.ok(chunks.length > 0, "the teacher preview must reference at least one client chunk");
+  for (const chunk of chunks) {
+    const source = await (await request(chunk)).text();
+    assert.ok(
+      !source.includes("firestore.googleapis.com"),
+      `${chunk} ships Firestore into the isolated preview`
+    );
+    assert.ok(
+      !source.includes("firebasestorage.googleapis.com"),
+      `${chunk} ships Storage into the isolated preview`
+    );
+    assert.ok(
+      !source.includes("TURSO_DATABASE_URL"),
+      `${chunk} ships Turso configuration into the isolated preview`
+    );
+  }
 });
 
 test("serves hardening response headers", async () => {
@@ -241,7 +282,8 @@ test("restricts account administration to the owner role", async () => {
   assert.ok(users.every((item) => !("rut" in item)));
 });
 
-test("refuses to change the rank of a developer account", async () => {
+// Implements: REQ-SEC-01 — el rango protegido sale de `users.role`, no del correo.
+test("refuses to change the rank of an account holding the owner rank", async () => {
   const cookie = await signIn(OWNER);
   const patch = (body) =>
     request("/api/admin/users", {
@@ -299,23 +341,36 @@ test("keeps profile deletion and course paths locked down", async () => {
   assert.match(firestoreRules, /allow delete: if isOwner\(\);/);
   assert.match(firestoreRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
   assert.match(storageRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
+  /*
+    Los conteos incluyen la definición de la función. SPEC-010 añadió el buzón de
+    entregas, así que Firestore pasa de 5 a 6 (posts, progress, meta, grades,
+    submissions) y Storage de 2 a 3 (material docente, entregas).
+  */
   assert.equal(
     firestoreRules.match(/validCourse\(courseId\)/g).length,
-    5,
+    6,
     "every course write path must be guarded by validCourse"
   );
   assert.equal(
     storageRules.match(/validCourse\(courseId\)/g).length,
-    2,
+    3,
     "every course upload path must be guarded by validCourse"
   );
+  /*
+    SPEC-010 endurece la escritura: ya no basta con ser docente, hay que dictar
+    esa sección. `teachesSection(courseId)` es `isOwner() || isTeacher() && isEnrolled(courseId)`.
+  */
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if isTeacher\(\)/
+    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if teachesSection\(courseId\)/
   );
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if isTeacher\(\)/
+    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if teachesSection\(courseId\)/
+  );
+  assert.match(
+    firestoreRules,
+    /function teachesSection\(seccionId\) \{\s*return isOwner\(\) \|\| isTeacher\(\) && isEnrolled\(seccionId\);/
   );
 });
 

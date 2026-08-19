@@ -4,28 +4,28 @@ name: CEOUBB Design System
 description: An institutional design system for Centro de Estudio UBB: a paper-calm, high-readability academic platform built on a light canvas, a Source Serif 4 display voice over near-black Inter UI typography, and UBB's official royal blue, red, and gold emblem palette.
 
 colors:
-  primary: "#0055b8"
-  primary-active: "#003d82"
-  secondary: "#002b5c"
+  primary: "oklch(0.48 0.18 255)" # UBB Royal Blue #0055b8
+  primary-active: "oklch(0.38 0.16 255)" # #003d82
+  secondary: "oklch(0.24 0.09 255)" # UBB Midnight Navy #002b5c
   on-primary: "#ffffff"
   canvas: "#ffffff"
-  canvas-soft: "#f4f6f9"
+  canvas-soft: "oklch(0.975 0.005 240)" # #f4f6f9
   surface: "#ffffff"
-  ink: "#0f172a"
-  ink-secondary: "#334155"
-  ink-muted: "#64748b"
-  ink-faint: "#94a3b8"
-  hairline: "#e2e8f0"
-  accent-sky: "#38bdf8"
-  accent-purple: "#8b5cf6"
-  accent-purple-deep: "#4c1d95"
-  accent-pink: "#ec4899"
-  accent-orange: "#e31b23"
-  accent-orange-deep: "#991b1b"
-  accent-teal: "#0d9488"
-  accent-green: "#10b981"
-  accent-yellow: "#f59e0b"
-  accent-brown: "#78350f"
+  ink: "oklch(0.20 0.03 260)" # #0f172a
+  ink-secondary: "oklch(0.36 0.03 255)" # #334155
+  ink-muted: "oklch(0.48 0.03 250)" # #64748b
+  ink-faint: "oklch(0.58 0.03 250)" # #94a3b8
+  hairline: "oklch(0.920 0.006 60)" # #e2e8f0
+  accent-sky: "oklch(0.75 0.14 235)" # #38bdf8
+  accent-purple: "oklch(0.62 0.22 300)" # #8b5cf6
+  accent-purple-deep: "oklch(0.35 0.20 300)" # #4c1d95
+  accent-pink: "oklch(0.65 0.22 350)" # #ec4899
+  accent-orange: "oklch(0.55 0.22 25)" # Shield Red #e31b23
+  accent-orange-deep: "oklch(0.42 0.20 25)" # #991b1b
+  accent-teal: "oklch(0.58 0.12 185)" # #0d9488
+  accent-green: "oklch(0.70 0.17 155)" # #10b981
+  accent-yellow: "oklch(0.75 0.16 75)" # #f59e0b
+  accent-brown: "oklch(0.38 0.12 60)" # #78350f
 
 typography:
   display-1:
@@ -170,17 +170,6 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
     padding: 24px
-  pricing-plan-card:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.md}"
-    padding: 24px
-  pricing-plan-card-featured:
-    backgroundColor: "{colors.canvas-soft}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: 24px
   text-input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -197,72 +186,11 @@ components:
     textColor: "{colors.ink-secondary}"
     typography: "{typography.caption}"
     padding: 32px
-
-  # Exemples (illustrative)
-  ex-pricing-tier:
-    description: "Default Pricing tier card. Re-uses feature-card chrome with brand canvas-soft surface."
-    backgroundColor: "{colors.canvas-soft}"
-    textColor: "{colors.ink}"
-    borderColor: "{colors.hairline}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-  ex-pricing-tier-featured:
-    description: "Featured/highlighted tier: polarity-flipped surface (dark fill + light text in light mode, light fill + dark text in dark mode)."
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-  ex-product-selector:
-    description: "What's Included summary card: re-purposed for SaaS / B2B verticals (NOT a literal product gallery)."
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-  ex-cart-drawer:
-    description: "Subscription summary: re-purposed for SaaS / B2B (line items per add-on, not literal cart)."
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-    item-divider: "{colors.hairline}"
-  ex-app-shell-row:
-    description: "Sidebar nav row inside the App Shell example. Active state uses brand primary as the indicator."
-    backgroundColor: "{colors.canvas}"
-    activeIndicator: "{colors.primary}"
-    rounded: "{rounded.sm}"
-    padding: "{spacing.sm} {spacing.md}"
-  ex-data-table-cell:
-    description: "Default data-table th + td chrome. Header uses mono-caps eyebrow typography; body uses body-sm."
-    headerBackground: "{colors.canvas-soft}"
-    headerTypography: "{typography.eyebrow}"
-    bodyTypography: "{typography.body-sm}"
-    cellPadding: "{spacing.sm} {spacing.md}"
-    rowBorder: "{colors.hairline}"
-  ex-auth-form-card:
-    description: "Sign-in / sign-up card. Re-uses feature-card chrome with text-input primitives inside."
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-  ex-modal-card:
-    description: "Modal dialog surface: same chrome as feature-card with elevated shadow."
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.lg}"
-  ex-empty-state-card:
-    description: "Empty-state illustration frame."
-    backgroundColor: "{colors.canvas-soft}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.xxl}"
-    captionTypography: "{typography.body-md}"
-  ex-toast:
-    description: "Toast notification surface: feature-card shape + medium shadow."
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.xl}"
-    padding: "{spacing.sm} {spacing.md}"
-    typography: "{typography.body-sm}"
 ---
 
 ## Overview
 
-CEOUBB (Centro de Estudio UBB) is structured as a clear academic workspace. The dominant surface is a calm, paper-soft off-white (`{colors.canvas-soft}` / #f4f6f9) that reduces eye strain during extended study sessions and makes course portals read like a structured academic document. Type is set in `Inter` in near-black `{colors.ink}` (#0f172a) at large, tightly-tracked weights, so headlines read as clear, confident statements with zero letter-spacing slack at display sizes (`{typography.display-1}` pulls -2.125px of tracking at 64px). The overall interface uses quiet greys and deep slates, punctuated by a single structural accent: **UBB Royal Blue**, `{colors.primary}` (#0055b8), derived from Universidad del Bío-Bío's official heraldic shield and reserved strictly for primary actions, active navigation states, and inline links.
+CEOUBB (Centro de Estudio UBB) is structured as a clear academic workspace. The dominant surface is a calm, paper-soft off-white (`{colors.canvas-soft}` / #f4f6f9 / `oklch(0.975 0.005 240)`) that reduces eye strain during extended study sessions and makes course portals read like a structured academic document. Type is set in `Inter` in near-black `{colors.ink}` (oklch(0.20 0.03 260) / #0f172a) at large, tightly-tracked weights, so headlines read as clear, confident statements with zero letter-spacing slack at display sizes (`{typography.display-1}` pulls -2.125px of tracking at 64px). The overall interface uses quiet greys and deep slates, punctuated by a single structural accent: **UBB Royal Blue**, `{colors.primary}` (oklch(0.48 0.18 255) / #0055b8), derived from Universidad del Bío-Bío's official heraldic shield and reserved strictly for primary actions, active navigation states, and inline links.
 
 Against that quiet chrome, CEOUBB utilizes an **academic and shield accent palette** inspired by the UBB crest: UBB Shield Red (`{colors.accent-orange}` / #e31b23), Sun Gold (`{colors.accent-yellow}` / #f59e0b), Sky Blue (`{colors.accent-sky}` / #38bdf8), Academic Emerald (`{colors.accent-green}` / #10b981), Teal (`{colors.accent-teal}` / #0d9488), and Violet (`{colors.accent-purple}` / #8b5cf6). These accents carry course category indicators, evaluation tags, status badges, and academic metrics. They never structure the layout or paint primary CTAs; they categorize and decorate. The interface remains clean and institutional so educational materials and course activity remain the primary focus. The single exception to the light tone is the portal hero, which inverts into a deep UBB Midnight Navy band (`{colors.secondary}` / #002b5c) with white typography as an institutional anchor section.
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import {
@@ -10,7 +11,13 @@ import {
   DeviceMobile,
   DownloadSimple,
 } from "@phosphor-icons/react";
-import { APK_URL, ease, rise, stagger } from "../../../lib/portal-utils";
+import {
+  APK_URL,
+  instantTransition,
+  rise,
+  springDefault,
+  stagger,
+} from "../../../lib/portal-utils";
 import { AI_TIERS, BRAND, PERK_GROUPS, UBB_PORTALS } from "./resources-data";
 import type { Brand } from "./resources-data";
 
@@ -25,30 +32,45 @@ function BrandMark({ brand }: { brand: Brand }) {
 }
 
 export function ResourcesView() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <m.section animate="show" className="resources-hub" initial="hidden" variants={stagger}>
+    <m.section
+      animate="show"
+      className="resources-hub"
+      initial={shouldReduceMotion ? "show" : "hidden"}
+      variants={shouldReduceMotion ? undefined : stagger}
+    >
       <div className="page-head lead">
         <h1>Recursos de estudio</h1>
         <p>
           <span>
-            Biblioteca colaborativa, asistentes de inteligencia artificial y beneficios con tu
-            correo institucional, para cualquier carrera de la Universidad del Bío-Bío.
+            Herramientas, material académico y convenios para acompañar tu estudio durante el
+            semestre.
           </span>
         </p>
       </div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Ecosistema CEOUBB</h2>
         </div>
         <div className="resource-layout">
-          <m.a className="resource-card" href="/biblioteca/index.html" whileHover={{ y: -1 }}>
+          <m.a
+            className="resource-card"
+            href="/biblioteca/index.html"
+            whileHover={shouldReduceMotion ? undefined : { y: -1 }}
+          >
             <span className="resource-icon">
               <Books size={22} />
             </span>
             <h3>Biblioteca académica</h3>
             <p>
-              Banco colaborativo de certámenes, controles y apuntes que la comunidad va sumando
+              Biblioteca colaborativa de certámenes, controles y apuntes que la comunidad va sumando
               período a período.
             </p>
             <ul className="resource-points">
@@ -74,7 +96,7 @@ export function ResourcesView() {
               <DeviceMobile size={22} />
             </span>
             <h3>CEOUBB Móvil</h3>
-            <p>La biblioteca de estudio viaja contigo y funciona sin conexión.</p>
+            <p>Accede a tu material de estudio en cualquier lugar con nuestra app oficial.</p>
             <div
               className="store-badges"
               role="group"
@@ -97,10 +119,7 @@ export function ResourcesView() {
                 />
               </div>
             </div>
-            <em>
-              Publicación en tiendas en preparación. Mientras tanto, el APK de Android está
-              disponible.
-            </em>
+            <em>Publicación en preparación. Mientras tanto, el APK de Android está disponible.</em>
             <a className="resource-inline" href={APK_URL}>
               <DownloadSimple size={15} /> Descargar APK para Android
             </a>
@@ -108,49 +127,69 @@ export function ResourcesView() {
         </div>
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Asistentes de inteligencia artificial</h2>
         </div>
         {AI_TIERS.map((tier) => (
           <div className="tier-group" key={tier.id}>
             <div className="tier-head">
-              <h3 className={`tier-label ${tier.tone}`}>{tier.label}</h3>
-              <p>{tier.note}</p>
+              <span className={`tier-label ${tier.tone}`}>{tier.label}</span>
             </div>
             <ul className="chip-grid">
               {tier.tools.map((tool) => (
                 <li key={tool.name}>
                   <a
+                    aria-label={`${tool.name} (se abre en una nueva pestaña)`}
                     className="brand-chip"
                     href={tool.url}
                     rel="noreferrer noopener"
                     target="_blank"
                   >
-                    <BrandMark brand={tool.brand} />
+                    {tool.brand && <BrandMark brand={tool.brand} />}
+                    {tool.image && (
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="brand-mark"
+                        height={20}
+                        src={tool.image}
+                        width={20}
+                      />
+                    )}
                     <b>{tool.name}</b>
                     <ArrowUpRight className="brand-go" size={14} />
                   </a>
                 </li>
               ))}
             </ul>
+            {tier.note && <p className="tier-note">{tier.note}</p>}
           </div>
         ))}
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Beneficios con tu correo institucional</h2>
         </div>
         {PERK_GROUPS.map((group) => (
           <div className="tier-group" key={group.id}>
             <div className="tier-head">
-              <h3 className={`tier-label ${group.tone}`}>{group.label}</h3>
+              <span className={`tier-label ${group.tone}`}>{group.label}</span>
             </div>
             <ul className="brand-grid">
               {group.items.map((perk) => (
                 <li key={perk.name}>
                   <a
+                    aria-label={`${perk.name} - ${perk.note} (se abre en una nueva pestaña)`}
                     className="brand-tile"
                     href={perk.url}
                     rel="noreferrer noopener"
@@ -170,54 +209,61 @@ export function ResourcesView() {
         ))}
       </m.div>
 
-      <m.div className="resource-block" transition={{ duration: 0.4, ease }} variants={rise}>
+      <m.div
+        className="resource-block"
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+        variants={shouldReduceMotion ? undefined : rise}
+      >
         <div className="section-title">
           <h2>Portales y servicios oficiales UBB</h2>
         </div>
         <div className="portal-panel">
-          <p>
-            Sistemas administrados por la Universidad del Bío-Bío. CEOUBB es una plataforma
-            estudiantil independiente y no los reemplaza.
-          </p>
           <ul className="portal-links">
             {UBB_PORTALS.map((portal) => (
-              <li key={portal.host}>
+              <li key={portal.url}>
                 <a
-                  className="portal-link"
+                  aria-label={`${portal.name} - ${portal.host} (se abre en una nueva pestaña)`}
+                  className="portal-card"
                   href={portal.url}
                   rel="noreferrer noopener"
                   target="_blank"
                 >
-                  <span className="portal-mark">
-                    {portal.brand && <BrandMark brand={portal.brand} />}
-                    {portal.image && (
-                      <Image
-                        alt=""
-                        aria-hidden="true"
-                        height={128}
-                        src={portal.image}
-                        width={128}
-                      />
-                    )}
-                    {!portal.brand && !portal.image && (
-                      <Image
-                        alt=""
-                        aria-hidden="true"
-                        height={594}
-                        src="/brand/ubb-shield.webp"
-                        width={388}
-                      />
-                    )}
-                  </span>
-                  <span className="portal-copy">
+                  <div className="portal-card-top">
+                    <span className="portal-mark">
+                      {portal.brand && <BrandMark brand={portal.brand} />}
+                      {portal.image && (
+                        <Image
+                          alt=""
+                          aria-hidden="true"
+                          height={128}
+                          src={portal.image}
+                          width={128}
+                        />
+                      )}
+                      {!portal.brand && !portal.image && (
+                        <Image
+                          alt=""
+                          aria-hidden="true"
+                          height={594}
+                          src="/brand/ubb-shield.webp"
+                          width={388}
+                        />
+                      )}
+                    </span>
+                    <ArrowUpRight className="brand-go" size={14} />
+                  </div>
+                  <div className="portal-card-bottom">
                     <b>{portal.name}</b>
                     <small>{portal.host}</small>
-                  </span>
-                  <ArrowUpRight className="brand-go" size={14} />
+                  </div>
                 </a>
               </li>
             ))}
           </ul>
+          <p>
+            Sistemas administrados por la Universidad del Bío-Bío. CEOUBB es una plataforma
+            estudiantil independiente y no los reemplaza.
+          </p>
         </div>
       </m.div>
     </m.section>

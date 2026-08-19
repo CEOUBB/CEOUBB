@@ -8,6 +8,7 @@ export type User = {
   email: string;
   name: string;
   role: Role;
+  carrera?: string | null;
 };
 
 export type CalendarEntry = {
@@ -22,8 +23,12 @@ export type CalendarEntry = {
 export const APK_URL =
   "https://drive.google.com/uc?export=download&id=16gs-qhzTujmFqf_zgGsVfqBq2QJEbYak";
 
-export const rise = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
-export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.055 } } };
+export const springDefault = { type: "spring", stiffness: 340, damping: 28, mass: 0.8 } as const;
+export const springSnappy = { type: "spring", stiffness: 400, damping: 30, mass: 0.6 } as const;
+export const instantTransition = { duration: 0.01 } as const;
+
+export const rise = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.045 } } };
 export const ease = [0.16, 1, 0.3, 1] as const;
 
 const PHOTO_KEY = "ceoubb:photo";
@@ -227,25 +232,70 @@ export function formatBytes(value: number): string {
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export async function loadCurrentSession(): Promise<User | null> {
+export type SessionState = {
+  user: User | null;
+  sectionIds: string[];
+};
+
+export async function loadCurrentSession(): Promise<SessionState> {
   try {
     const response = await fetch("/api/auth/me", { cache: "no-store" });
-    if (!response.ok) return null;
-    const data = (await response.json()) as { user?: User };
-    return data.user ?? null;
+    if (!response.ok) return { user: null, sectionIds: [] };
+    const data = (await response.json()) as { user?: User | null; sectionIds?: unknown };
+    const sectionIds = Array.isArray(data.sectionIds)
+      ? data.sectionIds.filter((value): value is string => typeof value === "string")
+      : [];
+    return { user: data.user ?? null, sectionIds };
   } catch {
-    return null;
+    return { user: null, sectionIds: [] };
   }
 }
 
-export async function loadAdminUsers(): Promise<User[]> {
+/*
+  Identificadores de sección con matrícula activa. Si la consulta falla el
+  portal se queda sin escuchas en vez de caer al barrido global: es preferible
+  una bandeja vacía a leer secciones ajenas.
+*/
+// Implements: REQ-PERF-01
+export async function loadEnrolledSectionIds(): Promise<string[]> {
   try {
-    const response = await fetch("/api/admin/users", { cache: "no-store" });
+    const response = await fetch("/api/enrollments/me", { cache: "no-store" });
     if (!response.ok) return [];
-    const data = (await response.json()) as { users?: User[] };
-    return data.users ?? [];
+    const data = (await response.json()) as { sectionIds?: unknown };
+    if (!Array.isArray(data.sectionIds)) return [];
+    return data.sectionIds.filter((value): value is string => typeof value === "string");
   } catch {
     return [];
+  }
+}
+
+export type AdminUsersResponse = {
+  users: User[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
+
+export async function loadAdminUsers(
+  page = 1,
+  limit = 50,
+  query = ""
+): Promise<AdminUsersResponse> {
+  try {
+    const response = await fetch(
+      `/api/admin/users?page=${page}&limit=${limit}&q=${encodeURIComponent(query)}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return { users: [], total: 0, page, totalPages: 1 };
+    const data = (await response.json()) as AdminUsersResponse;
+    return {
+      users: data.users ?? [],
+      total: Number(data.total ?? 0),
+      page: Number(data.page ?? page),
+      totalPages: Number(data.totalPages ?? 1),
+    };
+  } catch {
+    return { users: [], total: 0, page, totalPages: 1 };
   }
 }
 

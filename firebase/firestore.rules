@@ -10,10 +10,6 @@ service cloud.firestore {
       return signedIn() ? request.auth.token.email.lower() : '';
     }
 
-    function isOwner() {
-      return email() == 'elpapijuaco325@gmail.com' || email() == 'felipearce.2004@gmail.com';
-    }
-
     function isStudent() {
       return email().matches('^[^@]+@alumnos\\.ubiobio\\.cl$');
     }
@@ -22,8 +18,16 @@ service cloud.firestore {
       return email().matches('^[^@]+@ubiobio\\.cl$');
     }
 
+    // Implements: REQ-SEC-01 — el rango administrativo vive en el documento del
+    // usuario, no en una lista de correos personales incrustada en las reglas.
     function role() {
-      return signedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : '';
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isOwner() {
+      return role() == 'owner';
     }
 
     function isTeacher() {
@@ -35,16 +39,26 @@ service cloud.firestore {
     }
 
     function expectedRole() {
-      return isOwner() ? 'owner' : isTeacherEmail() ? 'teacher' : 'student';
+      return isTeacherEmail() ? 'teacher' : 'student';
     }
 
     function validCourse(courseId) {
-      return courseId.matches('^[a-z][a-z0-9-]{1,30}$');
+      return courseId.matches('^[a-z0-9][a-z0-9-]{1,60}$');
+    }
+
+    // Implements: REQ-SEC-02 — la proyección de matrícula es la única llave de
+    // una sección: sin marcador activo no hay lectura ni escritura posible.
+    function isEnrolled(seccionId) {
+      return signedIn() && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid)/sections/$(seccionId));
+    }
+
+    function teachesSection(seccionId) {
+      return isOwner() || isTeacher() && isEnrolled(seccionId);
     }
 
     match /users/{userId} {
       allow read: if isOwner() || signedIn() && request.auth.uid == userId;
-      allow create: if signedIn() && request.auth.uid == userId && (isOwner() || isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
+      allow create: if signedIn() && request.auth.uid == userId && (isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
       // Implements: REQ-CAP-18 — 'fcmToken' es la única ampliación de la app
       // nativa: el propio dueño escribe su token FCM y nada más. El rol sigue
       // congelado y `hasOnly` mantiene el resto del documento fuera de alcance.
@@ -58,35 +72,49 @@ service cloud.firestore {
       }
     }
 
-    match /courses/{courseId}/posts/{postId} {
-      allow read: if isMember();
-      allow create: if isTeacher() && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
-      allow update: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
-      allow delete: if isOwner() || isTeacher() && resource.data.authorId == request.auth.uid;
+    /*
+      Proyección de matrículas escrita sólo por el servidor con credenciales de
+      cuenta de servicio (que ignoran estas reglas). Para el cliente es de sólo
+      lectura y sólo sobre su propio expediente.
+    */
+    // Implements: REQ-ACAD-02
+    match /enrollments/{userId}/sections/{seccionId} {
+      allow read: if isOwner() || signedIn() && request.auth.uid == userId;
+      allow write: if false;
     }
 
+    // Implements: REQ-SEC-02
+    match /courses/{courseId}/posts/{postId} {
+      allow read: if isOwner() || isMember() && isEnrolled(courseId);
+      allow create: if teachesSection(courseId) && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
+      allow update: if isOwner() || teachesSection(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
+      allow delete: if isOwner() || teachesSection(courseId) && resource.data.authorId == request.auth.uid;
+    }
+
+    // Implements: REQ-SEC-02
     match /courses/{courseId}/progress/{userId} {
-      allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
-      allow create, update: if isMember() && validCourse(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
       allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
     }
 
+    // Implements: REQ-SEC-02
     match /courses/{courseId}/meta/{documentId} {
-      allow read: if isMember();
-      allow write: if isTeacher() && validCourse(courseId);
+      allow read: if isOwner() || isMember() && isEnrolled(courseId);
+      allow write: if teachesSection(courseId) && validCourse(courseId);
     }
 
+    // Implements: REQ-SEC-02
     match /courses/{courseId}/grades/{userId} {
-      allow read: if isOwner() || isTeacher() || signedIn() && request.auth.uid == userId;
-      allow write: if isTeacher() && validCourse(courseId);
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
+      allow write: if teachesSection(courseId) && validCourse(courseId);
     }
 
-    match /{path=**}/posts/{postId} {
-      allow read: if isMember();
-    }
-
-    match /{path=**}/meta/{documentId} {
-      allow read: if isMember();
+    // Implements: REQ-EVAL-01
+    match /courses/{courseId}/submissions/{submissionId} {
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && resource.data.uid == request.auth.uid;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.resource.data.uid == request.auth.uid;
+      allow delete: if isOwner() || signedIn() && resource.data.uid == request.auth.uid;
     }
   }
 }

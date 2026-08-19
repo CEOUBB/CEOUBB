@@ -50,6 +50,17 @@ async function abandonSession() {
   if (Capacitor.isNativePlatform()) await FirebaseAuthentication.signOut().catch(() => undefined);
 }
 
+async function isRegisteredOwner(uid: string): Promise<boolean> {
+  try {
+    const { doc, getDoc, getFirestore } = await import("firebase/firestore");
+    const db = getFirestore(firebaseApp);
+    const snap = await getDoc(doc(db, "users", uid));
+    return snap.exists() && snap.data()?.role === "owner";
+  } catch {
+    return false;
+  }
+}
+
 // Implements: REQ-CAP-12, REQ-CAP-12b
 export async function signInWithInstitutionalGoogle() {
   const result = Capacitor.isNativePlatform()
@@ -59,8 +70,11 @@ export async function signInWithInstitutionalGoogle() {
   // El rol siempre lo decide `roleForEmail`: ni la capa nativa ni esta función
   // vuelven a interpretar el dominio del correo.
   if (!roleForEmail(result.user.email ?? "")) {
-    await abandonSession();
-    throw new Error(ACCESS_REJECTION_MESSAGE);
+    const owner = await isRegisteredOwner(result.user.uid);
+    if (!owner) {
+      await abandonSession();
+      throw new Error(ACCESS_REJECTION_MESSAGE);
+    }
   }
 
   return result.user.getIdToken(true);

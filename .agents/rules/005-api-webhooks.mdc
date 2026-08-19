@@ -1,0 +1,31 @@
+---
+description: "Standards and security constraints for Next.js Route Handlers and API endpoints"
+globs: "app/api/**"
+alwaysApply: false
+---
+
+# Governance Rule: API Route Handlers & Webhooks
+
+This rule is automatically applied when creating, refactoring, or reviewing Next.js App Router Route Handlers (`app/api/**`).
+
+## 1. Authentication & Session Invariants
+1. **Server-Side Session Verification:** Any protected API route MUST extract and verify the user session using `getSessionUser(request)` from `lib/auth.ts`.
+2. **Deterministic Role Guards:** Never trust role claims sent in client JSON payloads. Check `user.role` against the verified session record.
+3. **Institutional Boundary Enforcement:** Reject unauthenticated calls with HTTP 401 and unauthorized roles with HTTP 403.
+4. **Owner Rank Protection:** any account whose stored record is `users.role === 'owner'` cannot be modified or downgraded by regular administrative mutations. The guard reads the rank from the database, never from an email allowlist (SPEC-010 / REQ-SEC-01).
+
+## 2. Request Parsing, Schema Validation & Responses
+1. **Strict Payload Validation:** Validate incoming JSON structures using Zod schemas or explicit boundary checks before executing mutations.
+2. **Bounded Responses:** List endpoints MUST support pagination (`page`, `limit`) with an explicit upper bound (maximum 100 items).
+3. **Structured JSON Output:** Return uniform JSON error responses (`{ error: string }`) with accurate HTTP status codes:
+   - `400 Bad Request` for malformed payloads or failing invariants.
+   - `401 Unauthorized` for missing credentials.
+   - `403 Forbidden` for permission failures or unauthorized domains.
+   - `404 Not Found` for missing resources.
+   - `500 Internal Server Error` for unhandled infrastructure exceptions.
+
+## 3. Strict Negative Constraints ("Do NOTs")
+- DO NOT perform unbounded database queries in route handlers (always append `.limit(N)`).
+- DO NOT leak sensitive internal error traces, stack traces, or environment variables to client responses.
+- DO NOT mutate persistent state on `GET` handlers. `GET` requests must remain idempotent and side-effect free.
+- DO NOT bypass CORS or CSP policies by emitting wildcard headers (`Access-Control-Allow-Origin: *`) on authenticated endpoints.

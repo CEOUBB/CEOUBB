@@ -1,18 +1,27 @@
-import { and, eq, gt } from "drizzle-orm";
-import { getDb } from "../db";
-import { sessions, users } from "../db/schema";
-import type { AccountRole } from "./access-policy";
+import { and, eq, gt, lte } from "drizzle-orm";
+import { getDb } from "../db/index.ts";
+import { sessions, users } from "../db/schema.ts";
+import type { AccountRole } from "./access-policy.ts";
 
 export type PublicUser = {
   id: string;
   email: string;
   name: string;
   role: AccountRole;
+  carrera?: string | null;
 };
 
 const SESSION_COOKIE = "centro_estudio_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const SESSION_SECURE = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
+// Implements: REQ-PERF-02
+export async function pruneExpiredSessions(): Promise<number> {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const result = await db.delete(sessions).where(lte(sessions.expiresAt, now));
+  return Number(result.rowsAffected ?? 0);
+}
 
 export async function createSession(userId: string) {
   const rawToken = randomToken();

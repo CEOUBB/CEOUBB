@@ -1,17 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-
-// Load .env.local if present
-const envPath = path.join(process.cwd(), ".env.local");
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf-8");
-  for (const line of envContent.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
-      const [key, ...valParts] = trimmed.split("=");
-      process.env[key.trim()] = valParts.join("=").trim();
-    }
-  }
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // .env.local is optional: the process may already carry the variables.
 }
 
 // Tokens

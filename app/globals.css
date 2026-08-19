@@ -1,34 +1,93 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   CEOUBB Design System — tokens
-   Source: claude.ai/design · "CEOUBB Design System" (1730f6d2)
-   tokens/colors.css · typography.css · spacing.css · elevation.css
+   CEOUBB Design System — Tokens Perceptuales OKLCH & @theme
+   Gobernanza Contra AI Slop Frontend · High-Craft Design Engineering
    ───────────────────────────────────────────────────────────── */
 
+@theme {
+  /* Escala de Neutros Cálidos (OKLCH - Hue 60: Piedra Natural / Documento) */
+  --color-stone-50: oklch(0.985 0.002 60);
+  --color-stone-100: oklch(0.965 0.004 60);
+  --color-stone-200: oklch(0.92 0.006 60);
+  --color-stone-300: oklch(0.86 0.008 60);
+  --color-stone-400: oklch(0.7 0.01 60);
+  --color-stone-500: oklch(0.54 0.012 60);
+  --color-stone-600: oklch(0.42 0.01 60);
+  --color-stone-700: oklch(0.32 0.008 60);
+  --color-stone-800: oklch(0.22 0.006 60);
+  --color-stone-900: oklch(0.16 0.005 60);
+  --color-stone-950: oklch(0.12 0.004 60);
+
+  /* Acento Institucional UBB Calibrado (Hue 255: Azul Real de Alta Precisión) */
+  --color-brand-blue: oklch(0.48 0.18 255);
+  --color-brand-blue-active: oklch(0.38 0.16 255);
+  --color-brand-navy: oklch(0.24 0.09 255);
+
+  /* Paleta Heráldica y Académica UBB (OKLCH Perceptual) */
+  --color-shield-sky: oklch(0.75 0.14 235);
+  --color-shield-gold: oklch(0.75 0.16 75);
+  --color-shield-red: oklch(0.55 0.22 25);
+  --color-shield-red-deep: oklch(0.42 0.2 25);
+  --color-academic-emerald: oklch(0.7 0.17 155);
+  --color-academic-teal: oklch(0.58 0.12 185);
+  --color-academic-purple: oklch(0.62 0.22 300);
+  --color-academic-purple-deep: oklch(0.35 0.2 300);
+  --color-academic-pink: oklch(0.65 0.22 350);
+  --color-academic-bronze: oklch(0.38 0.12 60);
+
+  /* Tokens Semánticos de Superficie */
+  --color-surface-base: oklch(0.975 0.005 240);
+  --color-surface-raised: #ffffff;
+  --color-surface-overlay: oklch(0.965 0.004 60);
+  --color-surface-border: oklch(0.92 0.006 60);
+
+  /* Tokens Semánticos de Texto */
+  --color-text-primary: oklch(0.2 0.03 260);
+  --color-text-secondary: oklch(0.36 0.03 255);
+  --color-text-muted: oklch(0.48 0.03 250);
+  --color-text-faint: oklch(0.58 0.03 250);
+
+  /* Tipografías del Sistema */
+  --font-sans:
+    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-serif:
+    var(--font-merriweather, var(--font-lato, var(--font-playfair, var(--font-source-serif)))),
+    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
+    serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Escala de Tiempos y Curvas de Aceleración */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+}
+
 :root {
-  --ubb-royal-blue: #0055b8;
-  --ubb-royal-blue-active: #003d82;
-  --ubb-midnight-navy: #002b5c;
-  --white: #ffffff;
-  --paper: #f4f6f9;
-  --hairline: #e2e8f0;
+  --ubb-royal-blue: var(--color-brand-blue, oklch(0.48 0.18 255));
+  --ubb-royal-blue-active: var(--color-brand-blue-active, oklch(0.38 0.16 255));
+  --ubb-midnight-navy: var(--color-brand-navy, oklch(0.24 0.09 255));
+  --white: var(--color-surface-raised, #ffffff);
+  --paper: var(--color-surface-base, oklch(0.975 0.005 240));
+  --hairline: var(--color-surface-border, oklch(0.92 0.006 60));
 
-  --ink-900: #0f172a;
-  --ink-700: #334155;
-  --ink-500: #57657a;
-  --ink-400: #616f85;
+  --ink-900: var(--color-text-primary, oklch(0.2 0.03 260));
+  --ink-700: var(--color-text-secondary, oklch(0.36 0.03 255));
+  --ink-500: var(--color-text-muted, oklch(0.48 0.03 250));
+  --ink-400: var(--color-text-faint, oklch(0.58 0.03 250));
 
-  --shield-sky: #38bdf8;
-  --shield-gold: #f59e0b;
-  --shield-red: #e31b23;
-  --shield-red-deep: #991b1b;
-  --academic-emerald: #10b981;
-  --academic-teal: #0d9488;
-  --academic-purple: #8b5cf6;
-  --academic-purple-deep: #4c1d95;
-  --academic-pink: #ec4899;
-  --academic-bronze: #78350f;
+  --shield-sky: var(--color-shield-sky, oklch(0.75 0.14 235));
+  --shield-gold: var(--color-shield-gold, oklch(0.75 0.16 75));
+  --shield-red: var(--color-shield-red, oklch(0.55 0.22 25));
+  --shield-red-deep: var(--color-shield-red-deep, oklch(0.42 0.2 25));
+  --academic-emerald: var(--color-academic-emerald, oklch(0.7 0.17 155));
+  --academic-teal: var(--color-academic-teal, oklch(0.58 0.12 185));
+  --academic-purple: var(--color-academic-purple, oklch(0.62 0.22 300));
+  --academic-purple-deep: var(--color-academic-purple-deep, oklch(0.35 0.2 300));
+  --academic-pink: var(--color-academic-pink, oklch(0.65 0.22 350));
+  --academic-bronze: var(--color-academic-bronze, oklch(0.38 0.12 60));
 
   --color-primary: var(--ubb-royal-blue);
   --color-primary-active: var(--ubb-royal-blue-active);
@@ -50,10 +109,16 @@
   --text-link: var(--color-primary);
 
   --font-core:
-    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  /* Voz institucional: serif académica sólo en títulos, nombres de ramo y cifras de portada. */
-  --font-display: var(--font-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    var(--font-manrope, var(--font-inter)), "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Voz institucional: firma títulos, nombres de ramo y cifras de portada. */
+  --font-display:
+    var(
+      --font-merriweather,
+      var(--font-lato, var(--font-playfair, var(--font-source-serif, var(--font-serif))))
+    ),
+    "Merriweather", "Lato", "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia,
+    serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --num: lining-nums tabular-nums;
 
@@ -137,9 +202,11 @@ h5,
 h6 {
   margin: 0;
   color: var(--text-body);
+  text-wrap: balance;
 }
 p {
   margin: 0;
+  text-wrap: pretty;
 }
 
 button,
@@ -208,6 +275,23 @@ img {
   font-family: var(--font-display);
   font-weight: 700;
   font-feature-settings: "lnum" 1;
+}
+
+.manrope-family {
+  font-family: var(--font-manrope, var(--font-sans)), "Manrope", sans-serif;
+}
+
+.merriweather-family {
+  font-family: var(--font-merriweather, var(--font-serif)), "Merriweather", serif;
+  font-weight: 600;
+}
+
+.lato-family {
+  font-family: var(--font-lato, var(--font-display)), "Lato", sans-serif;
+}
+
+.playfair-display-family {
+  font-family: var(--font-playfair, var(--font-serif)), "Playfair Display", serif;
 }
 
 /* ── Carga: esqueleto del portal ──────────────────────────────
@@ -682,17 +766,18 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
 }
 .store-badge {
-  width: 8.5rem;
-  display: block;
+  display: inline-flex;
+  height: 2.45rem;
+  width: auto;
   cursor: default;
 }
 
 .store-badge img {
-  width: 100%;
-  height: 2.55rem;
+  width: auto;
+  height: 2.45rem;
   display: block;
   border-radius: 0.45rem;
   object-fit: contain;
@@ -2931,6 +3016,7 @@ img {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
+  margin-inline-end: -0.06em;
 }
 .planner-headday b {
   font-family: var(--font-display);
@@ -2944,20 +3030,23 @@ img {
   color: var(--color-primary);
 }
 
-/* El disco de hoy necesita aire alrededor del número: la serif apretada dentro
-   de un círculo justo se lee como una pastilla deformada, no como una marca. */
 .planner-headday[data-today="true"] b {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
-  margin: -3px 0;
-  padding-top: 2px; /* las cifras lining de la serif se centran ópticamente altas */
+  margin: -3px auto;
+  padding-top: 1.5px;
   border-radius: 50%;
   background: var(--color-primary);
   color: var(--color-on-primary);
-  font-size: 18px;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: 18.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: normal;
 }
 
 .planner-ribbon {
@@ -3067,17 +3156,10 @@ img {
 .planner-hours span {
   position: absolute;
   right: 10px;
-  transform: translateY(-50%);
+  transform: translateY(6px);
   font-size: 11px;
   color: var(--text-faint);
   font-variant-numeric: var(--num);
-}
-
-.planner-hours span:first-child {
-  transform: none;
-}
-.planner-hours span:last-child {
-  transform: translateY(-100%);
 }
 
 /* La hora actual vive en la canaleta, alineada con la línea roja: sin ella hay
@@ -3648,7 +3730,7 @@ a.resource-card:focus-visible .resource-icon {
   font-style: normal;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 .resource-card > b {
   display: inline-flex;
@@ -3684,7 +3766,8 @@ a.resource-card:focus-visible .resource-icon {
 
 .resource-card .store-badges {
   justify-content: flex-start;
-  margin-top: var(--space-xxs);
+  margin: var(--space-xs) 0;
+  gap: var(--space-xs);
 }
 
 .resource-inline {
@@ -3700,6 +3783,11 @@ a.resource-card:focus-visible .resource-icon {
 .resource-inline:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.resource-inline:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .resource-note {
@@ -3717,43 +3805,43 @@ a.resource-card:focus-visible .resource-icon {
    la condición de uso una sola vez, en lugar de repetirla en cada ficha. */
 .tier-group {
   display: grid;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 .tier-group + .tier-group {
-  margin-top: var(--space-md);
+  margin-top: var(--space-lg);
 }
 .tier-head {
-  display: grid;
+  display: flex;
+  align-items: center;
   gap: var(--space-xxs);
-}
-.tier-head p {
-  max-width: 76ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-muted);
 }
 
 .tier-label {
   justify-self: start;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  border: 1px solid transparent;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.33;
-  letter-spacing: 0.125px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .tier-label.free {
-  background: color-mix(in srgb, var(--academic-emerald) 12%, white);
-  border-color: color-mix(in srgb, var(--academic-emerald) 34%, white);
-  color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900));
+  color: oklch(0.38 0.12 155);
 }
 .tier-label.plan {
-  background: color-mix(in srgb, var(--shield-gold) 14%, white);
-  border-color: color-mix(in srgb, var(--shield-gold) 40%, white);
-  color: var(--academic-bronze);
+  color: oklch(0.44 0.12 75);
+}
+
+.tier-note {
+  margin: 2px 0 0 0;
+  max-width: 76ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
 .brand-grid {
@@ -3791,6 +3879,10 @@ a.resource-card:focus-visible .resource-icon {
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
   color: var(--text-body);
 }
+.brand-tile:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .brand-head {
   display: flex;
   align-items: center;
@@ -3809,7 +3901,7 @@ a.resource-card:focus-visible .resource-icon {
 }
 
 /* Fichas de IA: sólo la marca. Sin descripción, la tarjeta sobra y el
-   contenedor se ajusta al nombre. */
+   contenedor se ajusta al nombre con altura mínima táctil accesible (44px). */
 .chip-grid {
   margin: 0;
   padding: 0;
@@ -3822,8 +3914,9 @@ a.resource-card:focus-visible .resource-icon {
 .brand-chip {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: var(--space-xs);
-  padding: 9px var(--space-sm);
+  padding: 8px var(--space-sm);
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
@@ -3841,6 +3934,10 @@ a.resource-card:focus-visible .resource-icon {
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
   color: var(--text-body);
 }
+.brand-chip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .brand-chip b {
   font-size: 15px;
   font-weight: 600;
@@ -3854,6 +3951,7 @@ a.resource-card:focus-visible .resource-icon {
   width: 22px;
   height: 22px;
   flex: none;
+  object-fit: contain;
 }
 .brand-go {
   flex: none;
@@ -3862,14 +3960,14 @@ a.resource-card:focus-visible .resource-icon {
 }
 .brand-tile:hover .brand-go,
 .brand-chip:hover .brand-go,
-.portal-link:hover .brand-go,
+.portal-card:hover .brand-go,
 .brand-tile:focus-visible .brand-go,
 .brand-chip:focus-visible .brand-go,
-.portal-link:focus-visible .brand-go {
+.portal-card:focus-visible .brand-go {
   color: var(--color-primary);
 }
 
-/* Portales UBB: filete heráldico como sello institucional del bloque de cierre. */
+/* Portales UBB: Panel con filete institucional y cuadrícula de tarjetas de servicios. */
 .portal-panel {
   position: relative;
   display: grid;
@@ -3896,72 +3994,100 @@ a.resource-card:focus-visible .resource-icon {
 }
 
 .portal-panel > p {
+  margin: 0;
   max-width: 76ch;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.55;
   color: var(--text-muted);
 }
+
 .portal-links {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: var(--space-xs);
 }
 
-/* Los nombres largos ocupan dos líneas: alinear arriba mantiene una sola
-   línea base para toda la fila. */
-.portal-link {
+.portal-card {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-xs);
-  height: 100%;
-  padding: 10px var(--space-sm);
+  min-height: 106px;
+  padding: 14px var(--space-md);
   background: var(--canvas-soft);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
   color: var(--text-body);
+  text-decoration: none;
   transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast);
+    transform var(--transition-base),
+    background var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
-.portal-link:hover,
-.portal-link:focus-visible {
-  background: var(--color-primary-wash);
-  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--hairline));
+.portal-card:hover,
+.portal-card:focus-visible {
+  transform: translateY(-2px);
+  background: var(--surface-card);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--border-hairline));
+  box-shadow: var(--shadow-1);
   color: var(--text-body);
 }
-.portal-copy {
-  min-width: 0;
-  flex: 1;
+
+.portal-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
-.portal-link b {
+
+.portal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.portal-card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-xs);
+}
+
+.portal-card-bottom b {
   display: block;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1.35;
 }
-.portal-link small {
+
+.portal-card-bottom small {
   display: block;
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-faint);
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 
 .portal-mark {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
+
 .portal-mark img {
   width: auto;
-  height: 22px;
+  height: 20px;
   object-fit: contain;
+}
+
+.portal-mark .brand-mark {
+  width: 20px;
+  height: 20px;
 }
 
 /* ── Administración ──────────────────────────────────────── */
@@ -4028,6 +4154,119 @@ a.resource-card:focus-visible .resource-icon {
   color: #047857;
 }
 
+.admin-toolbar {
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.admin-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 380px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.admin-search-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 36px 6px 38px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-search-input:focus {
+  border-color: var(--ubb-royal-blue);
+  box-shadow: 0 0 0 2px var(--color-primary-wash);
+}
+
+.admin-search-clear {
+  position: absolute;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: var(--canvas-soft);
+  color: var(--text-faint);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.admin-search-clear:hover {
+  background: var(--border-hairline);
+  color: var(--ink);
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-sm);
+}
+
+.admin-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-page-btn:hover:not(:disabled) {
+  background: var(--canvas-soft);
+  border-color: var(--text-faint);
+}
+
+.admin-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-page-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.admin-page-info b {
+  color: var(--ink);
+}
+
 /* ── Notas ───────────────────────────────────────────────── */
 
 .grades-view {
@@ -4046,7 +4285,7 @@ a.resource-card:focus-visible .resource-icon {
 .grades-head,
 .grades-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 90px 110px 110px;
+  grid-template-columns: minmax(0, 2fr) 84px 104px 104px minmax(148px, 176px);
   gap: var(--space-md);
   align-items: center;
   padding: var(--space-sm) var(--space-md);
@@ -4108,6 +4347,106 @@ a.resource-card:focus-visible .resource-icon {
   background: var(--canvas-soft);
   color: var(--text-faint);
   cursor: not-allowed;
+}
+
+/* Aula · entregas del estudiante (REQ-EVAL-01) */
+
+.grades-submission {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.grades-attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: start;
+  min-height: 32px;
+  padding: 4px 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.grades-attach:hover {
+  background: var(--canvas-soft);
+  border-color: var(--color-primary);
+}
+.grades-attach:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.grades-receipt {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  align-items: flex-start;
+}
+.grades-receipt b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grades-receipt b svg {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--academic-emerald) 30%, var(--ink-900));
+}
+.grades-receipt small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.grades-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grades-upload-track {
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  overflow: hidden;
+}
+.grades-upload-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transform-origin: left center;
+  transition: transform var(--transition-base);
+}
+.grades-upload small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grades-upload-fill {
+    transition: none;
+  }
+  .grades-attach {
+    transition: none;
+  }
 }
 
 .grades-summary {
@@ -4613,9 +4952,13 @@ a.resource-card:focus-visible .resource-icon {
   .grades-row {
     grid-template-columns: minmax(0, 1fr) 70px 70px;
   }
-  .grades-head span:last-child,
-  .grades-row span:last-child {
+  /* Simulación y entrega no caben junto a la ponderación: bajan a línea propia. */
+  .grades-head span:nth-child(n + 4),
+  .grades-row span:nth-child(n + 4) {
     grid-column: 1 / -1;
+  }
+  .grades-head span:nth-child(n + 4) {
+    display: none;
   }
   .grades-editor-row {
     grid-template-columns: minmax(0, 1fr) 1fr;

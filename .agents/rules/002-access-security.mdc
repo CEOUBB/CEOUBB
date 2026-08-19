@@ -1,0 +1,36 @@
+---
+description: "Role derivation policies, authorization, and dual-store synchronization"
+globs: "lib/access-policy.ts,firebase/*.rules,app/api/admin/**"
+alwaysApply: false
+---
+
+# Governance Rule: Security, Roles & Dual-Store Synchronization
+
+This rule is automatically applied when modifying access policies, infrastructure security rules, or administrative API endpoints.
+
+## 1. Deterministic Role Derivation (SSOT)
+Role derivation is governed **strictly** by the institutional email domain:
+- `@alumnos.ubiobio.cl` $\rightarrow$ `student`
+- `@ubiobio.cl` $\rightarrow$ `teacher`
+- *Any other domain MUST be immediately rejected.*
+
+The `owner` / `superuser` rank is **never** derived from an email address (SPEC-010 / REQ-SEC-01). It lives in Turso (`users.role = 'owner'`), is projected to `users/{uid}.role` in Firestore, and both rule files read it through `role()`. Never reintroduce a personal address into source code or security rules.
+
+**Single Source of Truth:** `lib/access-policy.ts` -> `roleForEmail()`. Reimplementing regex or email parsing in any other file is prohibited.
+
+## 1.1 Section Isolation by Enrollment (REQ-SEC-02)
+Reads and writes over `courses/{seccionId}/**` require an active enrollment marker at `enrollments/{uid}/sections/{seccionId}`, checked with `exists()` in Firestore rules and `firestore.exists()` in Storage rules. That marker is written only by `lib/services/enrollment-projection.ts` with service-account credentials and is read-only for clients. Collection-group wildcard matches are prohibited.
+
+## 2. Mandatory Dual-Store Synchronization (Turso + Firestore)
+Any administrative endpoint or mutation modifying a user's role (e.g., `PATCH /api/admin/users`) MUST:
+1. Update the relational record in Turso (`users.role`).
+2. Concurrently update the Firestore projection `users/{uid}.role` (so that `isTeacher()` in `firestore.rules` avoids emitting `permission-denied`).
+3. Preserve synchronization across the 4 architectural mirrors:
+   - `lib/access-policy.ts`
+   - `firebase/firestore.rules`
+   - `firebase/storage.rules`
+   - `android/app/src/main/res/values/firebase.xml` (owner addresses only)
+
+## 3. Strict Negative Constraints ("Do NOTs")
+- DO NOT weaken Firestore or Storage rules by replacing `request.auth != null` with `true`.
+- DO NOT trust role claims sent in client-side request payloads; derive the role from the verified server session.

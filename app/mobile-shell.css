@@ -241,13 +241,6 @@
     font-size: 13.5px;
   }
 
-  /* La primera etiqueta se apoyaba en el borde superior de la tarjeta, justo
-     donde el radio la muerde. `first-child` anula el centrado de las demás, así
-     que hay que devolverle el aire a mano. */
-  .planner-hours span:first-child {
-    transform: translateY(6px);
-  }
-
   .planner-daychip {
     min-height: 50px;
   }
@@ -803,6 +796,21 @@
 .sheet-field input:disabled {
   background: var(--canvas-soft);
   color: var(--text-faint);
+}
+
+/* La entrega dentro de la hoja usa el mismo alto táctil que los campos. */
+/* Implements: REQ-EVAL-01 */
+.sheet-field .grades-attach {
+  align-self: stretch;
+  min-height: 46px;
+  font-size: 15px;
+}
+.sheet-field .grades-receipt,
+.sheet-field .grades-upload {
+  width: 100%;
+}
+.sheet-field .grades-receipt b {
+  font-size: 15px;
 }
 
 /* El panel docente pierde su geometría de columna dentro de la hoja. */

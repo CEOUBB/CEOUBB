@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import {
+  MAX_BATCH_OPERATIONS,
+  MAX_WATCHED_SECTIONS,
+  chunkOperations,
+  mergeActivity,
   personalEventError,
   personalKind,
   postKind,
@@ -9,6 +13,8 @@ import {
   toGradebookState,
   toPersonalEvent,
   toPost,
+  watchableSections,
+  type CourseActivity,
 } from "../lib/firebase-classroom-client.ts";
 import { DEFAULT_FOLDER } from "../lib/courses.ts";
 
@@ -77,11 +83,13 @@ test("toPost derives authorRole according to institutional access policy", () =>
   const teacherDoc = mockDoc("p-teacher", { authorEmail: "docente@ubiobio.cl" });
   assert.equal(toPost(teacherDoc).authorRole, "teacher");
 
-  const ownerDoc = mockDoc("p-owner", { authorEmail: "elpapijuaco325@gmail.com" });
-  assert.equal(toPost(ownerDoc).authorRole, "owner");
+  // Implements: REQ-SEC-01 — ninguna cuenta personal deriva un rol: cae al
+  // mínimo privilegio, y el rango de propietario ya no viaja en el correo.
+  const personalDoc = mockDoc("p-personal", { authorEmail: "cualquiera@gmail.com" });
+  assert.equal(toPost(personalDoc).authorRole, "student");
 
-  const collaboratorDoc = mockDoc("p-collab", { authorEmail: "felipearce.2004@gmail.com" });
-  assert.equal(toPost(collaboratorDoc).authorRole, "owner");
+  const lookalikeDoc = mockDoc("p-lookalike", { authorEmail: "docente@ubiobio.cl.attacker.com" });
+  assert.equal(toPost(lookalikeDoc).authorRole, "student");
 });
 
 test("toFile builds ClassroomFile metadata from post and raw document data", () => {
@@ -238,4 +246,83 @@ test("personalEventError translates Firestore error codes to user-friendly Spani
     personalEventError(new Error("unknown"), "eliminar"),
     "No se pudo eliminar el bloque."
   );
+});
+
+// Implements: REQ-PERF-02
+test("a 320 student section still commits in a single batch", () => {
+  const rows = Array.from({ length: 320 }, (_, index) => ({
+    userId: `uid-${index}`,
+    scores: { c1: 5.5 },
+  }));
+  const batches = chunkOperations(rows);
+  assert.equal(batches.length, 1);
+  assert.equal(batches[0].length, 320);
+});
+
+// Implements: REQ-PERF-02
+test("more than 400 grade rows are partitioned into sequential batches", () => {
+  assert.equal(MAX_BATCH_OPERATIONS, 400);
+
+  const rows = Array.from({ length: 1000 }, (_, index) => ({ userId: `uid-${index}` }));
+  const batches = chunkOperations(rows);
+  assert.deepEqual(
+    batches.map((batch) => batch.length),
+    [400, 400, 200]
+  );
+  for (const batch of batches) {
+    assert.ok(batch.length <= 500, "Firestore aborts a batch over 500 operations");
+    assert.ok(batch.length <= MAX_BATCH_OPERATIONS);
+  }
+
+  // Ninguna fila se pierde ni se duplica al partir la matriz.
+  assert.deepEqual(
+    batches.flat().map((row) => row.userId),
+    rows.map((row) => row.userId)
+  );
+
+  assert.deepEqual(chunkOperations([]), []);
+  assert.equal(chunkOperations(rows.slice(0, 401)).length, 2);
+  assert.equal(chunkOperations(rows.slice(0, 400)).length, 1);
+});
+
+// Implements: REQ-PERF-01
+test("only the enrolled sections are ever watched, deduplicated and capped", () => {
+  assert.deepEqual(watchableSections([]), []);
+  assert.deepEqual(watchableSections(["b-2", "a-1", "b-2", ""]), ["a-1", "b-2"]);
+
+  const many = Array.from({ length: 200 }, (_, index) => `sec-${String(index).padStart(3, "0")}`);
+  const watched = watchableSections(many);
+  assert.equal(watched.length, MAX_WATCHED_SECTIONS);
+  assert.equal(watched[0], "sec-000");
+});
+
+// Implements: REQ-PERF-01
+test("merged activity keeps the newest posts first and never grows unbounded", () => {
+  const entry = (courseId: string, id: string, createdAt: string): CourseActivity => ({
+    id,
+    courseId,
+    title: id,
+    kind: "notice",
+    dueDate: "",
+    createdAt,
+  });
+
+  const bySection = new Map([
+    ["440299-2026-2-1", [entry("440299-2026-2-1", "old", "2026-08-01T10:00:00.000Z")]],
+    ["220318-2026-2-1", [entry("220318-2026-2-1", "new", "2026-08-17T10:00:00.000Z")]],
+  ]);
+  assert.deepEqual(
+    mergeActivity(bySection).map((item) => item.id),
+    ["new", "old"]
+  );
+
+  const flooded = new Map(
+    Array.from({ length: 40 }, (_, section) => [
+      `sec-${section}`,
+      Array.from({ length: 20 }, (_, index) =>
+        entry(`sec-${section}`, `${section}-${index}`, "2026-08-10T10:00:00.000Z")
+      ),
+    ])
+  );
+  assert.equal(mergeActivity(flooded).length, 120);
 });

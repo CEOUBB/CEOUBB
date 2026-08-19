@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import { CheckCircle, Paperclip } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
+  ClassroomStudent,
+  MAX_SUBMISSION_BYTES,
+  StudentSubmission,
   saveGradebook,
   saveSimulation,
   saveStudentScores,
+  uploadStudentSubmission,
+  watchOwnSubmissions,
 } from "../../../lib/firebase-classroom-client";
 import {
   DEFAULT_EXEMPTION_GRADE,
@@ -21,9 +28,11 @@ import {
   summarize,
 } from "../../../lib/grades";
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
-import { formatDay } from "../../../lib/portal-utils";
+import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
+
+const EMPTY_SCORES: GradeScores = {};
 
 export function GradesSection({
   course,
@@ -54,7 +63,7 @@ export function GradesSection({
   );
 }
 
-export function StudentGrades({
+function StudentGrades({
   course,
   gradebook,
   exemption,
@@ -74,6 +83,8 @@ export function StudentGrades({
   const [typed, setTyped] = useState<Record<string, string> | null>(null);
   const mobile = useIsMobileApp();
   const [detail, setDetail] = useState<GradeItem | null>(null);
+  const submissions = useOwnSubmissions(course.id);
+  const upload = useSubmissionUpload(course.id, note);
   const draft =
     typed ??
     Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
@@ -156,6 +167,7 @@ export function StudentGrades({
                 <small>
                   {item.weight}% ·{" "}
                   {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
+                  {submissions.has(item.id) ? " · entregado" : ""}
                 </small>
               </span>
             </button>
@@ -198,11 +210,11 @@ export function StudentGrades({
             <dl className="sheet-facts">
               <div>
                 <dt>Ponderación</dt>
-                <dd>{detail.weight}%</dd>
+                <dd className="num">{detail.weight}%</dd>
               </div>
               <div>
                 <dt>Nota oficial</dt>
-                <dd>
+                <dd className="num">
                   {isValidGrade(officialScores[detail.id])
                     ? formatGrade(officialScores[detail.id])
                     : "—"}
@@ -215,8 +227,19 @@ export function StudentGrades({
                 : "Simulación"}
               {simulationField(detail)}
             </label>
+            {/* Implements: REQ-EVAL-01 */}
+            <div className="sheet-field">
+              Entrega
+              <SubmissionSlot
+                item={detail}
+                onPick={upload.pick}
+                percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
+                receipt={submissions.get(detail.id)}
+              />
+            </div>
           </MobileSheet>
         )}
+        {upload.field}
       </section>
     );
   }
@@ -229,6 +252,7 @@ export function StudentGrades({
           <span>Pondera</span>
           <span>Nota oficial</span>
           <span>Simulación</span>
+          <span>Entrega</span>
         </div>
         {gradebook.map((item) => (
           <div className="grades-row" key={item.id}>
@@ -236,21 +260,33 @@ export function StudentGrades({
               <b>{item.name}</b>
               {item.date && <small>{formatDay(item.date)}</small>}
             </span>
-            <span className="grades-weight">{item.weight}%</span>
-            <span className="grades-official">
+            <span className="grades-weight num">{item.weight}%</span>
+            <span className="grades-official num">
               {isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}
             </span>
             <span>{simulationField(item)}</span>
+            {/* Implements: REQ-EVAL-01 */}
+            <span className="grades-submission">
+              <SubmissionSlot
+                item={item}
+                onPick={upload.pick}
+                percent={upload.state?.evalId === item.id ? upload.state.percent : null}
+                receipt={submissions.get(item.id)}
+              />
+            </span>
           </div>
         ))}
       </div>
       <aside className="grades-summary">
         <div className="grades-average">
-          <strong>{summary.average === null ? "—" : formatGrade(summary.average)}</strong>
+          <strong className="num">
+            {summary.average === null ? "—" : formatGrade(summary.average)}
+          </strong>
           <div>
             <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
             <p>
-              {summary.gradedWeight}% de {summary.totalWeight}% ya tiene nota
+              <span className="num">{summary.gradedWeight}%</span> de{" "}
+              <span className="num">{summary.totalWeight}%</span> ya tiene nota
             </p>
           </div>
         </div>
@@ -260,7 +296,8 @@ export function StudentGrades({
         </dl>
         <p className="grades-note">
           La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-          editar aquí.
+          editar aquí. Cada entrega admite hasta {formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el
+          equipo docente del ramo.
         </p>
         {status.text && (
           <p className={`tool-status ${status.tone}`} role="status">
@@ -268,11 +305,163 @@ export function StudentGrades({
           </p>
         )}
       </aside>
+      {upload.field}
     </section>
   );
 }
 
-export function TargetLine({
+/*
+  Buzón de entregas del estudiante. Vive dentro de la fila de la evaluación
+  porque una entrega no es una pantalla aparte: es el estado de esa evaluación.
+  La celda muestra sólo un estado a la vez —adjuntar, enviando o comprobante—
+  para que la tabla siga leyéndose de un vistazo.
+*/
+// Implements: REQ-EVAL-01
+function useOwnSubmissions(courseId: string) {
+  /*
+    El identificador del ramo viaja junto a los comprobantes: al cambiar de aula
+    la lista anterior deja de coincidir y se descarta al derivar, sin reiniciar
+    estado durante el render.
+  */
+  const [state, setState] = useState<{ courseId: string; items: StudentSubmission[] }>({
+    courseId,
+    items: [],
+  });
+  useEffect(
+    () =>
+      watchOwnSubmissions(
+        courseId,
+        (items) => setState({ courseId, items }),
+        () => setState({ courseId, items: [] })
+      ),
+    [courseId]
+  );
+  return useMemo(() => {
+    const rows = state.courseId === courseId ? state.items : [];
+    return new Map(rows.map((item) => [item.evalId, item]));
+  }, [courseId, state]);
+}
+
+// Implements: REQ-EVAL-01
+function useSubmissionUpload(courseId: string, note: (text: string, tone?: Note["tone"]) => void) {
+  const input = useRef<HTMLInputElement | null>(null);
+  const pending = useRef("");
+  const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
+
+  const pick = useCallback((evalId: string) => {
+    pending.current = evalId;
+    input.current?.click();
+  }, []);
+
+  const send = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      const evalId = pending.current;
+      event.target.value = "";
+      pending.current = "";
+      if (!file || !evalId) return;
+      if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES) {
+        note(`La entrega debe pesar entre 1 byte y ${formatBytes(MAX_SUBMISSION_BYTES)}.`, "bad");
+        return;
+      }
+      setState({ evalId, percent: 0 });
+      try {
+        await uploadStudentSubmission(courseId, evalId, file, (percent) =>
+          setState({ evalId, percent })
+        );
+        note("Entrega recibida. El comprobante queda en la evaluación.", "ok");
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No se pudo enviar la entrega.", "bad");
+      } finally {
+        setState(null);
+      }
+    },
+    [courseId, note]
+  );
+
+  const field = (
+    <input
+      aria-hidden="true"
+      className="sr-only"
+      onChange={send}
+      ref={input}
+      tabIndex={-1}
+      type="file"
+    />
+  );
+
+  return { field, pick, state };
+}
+
+// Implements: REQ-EVAL-01
+function SubmissionSlot({
+  item,
+  receipt,
+  percent,
+  onPick,
+}: {
+  item: GradeItem;
+  receipt: StudentSubmission | undefined;
+  percent: number | null;
+  onPick: (evalId: string) => void;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (percent !== null) {
+    return (
+      <span className="grades-upload">
+        <span className="grades-upload-track">
+          <span
+            className="grades-upload-fill"
+            style={{
+              transform: `scaleX(${percent / 100})`,
+              transition: shouldReduceMotion ? "none" : undefined,
+            }}
+          />
+        </span>
+        <small className="num" role="status">
+          Enviando {percent}%
+        </small>
+      </span>
+    );
+  }
+
+  if (receipt) {
+    return (
+      <span className="grades-receipt">
+        <b title={receipt.fileName}>
+          <CheckCircle aria-hidden="true" size={14} weight="fill" />
+          {receipt.fileName}
+        </b>
+        <small className="num">
+          {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
+        </small>
+        <button
+          aria-label={`Reemplazar la entrega de ${item.name}`}
+          className="grades-attach"
+          onClick={() => onPick(item.id)}
+          type="button"
+        >
+          Reemplazar
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      aria-label={`Adjuntar la entrega de ${item.name}`}
+      className="grades-attach"
+      onClick={() => onPick(item.id)}
+      type="button"
+    >
+      <Paperclip aria-hidden="true" size={14} />
+      Adjuntar
+    </button>
+  );
+}
+
+function TargetLine({
   label,
   target,
 }: {
@@ -295,7 +484,7 @@ export function TargetLine({
   );
 }
 
-export function TeacherGrades({
+function TeacherGrades({
   course,
   classroom,
   note,
@@ -353,17 +542,20 @@ export function TeacherGrades({
     }
   };
 
-  const setScore = async (userId: string, itemId: string, value: string) => {
-    const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-    const next = { ...(classScores[userId] ?? {}) };
-    if (isValidGrade(score)) next[itemId] = score;
-    else delete next[itemId];
-    try {
-      await saveStudentScores(course.id, userId, next);
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
-    }
-  };
+  const handleSetScore = useCallback(
+    async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
+      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+      const next = { ...currentScores };
+      if (isValidGrade(score)) next[itemId] = score;
+      else delete next[itemId];
+      try {
+        await saveStudentScores(course.id, userId, next);
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
+      }
+    },
+    [course.id, note]
+  );
 
   return (
     <section className="grades-teacher">
@@ -426,7 +618,7 @@ export function TeacherGrades({
               value={exempt}
             />
           </label>
-          <span className={totalWeight === 100 ? "weight-total ok" : "weight-total"}>
+          <span className={totalWeight === 100 ? "weight-total ok num" : "weight-total num"}>
             Suma {totalWeight}%
           </span>
           <button className="secondary-button" onClick={addItem} type="button">
@@ -460,35 +652,15 @@ export function TeacherGrades({
               Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
             </p>
           )}
-          {students.map((student) => {
-            const scores = classScores[student.userId] ?? {};
-            const summary = summarize(gradebook, scores);
-            return (
-              <div className="grades-matrix-row" key={student.userId}>
-                <span>
-                  <b>{student.name}</b>
-                  <small>{student.email}</small>
-                </span>
-                {gradebook.map((item) => (
-                  <span key={item.id}>
-                    <input
-                      aria-label={`${item.name} de ${student.name}`}
-                      defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
-                      key={`${item.id}-${scores[item.id] ?? ""}`}
-                      max={MAX_GRADE}
-                      min={MIN_GRADE}
-                      onBlur={(event) => setScore(student.userId, item.id, event.target.value)}
-                      step="0.1"
-                      type="number"
-                    />
-                  </span>
-                ))}
-                <span className="grades-official">
-                  {summary.average === null ? "—" : formatGrade(summary.average)}
-                </span>
-              </div>
-            );
-          })}
+          {students.map((student) => (
+            <TeacherStudentRow
+              gradebook={gradebook}
+              key={student.userId}
+              onSetScore={handleSetScore}
+              scores={classScores[student.userId] ?? EMPTY_SCORES}
+              student={student}
+            />
+          ))}
         </div>
       )}
       {status.text && (
@@ -499,3 +671,43 @@ export function TeacherGrades({
     </section>
   );
 }
+
+// Implements: REQ-PERF-08
+const TeacherStudentRow = React.memo(function TeacherStudentRow({
+  student,
+  gradebook,
+  scores,
+  onSetScore,
+}: {
+  student: ClassroomStudent;
+  gradebook: GradeItem[];
+  scores: GradeScores;
+  onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
+}) {
+  const summary = summarize(gradebook, scores);
+  return (
+    <div className="grades-matrix-row">
+      <span>
+        <b>{student.name}</b>
+        <small>{student.email}</small>
+      </span>
+      {gradebook.map((item) => (
+        <span key={item.id}>
+          <input
+            aria-label={`${item.name} de ${student.name}`}
+            defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
+            key={`${item.id}-${scores[item.id] ?? ""}`}
+            max={MAX_GRADE}
+            min={MIN_GRADE}
+            onBlur={(event) => onSetScore(student.userId, item.id, event.target.value, scores)}
+            step="0.1"
+            type="number"
+          />
+        </span>
+      ))}
+      <span className="grades-official num">
+        {summary.average === null ? "—" : formatGrade(summary.average)}
+      </span>
+    </div>
+  );
+});

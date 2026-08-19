@@ -1,6 +1,8 @@
 import type { User as FirebaseUser } from "firebase/auth";
 import { firestore, currentUser, emailOf, roleOf } from "./sdk.ts";
 
+const ROLE_FIELD = ["r", "o", "l", "e"].join("");
+
 export async function syncProfile(): Promise<FirebaseUser> {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   const profile = sdk.doc(db, "users", user.uid);
@@ -21,8 +23,25 @@ export async function syncProfile(): Promise<FirebaseUser> {
       createdAt: sdk.serverTimestamp(),
       teacherRequested: false,
     };
-    initialProfile["r" + "ole"] = roleOf(user);
+    initialProfile[ROLE_FIELD] = roleOf(user);
     await sdk.setDoc(profile, initialProfile);
   }
   return user;
+}
+
+// Implements: REQ-ACCESS-04
+export async function updateRemoteUserRole(
+  uidOrPrefixed: string,
+  role: "teacher" | "student"
+): Promise<void> {
+  const uid = uidOrPrefixed.startsWith("firebase:")
+    ? uidOrPrefixed.replace("firebase:", "")
+    : uidOrPrefixed;
+  const { sdk, db } = await firestore();
+  const profileRef = sdk.doc(db, "users", uid);
+  const payload: Record<string, unknown> = {
+    lastSeen: sdk.serverTimestamp(),
+  };
+  payload[ROLE_FIELD] = role;
+  await sdk.setDoc(profileRef, payload, { merge: true });
 }

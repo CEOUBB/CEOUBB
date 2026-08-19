@@ -18,6 +18,20 @@ import { type GradeItem, type GradeScores, normalizeScores } from "../grades.ts"
 
 const ACTIVITY_LIMIT = 120;
 
+/*
+  Techo por sección: 20 publicaciones bastan para el ribbon de novedades y
+  acotan la lectura inicial a `secciones x 20` documentos en vez de barrer la
+  universidad entera.
+*/
+const ACTIVITY_LIMIT_PER_SECTION = 20;
+
+/*
+  Una escucha por sección abre un canal por sección. Un estudiante lleva 6-8
+  ramos y un docente rara vez pasa de 12; 40 deja holgura para un coordinador
+  sin degradar el arranque del portal.
+*/
+export const MAX_WATCHED_SECTIONS = 40;
+
 export type ClassroomState = {
   posts: ClassroomPost[];
   files: ClassroomFile[];
@@ -140,52 +154,78 @@ export function watchClassroom(
   };
 }
 
-// ponytail: el planificador reutiliza este barrido para las entregas en vez de abrir un
-// segundo collectionGroup. Techo: una entrega cuya publicación quede fuera de las
-// ACTIVITY_LIMIT más recientes no aparece en el ribbon. Se corrige con la consulta filtrada
-// por matrícula que PLAN.md ya tiene pendiente, no con otro barrido global.
+/** Normaliza la lista de secciones a escuchar: sin duplicados y con techo. */
+// Implements: REQ-PERF-01
+export function watchableSections(enrolledSectionIds: readonly string[]): string[] {
+  return [...new Set(enrolledSectionIds.filter(Boolean))].sort().slice(0, MAX_WATCHED_SECTIONS);
+}
+
+/** Une la actividad de todas las secciones y deja las más recientes arriba. */
+// Implements: REQ-PERF-01
+export function mergeActivity(bySection: Map<string, CourseActivity[]>): CourseActivity[] {
+  return [...bySection.values()]
+    .flat()
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .slice(0, ACTIVITY_LIMIT);
+}
+
+/*
+  Escucha segmentada por matrícula. El `collectionGroup("posts")` anterior leía
+  las publicaciones de toda la universidad y las novedades del propio estudiante
+  quedaban desplazadas por el ruido de miles de secciones ajenas; ahora sólo se
+  abre un canal por sección matriculada.
+*/
+// Implements: REQ-PERF-01
 export function watchCourseActivity(
+  enrolledSectionIds: readonly string[],
   onChange: (items: CourseActivity[]) => void,
   onError: (message: string) => void
 ) {
   let active = true;
-  let stop: () => void = () => undefined;
+  const stops: (() => void)[] = [];
+  const sections = watchableSections(enrolledSectionIds);
+  const bySection = new Map<string, CourseActivity[]>();
+
+  if (sections.length === 0) {
+    onChange([]);
+    return () => undefined;
+  }
 
   firestore()
     .then(({ sdk, db }) => {
       if (!active) return;
-      stop = sdk.onSnapshot(
-        sdk.query(
-          sdk.collectionGroup(db, "posts"),
-          sdk.orderBy("createdAt", "desc"),
-          sdk.limit(ACTIVITY_LIMIT)
-        ),
-        (snapshot) =>
-          onChange(
-            snapshot.docs.flatMap((document) => {
-              const courseId =
-                document.ref.parent.parent?.id ?? String(document.data().courseId ?? "");
-              if (!courseId) return [];
-              return [
-                {
+      for (const courseId of sections) {
+        stops.push(
+          sdk.onSnapshot(
+            sdk.query(
+              sdk.collection(db, "courses", courseId, "posts"),
+              sdk.orderBy("createdAt", "desc"),
+              sdk.limit(ACTIVITY_LIMIT_PER_SECTION)
+            ),
+            (snapshot) => {
+              bySection.set(
+                courseId,
+                snapshot.docs.map((document) => ({
                   id: document.id,
                   courseId,
                   title: String(document.data().title ?? "Publicación"),
                   kind: postKind(String(document.data().kind ?? "notice")),
                   dueDate: normalizeDueDate(document.data().dueDate),
                   createdAt: iso(document.data().createdAt),
-                },
-              ];
-            })
-          ),
-        () => onError("No se pudo sincronizar la actividad de los cursos.")
-      );
+                }))
+              );
+              onChange(mergeActivity(bySection));
+            },
+            () => onError("No se pudo sincronizar la actividad de los cursos.")
+          )
+        );
+      }
     })
     .catch(() => onError("No se pudo conectar Firebase."));
 
   return () => {
     active = false;
-    stop();
+    for (const stop of stops) stop();
   };
 }
 

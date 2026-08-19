@@ -1,0 +1,23 @@
+---
+description: "Integration standards for Capacitor mobile bridge and native architecture"
+globs: "android/**,lib/mobile-bridge.ts,capacitor.config.ts,lib/native-files.ts,lib/push-notifications.ts"
+alwaysApply: false
+---
+
+# Governance Rule: Capacitor Mobile Architecture
+
+This rule is automatically applied when modifying native configurations, the Capacitor bridge, or mobile-specific shell components.
+
+## 1. Remote-First Architecture
+- **Production URL:** The Capacitor WebView loads `https://ceoubb.com` remotely.
+- **Local Web Directory (`capacitor/www/`):** Contains only the offline contingency document. Do not regenerate duplicate study library asset trees in native paths.
+- **Abstraction Seam (`lib/mobile-bridge.ts`):** All native platform APIs (haptics, status bar, hardware back button, downloads, and push notifications) must degrade to a silent `no-op` when running in a desktop browser.
+
+## 2. Platform & Security Invariants
+- **Android Application ID:** `cl.ubb.centroestudio`
+- **Minimum SDK:** `minSdk 26` (Android 8.0 Oreo)
+- **Dynamic Safe Areas:** Inset calculations must be resolved dynamically through CSS variables and native bridge plugins, without hardcoding arbitrary screen padding constants.
+
+## 3. Strict Negative Constraints ("Do NOTs")
+- DO NOT reimplement institutional email domain parsing in Java/Kotlin native code. The Firebase `User` instance is passed directly to `roleForEmail` in TypeScript.
+- DO NOT add iOS build steps to CI workflows (`ios/` is a versioned scaffold without macOS CI environments or Apple signing certificates).
