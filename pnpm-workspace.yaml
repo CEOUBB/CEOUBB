@@ -4,12 +4,14 @@ trustPolicyIgnoreAfter: 1
 blockExoticSubdeps: true
 allowBuilds:
   "@firebase/util": true
+  "@fission-ai/openspec": true
   "@google/genai": true
   "@sentry/cli": true
   esbuild: true
   protobufjs: true
 onlyBuiltDependencies:
   - "@firebase/util"
+  - "@fission-ai/openspec"
   - "@google/genai"
   - "@sentry/cli"
   - esbuild
