@@ -2,6 +2,7 @@ import { eq, or, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
 import { getSessionUser } from "../../../../lib/auth";
+import { projectUserRoleToFirestore } from "../../../../lib/services/enrollment-projection";
 
 // Implements: REQ-PERF-03, REQ-PERF-04, REQ-SEC-06, REQ-API-02
 export async function GET(request: Request) {
@@ -97,6 +98,10 @@ export async function PATCH(request: Request) {
       .update(users)
       .set({ role: payload.role as "teacher" | "student" })
       .where(eq(users.id, payload.userId));
+
+    // Implements: REQ-SEC-10
+    await projectUserRoleToFirestore(payload.userId, payload.role as "teacher" | "student");
+
     return Response.json({ ok: true });
   } catch {
     return Response.json({ error: "Error al actualizar usuario." }, { status: 500 });

@@ -46,9 +46,11 @@ export function isValidPathSegment(value: unknown): value is string {
 
 export function parseEnrollmentProjection(value: unknown): EnrollmentProjection {
   const input = (value ?? {}) as Partial<EnrollmentProjection>;
+  const rawUserId =
+    typeof input.userId === "string" ? input.userId.replace(/^firebase:/, "") : input.userId;
   if (!isValidPathSegment(input.seccionId))
     throw new Error("La matrícula no trae un identificador de sección válido.");
-  if (!isValidPathSegment(input.userId))
+  if (!isValidPathSegment(rawUserId))
     throw new Error("La matrícula no trae un identificador de usuario válido.");
   if (!SECTION_ROLES.includes(input.role as SectionRole))
     throw new Error("La matrícula no trae un rol de sección válido.");
@@ -56,7 +58,7 @@ export function parseEnrollmentProjection(value: unknown): EnrollmentProjection 
     throw new Error("La matrícula no trae un estado válido.");
   return {
     seccionId: input.seccionId,
-    userId: input.userId,
+    userId: rawUserId,
     role: input.role as SectionRole,
     status: input.status as EnrollmentStatus,
     updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : undefined,
@@ -64,12 +66,14 @@ export function parseEnrollmentProjection(value: unknown): EnrollmentProjection 
 }
 
 /** Ruta REST del marcador de matrícula: `/enrollments/{uid}/sections/{seccionId}`. */
+// Implements: REQ-SEC-07
 export function enrollmentDocumentPath(
   userId: string,
   seccionId: string,
   projectId = FIREBASE_PROJECT_ID
 ) {
-  return `projects/${projectId}/databases/(default)/documents/enrollments/${userId}/sections/${seccionId}`;
+  const cleanUid = userId.startsWith("firebase:") ? userId.replace("firebase:", "") : userId;
+  return `projects/${projectId}/databases/(default)/documents/enrollments/${cleanUid}/sections/${seccionId}`;
 }
 
 /** Parte una lista de operaciones en lotes que Firestore acepta de una vez. */
@@ -117,6 +121,41 @@ export async function projectEnrollmentToFirestore(
 ): Promise<FirestoreWrite> {
   const [write] = await projectEnrollments([{ seccionId, userId, role, status }]);
   return write;
+}
+
+/**
+ * Proyecta la mutación de un rol de usuario a Firestore usando credenciales de servicio.
+ */
+// Implements: REQ-SEC-10
+export async function projectUserRoleToFirestore(
+  userId: string,
+  role: "teacher" | "student",
+  projectId = FIREBASE_PROJECT_ID
+): Promise<void> {
+  const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
+  const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "";
+  if (!clientEmail || !privateKey) {
+    return;
+  }
+
+  const cleanUid = userId.startsWith("firebase:") ? userId.replace("firebase:", "") : userId;
+  const name = `projects/${projectId}/databases/(default)/documents/users/${cleanUid}`;
+  const write: FirestoreWrite = {
+    update: {
+      name,
+      fields: {
+        role: { stringValue: role },
+      },
+    },
+    updateMask: { fieldPaths: ["role"] },
+  };
+  try {
+    const token = await accessToken();
+    await commit([write], token);
+  } catch (err) {
+    console.error("[projectUserRoleToFirestore] Error projecting role to Firestore:", err);
+    throw err;
+  }
 }
 
 /** Proyecta muchas matrículas particionando en lotes de `MAX_WRITES_PER_COMMIT`. */

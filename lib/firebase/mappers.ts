@@ -58,10 +58,12 @@ export function toGradebookState(value: DocumentData | null) {
   };
 }
 
+// Implements: REQ-SEC-12
 export function toPost(document: QueryDocumentSnapshot<DocumentData>): ClassroomPost {
   const value = document.data();
   const authorEmail = String(value.authorEmail ?? "");
-  const linkUrl = String(value.fileUrl ?? value.linkUrl ?? "");
+  const rawLink = String(value.fileUrl || value.linkUrl || "").trim();
+  const linkUrl = /^https?:\/\//i.test(rawLink) ? rawLink : null;
   return {
     id: document.id,
     authorId: String(value.authorId ?? ""),
@@ -72,7 +74,7 @@ export function toPost(document: QueryDocumentSnapshot<DocumentData>): Classroom
     body: String(value.body ?? ""),
     kind: postKind(String(value.kind ?? "notice")),
     folder: String(value.folder || DEFAULT_FOLDER),
-    linkUrl: linkUrl || null,
+    linkUrl,
     storagePath: String(value.storagePath ?? ""),
     dueDate: normalizeDueDate(value.dueDate),
     createdAt: iso(value.createdAt),

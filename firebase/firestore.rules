@@ -110,10 +110,10 @@ service cloud.firestore {
       allow write: if teachesSection(courseId) && validCourse(courseId);
     }
 
-    // Implements: REQ-EVAL-01
+    // Implements: REQ-EVAL-01, REQ-SEC-08
     match /courses/{courseId}/submissions/{submissionId} {
       allow read: if isOwner() || teachesSection(courseId) || signedIn() && resource.data.uid == request.auth.uid;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.resource.data.uid == request.auth.uid;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid);
       allow delete: if isOwner() || signedIn() && resource.data.uid == request.auth.uid;
     }
   }

@@ -5,8 +5,9 @@ Sentry.init({
 
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
-  // Attach local variable values to stack frames
-  includeLocalVariables: true,
+  // Attach local variable values to stack frames (development only to avoid secret leakage in production)
+  // Implements: REQ-SEC-11
+  includeLocalVariables: process.env.NODE_ENV === "development",
 
   enableLogs: true,
 });
