@@ -220,7 +220,7 @@ export function ResourcesView() {
         <div className="portal-panel">
           <ul className="portal-links">
             {UBB_PORTALS.map((portal) => (
-              <li key={portal.host}>
+              <li key={portal.url}>
                 <a
                   aria-label={`${portal.name} - ${portal.host} (se abre en una nueva pestaña)`}
                   className="portal-card"

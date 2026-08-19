@@ -10,7 +10,12 @@ const UNAUTHORIZED = 401;
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return Response.json({ user: null });
-  const sectionIds = await listUserSectionIds(user.id, { limit: MAX_PAGE_SIZE });
+  let sectionIds: string[] = [];
+  try {
+    sectionIds = await listUserSectionIds(user.id, { limit: MAX_PAGE_SIZE });
+  } catch {
+    sectionIds = [];
+  }
   return Response.json({ user, sectionIds });
 }
 
