@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { users } from "../../../../db/schema";
+import { sessions, users } from "../../../../db/schema";
 import { destroySession, getSessionUser } from "../../../../lib/auth";
 import { MAX_PAGE_SIZE, listUserSectionIds } from "../../../../lib/services/academic-catalog";
 
@@ -25,7 +25,10 @@ export async function DELETE(request: Request) {
   if (!user) return Response.json({ error: "Inicia sesión." }, { status: UNAUTHORIZED });
   try {
     const db = getDb();
-    await db.delete(users).where(eq(users.id, user.id));
+    await db.batch([
+      db.delete(sessions).where(eq(sessions.userId, user.id)),
+      db.delete(users).where(eq(users.id, user.id)),
+    ]);
     return Response.json(
       { deleted: true },
       { headers: { "Set-Cookie": await destroySession(request) } }

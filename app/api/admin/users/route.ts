@@ -1,4 +1,4 @@
-import { eq, like, or, sql } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
 import { getSessionUser } from "../../../../lib/auth";
@@ -18,11 +18,12 @@ export async function GET(request: Request) {
   const limit = Number.isInteger(rawLimit) ? Math.max(1, Math.min(100, rawLimit)) : 50;
   const offset = (page - 1) * limit;
 
-  const sanitizedQ = q.replace(/[%_\\]/g, "\\$&");
+  const sanitizedQ = q.replace(/[%_\\]/g, "\\$&").toLowerCase();
+  const searchPattern = `%${sanitizedQ}%`;
   const whereClause = sanitizedQ
     ? or(
-        like(sql`lower(${users.name})`, `%${sanitizedQ.toLowerCase()}%`),
-        like(sql`lower(${users.email})`, `%${sanitizedQ.toLowerCase()}%`)
+        sql`lower(${users.name}) LIKE ${searchPattern} ESCAPE '\\'`,
+        sql`lower(${users.email}) LIKE ${searchPattern} ESCAPE '\\'`
       )
     : undefined;
 
