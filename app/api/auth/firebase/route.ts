@@ -79,7 +79,9 @@ export async function POST(request: Request) {
       { user: publicUser(user), photoUrl },
       { headers: { "Set-Cookie": cookie } }
     );
-  } catch {
+  } catch (err) {
+    // Implements: REQ-OBS-01
+    console.error("[Auth Firebase Error]:", err);
     return error("No fue posible completar el acceso institucional.", 500);
   }
 }

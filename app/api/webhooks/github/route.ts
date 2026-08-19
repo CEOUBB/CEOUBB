@@ -73,10 +73,11 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get("x-hub-signature-256");
 
-    if (
-      GITHUB_WEBHOOK_SECRET &&
-      !verifyGitHubSignature(rawBody, signature, GITHUB_WEBHOOK_SECRET)
-    ) {
+    // Implements: REQ-SEC-05
+    if (!GITHUB_WEBHOOK_SECRET) {
+      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
+    }
+    if (!verifyGitHubSignature(rawBody, signature, GITHUB_WEBHOOK_SECRET)) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 

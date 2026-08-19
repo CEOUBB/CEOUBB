@@ -40,14 +40,15 @@ export function verifyDiscordSignature(
 
 /**
  * Valida la firma de una petición entrante de Discord contra las claves públicas configuradas.
- * Si no hay claves públicas configuradas, retorna true (para entornos de desarrollo/pruebas locales sin llaves).
+ * Si no hay claves públicas configuradas, retorna false (fail-closed).
  */
+// Implements: REQ-SEC-04
 export function verifyDiscordRequestSignature(
   rawBody: string,
   signature: string,
   timestamp: string,
   publicKeys: string[] = getDiscordPublicKeys()
 ): boolean {
-  if (publicKeys.length === 0) return true;
+  if (publicKeys.length === 0) return false;
   return publicKeys.some((pk) => verifyDiscordSignature(rawBody, signature, timestamp, pk));
 }

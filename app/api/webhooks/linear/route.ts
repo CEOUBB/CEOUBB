@@ -140,9 +140,11 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     };
 
+    // Implements: REQ-NET-01
     const discordResponse = await fetch(DISCORD_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(6000),
       body: JSON.stringify({
         username: "Linear",
         embeds: [embed],
