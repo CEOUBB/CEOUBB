@@ -46,7 +46,8 @@ export function isValidPathSegment(value: unknown): value is string {
 
 export function parseEnrollmentProjection(value: unknown): EnrollmentProjection {
   const input = (value ?? {}) as Partial<EnrollmentProjection>;
-  const rawUserId = typeof input.userId === "string" ? input.userId.replace(/^firebase:/, "") : input.userId;
+  const rawUserId =
+    typeof input.userId === "string" ? input.userId.replace(/^firebase:/, "") : input.userId;
   if (!isValidPathSegment(input.seccionId))
     throw new Error("La matrícula no trae un identificador de sección válido.");
   if (!isValidPathSegment(rawUserId))

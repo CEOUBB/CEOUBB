@@ -24,10 +24,7 @@ export async function DELETE(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return Response.json({ error: "Inicia sesión." }, { status: UNAUTHORIZED });
   if (user.role === "owner") {
-    return Response.json(
-      { error: "La cuenta propietaria no puede eliminarse." },
-      { status: 400 }
-    );
+    return Response.json({ error: "La cuenta propietaria no puede eliminarse." }, { status: 400 });
   }
   try {
     const db = getDb();

@@ -8,7 +8,11 @@ import { toPost } from "../lib/firebase/mappers.ts";
 
 // Implements: REQ-SEC-07
 test("REQ-SEC-07: enrollmentDocumentPath normalizes prefixed UIDs by stripping 'firebase:'", () => {
-  const prefixedPath = enrollmentDocumentPath("firebase:usr_12345", "sec_math_01", "centro-de-estudio-ubb");
+  const prefixedPath = enrollmentDocumentPath(
+    "firebase:usr_12345",
+    "sec_math_01",
+    "centro-de-estudio-ubb"
+  );
   assert.equal(
     prefixedPath,
     "projects/centro-de-estudio-ubb/databases/(default)/documents/enrollments/usr_12345/sections/sec_math_01",
@@ -99,6 +103,14 @@ test("REQ-SEC-12: toPost sanitizes linkUrl and rejects non-http(s) schemes like 
 
 // Implements: REQ-SEC-14
 test("REQ-SEC-14: verifyLinearSignature returns false if secret or signature is empty", () => {
-  assert.equal(verifyLinearSignature('{"action":"create"}', "some-sig", ""), false, "Empty secret must return false");
-  assert.equal(verifyLinearSignature('{"action":"create"}', "", "some-secret"), false, "Empty signature must return false");
+  assert.equal(
+    verifyLinearSignature('{"action":"create"}', "some-sig", ""),
+    false,
+    "Empty secret must return false"
+  );
+  assert.equal(
+    verifyLinearSignature('{"action":"create"}', "", "some-secret"),
+    false,
+    "Empty signature must return false"
+  );
 });

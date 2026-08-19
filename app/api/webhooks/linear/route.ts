@@ -154,7 +154,10 @@ export async function POST(request: Request) {
     if (!discordResponse.ok) {
       const errText = await discordResponse.text();
       console.error("[Linear Webhook] Error forwarding to Discord:", errText);
-      return NextResponse.json({ error: "Error forwarding to notification channel" }, { status: discordResponse.status });
+      return NextResponse.json(
+        { error: "Error forwarding to notification channel" },
+        { status: discordResponse.status }
+      );
     }
 
     return NextResponse.json({ success: true });
