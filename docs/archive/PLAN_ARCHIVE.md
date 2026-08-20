@@ -684,7 +684,7 @@ Files changed: `docs/operations/google-cloud-budget-alerts.md`, `docs/specs/p0-p
 
 External services changed: Cloud Billing Budget API habilitada en `centro-de-estudio-ubb`; presupuesto mensual de CLP 10.000 creado para el proyecto, con alertas de gasto real al 50%, 80% y 100% dirigidas a los roles IAM de facturación y propietarios del proyecto.
 
-Checks passed: lectura posterior por Cloud Billing Budget API; verificación visual de alcance, monto, período y umbrales en Google Cloud Console; destinatarios confirmados contra las políticas IAM de la cuenta de facturación y del proyecto; `pnpm run lint`; `pnpm run typecheck`; `pnpm test` (208/208).
+Checks passed: lectura posterior por Cloud Billing Budget API; verificación visual de alcance, monto, período y umbrales en Google Cloud Console; destinatarios confirmados contra las políticas IAM de la cuenta de facturación y del proyecto; `pnpm run format:check`; `pnpm run lint`; `pnpm run typecheck`; `pnpm test` (208/208).
 
 Checks not run: no se forzó gasto real para disparar correos; la entrega efectiva se comprobará al cruzar el primer umbral.
 

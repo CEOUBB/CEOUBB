@@ -4,16 +4,16 @@ Estado verificado: 2026-08-20. Seguimiento interno: Linear CEO-10.
 
 ## Configuración vigente
 
-| Campo | Valor |
-|---|---|
-| Proyecto | `centro-de-estudio-ubb` |
-| Período | Mensual |
-| Monto | CLP 10.000 |
-| Base de medición | Gasto real |
-| Umbrales | 50%, 80% y 100% |
-| Alcance | Sólo el proyecto Centro de Estudio UBB |
-| Destinatarios | Administradores/usuarios de facturación y propietarios del proyecto |
-| Límite automático de gasto | No configurado |
+| Campo                      | Valor                                                               |
+| -------------------------- | ------------------------------------------------------------------- |
+| Proyecto                   | `centro-de-estudio-ubb`                                             |
+| Período                    | Mensual                                                             |
+| Monto                      | CLP 10.000                                                          |
+| Base de medición           | Gasto real                                                          |
+| Umbrales                   | 50%, 80% y 100%                                                     |
+| Alcance                    | Sólo el proyecto Centro de Estudio UBB                              |
+| Destinatarios              | Administradores/usuarios de facturación y propietarios del proyecto |
+| Límite automático de gasto | No configurado                                                      |
 
 Los destinatarios nominales y la evidencia del estado de la prueba gratuita se mantienen en el ticket interno CEO-10. No deben copiarse al repositorio público.
 
