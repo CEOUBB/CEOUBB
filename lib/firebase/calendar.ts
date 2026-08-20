@@ -91,7 +91,7 @@ export async function savePersonalEvent(input: PersonalEventInput) {
     });
     return created.id;
   } catch (cause) {
-    throw new Error(personalEventError(cause, "guardar"));
+    throw new Error(personalEventError(cause, "guardar"), { cause });
   }
 }
 
@@ -103,13 +103,13 @@ export async function setPersonalEventCompleted(id: string, completed: boolean) 
       updatedAt: sdk.serverTimestamp(),
     })
     .catch((cause) => {
-      throw new Error(personalEventError(cause, "guardar"));
+      throw new Error(personalEventError(cause, "guardar"), { cause });
     });
 }
 
 export async function deletePersonalEvent(id: string) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   await sdk.deleteDoc(sdk.doc(db, "users", user.uid, "calendar_events", id)).catch((cause) => {
-    throw new Error(personalEventError(cause, "eliminar"));
+    throw new Error(personalEventError(cause, "eliminar"), { cause });
   });
 }
