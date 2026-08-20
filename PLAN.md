@@ -110,7 +110,7 @@ Companion files:
 - [NEXT] Staging Firebase project and seeded emulator dataset (P0.11). Every deploy instruction targets production today. Firebase, `firebase/`
 - [NEXT] Define and record the P0.7 capacity and cost targets, then load-check against them. Without numbers, "production-ready" is untestable. `docs/specs/p0-pilot-safety.md`, Google Cloud billing
 - [NEXT] Run the production authentication, Storage and notification test matrix (P0.1-P0.3). Web, Android, Firebase
-- [NEXT] Configure billing budget alerts and App Check rollout (P0.4, P0.5). Google Cloud, Firebase
+- [NEXT] Configure App Check rollout (P0.5). Firebase
 - [BLOCKED] Project owner: **written authorization for an institutional pilot** with one departamento or carrera: named academic sponsor, one semester, real students, signed data-processing annex. No agent can do this; every adoption item depends on it. UBB (DTI, VRA, jurídica)
 - [BLOCKED] Project owner: Google Play verification and official listing URL. Play Console
 - [BLOCKED] Project owner: choose and fund the native iOS strategy and Apple Developer enrollment. App Store Connect
@@ -130,7 +130,7 @@ Everything not listed here is done and verified; the full inventory lives in `do
 - Web: store badges have no listing URLs (placeholders, non-clickable); no public account-deletion entry page; the local portal/library redesign is uncommitted and undeployed.
 - Android: release AAB install, Google sign-in, upload/download, role behaviour, account deletion and FCM delivery **not verified** on a clean physical device. Bundled library still on the old dark maroon theme.
 - iOS: nothing exists: no Xcode project, bundle ID, APNs config or iOS Firebase app. Badge is a placeholder and must not be linked.
-- Firebase/GCP: App Check not configured; no web push VAPID key; no Emulator Suite rule tests; no Cloud Billing budgets or alerts; billing trial/paid status still **pending verification**.
+- Firebase/GCP: App Check not configured; no web push VAPID key; no Emulator Suite rule tests. Cloud Billing alerts are configured, but the account remains in Free Trial and must be activated as paid before expiry to avoid service interruption.
 - GitHub: branch protection and required review not documented as enabled.
 
 ## Architectural risks and technical debt
@@ -160,7 +160,7 @@ Detail and remediation live in the spec files; this is the index.
 1. Deploy the wildcard course rules, run P0.1-P0.3 on real accounts and devices, fix functional failures.
 2. CI + rules emulator tests (P0.10) and staging (P0.11). Everything after this is verified before production.
 3. Backups and a drilled restore (P0.8) prior to teachers entering real grades.
-4. P0.4 and P0.5 before inviting a larger beta group.
+4. P0.5 before inviting a larger beta group; P0.4 billing alerts are configured.
 5. P0.6 and the `/privacidad` grade update, before store submission or real grades, whichever comes first.
 6. Grade audit trail (P0.9).
 7. Define P0.7 targets, then build the academic data model against them. Course identity lands first; enrollment-gated rules land with it.
