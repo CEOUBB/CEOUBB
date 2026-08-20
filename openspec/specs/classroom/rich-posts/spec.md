@@ -1,6 +1,7 @@
 # classroom/rich-posts Specification
 
 ## Purpose
+
 Defines safe technical classroom publications with a bounded Markdown subset, syntax-highlighted code, KaTeX formulas, a shared live preview, historical plain-text compatibility and identical rendering in the web portal and Android remote WebView.
 
 ## Requirements
