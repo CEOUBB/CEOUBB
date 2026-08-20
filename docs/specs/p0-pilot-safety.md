@@ -45,6 +45,8 @@ Acceptance: one readable notification per post, correct Spanish accents, no dupl
 
 Acceptance: owner has a confirmed budget notification path and understands budgets alert, not hard-cap.
 
+Estado verificado el 2026-08-20 (CEO-10): presupuesto mensual de CLP 10.000 limitado a `centro-de-estudio-ubb`, con umbrales de gasto real al 50%, 80% y 100%. Las notificaciones llegan a los roles IAM de facturación y a los propietarios del proyecto; los destinatarios nominales y el saldo/plazo de la prueba permanecen en Linear. No hay límite automático de gasto. La cuenta continúa en prueba gratuita y los recursos se detendrán si esta vence sin activar una cuenta pagada. Runbook: [`google-cloud-budget-alerts.md`](../operations/google-cloud-budget-alerts.md).
+
 ## P0.5 App Check rollout
 
 - Register web and Android apps with suitable providers.
