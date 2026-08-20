@@ -20,4 +20,4 @@
 
 - [x] 4.1 Run `pnpm run verify:fast`, `pnpm run verify:invariants`, `pnpm run lint` and `pnpm test` with zero warnings or failures; run targeted Prettier on every changed source because the repository-wide baseline contains 18 unrelated formatting findings.
 - [x] 4.2 Archive the verified OpenSpec change into `openspec/specs/classroom/rich-posts/spec.md` and revalidate the living specifications.
-- [ ] 4.3 Update `PLAN.md`, publish the feature branch and draft PR, link it to CEO-55 and move the Linear issue to review.
+- [x] 4.3 Update `PLAN.md`, publish the feature branch and draft PR, link it to CEO-55 and move the Linear issue to review.
