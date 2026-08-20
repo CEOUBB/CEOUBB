@@ -218,156 +218,113 @@ export function ResourcesSkeleton() {
         </p>
       </div>
 
-      <div className="resource-block">
-        <div className="section-title">
-          <span
-            className="sk"
-            style={
-              {
-                width: "170px",
-                height: "22px",
-                marginBottom: "var(--space-md)",
-                "--sk-delay": "110ms",
-              } as React.CSSProperties
-            }
-          />
-        </div>
-        <div className="resource-layout">
-          {/* Tarjeta 1: Biblioteca académica */}
-          <div className="resource-card" style={{ "--sk-delay": "140ms" } as React.CSSProperties}>
+      <div className="res-top">
+        {/* Portada: biblioteca académica */}
+        <div className="library-panel" style={{ "--sk-delay": "110ms" } as React.CSSProperties}>
+          <div className="library-lead">
+            <span
+              className="sk"
+              style={{ width: "46px", height: "46px", borderRadius: "var(--radius-md)" }}
+            />
+            <span className="sk" style={{ width: "246px", height: "26px", marginTop: "10px" }} />
+            <span className="sk" style={{ width: "100%", height: "13px", marginTop: "10px" }} />
+            <span className="sk" style={{ width: "72%", height: "13px", marginTop: "4px" }} />
             <span
               className="sk"
               style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "var(--radius-md)",
-                marginBottom: "4px",
+                width: "182px",
+                height: "44px",
+                marginTop: "16px",
+                borderRadius: "var(--radius-full)",
               }}
             />
-            <span className="sk" style={{ width: "170px", height: "20px", marginTop: "8px" }} />
-            <span className="sk" style={{ width: "94%", height: "13px", marginTop: "8px" }} />
-            <span className="sk" style={{ width: "78%", height: "13px", marginTop: "4px" }} />
+          </div>
+          <div className="library-points">
+            {[94, 88, 96].map((w, idx) => (
+              <span
+                className="sk"
+                key={`lib-point-${idx}`}
+                style={{ width: `${w}%`, height: "13px" }}
+              />
+            ))}
+          </div>
+        </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                margin: "12px 0 16px 0",
-              }}
-            >
-              {[88, 76, 92].map((w, idx) => (
-                <div
-                  key={`res-pt-${idx}`}
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+        {/* Tira de la app móvil */}
+        <div className="mobile-strip" style={{ "--sk-delay": "150ms" } as React.CSSProperties}>
+          <span
+            className="sk"
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "var(--radius-md)",
+              flex: "none",
+            }}
+          />
+          <div className="mobile-strip-text">
+            <span className="sk" style={{ width: "116px", height: "13px" }} />
+            <span className="sk" style={{ width: "88%", height: "11px", marginTop: "5px" }} />
+          </div>
+          <span
+            className="sk"
+            style={{ width: "196px", height: "30px", borderRadius: "var(--radius-sm)" }}
+          />
+          <span
+            className="sk"
+            style={{ width: "142px", height: "20px", borderRadius: "var(--radius-md)" }}
+          />
+        </div>
+      </div>
+
+      {/* Índice de servicios externos */}
+      {[
+        { id: "ia", title: 268, rows: 8, delay: 220 },
+        { id: "beneficios", title: 302, rows: 7, delay: 260 },
+        { id: "portales", title: 288, rows: 5, delay: 300 },
+      ].map((group) => (
+        <div
+          className="res-group"
+          key={group.id}
+          style={{ "--sk-delay": `${group.delay}ms` } as React.CSSProperties}
+        >
+          <div className="section-title compact-title">
+            <span className="sk" style={{ width: `${group.title}px`, height: "20px" }} />
+            <span className="sk" style={{ width: "18px", height: "12px" }} />
+          </div>
+          <ul className="res-index">
+            {Array.from({ length: group.rows }, (_, idx) => (
+              <li className="res-row" key={`${group.id}-row-${idx}`}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "var(--space-sm)",
+                    width: "100%",
+                    minHeight: "64px",
+                    padding: "12px var(--space-md)",
+                  }}
                 >
                   <span
                     className="sk"
-                    style={{ width: "14px", height: "14px", borderRadius: "3px", flexShrink: 0 }}
+                    style={{ width: "22px", height: "22px", flex: "none", borderRadius: "6px" }}
                   />
-                  <span className="sk" style={{ width: `${w}%`, height: "12px" }} />
-                </div>
-              ))}
-            </div>
-
-            <span className="sk" style={{ width: "120px", height: "14px", marginTop: "auto" }} />
-          </div>
-
-          {/* Tarjeta 2: CEOUBB Móvil */}
-          <div className="resource-card" style={{ "--sk-delay": "180ms" } as React.CSSProperties}>
-            <span
-              className="sk"
-              style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "var(--radius-md)",
-                marginBottom: "4px",
-              }}
-            />
-            <span className="sk" style={{ width: "140px", height: "20px", marginTop: "8px" }} />
-            <span className="sk" style={{ width: "90%", height: "13px", marginTop: "8px" }} />
-            <span className="sk" style={{ width: "65%", height: "13px", marginTop: "4px" }} />
-
-            <div
-              className="store-badges"
-              style={{ display: "flex", gap: "10px", margin: "14px 0 12px 0" }}
-            >
-              <span
-                className="sk"
-                style={{ width: "124px", height: "38px", borderRadius: "var(--radius-md)" }}
-              />
-              <span
-                className="sk"
-                style={{ width: "124px", height: "38px", borderRadius: "var(--radius-md)" }}
-              />
-            </div>
-
-            <span className="sk" style={{ width: "82%", height: "11px" }} />
-            <span className="sk" style={{ width: "175px", height: "14px", marginTop: "10px" }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="resource-block" style={{ marginTop: "var(--space-xl)" }}>
-        <div className="section-title">
-          <span
-            className="sk"
-            style={
-              {
-                width: "250px",
-                height: "22px",
-                marginBottom: "var(--space-md)",
-                "--sk-delay": "220ms",
-              } as React.CSSProperties
-            }
-          />
-        </div>
-
-        {/* Tier 1: Gratis, sin límites */}
-        <div className="tier-group">
-          <span
-            className="sk"
-            style={{
-              width: "110px",
-              height: "14px",
-              borderRadius: "var(--radius-xs)",
-              marginBottom: "10px",
-            }}
-          />
-          <div style={{ display: "flex", gap: "10px" }}>
-            {[120, 110].map((w, idx) => (
-              <span
-                className="sk"
-                key={`tier1-chip-${idx}`}
-                style={{ width: `${w}px`, height: "38px", borderRadius: "var(--radius-md)" }}
-              />
+                  <span style={{ flex: 1, minWidth: 0, display: "grid", gap: "6px" }}>
+                    <span
+                      className="sk"
+                      style={{ width: `${58 + ((idx * 11) % 26)}%`, height: "13px" }}
+                    />
+                    <span
+                      className="sk"
+                      style={{ width: `${44 + ((idx * 13) % 32)}%`, height: "11px" }}
+                    />
+                  </span>
+                  <span className="sk" style={{ width: "14px", height: "14px", flex: "none" }} />
+                </span>
+              </li>
             ))}
-          </div>
-          <span className="sk" style={{ width: "230px", height: "11px", marginTop: "10px" }} />
+          </ul>
         </div>
-
-        {/* Tier 2: Gratis, con límites */}
-        <div className="tier-group" style={{ marginTop: "var(--space-lg)" }}>
-          <span
-            className="sk"
-            style={{
-              width: "125px",
-              height: "14px",
-              borderRadius: "var(--radius-xs)",
-              marginBottom: "10px",
-            }}
-          />
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            {[125, 115, 120, 130].map((w, idx) => (
-              <span
-                className="sk"
-                key={`tier2-chip-${idx}`}
-                style={{ width: `${w}px`, height: "38px", borderRadius: "var(--radius-md)" }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      ))}
     </section>
   );
 }
