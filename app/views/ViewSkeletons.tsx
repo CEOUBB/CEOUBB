@@ -25,62 +25,96 @@ const SKELETON_POSTS = [0, 1, 2];
 export function CalendarSkeleton() {
   return (
     <section aria-busy="true" aria-label="Cargando calendario…" className="planner" role="status">
-      <div className="planner-top">
-        <div className="planner-title">
+      <header className="page-head planner-bar">
+        <div className="planner-lead">
           <span
-            className="sk"
-            style={{ width: "220px", height: "34px", "--sk-delay": "50ms" } as React.CSSProperties}
+            className="sk boot-title"
+            style={{ width: "200px", height: "34px", "--sk-delay": "50ms" } as React.CSSProperties}
           />
-          <span
-            className="sk"
-            style={
-              {
-                width: "160px",
-                height: "14px",
-                marginTop: "6px",
-                "--sk-delay": "90ms",
-              } as React.CSSProperties
-            }
-          />
+          <p style={{ marginTop: "6px" }}>
+            <span
+              className="sk"
+              style={
+                { width: "130px", height: "14px", "--sk-delay": "80ms" } as React.CSSProperties
+              }
+            />
+            <span
+              className="sk"
+              style={
+                { width: "85px", height: "14px", "--sk-delay": "100ms" } as React.CSSProperties
+              }
+            />
+            <span
+              className="sk"
+              style={
+                { width: "80px", height: "14px", "--sk-delay": "120ms" } as React.CSSProperties
+              }
+            />
+          </p>
         </div>
-        <div className="planner-actions">
-          <span
-            className="sk sk-round"
-            style={{ width: "60px", height: "36px", "--sk-delay": "120ms" } as React.CSSProperties}
-          />
-          <span
-            className="sk sk-round"
-            style={{ width: "36px", height: "36px", "--sk-delay": "140ms" } as React.CSSProperties}
-          />
-          <span
-            className="sk sk-round"
-            style={{ width: "36px", height: "36px", "--sk-delay": "160ms" } as React.CSSProperties}
-          />
+        <div className="planner-controls">
+          <div className="planner-step">
+            <span
+              className="sk"
+              style={
+                { width: "36px", height: "34px", "--sk-delay": "130ms" } as React.CSSProperties
+              }
+            />
+            <span
+              className="sk"
+              style={
+                {
+                  width: "52px",
+                  height: "34px",
+                  borderLeft: "1px solid var(--border-hairline)",
+                  borderRight: "1px solid var(--border-hairline)",
+                  "--sk-delay": "140ms",
+                } as React.CSSProperties
+              }
+            />
+            <span
+              className="sk"
+              style={
+                { width: "36px", height: "34px", "--sk-delay": "150ms" } as React.CSSProperties
+              }
+            />
+          </div>
           <span
             className="sk"
             style={
               {
                 width: "130px",
-                height: "36px",
+                height: "34px",
+                borderRadius: "var(--radius-md)",
+                "--sk-delay": "170ms",
+              } as React.CSSProperties
+            }
+          />
+          <span
+            className="sk"
+            style={
+              {
+                width: "140px",
+                height: "34px",
                 borderRadius: "var(--radius-full)",
-                "--sk-delay": "180ms",
+                "--sk-delay": "190ms",
               } as React.CSSProperties
             }
           />
         </div>
-      </div>
+      </header>
 
-      <div className="planner-filters" style={{ margin: "var(--space-md) 0 var(--space-lg)" }}>
+      <div aria-label="Cargando filtros" className="planner-filters">
         {SKELETON_FILTER_COURSES.map((idx) => (
           <span
-            className="sk"
+            className="planner-pill sk"
             key={`cal-filt-${idx}`}
             style={
               {
                 width: `${110 + (idx % 3) * 25}px`,
-                height: "32px",
+                height: "30px",
                 borderRadius: "var(--radius-full)",
-                "--sk-delay": `${180 + idx * 40}ms`,
+                "--sk-delay": `${210 + idx * 35}ms`,
               } as React.CSSProperties
             }
           />
