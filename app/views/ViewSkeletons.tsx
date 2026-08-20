@@ -536,107 +536,97 @@ export function ClassroomSkeleton() {
           </span>
         </nav>
 
-        <div className="classroom-columns">
-          <section className="posts-section">
-            <div className="section-title compact-title">
-              <span
-                className="sk"
-                style={
-                  {
-                    width: "140px",
-                    height: "20px",
-                    marginBottom: "4px",
-                    "--sk-delay": "130ms",
-                  } as React.CSSProperties
-                }
-              />
-            </div>
-            <div className="post-list">
-              {SKELETON_POST_CARDS.map((card) => (
-                <article
-                  key={`sk-post-${card}`}
-                  style={{ "--sk-delay": `${160 + card * 60}ms` } as React.CSSProperties}
-                >
-                  <span
-                    className="sk"
-                    style={{
-                      width: "56px",
-                      height: "22px",
-                      borderRadius: "var(--radius-full)",
-                    }}
-                  />
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}
-                  >
-                    <span className="sk" style={{ width: "65%", height: "16px" }} />
-                    <span className="sk" style={{ width: "95%", height: "13px" }} />
-                    <span className="sk" style={{ width: "75%", height: "13px" }} />
-                    <div style={{ display: "flex", gap: "12px", marginTop: "6px" }}>
-                      <span className="sk" style={{ width: "85px", height: "12px" }} />
-                      <span className="sk" style={{ width: "65px", height: "12px" }} />
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+        <div>
+          <div className="classroom-columns">
+            <section className="posts-section">
+              <div className="section-title compact-title">
+                <h2>Avisos del curso</h2>
+              </div>
+              <div className="empty-state">
+                <span
+                  className="sk"
+                  style={
+                    {
+                      width: "240px",
+                      height: "16px",
+                      display: "block",
+                      "--sk-delay": "150ms",
+                    } as React.CSSProperties
+                  }
+                />
+                <span
+                  className="sk"
+                  style={
+                    {
+                      width: "85%",
+                      height: "14px",
+                      marginTop: "6px",
+                      display: "block",
+                      "--sk-delay": "180ms",
+                    } as React.CSSProperties
+                  }
+                />
+                <span
+                  className="sk"
+                  style={
+                    {
+                      width: "160px",
+                      height: "14px",
+                      marginTop: "12px",
+                      display: "block",
+                      "--sk-delay": "210ms",
+                    } as React.CSSProperties
+                  }
+                />
+              </div>
+            </section>
 
-          <aside className="course-rail">
-            <div className="section-title compact-title">
-              <h2>
-                <Info aria-hidden="true" size={19} weight="fill" />
-                Información del ramo
-              </h2>
-            </div>
-            <div className="course-facts">
-              <dl>
-                <div>
-                  <dt>Coordinación</dt>
-                  <dd>
-                    <span
-                      className="sk"
-                      style={
-                        {
-                          width: "160px",
-                          height: "16px",
-                          display: "block",
-                          "--sk-delay": "150ms",
-                        } as React.CSSProperties
-                      }
-                    />
-                    <span
-                      className="sk"
-                      style={
-                        {
-                          width: "120px",
-                          height: "12px",
-                          marginTop: "2px",
-                          display: "block",
-                          "--sk-delay": "180ms",
-                        } as React.CSSProperties
-                      }
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt>Estudiantes</dt>
-                  <dd>
-                    <span
-                      className="sk"
-                      style={
-                        {
-                          width: "80px",
-                          height: "16px",
-                          display: "block",
-                          "--sk-delay": "210ms",
-                        } as React.CSSProperties
-                      }
-                    />
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </aside>
+            <aside className="course-rail">
+              <div className="section-title compact-title">
+                <h2>
+                  <Info aria-hidden="true" size={19} weight="fill" />
+                  Información del ramo
+                </h2>
+              </div>
+              <div className="course-facts">
+                <dl>
+                  <div>
+                    <dt>Coordinación</dt>
+                    <dd>
+                      <span
+                        className="sk"
+                        style={
+                          {
+                            width: "160px",
+                            height: "16px",
+                            display: "block",
+                            "--sk-delay": "170ms",
+                          } as React.CSSProperties
+                        }
+                      />
+                      <small>Cuenta docente institucional</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estudiantes</dt>
+                    <dd>
+                      <span
+                        className="sk"
+                        style={
+                          {
+                            width: "80px",
+                            height: "16px",
+                            display: "block",
+                            "--sk-delay": "220ms",
+                          } as React.CSSProperties
+                        }
+                      />
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </aside>
+          </div>
         </div>
       </main>
     </div>
