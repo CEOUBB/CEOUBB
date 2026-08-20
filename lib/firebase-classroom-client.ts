@@ -35,6 +35,7 @@ export {
   mergeActivity,
   MAX_WATCHED_SECTIONS,
   publishClassroomPost,
+  saveLiveClassLink,
   editClassroomPost,
   moveClassroomPost,
   deleteClassroomPost,

@@ -12,6 +12,7 @@ import { MaterialsSection } from "./MaterialsSection";
 import { GradesSection } from "./GradesSection";
 import { ProgressSection } from "./ProgressSection";
 import { PeopleSection } from "./PeopleSection";
+import { LiveClassSection } from "./LiveClassSection";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 
 export function ClassroomView({
@@ -28,6 +29,8 @@ export function ClassroomView({
     setTab,
     classroom,
     status,
+    liveClassStatus,
+    liveClassInvalid,
     note,
     copiedCourseReference,
     canTeach,
@@ -47,6 +50,8 @@ export function ClassroomView({
     moveFile,
     deleteFile,
     copyCourseReference,
+    saveLiveClass,
+    clearLiveClass,
   } = useClassroomHandlers(course, user);
 
   return (
@@ -101,51 +106,61 @@ export function ClassroomView({
         <AnimatePresence initial={false} mode="wait">
           <Screen key={tab}>
             {tab === "home" && (
-              <div className="classroom-columns">
-                <PostsSection
-                  posts={posts}
-                  user={user}
-                  editPost={editPost}
-                  deletePost={deletePost}
-                  openMaterials={() => setTab("materials")}
+              <>
+                <LiveClassSection
+                  liveClass={classroom.liveClass}
+                  canTeach={canTeach}
+                  status={liveClassStatus}
+                  invalid={liveClassInvalid}
+                  onSave={saveLiveClass}
+                  onClear={clearLiveClass}
                 />
-                <aside className="course-rail">
-                  <div className="section-title compact-title">
-                    <h2>
-                      <Info size={19} weight="fill" aria-hidden="true" />
-                      Información del ramo
-                    </h2>
-                  </div>
-                  <div className="course-facts">
-                    <dl>
-                      <div>
-                        <dt>Coordinación</dt>
-                        <dd>
-                          <b>{course.teacher}</b>
-                          <small>Cuenta docente institucional</small>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
-                        <dd>
-                          <b>
-                            {canTeach
-                              ? studentCount(students.length)
-                              : units.length > 0
-                                ? `${completed} de ${units.length} unidades`
-                                : "Sin unidades cargadas"}
-                          </b>
-                          {!canTeach && units.length > 0 && (
-                            <span className="mini-progress">
-                              <Bar ratio={units.length ? completed / units.length : 0} />
-                            </span>
-                          )}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                </aside>
-              </div>
+                <div className="classroom-columns">
+                  <PostsSection
+                    posts={posts}
+                    user={user}
+                    editPost={editPost}
+                    deletePost={deletePost}
+                    openMaterials={() => setTab("materials")}
+                  />
+                  <aside className="course-rail">
+                    <div className="section-title compact-title">
+                      <h2>
+                        <Info size={19} weight="fill" aria-hidden="true" />
+                        Información del ramo
+                      </h2>
+                    </div>
+                    <div className="course-facts">
+                      <dl>
+                        <div>
+                          <dt>Coordinación</dt>
+                          <dd>
+                            <b>{course.teacher}</b>
+                            <small>Cuenta docente institucional</small>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
+                          <dd>
+                            <b>
+                              {canTeach
+                                ? studentCount(students.length)
+                                : units.length > 0
+                                  ? `${completed} de ${units.length} unidades`
+                                  : "Sin unidades cargadas"}
+                            </b>
+                            {!canTeach && units.length > 0 && (
+                              <span className="mini-progress">
+                                <Bar ratio={units.length ? completed / units.length : 0} />
+                              </span>
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </aside>
+                </div>
+              </>
             )}
             {tab === "materials" && (
               <MaterialsSection
