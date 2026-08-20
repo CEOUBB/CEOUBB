@@ -667,3 +667,29 @@ Unchanged for the code: deploy the two rules sets and run the manual matrix. In 
   - Tacto y densidad con `@media (hover: none)`, objetivos de 44px, `touch-action: manipulation`, `overscroll-behavior: contain`.
   - Bloqueo de orientación vertical en `AndroidManifest.xml` e `Info.plist`.
   - Verificación: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit` (58/58) y `pnpm test` (81/81) en verde.
+
+## 2026-08-20: CEO-10 — alertas de gasto de Google Cloud
+
+Date: 2026-08-20
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-10-configurar-alertas-de-gasto-en-google-cloud` / commit de esta PR
+
+Goal: configurar y verificar alertas de gasto para el proyecto Firebase de producción.
+
+Files changed: `docs/operations/google-cloud-budget-alerts.md`, `docs/specs/p0-pilot-safety.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: Cloud Billing Budget API habilitada en `centro-de-estudio-ubb`; presupuesto mensual de CLP 10.000 creado para el proyecto, con alertas de gasto real al 50%, 80% y 100% dirigidas a los roles IAM de facturación y propietarios del proyecto.
+
+Checks passed: lectura posterior por Cloud Billing Budget API; verificación visual de alcance, monto, período y umbrales en Google Cloud Console; destinatarios confirmados contra las políticas IAM de la cuenta de facturación y del proyecto; `pnpm run format:check`; `pnpm run lint`; `pnpm run typecheck`; `pnpm test` (208/208).
+
+Checks not run: no se forzó gasto real para disparar correos; la entrega efectiva se comprobará al cruzar el primer umbral.
+
+Production deployed: yes; configuración de facturación de Google Cloud para `centro-de-estudio-ubb`.
+
+Known risks: las alertas no cortan gasto y los costos pueden demorar varias horas en aparecer. La cuenta sigue en Free Trial; sin activación pagada antes del vencimiento, Google Cloud detendrá los recursos. P0.7 todavía no define capacidad ni costo por estudiante.
+
+Next recommended action: activar la cuenta pagada antes del fin de la prueba y ejecutar P0.5 App Check antes de ampliar la beta.
