@@ -461,6 +461,7 @@ export function ClassroomSkeleton() {
               />
             </span>
             <h1 style={{ marginTop: "4px" }}>
+              <span className="sr-only">Cargando asignatura…</span>
               <span
                 className="sk boot-title"
                 style={
