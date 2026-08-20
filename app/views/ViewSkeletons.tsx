@@ -4,7 +4,20 @@
 // Implements: REQ-ACCESSIBLE-LOADING-STATE-ANNOUNCEMENT
 // Implements: REQ-STAGGERED-SHIMMER-MOTION
 
-import { Books, DeviceMobile, FolderSimple, Info, MagnifyingGlass } from "@phosphor-icons/react";
+import {
+  ArrowRight,
+  Books,
+  ChartBar,
+  Check,
+  DeviceMobile,
+  DownloadSimple,
+  Files,
+  GraduationCap,
+  House,
+  Info,
+  MagnifyingGlass,
+  UsersThree,
+} from "@phosphor-icons/react";
 
 const SKELETON_DAYS = [
   { day: "LUN", num: "17" },
@@ -17,10 +30,8 @@ const SKELETON_DAYS = [
 ];
 
 const SKELETON_HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
-
 const SKELETON_FILTER_COURSES = [0, 1, 2, 3, 4];
-const SKELETON_ADMIN_ROWS = [0, 1, 2, 3, 4, 5];
-const SKELETON_POSTS = [0, 1, 2];
+const SKELETON_ADMIN_ROWS = [0, 1, 2];
 
 export function CalendarSkeleton() {
   return (
@@ -206,97 +217,121 @@ export function ResourcesSkeleton() {
       role="status"
     >
       <div className="page-head lead">
-        <span
-          className="sk boot-title"
-          style={{ width: "280px", height: "36px", "--sk-delay": "50ms" } as React.CSSProperties}
-        />
-        <span
-          className="sk boot-subtitle"
-          style={
-            {
-              width: "min(90%, 540px)",
-              height: "14px",
-              marginTop: "8px",
-              "--sk-delay": "90ms",
-            } as React.CSSProperties
-          }
-        />
+        <h1>Recursos de estudio</h1>
+        <p>
+          <span>
+            Herramientas, material académico y convenios para acompañar tu estudio durante el
+            semestre.
+          </span>
+        </p>
       </div>
 
       <div className="resource-block">
         <div className="section-title">
-          <span
-            className="sk"
-            style={{ width: "190px", height: "22px", "--sk-delay": "120ms" } as React.CSSProperties}
-          />
+          <h2>Ecosistema CEOUBB</h2>
         </div>
         <div className="resource-layout">
-          <div className="resource-card" style={{ "--sk-delay": "160ms" } as React.CSSProperties}>
+          <div className="resource-card" style={{ "--sk-delay": "120ms" } as React.CSSProperties}>
             <span className="resource-icon">
               <Books size={22} />
             </span>
-            <span className="sk" style={{ width: "65%", height: "20px" }} />
-            <span className="sk" style={{ width: "90%", height: "14px", marginTop: "4px" }} />
-            <div style={{ display: "grid", gap: "8px", margin: "12px 0" }}>
-              <span className="sk" style={{ width: "85%", height: "12px" }} />
-              <span className="sk" style={{ width: "80%", height: "12px" }} />
-              <span className="sk" style={{ width: "75%", height: "12px" }} />
-            </div>
-            <span className="sk" style={{ width: "130px", height: "14px", marginTop: "auto" }} />
+            <h3>Biblioteca académica</h3>
+            <p>
+              Biblioteca colaborativa de certámenes, controles y apuntes que la comunidad va sumando
+              período a período.
+            </p>
+            <ul className="resource-points">
+              <li>
+                <Check size={15} weight="bold" /> Evaluaciones completas con puntaje y tiempo real
+                de aplicación.
+              </li>
+              <li>
+                <Check size={15} weight="bold" /> Pautas desarrolladas paso a paso, no sólo la
+                alternativa correcta.
+              </li>
+              <li>
+                <Check size={15} weight="bold" /> Abierta a todas las facultades: se amplía con lo
+                que aportan estudiantes y docentes.
+              </li>
+            </ul>
+            <b>
+              Abrir biblioteca <ArrowRight size={14} />
+            </b>
           </div>
 
-          <div className="resource-card" style={{ "--sk-delay": "220ms" } as React.CSSProperties}>
+          <div className="resource-card" style={{ "--sk-delay": "160ms" } as React.CSSProperties}>
             <span className="resource-icon">
               <DeviceMobile size={22} />
             </span>
-            <span className="sk" style={{ width: "50%", height: "20px" }} />
-            <span className="sk" style={{ width: "85%", height: "14px", marginTop: "4px" }} />
-            <div style={{ display: "flex", gap: "10px", margin: "16px 0" }}>
-              <span
-                className="sk"
-                style={{ width: "110px", height: "36px", borderRadius: "var(--radius-md)" }}
+            <h3>CEOUBB Móvil</h3>
+            <p>Accede a tu material de estudio en cualquier lugar con nuestra app oficial.</p>
+            <div
+              className="store-badges"
+              role="group"
+              aria-label="Aplicaciones móviles próximamente disponibles"
+            >
+              <div
+                className="store-badge sk"
+                style={{ width: "128px", height: "40px", borderRadius: "var(--radius-md)" }}
               />
-              <span
-                className="sk"
-                style={{ width: "110px", height: "36px", borderRadius: "var(--radius-md)" }}
+              <div
+                className="store-badge sk"
+                style={{ width: "128px", height: "40px", borderRadius: "var(--radius-md)" }}
               />
             </div>
-            <span className="sk" style={{ width: "170px", height: "14px", marginTop: "auto" }} />
+            <em>Publicación en preparación. Mientras tanto, el APK de Android está disponible.</em>
+            <span className="resource-inline" style={{ color: "var(--text-muted)" }}>
+              <DownloadSimple size={15} /> Descargar APK para Android
+            </span>
           </div>
         </div>
       </div>
 
       <div className="resource-block">
         <div className="section-title">
-          <span
-            className="sk"
-            style={{ width: "260px", height: "22px", "--sk-delay": "260ms" } as React.CSSProperties}
-          />
+          <h2>Asistentes de inteligencia artificial</h2>
         </div>
         <div className="tier-group">
           <div className="tier-head">
-            <span
-              className="sk"
-              style={
-                {
-                  width: "180px",
-                  height: "24px",
-                  borderRadius: "var(--radius-full)",
-                  "--sk-delay": "290ms",
-                } as React.CSSProperties
-              }
-            />
+            <span className="tier-label green">GRATIS, SIN LÍMITES</span>
           </div>
           <ul className="chip-grid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {[0, 1, 2, 3].map((chip) => (
-              <li key={`ai-chip-${chip}`}>
+            {["DeepSeek", "Qwen"].map((name, chip) => (
+              <li key={`ai-chip-${name}`}>
                 <span
                   className="brand-chip sk"
                   style={
                     {
-                      width: "100%",
-                      height: "46px",
-                      "--sk-delay": `${320 + chip * 40}ms`,
+                      width: "125px",
+                      height: "40px",
+                      borderRadius: "var(--radius-md)",
+                      "--sk-delay": `${200 + chip * 40}ms`,
+                    } as React.CSSProperties
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+          <small className="tier-note" style={{ display: "block", marginTop: "8px" }}>
+            * Conversación ilimitada con una cuenta gratuita.
+          </small>
+        </div>
+
+        <div className="tier-group" style={{ marginTop: "var(--space-md)" }}>
+          <div className="tier-head">
+            <span className="tier-label amber">GRATIS, CON LÍMITES</span>
+          </div>
+          <ul className="chip-grid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {["ChatGPT", "Claude", "Gemini", "Perplexity"].map((name, chip) => (
+              <li key={`ai-chip-lim-${name}`}>
+                <span
+                  className="brand-chip sk"
+                  style={
+                    {
+                      width: "130px",
+                      height: "40px",
+                      borderRadius: "var(--radius-md)",
+                      "--sk-delay": `${280 + chip * 40}ms`,
                     } as React.CSSProperties
                   }
                 />
@@ -304,31 +339,6 @@ export function ResourcesSkeleton() {
             ))}
           </ul>
         </div>
-      </div>
-
-      <div className="resource-block">
-        <div className="section-title">
-          <span
-            className="sk"
-            style={{ width: "300px", height: "22px", "--sk-delay": "380ms" } as React.CSSProperties}
-          />
-        </div>
-        <ul className="brand-grid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {[0, 1, 2, 3].map((tile) => (
-            <li key={`perk-tile-${tile}`}>
-              <div
-                className="brand-tile sk"
-                style={
-                  {
-                    width: "100%",
-                    height: "92px",
-                    "--sk-delay": `${420 + tile * 40}ms`,
-                  } as React.CSSProperties
-                }
-              />
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
@@ -338,36 +348,35 @@ export function AdminSkeleton() {
   return (
     <section aria-busy="true" aria-label="Cargando administración de cuentas…" role="status">
       <div className="page-head lead">
-        <span
-          className="sk boot-title"
-          style={{ width: "320px", height: "36px", "--sk-delay": "50ms" } as React.CSSProperties}
-        />
-        <span
-          className="sk boot-subtitle"
-          style={
-            {
-              width: "240px",
-              height: "14px",
-              marginTop: "8px",
-              "--sk-delay": "90ms",
-            } as React.CSSProperties
-          }
-        />
+        <h1>Administración de cuentas</h1>
+        <p>
+          <span>
+            <span
+              className="sk num"
+              style={{
+                width: "24px",
+                height: "14px",
+                display: "inline-block",
+                verticalAlign: "middle",
+              }}
+            />{" "}
+            cuentas registradas
+          </span>
+          <span>·</span>
+          <span>el rango se asigna por dominio institucional</span>
+        </p>
       </div>
 
-      <div className="admin-toolbar" style={{ margin: "var(--space-lg) 0" }}>
+      <div className="admin-toolbar">
         <div className="admin-search-box">
           <MagnifyingGlass aria-hidden="true" className="admin-search-icon" size={18} />
-          <span
-            className="sk"
-            style={
-              {
-                width: "220px",
-                height: "16px",
-                marginLeft: "8px",
-                "--sk-delay": "130ms",
-              } as React.CSSProperties
-            }
+          <input
+            aria-label="Buscar cuentas"
+            className="admin-search-input"
+            disabled
+            placeholder="Buscar por nombre o correo…"
+            style={{ pointerEvents: "none" }}
+            type="search"
           />
         </div>
       </div>
@@ -382,35 +391,45 @@ export function AdminSkeleton() {
           <div
             className="admin-row"
             key={`admin-row-${row}`}
-            style={{ "--sk-delay": `${160 + row * 45}ms` } as React.CSSProperties}
+            style={{ "--sk-delay": `${140 + row * 40}ms` } as React.CSSProperties}
           >
             <span>
-              <span className="sk" style={{ width: `${140 + (row % 3) * 30}px`, height: "15px" }} />
               <span
                 className="sk"
-                style={{ width: `${180 + (row % 2) * 40}px`, height: "12px", marginTop: "4px" }}
+                style={{
+                  width: `${160 + (row % 2) * 30}px`,
+                  height: "15px",
+                  display: "block",
+                }}
+              />
+              <span
+                className="sk"
+                style={{
+                  width: `${210 + (row % 2) * 20}px`,
+                  height: "12px",
+                  marginTop: "4px",
+                  display: "block",
+                }}
               />
             </span>
-            <span>
-              <span
-                className="sk"
-                style={{ width: "80px", height: "24px", borderRadius: "var(--radius-full)" }}
-              />
+            <span className={`role-chip ${row === 0 ? "student" : "owner"}`}>
+              {row === 0 ? "Estudiante" : "Desarrollador"}
             </span>
             <span>
-              <span
-                className="sk"
-                style={{ width: "110px", height: "32px", borderRadius: "var(--radius-md)" }}
-              />
+              {row === 0 && (
+                <span
+                  className="sk"
+                  style={{
+                    width: "110px",
+                    height: "34px",
+                    borderRadius: "var(--radius-xs)",
+                    display: "inline-block",
+                  }}
+                />
+              )}
             </span>
           </div>
         ))}
-      </div>
-
-      <div className="admin-pagination" style={{ marginTop: "var(--space-md)" }}>
-        <span className="admin-page-btn sk" style={{ width: "90px", height: "36px" }} />
-        <span className="admin-page-info sk" style={{ width: "120px", height: "16px" }} />
-        <span className="admin-page-btn sk" style={{ width: "90px", height: "36px" }} />
       </div>
     </section>
   );
@@ -428,95 +447,108 @@ export function ClassroomSkeleton() {
         <header className="classroom-top">
           <div>
             <span className="breadcrumb">
+              <span style={{ color: "var(--text-muted)" }}>Mis cursos</span> /{" "}
               <span
                 className="sk"
                 style={
-                  { width: "160px", height: "13px", "--sk-delay": "40ms" } as React.CSSProperties
+                  {
+                    width: "80px",
+                    height: "13px",
+                    display: "inline-block",
+                    "--sk-delay": "40ms",
+                  } as React.CSSProperties
                 }
               />
             </span>
-            <span
-              className="sk boot-title"
-              style={
-                {
-                  width: "min(80%, 420px)",
-                  height: "36px",
-                  marginTop: "4px",
-                  "--sk-delay": "80ms",
-                } as React.CSSProperties
-              }
-            />
+            <h1 style={{ marginTop: "4px" }}>
+              <span
+                className="sk boot-title"
+                style={
+                  {
+                    width: "220px",
+                    height: "36px",
+                    display: "block",
+                    "--sk-delay": "80ms",
+                  } as React.CSSProperties
+                }
+              />
+            </h1>
           </div>
           <div className="classroom-meta">
             <span
               className="course-reference sk"
               style={
-                { width: "130px", height: "34px", "--sk-delay": "110ms" } as React.CSSProperties
+                {
+                  width: "150px",
+                  height: "34px",
+                  borderRadius: "var(--radius-md)",
+                  "--sk-delay": "110ms",
+                } as React.CSSProperties
               }
             />
           </div>
         </header>
 
         <nav aria-label="Secciones del aula" className="course-tabs">
-          {["Novedades", "Evaluaciones", "Materiales", "Personas", "Progreso"].map(
-            (tabName, idx) => (
-              <span
-                aria-hidden="true"
-                className={idx === 0 ? "active" : ""}
-                key={tabName}
-                tabIndex={-1}
-              >
-                {idx === 0 && <FolderSimple size={18} />}
-                {tabName}
-              </span>
-            )
-          )}
+          <span aria-hidden="true" className="active" tabIndex={-1}>
+            <House size={18} /> Portada
+          </span>
+          <span aria-hidden="true" tabIndex={-1}>
+            <Files size={18} /> Materiales
+          </span>
+          <span aria-hidden="true" tabIndex={-1}>
+            <GraduationCap size={18} /> Notas
+          </span>
+          <span aria-hidden="true" tabIndex={-1}>
+            <ChartBar size={18} /> Progreso
+          </span>
+          <span aria-hidden="true" tabIndex={-1}>
+            <UsersThree size={18} /> Participantes
+          </span>
         </nav>
 
         <div className="classroom-columns">
-          <section>
-            {SKELETON_POSTS.map((post) => (
-              <article
-                className="post-card"
-                key={`post-${post}`}
+          <section className="posts-section">
+            <div className="section-title compact-title">
+              <h2>Avisos del curso</h2>
+            </div>
+            <div className="empty-state">
+              <span
+                className="sk"
                 style={
                   {
-                    background: "var(--surface-card)",
-                    border: "1px solid var(--border-hairline)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "var(--space-lg)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    "--sk-delay": `${160 + post * 70}ms`,
+                    width: "240px",
+                    height: "18px",
+                    display: "block",
+                    "--sk-delay": "140ms",
                   } as React.CSSProperties
                 }
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span className="sk sk-round" style={{ width: "36px", height: "36px" }} />
-                  <div>
-                    <span className="sk" style={{ width: "140px", height: "14px" }} />
-                    <span
-                      className="sk"
-                      style={{ width: "90px", height: "11px", marginTop: "4px" }}
-                    />
-                  </div>
-                </div>
-                <span className="sk" style={{ width: "95%", height: "14px", marginTop: "6px" }} />
-                <span className="sk" style={{ width: "80%", height: "14px" }} />
-                {post === 0 && (
-                  <span
-                    className="sk"
-                    style={{
-                      width: "200px",
-                      height: "34px",
-                      borderRadius: "var(--radius-md)",
-                      marginTop: "4px",
-                    }}
-                  />
-                )}
-              </article>
-            ))}
+              />
+              <span
+                className="sk"
+                style={
+                  {
+                    width: "80%",
+                    height: "14px",
+                    marginTop: "6px",
+                    display: "block",
+                    "--sk-delay": "180ms",
+                  } as React.CSSProperties
+                }
+              />
+              <span
+                className="sk"
+                style={
+                  {
+                    width: "160px",
+                    height: "14px",
+                    marginTop: "12px",
+                    display: "block",
+                    "--sk-delay": "220ms",
+                  } as React.CSSProperties
+                }
+              />
+            </div>
           </section>
 
           <aside className="course-rail">
@@ -526,33 +558,42 @@ export function ClassroomSkeleton() {
                 Información del ramo
               </h2>
             </div>
-            <div
-              className="course-facts"
-              style={{
-                padding: "var(--space-lg)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-              }}
-            >
-              <div>
-                <span className="sk" style={{ width: "90px", height: "11px" }} />
-                <span className="sk" style={{ width: "160px", height: "15px", marginTop: "4px" }} />
-                <span className="sk" style={{ width: "130px", height: "11px", marginTop: "2px" }} />
-              </div>
-              <div style={{ borderTop: "1px solid var(--border-hairline)", paddingTop: "12px" }}>
-                <span className="sk" style={{ width: "70px", height: "11px" }} />
-                <span className="sk" style={{ width: "120px", height: "15px", marginTop: "4px" }} />
-                <span
-                  className="sk"
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    borderRadius: "var(--radius-full)",
-                    marginTop: "8px",
-                  }}
-                />
-              </div>
+            <div className="course-facts">
+              <dl>
+                <div>
+                  <dt>Coordinación</dt>
+                  <dd>
+                    <span
+                      className="sk"
+                      style={
+                        {
+                          width: "180px",
+                          height: "16px",
+                          display: "block",
+                          "--sk-delay": "160ms",
+                        } as React.CSSProperties
+                      }
+                    />
+                    <small>Cuenta docente institucional</small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Estudiantes</dt>
+                  <dd>
+                    <span
+                      className="sk"
+                      style={
+                        {
+                          width: "90px",
+                          height: "16px",
+                          display: "block",
+                          "--sk-delay": "200ms",
+                        } as React.CSSProperties
+                      }
+                    />
+                  </dd>
+                </div>
+              </dl>
             </div>
           </aside>
         </div>
