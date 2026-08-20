@@ -27,7 +27,6 @@ const SKELETON_DAYS = [
 const SKELETON_HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
 const SKELETON_FILTER_COURSES = [0, 1, 2, 3, 4];
 const SKELETON_ADMIN_ROWS = [0, 1, 2, 3];
-const SKELETON_POST_CARDS = [0, 1];
 
 export function CalendarSkeleton() {
   return (
