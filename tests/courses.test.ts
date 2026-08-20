@@ -37,14 +37,7 @@ test("materialFolders genera carpetas con los prefijos de unidades y carpetas po
   assert.ok(estatica);
 
   const folders = materialFolders(estatica);
-  assert.deepEqual(folders, [
-    "RA1",
-    "RA2",
-    "RA3",
-    "RA4",
-    "Certámenes anteriores",
-    "General",
-  ]);
+  assert.deepEqual(folders, ["RA1", "RA2", "RA3", "RA4", "Certámenes anteriores", "General"]);
 });
 
 test("materialFolders retorna carpetas por defecto para cursos sin unidades", () => {

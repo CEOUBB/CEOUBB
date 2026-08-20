@@ -5,7 +5,7 @@
   "tests/backend-remediation.test.ts": "0724547abd4343a79700850aff557f525d78b87916cda07151eeb234022aa4ac",
   "tests/capacitor-config.test.ts": "20a694aec62b7c064b1268dfec35ed083e3a5191b119cd857837a555f016cdb0",
   "tests/ci-workflows.test.ts": "0f9444b801bad588abd2e895772bc28214a4751c8f6cabbfc9d166865fe8558b",
-  "tests/courses.test.ts": "a05c296311be39bc610526c4c4065871e8f6f357acc9ded4c92c55ee3bee0b3a",
+  "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
   "tests/deep-security-remediation.test.ts": "886f51e1aae0f6a8d167e1ca91d3c83e5734048753fd80e88b6f98f38f2f80ae",
   "tests/discord-interactions.test.ts": "c552bdcb242b75e39bf4861b7b181ccb443f79856f61024c48bfd35a01e50a4d",
   "tests/firebase-mappers.test.ts": "5cbc80506cd06854792a7172fa583427672b93c0a3df51b67b6978467b1ad6d4",
