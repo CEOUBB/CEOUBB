@@ -1,4 +1,5 @@
 {
+  "tests/academic-content-renderer.test.ts": "c49c689f7cd9bdecaa1108aba63871a82a18c129ab5f7fa9ed94ac6ca02ee6ce",
   "tests/academic-model.test.ts": "f841fdf956c8faa331fde320ed264ff530de5578c56f5f4e88e571d3270e6043",
   "tests/access-policy.test.ts": "63d48f22736dbd3bea0412822529e94344f129aedacc2e0fcca2aa288d2511cc",
   "tests/admin-api.test.ts": "c0a371a121e45704be6196729411733ed0034f08c4371a50025fa77fde3c6fd5",
