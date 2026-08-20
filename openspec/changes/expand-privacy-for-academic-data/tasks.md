@@ -13,8 +13,8 @@ Requirement traceability markers used in this change, one per spec requirement i
 
 ## 1. Deploy Prerequisites
 
-- [ ] 1.1 Confirm the mailbox `contacto@ceoubb.com` exists on the `ceoubb.com` domain and reaches a monitored recipient. Blocks every task in group 6 — the rights procedure publishes a response deadline against this address. Verify by sending a message and receiving it.
-- [ ] 1.2 Set `CRON_SECRET` in the Vercel project environment (production and preview). Verify with `pnpm dlx vercel env ls`.
+- [x] 1.1 Confirm the mailbox `contacto@ceoubb.com` exists on the `ceoubb.com` domain and reaches a monitored recipient. Blocks every task in group 6 — the rights procedure publishes a response deadline against this address. Verify by sending a message and receiving it.
+- [x] 1.2 Set `CRON_SECRET` in the Vercel project environment (production and preview). Verify with `pnpm dlx vercel env ls`.
 
 ## 2. Failing Tests (RED)
 
