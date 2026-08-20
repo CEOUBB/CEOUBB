@@ -41,4 +41,4 @@ Trazabilidad de requisitos:
 ## 6. Publicación
 
 - [x] 6.1 Revisar diff/status; agregar sólo archivos CEO-58; commit Conventional Commit en español.
-- [ ] 6.2 Push de la rama sugerida, PR no borrador en español contra `main`, enlace a Linear y comentario de resultados en CEO-58.
+- [x] 6.2 Push de la rama sugerida, PR no borrador [#55](https://github.com/CEOUBB/CEOUBB/pull/55) en español contra `main`, enlace a Linear y comentario de resultados en CEO-58; issue movido a `In Review`.

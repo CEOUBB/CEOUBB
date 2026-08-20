@@ -701,6 +701,7 @@ Next recommended action: activar la cuenta pagada antes del fin de la prueba y e
 - Humano: Juako.
 - Agente: Codex.
 - Rama: `elpapijuaco325/ceo-58-feateditor-motor-de-renderizado-multimodal-con-soporte-katex`.
+- Pull request: [#55](https://github.com/CEOUBB/CEOUBB/pull/55), no borrador; Linear CEO-58 en `In Review`.
 - Objetivo: entregar `<AcademicContentRenderer />` para Markdown con LaTeX y HTML enriquecido seguro, sin FOUC, con código científico copiable y callouts institucionales.
 
 ### Cambios realizados
