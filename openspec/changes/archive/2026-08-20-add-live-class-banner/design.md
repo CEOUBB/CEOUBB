@@ -46,9 +46,9 @@ La ruta es `courses/{courseId}/meta/live-class`, con las claves exactas `courseI
 
 `normalizeLiveClassUrl` recorta la entrada, interpreta vacío como eliminación, limita la URL a 2.048 caracteres, exige HTTPS sin credenciales y reconoce solamente `zoom.us`, sus subdominios y los hosts exactos vigentes de Teams. Se preservan path, query y fragment porque contienen la identidad y credenciales propias de la reunión.
 
-### D3. Reglas específicas sin bypass del wildcard
+### D3. Rama específica sin ampliar la superficie `allow`
 
-El permiso genérico de `meta/{documentId}` excluye `live-class`. La regla exacta conserva `isEnrolled(courseId)` para lectura y `teachesSection(courseId)` para mutación, valida claves, autor, timestamp, proveedor, dominio y longitud.
+La regla canónica `meta/{documentId}` conserva `isEnrolled(courseId)` para lectura y `teachesSection(courseId)` para mutación. Su única sentencia `allow write` discrimina `live-class`: delete mantiene los límites de sección; create/update además valida claves, autor, timestamp, proveedor, dominio y longitud. Esta forma conserva las 21 sentencias `allow` bloqueadas por el arnés de seguridad.
 
 ### D4. Banner condicional antes de avisos
 
@@ -58,7 +58,7 @@ El permiso genérico de `meta/{documentId}` excluye `live-class`. La regla exact
 
 - **RED:** la suite nueva definió normalización, rechazo de dominios, paridad de reglas, orden visual y ausencia de contenedor. P8 comenzó antes de la adopción del arnés OpenSpec, por lo que el primer terminal RED no quedó preservado; el fallo esperado era la ausencia de `lib/live-class.ts` y de `LiveClassSection`.
 - **GREEN:** se añadió la lógica mínima, el listener de documento, la mutación, las reglas específicas y la composición de portada hasta aprobar la suite.
-- **REFACTOR:** al rebasar sobre el `main` endurecido se eliminó la adaptación heredada de `watchGradebooks`, ya innecesaria porque ahora escucha documentos por sección, y se conservó intacta la prueba preexistente de reglas nativas.
+- **REFACTOR:** al rebasar sobre el `main` endurecido se eliminó la adaptación heredada de `watchGradebooks`, ya innecesaria porque ahora escucha documentos por sección. El primer gate detectó tres sentencias `allow` nuevas; la validación se integró en el permiso existente y la prueba preexistente de reglas nativas quedó intacta.
 
 ## Risks / Trade-offs
 
@@ -72,11 +72,11 @@ Revertir el código y las reglas deja los documentos `meta/live-class` sin consu
 
 ## Blast Radius
 
-| Área | Archivos |
-| :--- | :--- |
-| Contrato | `lib/live-class.ts` |
-| Tiempo real | `lib/firebase/posts.ts`, `lib/firebase-classroom-client.ts` |
-| Autorización | `firebase/firestore.rules` |
-| Interfaz | `app/views/classroom/LiveClassSection.tsx`, `ClassroomView.tsx`, `use-classroom-handlers.ts`, `classroom-utils.ts`, `app/globals.css` |
-| Verificación | `tests/live-class.test.ts`, `package.json`, `.agents/.test-hashes.json` |
-| Handoff | `PLAN.md`, `docs/specs/p8-live-class-banner.md` |
+| Área         | Archivos                                                                                                                              |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| Contrato     | `lib/live-class.ts`                                                                                                                   |
+| Tiempo real  | `lib/firebase/posts.ts`, `lib/firebase-classroom-client.ts`                                                                           |
+| Autorización | `firebase/firestore.rules`                                                                                                            |
+| Interfaz     | `app/views/classroom/LiveClassSection.tsx`, `ClassroomView.tsx`, `use-classroom-handlers.ts`, `classroom-utils.ts`, `app/globals.css` |
+| Verificación | `tests/live-class.test.ts`, `package.json`, `.agents/.test-hashes.json`                                                               |
+| Handoff      | `PLAN.md`, `docs/specs/p8-live-class-banner.md`                                                                                       |

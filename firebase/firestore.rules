@@ -112,17 +112,11 @@ service cloud.firestore {
       allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
     }
 
-    // Implements: REQ-SEC-02
+    // Implements: REQ-SEC-02, REQ-LIVE-02, REQ-LIVE-06
     match /courses/{courseId}/meta/{documentId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow write: if documentId != 'live-class' && teachesSection(courseId) && validCourse(courseId);
-    }
-
-    // Implements: REQ-LIVE-02, REQ-LIVE-06
-    match /courses/{courseId}/meta/live-class {
-      allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow create, update: if teachesSection(courseId) && validCourse(courseId) && validLiveClass(courseId);
-      allow delete: if teachesSection(courseId) && validCourse(courseId);
+      allow write: if teachesSection(courseId) && validCourse(courseId)
+        && (documentId != 'live-class' || request.method == 'delete' || validLiveClass(courseId));
     }
 
     // Implements: REQ-SEC-02

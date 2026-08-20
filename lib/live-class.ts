@@ -1,9 +1,9 @@
-export const LIVE_CLASS_INVALID_MESSAGE =
-  "Usa un enlace HTTPS de Zoom o Microsoft Teams.";
+export const LIVE_CLASS_INVALID_MESSAGE = "Usa un enlace HTTPS de Zoom o Microsoft Teams.";
 
 // Implements: REQ-LIVE-01, REQ-LIVE-02
 export type LiveClassProvider = "zoom" | "teams";
 
+// Implements: REQ-LIVE-01
 export type LiveClassLink = {
   url: string;
   provider: LiveClassProvider;

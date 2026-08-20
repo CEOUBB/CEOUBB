@@ -212,7 +212,8 @@ export function useClassroomHandlers(course: Course, user: User) {
         tone: "ok",
       });
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "No se pudo guardar la clase en vivo.";
+      const message =
+        cause instanceof Error ? cause.message : "No se pudo guardar la clase en vivo.";
       const invalid = message === LIVE_CLASS_INVALID_MESSAGE;
       setLiveClassInvalid(invalid);
       setLiveClassStatus({ text: message, tone: "bad" });

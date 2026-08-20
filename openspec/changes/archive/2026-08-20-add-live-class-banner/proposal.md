@@ -11,7 +11,7 @@ El P8 histórico en `docs/specs/p8-live-class-banner.md` fue aprobado por el man
 - Añadir una escucha de documento acotada al aula abierta y propagar altas, cambios y eliminación en tiempo real.
 - Mostrar un banner de entrada antes de los avisos y no renderizar espacio alguno cuando un estudiante no tiene enlace.
 - Permitir que el equipo docente ya autorizado para la sección configure o quite el enlace.
-- Mantener el aislamiento por matrícula vigente en todas las lecturas y escrituras.
+- Mantener el aislamiento por matrícula vigente y el número congelado de sentencias `allow` en todas las lecturas y escrituras.
 
 ## Capabilities
 

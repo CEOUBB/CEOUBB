@@ -1,19 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import {
-  LIVE_CLASS_INVALID_MESSAGE,
-  normalizeLiveClassUrl,
-} from "../lib/live-class.ts";
+import { LIVE_CLASS_INVALID_MESSAGE, normalizeLiveClassUrl } from "../lib/live-class.ts";
 
 test("normaliza Zoom y conserva la reunión completa", () => {
-  assert.deepEqual(
-    normalizeLiveClassUrl("  https://US02WEB.ZOOM.US/j/123456789?pwd=abc#join  "),
-    {
-      url: "https://us02web.zoom.us/j/123456789?pwd=abc#join",
-      provider: "zoom",
-    },
-  );
+  assert.deepEqual(normalizeLiveClassUrl("  https://US02WEB.ZOOM.US/j/123456789?pwd=abc#join  "), {
+    url: "https://us02web.zoom.us/j/123456789?pwd=abc#join",
+    provider: "zoom",
+  });
 });
 
 test("acepta los dos hosts vigentes de Microsoft Teams", () => {
@@ -22,7 +16,7 @@ test("acepta los dos hosts vigentes de Microsoft Teams", () => {
     {
       url: "https://teams.microsoft.com/l/meetup-join/abc?context=%7B%7D",
       provider: "teams",
-    },
+    }
   );
   assert.deepEqual(normalizeLiveClassUrl("https://teams.cloud.microsoft/meet/abc"), {
     url: "https://teams.cloud.microsoft/meet/abc",
@@ -48,9 +42,8 @@ test("rechaza protocolos inseguros, credenciales y dominios parecidos", () => {
   for (const value of invalid) {
     assert.throws(
       () => normalizeLiveClassUrl(value),
-      (cause: unknown) =>
-        cause instanceof Error && cause.message === LIVE_CLASS_INVALID_MESSAGE,
-      value,
+      (cause: unknown) => cause instanceof Error && cause.message === LIVE_CLASS_INVALID_MESSAGE,
+      value
     );
   }
 });
@@ -63,7 +56,10 @@ test("rechaza enlaces que superan el límite de 2 KiB", () => {
 });
 
 test("mantiene trazabilidad con la especificación P8", () => {
-  const spec = readFileSync(new URL("../docs/specs/p8-live-class-banner.md", import.meta.url), "utf8");
+  const spec = readFileSync(
+    new URL("../docs/specs/p8-live-class-banner.md", import.meta.url),
+    "utf8"
+  );
   for (const requirement of ["REQ-LIVE-01", "REQ-LIVE-02", "REQ-LIVE-05"]) {
     assert.match(spec, new RegExp(requirement));
   }
@@ -71,26 +67,26 @@ test("mantiene trazabilidad con la especificación P8", () => {
 
 test("las reglas aíslan live-class y validan el mismo contrato", () => {
   const rules = readFileSync(new URL("../firebase/firestore.rules", import.meta.url), "utf8");
-  assert.match(rules, /match \/courses\/\{courseId\}\/meta\/live-class/);
+  assert.match(rules, /match \/courses\/\{courseId\}\/meta\/\{documentId\}/);
   assert.match(rules, /documentId != 'live-class'/);
+  assert.match(rules, /request\.method == 'delete'/);
   assert.match(rules, /hasOnly\(\['courseId', 'url', 'provider', 'updatedBy', 'updatedAt'\]\)/);
   assert.match(rules, /request\.resource\.data\.updatedBy == request\.auth\.uid/);
   assert.match(rules, /request\.resource\.data\.url\.size\(\) <= 2048/);
   assert.match(rules, /provider == 'zoom'/);
   assert.match(rules, /provider == 'teams'/);
   assert.match(rules, /allow read: if isOwner\(\) \|\| isMember\(\) && isEnrolled\(courseId\)/);
-  assert.match(rules, /allow create, update: if teachesSection\(courseId\)/);
-  assert.match(rules, /allow delete: if teachesSection\(courseId\)/);
+  assert.match(rules, /allow write: if teachesSection\(courseId\) && validCourse\(courseId\)/);
 });
 
 test("la portada coloca el banner antes de los avisos y no reserva un vacío al estudiante", () => {
   const view = readFileSync(
     new URL("../app/views/classroom/ClassroomView.tsx", import.meta.url),
-    "utf8",
+    "utf8"
   );
   const section = readFileSync(
     new URL("../app/views/classroom/LiveClassSection.tsx", import.meta.url),
-    "utf8",
+    "utf8"
   );
   assert.ok(view.indexOf("<LiveClassSection") < view.indexOf("<PostsSection"));
   assert.match(section, /if \(!liveClass && !canTeach\) return null;/);

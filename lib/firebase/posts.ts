@@ -196,9 +196,9 @@ export async function saveLiveClassLink(courseId: string, value: string) {
   } catch (cause) {
     const code = typeof cause === "object" && cause && "code" in cause ? cause.code : "";
     if (code === "permission-denied") {
-      throw new Error("No tienes permiso para editar esta clase en vivo.");
+      throw new Error("No tienes permiso para editar esta clase en vivo.", { cause });
     }
-    throw new Error("No se pudo guardar la clase en vivo. Inténtalo nuevamente.");
+    throw new Error("No se pudo guardar la clase en vivo. Inténtalo nuevamente.", { cause });
   }
 }
 

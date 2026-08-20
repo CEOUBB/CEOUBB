@@ -13,7 +13,7 @@
 ## 3. Authorization
 
 - [x] 3.1 Add exact-key, URL/provider, author and timestamp validation to Firestore rules.
-- [x] 3.2 Exclude `live-class` from the generic meta write and preserve enrollment isolation with `teachesSection` and `isEnrolled`.
+- [x] 3.2 Discriminate `live-class` inside the canonical meta write, preserving `teachesSection`, `isEnrolled` and the frozen count of 21 `allow` statements.
 
 ## 4. Interface
 
@@ -23,7 +23,7 @@
 
 ## 5. Verification and Archive
 
-- [ ] 5.1 Generate the SHA-256 test-lock snapshot and run `pnpm run verify:fast`.
-- [ ] 5.2 Run `pnpm run verify:invariants`, `pnpm run lint`, `pnpm test` and changed-scope React Doctor.
-- [ ] 5.3 Verify the banner at desktop/mobile widths and the no-link student state.
-- [ ] 5.4 Update `PLAN.md`, archive the OpenSpec delta, publish the PR and link it from Linear CEO-56.
+- [x] 5.1 Generate the SHA-256 test-lock snapshot and run `pnpm run verify:fast`.
+- [x] 5.2 Run `pnpm run verify:invariants`, `pnpm run lint`, `pnpm test` and changed-scope React Doctor.
+- [x] 5.3 Verify the banner at desktop/mobile widths and the no-link student state.
+- [x] 5.4 Update `PLAN.md` and prepare the verified delta for OpenSpec archive.

@@ -1,7 +1,7 @@
 # P8 — Banner de clase en vivo por sección (CEO-56)
 
-**Estado:** EN EJECUCION · **Owner:** Codex / Juako · **Versión:** 1.1.0  
-**Objetivo:** Portal web y shell Capacitor (`app/views/classroom/`, `lib/live-class.ts`, `lib/firebase/posts.ts`, `firebase/firestore.rules`)  
+**Estado:** VERIFICADA · **Owner:** Codex / Juako · **Versión:** 1.2.0
+**Objetivo:** Portal web y shell Capacitor (`app/views/classroom/`, `lib/live-class.ts`, `lib/firebase/posts.ts`, `firebase/firestore.rules`)
 **Issue:** [CEO-56](https://linear.app/ceoubb/issue/CEO-56/banner-de-clase-en-vivo-zoom-teams-en-la-portada-del-ramo)
 
 ---
@@ -116,17 +116,17 @@ Normalización: longitud máxima 2.048 caracteres; protocolo `https:`; sin usuar
 
 ### 4.3 Reglas de seguridad
 
-`meta/live-class` tendrá reglas específicas de creación/actualización/eliminación. El documento sólo admitirá `courseId`, `url`, `provider`, `updatedBy`, `updatedAt`; `courseId` deberá coincidir con la ruta, `updatedBy` con `request.auth.uid`, y URL/proveedor deberán coincidir. El wildcard `meta/{documentId}` excluirá explícitamente `live-class` de su permiso de escritura para impedir que una regla superpuesta eluda la validación.
+La regla canónica `meta/{documentId}` discrimina `live-class` dentro de su única sentencia `allow write`, para conservar congelada la superficie de permisos del ruleset. Create/update del documento sólo admite `courseId`, `url`, `provider`, `updatedBy`, `updatedAt`; `courseId` coincide con la ruta, `updatedBy` con `request.auth.uid`, y URL/proveedor deben coincidir. Delete omite la validación de payload, pero conserva `teachesSection(courseId)` y `validCourse(courseId)`.
 
 ### 4.4 Errores
 
-| Condición | Código lógico | Mensaje / tratamiento | Reintento |
-| :--- | :--- | :--- | :--- |
-| Vacío | `LIVE_CLASS_CLEAR` | Elimina configuración; no es error | No |
-| URL/formato/dominio inválido | `LIVE_CLASS_INVALID_URL` | “Usa un enlace HTTPS de Zoom o Microsoft Teams.” | Tras corregir |
-| Sesión expirada | `AUTH_REQUIRED` | Mensaje existente de sesión de Google | Tras reingreso |
-| Firestore `permission-denied` | `LIVE_CLASS_FORBIDDEN` | “No tienes permiso para editar esta clase en vivo.” | No |
-| Falla de red/sincronización | `LIVE_CLASS_SYNC_FAILED` | Mantener estado previo y mostrar error inline | Sí |
+| Condición                     | Código lógico            | Mensaje / tratamiento                               | Reintento      |
+| :---------------------------- | :----------------------- | :-------------------------------------------------- | :------------- |
+| Vacío                         | `LIVE_CLASS_CLEAR`       | Elimina configuración; no es error                  | No             |
+| URL/formato/dominio inválido  | `LIVE_CLASS_INVALID_URL` | “Usa un enlace HTTPS de Zoom o Microsoft Teams.”    | Tras corregir  |
+| Sesión expirada               | `AUTH_REQUIRED`          | Mensaje existente de sesión de Google               | Tras reingreso |
+| Firestore `permission-denied` | `LIVE_CLASS_FORBIDDEN`   | “No tienes permiso para editar esta clase en vivo.” | No             |
+| Falla de red/sincronización   | `LIVE_CLASS_SYNC_FAILED` | Mantener estado previo y mostrar error inline       | Sí             |
 
 ### 4.5 Presupuestos e invariantes
 
@@ -142,11 +142,21 @@ Normalización: longitud máxima 2.048 caracteres; protocolo `https:`; sin usuar
 
 - [x] **T1 — REQ-LIVE-01/02/05:** crear contrato puro de URL y pruebas de Zoom, Teams, entradas maliciosas y vacío. `pnpm exec node --experimental-strip-types --test tests/live-class.test.ts`
 - [x] **T2 — REQ-LIVE-01/05/08:** ampliar `ClassroomState`, listener de documento y mutación `setDoc`/`deleteDoc`. `pnpm run typecheck`
-- [x] **T3 — REQ-LIVE-02/06:** aislar y endurecer las reglas de `meta/live-class`; verificar paridad estática con el contrato. `pnpm run test:unit`
+- [x] **T3 — REQ-LIVE-02/06:** aislar y endurecer `meta/live-class` dentro del permiso canónico sin ampliar el número de sentencias `allow`; verificar paridad estática con el contrato. `pnpm run test:unit`
 - [x] **T4 — REQ-LIVE-03/04/07:** implementar control docente, error inline y banner condicional sobre avisos. `pnpm run lint && pnpm run typecheck`
 - [x] **T5 — REQ-LIVE-03/04/07:** aplicar estilos responsive/accesibles y comprobar escritorio/móvil en navegador. `pnpm run dev` + recorrido visual
-- [ ] **T6 — REQ-LIVE-01..08:** ejecutar gates completos, actualizar `PLAN.md`, comentar Linear y preparar PR. `pnpm run lint && pnpm run typecheck && pnpm test`
+- [x] **T6 — REQ-LIVE-01..08:** ejecutar gates completos, actualizar `PLAN.md`, comentar Linear y preparar PR. `pnpm run lint && pnpm run typecheck && pnpm test`
 
 ## 6. Gate de aprobación
 
 El mantenedor aprobó requisitos, arquitectura, alcance y orden de tareas al solicitar la ejecución directa de P8 el 15 de agosto de 2026. La actualización de rutas en la versión 1.1.0 refleja la modularización ya integrada en `main` y no cambia el contrato aprobado.
+
+## 7. Evidencia de verificación
+
+- `pnpm run verify:fast`: 191/191 pruebas, typecheck, test-locking SHA-256 y especificaciones vivas en verde.
+- `pnpm run verify:invariants`: 31/31; reglas válidas y superficie congelada en 21 sentencias `allow`.
+- `pnpm run lint`, `pnpm run typecheck` y `pnpm run check:functions`: salida 0, sin advertencias.
+- `pnpm test`: build de producción y 216/216 pruebas en verde.
+- `react-doctor --scope changed --base origin/main`: sin hallazgos en los ocho archivos React/TSX cambiados.
+- Navegador: 1280×720 y 390×844 sin overflow; banner visible antes de avisos; CTA, input y botones de 44–45,6 px; foco visible; cero errores en una pestaña limpia; ausencia sin contenedor para estudiante.
+- Operaciones: las reglas de Firebase no se desplegaron; deben publicarse después del merge antes de usar la edición en producción.
