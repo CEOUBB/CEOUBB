@@ -1,7 +1,7 @@
 import type { AccountRole as Role } from "./access-policy";
 import type { Course } from "./courses";
 import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
-import { dueDateParts } from "./planner";
+import { dueDateParts } from "./planner.ts";
 
 export type User = {
   id: string;
@@ -304,4 +304,4 @@ export function fileExtension(value: string): string {
   return extension.slice(0, 4);
 }
 
-export { formatGrade } from "./grades";
+export { formatGrade } from "./grades.ts";
