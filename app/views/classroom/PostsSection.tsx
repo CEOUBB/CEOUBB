@@ -30,9 +30,15 @@ export function PostsSection({
     event.preventDefault();
     if (!editing || editing.id !== post.id) return;
     setSaving(true);
-    const saved = await editPost(post, { title: editing.title.trim(), body: editing.body.trim() });
-    setSaving(false);
-    if (saved) setEditing(null);
+    try {
+      const saved = await editPost(post, {
+        title: editing.title.trim(),
+        body: editing.body.trim(),
+      });
+      if (saved) setEditing(null);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

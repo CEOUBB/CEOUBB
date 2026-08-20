@@ -34,6 +34,26 @@ declare global {
 
 const katexSubscribers = new Set<() => void>();
 
+function stableKey(value: unknown) {
+  const serialized = JSON.stringify(value) ?? String(value);
+  let hash = 2_166_136_261;
+  for (let cursor = 0; cursor < serialized.length; cursor += 1) {
+    hash ^= serialized.charCodeAt(cursor);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function keyedItems<T>(items: T[], prefix: string) {
+  const occurrences = new Map<string, number>();
+  return items.map((item) => {
+    const signature = `${prefix}-${stableKey(item)}`;
+    const occurrence = occurrences.get(signature) ?? 0;
+    occurrences.set(signature, occurrence + 1);
+    return { item, key: `${signature}-${occurrence}` };
+  });
+}
+
 export function RichTextAssets() {
   return (
     <Script
@@ -108,18 +128,17 @@ function MathFormula({ value, display }: { value: string; display: boolean }) {
   );
 }
 
-function renderInline(nodes: RichInline[], prefix: string): ReactNode[] {
-  return nodes.map((node, index) => {
-    const key = `${prefix}-${index}`;
+function renderInline(nodes: RichInline[]): ReactNode[] {
+  return keyedItems(nodes, "inline").map(({ item: node, key }) => {
     if (node.type === "text") return <Fragment key={key}>{node.value}</Fragment>;
     if (node.type === "code") return <code key={key}>{node.value}</code>;
     if (node.type === "math") return <MathFormula display={false} key={key} value={node.value} />;
-    if (node.type === "strong") return <strong key={key}>{renderInline(node.content, key)}</strong>;
-    if (node.type === "emphasis") return <em key={key}>{renderInline(node.content, key)}</em>;
-    if (!node.href) return <span key={key}>{renderInline(node.content, key)}</span>;
+    if (node.type === "strong") return <strong key={key}>{renderInline(node.content)}</strong>;
+    if (node.type === "emphasis") return <em key={key}>{renderInline(node.content)}</em>;
+    if (!node.href) return <span key={key}>{renderInline(node.content)}</span>;
     return (
       <a href={node.href} key={key} rel="noopener noreferrer" target="_blank">
-        {renderInline(node.content, key)}
+        {renderInline(node.content)}
       </a>
     );
   });
@@ -138,8 +157,8 @@ function CodeBlock({
       <figcaption>{codeLanguageLabel(language)}</figcaption>
       <pre>
         <code>
-          {tokens.map((token, index) => (
-            <span className={`syntax-${token.kind}`} key={`${token.kind}-${index}`}>
+          {keyedItems(tokens, "token").map(({ item: token, key }) => (
+            <span className={`syntax-${token.kind}`} key={key}>
               {token.value}
             </span>
           ))}
@@ -156,9 +175,8 @@ export function RichText({ body, className = "" }: { body: string; className?: s
       className={`rich-text ${className}`.trim()}
       data-requirement="Implements: REQ-RICH-01 REQ-RICH-02 REQ-RICH-03 REQ-RICH-05 REQ-RICH-06"
     >
-      {blocks.map((block, index) => {
-        const key = `${block.type}-${index}`;
-        if (block.type === "paragraph") return <p key={key}>{renderInline(block.content, key)}</p>;
+      {keyedItems(blocks, "block").map(({ item: block, key }) => {
+        if (block.type === "paragraph") return <p key={key}>{renderInline(block.content)}</p>;
         if (block.type === "heading") {
           return (
             <h4
@@ -166,20 +184,20 @@ export function RichText({ body, className = "" }: { body: string; className?: s
               className={`rich-heading rich-heading-${block.level}`}
               key={key}
             >
-              {renderInline(block.content, key)}
+              {renderInline(block.content)}
             </h4>
           );
         }
         if (block.type === "quote")
-          return <blockquote key={key}>{renderInline(block.content, key)}</blockquote>;
+          return <blockquote key={key}>{renderInline(block.content)}</blockquote>;
         if (block.type === "code")
           return <CodeBlock key={key} language={block.language} value={block.value} />;
         if (block.type === "math") return <MathFormula display key={key} value={block.value} />;
         const List = block.ordered ? "ol" : "ul";
         return (
           <List key={key}>
-            {block.items.map((item, itemIndex) => (
-              <li key={`${key}-${itemIndex}`}>{renderInline(item, `${key}-${itemIndex}`)}</li>
+            {keyedItems(block.items, "item").map(({ item, key: itemKey }) => (
+              <li key={itemKey}>{renderInline(item)}</li>
             ))}
           </List>
         );
