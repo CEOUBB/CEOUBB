@@ -14,19 +14,18 @@ import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { CoursesDashboard } from "./views/CoursesDashboard";
 
-const ViewSkeleton = ({ label }: { label: string }) => (
-  <div className="boot-head" aria-busy="true" aria-label={label} role="status">
-    <span className="boot-title sk" />
-    <span className="boot-subtitle sk" />
-    <div className="boot-strip sk" style={{ marginTop: "1rem" }} />
-  </div>
-);
+import {
+  AdminSkeleton,
+  CalendarSkeleton,
+  ClassroomSkeleton,
+  ResourcesSkeleton,
+} from "./views/ViewSkeletons";
 
 const CalendarView = dynamic(
   () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
   {
     ssr: false,
-    loading: () => <ViewSkeleton label="Cargando calendario…" />,
+    loading: () => <CalendarSkeleton />,
   }
 );
 
@@ -34,18 +33,18 @@ const ResourcesView = dynamic(
   () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
   {
     ssr: false,
-    loading: () => <ViewSkeleton label="Cargando recursos…" />,
+    loading: () => <ResourcesSkeleton />,
   }
 );
 
 const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
   ssr: false,
-  loading: () => <ViewSkeleton label="Cargando administración…" />,
+  loading: () => <AdminSkeleton />,
 });
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
-  loading: () => <ViewSkeleton label="Abriendo el aula…" />,
+  loading: () => <ClassroomSkeleton />,
 });
 
 export function PortalHeader({

@@ -18,8 +18,18 @@ import {
   springDefault,
   stagger,
 } from "../../../lib/portal-utils";
-import { AI_TIERS, BRAND, PERK_GROUPS, UBB_PORTALS } from "./resources-data";
-import type { Brand } from "./resources-data";
+import { BRAND, RESOURCE_GROUPS } from "./resources-data";
+import type { Brand, ResourceItem } from "./resources-data";
+
+const LIBRARY_POINTS = [
+  "Accede a evaluaciones y documentos de años anteriores cuando lo necesites.",
+  "Practica con material real de la UBB para estudiar con anticipación.",
+  "Abierta a todas las facultades: crece con lo que aportan estudiantes y docentes.",
+];
+
+/* El índice entra después de la portada: opacidad y 6px, no el mismo salto que
+   la zona superior. Un solo gesto de carga, en dos tiempos. */
+const settle = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
 
 function BrandMark({ brand }: { brand: Brand }) {
   return (
@@ -28,6 +38,59 @@ function BrandMark({ brand }: { brand: Brand }) {
         <path d={path.d} fill={path.fill} key={path.d} />
       ))}
     </svg>
+  );
+}
+
+/* Marca de la fila: vector propio, imagen de la marca o el escudo UBB para los
+   servicios institucionales que no tienen logotipo propio. */
+function ResourceMark({ item }: { item: ResourceItem }) {
+  if (item.brand) return <BrandMark brand={item.brand} />;
+  if (item.image) {
+    return (
+      <Image
+        alt=""
+        aria-hidden="true"
+        className="brand-mark"
+        height={64}
+        src={item.image}
+        width={64}
+      />
+    );
+  }
+  return (
+    <Image
+      alt=""
+      aria-hidden="true"
+      className="brand-mark"
+      height={594}
+      src="/brand/ubb-shield.webp"
+      width={388}
+    />
+  );
+}
+
+function ResourceRow({ item }: { item: ResourceItem }) {
+  return (
+    <li className="res-row">
+      <a
+        aria-label={`${item.name}${item.tag ? ` · ${item.tag}` : ""} (se abre en una nueva pestaña)`}
+        href={item.url}
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        <span className="res-mark">
+          <ResourceMark item={item} />
+        </span>
+        <span className="res-body">
+          <span className="res-name">
+            <b>{item.name}</b>
+            {item.tag && <span className={`res-tag ${item.tone ?? "free"}`}>{item.tag}</span>}
+          </span>
+          {item.note ? <small>{item.note}</small> : <small className="res-host">{item.host}</small>}
+        </span>
+        <ArrowUpRight className="brand-go" size={14} />
+      </a>
+    </li>
   );
 }
 
@@ -52,220 +115,94 @@ export function ResourcesView() {
       </div>
 
       <m.div
-        className="resource-block"
+        className="res-top"
         transition={shouldReduceMotion ? instantTransition : springDefault}
         variants={shouldReduceMotion ? undefined : rise}
       >
-        <div className="section-title">
-          <h2>Ecosistema CEOUBB</h2>
-        </div>
-        <div className="resource-layout">
-          <m.a
-            className="resource-card"
-            href="/biblioteca/index.html"
-            whileHover={shouldReduceMotion ? undefined : { y: -1 }}
-          >
-            <span className="resource-icon">
-              <Books size={22} />
+        <section className="library-panel">
+          <div className="library-lead">
+            <span className="library-icon">
+              <Books size={24} />
             </span>
-            <h3>Biblioteca académica</h3>
-            <p>
-              Biblioteca colaborativa de certámenes, controles y apuntes que la comunidad va sumando
-              período a período.
-            </p>
-            <ul className="resource-points">
-              <li>
-                <Check size={15} weight="bold" /> Evaluaciones completas con puntaje y tiempo real
-                de aplicación.
-              </li>
-              <li>
-                <Check size={15} weight="bold" /> Pautas desarrolladas paso a paso, no sólo la
-                alternativa correcta.
-              </li>
-              <li>
-                <Check size={15} weight="bold" /> Abierta a todas las facultades: se amplía con lo
-                que aportan estudiantes y docentes.
-              </li>
-            </ul>
-            <b>
-              Abrir biblioteca <ArrowRight size={14} />
-            </b>
-          </m.a>
-          <div className="resource-card">
-            <span className="resource-icon">
-              <DeviceMobile size={22} />
-            </span>
-            <h3>CEOUBB Móvil</h3>
-            <p>Accede a tu material de estudio en cualquier lugar con nuestra app oficial.</p>
-            <div
-              className="store-badges"
-              role="group"
-              aria-label="Aplicaciones móviles próximamente disponibles"
-            >
-              <div className="store-badge">
-                <Image
-                  alt="App Store"
-                  height={1284}
-                  src="/brand/app-store-badge-es.webp"
-                  width={3840}
-                />
-              </div>
-              <div className="store-badge">
-                <Image
-                  alt="Google Play"
-                  height={675}
-                  src="/brand/google-play-badge-es.webp"
-                  width={2214}
-                />
-              </div>
-            </div>
-            <em>Publicación en preparación. Mientras tanto, el APK de Android está disponible.</em>
-            <a className="resource-inline" href={APK_URL}>
-              <DownloadSimple size={15} /> Descargar APK para Android
+            <h2>Biblioteca académica</h2>
+            <p>Certámenes, controles y apuntes que la comunidad va sumando período a período.</p>
+            <a className="library-cta" href="/biblioteca/index.html">
+              Abrir biblioteca <ArrowRight size={16} />
             </a>
           </div>
-        </div>
-      </m.div>
-
-      <m.div
-        className="resource-block"
-        transition={shouldReduceMotion ? instantTransition : springDefault}
-        variants={shouldReduceMotion ? undefined : rise}
-      >
-        <div className="section-title">
-          <h2>Asistentes de inteligencia artificial</h2>
-        </div>
-        {AI_TIERS.map((tier) => (
-          <div className="tier-group" key={tier.id}>
-            <div className="tier-head">
-              <span className={`tier-label ${tier.tone}`}>{tier.label}</span>
-            </div>
-            <ul className="chip-grid">
-              {tier.tools.map((tool) => (
-                <li key={tool.name}>
-                  <a
-                    aria-label={`${tool.name} (se abre en una nueva pestaña)`}
-                    className="brand-chip"
-                    href={tool.url}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                  >
-                    {tool.brand && <BrandMark brand={tool.brand} />}
-                    {tool.image && (
-                      <Image
-                        alt=""
-                        aria-hidden="true"
-                        className="brand-mark"
-                        height={20}
-                        src={tool.image}
-                        width={20}
-                      />
-                    )}
-                    <b>{tool.name}</b>
-                    <ArrowUpRight className="brand-go" size={14} />
-                  </a>
-                </li>
-              ))}
-            </ul>
-            {tier.note && <p className="tier-note">{tier.note}</p>}
-          </div>
-        ))}
-      </m.div>
-
-      <m.div
-        className="resource-block"
-        transition={shouldReduceMotion ? instantTransition : springDefault}
-        variants={shouldReduceMotion ? undefined : rise}
-      >
-        <div className="section-title">
-          <h2>Beneficios con tu correo institucional</h2>
-        </div>
-        {PERK_GROUPS.map((group) => (
-          <div className="tier-group" key={group.id}>
-            <div className="tier-head">
-              <span className={`tier-label ${group.tone}`}>{group.label}</span>
-            </div>
-            <ul className="brand-grid">
-              {group.items.map((perk) => (
-                <li key={perk.name}>
-                  <a
-                    aria-label={`${perk.name} - ${perk.note} (se abre en una nueva pestaña)`}
-                    className="brand-tile"
-                    href={perk.url}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                  >
-                    <span className="brand-head">
-                      <BrandMark brand={perk.brand} />
-                      <b>{perk.name}</b>
-                      <ArrowUpRight className="brand-go" size={14} />
-                    </span>
-                    <small>{perk.note}</small>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </m.div>
-
-      <m.div
-        className="resource-block"
-        transition={shouldReduceMotion ? instantTransition : springDefault}
-        variants={shouldReduceMotion ? undefined : rise}
-      >
-        <div className="section-title">
-          <h2>Portales y servicios oficiales UBB</h2>
-        </div>
-        <div className="portal-panel">
-          <ul className="portal-links">
-            {UBB_PORTALS.map((portal) => (
-              <li key={portal.url}>
-                <a
-                  aria-label={`${portal.name} - ${portal.host} (se abre en una nueva pestaña)`}
-                  className="portal-card"
-                  href={portal.url}
-                  rel="noreferrer noopener"
-                  target="_blank"
-                >
-                  <div className="portal-card-top">
-                    <span className="portal-mark">
-                      {portal.brand && <BrandMark brand={portal.brand} />}
-                      {portal.image && (
-                        <Image
-                          alt=""
-                          aria-hidden="true"
-                          height={128}
-                          src={portal.image}
-                          width={128}
-                        />
-                      )}
-                      {!portal.brand && !portal.image && (
-                        <Image
-                          alt=""
-                          aria-hidden="true"
-                          height={594}
-                          src="/brand/ubb-shield.webp"
-                          width={388}
-                        />
-                      )}
-                    </span>
-                    <ArrowUpRight className="brand-go" size={14} />
-                  </div>
-                  <div className="portal-card-bottom">
-                    <b>{portal.name}</b>
-                    <small>{portal.host}</small>
-                  </div>
-                </a>
+          <ul className="library-points">
+            {LIBRARY_POINTS.map((point) => (
+              <li key={point}>
+                <Check size={15} weight="bold" /> {point}
               </li>
             ))}
           </ul>
-          <p>
-            Sistemas administrados por la Universidad del Bío-Bío. CEOUBB es una plataforma
-            estudiantil independiente y no los reemplaza.
-          </p>
+        </section>
+
+        <div className="mobile-strip">
+          <span className="mobile-strip-icon">
+            <DeviceMobile size={20} />
+          </span>
+          <div className="mobile-strip-text">
+            <b>CEOUBB Móvil</b>
+            <small>
+              La publicación en tiendas está en preparación. El APK de Android ya se puede instalar.
+            </small>
+          </div>
+          <div
+            aria-label="Aplicaciones móviles en preparación"
+            className="store-badges"
+            role="group"
+          >
+            <div className="store-badge">
+              <Image
+                alt="App Store"
+                height={1284}
+                src="/brand/app-store-badge-es.webp"
+                width={3840}
+              />
+            </div>
+            <div className="store-badge">
+              <Image
+                alt="Google Play"
+                height={675}
+                src="/brand/google-play-badge-es.webp"
+                width={2214}
+              />
+            </div>
+          </div>
+          <a className="mobile-strip-action" href={APK_URL}>
+            <DownloadSimple size={16} /> Descargar APK
+          </a>
         </div>
       </m.div>
+
+      {RESOURCE_GROUPS.map((group) => (
+        <m.section
+          className={`res-group${group.disclaimer ? " res-group-ubb" : ""}`}
+          key={group.id}
+          transition={shouldReduceMotion ? instantTransition : springDefault}
+          variants={shouldReduceMotion ? undefined : settle}
+        >
+          <div className="section-title compact-title">
+            <h2>{group.title}</h2>
+            <span className="res-group-count num">{group.items.length}</span>
+          </div>
+          <ul className="res-index">
+            {group.items.map((item) => (
+              <ResourceRow item={item} key={item.url} />
+            ))}
+          </ul>
+          {group.notes && (
+            <ul className="res-notes">
+              {group.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          )}
+          {group.disclaimer && <p className="res-disclaimer">{group.disclaimer}</p>}
+        </m.section>
+      ))}
     </m.section>
   );
 }
