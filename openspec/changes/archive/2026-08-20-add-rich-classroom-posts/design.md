@@ -80,14 +80,14 @@ No Drizzle or Zod schema changes apply because the persisted payload is unchange
 
 ## Blast Radius
 
-| Surface | Effect | Risk control |
-| :--- | :--- | :--- |
-| Classroom feed | Plain body becomes rich nodes | Legacy text regression test |
-| Teacher authoring | Controlled live-preview editor | Same renderer; draft cleared only on success |
-| Firebase writes | Body/link validation | Bounded input and scheme allowlist |
-| KaTeX assets | Same-origin client script | Existing vendored files; restrictive options; source fallback |
-| Android | Receives remote web bundle | Capacitor config parity assertion; no native files changed |
-| Scale | O(n) work per visible body | 40,000-character write bound; no queries added |
+| Surface           | Effect                         | Risk control                                                  |
+| :---------------- | :----------------------------- | :------------------------------------------------------------ |
+| Classroom feed    | Plain body becomes rich nodes  | Legacy text regression test                                   |
+| Teacher authoring | Controlled live-preview editor | Same renderer; draft cleared only on success                  |
+| Firebase writes   | Body/link validation           | Bounded input and scheme allowlist                            |
+| KaTeX assets      | Same-origin client script      | Existing vendored files; restrictive options; source fallback |
+| Android           | Receives remote web bundle     | Capacitor config parity assertion; no native files changed    |
+| Scale             | O(n) work per visible body     | 40,000-character write bound; no queries added                |
 
 ## TDD Triangulation
 

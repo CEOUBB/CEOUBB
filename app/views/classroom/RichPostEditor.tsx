@@ -23,7 +23,9 @@ export function RichPostEditor({
     <div className="rich-editor" data-requirement="Implements: REQ-RICH-04 REQ-RICH-07">
       <div className="rich-editor-heading">
         <label htmlFor={inputId}>{label}</label>
-        <span>{value.length.toLocaleString("es-CL")} / {RICH_TEXT_MAX_LENGTH.toLocaleString("es-CL")}</span>
+        <span>
+          {value.length.toLocaleString("es-CL")} / {RICH_TEXT_MAX_LENGTH.toLocaleString("es-CL")}
+        </span>
       </div>
       <textarea
         id={inputId}

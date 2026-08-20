@@ -11,7 +11,8 @@ export const RICH_TEXT_REQUIREMENTS = [
 ] as const;
 
 export type CodeLanguage = "matlab" | "python" | "cpp" | "sql" | "plain";
-export type SyntaxTokenKind = "plain" | "comment" | "string" | "number" | "keyword" | "type" | "function" | "operator";
+export type SyntaxTokenKind =
+  "plain" | "comment" | "string" | "number" | "keyword" | "type" | "function" | "operator";
 
 export type SyntaxToken = {
   kind: SyntaxTokenKind;
@@ -46,22 +47,265 @@ const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
 };
 
 const KEYWORDS: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
-  matlab: new Set(["break", "case", "catch", "classdef", "continue", "else", "elseif", "end", "for", "function", "global", "if", "otherwise", "parfor", "persistent", "return", "spmd", "switch", "try", "while"]),
-  python: new Set(["and", "as", "assert", "async", "await", "break", "case", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"]),
-  cpp: new Set(["alignas", "alignof", "asm", "auto", "break", "case", "catch", "class", "concept", "const", "consteval", "constexpr", "constinit", "continue", "co_await", "co_return", "co_yield", "decltype", "default", "delete", "do", "else", "enum", "explicit", "export", "extern", "for", "friend", "goto", "if", "inline", "namespace", "new", "noexcept", "operator", "private", "protected", "public", "requires", "return", "sizeof", "static", "struct", "switch", "template", "this", "throw", "try", "typedef", "typename", "union", "using", "virtual", "volatile", "while"]),
-  sql: new Set(["add", "all", "alter", "and", "as", "asc", "between", "by", "case", "check", "column", "constraint", "create", "database", "default", "delete", "desc", "distinct", "drop", "else", "end", "exists", "foreign", "from", "full", "group", "having", "in", "index", "inner", "insert", "into", "is", "join", "key", "left", "like", "limit", "not", "null", "on", "or", "order", "outer", "primary", "references", "right", "select", "set", "table", "then", "union", "unique", "update", "values", "view", "when", "where", "with"]),
+  matlab: new Set([
+    "break",
+    "case",
+    "catch",
+    "classdef",
+    "continue",
+    "else",
+    "elseif",
+    "end",
+    "for",
+    "function",
+    "global",
+    "if",
+    "otherwise",
+    "parfor",
+    "persistent",
+    "return",
+    "spmd",
+    "switch",
+    "try",
+    "while",
+  ]),
+  python: new Set([
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "case",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "match",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "raise",
+    "return",
+    "try",
+    "while",
+    "with",
+    "yield",
+  ]),
+  cpp: new Set([
+    "alignas",
+    "alignof",
+    "asm",
+    "auto",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "concept",
+    "const",
+    "consteval",
+    "constexpr",
+    "constinit",
+    "continue",
+    "co_await",
+    "co_return",
+    "co_yield",
+    "decltype",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "explicit",
+    "export",
+    "extern",
+    "for",
+    "friend",
+    "goto",
+    "if",
+    "inline",
+    "namespace",
+    "new",
+    "noexcept",
+    "operator",
+    "private",
+    "protected",
+    "public",
+    "requires",
+    "return",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "template",
+    "this",
+    "throw",
+    "try",
+    "typedef",
+    "typename",
+    "union",
+    "using",
+    "virtual",
+    "volatile",
+    "while",
+  ]),
+  sql: new Set([
+    "add",
+    "all",
+    "alter",
+    "and",
+    "as",
+    "asc",
+    "between",
+    "by",
+    "case",
+    "check",
+    "column",
+    "constraint",
+    "create",
+    "database",
+    "default",
+    "delete",
+    "desc",
+    "distinct",
+    "drop",
+    "else",
+    "end",
+    "exists",
+    "foreign",
+    "from",
+    "full",
+    "group",
+    "having",
+    "in",
+    "index",
+    "inner",
+    "insert",
+    "into",
+    "is",
+    "join",
+    "key",
+    "left",
+    "like",
+    "limit",
+    "not",
+    "null",
+    "on",
+    "or",
+    "order",
+    "outer",
+    "primary",
+    "references",
+    "right",
+    "select",
+    "set",
+    "table",
+    "then",
+    "union",
+    "unique",
+    "update",
+    "values",
+    "view",
+    "when",
+    "where",
+    "with",
+  ]),
 };
 
 const TYPES: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
-  matlab: new Set(["cell", "char", "double", "int8", "int16", "int32", "int64", "logical", "single", "string", "struct", "table", "uint8", "uint16", "uint32", "uint64"]),
-  python: new Set(["bool", "bytes", "dict", "float", "frozenset", "int", "list", "None", "set", "str", "tuple", "True", "False"]),
-  cpp: new Set(["bool", "char", "char8_t", "char16_t", "char32_t", "double", "float", "int", "long", "short", "signed", "size_t", "string", "unsigned", "void", "wchar_t"]),
-  sql: new Set(["bigint", "binary", "bit", "blob", "boolean", "char", "date", "datetime", "decimal", "float", "int", "integer", "json", "numeric", "real", "text", "time", "timestamp", "uuid", "varchar"]),
+  matlab: new Set([
+    "cell",
+    "char",
+    "double",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "logical",
+    "single",
+    "string",
+    "struct",
+    "table",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+  ]),
+  python: new Set([
+    "bool",
+    "bytes",
+    "dict",
+    "float",
+    "frozenset",
+    "int",
+    "list",
+    "None",
+    "set",
+    "str",
+    "tuple",
+    "True",
+    "False",
+  ]),
+  cpp: new Set([
+    "bool",
+    "char",
+    "char8_t",
+    "char16_t",
+    "char32_t",
+    "double",
+    "float",
+    "int",
+    "long",
+    "short",
+    "signed",
+    "size_t",
+    "string",
+    "unsigned",
+    "void",
+    "wchar_t",
+  ]),
+  sql: new Set([
+    "bigint",
+    "binary",
+    "bit",
+    "blob",
+    "boolean",
+    "char",
+    "date",
+    "datetime",
+    "decimal",
+    "float",
+    "int",
+    "integer",
+    "json",
+    "numeric",
+    "real",
+    "text",
+    "time",
+    "timestamp",
+    "uuid",
+    "varchar",
+  ]),
 };
 
 const TOKEN_PATTERNS: Record<Exclude<CodeLanguage, "plain">, RegExp> = {
-  matlab: /%\{[\s\S]*?%\}|%[^\n]*|"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
-  python: /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
+  matlab:
+    /%\{[\s\S]*?%\}|%[^\n]*|"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
+  python:
+    /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
   cpp: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#]+|./gi,
   sql: /\/\*[\s\S]*?\*\/|--[^\n]*|"(?:""|[^"])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
 };
@@ -81,7 +325,13 @@ export function codeLanguageLabel(language: CodeLanguage) {
 
 export function safeLinkDestination(value: string): string | null {
   const candidate = value.trim();
-  if (!candidate || [...candidate].some((character) => character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127)) return null;
+  if (
+    !candidate ||
+    [...candidate].some(
+      (character) => character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127
+    )
+  )
+    return null;
   try {
     const url = new URL(candidate);
     return url.protocol === "http:" || url.protocol === "https:" || url.protocol === "mailto:"
@@ -95,18 +345,25 @@ export function safeLinkDestination(value: string): string | null {
 export function normalizeRichTextBody(value: string) {
   const body = value.trim();
   if (body.length > RICH_TEXT_MAX_LENGTH) {
-    throw new Error(`La publicación no puede superar ${RICH_TEXT_MAX_LENGTH.toLocaleString("es-CL")} caracteres.`);
+    throw new Error(
+      `La publicación no puede superar ${RICH_TEXT_MAX_LENGTH.toLocaleString("es-CL")} caracteres.`
+    );
   }
   return body;
 }
 
-function tokenKind(language: Exclude<CodeLanguage, "plain">, value: string, rest: string): SyntaxTokenKind {
+function tokenKind(
+  language: Exclude<CodeLanguage, "plain">,
+  value: string,
+  rest: string
+): SyntaxTokenKind {
   if (
     (language === "matlab" && (value.startsWith("%") || value.startsWith("%{"))) ||
     (language === "python" && value.startsWith("#")) ||
     (language === "cpp" && (value.startsWith("//") || value.startsWith("/*"))) ||
     (language === "sql" && (value.startsWith("--") || value.startsWith("/*")))
-  ) return "comment";
+  )
+    return "comment";
   if (/^(?:"|'|'''|""")/.test(value)) return "string";
   if (/^(?:0x[\da-f]+|\d)/i.test(value)) return "number";
   if (/^[A-Za-z_]\w*$/.test(value)) {
@@ -186,11 +443,18 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
       }
     }
 
-    const strongDelimiter = value.startsWith("**", cursor) ? "**" : value.startsWith("__", cursor) ? "__" : null;
+    const strongDelimiter = value.startsWith("**", cursor)
+      ? "**"
+      : value.startsWith("__", cursor)
+        ? "__"
+        : null;
     if (strongDelimiter) {
       const close = closingDelimiter(value, strongDelimiter, cursor + 2);
       if (close > cursor + 2) {
-        nodes.push({ type: "strong", content: parseRichInline(value.slice(cursor + 2, close), depth + 1) });
+        nodes.push({
+          type: "strong",
+          content: parseRichInline(value.slice(cursor + 2, close), depth + 1),
+        });
         cursor = close + 2;
         continue;
       }
@@ -216,13 +480,20 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
       const delimiter = value[cursor];
       const close = closingDelimiter(value, delimiter, cursor + 1);
       if (close > cursor + 1) {
-        nodes.push({ type: "emphasis", content: parseRichInline(value.slice(cursor + 1, close), depth + 1) });
+        nodes.push({
+          type: "emphasis",
+          content: parseRichInline(value.slice(cursor + 1, close), depth + 1),
+        });
         cursor = close + 1;
         continue;
       }
     }
 
-    if (value[cursor] === "\\" && cursor + 1 < value.length && /[\\`*_[\]()$]/.test(value[cursor + 1])) {
+    if (
+      value[cursor] === "\\" &&
+      cursor + 1 < value.length &&
+      /[\\`*_[\]()$]/.test(value[cursor + 1])
+    ) {
       appendText(nodes, value[cursor + 1]);
       cursor += 2;
       continue;
@@ -239,13 +510,22 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
 
 function startsBlock(line: string) {
   const trimmed = line.trim();
-  return /^ {0,3}```/.test(line) || /^#{1,6}\s+/.test(trimmed) || /^>\s?/.test(trimmed) || /^(?:[-+*]|\d+\.)\s+/.test(trimmed) || trimmed === "$$" || trimmed === "\\[";
+  return (
+    /^ {0,3}```/.test(line) ||
+    /^#{1,6}\s+/.test(trimmed) ||
+    /^>\s?/.test(trimmed) ||
+    /^(?:[-+*]|\d+\.)\s+/.test(trimmed) ||
+    trimmed === "$$" ||
+    trimmed === "\\["
+  );
 }
 
 function sameLineDisplayMath(line: string) {
   const trimmed = line.trim();
-  if (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length > 4) return trimmed.slice(2, -2).trim();
-  if (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length > 4) return trimmed.slice(2, -2).trim();
+  if (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length > 4)
+    return trimmed.slice(2, -2).trim();
+  if (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length > 4)
+    return trimmed.slice(2, -2).trim();
   return null;
 }
 
@@ -271,7 +551,11 @@ export function parseRichText(value: string): RichBlock[] {
         cursor += 1;
       }
       if (cursor < lines.length) cursor += 1;
-      blocks.push({ type: "code", language: normalizeCodeLanguage(fence[1] ?? ""), value: code.join("\n") });
+      blocks.push({
+        type: "code",
+        language: normalizeCodeLanguage(fence[1] ?? ""),
+        value: code.join("\n"),
+      });
       continue;
     }
 
@@ -299,7 +583,11 @@ export function parseRichText(value: string): RichBlock[] {
 
     const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
     if (heading) {
-      blocks.push({ type: "heading", level: heading[1].length, content: parseRichInline(heading[2]) });
+      blocks.push({
+        type: "heading",
+        level: heading[1].length,
+        content: parseRichInline(heading[2]),
+      });
       cursor += 1;
       continue;
     }
@@ -330,7 +618,12 @@ export function parseRichText(value: string): RichBlock[] {
 
     const paragraph: string[] = [line];
     cursor += 1;
-    while (cursor < lines.length && lines[cursor].trim() && !startsBlock(lines[cursor]) && sameLineDisplayMath(lines[cursor]) === null) {
+    while (
+      cursor < lines.length &&
+      lines[cursor].trim() &&
+      !startsBlock(lines[cursor]) &&
+      sameLineDisplayMath(lines[cursor]) === null
+    ) {
       paragraph.push(lines[cursor]);
       cursor += 1;
     }

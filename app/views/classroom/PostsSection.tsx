@@ -77,9 +77,19 @@ export function PostsSection({
                         value={editing.title}
                       />
                     </label>
-                    <RichPostEditor name="body" onChange={(body) => setEditing({ ...editing, body })} required value={editing.body} />
+                    <RichPostEditor
+                      name="body"
+                      onChange={(body) => setEditing({ ...editing, body })}
+                      required
+                      value={editing.body}
+                    />
                     <span className="post-edit-actions">
-                      <button className="secondary-button" disabled={saving} onClick={() => setEditing(null)} type="button">
+                      <button
+                        className="secondary-button"
+                        disabled={saving}
+                        onClick={() => setEditing(null)}
+                        type="button"
+                      >
                         Cancelar
                       </button>
                       <button className="primary-button" disabled={saving} type="submit">
@@ -106,7 +116,12 @@ export function PostsSection({
                       )}
                       {canManage && (
                         <span className="content-actions">
-                          <button onClick={() => setEditing({ id: post.id, title: post.title, body: post.body })} type="button">
+                          <button
+                            onClick={() =>
+                              setEditing({ id: post.id, title: post.title, body: post.body })
+                            }
+                            type="button"
+                          >
                             Modificar
                           </button>
                           <button onClick={() => deletePost(post)} type="button">

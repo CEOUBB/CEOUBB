@@ -22,7 +22,7 @@ type KatexRuntime = {
       strict: "error";
       throwOnError: boolean;
       trust: boolean;
-    },
+    }
   ) => void;
 };
 
@@ -125,7 +125,13 @@ function renderInline(nodes: RichInline[], prefix: string): ReactNode[] {
   });
 }
 
-function CodeBlock({ language, value }: { language: Parameters<typeof highlightCode>[1]; value: string }) {
+function CodeBlock({
+  language,
+  value,
+}: {
+  language: Parameters<typeof highlightCode>[1];
+  value: string;
+}) {
   const tokens = useMemo(() => highlightCode(value, language), [language, value]);
   return (
     <figure className="rich-code">
@@ -155,13 +161,19 @@ export function RichText({ body, className = "" }: { body: string; className?: s
         if (block.type === "paragraph") return <p key={key}>{renderInline(block.content, key)}</p>;
         if (block.type === "heading") {
           return (
-            <h4 aria-level={Math.min(block.level + 3, 6)} className={`rich-heading rich-heading-${block.level}`} key={key}>
+            <h4
+              aria-level={Math.min(block.level + 3, 6)}
+              className={`rich-heading rich-heading-${block.level}`}
+              key={key}
+            >
               {renderInline(block.content, key)}
             </h4>
           );
         }
-        if (block.type === "quote") return <blockquote key={key}>{renderInline(block.content, key)}</blockquote>;
-        if (block.type === "code") return <CodeBlock key={key} language={block.language} value={block.value} />;
+        if (block.type === "quote")
+          return <blockquote key={key}>{renderInline(block.content, key)}</blockquote>;
+        if (block.type === "code")
+          return <CodeBlock key={key} language={block.language} value={block.value} />;
         if (block.type === "math") return <MathFormula display key={key} value={block.value} />;
         const List = block.ordered ? "ol" : "ul";
         return (

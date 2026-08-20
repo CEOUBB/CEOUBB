@@ -14,7 +14,7 @@ import {
 } from "../lib/rich-text.ts";
 
 function inlineText(nodes: RichInline[]): string {
-  return nodes.map((node) => "value" in node ? node.value : inlineText(node.content)).join("");
+  return nodes.map((node) => ("value" in node ? node.value : inlineText(node.content))).join("");
 }
 
 test("plain-text legacy posts preserve content and line breaks", () => {
@@ -51,7 +51,8 @@ test("fenced code normalizes and highlights every required language", () => {
 });
 
 test("hostile HTML stays inert and unsafe link destinations are removed", () => {
-  const body = '<img src=x onerror="alert(1)">\n<script>alert(2)</script>\n[peligro](javascript:alert(3))\n[seguro](https://ubiobio.cl)';
+  const body =
+    '<img src=x onerror="alert(1)">\n<script>alert(2)</script>\n[peligro](javascript:alert(3))\n[seguro](https://ubiobio.cl)';
   const blocks = parseRichText(body);
   assert.equal(blocks.length, 1);
   assert.equal(blocks[0].type, "paragraph");
@@ -62,20 +63,34 @@ test("hostile HTML stays inert and unsafe link destinations are removed", () => 
   assert.equal(links[1]?.href, "https://ubiobio.cl");
   assert.equal(safeLinkDestination("javascript:alert(1)"), null);
   assert.equal(safeLinkDestination("data:text/html;base64,WA=="), null);
+  assert.equal(safeLinkDestination("https://ubiobio.cl\nmalicioso"), null);
   assert.equal(safeLinkDestination("mailto:docente@ubiobio.cl"), "mailto:docente@ubiobio.cl");
   assert.ok(!JSON.stringify(blocks).includes('"type":"html"'));
 });
 
 test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "app/views/classroom/RichText.tsx"), "utf8");
-  const postsSource = fs.readFileSync(path.join(process.cwd(), "app/views/classroom/PostsSection.tsx"), "utf8");
-  const materialsSource = fs.readFileSync(path.join(process.cwd(), "app/views/classroom/MaterialsSection.tsx"), "utf8");
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/RichText.tsx"),
+    "utf8"
+  );
+  const postsSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/PostsSection.tsx"),
+    "utf8"
+  );
+  const materialsSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MaterialsSection.tsx"),
+    "utf8"
+  );
   const capacitorSource = fs.readFileSync(path.join(process.cwd(), "capacitor.config.ts"), "utf8");
   assert.doesNotMatch(source, /dangerouslySetInnerHTML/);
+  assert.doesNotMatch(source, /\.innerHTML\s*=/);
   assert.match(source, /biblioteca\/assets\/vendor\/katex\/katex\.min\.js/);
   assert.match(source, /trust:\s*false/);
   assert.match(source, /strict:\s*"error"/);
   assert.match(source, /maxSize:\s*10/);
+  assert.match(source, /maxExpand:\s*1_000/);
+  assert.match(source, /throwOnError:\s*true/);
+  assert.match(source, /output:\s*"htmlAndMathml"/);
   assert.match(postsSource, /href=\{safePostLink\}/);
   assert.doesNotMatch(postsSource, /href=\{post\.linkUrl\}/);
   assert.match(postsSource, /<RichText body=\{post\.body\}/);
@@ -88,12 +103,16 @@ test("inline and display formulas share the parsed document model", () => {
   assert.equal(blocks.length, 2);
   assert.equal(blocks[0].type, "paragraph");
   assert.equal(blocks[1].type, "math");
-  if (blocks[0].type === "paragraph") assert.ok(blocks[0].content.some((node) => node.type === "math"));
+  if (blocks[0].type === "paragraph")
+    assert.ok(blocks[0].content.some((node) => node.type === "math"));
   if (blocks[1].type === "math") assert.equal(blocks[1].value, "\\int_0^L w(x)\\,dx");
 });
 
 test("new editor limit and traceability contract stay explicit", () => {
-  const editorSource = fs.readFileSync(path.join(process.cwd(), "app/views/classroom/RichPostEditor.tsx"), "utf8");
+  const editorSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/RichPostEditor.tsx"),
+    "utf8"
+  );
   const legacyBody = "x".repeat(RICH_TEXT_MAX_LENGTH + 1);
   const blocks = parseRichText(legacyBody);
   assert.equal(RICH_TEXT_MAX_LENGTH, 40_000);
@@ -103,5 +122,7 @@ test("new editor limit and traceability contract stay explicit", () => {
   if (blocks[0].type === "paragraph") assert.equal(inlineText(blocks[0].content), legacyBody);
   assert.match(editorSource, /maxLength=\{RICH_TEXT_MAX_LENGTH\}/);
   assert.equal(RICH_TEXT_REQUIREMENTS.length, 7);
-  assert.ok(RICH_TEXT_REQUIREMENTS.every((requirement) => requirement.startsWith("Implements: REQ-RICH-")));
+  assert.ok(
+    RICH_TEXT_REQUIREMENTS.every((requirement) => requirement.startsWith("Implements: REQ-RICH-"))
+  );
 });
