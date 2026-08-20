@@ -114,3 +114,19 @@ test("REQ-SEC-14: verifyLinearSignature returns false if secret or signature is 
     "Empty signature must return false"
   );
 });
+
+// Implements: REQ-SEC-03
+test("REQ-SEC-03: standup cron route handler uses timingSafeEqual for CRON_SECRET verification", () => {
+  const routePath = path.resolve("app/api/cron/standup/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /timingSafeEqual/,
+    "Standup cron route handler must use timingSafeEqual for secret verification"
+  );
+  assert.match(
+    routeContent,
+    /credentialMatches/,
+    "Standup cron route handler must call credentialMatches helper"
+  );
+});
