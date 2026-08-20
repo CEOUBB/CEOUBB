@@ -59,7 +59,9 @@ export function LiveClassSection({
             </div>
           </div>
           <div className="live-class-field">
-            <label htmlFor="live-class-url">Enlace de la reunión</label>
+            <label className="sr-only" htmlFor="live-class-url">
+              Enlace de la reunión
+            </label>
             <input
               aria-describedby="live-class-feedback"
               aria-invalid={invalid || undefined}
