@@ -76,8 +76,10 @@ export function useClassroomHandlers(course: Course, user: User) {
       });
       formElement.reset();
       note("Publicado correctamente y notificado al curso.", "ok");
+      return true;
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");
+      return false;
     }
   };
 
@@ -99,16 +101,14 @@ export function useClassroomHandlers(course: Course, user: User) {
     }
   };
 
-  const editPost = async (post: ClassroomPost) => {
-    const title = window.prompt("Título de la publicación", post.title);
-    if (title === null) return;
-    const body = window.prompt("Contenido de la publicación", post.body);
-    if (body === null) return;
+  const editPost = async (post: ClassroomPost, values: { title: string; body: string }) => {
     try {
-      await editClassroomPost(course.id, post.id, { title, body });
+      await editClassroomPost(course.id, post.id, values);
       note("Publicación actualizada.", "ok");
+      return true;
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible modificarla.", "bad");
+      return false;
     }
   };
 
