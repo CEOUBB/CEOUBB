@@ -100,7 +100,9 @@ export function CalendarSkeleton() {
               key={item.day}
             >
               <small>{item.day}</small>
-              <b style={item.today ? { margin: "-3px auto" } : undefined}>{item.num}</b>
+              <b className="num" style={item.today ? { margin: "-3px auto" } : undefined}>
+                {item.num}
+              </b>
             </div>
           ))}
         </div>
@@ -108,7 +110,7 @@ export function CalendarSkeleton() {
         <div className="planner-grid" style={{ minHeight: "480px" }}>
           <div className="planner-hours">
             {SKELETON_HOURS.map((hr) => (
-              <span className="planner-hour" key={hr}>
+              <span className="planner-hour num" key={hr}>
                 {hr}
               </span>
             ))}
@@ -424,15 +426,15 @@ export function ClassroomSkeleton() {
         <nav aria-label="Secciones del aula" className="course-tabs">
           {["Novedades", "Evaluaciones", "Materiales", "Personas", "Progreso"].map(
             (tabName, idx) => (
-              <button
+              <span
+                aria-hidden="true"
                 className={idx === 0 ? "active" : ""}
                 key={tabName}
-                style={{ pointerEvents: "none" }}
-                type="button"
+                tabIndex={-1}
               >
                 {idx === 0 && <FolderSimple size={18} />}
                 {tabName}
-              </button>
+              </span>
             )
           )}
         </nav>

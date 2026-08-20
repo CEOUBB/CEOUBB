@@ -1956,7 +1956,8 @@ img {
   display: none;
 }
 
-.course-tabs button {
+.course-tabs button,
+.course-tabs span {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1973,7 +1974,8 @@ img {
     background var(--transition-fast);
 }
 
-.course-tabs button svg {
+.course-tabs button svg,
+.course-tabs span svg {
   color: var(--text-faint);
   transition: color var(--transition-fast);
 }
@@ -1984,12 +1986,14 @@ img {
 .course-tabs button:hover svg {
   color: var(--text-secondary);
 }
-.course-tabs button.active {
+.course-tabs button.active,
+.course-tabs span.active {
   color: var(--color-primary);
   font-weight: 600;
   border-bottom-color: var(--color-primary);
 }
-.course-tabs button.active svg {
+.course-tabs button.active svg,
+.course-tabs span.active svg {
   color: var(--color-primary);
 }
 
