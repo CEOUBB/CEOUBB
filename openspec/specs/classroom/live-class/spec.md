@@ -1,6 +1,7 @@
 # classroom/live-class Specification
 
 ## Purpose
+
 Governs the validated live-class link stored per academic section, its bounded real-time delivery, its editing authorization and the prominent, accessible entry point shown on the classroom home page.
 
 ## Requirements
