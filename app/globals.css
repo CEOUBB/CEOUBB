@@ -2205,6 +2205,177 @@ img {
   gap: var(--space-md);
 }
 
+.live-class-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.live-class-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  overflow: hidden;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--surface-card);
+  border: 1px solid color-mix(in srgb, var(--course-tone) 34%, var(--border-hairline));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-1);
+}
+
+.live-class-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--course-tone);
+}
+
+.live-class-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--course-tone) 13%, var(--surface-card));
+  color: color-mix(in srgb, var(--course-tone) 46%, var(--text-body));
+}
+
+.live-class-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.live-class-copy > span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+}
+.live-class-copy strong {
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.live-class-copy small {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.live-class-join {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.live-class-editor {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.7fr) minmax(280px, 1fr) auto;
+  align-items: end;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.live-class-editor-copy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+}
+.live-class-editor-copy > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.live-class-editor-copy strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.live-class-editor-copy small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.live-class-editor-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+}
+
+.live-class-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.live-class-field label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+.live-class-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  color: var(--text-body);
+  font-size: 16px;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.live-class-field input::placeholder {
+  color: var(--text-faint);
+}
+.live-class-field input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+.live-class-field input[aria-invalid="true"] {
+  border-color: var(--shield-red-deep);
+}
+
+.live-class-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.live-class-actions .primary-button,
+.live-class-actions .secondary-button {
+  min-height: 44px;
+  padding-inline: var(--space-md);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.live-class-editor > .tool-status {
+  grid-column: 2 / -1;
+  margin: 0;
+}
+.live-class-editor > .tool-status:empty {
+  display: none;
+}
+
 .unit-grid {
   display: flex;
   flex-direction: column;
@@ -4744,6 +4915,13 @@ img {
   .course-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .live-class-editor {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .live-class-editor-copy,
+  .live-class-editor > .tool-status {
+    grid-column: 1 / -1;
+  }
   .classroom-columns,
   .materials-view,
   .grades-view {
@@ -4965,6 +5143,25 @@ img {
   .portal-main,
   .classroom-layout {
     padding: var(--space-md) var(--space-md) var(--space-xxl);
+  }
+  .live-class-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: var(--space-md);
+  }
+  .live-class-join {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .live-class-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .live-class-editor-copy,
+  .live-class-editor > .tool-status {
+    grid-column: 1;
+  }
+  .live-class-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
   .unit-grid article,
   .post-list article,

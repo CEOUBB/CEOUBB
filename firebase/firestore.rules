@@ -46,6 +46,20 @@ service cloud.firestore {
       return courseId.matches('^[a-z0-9][a-z0-9-]{1,60}$');
     }
 
+    // Implements: REQ-LIVE-02, REQ-LIVE-06
+    function validLiveClass(courseId) {
+      return request.resource.data.keys().hasOnly(['courseId', 'url', 'provider', 'updatedBy', 'updatedAt'])
+        && request.resource.data.courseId == courseId
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.url is string
+        && request.resource.data.url.size() <= 2048
+        && (request.resource.data.provider == 'zoom'
+          && request.resource.data.url.matches('^https://([A-Za-z0-9-]+\\.)*zoom\\.us(:[0-9]+)?([/?#].*)?$')
+          || request.resource.data.provider == 'teams'
+          && request.resource.data.url.matches('^https://(teams\\.microsoft\\.com|teams\\.cloud\\.microsoft)(:[0-9]+)?([/?#].*)?$'));
+    }
+
     // Implements: REQ-SEC-02 — la proyección de matrícula es la única llave de
     // una sección: sin marcador activo no hay lectura ni escritura posible.
     function isEnrolled(seccionId) {
@@ -101,7 +115,14 @@ service cloud.firestore {
     // Implements: REQ-SEC-02
     match /courses/{courseId}/meta/{documentId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow write: if teachesSection(courseId) && validCourse(courseId);
+      allow write: if documentId != 'live-class' && teachesSection(courseId) && validCourse(courseId);
+    }
+
+    // Implements: REQ-LIVE-02, REQ-LIVE-06
+    match /courses/{courseId}/meta/live-class {
+      allow read: if isOwner() || isMember() && isEnrolled(courseId);
+      allow create, update: if teachesSection(courseId) && validCourse(courseId) && validLiveClass(courseId);
+      allow delete: if teachesSection(courseId) && validCourse(courseId);
     }
 
     // Implements: REQ-SEC-02
