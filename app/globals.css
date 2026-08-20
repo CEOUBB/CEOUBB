@@ -261,7 +261,7 @@ img {
 .section-title h2,
 .classroom-top h1,
 .course-card h3,
-.resource-card h3,
+.library-panel h2,
 .policy-page h1,
 .access-brand h1,
 .login-card h2 {
@@ -3649,305 +3649,247 @@ img {
 }
 
 /* ── Recursos ─────────────────────────────────────────────────
-   Cuatro bloques con densidades distintas: dos tarjetas grandes para el
-   ecosistema propio, fichas mínimas para las IA, mosaico agrupado para los
-   beneficios y un panel con filete heráldico para los portales UBB.
+   Una portada y un índice. Arriba, lo único que vive dentro de CEOUBB
+   —la biblioteca— más la tira de la app; abajo, los servicios externos
+   en una sola retícula de filas con filtro, para que buscar sea un
+   gesto y no un recorrido por cuatro bloques distintos.
    ─────────────────────────────────────────────────────────── */
 
 .resources-hub {
   display: grid;
-  gap: var(--space-3xl);
+  gap: var(--space-xxl);
 }
 .portal-main > .resources-hub > .page-head {
   margin-bottom: 0;
 }
 
-.resource-block {
+/* ── Portada: la biblioteca y la app ─────────────────────── */
+
+.res-top {
   display: grid;
-  gap: var(--space-md);
-}
-.resource-block > .section-title {
-  margin-top: 0;
+  gap: var(--space-sm);
 }
 
-.resource-layout {
+/* La biblioteca es lo único propio de la página: se lleva el ancho
+   completo, la voz display y el único botón sólido del hub. */
+.library-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: var(--space-md);
-  align-items: stretch;
-}
-
-.resource-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  padding: var(--space-lg);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-xl);
+  padding: var(--space-xl) var(--space-lg);
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
-  color: var(--text-body);
-  transition:
-    box-shadow var(--transition-base),
-    border-color var(--transition-base);
+  border-radius: var(--radius-xl);
 }
 
-a.resource-card:hover,
-a.resource-card:focus-visible {
-  box-shadow: var(--shadow-1);
-  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
-  color: var(--text-body);
-}
-a.resource-card:hover .resource-icon,
-a.resource-card:focus-visible .resource-icon {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+.library-lead {
+  display: grid;
+  gap: var(--space-xs);
+  align-content: start;
 }
 
-/* El icono abre la tarjeta: se separa del título más de lo que el título se
-   separa de su propio cuerpo. */
-.resource-icon {
+.library-icon {
   display: inline-grid;
   place-items: center;
   margin-bottom: var(--space-xxs);
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: var(--radius-md);
   background: var(--color-primary-wash);
   color: var(--color-primary);
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
 }
 
-.resource-card h3 {
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.27;
-  letter-spacing: -0.25px;
+.library-panel h2 {
+  font-size: clamp(23px, 2.6vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
-.resource-card p {
+
+.library-panel p {
+  max-width: 52ch;
   font-size: 15px;
-  color: var(--text-muted);
-}
-.resource-card em {
-  font-style: normal;
-  font-size: 13px;
   line-height: 1.5;
   color: var(--text-muted);
 }
-.resource-card > b {
+
+.library-cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: var(--space-xs);
+  justify-self: start;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  min-height: 44px;
+  padding: 0 var(--space-lg);
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  color: var(--color-on-primary);
   font-size: 15px;
   font-weight: 500;
-  color: var(--color-primary);
+  transition: background var(--transition-fast);
+}
+.library-cta:hover {
+  background: var(--color-primary-active);
+  color: var(--color-on-primary);
 }
 
-.resource-points {
-  margin: var(--space-xxs) 0 0;
-  padding: 0;
+.library-points {
+  margin: 0;
+  padding: 0 0 0 var(--space-xl);
   list-style: none;
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
+  align-content: center;
+  border-left: 1px solid var(--border-hairline);
 }
-.resource-points li {
+.library-points li {
   display: flex;
   align-items: flex-start;
   gap: var(--space-xs);
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 14.5px;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
-.resource-points svg {
+.library-points svg {
   flex: none;
   margin-top: 4px;
   color: var(--academic-teal);
 }
 
-.resource-card .store-badges {
-  justify-content: flex-start;
-  margin: var(--space-xs) 0;
-  gap: var(--space-xs);
-}
-
-.resource-inline {
-  display: inline-flex;
+/* La app todavía no está publicada: una tira de servicio, no una
+   tarjeta de campaña. Las insignias quedan inertes hasta que existan
+   las fichas reales en cada tienda. */
+.mobile-strip {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: var(--space-xs);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--color-primary);
-}
-.resource-inline:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.resource-inline:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
 }
 
-.resource-note {
-  max-width: 76ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-muted);
-}
-.resource-note sup {
-  font-weight: 600;
+.mobile-strip-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
   color: var(--text-secondary);
 }
 
-/* Grupos rotulados (IA y beneficios): la píldora clasifica y la bajada explica
-   la condición de uso una sola vez, en lugar de repetirla en cada ficha. */
-.tier-group {
+.mobile-strip-text {
+  flex: 1 1 200px;
   display: grid;
-  gap: var(--space-xs);
+  gap: 1px;
 }
-.tier-group + .tier-group {
-  margin-top: var(--space-lg);
-}
-.tier-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xxs);
-}
-
-.tier-label {
-  justify-self: start;
-  padding: 0;
-  background: transparent;
-  border: none;
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-.tier-label.free {
-  color: oklch(0.38 0.12 155);
-}
-.tier-label.plan {
-  color: oklch(0.44 0.12 75);
-}
-
-.tier-note {
-  margin: 2px 0 0 0;
-  max-width: 76ch;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--text-muted);
-}
-
-.brand-grid {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
-  gap: var(--space-sm);
-}
-.brand-grid > li {
-  display: flex;
-}
-
-.brand-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  padding: 14px var(--space-md);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
-  color: var(--text-body);
-  transition:
-    box-shadow var(--transition-base),
-    border-color var(--transition-base),
-    transform var(--transition-base);
-}
-
-.brand-tile:hover,
-.brand-tile:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-1);
-  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
-  color: var(--text-body);
-}
-.brand-tile:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-.brand-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-.brand-head b {
-  flex: 1;
-  min-width: 0;
-  font-size: 15px;
+.mobile-strip-text b {
+  font-size: 14.5px;
   font-weight: 600;
 }
-.brand-tile small {
-  font-size: 13px;
+.mobile-strip-text small {
+  font-size: 12.5px;
   line-height: 1.45;
   color: var(--text-muted);
 }
 
-/* Fichas de IA: sólo la marca. Sin descripción, la tarjeta sobra y el
-   contenedor se ajusta al nombre con altura mínima táctil accesible (44px). */
-.chip-grid {
+.mobile-strip .store-badges {
+  gap: var(--space-xs);
+}
+.mobile-strip .store-badge,
+.mobile-strip .store-badge img {
+  height: 30px;
+}
+
+.mobile-strip-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+.mobile-strip-action:hover {
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+
+/* ── Índice de servicios externos ────────────────────────── */
+
+.res-group {
+  display: grid;
+  gap: var(--space-sm);
+}
+.res-group .section-title {
+  margin-top: 0;
+}
+.res-group-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Retícula de filas: cada fila dibuja su propio filete superior e
+   izquierdo y los solapa con margen negativo, así la cuadrícula se
+   cierra sola con cualquier número de columnas o de resultados. */
+.res-index {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-
-.brand-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  gap: var(--space-xs);
-  padding: 8px var(--space-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  color: var(--text-body);
-  transition:
-    box-shadow var(--transition-base),
-    border-color var(--transition-base),
-    transform var(--transition-base);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
-.brand-chip:hover,
-.brand-chip:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-1);
-  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--hairline));
+.res-row {
+  display: flex;
+  margin: -1px 0 0 -1px;
+  border-top: 1px solid var(--border-hairline);
+  border-left: 1px solid var(--border-hairline);
+}
+
+.res-row > a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 64px;
+  padding: 12px var(--space-md);
+  color: var(--text-body);
+  transition: background var(--transition-fast);
+}
+.res-row > a:hover {
+  background: var(--color-primary-wash);
   color: var(--text-body);
 }
-.brand-chip:focus-visible {
+.res-row > a:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline-offset: -2px;
+  border-radius: 0;
 }
-.brand-chip b {
-  font-size: 15px;
-  font-weight: 600;
+
+.res-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
 }
-.brand-chip .brand-mark {
-  width: 20px;
-  height: 20px;
+.res-mark img {
+  width: auto;
+  height: 22px;
+  object-fit: contain;
 }
 
 .brand-mark {
@@ -3961,31 +3903,99 @@ a.resource-card:focus-visible .resource-icon {
   color: var(--text-faint);
   transition: color var(--transition-fast);
 }
-.brand-tile:hover .brand-go,
-.brand-chip:hover .brand-go,
-.portal-card:hover .brand-go,
-.brand-tile:focus-visible .brand-go,
-.brand-chip:focus-visible .brand-go,
-.portal-card:focus-visible .brand-go {
+.res-row > a:hover .brand-go,
+.res-row > a:focus-visible .brand-go {
   color: var(--color-primary);
 }
 
-/* Portales UBB: Panel con filete institucional y cuadrícula de tarjetas de servicios. */
-.portal-panel {
-  position: relative;
+.res-body {
+  flex: 1;
+  min-width: 0;
   display: grid;
-  gap: var(--space-md);
+  gap: 2px;
+}
+.res-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.res-name b {
+  min-width: 0;
   overflow: hidden;
-  padding: var(--space-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.res-body small {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.res-body small.res-host {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.portal-panel::before {
+/* La etiqueta sólo aparece cuando separa a esta ficha de sus vecinas:
+   en portales, donde la condición es la misma para los cinco, no hay. */
+.res-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+}
+.res-tag.free {
+  background: oklch(0.945 0.045 155);
+  color: oklch(0.36 0.11 155);
+}
+.res-tag.plan {
+  background: oklch(0.95 0.05 85);
+  color: oklch(0.4 0.1 70);
+}
+
+.res-notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+}
+.res-notes li,
+.res-disclaimer {
+  max-width: 76ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* Bajo los 400px el nombre pierde la carrera contra la etiqueta: que la línea
+   envuelva antes que perder letras del servicio. */
+@media (max-width: 400px) {
+  .res-name {
+    flex-wrap: wrap;
+  }
+  .res-name b {
+    white-space: normal;
+  }
+}
+
+/* Portales UBB: el filete heráldico marca lo institucional, y sólo eso. */
+.res-group-ubb .res-index {
+  position: relative;
+}
+.res-group-ubb .res-index::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
+  z-index: 1;
   height: 3px;
   background: linear-gradient(
     90deg,
@@ -3994,103 +4004,6 @@ a.resource-card:focus-visible .resource-icon {
     var(--shield-gold) 64% 84%,
     var(--shield-red) 84%
   );
-}
-
-.portal-panel > p {
-  margin: 0;
-  max-width: 76ch;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--text-muted);
-}
-
-.portal-links {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: var(--space-xs);
-}
-
-.portal-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 106px;
-  padding: 14px var(--space-md);
-  background: var(--canvas-soft);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  color: var(--text-body);
-  text-decoration: none;
-  transition:
-    transform var(--transition-base),
-    background var(--transition-base),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base);
-}
-
-.portal-card:hover,
-.portal-card:focus-visible {
-  transform: translateY(-2px);
-  background: var(--surface-card);
-  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--border-hairline));
-  box-shadow: var(--shadow-1);
-  color: var(--text-body);
-}
-
-.portal-card:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.portal-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.portal-card-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: var(--space-xs);
-}
-
-.portal-card-bottom b {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink-900);
-  line-height: 1.35;
-}
-
-.portal-card-bottom small {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-
-.portal-mark {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  flex: none;
-}
-
-.portal-mark img {
-  width: auto;
-  height: 20px;
-  object-fit: contain;
-}
-
-.portal-mark .brand-mark {
-  width: 20px;
-  height: 20px;
 }
 
 /* ── Administración ──────────────────────────────────────── */
@@ -4718,9 +4631,17 @@ a.resource-card:focus-visible .resource-icon {
   }
   .classroom-columns,
   .materials-view,
-  .grades-view,
-  .resource-layout {
+  .grades-view {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .library-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-lg);
+  }
+  .library-points {
+    padding: var(--space-lg) 0 0;
+    border-top: 1px solid var(--border-hairline);
+    border-left: 0;
   }
   .planner-frame {
     --planner-gutter: 54px;
@@ -4835,11 +4756,7 @@ a.resource-card:focus-visible .resource-icon {
 }
 
 @media (max-width: 560px) {
-  .brand-grid,
-  .portal-links {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .resource-card .store-badges {
+  .mobile-strip .store-badges {
     flex-wrap: wrap;
   }
 }
