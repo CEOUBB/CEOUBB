@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, lt } from "drizzle-orm";
 import { getDb } from "../../db/index.ts";
 import {
   asignaturas,
@@ -151,11 +151,63 @@ export async function listSectionRoster(
 
 /**
  * Registra la mutación de una nota oficial. La bitácora es de sólo inserción:
- * nunca se actualiza ni se borra una entrada existente.
+ * nunca se borra una entrada existente y la única actualización admitida es el
+ * borrado de la IP vencida que hace `purgeAgedAuditIpAddresses`.
  */
 // Implements: REQ-AUDIT-01
 export async function appendGradeAuditLog(entry: GradeAuditEntry): Promise<void> {
   await getDb().insert(gradeAuditLogs).values(entry);
+}
+
+/** Meses que la política publicada promete conservar la IP de una mutación de nota. */
+// Implements: REQ-PRIV-04
+export const AUDIT_IP_RETENTION_MONTHS = 12;
+
+/** Techo de entradas que una sola ejecución de la purga puede tocar. */
+// Implements: REQ-PRIV-08
+export const AUDIT_IP_PURGE_BATCH = MAX_PAGE_SIZE;
+
+/** Instante ISO antes del cual una IP de bitácora ya venció. */
+// Implements: REQ-PRIV-08
+export function auditIpRetentionCutoff(now: Date): string {
+  const cutoff = new Date(now);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - AUDIT_IP_RETENTION_MONTHS);
+  return cutoff.toISOString();
+}
+
+/**
+ * Borra la IP de las entradas vencidas y conserva el resto de la bitácora: la IP
+ * identifica un dispositivo, el historial de puntajes identifica un acto académico
+ * y es justamente la evidencia que la auditoría existe para preservar.
+ */
+// Implements: REQ-PRIV-08
+export async function purgeAgedAuditIpAddresses(
+  cutoff: string,
+  limit: number = AUDIT_IP_PURGE_BATCH
+): Promise<number> {
+  const db = getDb();
+  /*
+    Dos sentencias en vez de un `UPDATE ... LIMIT`: SQLite sólo acepta ese límite
+    si se compiló con SQLITE_ENABLE_UPDATE_DELETE_LIMIT, y libSQL no lo garantiza.
+    El `select` acotado da el mismo techo con SQL que sí está garantizado.
+  */
+  const aged = await db
+    .select({ id: gradeAuditLogs.id })
+    .from(gradeAuditLogs)
+    .where(and(lt(gradeAuditLogs.timestamp, cutoff), isNotNull(gradeAuditLogs.ipAddress)))
+    .orderBy(asc(gradeAuditLogs.id))
+    .limit(boundedLimit(limit));
+  if (aged.length === 0) return 0;
+  await db
+    .update(gradeAuditLogs)
+    .set({ ipAddress: null })
+    .where(
+      inArray(
+        gradeAuditLogs.id,
+        aged.map((row) => row.id)
+      )
+    );
+  return aged.length;
 }
 
 /** Bitácora de una sección, paginada por `id`. */

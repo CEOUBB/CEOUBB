@@ -814,15 +814,60 @@ img {
   gap: var(--space-lg);
 }
 
-.policy-brand {
+/*
+  Cabecera del documento legal: reusa la marca del app bar (`.app-brand`) para que
+  la página no parezca de otro sitio, y ofrece una salida explícita. Quien llega
+  aquí lo hace desde un enlace del pie: leyó lo que buscaba y quiere volver.
+*/
+.policy-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
-  font-weight: 600;
 }
-.policy-brand img {
-  height: 32px;
-  width: auto;
+.policy-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 8px 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.33;
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.policy-back:hover {
+  background: var(--canvas-soft);
+  border-color: var(--text-faint);
+}
+.policy-back svg {
+  flex: 0 0 auto;
+  transition: transform var(--transition-fast);
+}
+.policy-back:hover svg {
+  transform: translateX(-2px);
+}
+@media (pointer: coarse) {
+  .policy-back {
+    min-height: 44px;
+  }
+}
+/*
+  En la barra del portal el rótulo se oculta bajo 768px para dejarle el ancho a la
+  búsqueda. Un documento legal no tiene esa barra: aquí el escudo solo no identifica
+  el sitio, así que el rótulo se queda y la fila envuelve si hace falta.
+*/
+@media (max-width: 767px) {
+  .policy-head .app-brand strong {
+    display: block;
+  }
 }
 
 .policy-page article {
@@ -859,13 +904,83 @@ img {
   line-height: 1.5;
   color: var(--text-secondary);
 }
+.policy-page h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-body);
+  margin-top: var(--space-xs);
+}
 .policy-page p a,
-.policy-page nav a {
+.policy-page nav a,
+.policy-page li a,
+.policy-page dd a {
   text-decoration: underline;
 }
 .policy-page nav {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+/*
+  Los documentos legales se leen buscando una cláusula, no de corrido: el índice
+  numerado, las listas y la rejilla término/regla existen para que "¿cuánto duran
+  mis datos?" se encuentre de un vistazo y se pueda citar por número.
+*/
+.policy-page ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding-left: var(--space-lg);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.policy-page li::marker {
+  color: var(--text-faint);
+}
+.policy-page dl {
+  display: grid;
+  grid-template-columns: minmax(11rem, 15rem) 1fr;
+  gap: var(--space-sm) var(--space-lg);
+  margin: 0;
+  padding: var(--space-md) 0 0;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.policy-page dt {
+  font-weight: 600;
+  color: var(--text-body);
+}
+.policy-page dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.policy-page .policy-index {
+  list-style: none;
+  padding-left: 0;
+  gap: var(--space-xxs);
+  font-size: 15px;
+}
+.policy-page .policy-index a {
+  text-decoration: none;
+  color: var(--text-secondary);
+}
+.policy-page .policy-index a:hover {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .policy-page dl {
+    grid-template-columns: 1fr;
+    gap: var(--space-xxs) 0;
+  }
+  .policy-page dd {
+    margin-bottom: var(--space-xs);
+  }
 }
 
 /* ── Portal · cabecera ────────────────────────────────────── */

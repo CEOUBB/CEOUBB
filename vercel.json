@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/standup?type=night",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/audit-retention",
+      "schedule": "30 5 * * *"
     }
   ]
 }
