@@ -6,7 +6,7 @@ import { getTableConfig } from "drizzle-orm/sqlite-core";
 import { getDb } from "../db/index.ts";
 import { sessions, users } from "../db/schema.ts";
 import type { AccountRole } from "../lib/access-policy.ts";
-import { pruneExpiredSessions } from "../lib/auth.ts";
+import { pruneExpiredSessions, publicUser } from "../lib/auth.ts";
 
 type Actor = { id: string; role: AccountRole; email: string } | null;
 type TargetUser = { id: string; email: string; role: AccountRole } | null;
@@ -501,4 +501,55 @@ test("REQ-ACCESS-04: Dual-store user role mutation contract (Turso + Firestore p
   );
   assert.match(rulesSource, /isOwner\(\)\s*\|\|\s*signedIn\(\)/);
   assert.match(rulesSource, /match \/users\/\{userId\}/);
+});
+
+test("publicUser maps user attributes into PublicUser and omits non-public fields like carrera", () => {
+  const fullUser = {
+    id: "usr-123",
+    email: "estudiante@alumnos.ubiobio.cl",
+    name: "María González",
+    role: "student" as const,
+    carrera: "Ingeniería Civil Informática",
+    internalNotes: "Estudiante regular",
+  };
+
+  const mapped = publicUser(fullUser);
+
+  assert.deepEqual(mapped, {
+    id: "usr-123",
+    email: "estudiante@alumnos.ubiobio.cl",
+    name: "María González",
+    role: "student",
+  });
+  assert.equal("carrera" in mapped, false);
+  assert.equal("internalNotes" in (mapped as Record<string, unknown>), false);
+});
+
+test("publicUser handles all account roles (student, teacher, owner)", () => {
+  const roles = ["student", "teacher", "owner"] as const;
+  for (const role of roles) {
+    const user = {
+      id: `usr-${role}`,
+      email: `${role}@ubiobio.cl`,
+      name: `Usuario ${role}`,
+      role,
+    };
+    const mapped = publicUser(user);
+    assert.equal(mapped.role, role);
+    assert.equal(mapped.id, user.id);
+    assert.equal(mapped.email, user.email);
+    assert.equal(mapped.name, user.name);
+  }
+});
+
+test("publicUser creates a new object reference without mutating the source", () => {
+  const user = {
+    id: "usr-ref",
+    email: "test@ubiobio.cl",
+    name: "Test Reference",
+    role: "teacher" as const,
+    carrera: null,
+  };
+  const mapped = publicUser(user);
+  assert.notEqual(mapped, user as unknown as ReturnType<typeof publicUser>);
 });
