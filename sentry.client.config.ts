@@ -10,5 +10,17 @@ Sentry.init({
 
   enableLogs: true,
 
-  integrations: [Sentry.replayIntegration()],
+  /*
+    Las tres opciones coinciden hoy con el default del SDK, y van explícitas a
+    propósito: /privacidad publica que las grabaciones enmascaran el contenido, y
+    esa promesa no puede depender de un default que un upgrade cambie en silencio.
+  */
+  // Implements: REQ-PRIV-07
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: true,
+      maskAllInputs: true,
+      blockAllMedia: true,
+    }),
+  ],
 });
