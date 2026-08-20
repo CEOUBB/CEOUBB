@@ -3845,7 +3845,7 @@ img {
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
@@ -3974,6 +3974,17 @@ img {
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--text-muted);
+}
+
+/* Bajo los 400px el nombre pierde la carrera contra la etiqueta: que la línea
+   envuelva antes que perder letras del servicio. */
+@media (max-width: 400px) {
+  .res-name {
+    flex-wrap: wrap;
+  }
+  .res-name b {
+    white-space: normal;
+  }
 }
 
 /* Portales UBB: el filete heráldico marca lo institucional, y sólo eso. */
