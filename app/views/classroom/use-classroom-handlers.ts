@@ -12,6 +12,7 @@ import {
   publishClassroomPost,
   renameClassroomFile,
   saveClassroomProgress,
+  saveLiveClassLink,
   uploadClassroomFile,
   watchClassroom,
 } from "../../../lib/firebase-classroom-client";
@@ -19,12 +20,15 @@ import { Course, materialFolders } from "../../../lib/courses";
 import { isNativeShell } from "../../../lib/mobile-bridge";
 import { openDocumentNatively } from "../../../lib/native-files";
 import type { User } from "../../../lib/portal-utils";
+import { LIVE_CLASS_INVALID_MESSAGE } from "../../../lib/live-class";
 import { emptyClassroom, type Note, type Tab } from "./classroom-utils";
 
 export function useClassroomHandlers(course: Course, user: User) {
   const [tab, setTab] = useState<Tab>("home");
   const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
   const [status, setStatus] = useState<Note>({ text: "", tone: "info" });
+  const [liveClassStatus, setLiveClassStatus] = useState<Note>({ text: "", tone: "info" });
+  const [liveClassInvalid, setLiveClassInvalid] = useState(false);
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
 
   const note = (text: string, tone: Note["tone"] = "info") => setStatus({ text, tone });
@@ -76,8 +80,10 @@ export function useClassroomHandlers(course: Course, user: User) {
       });
       formElement.reset();
       note("Publicado correctamente y notificado al curso.", "ok");
+      return true;
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");
+      return false;
     }
   };
 
@@ -99,16 +105,14 @@ export function useClassroomHandlers(course: Course, user: User) {
     }
   };
 
-  const editPost = async (post: ClassroomPost) => {
-    const title = window.prompt("Título de la publicación", post.title);
-    if (title === null) return;
-    const body = window.prompt("Contenido de la publicación", post.body);
-    if (body === null) return;
+  const editPost = async (post: ClassroomPost, values: { title: string; body: string }) => {
     try {
-      await editClassroomPost(course.id, post.id, { title, body });
+      await editClassroomPost(course.id, post.id, values);
       note("Publicación actualizada.", "ok");
+      return true;
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible modificarla.", "bad");
+      return false;
     }
   };
 
@@ -194,11 +198,53 @@ export function useClassroomHandlers(course: Course, user: User) {
     }
   };
 
+  // Implements: REQ-LIVE-01, REQ-LIVE-02, REQ-LIVE-05, REQ-LIVE-07
+  const saveLiveClass = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const value = String(new FormData(formElement).get("liveClassUrl") ?? "");
+    setLiveClassInvalid(false);
+    setLiveClassStatus({ text: "Guardando enlace…", tone: "info" });
+    try {
+      await saveLiveClassLink(course.id, value);
+      setLiveClassStatus({
+        text: value.trim() ? "Enlace de clase en vivo guardado." : "Enlace eliminado.",
+        tone: "ok",
+      });
+    } catch (cause) {
+      const message =
+        cause instanceof Error ? cause.message : "No se pudo guardar la clase en vivo.";
+      const invalid = message === LIVE_CLASS_INVALID_MESSAGE;
+      setLiveClassInvalid(invalid);
+      setLiveClassStatus({ text: message, tone: "bad" });
+      if (invalid) {
+        (formElement.elements.namedItem("liveClassUrl") as HTMLInputElement | null)?.focus();
+      }
+    }
+  };
+
+  // Implements: REQ-LIVE-05, REQ-LIVE-07
+  const clearLiveClass = async () => {
+    setLiveClassInvalid(false);
+    setLiveClassStatus({ text: "Quitando enlace…", tone: "info" });
+    try {
+      await saveLiveClassLink(course.id, "");
+      setLiveClassStatus({ text: "Enlace eliminado.", tone: "ok" });
+    } catch (cause) {
+      setLiveClassStatus({
+        text: cause instanceof Error ? cause.message : "No se pudo quitar la clase en vivo.",
+        tone: "bad",
+      });
+    }
+  };
+
   return {
     tab,
     setTab,
     classroom,
     status,
+    liveClassStatus,
+    liveClassInvalid,
     note,
     copiedCourseReference,
     canTeach,
@@ -218,5 +264,7 @@ export function useClassroomHandlers(course: Course, user: User) {
     moveFile,
     deleteFile,
     copyCourseReference,
+    saveLiveClass,
+    clearLiveClass,
   };
 }

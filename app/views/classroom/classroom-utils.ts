@@ -28,6 +28,7 @@ export const emptyClassroom: ClassroomState = {
   officialScores: {},
   simulation: {},
   classScores: {},
+  liveClass: null,
 };
 
 export function groupByFolder(course: Course, files: ClassroomFile[]) {

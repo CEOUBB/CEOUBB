@@ -15,6 +15,8 @@ import {
 } from "./mappers.ts";
 import { normalizeDueDate } from "../planner.ts";
 import { type GradeItem, type GradeScores, normalizeScores } from "../grades.ts";
+import { normalizeRichTextBody, safeLinkDestination } from "../rich-text.ts";
+import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 
 const ACTIVITY_LIMIT = 120;
 
@@ -42,6 +44,7 @@ export type ClassroomState = {
   officialScores: GradeScores;
   simulation: GradeScores;
   classScores: Record<string, GradeScores>;
+  liveClass: LiveClassLink | null;
 };
 
 export type CourseActivity = {
@@ -53,6 +56,7 @@ export type CourseActivity = {
   createdAt: string;
 };
 
+// Implements: REQ-LIVE-01, REQ-LIVE-05, REQ-LIVE-08
 export function watchClassroom(
   courseId: string,
   teaching: boolean,
@@ -92,6 +96,25 @@ export function watchClassroom(
           sdk.doc(db, "courses", courseId, "meta", "gradebook"),
           (snapshot) => onChange(toGradebookState(snapshot.exists() ? snapshot.data() : null)),
           () => onError("No se pudo cargar la ponderación del curso.")
+        )
+      );
+      stops.push(
+        sdk.onSnapshot(
+          sdk.doc(db, "courses", courseId, "meta", "live-class"),
+          (snapshot) => {
+            if (!snapshot.exists()) {
+              onChange({ liveClass: null });
+              return;
+            }
+            try {
+              const data = snapshot.data();
+              const liveClass = normalizeLiveClassUrl(String(data.url ?? ""));
+              onChange({ liveClass: liveClass?.provider === data.provider ? liveClass : null });
+            } catch {
+              onChange({ liveClass: null });
+            }
+          },
+          () => onError("No se pudo sincronizar la clase en vivo.")
         )
       );
       if (teaching) {
@@ -152,6 +175,32 @@ export function watchClassroom(
     active = false;
     for (const stop of stops) stop();
   };
+}
+
+// Implements: REQ-LIVE-01, REQ-LIVE-02, REQ-LIVE-05
+export async function saveLiveClassLink(courseId: string, value: string) {
+  const liveClass = normalizeLiveClassUrl(value);
+  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
+  const reference = sdk.doc(db, "courses", courseId, "meta", "live-class");
+
+  try {
+    if (!liveClass) {
+      await sdk.deleteDoc(reference);
+      return;
+    }
+    await sdk.setDoc(reference, {
+      courseId,
+      ...liveClass,
+      updatedBy: user.uid,
+      updatedAt: sdk.serverTimestamp(),
+    });
+  } catch (cause) {
+    const code = typeof cause === "object" && cause && "code" in cause ? cause.code : "";
+    if (code === "permission-denied") {
+      throw new Error("No tienes permiso para editar esta clase en vivo.", { cause });
+    }
+    throw new Error("No se pudo guardar la clase en vivo. Inténtalo nuevamente.", { cause });
+  }
 }
 
 /** Normaliza la lista de secciones a escuchar: sin duplicados y con techo. */
@@ -241,12 +290,17 @@ export async function publishClassroomPost(
   }
 ) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
-  const linkUrl = input.linkUrl.trim();
+  const rawLinkUrl = input.linkUrl.trim();
+  const linkUrl = rawLinkUrl ? safeLinkDestination(rawLinkUrl) : "";
+  if (rawLinkUrl && (!linkUrl || !/^https?:\/\//i.test(linkUrl))) {
+    throw new Error("El enlace debe usar http:// o https://.");
+  }
+  const body = normalizeRichTextBody(input.body);
   await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
     ...authorFields(user),
     courseId,
     title: input.title.trim(),
-    body: input.body.trim(),
+    body,
     kind: postKind(input.kind),
     folder: folderName(input.folder),
     dueDate: normalizeDueDate(input.dueDate),
@@ -266,8 +320,8 @@ export async function editClassroomPost(
 ) {
   const { sdk, db } = await firestore();
   await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
-    title: values.title,
-    body: values.body,
+    title: values.title.trim(),
+    body: normalizeRichTextBody(values.body),
   });
 }
 
