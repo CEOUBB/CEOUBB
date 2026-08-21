@@ -9,6 +9,7 @@ import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { fileExtension, formatBytes, formatDate, type User } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { groupByFolder, type Note } from "./classroom-utils";
+import { RichPostEditor } from "./RichPostEditor";
 
 export function MaterialsSection({
   course,
@@ -27,7 +28,7 @@ export function MaterialsSection({
   files: ClassroomFile[];
   user: User;
   canTeach: boolean;
-  publish: (event: FormEvent<HTMLFormElement>) => void;
+  publish: (event: FormEvent<HTMLFormElement>) => Promise<boolean>;
   upload: (event: FormEvent<HTMLFormElement>) => void;
   openFile: (file: ClassroomFile) => void;
   renameFile: (file: ClassroomFile) => void;
@@ -38,6 +39,11 @@ export function MaterialsSection({
   const folders = useMemo(() => groupByFolder(course, files), [course, files]);
   const mobile = useIsMobileApp();
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [postBody, setPostBody] = useState("");
+
+  const publishPost = async (event: FormEvent<HTMLFormElement>) => {
+    if (await publish(event)) setPostBody("");
+  };
 
   /* El panel docente ocupa una columna entera: en móvil no cabe al lado del
      listado, así que se guarda tras un botón y sube como hoja arrastrable. */
@@ -48,7 +54,7 @@ export function MaterialsSection({
           <option key={folder} value={folder} />
         ))}
       </datalist>
-      <form onSubmit={publish}>
+      <form onSubmit={publishPost}>
         <label>
           Título
           <input name="title" required />
@@ -66,10 +72,7 @@ export function MaterialsSection({
           Carpeta
           <input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
         </label>
-        <label>
-          Mensaje
-          <textarea name="body" rows={4} required />
-        </label>
+        <RichPostEditor name="body" onChange={setPostBody} required value={postBody} />
         <label>
           Enlace Drive opcional
           <input name="linkUrl" type="url" placeholder="https://…" />
