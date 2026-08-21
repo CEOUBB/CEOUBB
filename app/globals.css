@@ -2764,6 +2764,7 @@ img {
   display: grid;
   gap: 8px;
   min-width: 0;
+  container-type: inline-size;
 }
 
 .rich-editor-heading {
@@ -2830,6 +2831,368 @@ img {
   margin: 0;
   color: var(--text-faint);
   font-size: 14px;
+}
+
+.editor-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--canvas-soft);
+  overflow: hidden;
+}
+
+.editor-tabs button {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 0;
+  border-right: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-tabs button:last-child {
+  border-right: 0;
+}
+
+.editor-tabs button::after {
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  content: "";
+}
+
+.editor-tabs button[aria-selected="true"] {
+  background: var(--surface-card);
+  color: var(--text-body);
+}
+
+.editor-tabs button[aria-selected="true"]::after {
+  background: var(--color-primary);
+}
+
+.editor-tabs button strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-tabs button span {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 450;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-tabs button:focus-visible,
+.editor-toolbar button:focus-visible,
+.editor-visual-canvas:focus-visible,
+.editor-source:focus-visible,
+.multimodal-editor-workspace:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
+}
+
+.multimodal-editor-workspace {
+  display: grid;
+  min-width: 0;
+  border: 1px solid var(--border-hairline);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.editor-compose-pane {
+  min-width: 0;
+  background: var(--surface-card);
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 4px 7px;
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--canvas-soft);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.editor-toolbar button {
+  display: inline-flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.editor-toolbar button:hover {
+  border-color: var(--border-hairline);
+  background: var(--surface-card);
+  color: var(--text-body);
+}
+
+.editor-toolbar button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--border-hairline));
+  background: color-mix(in srgb, var(--color-primary) 9%, white);
+  color: var(--color-primary);
+}
+
+.editor-visual-canvas,
+.editor-source {
+  width: 100%;
+  min-height: 270px;
+  margin: 0;
+  padding: 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 15px;
+  line-height: 1.65;
+  caret-color: var(--color-primary);
+  resize: vertical;
+  scroll-margin-block: 72px;
+}
+
+.editor-visual-canvas {
+  overflow: auto;
+  font-family: var(--font-core);
+}
+
+.editor-visual-canvas:empty::before {
+  color: var(--text-faint);
+  content: "Comienza a redactar o pega contenido desde Word…";
+  pointer-events: none;
+}
+
+.editor-visual-canvas p,
+.editor-visual-canvas blockquote,
+.editor-visual-canvas pre,
+.editor-visual-canvas table,
+.editor-visual-canvas aside {
+  margin: 0 0 14px;
+}
+
+.editor-visual-canvas h1,
+.editor-visual-canvas h2,
+.editor-visual-canvas h3,
+.editor-visual-canvas h4,
+.editor-visual-canvas h5,
+.editor-visual-canvas h6 {
+  margin: 20px 0 10px;
+  color: var(--text-body);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.editor-visual-canvas blockquote {
+  padding-left: 14px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--text-secondary);
+}
+
+.editor-visual-canvas pre {
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-navy);
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.editor-visual-canvas table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.editor-visual-canvas td,
+.editor-visual-canvas th {
+  min-width: 112px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-hairline);
+}
+
+.editor-visual-canvas tr:first-child td,
+.editor-visual-canvas th {
+  background: var(--canvas-soft);
+  font-weight: 650;
+}
+
+.editor-visual-canvas aside[data-callout] {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--border-hairline));
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 5%, white);
+}
+
+.editor-visual-canvas aside[data-callout] p:last-child {
+  margin-bottom: 0;
+}
+
+.editor-latex-token {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas-soft);
+  color: var(--brand-navy);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}
+
+.editor-latex-token::before,
+.editor-latex-token::after {
+  content: "$";
+}
+
+div.editor-latex-token::before,
+div.editor-latex-token::after {
+  content: "$$";
+}
+
+div.editor-latex-token {
+  display: block;
+  margin: 12px 0;
+  padding: 10px;
+  text-align: center;
+}
+
+.editor-source {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  tab-size: 2;
+  white-space: pre-wrap;
+}
+
+.editor-source-html {
+  background: color-mix(in srgb, var(--canvas-soft) 58%, white);
+  color: var(--brand-navy);
+}
+
+.editor-source::placeholder {
+  color: var(--text-faint);
+}
+
+.multimodal-editor .rich-editor-preview {
+  align-content: start;
+  min-width: 0;
+  min-height: 170px;
+  padding: 16px 18px 20px;
+  border: 0;
+  border-top: 1px solid var(--border-hairline);
+  border-radius: 0;
+  background: var(--canvas-soft);
+}
+
+.editor-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.editor-preview-heading strong {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-preview-heading span {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.editor-form-value {
+  resize: none;
+}
+
+@container (min-width: 720px) {
+  .multimodal-editor-workspace {
+    grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  }
+
+  .multimodal-editor .rich-editor-preview {
+    border-top: 0;
+    border-left: 1px solid var(--border-hairline);
+  }
+}
+
+@media (max-width: 520px) {
+  .editor-tabs button {
+    min-height: 48px;
+    padding-inline: 8px;
+    text-align: center;
+  }
+
+  .editor-tabs button span {
+    display: none;
+  }
+
+  .editor-toolbar {
+    padding-inline: 4px;
+  }
+
+  .editor-toolbar button {
+    flex-basis: 44px;
+    width: 44px;
+  }
+
+  .editor-visual-canvas,
+  .editor-source {
+    min-height: 240px;
+    padding: 14px;
+    font-size: 16px;
+  }
+}
+
+@media (forced-colors: active) {
+  .editor-tabs button[aria-selected="true"],
+  .editor-toolbar button[aria-pressed="true"] {
+    border: 2px solid Highlight;
+  }
 }
 
 .post-edit-form {
