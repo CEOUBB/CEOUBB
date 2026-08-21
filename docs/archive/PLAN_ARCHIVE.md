@@ -730,3 +730,29 @@ Next recommended action: activar la cuenta pagada antes del fin de la prueba y e
 ### Próximo paso recomendado
 
 Consumir `AcademicContentRenderer` desde los tres modos del editor de CEO-59 y desde las publicaciones del aula, conservando el mismo contrato de formato y sanitización.
+
+## 2026-08-20: CEO-61 — retrocompatibilidad y paridad móvil de publicaciones
+
+Date: 2026-08-20
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-61-testclassroom-retrocompatibilidad-de-publicaciones-seguridad` / commit de esta PR
+
+Goal: preservar publicaciones históricas de texto plano y entregar tablas Markdown seguras con paridad de layout entre el portal web y la WebView remota de Capacitor Android.
+
+Files changed: `lib/rich-text.ts`, `app/views/classroom/RichText.tsx`, `app/globals.css`, `tests/rich-text.test.ts`, `openspec/specs/classroom/rich-posts/spec.md`, `docs/specs/p16-classroom-retrocompatibility-mobile-parity.md`, `.agents/.test-hashes.json`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: CEO-61 consultado y actualizado en Linear; PR [#57](https://github.com/CEOUBB/CEOUBB/pull/57) creado en GitHub; sin cambios en Firebase, Turso, Vercel ni producción.
+
+Checks passed: prueba focalizada de rich text (9/9); `pnpm run verify:fast` (201/201, hashes de 24 archivos y 9/9 specs OpenSpec); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm run test:unit` (201/201); `pnpm test` (build Next.js 16.3 y 226/226); QA Chromium a 360×800 sin overflow global ni errores de consola.
+
+Checks not run: gesto horizontal en dispositivo Android físico; la paridad móvil se verificó mediante el componente remoto compartido, contratos CSS y viewport móvil de Chromium.
+
+Production deployed: no.
+
+Known risks: el comportamiento táctil final depende del motor WebView presente en el dispositivo; debe confirmarse sobre Android después de disponer del preview. No hay deuda nueva de escala porque el cambio es lineal sobre el body acotado y no agrega consultas ni listeners.
+
+Next recommended action: revisar y fusionar la PR; después desplegar el bundle y ejecutar el smoke test físico con una tabla de seis columnas, una línea de código extensa y una fórmula KaTeX ancha.
