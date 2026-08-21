@@ -13,6 +13,7 @@ import { GradesSection } from "./GradesSection";
 import { ProgressSection } from "./ProgressSection";
 import { PeopleSection } from "./PeopleSection";
 import { LiveClassSection } from "./LiveClassSection";
+import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 
 export function ClassroomView({
@@ -59,6 +60,7 @@ export function ClassroomView({
       className="classroom-layout"
       style={{ "--course-tone": course.tone } as React.CSSProperties}
     >
+      <RichTextAssets />
       <main className="classroom-main">
         <header className="classroom-top">
           <div>

@@ -15,6 +15,7 @@ import {
 } from "./mappers.ts";
 import { normalizeDueDate } from "../planner.ts";
 import { type GradeItem, type GradeScores, normalizeScores } from "../grades.ts";
+import { normalizeRichTextBody, safeLinkDestination } from "../rich-text.ts";
 import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 
 const ACTIVITY_LIMIT = 120;
@@ -289,12 +290,17 @@ export async function publishClassroomPost(
   }
 ) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
-  const linkUrl = input.linkUrl.trim();
+  const rawLinkUrl = input.linkUrl.trim();
+  const linkUrl = rawLinkUrl ? safeLinkDestination(rawLinkUrl) : "";
+  if (rawLinkUrl && (!linkUrl || !/^https?:\/\//i.test(linkUrl))) {
+    throw new Error("El enlace debe usar http:// o https://.");
+  }
+  const body = normalizeRichTextBody(input.body);
   await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
     ...authorFields(user),
     courseId,
     title: input.title.trim(),
-    body: input.body.trim(),
+    body,
     kind: postKind(input.kind),
     folder: folderName(input.folder),
     dueDate: normalizeDueDate(input.dueDate),
@@ -314,8 +320,8 @@ export async function editClassroomPost(
 ) {
   const { sdk, db } = await firestore();
   await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
-    title: values.title,
-    body: values.body,
+    title: values.title.trim(),
+    body: normalizeRichTextBody(values.body),
   });
 }
 
