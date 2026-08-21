@@ -1,6 +1,6 @@
 # Centro de Estudio UBB: Plan y Agent Handoff
 
-Last verified 2026-08-20 · baseline `6044074` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
+Last verified 2026-08-21 · baseline `455b03b` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
 **Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment and verification.
 
@@ -17,6 +17,7 @@ Companion files:
 - [`DESIGN.md`](DESIGN.md): Fuente canónica del sistema de diseño institucional, tokens de color y tipografía.
 - [`docs/archive/PLAN_ARCHIVE.md`](docs/archive/PLAN_ARCHIVE.md): completed work, implemented milestones, full handoff history.
 - [`docs/institutional/moodle-adecca-comparison.md`](docs/institutional/moodle-adecca-comparison.md): Moodle & Adecca institutional comparison and adoption dossier.
+- [`docs/operations/capacity-cost-baseline.md`](docs/operations/capacity-cost-baseline.md): CEO-9, envolvente de 12.000 estudiantes, 3.000 secciones y 3.000 concurrentes; modelo CLP 450 base / CLP 1.000 techo por estudiante-año; SLO, RPO/RTO y protocolo de evidencia.
 - [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md): P0.1-P0.11 detail and acceptance criteria.
 - [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md): P0B.1-P0B.7 institutional adoption dossier.
 - [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md): React Doctor quality & frontend reliability remediation spec (SDD).
@@ -35,6 +36,7 @@ Companion files:
 - [`docs/specs/p11-ui-ux-deliberate-remediation.md`](docs/specs/p11-ui-ux-deliberate-remediation.md): UI/UX Deliberate Quality Remediation, Manrope/Merriweather Typography SSOT & Layout Performance spec (SDD).
 - [`docs/specs/p16-classroom-retrocompatibility-mobile-parity.md`](docs/specs/p16-classroom-retrocompatibility-mobile-parity.md): CEO-61, contrato verificado de retrocompatibilidad de avisos históricos, tablas Markdown seguras y overflow técnico local en Web/Capacitor.
 - [`openspec/specs/classroom/rich-posts/spec.md`](openspec/specs/classroom/rich-posts/spec.md): CEO-55, especificación viva de publicaciones técnicas seguras con Markdown, código, KaTeX y vista previa compartida en web/Android; cambio archivado en [`2026-08-20-add-rich-classroom-posts`](openspec/changes/archive/2026-08-20-add-rich-classroom-posts/proposal.md).
+- [`openspec/specs/operations/capacity-cost/spec.md`](openspec/specs/operations/capacity-cost/spec.md): CEO-9, contrato operativo de capacidad, costo unitario y continuidad; objetivos pendientes de carga y restauración en staging.
 - [`openspec/specs/editor/multimodal-authoring/spec.md`](openspec/specs/editor/multimodal-authoring/spec.md): CEO-59, contrato vivo del editor académico sincronizado en modos Visual, Markdown + LaTeX y HTML libre; cambio archivado en [`2026-08-20-add-multimodal-academic-editor`](openspec/changes/archive/2026-08-20-add-multimodal-academic-editor/proposal.md).
 - [`docs/specs/p15-publication-wizard.md`](docs/specs/p15-publication-wizard.md): CEO-60, contrato verificado para el wizard docente de tres pasos, split-button, preferencia local y alertas silenciosas; capacidad viva [`classroom/publication-wizard`](openspec/specs/classroom/publication-wizard/spec.md) y cambio archivado [`2026-08-20-add-publication-wizard`](openspec/changes/archive/2026-08-20-add-publication-wizard/proposal.md).
 - **Discord AI Bridges & Automation Suite** (Implemented 2026-08-14 / 2026-08-15): Inyección de contexto histórico del canal en bridges locales, persistencia de sesiones en disco (`.cache/`), ejecución de comandos `/doctor`, `/review-pr` y webhook de CI/CD en `app/api/webhooks/github/route.ts`. **Asistente Cloud 24/7 en Vercel Serverless** implementado en `app/api/discord/interactions/route.ts`: soporta comando `/gemini` (y `/consultar`) con respuesta diferida (`type: 5`), inyección de contexto en vivo (`AGENTS.md`, `PLAN.md`, `design-ceoubb.md`), _Function Calling_ nativo hacia Linear (`LINEAR_API_KEY`) y GitHub (`GITHUB_TOKEN`), y script de registro global/guild `scripts/register-discord-commands.js`. 37/37 unit tests pasados, `pnpm run typecheck`, `pnpm run lint` y `next build` limpios.
@@ -117,7 +119,7 @@ Companion files:
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore export, Turso backup, stated RPO/RTO (P0.8). Sharpest risk in the repository. Firebase, Turso, `firebase/functions/`
 - [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as merge gate (P0.10). `tests/`, `firebase/`
 - [NEXT] Staging Firebase project and seeded emulator dataset (P0.11). Every deploy instruction targets production today. Firebase, `firebase/`
-- [NEXT] Define and record the P0.7 capacity and cost targets, then load-check against them. Without numbers, "production-ready" is untestable. `docs/specs/p0-pilot-safety.md`, Google Cloud billing
+- [NEXT] Demostrar P0.7 en staging: 3.000 sesiones concurrentes por 30 minutos, apertura inicial ≤ 200 lecturas Firestore, p95 ≤ 2 s, 5xx < 0,1%, costo anualizado ≤ CLP 1.000 por estudiante y simulacro RPO 1 h / RTO 4 h. Los objetivos y el modelo ya están definidos por CEO-9; todavía no son garantías. `docs/operations/capacity-cost-baseline.md`, staging, billing export
 - [NEXT] Run the production authentication, Storage and notification test matrix (P0.1-P0.3). Web, Android, Firebase
 - [NEXT] Configure App Check rollout (P0.5). Firebase
 - [BLOCKED] Project owner: **written authorization for an institutional pilot** with one departamento or carrera: named academic sponsor, one semester, real students, signed data-processing annex. No agent can do this; every adoption item depends on it. UBB (DTI, VRA, jurídica)
@@ -151,7 +153,7 @@ Detail and remediation live in the spec files; this is the index.
 - **No backups, no proven restore**: no Firestore export, no Turso backup, no restore ever performed. -> P0.8
 - **Consumer identity and personal-account superusers**: two hardcoded Gmail owners across web, both rules files and the Android service. -> P0B.1
 - **Single environment, no CI**: one Firebase project, deploys go straight to it, rules have no emulator tests. -> P0.10, P0.11
-- **No capacity or cost model**: "production-ready" is untestable and cost per student does not exist. -> P0.7
+- **Capacity targets are defined but not demonstrated**: CEO-9 fija 12.000 estudiantes, 3.000 secciones, 3.000 concurrentes, CLP 450 base / CLP 1.000 techo y RPO 1 h / RTO 4 h. Falta la prueba de carga, el costo pagado medido y el simulacro de restauración en staging. -> P0.7, P0.8
 - **Governance and continuity**: personal Firebase/Vercel/Turso accounts, no license, no data-processing agreement, no accessibility statement, no external pentest, bus factor of two. -> P0B.6
 - **Account deletion compliance gap**: backend Function and Android invocation exist; the public `/eliminar-cuenta` route was removed from the web UI. -> P0.6
 - **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles and the native bridge differ. Academic corrections may reach only one platform. Needs a content-sync script that copies portable content and verifies hashes without overwriting native-only behaviour.
@@ -172,7 +174,7 @@ Detail and remediation live in the spec files; this is the index.
 4. P0.5 before inviting a larger beta group; P0.4 billing alerts are configured.
 5. P0.6 and the `/privacidad` grade update, before store submission or real grades, whichever comes first.
 6. Grade audit trail (P0.9).
-7. Define P0.7 targets, then build the academic data model against them. Course identity lands first; enrollment-gated rules land with it.
+7. Ejecutar la prueba P0.7 contra los objetivos ya definidos por CEO-9 y cerrar el simulacro P0.8; la identidad de sección y las reglas por matrícula ya forman la base del conjunto de datos.
 8. Finish the Google Play testing/submission path.
 9. Decide and begin the iOS architecture in a separate workstream.
 
@@ -254,4 +256,4 @@ Next recommended action:
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
-In parallel, the owner starts P0B.7 item 1 (pilot authorization) and fills in the P0.7 capacity and cost targets.
+In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging and schedules the P0.7 load test plus the P0.8 restoration drill against the published targets.
