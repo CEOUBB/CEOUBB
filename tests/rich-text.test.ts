@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import {
+  CLASSROOM_COMPATIBILITY_REQUIREMENTS,
   RICH_TEXT_MAX_LENGTH,
   RICH_TEXT_REQUIREMENTS,
   highlightCode,
@@ -18,13 +19,44 @@ function inlineText(nodes: RichInline[]): string {
 }
 
 test("plain-text legacy posts preserve content and line breaks", () => {
-  const blocks = parseRichText("Primera linea\nSegunda linea\n\nParrafo final");
+  const blocks = parseRichText("Primera linea\r\nSegunda linea\r\n\r\nParrafo final");
   assert.equal(blocks.length, 2);
   assert.equal(blocks[0].type, "paragraph");
   assert.equal(blocks[1].type, "paragraph");
   if (blocks[0].type !== "paragraph" || blocks[1].type !== "paragraph") return;
   assert.equal(inlineText(blocks[0].content), "Primera linea\nSegunda linea");
   assert.equal(inlineText(blocks[1].content), "Parrafo final");
+});
+
+test("six-column Markdown tables stay semantic and preserve safe inline content", () => {
+  const blocks = parseRichText(`| Ramo | Sección | Sala | Horario | Recurso | Nota |
+| :--- | :---: | ---: | --- | --- | --- |
+| Estática | 1 | AB-201 | 10:00 | [sitio](https://ubiobio.cl) | \`a|b\` |
+| Cálculo | 2 | AB-202 | 12:00 | [riesgo](javascript:alert(1)) | <img onerror=alert(2)> |`);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, "table");
+  if (blocks[0].type !== "table") return;
+
+  assert.equal(blocks[0].header.length, 6);
+  assert.equal(blocks[0].rows.length, 2);
+  assert.ok(blocks[0].rows.every((row) => row.length === 6));
+  assert.deepEqual(blocks[0].alignments, ["left", "center", "right", null, null, null]);
+  assert.equal(inlineText(blocks[0].rows[0][5]), "a|b");
+  assert.match(inlineText(blocks[0].rows[1][5]), /<img onerror=alert\(2\)>/);
+
+  const safeLink = blocks[0].rows[0][4].find((node) => node.type === "link");
+  const unsafeLink = blocks[0].rows[1][4].find((node) => node.type === "link");
+  assert.equal(safeLink?.type === "link" ? safeLink.href : undefined, "https://ubiobio.cl");
+  assert.equal(unsafeLink?.type === "link" ? unsafeLink.href : undefined, null);
+});
+
+test("invalid table syntax falls back to plain text without dropping content", () => {
+  const source = "| Columna A | Columna B |\n| -- | --- |\nTexto posterior";
+  const blocks = parseRichText(source);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, "paragraph");
+  if (blocks[0].type === "paragraph") assert.equal(inlineText(blocks[0].content), source);
 });
 
 test("fenced code normalizes and highlights every required language", () => {
@@ -103,6 +135,38 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   assert.match(capacitorSource, /https:\/\/ceoubb\.com/);
 });
 
+test("academic prose confines technical overflow for web and Android", () => {
+  const rendererSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/RichText.tsx"),
+    "utf8"
+  );
+  const cssSource = fs.readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
+
+  assert.match(rendererSource, /className=\{`academic-prose rich-text /);
+  assert.match(rendererSource, /className="rich-table-scroll"/);
+  assert.match(rendererSource, /role="region"/);
+  assert.match(rendererSource, /<table className="num">/);
+  assert.doesNotMatch(rendererSource, /dangerouslySetInnerHTML/);
+
+  assert.match(cssSource, /\.post-list article > div\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(
+    cssSource,
+    /\.rich-table-scroll\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?overflow-x:\s*auto;[\s\S]*?overscroll-behavior-inline:\s*contain;[\s\S]*?touch-action:\s*pan-x pan-y;/
+  );
+  assert.match(
+    cssSource,
+    /\.rich-code pre\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?overflow-x:\s*auto;[\s\S]*?overscroll-behavior-inline:\s*contain;[\s\S]*?touch-action:\s*pan-x pan-y;/
+  );
+  assert.match(
+    cssSource,
+    /\.rich-math-display\s*\{[\s\S]*?overflow-x:\s*auto;[\s\S]*?overscroll-behavior-inline:\s*contain;[\s\S]*?touch-action:\s*pan-x pan-y;/
+  );
+  assert.match(
+    cssSource,
+    /\.rich-math-inline\s*\{[\s\S]*?overflow-x:\s*auto;[\s\S]*?overscroll-behavior-inline:\s*contain;[\s\S]*?touch-action:\s*pan-x pan-y;/
+  );
+});
+
 test("inline and display formulas share the parsed document model", () => {
   const blocks = parseRichText("Equilibrio: $\\sum F_x = 0$.\n\n$$\\int_0^L w(x)\\,dx$$");
   assert.equal(blocks.length, 2);
@@ -129,5 +193,11 @@ test("new editor limit and traceability contract stay explicit", () => {
   assert.equal(RICH_TEXT_REQUIREMENTS.length, 7);
   assert.ok(
     RICH_TEXT_REQUIREMENTS.every((requirement) => requirement.startsWith("Implements: REQ-RICH-"))
+  );
+  assert.equal(CLASSROOM_COMPATIBILITY_REQUIREMENTS.length, 6);
+  assert.ok(
+    CLASSROOM_COMPATIBILITY_REQUIREMENTS.every((requirement) =>
+      requirement.startsWith("Implements: REQ-CEO61-")
+    )
   );
 });
