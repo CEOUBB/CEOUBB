@@ -694,6 +694,43 @@ Known risks: las alertas no cortan gasto y los costos pueden demorar varias hora
 
 Next recommended action: activar la cuenta pagada antes del fin de la prueba y ejecutar P0.5 App Check antes de ampliar la beta.
 
+## 2026-08-20 — CEO-58: motor de renderizado multimodal académico
+
+### Contexto y responsable
+
+- Humano: Juako.
+- Agente: Codex.
+- Rama: `elpapijuaco325/ceo-58-feateditor-motor-de-renderizado-multimodal-con-soporte-katex`.
+- Pull request: [#55](https://github.com/CEOUBB/CEOUBB/pull/55), no borrador; Linear CEO-58 en `In Review`.
+- Objetivo: entregar `<AcademicContentRenderer />` para Markdown con LaTeX y HTML enriquecido seguro, sin FOUC, con código científico copiable y callouts institucionales.
+
+### Cambios realizados
+
+- Pipeline SSR determinista en `lib/academic-content.ts` con Unified/Remark/Rehype, sanitización AST previa a transformaciones confiables y salida común para Markdown o HTML.
+- KaTeX inline y de bloque con MathML y hoja de estilos cargada desde el layout inicial; JetBrains Mono se integra mediante `next/font`.
+- Highlighting acotado sin autodetección para Python, MATLAB, C, SQL y R; lenguajes desconocidos degradan a texto escapado.
+- `AcademicContentRenderer` mantiene el render inicial del servidor y delega sólo la acción de copia a un boundary cliente accesible con botón nativo y `aria-live`.
+- `.academic-prose` incorpora callouts `callout-notice` y `callout-assessment`, tablas con overflow local, ecuaciones responsivas, código, foco y reglas de impresión.
+- Spec OpenSpec `content/academic-rendering` y nueve pruebas focales con test-locking SHA-256.
+
+### Verificación
+
+- `pnpm run verify:fast`: 200/200 tras integrar `origin/main`.
+- `pnpm run verify:invariants`: 31/31.
+- `pnpm run lint`, `pnpm run typecheck` y `pnpm run format:check`: limpios.
+- `pnpm test`: build de Next.js 16.3.0 y 225/225 pruebas.
+- QA en navegador a 1280×900 y 375×812: KaTeX y CSS presentes en el HTML inicial, sin delimitadores LaTeX visibles, sin overflow global ni errores de consola; tabla, callouts, código y confirmación de copia verificados.
+
+### Estado operativo y riesgos
+
+- No hubo despliegue ni cambios de datos, Firebase, autenticación o políticas de acceso.
+- El costo de render es proporcional al contenido y no abre consultas ni listeners; la integración del renderer en el futuro editor pertenece a CEO-59/CEO-60.
+- `pnpm peers check` conserva una incompatibilidad preexistente entre ESLint 9 y `@eslint/js` 10; no afecta lint, build ni pruebas de este cambio.
+
+### Próximo paso recomendado
+
+Consumir `AcademicContentRenderer` desde los tres modos del editor de CEO-59 y desde las publicaciones del aula, conservando el mismo contrato de formato y sanitización.
+
 ## 2026-08-20: CEO-61 — retrocompatibilidad y paridad móvil de publicaciones
 
 Date: 2026-08-20

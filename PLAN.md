@@ -1,6 +1,6 @@
 # Centro de Estudio UBB: Plan y Agent Handoff
 
-Last verified 2026-08-20 · baseline `5350073` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
+Last verified 2026-08-20 · baseline `6044074` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
 **Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment and verification.
 

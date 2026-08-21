@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Merriweather } from "next/font/google";
+import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 import "./mobile-shell.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -68,7 +75,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className={`${manrope.variable} ${merriweather.variable}`} lang="es">
+    <html
+      className={`${manrope.variable} ${merriweather.variable} ${jetBrainsMono.variable}`}
+      lang="es"
+    >
       <body>{children}</body>
     </html>
   );
