@@ -21,4 +21,4 @@
 - [x] 4.1 Ejecutar `pnpm run verify:fast`, `pnpm run verify:invariants`, `pnpm run lint`, `pnpm run format:check` y `pnpm test`.
 - [x] 4.2 Ejecutar React Doctor sobre el alcance cambiado y recorrer escritorio/móvil sin overflow ni errores.
 - [x] 4.3 Actualizar `PLAN.md`, marcar la spec histórica `VERIFICADA` y archivar el delta OpenSpec.
-- [ ] 4.4 Crear commit y PR en español; adjuntar el PR a CEO-60 y actualizar el issue.
+- [x] 4.4 Crear commit y PR en español; adjuntar el PR a CEO-60 y actualizar el issue.
