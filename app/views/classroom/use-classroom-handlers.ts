@@ -69,6 +69,7 @@ export function useClassroomHandlers(course: Course, user: User) {
     note("Publicando…");
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
+    const notifyStudents = String(form.get("notificationMode")) !== "silent";
     try {
       await publishClassroomPost(course.id, {
         title: String(form.get("title") ?? ""),
@@ -77,9 +78,15 @@ export function useClassroomHandlers(course: Course, user: User) {
         folder: String(form.get("folder") ?? ""),
         linkUrl: String(form.get("linkUrl") ?? ""),
         dueDate: String(form.get("dueDate") ?? ""),
+        notifyStudents,
       });
       formElement.reset();
-      note("Publicado correctamente y notificado al curso.", "ok");
+      note(
+        notifyStudents
+          ? "Publicado correctamente y notificado al curso."
+          : "Publicado correctamente sin enviar alertas.",
+        "ok"
+      );
       return true;
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");

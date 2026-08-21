@@ -1,11 +1,11 @@
 "use client";
 
 import { MultimodalEditor } from "./MultimodalEditor";
-import type { EditorMode } from "../../../lib/multimodal-editor";
+import type { EditorMode } from "../../../lib/publication-workflow";
 import { RICH_TEXT_MAX_LENGTH } from "../../../lib/rich-text";
 
 export function RichPostEditor({
-  editorMode,
+  editorMode = "visual",
   label = "Mensaje",
   name,
   onChange,
