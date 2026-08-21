@@ -1,6 +1,7 @@
 # editor/multimodal-authoring Specification
 
 ## Purpose
+
 TBD - created by archiving change add-multimodal-academic-editor. Update Purpose after archive.
 
 ## Requirements

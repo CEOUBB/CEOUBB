@@ -2545,6 +2545,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .post-kind {
@@ -2678,6 +2679,8 @@ img {
 }
 
 .rich-code {
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid #243247;
   border-radius: var(--radius-md);
@@ -2700,6 +2703,10 @@ img {
   margin: 0;
   padding: 14px;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
   color: #e2e8f0;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -2741,13 +2748,22 @@ img {
 }
 .rich-math-inline {
   display: inline-block;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-inline: 2px;
+  overscroll-behavior-inline: contain;
+  touch-action: pan-x pan-y;
   vertical-align: middle;
+  -webkit-overflow-scrolling: touch;
 }
 .rich-math-display {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 6px 2px;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 .rich-math:empty::before {
   content: attr(data-source);
@@ -2756,8 +2772,66 @@ img {
 }
 .rich-math .katex-display {
   margin: 0;
+}
+
+.rich-table-scroll {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rich-table-scroll table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rich-table-scroll th,
+.rich-table-scroll td {
+  min-width: 9rem;
+  padding: 9px 12px;
+  border-right: 1px solid var(--border-hairline);
+  border-bottom: 1px solid var(--border-hairline);
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.rich-table-scroll th:last-child,
+.rich-table-scroll td:last-child {
+  border-right: 0;
+}
+
+.rich-table-scroll tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rich-table-scroll th {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+  font-weight: 600;
+}
+
+.rich-table-align-center {
+  text-align: center !important;
+}
+
+.rich-table-align-right {
+  text-align: right !important;
+}
+
+.rich-table-align-left {
+  text-align: left !important;
 }
 
 .rich-editor {

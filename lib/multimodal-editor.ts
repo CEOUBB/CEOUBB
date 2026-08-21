@@ -116,6 +116,28 @@ function renderBlock(block: RichBlock): string {
   if (block.type === "code")
     return `<pre><code data-language="${escapeHtml(block.language)}">${escapeHtml(block.value)}</code></pre>`;
   if (block.type === "math") return `<div data-latex="display">${escapeHtml(block.value)}</div>`;
+  if (block.type === "table") {
+    const headCells = block.header
+      .map((cell, index) => {
+        const align = block.alignments[index];
+        const alignAttr = align ? ` align="${align}"` : "";
+        return `<th${alignAttr}>${renderInline(cell)}</th>`;
+      })
+      .join("");
+    const bodyRows = block.rows
+      .map((row) => {
+        const cells = row
+          .map((cell, index) => {
+            const align = block.alignments[index];
+            const alignAttr = align ? ` align="${align}"` : "";
+            return `<td${alignAttr}>${renderInline(cell)}</td>`;
+          })
+          .join("");
+        return `<tr>${cells}</tr>`;
+      })
+      .join("");
+    return `<table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  }
   const tag = block.ordered ? "ol" : "ul";
   return `<${tag}>${block.items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
 }

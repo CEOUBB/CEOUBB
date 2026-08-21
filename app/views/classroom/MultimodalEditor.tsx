@@ -34,6 +34,7 @@ import { RICH_TEXT_MAX_LENGTH, safeLinkDestination } from "../../../lib/rich-tex
 import { RichText } from "./RichText";
 
 type MultimodalEditorProps = {
+  initialMode?: EditorMode;
   label?: string;
   maxLength?: number;
   name: string;
@@ -444,6 +445,7 @@ function EditorPreview({ value }: { value: string }) {
 }
 
 function useMultimodalEditorController({
+  initialMode = "visual",
   label = "Mensaje",
   maxLength = RICH_TEXT_MAX_LENGTH,
   name,
@@ -455,7 +457,7 @@ function useMultimodalEditorController({
   const visualRef = useRef<HTMLDivElement>(null);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
   const lastEmittedRef = useRef(value);
-  const [mode, setMode] = useState<EditorMode>("visual");
+  const [mode, setMode] = useState<EditorMode>(initialMode);
   const [htmlDraft, setHtmlDraft] = useState(() => markdownToEditorHtml(value));
   const pendingVisualHtmlRef = useRef(htmlDraft);
   const visualOriginHtmlRef = useRef(htmlDraft);
