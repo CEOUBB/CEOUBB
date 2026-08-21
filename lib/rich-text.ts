@@ -10,6 +10,15 @@ export const RICH_TEXT_REQUIREMENTS = [
   "Implements: REQ-RICH-07",
 ] as const;
 
+export const CLASSROOM_COMPATIBILITY_REQUIREMENTS = [
+  "Implements: REQ-CEO61-01",
+  "Implements: REQ-CEO61-02",
+  "Implements: REQ-CEO61-03",
+  "Implements: REQ-CEO61-04",
+  "Implements: REQ-CEO61-05",
+  "Implements: REQ-CEO61-06",
+] as const;
+
 export type CodeLanguage = "matlab" | "python" | "cpp" | "sql" | "plain";
 export type SyntaxTokenKind =
   "plain" | "comment" | "string" | "number" | "keyword" | "type" | "function" | "operator";
@@ -27,13 +36,23 @@ export type RichInline =
   | { type: "emphasis"; content: RichInline[] }
   | { type: "link"; href: string | null; content: RichInline[] };
 
+export type TableAlignment = "left" | "center" | "right" | null;
+
+export type RichTableBlock = {
+  type: "table";
+  alignments: TableAlignment[];
+  header: RichInline[][];
+  rows: RichInline[][][];
+};
+
 export type RichBlock =
   | { type: "paragraph"; content: RichInline[] }
   | { type: "quote"; content: RichInline[] }
   | { type: "heading"; level: number; content: RichInline[] }
   | { type: "list"; ordered: boolean; items: RichInline[][] }
   | { type: "code"; language: CodeLanguage; value: string }
-  | { type: "math"; display: true; value: string };
+  | { type: "math"; display: true; value: string }
+  | RichTableBlock;
 
 const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
   matlab: "matlab",
@@ -520,6 +539,71 @@ function startsBlock(line: string) {
   );
 }
 
+function isEscapedAt(value: string, index: number) {
+  let slashes = 0;
+  for (let cursor = index - 1; cursor >= 0 && value[cursor] === "\\"; cursor -= 1) {
+    slashes += 1;
+  }
+  return slashes % 2 === 1;
+}
+
+function splitTableRow(line: string) {
+  let value = line.trim();
+  if (!value.includes("|")) return null;
+  if (value.startsWith("|")) value = value.slice(1);
+  if (value.endsWith("|") && !isEscapedAt(value, value.length - 1)) value = value.slice(0, -1);
+
+  const cells: string[] = [];
+  let cell = "";
+  let codeTicks = 0;
+
+  for (let cursor = 0; cursor < value.length; cursor += 1) {
+    const character = value[cursor];
+    if (character === "\\" && value[cursor + 1] === "|") {
+      cell += "|";
+      cursor += 1;
+      continue;
+    }
+    if (character === "`") {
+      let run = 1;
+      while (value[cursor + run] === "`") run += 1;
+      if (codeTicks === 0) codeTicks = run;
+      else if (codeTicks === run) codeTicks = 0;
+      cell += "`".repeat(run);
+      cursor += run - 1;
+      continue;
+    }
+    if (character === "|" && codeTicks === 0) {
+      cells.push(cell.trim());
+      cell = "";
+      continue;
+    }
+    cell += character;
+  }
+
+  cells.push(cell.trim());
+  return cells.length > 1 ? cells : null;
+}
+
+function tableHeaderAt(lines: string[], cursor: number) {
+  if (cursor + 1 >= lines.length) return null;
+  const header = splitTableRow(lines[cursor]);
+  const separator = splitTableRow(lines[cursor + 1]);
+  if (!header || !separator || header.length !== separator.length) return null;
+  if (!separator.every((cell) => /^:?-{3,}:?$/.test(cell))) return null;
+
+  const alignments = separator.map<TableAlignment>((cell) => {
+    const left = cell.startsWith(":");
+    const right = cell.endsWith(":");
+    if (left && right) return "center";
+    if (right) return "right";
+    if (left) return "left";
+    return null;
+  });
+
+  return { alignments, header };
+}
+
 function sameLineDisplayMath(line: string) {
   const trimmed = line.trim();
   if (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length > 4)
@@ -539,6 +623,25 @@ export function parseRichText(value: string): RichBlock[] {
     const trimmed = line.trim();
     if (!trimmed) {
       cursor += 1;
+      continue;
+    }
+
+    const tableHeader = tableHeaderAt(lines, cursor);
+    if (tableHeader) {
+      const rows: RichInline[][][] = [];
+      cursor += 2;
+      while (cursor < lines.length) {
+        const cells = splitTableRow(lines[cursor]);
+        if (!cells || cells.length !== tableHeader.header.length) break;
+        rows.push(cells.map((cell) => parseRichInline(cell)));
+        cursor += 1;
+      }
+      blocks.push({
+        type: "table",
+        alignments: tableHeader.alignments,
+        header: tableHeader.header.map((cell) => parseRichInline(cell)),
+        rows,
+      });
       continue;
     }
 
@@ -622,6 +725,7 @@ export function parseRichText(value: string): RichBlock[] {
       cursor < lines.length &&
       lines[cursor].trim() &&
       !startsBlock(lines[cursor]) &&
+      !tableHeaderAt(lines, cursor) &&
       sameLineDisplayMath(lines[cursor]) === null
     ) {
       paragraph.push(lines[cursor]);

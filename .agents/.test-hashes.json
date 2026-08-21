@@ -20,7 +20,7 @@
   "tests/portal-utils.test.ts": "b3f47ff8ec6ee7ba956501d466e730cecbf124da134a223f4b7e1f67b6498b47",
   "tests/privacy-terms.test.ts": "bd61c0e7e49b842cd1a1681cc0a674132e4a1fa29c896d4710b493addf52297d",
   "tests/rendered-html.test.mjs": "9739502e0267b96de0d9eb53e4735c6381415a93b424174b116713ba995c6f5f",
-  "tests/rich-text.test.ts": "cb055c4242b82e146fab35e11aa674150715bcc13ddc105bb2c09305572ad1d6",
+  "tests/rich-text.test.ts": "8c2cba6722580606dd82a009c22d882e3e0bed17fb4ec48fea01ac404896c2f3",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb"
 }

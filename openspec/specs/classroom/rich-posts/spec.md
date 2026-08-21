@@ -90,6 +90,25 @@ WHERE the classroom runs inside the Android Capacitor application, the system SH
 - **WHEN** an Android user opens a classroom post after the remote bundle is deployed
 - **THEN** the WebView SHALL load the same `RichText` component, syntax tokenizer and vendored KaTeX assets used by the web portal
 
+#### Scenario: Technical content keeps overflow local on Android
+
+- **WHEN** an Android user opens a six-column Markdown table, a long code line or a wide KaTeX formula
+- **THEN** each technical element SHALL expose local horizontal touch scrolling and SHALL NOT widen the post card or classroom layout
+
+### Requirement: Safe Markdown Tables
+
+WHEN a body contains a pipe-delimited Markdown table with a valid separator row, the classroom SHALL render a semantic table from escaped React nodes and SHALL process every cell through the same safe inline parser used by paragraphs. IF a table cell contains raw HTML or an executable link destination, THEN the source SHALL remain inert and the destination SHALL be omitted.
+
+#### Scenario: Six-column table remains usable on a phone
+
+- **WHEN** a publication contains a valid table with six columns
+- **THEN** every header and data cell SHALL remain present inside a labeled horizontal scroll region
+
+#### Scenario: Invalid table syntax preserves author text
+
+- **WHEN** pipe-delimited text lacks a valid separator row or uses an incompatible column count
+- **THEN** the renderer SHALL treat it as ordinary paragraph content without discarding text
+
 ### Requirement: Bounded New Writes Without Historical Truncation
 
 The classroom SHALL limit every newly published or edited body to 40,000 characters. IF a historical stored body is larger, THEN the renderer SHALL continue to display it without mutating or truncating the stored value.
