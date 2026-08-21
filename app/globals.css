@@ -256,6 +256,230 @@ img {
   font-variant-numeric: var(--num);
 }
 
+.academic-prose {
+  min-width: 0;
+  color: var(--text-body);
+  font-family: var(--font-core);
+  font-size: clamp(0.98rem, 0.95rem + 0.14vw, 1.05rem);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.academic-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.academic-prose > :last-child {
+  margin-block-end: 0;
+}
+
+.academic-prose .academic-prose-error {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--shield-red-deep) 35%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-red) 7%, var(--surface-card));
+  color: var(--shield-red-deep);
+  font-weight: 600;
+}
+
+.academic-prose :where(h1, h2, h3, h4, h5, h6) {
+  margin-block: 1.65em 0.55em;
+  color: var(--text-body);
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.academic-prose :where(h1) {
+  font-size: clamp(1.8rem, 1.56rem + 0.8vw, 2.35rem);
+}
+
+.academic-prose :where(h2) {
+  font-size: clamp(1.5rem, 1.34rem + 0.5vw, 1.9rem);
+}
+
+.academic-prose :where(h3) {
+  font-size: clamp(1.25rem, 1.16rem + 0.28vw, 1.48rem);
+}
+
+.academic-prose :where(h4, h5, h6) {
+  font-size: 1.08rem;
+}
+
+.academic-prose :where(p, ul, ol, dl, blockquote, figure, pre, .academic-table-scroll) {
+  margin-block: 0 1.15em;
+}
+
+.academic-prose :where(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+
+.academic-prose :where(li + li) {
+  margin-block-start: 0.35em;
+}
+
+.academic-prose :where(dt) {
+  font-weight: 700;
+}
+
+.academic-prose :where(dd) {
+  margin-inline-start: 1.25em;
+}
+
+.academic-prose :where(blockquote) {
+  margin-inline: 0;
+  padding: var(--space-sm) var(--space-lg);
+  border-inline-start: 3px solid var(--color-primary);
+  background: var(--color-primary-wash);
+  color: var(--text-secondary);
+}
+
+.academic-prose :where(hr) {
+  margin-block: var(--space-xl);
+  border: 0;
+  border-block-start: 1px solid var(--border-hairline);
+}
+
+.academic-prose :where(a) {
+  color: var(--text-link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+.academic-prose :where(code, kbd, samp, var) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.academic-prose :where(:not(pre) > code, kbd, samp) {
+  padding: 0.14em 0.36em;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas-soft);
+}
+
+.academic-prose :where(pre) {
+  max-width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  overflow-x: auto;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas-soft);
+  color: var(--text-body);
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.academic-prose :where(pre code) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  white-space: pre;
+}
+
+.academic-prose :where(img) {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  margin-block: var(--space-lg);
+  border-radius: var(--radius-md);
+}
+
+.academic-prose :where(figure) {
+  margin-inline: 0;
+}
+
+.academic-prose :where(figure img) {
+  margin-block-end: var(--space-xs);
+}
+
+.academic-prose :where(figcaption) {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.academic-prose :where(mark) {
+  padding-inline: 0.12em;
+  background: color-mix(in srgb, var(--shield-gold) 28%, transparent);
+  color: inherit;
+}
+
+.academic-prose .academic-table-scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  -webkit-overflow-scrolling: touch;
+}
+
+.academic-prose .academic-table-scroll:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  box-shadow: var(--shadow-focus);
+}
+
+.academic-prose :where(table) {
+  inline-size: 100%;
+  min-inline-size: 36rem;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: var(--surface-card);
+  font-variant-numeric: var(--num);
+}
+
+.academic-prose :where(caption) {
+  padding: var(--space-sm) var(--space-md);
+  border-block-end: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: start;
+}
+
+.academic-prose :where(th, td) {
+  padding: 0.75rem var(--space-md);
+  border-block-end: 1px solid var(--border-hairline);
+  text-align: start;
+  vertical-align: top;
+}
+
+.academic-prose :where(thead th) {
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.academic-prose :where(tbody tr:last-child > *) {
+  border-block-end: 0;
+}
+
+@media (max-width: 600px) {
+  .academic-prose {
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .academic-prose :where(table) {
+    min-inline-size: 32rem;
+  }
+
+  .academic-prose :where(th, td) {
+    padding: 0.68rem var(--space-sm);
+  }
+}
+
 /* Firma institucional: serif académica en títulos de página y nombres de ramo. */
 .page-head h1,
 .section-title h2,
