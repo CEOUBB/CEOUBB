@@ -70,19 +70,43 @@ Context: the callable Function and Android invocation exist, but `/eliminar-cuen
 
 ## P0.7 Capacity and cost targets
 
-No capacity target is stated anywhere in the repository, so "production-ready" is untestable and no scale item has an acceptance criterion. Fill in with owner-approved numbers, then treat as acceptance criteria for the scale work in [`p1-academic-model.md`](p1-academic-model.md).
+CEO-9 fija la línea base. El detalle, las fórmulas, exclusiones, fuentes y protocolo de prueba viven en [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md); el contrato canónico es `operations/capacity-cost` en OpenSpec.
 
-| Target                                        | Value       | Notes                                                                                            |
-| --------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| Concurrent students at peak (exam week)       | _to define_ | Drives read/write budget                                                                         |
-| Active course-sections per period             | _to define_ | Drives the sweep fixes                                                                           |
-| Total enrolled students                       | _to define_ | Drives Turso sizing and import design                                                            |
-| Firestore reads per portal load               | _to define_ | Today unbounded; grows with total courses in the DB                                              |
-| Storage GB stored and GB downloaded per month | _to define_ | Dominated by "Mi Bodega" if ever built                                                           |
-| **Cost per student per year**                 | _to define_ | The number an institutional decision turns on; benchmark against what Moodle UBB costs UBB today |
-| Uptime target, RPO and RTO                    | _to define_ | Required for any service agreement                                                               |
+| Target                                          |                               Value | Notes                                                                     |
+| :---------------------------------------------- | ----------------------------------: | :------------------------------------------------------------------------ |
+| Concurrent students at peak (exam week)         |                               3.000 | 25% de la población activa; rampa ≤ 10 min y meseta de 30 min             |
+| Active course-sections per period               |                               3.000 | 2.400 derivadas de matrículas más 25% de holgura                          |
+| Active student-section enrollments              |                              72.000 | 12.000 estudiantes × 6 secciones                                          |
+| Total active students                           |                              12.000 | Envolvente de 15.000 identidades al incluir docentes y personal           |
+| Firestore reads per initial student portal load |                               ≤ 200 | Estudiante con hasta 8 secciones; incluye lecturas dependientes de reglas |
+| Storage stored / downloaded per academic month  |               1.000 GiB / 2.000 GiB | “Mi Bodega” continúa excluida                                             |
+| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1.000 ceiling** | Costo recurrente cloud, no costo total institucional                      |
+| Product availability                            |                       99,9% mensual | Máximo 43 min 12 s de caída no planificada en 30 días                     |
+| RPO / RTO                                       |                           1 h / 4 h | Objetivo, pendiente de simulacro P0.8                                     |
 
-Acceptance: numbers exist, owner-approved, and a load check has run against the two highest-risk ones (concurrent students, reads per portal load).
+Requisitos operativos:
+
+- **REQ-OPS-CAP-01 (Ubiquitous):** The system SHALL be designed and validated for 12,000 active students, 3,000 active section-periods and 72,000 active enrollments per semester.
+- **REQ-OPS-CAP-02 (State-Driven):** WHILE validating exam-week capacity, the test harness SHALL sustain 3,000 simultaneous authenticated students for 30 minutes after a ramp of at most 10 minutes.
+- **REQ-OPS-COST-01 (Unwanted Behavior):** IF the sustainable annualized infrastructure projection exceeds CLP 1,000 per active student-year, THEN institutional expansion SHALL stop until the cost is remediated and remeasured.
+- **REQ-OPS-RES-02 (Unwanted Behavior):** IF a critical incident requires restoration, THEN critical academic service SHALL return within four hours with no more than one hour of academic data loss.
+
+```gherkin
+Scenario: La envolvente institucional se valida en staging
+  Given 12.000 estudiantes, 3.000 secciones y 72.000 matrículas sintéticas
+  When 3.000 sesiones se mantienen concurrentes durante 30 minutos
+  Then p95 de HTML/API debe ser menor o igual a 2 segundos
+  And HTTP 5xx debe permanecer bajo 0,1%
+  And una apertura estudiantil de hasta 8 secciones no debe superar 200 lecturas Firestore
+
+Scenario: La restauración demuestra continuidad
+  Given un fallo controlado con registros académicos fechados
+  When se ejecuta el runbook de recuperación en staging
+  Then el servicio crítico debe volver dentro de 4 horas
+  And el registro perdido más reciente no debe superar 1 hora
+```
+
+Acceptance: la especificación y el modelo quedan definidos con CEO-9. La capacidad, el SLO y la recuperación sólo pasan de “objetivo” a “demostrados” cuando staging aprueba la carga y el simulacro con los mismos umbrales; no se permite rebajarlos para aprobar.
 
 ## P0.8 Backups and a drilled restore
 

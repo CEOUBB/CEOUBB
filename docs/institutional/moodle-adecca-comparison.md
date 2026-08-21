@@ -271,17 +271,20 @@ Standard evaluation checklist, none of it present today:
 
 ### 7.4 Capacity, cost and evidence
 
-No document in this repository states a capacity target, so "production-ready" is currently untestable. Fill these in and treat them as acceptance criteria for the scale work in section 6:
+CEO-9 defines the architecture and budget envelope. These values are acceptance targets, not claims already demonstrated in production; the reproducible model and source prices are in [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md).
 
-| Target                                      | Value       | Notes                                                                                                     |
-| :------------------------------------------ | :---------- | :-------------------------------------------------------------------------------------------------------- |
-| Concurrent students at peak (exam week)     | _to define_ | Drives read/write budget                                                                                  |
-| Active course-sections per period           | _to define_ | Drives the sweep fixes                                                                                    |
-| Total enrolled students                     | _to define_ | Drives Turso sizing and import design                                                                     |
-| Firestore reads per portal load             | _to define_ | Today: unbounded, grows with total courses in the database                                                |
-| Storage GB stored / GB downloaded per month | _to define_ | Dominated by "Mi Bodega" if that is ever built                                                            |
-| **Cost per student per year**               | _to define_ | The number a rectoría-level decision actually turns on; benchmark against what Moodle UBB costs UBB today |
-| Uptime target and RPO/RTO                   | _to define_ | Required for any service agreement                                                                        |
+| Target                                          |                               Value | Evidence status                                   |
+| :---------------------------------------------- | ----------------------------------: | :------------------------------------------------ |
+| Concurrent students at peak (exam week)         |                               3,000 | Target; staging load test pending                 |
+| Active course-sections per period               |                               3,000 | Derived from 72,000 enrollments with 25% headroom |
+| Total active students                           |                              12,000 | UBB 2022 baseline rounded for current design      |
+| Firestore reads per initial student portal load |                               ≤ 200 | Code budget; billing trace pending                |
+| Storage stored / downloaded per academic month  |               1,000 GiB / 2,000 GiB | Cost-model envelope; “Mi Bodega” excluded         |
+| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1,000 ceiling** | Price model; measured paid run rate pending       |
+| Product availability                            |                       99.9% monthly | Internal SLO; not a contractual SLA               |
+| RPO / RTO                                       |                    1 hour / 4 hours | Target; staging restoration drill pending         |
+
+The cost figure covers recurring cloud infrastructure only. It is not the university's total cost of ownership and excludes staffing, support, Moodle/Adecca migration, training, tax, legal review, security assessment and Enterprise support/SLA contracts. CEOUBB must not present the capacity, RPO or RTO as achieved until the staging evidence passes the unchanged thresholds.
 
 ---
 

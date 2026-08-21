@@ -756,3 +756,29 @@ Production deployed: no.
 Known risks: el comportamiento táctil final depende del motor WebView presente en el dispositivo; debe confirmarse sobre Android después de disponer del preview. No hay deuda nueva de escala porque el cambio es lineal sobre el body acotado y no agrega consultas ni listeners.
 
 Next recommended action: revisar y fusionar la PR; después desplegar el bundle y ejecutar el smoke test físico con una tabla de seis columnas, una línea de código extensa y una fórmula KaTeX ancha.
+
+## 2026-08-21: CEO-9 — capacidad, costo y continuidad
+
+Date: 2026-08-21
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-9-definir-cuantos-estudiantes-y-ramos-tenemos-que-aguantar-y` / commit de esta PR
+
+Goal: convertir “escala institucional” en objetivos cuantificados y verificables de población, secciones, simultaneidad, costo por estudiante, disponibilidad y recuperación.
+
+Files changed: `docs/operations/capacity-cost-baseline.md`, `docs/specs/p0-pilot-safety.md`, `docs/institutional/moodle-adecca-comparison.md`, `openspec/specs/operations/capacity-cost/spec.md`, cambio OpenSpec archivado `define-capacity-cost-baseline`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: CEO-9 consultado en Linear; precios verificados en fuentes oficiales UBB, Google Cloud/Firebase, Vercel y Turso. Sin cambios en Firebase, Cloud Billing, Turso, Vercel ni producción.
+
+Checks passed: cambio OpenSpec estricto válido y archivado; `pnpm run verify:fast` (201/201, hashes 24/24 y 10/10 specs); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` (build Next.js 16.3 y 226/226).
+
+Checks not run: prueba real de 3.000 sesiones concurrentes y simulacro de restauración. Ambos requieren staging y permanecen como evidencia obligatoria, sin rebajar umbrales.
+
+Production deployed: no.
+
+Known risks: 3.000 secciones es una envolvente derivada porque no existe un extracto DARCA vigente en el repositorio; CLP 450 es un modelo de infraestructura, no costo total institucional; Cloud Storage concentra más de la mitad del caso base; SLO/RPO/RTO son objetivos hasta que staging los demuestre.
+
+Next recommended action: provisionar staging, ejecutar la carga de 3.000 sesiones durante 30 minutos, capturar lecturas/costo y realizar el simulacro RPO 1 h / RTO 4 h.
