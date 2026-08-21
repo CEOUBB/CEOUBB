@@ -130,3 +130,24 @@ test("REQ-SEC-03: standup cron route handler uses timingSafeEqual for CRON_SECRE
     "Standup cron route handler must call credentialMatches helper"
   );
 });
+
+// Implements: REQ-SEC-15
+test("REQ-SEC-15: admin users route bounds search query length to 100 and parses json payload safely", () => {
+  const routePath = path.resolve("app/api/admin/users/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /\.slice\(0,\s*100\)/,
+    "Search query q must be bounded to 100 characters max"
+  );
+  assert.match(
+    routeContent,
+    /typeof payload !== "object"/,
+    "PATCH handler must validate payload object structure"
+  );
+  assert.match(
+    routeContent,
+    /typeof payload\.userId !== "string"/,
+    "PATCH handler must validate userId is string"
+  );
+});
