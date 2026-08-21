@@ -287,6 +287,7 @@ export async function publishClassroomPost(
     folder: string;
     linkUrl: string;
     dueDate: string;
+    notifyStudents: boolean;
   }
 ) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
@@ -309,6 +310,7 @@ export async function publishClassroomPost(
     storagePath: "",
     contentType: "",
     fileSize: 0,
+    notifyStudents: input.notifyStudents,
     createdAt: sdk.serverTimestamp(),
   });
 }

@@ -20,6 +20,7 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
   async (event) => {
     if (!event.data) return;
     const post = event.data.data();
+    if (post.notifyStudents === false) return;
     const courseId = event.params.courseId;
     const postId = event.params.postId;
     const topicCourse = courseId.replace(/[^a-zA-Z0-9-_.~%]/g, "_");

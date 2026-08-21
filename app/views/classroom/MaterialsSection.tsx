@@ -9,7 +9,7 @@ import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { fileExtension, formatBytes, formatDate, type User } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { groupByFolder, type Note } from "./classroom-utils";
-import { RichPostEditor } from "./RichPostEditor";
+import { PublicationLauncher } from "./PublicationLauncher";
 
 export function MaterialsSection({
   course,
@@ -37,60 +37,19 @@ export function MaterialsSection({
   status: Note;
 }) {
   const folders = useMemo(() => groupByFolder(course, files), [course, files]);
+  const availableFolders = useMemo(() => materialFolders(course), [course]);
   const mobile = useIsMobileApp();
   const [toolsOpen, setToolsOpen] = useState(false);
-  const [postBody, setPostBody] = useState("");
-
-  const publishPost = async (event: FormEvent<HTMLFormElement>) => {
-    if (await publish(event)) setPostBody("");
-  };
 
   /* El panel docente ocupa una columna entera: en móvil no cabe al lado del
      listado, así que se guarda tras un botón y sube como hoja arrastrable. */
   const tools = (
     <>
       <datalist id="folder-options">
-        {materialFolders(course).map((folder) => (
+        {availableFolders.map((folder) => (
           <option key={folder} value={folder} />
         ))}
       </datalist>
-      <form onSubmit={publishPost}>
-        <label>
-          Título
-          <input name="title" required />
-        </label>
-        <label>
-          Tipo
-          <select name="kind">
-            <option value="notice">Aviso</option>
-            <option value="guide">Guía</option>
-            <option value="assessment">Dictamen o certamen</option>
-            <option value="resource">Recurso</option>
-          </select>
-        </label>
-        <label>
-          Carpeta
-          <input name="folder" list="folder-options" placeholder={DEFAULT_FOLDER} />
-        </label>
-        <RichPostEditor name="body" onChange={setPostBody} required value={postBody} />
-        <label>
-          Enlace Drive opcional
-          <input name="linkUrl" type="url" placeholder="https://…" />
-        </label>
-        <label>
-          Fecha de entrega opcional
-          <input name="dueDate" type="datetime-local" />
-          <small className="field-hint">
-            Aparece en el calendario de cada estudiante del ramo.
-          </small>
-        </label>
-        <button className="primary-button" type="submit">
-          Publicar aviso o enlace
-        </button>
-      </form>
-      <div className="tool-divider">
-        <span>o subir archivo</span>
-      </div>
       <form onSubmit={upload}>
         <label>
           PDF, PPT, DOCX, XLSX, ZIP o imagen
@@ -115,8 +74,11 @@ export function MaterialsSection({
   return (
     <section className="materials-view">
       <div className="materials-list">
-        <div className="section-title compact-title">
+        <div className="section-title compact-title publication-section-title">
           <h2>Archivos compartidos</h2>
+          {canTeach && (
+            <PublicationLauncher folders={availableFolders} publish={publish} status={status} />
+          )}
         </div>
         <Link className="material-row featured" href="/biblioteca/index.html" prefetch={false}>
           <span className="file-icon">
@@ -183,7 +145,7 @@ export function MaterialsSection({
       </div>
       {canTeach && !mobile && (
         <aside className="teacher-tools">
-          <h2>Publicar en el aula</h2>
+          <h2>Subir un archivo</h2>
           {tools}
         </aside>
       )}
@@ -198,13 +160,13 @@ export function MaterialsSection({
             }}
             type="button"
           >
-            Publicar o subir archivo
+            Subir archivo
           </button>
           <MobileSheet
             onOpenChange={setToolsOpen}
             open={toolsOpen}
-            title="Publicar en el aula"
-            description="Aviso, enlace o archivo del ramo."
+            title="Subir un archivo"
+            description="Añade un documento a los materiales del ramo."
           >
             <div className="teacher-tools sheet-tools">{tools}</div>
           </MobileSheet>
