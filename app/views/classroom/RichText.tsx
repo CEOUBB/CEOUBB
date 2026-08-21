@@ -69,12 +69,13 @@ export function RichTextAssets() {
 }
 
 function MathFormula({ value, display }: { value: string; display: boolean }) {
-  const elementRef = useRef<HTMLElement | null>(null);
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const spanRef = useRef<HTMLSpanElement | null>(null);
   const source = display ? `$$\n${value}\n$$` : `$${value}$`;
 
   useEffect(() => {
     const render = () => {
-      const element = elementRef.current;
+      const element = display ? divRef.current : spanRef.current;
       if (!element) return;
       if (!window.katex) {
         element.textContent = source;
@@ -109,9 +110,7 @@ function MathFormula({ value, display }: { value: string; display: boolean }) {
         aria-label={`Fórmula: ${value}`}
         className="rich-math rich-math-display"
         data-source={source}
-        ref={(element) => {
-          elementRef.current = element;
-        }}
+        ref={divRef}
       />
     );
   }
@@ -121,9 +120,7 @@ function MathFormula({ value, display }: { value: string; display: boolean }) {
       aria-label={`Fórmula: ${value}`}
       className="rich-math rich-math-inline"
       data-source={source}
-      ref={(element) => {
-        elementRef.current = element;
-      }}
+      ref={spanRef}
     />
   );
 }
