@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useId } from "react";
 import { RICH_TEXT_MAX_LENGTH } from "../../../lib/rich-text";
+import type { EditorMode } from "../../../lib/publication-workflow";
 import { RichText } from "./RichText";
 
 export function RichPostEditor({
@@ -10,7 +11,9 @@ export function RichPostEditor({
   onChange,
   required = false,
   value,
+  editorMode = "markdown",
 }: {
+  editorMode?: EditorMode;
   label?: string;
   name: string;
   onChange: (value: string) => void;
@@ -20,7 +23,11 @@ export function RichPostEditor({
   const inputId = useId();
   const previewValue = useDeferredValue(value);
   return (
-    <div className="rich-editor" data-requirement="Implements: REQ-RICH-04 REQ-RICH-07">
+    <div
+      className="rich-editor"
+      data-editor-mode={editorMode}
+      data-requirement="Implements: REQ-RICH-04 REQ-RICH-07 REQ-PUB-01 REQ-PUB-05"
+    >
       <div className="rich-editor-heading">
         <label htmlFor={inputId}>{label}</label>
         <span>

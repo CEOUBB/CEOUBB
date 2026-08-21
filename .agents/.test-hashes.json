@@ -19,8 +19,9 @@
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "b3f47ff8ec6ee7ba956501d466e730cecbf124da134a223f4b7e1f67b6498b47",
   "tests/privacy-terms.test.ts": "bd61c0e7e49b842cd1a1681cc0a674132e4a1fa29c896d4710b493addf52297d",
+  "tests/publication-workflow.test.ts": "96058d3aff2f52b4d653c49406751a008b261456f6929b264e49da8e32451591",
   "tests/rendered-html.test.mjs": "9739502e0267b96de0d9eb53e4735c6381415a93b424174b116713ba995c6f5f",
-  "tests/rich-text.test.ts": "cb055c4242b82e146fab35e11aa674150715bcc13ddc105bb2c09305572ad1d6",
+  "tests/rich-text.test.ts": "1272edd63c587310fe0c8048347e6934bbf4e6889bccdaa835fa3a3403974e6b",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb"
 }

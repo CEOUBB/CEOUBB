@@ -81,6 +81,10 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
     path.join(process.cwd(), "app/views/classroom/MaterialsSection.tsx"),
     "utf8"
   );
+  const publicationComposerSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/PublicationComposerDialog.tsx"),
+    "utf8"
+  );
   const capacitorSource = fs.readFileSync(path.join(process.cwd(), "capacitor.config.ts"), "utf8");
   assert.doesNotMatch(source, /dangerouslySetInnerHTML/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
@@ -94,7 +98,8 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   assert.match(postsSource, /href=\{safePostLink\}/);
   assert.doesNotMatch(postsSource, /href=\{post\.linkUrl\}/);
   assert.match(postsSource, /<RichText body=\{post\.body\}/);
-  assert.match(materialsSource, /<RichPostEditor name="body"/);
+  assert.match(materialsSource, /<PublicationLauncher/);
+  assert.match(publicationComposerSource, /<RichPostEditor[\s\S]*?name="body"/);
   assert.match(capacitorSource, /https:\/\/ceoubb\.com/);
 });
 
