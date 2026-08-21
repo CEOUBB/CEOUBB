@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getRecentCommits } from "../../../../lib/services/github.ts";
 import {
@@ -82,12 +83,17 @@ async function sendDiscordEmbed(embed: Record<string, unknown>, components: unkn
   return await res.json();
 }
 
+function credentialMatches(header: string | null): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !header) return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(header), digest(`Bearer ${secret}`));
+}
+
 export async function GET(req: NextRequest) {
-  // Verificación de seguridad de Vercel Cron
+  // Verificación de seguridad de Vercel Cron con comparación constante en tiempo
   // Implements: REQ-SEC-03
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = req.headers.get("authorization");
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!credentialMatches(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
