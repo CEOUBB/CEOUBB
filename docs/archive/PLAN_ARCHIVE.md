@@ -708,7 +708,7 @@ Goal: preservar publicaciones históricas de texto plano y entregar tablas Markd
 
 Files changed: `lib/rich-text.ts`, `app/views/classroom/RichText.tsx`, `app/globals.css`, `tests/rich-text.test.ts`, `openspec/specs/classroom/rich-posts/spec.md`, `docs/specs/p16-classroom-retrocompatibility-mobile-parity.md`, `.agents/.test-hashes.json`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
 
-External services changed: consulta de CEO-61 en Linear; sin cambios en Firebase, Turso, Vercel ni producción.
+External services changed: CEO-61 consultado y actualizado en Linear; PR [#57](https://github.com/CEOUBB/CEOUBB/pull/57) creado en GitHub; sin cambios en Firebase, Turso, Vercel ni producción.
 
 Checks passed: prueba focalizada de rich text (9/9); `pnpm run verify:fast` (201/201, hashes de 24 archivos y 9/9 specs OpenSpec); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm run test:unit` (201/201); `pnpm test` (build Next.js 16.3 y 226/226); QA Chromium a 360×800 sin overflow global ni errores de consola.
 
