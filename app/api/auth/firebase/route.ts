@@ -8,7 +8,8 @@ import {
 } from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
 
-const FIREBASE_API_KEY = "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU";
+const FIREBASE_API_KEY =
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
 
 type FirebaseAccount = {
   localId?: string;
