@@ -809,6 +809,32 @@ Known risks: el operador legal de CEOUBB todavía no está individualizado; el c
 
 Next recommended action: Jurídica y DTI completan las partes y bases legales, validan la tabla de retención y subencargados, provisionan el canal de derechos, cierran borrado/backup/residencia y recién entonces firman el convenio y autorizan datos reales.
 
+## 2026-08-23: CEO-7 — historial inmutable de cambios de notas
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-7-guardar-historial-de-cambios-de-notas-quien-cambio-que-y` / `5c6b496` más commit de handoff
+
+Goal: registrar quién cambió cada nota, cuándo lo hizo y cuáles fueron los valores anterior y nuevo, sin permitir que la aplicación edite, elimine u omita esa evidencia.
+
+Files changed: `firebase/functions/grade-audit.js`, `firebase/functions/index.js`, `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `lib/firebase/grades.ts`, `lib/firebase/sdk.ts`, `tests/grade-audit.test.ts`, pruebas de reglas/render, `openspec/specs/grades/spec.md`, cambio OpenSpec archivado `2026-08-23-add-immutable-grade-audit-trail`, `docs/specs/p17-immutable-grade-audit-trail.md`, `docs/specs/p0-pilot-safety.md`, documentación Firebase y `PLAN.md`.
+
+External services changed: rama publicada y PR [#70](https://github.com/CEOUBB/CEOUBB/pull/70) creado en GitHub. Sin cambios en Firebase, Turso, Vercel ni producción.
+
+Checks passed: RED registrado por ausencia del módulo; suite focal 9/9; `pnpm run verify:fast` 236/236 con 29 hashes; `pnpm run verify:invariants` 31/31; `pnpm run lint`; `pnpm run format:check`; `pnpm run check:functions`; carga local de `saveAuditedStudentScores`, `saveAuditedGradebook`, `notifyStudentsOnCoursePost` y `deleteMyAccount`; `pnpm test` con build Next.js 16.3 y 261/261; OpenSpec validado y archivado.
+
+Checks not run: Emulator Suite de reglas y matriz manual con cuentas owner/docente/estudiante; P0.10 todavía no provee ese arnés. No se verificó producción porque este PR no despliega infraestructura.
+
+Production deployed: no.
+
+Known risks: el despliegue debe respetar Functions -> portal -> índice -> reglas para no bloquear escrituras; no existe historial retroactivo para notas anteriores; la vista read-only del historial sigue pendiente para completar el criterio “surfaced” de P0.9.
+
+Next recommended action: revisar y fusionar PR #70; luego desplegar en el orden documentado, ejecutar la matriz multirol y comprobar que una corrección 5,0 -> 6,0 produce una entrada inmutable visible sólo para el equipo docente, owner y el estudiante afectado.
+
 ## 2026-08-23: CEO-25 — rol de ayudante por ramo
 
 Date: 2026-08-23
