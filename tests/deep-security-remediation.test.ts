@@ -130,3 +130,24 @@ test("REQ-SEC-03: standup cron route handler uses timingSafeEqual for CRON_SECRE
     "Standup cron route handler must call credentialMatches helper"
   );
 });
+
+// Implements: REQ-SEC-15
+test("REQ-SEC-15: admin users PATCH endpoint strictly validates input types and malformed JSON payloads", () => {
+  const routePath = path.resolve("app/api/admin/users/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /typeof payload\.userId !== "string"/,
+    "Admin users PATCH handler must check typeof payload.userId === 'string'"
+  );
+  assert.match(
+    routeContent,
+    /typeof payload\.role !== "string"/,
+    "Admin users PATCH handler must check typeof payload.role === 'string'"
+  );
+  assert.match(
+    routeContent,
+    /Cuerpo de la petición malformado\./,
+    "Admin users PATCH handler must return 400 Bad Request on malformed JSON"
+  );
+});

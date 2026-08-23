@@ -10,7 +10,7 @@ import { pruneExpiredSessions, publicUser } from "../lib/auth.ts";
 
 type Actor = { id: string; role: AccountRole; email: string } | null;
 type TargetUser = { id: string; email: string; role: AccountRole } | null;
-type RoleChangePayload = { userId?: string; role?: string };
+type RoleChangePayload = { userId?: unknown; role?: unknown };
 
 type GuardDecision = {
   allowed: boolean;
@@ -20,7 +20,7 @@ type GuardDecision = {
 
 /**
  * Pure model of the administration role mutation guard invariants
- * implemented in app/api/admin/users/route.ts:14-24.
+ * implemented in app/api/admin/users/route.ts.
  */
 function evaluateRoleChangeGuard(
   actor: Actor,
@@ -30,7 +30,12 @@ function evaluateRoleChangeGuard(
   if (!actor || actor.role !== "owner") {
     return { allowed: false, status: 403, error: "Acceso restringido." };
   }
-  if (!payload.userId || !["teacher", "student"].includes(payload.role ?? "")) {
+  if (
+    !payload ||
+    typeof payload.userId !== "string" ||
+    typeof payload.role !== "string" ||
+    !["teacher", "student"].includes(payload.role)
+  ) {
     return { allowed: false, status: 400, error: "Datos inválidos." };
   }
   if (payload.userId === actor.id) {

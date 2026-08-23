@@ -70,10 +70,22 @@ export async function PATCH(request: Request) {
   if (!actor || actor.role !== "owner")
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
+  let payload: { userId?: unknown; role?: unknown };
   try {
-    const payload = (await request.json()) as { userId?: string; role?: string };
-    if (!payload.userId || !["teacher", "student"].includes(payload.role ?? ""))
-      return Response.json({ error: "Datos inválidos." }, { status: 400 });
+    payload = await request.json();
+  } catch {
+    return Response.json({ error: "Cuerpo de la petición malformado." }, { status: 400 });
+  }
+
+  if (
+    !payload ||
+    typeof payload.userId !== "string" ||
+    typeof payload.role !== "string" ||
+    !["teacher", "student"].includes(payload.role)
+  )
+    return Response.json({ error: "Datos inválidos." }, { status: 400 });
+
+  try {
     if (payload.userId === actor.id)
       return Response.json(
         { error: "La cuenta propietaria no puede degradarse." },
