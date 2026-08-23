@@ -12,6 +12,9 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <main className="policy-page">
+      <a className="skip-link" href="#contenido-principal">
+        Saltar al contenido principal
+      </a>
       <header className="policy-head">
         <Link className="app-brand" href="/">
           <Image
@@ -29,7 +32,7 @@ export default function PrivacyPage() {
           Volver al portal
         </Link>
       </header>
-      <article>
+      <article id="contenido-principal" tabIndex={-1}>
         <p className="privacy-date">
           Vigente desde el <span className="num">20</span> de agosto de{" "}
           <span className="num">2026</span>
@@ -284,8 +287,9 @@ export default function PrivacyPage() {
           sistema o el texto antes que sostener una diferencia entre ambos.
         </p>
 
-        <nav>
-          Ver también los <Link href="/terminos">términos de uso</Link>.
+        <nav aria-label="Documentos relacionados">
+          Ver también los <Link href="/terminos">términos de uso</Link> y la{" "}
+          <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
     </main>
