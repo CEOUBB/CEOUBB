@@ -19,6 +19,7 @@ import {
   type Course,
 } from "../lib/courses";
 import type { ManagedCourse } from "../lib/course-management";
+import { loadMyCourses } from "../lib/teacher-course-client";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
@@ -330,18 +331,11 @@ export function Portal() {
   useHardwareBack(handleHardwareBack);
 
   const refreshCourses = useCallback(async () => {
-    const nextCourses = await loadMyCourses();
-    setCourses(nextCourses);
-    setSectionIds(nextCourses.map((course) => course.id));
-    if (nextCourses.length === 0) {
-      setActivity([]);
-      setGradebooks([]);
-    }
-  const refreshCourses = useCallback(async () => {
     const session = await loadCurrentSession();
     if (session.sections) {
       setAcademicSections(session.sections);
     }
+    await loadMyCourses();
   }, []);
 
   const handleSignedIn = useCallback(
@@ -416,8 +410,6 @@ export function Portal() {
     };
   }, [user, memberships.length]);
 
-=======
->>>>>>> 9919878 (feat(docentes): habilitar administración autónoma de ramos)
   useEffect(() => {
     if (!user || sectionIds.length === 0) return;
     let alive = true;

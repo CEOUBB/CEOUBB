@@ -1,7 +1,15 @@
-import { Bell, Books, CalendarBlank, ChalkboardTeacher, House, Sliders } from "@phosphor-icons/react";
+import {
+  Bell,
+  Books,
+  CalendarBlank,
+  ChalkboardTeacher,
+  House,
+  Sliders,
+} from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
 
-export type Screen = "courses" | "course" | "notifications" | "calendar" | "resources" | "teacher" | "admin";
+export type Screen =
+  "courses" | "course" | "notifications" | "calendar" | "resources" | "teacher" | "admin";
 
 export interface NavState {
   screen: Screen;
