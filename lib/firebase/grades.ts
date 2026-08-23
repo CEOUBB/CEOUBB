@@ -19,6 +19,7 @@ type AuditedMutationResult = {
 };
 
 const MAX_AUDITED_ROWS_PER_CALL = 100;
+const MAX_CONCURRENT_AUDITED_CALLS = 4;
 
 /**
  * Firestore aborta un `writeBatch` sobre 500 operaciones. Esta utilidad conserva
@@ -161,6 +162,23 @@ export function chunkOperations<T>(rows: readonly T[], size = MAX_BATCH_OPERATIO
   return batches;
 }
 
+function saveAuditBatchWaves(
+  courseId: string,
+  batches: readonly (readonly StudentScoreRow[])[],
+  offset = 0
+): Promise<void> {
+  const wave = batches.slice(offset, offset + MAX_CONCURRENT_AUDITED_CALLS);
+  if (wave.length === 0) return Promise.resolve();
+  return Promise.all(
+    wave.map((group) =>
+      callAuditedMutation("saveAuditedStudentScores", {
+        courseId,
+        rows: group.map((row) => ({ userId: row.userId, scores: normalizeScores(row.scores) })),
+      })
+    )
+  ).then(() => saveAuditBatchWaves(courseId, batches, offset + MAX_CONCURRENT_AUDITED_CALLS));
+}
+
 /*
   Publicación masiva de notas oficiales. Una sección de plan común pasa de 300
   estudiantes: el cliente limita cada invocación y la Function procesa cada fila
@@ -170,11 +188,6 @@ export function chunkOperations<T>(rows: readonly T[], size = MAX_BATCH_OPERATIO
 export async function saveSectionScores(courseId: string, rows: readonly StudentScoreRow[]) {
   if (rows.length === 0) return 0;
   const batches = chunkOperations(rows, MAX_AUDITED_ROWS_PER_CALL);
-  for (const group of batches) {
-    await callAuditedMutation("saveAuditedStudentScores", {
-      courseId,
-      rows: group.map((row) => ({ userId: row.userId, scores: normalizeScores(row.scores) })),
-    });
-  }
+  await saveAuditBatchWaves(courseId, batches);
   return batches.length;
 }

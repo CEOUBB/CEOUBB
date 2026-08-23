@@ -144,6 +144,9 @@ test("REQ-AUDIT-03: the web client has no direct write path for official grades"
   assert.match(client, /httpsCallable/);
   assert.match(client, /saveAuditedStudentScores/);
   assert.match(client, /saveAuditedGradebook/);
+  assert.match(client, /MAX_CONCURRENT_AUDITED_CALLS\s*=\s*4/);
+  assert.match(client, /Promise\.all\(\s*wave\.map/);
+  assert.doesNotMatch(client, /for \(const group of batches\)[\s\S]{0,120}await/);
   assert.doesNotMatch(client, /sdk\.writeBatch|batch\.set/);
   assert.doesNotMatch(client, /"grades", row\.userId/);
 });
