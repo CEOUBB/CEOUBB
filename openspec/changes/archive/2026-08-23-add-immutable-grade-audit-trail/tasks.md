@@ -21,4 +21,4 @@
 - [x] 4.1 Run RED, GREEN and REFACTOR verification with the test-lock unchanged after GREEN begins.
 - [x] 4.2 Run `pnpm run verify:fast`, `verify:invariants`, `lint`, `format:check`, `check:functions` and `pnpm test`.
 - [x] 4.3 Archive the OpenSpec delta and update the formal handoff.
-- [ ] 4.4 Commit, push and open the Spanish GitHub pull request linked to CEO-7.
+- [x] 4.4 Commit, push and open the Spanish GitHub pull request linked to CEO-7.

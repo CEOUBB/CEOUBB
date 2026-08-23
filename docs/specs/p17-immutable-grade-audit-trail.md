@@ -6,6 +6,7 @@
 - **Autorización:** orden directa del mantenedor de ejecutar y abrir PR sin gates de aprobación intermedios
 - **Contrato vivo:** `openspec/specs/grades/spec.md`
 - **Cambio archivado:** `openspec/changes/archive/2026-08-23-add-immutable-grade-audit-trail/`
+- **Pull request:** [#70](https://github.com/CEOUBB/CEOUBB/pull/70)
 
 ## Objetivo
 
