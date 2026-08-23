@@ -18,6 +18,7 @@ import {
   type AcademicSectionSummary,
   type Course,
 } from "../lib/courses";
+import type { ManagedCourse } from "../lib/course-management";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
@@ -328,6 +329,29 @@ export function Portal() {
 
   useHardwareBack(handleHardwareBack);
 
+  const refreshCourses = useCallback(async () => {
+    const nextCourses = await loadMyCourses();
+    setCourses(nextCourses);
+    setSectionIds(nextCourses.map((course) => course.id));
+    if (nextCourses.length === 0) {
+      setActivity([]);
+      setGradebooks([]);
+    }
+  const refreshCourses = useCallback(async () => {
+    const session = await loadCurrentSession();
+    if (session.sections) {
+      setAcademicSections(session.sections);
+    }
+  }, []);
+
+  const handleSignedIn = useCallback(
+    (current: User) => {
+      setUser(current);
+      void refreshCourses();
+    },
+    [refreshCourses]
+  );
+
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
@@ -392,6 +416,8 @@ export function Portal() {
     };
   }, [user, memberships.length]);
 
+=======
+>>>>>>> 9919878 (feat(docentes): habilitar administración autónoma de ramos)
   useEffect(() => {
     if (!user || sectionIds.length === 0) return;
     let alive = true;
@@ -518,6 +544,8 @@ export function Portal() {
     forgetPhoto();
     setCommunications({ threads: [], cursors: [] });
     setCommunicationError("");
+    setActivity([]);
+    setGradebooks([]);
     setUser(null);
     setMemberships([]);
     setAcademicSections(null);
@@ -542,7 +570,11 @@ export function Portal() {
   const openedSectionRole = openedCourse
     ? (openedCourse.sectionRole ?? sectionRoleFor(memberships, openedCourse.id))
     : null;
-  const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
+  const views = navItems.filter(
+    (item) =>
+      (item.key !== "admin" || user.role === "owner") &&
+      (item.key !== "teacher" || user.role === "teacher" || user.role === "owner")
+  );
   const context =
     screen === "course" && openedCourse
       ? openedCourse.name
@@ -664,6 +696,7 @@ export function Portal() {
             openCourse={openCourse}
             onLoadMoreArchived={loadMoreArchived}
             openedCourse={openedCourse}
+            onCoursesChanged={refreshCourses}
             screen={screen}
             seen={seen}
             sectionRole={openedSectionRole}

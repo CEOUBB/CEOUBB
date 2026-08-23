@@ -63,6 +63,7 @@ export async function classroomFileUrl(storagePath: string) {
 export type { CourseGradebook, StudentScoreRow } from "./firebase/grades.ts";
 
 export {
+  watchGradebook,
   watchGradebooks,
   saveClassroomProgress,
   saveSimulation,

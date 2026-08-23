@@ -34,6 +34,32 @@ const MAX_CONCURRENT_AUDITED_CALLS = 4;
 // Implements: REQ-PERF-02
 export const MAX_BATCH_OPERATIONS = 400;
 
+export function watchGradebook(
+  courseId: string,
+  onChange: (item: CourseGradebook) => void,
+  onError: (message: string) => void
+) {
+  let active = true;
+  let stop: (() => void) | undefined;
+  firestore()
+    .then(({ sdk, db }) => {
+      if (!active) return;
+      stop = sdk.onSnapshot(
+        sdk.doc(db, "courses", courseId, "meta", "gradebook"),
+        (snapshot) => {
+          const state = toGradebookState(snapshot.exists() ? snapshot.data() : null);
+          onChange({ courseId, items: state.gradebook, exemption: state.exemption });
+        },
+        () => onError("No se pudo cargar el esquema de evaluaciones.")
+      );
+    })
+    .catch(() => onError("No se pudo conectar Firebase."));
+  return () => {
+    active = false;
+    stop?.();
+  };
+}
+
 /*
   Escucha segmentada de ponderaciones. El `collectionGroup("meta")` anterior no
   tenía límite y leía la ponderación de cada curso de la universidad al montar

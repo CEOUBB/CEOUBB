@@ -34,6 +34,7 @@ import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
+import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 
 const EMPTY_SCORES: GradeScores = {};
 const EMPTY_FEEDBACK: GradeFeedback = {};
@@ -563,55 +564,9 @@ function TeacherGrades({
   status: Note;
 }) {
   const { gradebook, exemption, students, classScores, classFeedback } = classroom;
-  const [draftItems, setDraftItems] = useState<GradeItem[] | null>(null);
-  const [draftExempt, setDraftExempt] = useState<string | null>(null);
   const [feedbackEditor, setFeedbackEditor] = useState<FeedbackEditor | null>(null);
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
-  const items = draftItems ?? gradebook;
-  const exempt = draftExempt ?? String(exemption ?? DEFAULT_EXEMPTION_GRADE);
-  const setItems = (update: (current: GradeItem[]) => GradeItem[]) => setDraftItems(update(items));
-
-  const totalWeight = items.reduce(
-    (total, item) =>
-      total + (typeof item.weight === "number" && !Number.isNaN(item.weight) ? item.weight : 0),
-    0
-  );
-
-  const patch = (id: string, values: Partial<GradeItem>) =>
-    setItems((current) => current.map((item) => (item.id === id ? { ...item, ...values } : item)));
-
-  const addItem = () => {
-    const id = crypto.randomUUID();
-    setItems((current) => [...current, { id, name: "", weight: 0, date: "" }]);
-  };
-
-  const save = async () => {
-    if (readOnly) return note("Este ramo está archivado y no admite cambios.", "bad");
-    const target = typeof exempt === "string" && exempt.trim() !== "" ? Number(exempt) : Number.NaN;
-    note("Guardando ponderación…");
-    try {
-      await saveGradebook(
-        course.id,
-        items.filter(
-          (item) =>
-            item.name.trim() &&
-            typeof item.weight === "number" &&
-            !Number.isNaN(item.weight) &&
-            item.weight > 0
-        ),
-        isValidGrade(target) ? target : null
-      );
-      setDraftItems(null);
-      setDraftExempt(null);
-      note("Ponderación guardada. Los estudiantes ya la ven.", "ok");
-    } catch (cause) {
-      note(
-        cause instanceof Error ? cause.message : "No fue posible guardar la ponderación.",
-        "bad"
-      );
-    }
-  };
 
   const handleSetScore = useCallback(
     async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
@@ -670,78 +625,7 @@ function TeacherGrades({
       <div className="section-title compact-title">
         <h2>Ponderación del ramo</h2>
       </div>
-      <div className="grades-editor">
-        {items.length === 0 && <p className="empty-row">Agrega la primera evaluación del ramo.</p>}
-        {items.map((item) => (
-          <div className="grades-editor-row" key={item.id}>
-            <label>
-              Evaluación
-              <input
-                disabled={readOnly}
-                onChange={(event) => patch(item.id, { name: event.target.value })}
-                value={item.name}
-              />
-            </label>
-            <label>
-              Pondera %
-              <input
-                disabled={readOnly}
-                max={100}
-                min={0}
-                onChange={(event) => {
-                  const raw = event.target.value.trim();
-                  const parsed = raw === "" ? 0 : Number(raw);
-                  patch(item.id, {
-                    weight: Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0,
-                  });
-                }}
-                type="number"
-                value={item.weight}
-              />
-            </label>
-            <label>
-              Fecha
-              <input
-                disabled={readOnly}
-                onChange={(event) => patch(item.id, { date: event.target.value })}
-                type="date"
-                value={item.date}
-              />
-            </label>
-            <button
-              className="remove-row"
-              disabled={readOnly}
-              onClick={() => setItems((current) => current.filter((row) => row.id !== item.id))}
-              type="button"
-            >
-              Quitar
-            </button>
-          </div>
-        ))}
-        <div className="grades-editor-foot">
-          <label>
-            Nota de eximición
-            <input
-              disabled={readOnly}
-              max={MAX_GRADE}
-              min={MIN_GRADE}
-              onChange={(event) => setDraftExempt(event.target.value)}
-              step="0.1"
-              type="number"
-              value={exempt}
-            />
-          </label>
-          <span className={totalWeight === 100 ? "weight-total ok num" : "weight-total num"}>
-            Suma {totalWeight}%
-          </span>
-          <button className="secondary-button" disabled={readOnly} onClick={addItem} type="button">
-            Agregar evaluación
-          </button>
-          <button className="primary-button" disabled={readOnly} onClick={save} type="button">
-            Guardar ponderación
-          </button>
-        </div>
-      </div>
+      <GradebookSettingsEditor courseId={course.id} exemption={exemption} gradebook={gradebook} />
       <div className="section-title compact-title">
         <h2>Notas oficiales</h2>
       </div>
