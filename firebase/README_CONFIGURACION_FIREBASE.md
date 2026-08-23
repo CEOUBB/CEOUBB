@@ -38,3 +38,14 @@ Sin secciones proyectadas, el portal no abre ninguna escucha y el aula queda vac
 5. Configurar una alerta de presupuesto en Google Cloud Billing.
 
 La función envía una notificación a los estudiantes cuando un profesor o el propietario publica un aviso o archivo nuevo. La app se suscribe al curso después de validar el rol institucional.
+
+## Despliegue de la bitácora de notas (CEO-7)
+
+El cambio debe publicarse en este orden para no interrumpir la edición de notas:
+
+1. Desplegar `saveAuditedStudentScores` y `saveAuditedGradebook`.
+2. Desplegar el portal web que invoca ambas Functions; la app Capacitor consume el mismo portal remoto.
+3. Desplegar el índice compuesto de `gradeAudit`.
+4. Desplegar `firestore.rules` al final, porque desde ese instante toda escritura directa a `grades/{uid}`, `meta/gradebook` y `gradeAudit/{eventId}` queda denegada.
+
+No se deben borrar documentos de `gradeAudit` durante rollback. Revertir las reglas para recuperar la escritura directa elimina la garantía de CEO-7 y sólo es una medida de emergencia documentada.

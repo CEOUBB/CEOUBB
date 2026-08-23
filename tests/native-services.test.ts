@@ -45,17 +45,16 @@ test("keeps every other guard on the users update rule", async () => {
 
 /*
   La superficie de reglas está congelada: cualquier `allow` nuevo debe pasar por
-  una spec aprobada. SPEC-010 la movió de 18 a 21 —entran matrículas (2) y
-  entregas (3), y salen los dos comodines de collection group— y la vuelve a
-  congelar aquí.
+  una spec aprobada. SPEC-010 la movió de 18 a 21 y CEO-7 agrega las dos reglas
+  explícitas de lectura y denegación de escritura para la bitácora de notas.
 */
 // REQ-CAP-18, REQ-SEC-02
 test("keeps the allow surface frozen at the approved count", async () => {
   const rules = await read("firebase/firestore.rules");
   assert.equal(
     (rules.match(/^\s*allow /gm) ?? []).length,
-    21,
-    "the ruleset must keep exactly 21 allow rules"
+    23,
+    "the ruleset must keep exactly 23 allow rules"
   );
   // No hay regla comodín: lo que no está listado queda denegado por defecto.
   assert.doesNotMatch(rules, /allow .*: if true;/, "no rule may grant unconditional access");
