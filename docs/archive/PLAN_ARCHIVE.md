@@ -782,3 +782,29 @@ Production deployed: no.
 Known risks: 3.000 secciones es una envolvente derivada porque no existe un extracto DARCA vigente en el repositorio; CLP 450 es un modelo de infraestructura, no costo total institucional; Cloud Storage concentra más de la mitad del caso base; SLO/RPO/RTO son objetivos hasta que staging los demuestre.
 
 Next recommended action: provisionar staging, ejecutar la carga de 3.000 sesiones durante 30 minutos, capturar lecturas/costo y realizar el simulacro RPO 1 h / RTO 4 h.
+
+## 2026-08-23: CEO-25 — rol de ayudante por ramo
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-25-agregar-el-rol-de-ayudante` / commit de esta PR
+
+Goal: permitir que una cuenta estudiantil colabore como ayudante sólo en las secciones asignadas, con capacidad para publicar y subir material sin promoción global ni acceso a datos docentes sensibles.
+
+Files changed: `lib/section-roles.ts`, `lib/services/academic-catalog.ts`, `lib/services/enrollment-projection.ts`, `lib/portal-utils.ts`, `app/api/auth/me/route.ts`, `app/api/enrollments/me/route.ts`, `app/Portal.tsx`, `app/portal-shell.tsx`, `app/views/classroom/`, `firebase/firestore.rules`, `firebase/storage.rules`, `tests/assistant-role.test.ts`, `package.json`, `.agents/.test-hashes.json`, `openspec/specs/academic/spec.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: ninguno; no se desplegaron reglas, no se mutaron matrículas y no se modificó producción.
+
+Checks passed: cambio OpenSpec estricto válido; prueba focal de ayudantía 5/5; `pnpm run verify:fast` (232/232, 29 hashes y 14 specs); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` (build Next.js 16.3 y 257/257); React Doctor `--scope changed --base origin/main --include-untracked --blocking warning` sin hallazgos.
+
+Checks not run: Firebase Emulator Suite y smoke test con una matrícula real `assistant`; el repositorio aún no dispone del arnés de emuladores y este cambio no autoriza mutaciones en producción.
+
+Production deployed: no.
+
+Known risks: las nuevas capacidades no funcionarán en producción hasta desplegar ambas reglas después del merge. CEO-25 consume roles ya presentes en Turso y su proyección, pero no incluye una interfaz docente para nombrar o revocar ayudantes; ese flujo permanece en el backlog de participantes.
+
+Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.

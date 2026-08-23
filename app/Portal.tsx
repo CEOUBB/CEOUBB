@@ -21,11 +21,12 @@ import {
   calendarEntries,
   forgetPhoto,
   loadCurrentSession,
-  loadEnrolledSectionIds,
+  loadEnrolledSectionMemberships,
   rememberPhoto,
   type User,
 } from "../lib/portal-utils";
 import { CommandPalette, type PaletteItem } from "./command-palette";
+import { sectionRoleFor, type SectionMembership } from "../lib/section-roles";
 
 const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
 const SKELETON_NAV = [0, 1, 2];
@@ -251,7 +252,7 @@ export function Portal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
-  const [sectionIds, setSectionIds] = useState<string[]>([]);
+  const [memberships, setMemberships] = useState<SectionMembership[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
 
   const mobile = useIsMobileApp();
@@ -301,10 +302,10 @@ export function Portal() {
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
-      .then(({ user: current, sectionIds: currentSectionIds }) => {
+      .then(({ user: current, memberships: currentMemberships }) => {
         if (!alive) return;
         setUser(current);
-        if (currentSectionIds.length > 0) setSectionIds(currentSectionIds);
+        if (currentMemberships.length > 0) setMemberships(currentMemberships);
         setChecking(false);
       })
       .catch(() => {
@@ -318,18 +319,22 @@ export function Portal() {
   }, []);
 
   const courses = useMemo(() => COURSES, []);
+  const sectionIds = useMemo(
+    () => memberships.map((membership) => membership.sectionId),
+    [memberships]
+  );
 
-  // Implements: REQ-PERF-01
+  // Implements: REQ-PERF-01, REQ-ASST-01, REQ-ASST-02
   useEffect(() => {
-    if (!user || sectionIds.length > 0) return;
+    if (!user || memberships.length > 0) return;
     let alive = true;
-    loadEnrolledSectionIds().then((ids) => {
-      if (alive && ids.length > 0) setSectionIds(ids);
+    loadEnrolledSectionMemberships().then((currentMemberships) => {
+      if (alive && currentMemberships.length > 0) setMemberships(currentMemberships);
     });
     return () => {
       alive = false;
     };
-  }, [user, sectionIds.length]);
+  }, [user, memberships.length]);
 
   useEffect(() => {
     if (!user || sectionIds.length === 0) return;
@@ -411,6 +416,7 @@ export function Portal() {
   if (!user) return <AccessScreen onSignedIn={setUser} />;
 
   const openedCourse = course ?? courseById(COURSES[0].id);
+  const openedSectionRole = openedCourse ? sectionRoleFor(memberships, openedCourse.id) : null;
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   const context =
     screen === "course" && openedCourse
@@ -513,6 +519,7 @@ export function Portal() {
             openedCourse={openedCourse}
             screen={screen}
             seen={seen}
+            sectionRole={openedSectionRole}
             setScreen={setScreen}
             user={user}
           />
