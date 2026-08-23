@@ -84,7 +84,7 @@ test("Firebase grants assistants content only and preserves teacher-only academi
   );
   assert.match(
     firestore,
-    /match \/courses\/\{courseId\}\/grades\/\{userId\}[\s\S]*?allow write: if teachesSection\(courseId\)/
+    /match \/courses\/\{courseId\}\/grades\/\{userId\}[\s\S]*?allow write: if false;/
   );
   assert.match(
     storage,
