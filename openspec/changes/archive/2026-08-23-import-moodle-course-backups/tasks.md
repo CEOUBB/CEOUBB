@@ -35,4 +35,4 @@
 - [x] 6.1 Run focal tests, `pnpm run verify:fast`, `pnpm run verify:invariants`, typecheck, lint, format check and Functions check.
 - [x] 6.2 Run `pnpm test`, strict OpenSpec validation and changed-scope React Doctor; fix implementation only if a locked assertion fails.
 - [x] 6.3 Verify the parser with TGZ, ZIP, CSV and unsupported content; verify the dialogue at 1440×900 and 390×844 with no console errors or horizontal overflow.
-- [ ] 6.4 Archive the OpenSpec change, update `PLAN.md`/handoff, commit in Spanish, push the branch and open the Spanish PR.
+- [x] 6.4 Archive the OpenSpec change, update `PLAN.md`/handoff, commit in Spanish, push the branch and open the Spanish PR.
