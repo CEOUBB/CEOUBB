@@ -5,9 +5,9 @@ import {
   ACCESS_REJECTION_MESSAGE,
   normalizeAccessEmail,
   roleForEmail,
-} from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
+import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
 
 const FIREBASE_API_KEY =
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
@@ -71,17 +71,20 @@ export async function POST(request: Request) {
       await db.insert(users).values(user);
     }
 
+    const safeUser = publicUser(user);
     await claimPendingEnrollments({ id: user.id, email: user.email }).catch(() => undefined);
+    try {
+      await claimPendingMoodleEnrollments(safeUser);
+    } catch (claimError) {
+      console.error("[Moodle Pending Enrollment]:", claimError);
+    }
     const cookie = await createSession(user.id);
     const googlePhoto =
       account.photoUrl ||
       account.providerUserInfo?.find((provider) => provider.photoUrl)?.photoUrl ||
       "";
     const photoUrl = googlePhoto.startsWith("https://") ? googlePhoto : "";
-    return Response.json(
-      { user: publicUser(user), photoUrl },
-      { headers: { "Set-Cookie": cookie } }
-    );
+    return Response.json({ user: safeUser, photoUrl }, { headers: { "Set-Cookie": cookie } });
   } catch (err) {
     // Implements: REQ-OBS-01
     console.error("[Auth Firebase Error]:", err);

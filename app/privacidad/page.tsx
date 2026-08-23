@@ -123,6 +123,8 @@ export default function PrivacyPage() {
         <p>
           Tus matrículas y el estado de cada una, las secciones a las que perteneces —asignatura,
           período académico y número de sección— y si estás en ellas como estudiante o como docente.
+          Cuando un docente importa una nómina de Moodle, podemos conservar temporalmente el correo
+          institucional de una cuenta que todavía no existe para vincularla cuando inicie sesión.
         </p>
 
         <h3>Desempeño académico</h3>
@@ -198,6 +200,11 @@ export default function PrivacyPage() {
         <dl>
           <dt>Identidad y matrículas</dt>
           <dd>Mientras tu cuenta permanezca activa en la plataforma.</dd>
+          <dt>Matrículas pendientes importadas</dt>
+          <dd>
+            El correo institucional pendiente se conserva hasta que la cuenta inicia sesión o por un
+            máximo de <span className="num">90</span> días desde la importación.
+          </dd>
           <dt>Sesiones</dt>
           <dd>Hasta la fecha de expiración de cada sesión; después se descartan.</dd>
           <dt>Notas, evaluaciones y entregas</dt>
