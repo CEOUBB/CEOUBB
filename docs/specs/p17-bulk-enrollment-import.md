@@ -179,7 +179,7 @@ type ImportPreview = {
 ### 4.5 Seguridad y presupuestos
 
 - Autorización antes de leer el CSV o consultar la nómina.
-- Lecturas `IN (...)` y escrituras múltiples particionadas en grupos de 100 para no exceder límites de variables SQLite.
+- Lecturas `IN (...)` y escrituras múltiples particionadas en grupos de 100 para no exceder límites de variables SQLite; los grupos se envían mediante batches libSQL y las mutaciones se confirman en una sola transacción atómica.
 - Proyecciones Firestore particionadas por el límite existente de 400.
 - Máximo 5 MiB, 12,000 filas, 254 caracteres por correo y 120 por nombre.
 - La UI conserva sólo el texto en memoria durante previsualización/aplicación y renderiza 50 filas por página.
@@ -225,7 +225,7 @@ graph TD
 
 ## 6. Verificación final
 
-- Prueba focal `tests/bulk-enrollment.test.ts`: 11/11, incluyendo parser, límites, clasificación, primera aplicación, repetición idempotente y reclamo de pendientes sobre libSQL migrado en memoria.
+- Prueba focal `tests/bulk-enrollment.test.ts`: 11/11, incluyendo parser, límites, clasificación, batch de 102 filas en más de un chunk, primera aplicación, repetición idempotente y reclamo de pendientes sobre libSQL migrado en memoria.
 - `pnpm run verify:fast`: 239/239; hashes de 29 archivos y 14/14 contratos OpenSpec.
 - `pnpm run verify:invariants`: 32/32 y reglas Firebase sincronizadas.
 - `pnpm run lint`, `pnpm run typecheck` y `pnpm run format:check`: limpios.

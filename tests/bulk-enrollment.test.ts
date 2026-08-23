@@ -308,42 +308,45 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
     name: "Owner",
     role: "owner" as const,
   };
+  const newStudents = Array.from({ length: 101 }, (_, index) =>
+    index === 0
+      ? "Bastián;bastian@alumnos.ubiobio.cl"
+      : `Pendiente ${index};pendiente${index}@alumnos.ubiobio.cl`
+  );
   const input = {
     sectionId: "440299-2026-2-1",
-    csv: ["nombre;correo", "Ana;ana@alumnos.ubiobio.cl", "Bastián;bastian@alumnos.ubiobio.cl"].join(
-      "\n"
-    ),
+    csv: ["nombre;correo", "Ana;ana@alumnos.ubiobio.cl", ...newStudents].join("\n"),
   };
   const firstPreview = await previewEnrollmentImport(actor, input);
-  assert.deepEqual(
-    firstPreview.rows.map((row) => row.status),
-    ["activate", "pending"]
-  );
+  assert.equal(firstPreview.rows[0]?.status, "activate");
+  assert.equal(firstPreview.totals.activate, 1);
+  assert.equal(firstPreview.totals.pending, 101);
 
   const firstApply = await applyEnrollmentImport(actor, {
     ...input,
     fingerprint: firstPreview.fingerprint,
   });
   assert.equal(firstApply.activated, 1);
-  assert.equal(firstApply.pending, 1);
+  assert.equal(firstApply.pending, 101);
   assert.equal(firstApply.projectionPending, true);
   assert.equal((await db.select().from(matriculas).limit(100)).length, 1);
-  assert.equal((await db.select().from(matriculasPendientes).limit(100)).length, 2);
+  assert.equal((await db.select().from(matriculasPendientes).limit(200)).length, 102);
 
   const repeatedPreview = await previewEnrollmentImport(actor, input);
-  assert.deepEqual(
-    repeatedPreview.rows.map((row) => row.status),
-    ["unchanged", "unchanged"]
+  assert.equal(
+    repeatedPreview.rows.every((row) => row.status === "unchanged"),
+    true
   );
+  assert.equal(repeatedPreview.totals.unchanged, 102);
   const repeatedApply = await applyEnrollmentImport(actor, {
     ...input,
     fingerprint: repeatedPreview.fingerprint,
   });
   assert.equal(repeatedApply.activated, 0);
   assert.equal(repeatedApply.pending, 0);
-  assert.equal(repeatedApply.unchanged, 2);
+  assert.equal(repeatedApply.unchanged, 102);
   assert.equal((await db.select().from(matriculas).limit(100)).length, 1);
-  assert.equal((await db.select().from(matriculasPendientes).limit(100)).length, 2);
+  assert.equal((await db.select().from(matriculasPendientes).limit(200)).length, 102);
 
   await db.insert(users).values({
     id: "student-new",
@@ -358,5 +361,5 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
   });
   assert.deepEqual(claim, { claimed: 1, projectionPending: true });
   assert.equal((await db.select().from(matriculas).limit(100)).length, 2);
-  assert.equal((await db.select().from(matriculasPendientes).limit(100)).length, 2);
+  assert.equal((await db.select().from(matriculasPendientes).limit(200)).length, 102);
 });

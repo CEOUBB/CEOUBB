@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { getDb } from "../../db/index.ts";
 import { matriculas, matriculasPendientes, periodos, secciones, users } from "../../db/schema.ts";
 import { normalizeAccessEmail } from "../access-policy.ts";
@@ -90,38 +91,37 @@ export async function applyEnrollmentImport(
     createdAt: now,
   }));
 
-  await db.transaction(async (tx) => {
-    for (const chunk of importChunks(plan.enrollments)) {
-      await tx
-        .insert(matriculas)
-        .values(
-          chunk.map((row) => ({
-            id: randomUUID(),
-            seccionId: input.sectionId,
-            usuarioId: row.userId,
-            rolSeccion: "student" as const,
-            estado: "activa" as const,
-            createdAt: now,
-          }))
-        )
-        .onConflictDoUpdate({
-          target: [matriculas.seccionId, matriculas.usuarioId],
-          set: { rolSeccion: "student", estado: "activa" },
-        });
-    }
-    for (const chunk of importChunks(outbox)) {
-      await tx
-        .insert(matriculasPendientes)
-        .values(chunk)
-        .onConflictDoUpdate({
-          target: [matriculasPendientes.seccionId, matriculasPendientes.email],
-          set: {
-            nombre: sql`excluded.nombre`,
-            importedBy: actor.id,
-          },
-        });
-    }
-  });
+  const enrollmentQueries = importChunks(plan.enrollments).map((chunk) =>
+    db
+      .insert(matriculas)
+      .values(
+        chunk.map((row) => ({
+          id: randomUUID(),
+          seccionId: input.sectionId,
+          usuarioId: row.userId,
+          rolSeccion: "student" as const,
+          estado: "activa" as const,
+          createdAt: now,
+        }))
+      )
+      .onConflictDoUpdate({
+        target: [matriculas.seccionId, matriculas.usuarioId],
+        set: { rolSeccion: "student", estado: "activa" },
+      })
+  );
+  const pendingQueries = importChunks(outbox).map((chunk) =>
+    db
+      .insert(matriculasPendientes)
+      .values(chunk)
+      .onConflictDoUpdate({
+        target: [matriculasPendientes.seccionId, matriculasPendientes.email],
+        set: {
+          nombre: sql`excluded.nombre`,
+          importedBy: actor.id,
+        },
+      })
+  );
+  await runDatabaseBatch(db, [...enrollmentQueries, ...pendingQueries]);
 
   const projections = plan.registeredForProjection.map((row) => ({
     seccionId: input.sectionId,
@@ -170,9 +170,10 @@ export async function claimPendingEnrollments(user: {
   if (pending.length === 0) return { claimed: 0, projectionPending: false };
 
   const now = new Date().toISOString();
-  await db.transaction(async (tx) => {
-    for (const chunk of importChunks(pending)) {
-      await tx
+  await runDatabaseBatch(
+    db,
+    importChunks(pending).map((chunk) =>
+      db
         .insert(matriculas)
         .values(
           chunk.map((row) => ({
@@ -187,9 +188,9 @@ export async function claimPendingEnrollments(user: {
         .onConflictDoUpdate({
           target: [matriculas.seccionId, matriculas.usuarioId],
           set: { rolSeccion: "student", estado: "activa" },
-        });
-    }
-  });
+        })
+    )
+  );
 
   try {
     await projectEnrollments(
@@ -201,9 +202,12 @@ export async function claimPendingEnrollments(user: {
         updatedAt: now,
       }))
     );
-    for (const chunk of importChunks(pending.map((row) => row.id))) {
-      await db.delete(matriculasPendientes).where(inArray(matriculasPendientes.id, chunk));
-    }
+    await runDatabaseBatch(
+      db,
+      importChunks(pending.map((row) => row.id)).map((chunk) =>
+        db.delete(matriculasPendientes).where(inArray(matriculasPendientes.id, chunk))
+      )
+    );
     return { claimed: pending.length, projectionPending: false };
   } catch {
     return { claimed: pending.length, projectionPending: true };
@@ -278,58 +282,78 @@ async function loadEnrollmentImportState(
 ): Promise<EnrollmentImportState> {
   const emails = [...new Set(rows.flatMap((row) => (row.error ? [] : [row.email])))];
   const db = getDb();
-  const registeredUsers: RegisteredImportUser[] = [];
-  const pendingEmails: string[] = [];
-
-  for (const chunk of importChunks(emails)) {
-    const [registered, pending] = await Promise.all([
-      db
-        .select({ id: users.id, email: users.email })
-        .from(users)
-        .where(inArray(users.email, chunk))
-        .limit(chunk.length),
-      db
-        .select({ email: matriculasPendientes.email })
-        .from(matriculasPendientes)
-        .where(
-          and(
-            eq(matriculasPendientes.seccionId, sectionId),
-            inArray(matriculasPendientes.email, chunk)
+  const emailChunks = importChunks(emails);
+  const [registeredGroups, pendingGroups] = await Promise.all([
+    runDatabaseBatch<RegisteredImportUser[]>(
+      db,
+      emailChunks.map((chunk) =>
+        db
+          .select({ id: users.id, email: users.email })
+          .from(users)
+          .where(inArray(users.email, chunk))
+          .limit(chunk.length)
+      )
+    ),
+    runDatabaseBatch<{ email: string }[]>(
+      db,
+      emailChunks.map((chunk) =>
+        db
+          .select({ email: matriculasPendientes.email })
+          .from(matriculasPendientes)
+          .where(
+            and(
+              eq(matriculasPendientes.seccionId, sectionId),
+              inArray(matriculasPendientes.email, chunk)
+            )
           )
-        )
-        .limit(chunk.length),
-    ]);
-    registeredUsers.push(...registered);
-    pendingEmails.push(...pending.map((row) => row.email));
-  }
+          .limit(chunk.length)
+      )
+    ),
+  ]);
+  const registeredUsers = registeredGroups.flat();
+  const pendingEmails = pendingGroups.flat().map((row) => row.email);
 
-  const currentEnrollments: CurrentEnrollment[] = [];
-  for (const chunk of importChunks(registeredUsers.map((user) => user.id))) {
-    const found = await db
-      .select({
-        userId: matriculas.usuarioId,
-        role: matriculas.rolSeccion,
-        status: matriculas.estado,
-      })
-      .from(matriculas)
-      .where(and(eq(matriculas.seccionId, sectionId), inArray(matriculas.usuarioId, chunk)))
-      .limit(chunk.length);
-    currentEnrollments.push(...found);
-  }
+  const currentEnrollments = (
+    await runDatabaseBatch<CurrentEnrollment[]>(
+      db,
+      importChunks(registeredUsers.map((user) => user.id)).map((chunk) =>
+        db
+          .select({
+            userId: matriculas.usuarioId,
+            role: matriculas.rolSeccion,
+            status: matriculas.estado,
+          })
+          .from(matriculas)
+          .where(and(eq(matriculas.seccionId, sectionId), inArray(matriculas.usuarioId, chunk)))
+          .limit(chunk.length)
+      )
+    )
+  ).flat();
 
   return { registeredUsers, currentEnrollments, pendingEmails };
 }
 
 async function deletePendingByEmail(sectionId: string, emails: string[]) {
   const db = getDb();
-  for (const chunk of importChunks(emails)) {
-    await db
-      .delete(matriculasPendientes)
-      .where(
-        and(
-          eq(matriculasPendientes.seccionId, sectionId),
-          inArray(matriculasPendientes.email, chunk)
+  await runDatabaseBatch(
+    db,
+    importChunks(emails).map((chunk) =>
+      db
+        .delete(matriculasPendientes)
+        .where(
+          and(
+            eq(matriculasPendientes.seccionId, sectionId),
+            inArray(matriculasPendientes.email, chunk)
+          )
         )
-      );
-  }
+    )
+  );
+}
+
+async function runDatabaseBatch<T = unknown>(
+  db: ReturnType<typeof getDb>,
+  queries: BatchItem<"sqlite">[]
+): Promise<T[]> {
+  if (queries.length === 0) return [];
+  return (await db.batch(queries as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]])) as T[];
 }

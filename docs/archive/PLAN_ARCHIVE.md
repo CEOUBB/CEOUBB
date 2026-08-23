@@ -977,7 +977,7 @@ Files changed: parser y plan puro en `lib/bulk-enrollment.ts`; persistencia, aut
 
 External services changed: rama y PR #68 publicados en GitHub. Sin cambios en Firebase, Turso, Vercel ni producción.
 
-Checks passed: prueba focal 11/11 sobre libSQL migrado; `pnpm run verify:fast` 239/239 con hashes 29/29 y OpenSpec 14/14; `pnpm run verify:invariants` 32/32 y reglas Firebase; `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` con build Next.js 16.3.0 y 264/264; React Doctor changed-scope 90/100 sin hallazgos en archivos CEO-16; QA Chromium 1440×1000 y 390×844 para preview, aplicación, repetición idempotente, rechazo de Gmail, paginación, accesibilidad básica, overflow y consola; endpoint sin sesión verificado con HTTP 401 acotado.
+Checks passed: prueba focal 11/11 sobre libSQL migrado, incluida una nómina de 102 filas que cruza el límite de chunk; `pnpm run verify:fast` 239/239 con hashes 29/29 y OpenSpec 14/14; `pnpm run verify:invariants` 32/32 y reglas Firebase; `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` con build Next.js 16.3.0 y 264/264; React Doctor changed-scope 90/100 sin hallazgos en archivos CEO-16; QA Chromium 1440×1000 y 390×844 para preview, aplicación, repetición idempotente, rechazo de Gmail, paginación, accesibilidad básica, overflow y consola; endpoint sin sesión verificado con HTTP 401 acotado.
 
 Checks not run: carga end-to-end de 12.000 filas contra Turso y Firestore de staging; proyección con credenciales Firebase reales; smoke test en WebView Android físico. Los límites, lotes de 100/400 y DOM de 50 filas sí quedaron protegidos por contrato y pruebas deterministas.
 

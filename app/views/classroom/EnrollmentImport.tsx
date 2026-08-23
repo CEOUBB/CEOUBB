@@ -101,11 +101,16 @@ export function EnrollmentImport({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sectionId, csv, fingerprint: preview.fingerprint }),
       });
-      if (!response.ok && response.status !== 502) {
-        throw new Error(await responseError(response, "No fue posible aplicar las matrículas."));
+      let data: ImportResult;
+      if (response.status === 502) {
+        data = (await response.json()) as ImportResult;
+      } else {
+        if (!response.ok) {
+          throw new Error(await responseError(response, "No fue posible aplicar las matrículas."));
+        }
+        data = (await response.json()) as ImportResult;
       }
-      const data = (await response.json()) as ImportResult;
-      if (!response.ok && data.applied !== true) {
+      if (data.applied !== true) {
         throw new Error(data.error || "No fue posible aplicar las matrículas.");
       }
       await loadPreview(1, false);
