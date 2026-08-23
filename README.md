@@ -156,6 +156,7 @@ pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only sto
   - [ADR-0002: Adopción del Runtime Capacitor 7 Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)
   - [ADR-0003: Derivación de Roles por Dominio Institucional](docs/adr/0003-domain-role-derivation.md)
 - **[Dossier de Adopción Institucional (`docs/institutional/`)](docs/institutional/moodle-adecca-comparison.md):** Comparativa técnica exhaustiva frente a Moodle UBB y Adecca UBB.
+- **[Carpeta Legal (`docs/legal/`)](docs/legal/README.md):** Borradores para revisión jurídica sobre encargo de tratamiento, retención, derechos, residencia de datos y término del servicio.
 - **[Guía de Contribución (`CONTRIBUTING.md`)](CONTRIBUTING.md):** Flujo de trabajo, branching y Conventional Commits en español.
 - **[Política de Seguridad (`SECURITY.md`)](SECURITY.md):** Divulgación responsable y cumplimiento de la Ley chilena N° 19.628 y N° 21.719.
 

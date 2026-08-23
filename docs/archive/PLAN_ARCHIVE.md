@@ -783,6 +783,32 @@ Known risks: 3.000 secciones es una envolvente derivada porque no existe un extr
 
 Next recommended action: provisionar staging, ejecutar la carga de 3.000 sesiones durante 30 minutos, capturar lecturas/costo y realizar el simulacro RPO 1 h / RTO 4 h.
 
+## 2026-08-23: CEO-40 — carpeta legal de tratamiento, retención y salida
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-40-preparar-la-carpeta-legal-convenio-retencion-y-borrado-de` / `b58f57d`; PR [#69](https://github.com/CEOUBB/CEOUBB/pull/69).
+
+Goal: preparar para revisión de Jurídica el convenio UBB-responsable / CEOUBB-encargado, los plazos y métodos de eliminación, el procedimiento de derechos sin WhatsApp, la residencia y transferencias, y la devolución o supresión si el proyecto termina.
+
+Files changed: `docs/legal/README.md`, cinco documentos de `docs/legal/`, `README.md`, `docs/specs/p0b-adoption.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: rama publicada y PR #69 creado en GitHub. Se consultaron fuentes oficiales BCN/Ley Chile, Ministerio de Economía, Google/Firebase, Vercel, Turso y Sentry. Sin cambios en Firebase, Turso, Vercel, Sentry, correo ni producción.
+
+Checks passed: enlaces internos de la carpeta; escaneo de patrones de secretos; `git diff --check`; `pnpm run format:check`; `pnpm run lint`; `pnpm test` con build Next.js 16.3, TypeScript y 252/252 pruebas.
+
+Checks not run: revisión o aprobación jurídica; verificación en consola de región de Storage, Turso y Sentry; prueba real del buzón `contacto@ceoubb.com`; borrado integral multisistema; respaldo y simulacro de restauración. Son bloqueos externos u operativos documentados, no afirmaciones cerradas por esta PR.
+
+Production deployed: no.
+
+Known risks: el operador legal de CEOUBB todavía no está individualizado; el convenio y la autorización del piloto no están firmados; los plazos son una propuesta pendiente de normativa académica UBB; Vercel, Auth/FCM, Turso y Sentry implican o pueden implicar tratamiento internacional; los dos caminos actuales de eliminación son parciales; no hay respaldo ni restore probado.
+
+Next recommended action: Jurídica y DTI completan las partes y bases legales, validan la tabla de retención y subencargados, provisionan el canal de derechos, cierran borrado/backup/residencia y recién entonces firman el convenio y autorizan datos reales.
+
 ## 2026-08-23: CEO-7 — historial inmutable de cambios de notas
 
 Date: 2026-08-23
