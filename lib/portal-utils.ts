@@ -2,6 +2,7 @@ import type { AccountRole as Role } from "./access-policy";
 import type { Course } from "./courses";
 import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
 import { dueDateParts } from "./planner.ts";
+import { parseSectionMemberships, type SectionMembership } from "./section-roles.ts";
 
 export type User = {
   id: string;
@@ -235,19 +236,26 @@ export function formatBytes(value: number): string {
 export type SessionState = {
   user: User | null;
   sectionIds: string[];
+  memberships: SectionMembership[];
 };
 
 export async function loadCurrentSession(): Promise<SessionState> {
   try {
     const response = await fetch("/api/auth/me", { cache: "no-store" });
-    if (!response.ok) return { user: null, sectionIds: [] };
-    const data = (await response.json()) as { user?: User | null; sectionIds?: unknown };
-    const sectionIds = Array.isArray(data.sectionIds)
-      ? data.sectionIds.filter((value): value is string => typeof value === "string")
-      : [];
-    return { user: data.user ?? null, sectionIds };
+    if (!response.ok) return { user: null, sectionIds: [], memberships: [] };
+    const data = (await response.json()) as {
+      user?: User | null;
+      sectionIds?: unknown;
+      memberships?: unknown;
+    };
+    const memberships = parseSectionMemberships(data.memberships);
+    return {
+      user: data.user ?? null,
+      sectionIds: memberships.map((membership) => membership.sectionId),
+      memberships,
+    };
   } catch {
-    return { user: null, sectionIds: [] };
+    return { user: null, sectionIds: [], memberships: [] };
   }
 }
 
@@ -264,6 +272,18 @@ export async function loadEnrolledSectionIds(): Promise<string[]> {
     const data = (await response.json()) as { sectionIds?: unknown };
     if (!Array.isArray(data.sectionIds)) return [];
     return data.sectionIds.filter((value): value is string => typeof value === "string");
+  } catch {
+    return [];
+  }
+}
+
+// Implements: REQ-ASST-01, REQ-ASST-02
+export async function loadEnrolledSectionMemberships(): Promise<SectionMembership[]> {
+  try {
+    const response = await fetch("/api/enrollments/me", { cache: "no-store" });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { memberships?: unknown };
+    return parseSectionMemberships(data.memberships);
   } catch {
     return [];
   }

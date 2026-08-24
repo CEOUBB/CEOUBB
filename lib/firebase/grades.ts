@@ -1,4 +1,4 @@
-import { firestore, currentUser, emailOf } from "./sdk.ts";
+import { cloudFunctions, firestore, currentUser, emailOf } from "./sdk.ts";
 import { type GradeItem, type GradeScores, normalizeItems, normalizeScores } from "../grades.ts";
 import { toGradebookState } from "./mappers.ts";
 import { watchableSections } from "./posts.ts";
@@ -14,9 +14,16 @@ export type StudentScoreRow = {
   scores: GradeScores;
 };
 
+type AuditedMutationResult = {
+  changedCount: number;
+};
+
+const MAX_AUDITED_ROWS_PER_CALL = 100;
+const MAX_CONCURRENT_AUDITED_CALLS = 4;
+
 /**
- * Firestore aborta un `writeBatch` sobre 500 operaciones. 400 deja margen para
- * el documento de bitácora que acompaña cada tanda y para un reintento parcial.
+ * Firestore aborta un `writeBatch` sobre 500 operaciones. Esta utilidad conserva
+ * el margen histórico de 400; las mutaciones auditadas usan un techo menor.
  */
 // Implements: REQ-PERF-02
 export const MAX_BATCH_OPERATIONS = 400;
@@ -103,21 +110,43 @@ export async function saveSimulation(courseId: string, scores: GradeScores) {
   );
 }
 
+function gradeMutationError(cause: unknown) {
+  const code =
+    cause && typeof cause === "object" && "code" in cause ? String(cause.code).toLowerCase() : "";
+  if (code.endsWith("unauthenticated"))
+    return new Error("Tu sesión expiró. Cierra sesión y vuelve a ingresar.");
+  if (code.endsWith("permission-denied"))
+    return new Error("No tienes permisos para editar notas en esta sección.");
+  if (code.endsWith("failed-precondition"))
+    return new Error("La matrícula de la sección no está sincronizada.");
+  if (cause instanceof Error && cause.message) return cause;
+  return new Error("No fue posible guardar el libro de notas.");
+}
+
+async function callAuditedMutation<TRequest>(name: string, data: TRequest) {
+  const { sdk, functions } = await cloudFunctions();
+  try {
+    const callable = sdk.httpsCallable<TRequest, AuditedMutationResult>(functions, name);
+    return (await callable(data)).data;
+  } catch (cause) {
+    throw gradeMutationError(cause);
+  }
+}
+
+// Implements: REQ-AUDIT-07
 export async function saveGradebook(
   courseId: string,
   items: GradeItem[],
   exemption: number | null
 ) {
-  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
-  await sdk.setDoc(sdk.doc(db, "courses", courseId, "meta", "gradebook"), {
+  await callAuditedMutation("saveAuditedGradebook", {
     courseId,
     items: normalizeItems(items),
     exemption,
-    updatedBy: user.uid,
-    updatedAt: sdk.serverTimestamp(),
   });
 }
 
+// Implements: REQ-AUDIT-01
 export async function saveStudentScores(courseId: string, userId: string, scores: GradeScores) {
   await saveSectionScores(courseId, [{ userId, scores }]);
 }
@@ -133,28 +162,32 @@ export function chunkOperations<T>(rows: readonly T[], size = MAX_BATCH_OPERATIO
   return batches;
 }
 
+function saveAuditBatchWaves(
+  courseId: string,
+  batches: readonly (readonly StudentScoreRow[])[],
+  offset = 0
+): Promise<void> {
+  const wave = batches.slice(offset, offset + MAX_CONCURRENT_AUDITED_CALLS);
+  if (wave.length === 0) return Promise.resolve();
+  return Promise.all(
+    wave.map((group) =>
+      callAuditedMutation("saveAuditedStudentScores", {
+        courseId,
+        rows: group.map((row) => ({ userId: row.userId, scores: normalizeScores(row.scores) })),
+      })
+    )
+  ).then(() => saveAuditBatchWaves(courseId, batches, offset + MAX_CONCURRENT_AUDITED_CALLS));
+}
+
 /*
   Publicación masiva de notas oficiales. Una sección de plan común pasa de 300
-  estudiantes: un único `writeBatch` reventaría el techo de 500 operaciones de
-  Firestore, así que la matriz se escribe en tandas secuenciales de 400.
+  estudiantes: el cliente limita cada invocación y la Function procesa cada fila
+  en una transacción independiente junto con sus documentos de auditoría.
 */
-// Implements: REQ-PERF-02
+// Implements: REQ-PERF-02, REQ-AUDIT-01, REQ-AUDIT-06
 export async function saveSectionScores(courseId: string, rows: readonly StudentScoreRow[]) {
   if (rows.length === 0) return 0;
-  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
-  const batches = chunkOperations(rows);
-  for (const group of batches) {
-    const batch = sdk.writeBatch(db);
-    for (const row of group) {
-      batch.set(sdk.doc(db, "courses", courseId, "grades", row.userId), {
-        uid: row.userId,
-        courseId,
-        scores: normalizeScores(row.scores),
-        updatedBy: user.uid,
-        updatedAt: sdk.serverTimestamp(),
-      });
-    }
-    await batch.commit();
-  }
+  const batches = chunkOperations(rows, MAX_AUDITED_ROWS_PER_CALL);
+  await saveAuditBatchWaves(courseId, batches);
   return batches.length;
 }

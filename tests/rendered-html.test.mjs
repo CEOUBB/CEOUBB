@@ -342,13 +342,13 @@ test("keeps profile deletion and course paths locked down", async () => {
   assert.match(firestoreRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
   assert.match(storageRules, /function validCourse\(courseId\) \{\s*return courseId\.matches/);
   /*
-    Los conteos incluyen la definición de la función. SPEC-010 añadió el buzón de
-    entregas, así que Firestore pasa de 5 a 6 (posts, progress, meta, grades,
-    submissions) y Storage de 2 a 3 (material docente, entregas).
+    Los conteos incluyen la definición de la función. CEO-7 retira `grades` de
+    las escrituras cliente: Firestore conserva posts, progress, meta y submissions;
+    Storage mantiene material docente y entregas.
   */
   assert.equal(
     firestoreRules.match(/validCourse\(courseId\)/g).length,
-    6,
+    5,
     "every course write path must be guarded by validCourse"
   );
   assert.equal(
@@ -358,15 +358,20 @@ test("keeps profile deletion and course paths locked down", async () => {
   );
   /*
     SPEC-010 endurece la escritura: ya no basta con ser docente, hay que dictar
-    esa sección. `teachesSection(courseId)` es `isOwner() || isTeacher() && isEnrolled(courseId)`.
+    esa sección. CEO-7 endurece las notas otra vez: sólo la Function auditada las
+    muta y ningún cliente puede escribir el estado ni la bitácora.
   */
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if teachesSection\(courseId\)/
+    /match \/courses\/\{courseId\}\/grades\/\{userId\} \{[^}]*allow write: if false;/
   );
   assert.match(
     firestoreRules,
-    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if teachesSection\(courseId\)/
+    /match \/courses\/\{courseId\}\/gradeAudit\/\{auditId\} \{[^}]*allow write: if false;/
+  );
+  assert.match(
+    firestoreRules,
+    /match \/courses\/\{courseId\}\/meta\/\{documentId\} \{[^}]*allow write: if teachesSection\(courseId\)[^;]*documentId != 'gradebook'/
   );
   assert.match(
     firestoreRules,

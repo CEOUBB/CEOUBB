@@ -1,4 +1,5 @@
 import { createSign } from "node:crypto";
+import { SECTION_ROLES, type SectionRole } from "../section-roles.ts";
 
 /*
   Proyección unidireccional Turso -> Firestore. Turso manda; Firestore sólo
@@ -16,10 +17,8 @@ export const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "centro-de
 /** Firestore acepta 500 escrituras por commit; 400 deja margen ante reintentos. */
 export const MAX_WRITES_PER_COMMIT = 400;
 
-const SECTION_ROLES = ["teacher", "student", "assistant", "coordinator"] as const;
 const ENROLLMENT_STATES = ["activa", "retirada", "congelada"] as const;
 
-export type SectionRole = (typeof SECTION_ROLES)[number];
 export type EnrollmentStatus = (typeof ENROLLMENT_STATES)[number];
 
 export type EnrollmentProjection = {

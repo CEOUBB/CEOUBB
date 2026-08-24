@@ -15,14 +15,17 @@ import { PeopleSection } from "./PeopleSection";
 import { LiveClassSection } from "./LiveClassSection";
 import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
+import type { SectionRole } from "../../../lib/section-roles";
 
 export function ClassroomView({
   course,
   user,
+  sectionRole,
   goBack,
 }: {
   course: Course;
   user: User;
+  sectionRole: SectionRole | null;
   goBack: () => void;
 }) {
   const {
@@ -34,6 +37,7 @@ export function ClassroomView({
     liveClassInvalid,
     note,
     copiedCourseReference,
+    canManageContent,
     canTeach,
     files,
     students,
@@ -53,7 +57,7 @@ export function ClassroomView({
     copyCourseReference,
     saveLiveClass,
     clearLiveClass,
-  } = useClassroomHandlers(course, user);
+  } = useClassroomHandlers(course, user, sectionRole);
 
   return (
     <div
@@ -121,6 +125,7 @@ export function ClassroomView({
                   <PostsSection
                     posts={posts}
                     user={user}
+                    canManageContent={canManageContent}
                     editPost={editPost}
                     deletePost={deletePost}
                     openMaterials={() => setTab("materials")}
@@ -169,7 +174,7 @@ export function ClassroomView({
                 course={course}
                 files={files}
                 user={user}
-                canTeach={canTeach}
+                canManageContent={canManageContent}
                 publish={publish}
                 upload={upload}
                 openFile={openFile}
@@ -197,7 +202,14 @@ export function ClassroomView({
                 updateProgress={updateProgress}
               />
             )}
-            {tab === "people" && <PeopleSection course={course} user={user} students={students} />}
+            {tab === "people" && (
+              <PeopleSection
+                course={course}
+                user={user}
+                sectionRole={sectionRole}
+                students={students}
+              />
+            )}
           </Screen>
         </AnimatePresence>
       </main>

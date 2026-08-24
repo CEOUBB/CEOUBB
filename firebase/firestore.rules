@@ -66,8 +66,24 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid)/sections/$(seccionId));
     }
 
+    // Implements: REQ-ASST-01, REQ-ASST-02
+    function sectionRole(seccionId) {
+      return isEnrolled(seccionId)
+        ? get(/databases/$(database)/documents/enrollments/$(request.auth.uid)/sections/$(seccionId)).data.role
+        : '';
+    }
+
     function teachesSection(seccionId) {
       return isOwner() || isTeacher() && isEnrolled(seccionId);
+    }
+
+    // Implements: REQ-ASST-03, REQ-ASST-04, REQ-ASST-05
+    function assistsSection(seccionId) {
+      return isMember() && isEnrolled(seccionId) && sectionRole(seccionId) == 'assistant';
+    }
+
+    function managesSectionContent(seccionId) {
+      return teachesSection(seccionId) || assistsSection(seccionId);
     }
 
     match /users/{userId} {
@@ -100,9 +116,9 @@ service cloud.firestore {
     // Implements: REQ-SEC-02
     match /courses/{courseId}/posts/{postId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow create: if teachesSection(courseId) && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
-      allow update: if isOwner() || teachesSection(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
-      allow delete: if isOwner() || teachesSection(courseId) && resource.data.authorId == request.auth.uid;
+      allow create: if managesSectionContent(courseId) && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
+      allow update: if isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
+      allow delete: if isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid;
     }
 
     // Implements: REQ-SEC-02
@@ -115,14 +131,20 @@ service cloud.firestore {
     // Implements: REQ-SEC-02, REQ-LIVE-02, REQ-LIVE-06
     match /courses/{courseId}/meta/{documentId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow write: if teachesSection(courseId) && validCourse(courseId)
+      allow write: if teachesSection(courseId) && validCourse(courseId) && documentId != 'gradebook'
         && (documentId != 'live-class' || request.method == 'delete' || validLiveClass(courseId));
     }
 
-    // Implements: REQ-SEC-02
+    // Implements: REQ-SEC-02, REQ-AUDIT-03
     match /courses/{courseId}/grades/{userId} {
       allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
-      allow write: if teachesSection(courseId) && validCourse(courseId);
+      allow write: if false;
+    }
+
+    // Implements: REQ-AUDIT-03, REQ-AUDIT-05
+    match /courses/{courseId}/gradeAudit/{auditId} {
+      allow read: if teachesSection(courseId) || signedIn() && isStudent() && role() == 'student' && isEnrolled(courseId) && resource.data.targetType == 'score' && resource.data.studentId == request.auth.uid;
+      allow write: if false;
     }
 
     // Implements: REQ-EVAL-01, REQ-SEC-08

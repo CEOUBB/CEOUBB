@@ -24,6 +24,7 @@ const elements = typeof document !== 'undefined' ? {
   resultCount: document.querySelector('#resultCount'),
   courseSummary: document.querySelector('#courseSummary'),
   progressBar: document.querySelector('#progressBar'),
+  progressMeter: document.querySelector('#progressMeter'),
   progressText: document.querySelector('#progressText'),
   heroCompleted: document.querySelector('#heroCompleted'),
   heroTitle: document.querySelector('#heroTitle'),
@@ -39,6 +40,10 @@ const totalProblems = allExercises.reduce((sum, exercise) => sum + (exercise.pro
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+}
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function renderMath(root) {
@@ -109,7 +114,8 @@ function selectCourse(courseId) {
   render();
   const titleEl = document.querySelector('#exercisesTitle');
   if (titleEl && typeof titleEl.scrollIntoView === 'function') {
-    titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    titleEl.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    titleEl.focus({ preventScroll: true });
   }
 }
 
@@ -118,14 +124,18 @@ function renderNav() {
   const items = [{ id: 'all', short: 'Todos los ramos', icon: '◆', exercises: allExercises }, ...courses];
   elements.nav.innerHTML = items.map(course => {
     const total = course.id === 'all' ? allExercises.length : (course.exercises ? course.exercises.length : 0);
-    return `<button class="nav-item ${state.activeCourse === course.id ? 'active' : ''}" data-course="${escapeHtml(course.id)}" type="button"><span class="nav-icon">${escapeHtml(course.icon)}</span><span>${escapeHtml(course.short)}</span><span class="nav-count">${completedCount(course.id === 'all' ? null : course.id)}/${total}</span></button>`;
+    const active = state.activeCourse === course.id;
+    return `<button class="nav-item ${active ? 'active' : ''}" data-course="${escapeHtml(course.id)}" type="button" aria-pressed="${active}"><span class="nav-icon" aria-hidden="true">${escapeHtml(course.icon)}</span><span>${escapeHtml(course.short)}</span><span class="nav-count">${completedCount(course.id === 'all' ? null : course.id)}/${total}</span></button>`;
   }).join('');
   elements.nav.querySelectorAll('[data-course]').forEach(button => button.addEventListener('click', () => selectCourse(button.dataset.course)));
 }
 
 function renderCourseGrid() {
   if (!elements.grid) return;
-  elements.grid.innerHTML = courses.map(course => `<button class="course-card ${state.activeCourse === course.id ? 'active' : ''}" data-course="${escapeHtml(course.id)}" data-icon="${escapeHtml(course.icon)}" type="button"><div class="course-meta"><span class="course-dot"></span><span>${completedCount(course.id)}/${course.exercises ? course.exercises.length : 0} certámenes</span></div><h3>${escapeHtml(course.name)}</h3><p>${escapeHtml(course.description)}</p></button>`).join('');
+  elements.grid.innerHTML = courses.map(course => {
+    const active = state.activeCourse === course.id;
+    return `<button class="course-card ${active ? 'active' : ''}" data-course="${escapeHtml(course.id)}" data-icon="${escapeHtml(course.icon)}" type="button" aria-pressed="${active}"><div class="course-meta"><span class="course-dot" aria-hidden="true"></span><span>${completedCount(course.id)}/${course.exercises ? course.exercises.length : 0} certámenes</span></div><h3>${escapeHtml(course.name)}</h3><p>${escapeHtml(course.description)}</p></button>`;
+  }).join('');
   elements.grid.querySelectorAll('[data-course]').forEach(button => button.addEventListener('click', () => selectCourse(button.dataset.course)));
   if (elements.courseSummary) elements.courseSummary.textContent = `${allExercises.length} evaluaciones · ${totalProblems} problemas largos`;
 }
@@ -175,20 +185,32 @@ function filteredExercises() {
 function exerciseTemplate(exercise) {
   const done = Boolean(state.progress.completed[exercise.id]);
   const codeClass = exercise.courseId === 'matlab' ? 'code-like' : '';
-  return `<article id="${escapeHtml(exercise.id)}" class="exercise-card ${done ? 'completed' : ''}">
+  const id = escapeHtml(exercise.id);
+  const title = escapeHtml(exercise.title);
+  return `<article id="${id}" class="exercise-card ${done ? 'completed' : ''}" tabindex="-1">
     <div class="exercise-head">
-      <button class="complete-check ${done ? 'checked' : ''}" data-complete="${escapeHtml(exercise.id)}" type="button" aria-label="Marcar ejercicio completado">✓</button>
-      <div class="exercise-title"><h3>${escapeHtml(exercise.title)}</h3><div class="badges"><span class="badge level-advanced">${escapeHtml(exercise.difficulty)}</span><span class="badge">${escapeHtml(exercise.topic)}</span>${exercise.time ? `<span class="badge">${escapeHtml(exercise.time)}</span>` : ''}${exercise.points ? `<span class="badge">${escapeHtml(exercise.points)}</span>` : ''}</div></div>
+      <button class="complete-check ${done ? 'checked' : ''}" data-complete="${id}" type="button" aria-label="${done ? 'Reabrir' : 'Marcar como completada'}: ${title}" aria-pressed="${done}">✓</button>
+      <div class="exercise-title"><h3 id="title-${id}">${title}</h3><div class="badges"><span class="badge level-advanced">${escapeHtml(exercise.difficulty)}</span><span class="badge">${escapeHtml(exercise.topic)}</span>${exercise.time ? `<span class="badge">${escapeHtml(exercise.time)}</span>` : ''}${exercise.points ? `<span class="badge">${escapeHtml(exercise.points)}</span>` : ''}</div></div>
       <span class="exercise-course">${escapeHtml(exercise.courseName)}</span>
     </div>
     <div class="exercise-body">
       <p class="prompt">${escapeHtml(exercise.prompt)}</p>
-      <div class="exercise-actions"><button class="small-button" data-hint="${escapeHtml(exercise.id)}" type="button">Ver pista</button><button class="small-button" data-solution="${escapeHtml(exercise.id)}" type="button">Ver solución</button><button class="small-button" data-note="${escapeHtml(exercise.id)}" type="button">Mis notas</button><button class="small-button ai-button" data-ai="${escapeHtml(exercise.id)}" type="button">Preguntar a ChatGPT</button></div>
-      <div id="hint-${escapeHtml(exercise.id)}" class="reveal hint">${escapeHtml(exercise.hint)}</div>
-      <div id="solution-${escapeHtml(exercise.id)}" class="reveal ${codeClass}">${escapeHtml(exercise.solution)}</div>
-      <textarea id="note-${escapeHtml(exercise.id)}" class="notes-area" data-note-input="${escapeHtml(exercise.id)}" placeholder="Escribe tu desarrollo, dudas o resultado..." hidden>${escapeHtml(state.progress.notes[exercise.id] || '')}</textarea>
+      <div class="exercise-actions"><button class="small-button" data-hint="${id}" type="button" aria-expanded="false" aria-controls="hint-${id}">Ver pista</button><button class="small-button" data-solution="${id}" type="button" aria-expanded="false" aria-controls="solution-${id}">Ver solución</button><button class="small-button" data-note="${id}" type="button" aria-expanded="false" aria-controls="note-${id}">Mis notas</button><button class="small-button ai-button" data-ai="${id}" type="button">Preguntar a ChatGPT</button></div>
+      <div id="hint-${id}" class="reveal hint" hidden>${escapeHtml(exercise.hint)}</div>
+      <div id="solution-${id}" class="reveal ${codeClass}" hidden>${escapeHtml(exercise.solution)}</div>
+      <label class="sr-only" for="note-${id}">Notas de ${title}</label>
+      <span id="note-help-${id}" class="sr-only">Tus notas se guardan sólo en este dispositivo.</span>
+      <textarea id="note-${id}" class="notes-area" data-note-input="${id}" aria-describedby="note-help-${id}" placeholder="Escribe tu desarrollo, dudas o resultado..." hidden>${escapeHtml(state.progress.notes[exercise.id] || '')}</textarea>
     </div>
   </article>`;
+}
+
+function toggleDisclosure(button, target) {
+  const expanded = button.getAttribute('aria-expanded') !== 'true';
+  button.setAttribute('aria-expanded', String(expanded));
+  target.hidden = !expanded;
+  target.classList.toggle('visible', expanded);
+  return expanded;
 }
 
 function bindExerciseActions() {
@@ -200,6 +222,9 @@ function bindExerciseActions() {
     else delete state.progress.completed[id];
     saveProgress();
     button.classList.toggle('checked', done);
+    button.setAttribute('aria-pressed', String(done));
+    const exercise = allExercises.find(item => item.id === id);
+    button.setAttribute('aria-label', `${done ? 'Reabrir' : 'Marcar como completada'}: ${exercise?.title || 'evaluación'}`);
     const card = document.querySelector(`#${id}`);
     if (card) card.classList.toggle('completed', done);
     refreshCounts();
@@ -208,17 +233,17 @@ function bindExerciseActions() {
   }));
   elements.list.querySelectorAll('[data-hint]').forEach(button => button.addEventListener('click', () => {
     const el = document.querySelector(`#hint-${button.dataset.hint}`);
-    if (el) el.classList.toggle('visible');
+    if (el) toggleDisclosure(button, el);
   }));
   elements.list.querySelectorAll('[data-solution]').forEach(button => button.addEventListener('click', () => {
     const el = document.querySelector(`#solution-${button.dataset.solution}`);
-    if (el) el.classList.toggle('visible');
+    if (el) toggleDisclosure(button, el);
   }));
   elements.list.querySelectorAll('[data-note]').forEach(button => button.addEventListener('click', () => {
     const area = document.querySelector(`#note-${button.dataset.note}`);
     if (area) {
-      area.hidden = !area.hidden;
-      if (!area.hidden) area.focus();
+      const expanded = toggleDisclosure(button, area);
+      if (expanded) area.focus();
     }
   }));
   elements.list.querySelectorAll('[data-note-input]').forEach(area => area.addEventListener('input', () => {
@@ -234,7 +259,7 @@ function bindExerciseActions() {
 function renderExercises() {
   if (!elements.list) return;
   const visible = filteredExercises();
-  if (elements.resultCount) elements.resultCount.textContent = `${visible.length} evaluación${visible.length === 1 ? '' : 'es'}`;
+  if (elements.resultCount) elements.resultCount.textContent = `${visible.length} ${visible.length === 1 ? 'evaluación' : 'evaluaciones'}`;
   elements.list.innerHTML = visible.length ? visible.map(exerciseTemplate).join('') : '<div class="empty-state">No hay ejercicios que coincidan con los filtros actuales.</div>';
   bindExerciseActions();
   renderMath(elements.list);
@@ -283,7 +308,9 @@ function renderMaterials() {
       a.className = 'material-link';
       a.href = encodeURI(file.path);
       a.target = '_blank';
+      a.rel = 'noopener';
       a.dataset.material = file.path;
+      a.setAttribute('aria-label', `${file.name || 'Archivo'} (${file.type || 'documento'}, ${formatBytes(file.size)}; abre en una pestaña nueva)`);
 
       const typeSpan = document.createElement('span');
       typeSpan.className = 'file-type';
@@ -320,6 +347,11 @@ function renderProgress() {
   const percent = Math.round(100 * count / total);
   if (elements.progressBar) elements.progressBar.style.width = `${percent}%`;
   if (elements.progressText) elements.progressText.textContent = `${count} de ${allExercises.length} · ${percent}%`;
+  if (elements.progressMeter) {
+    elements.progressMeter.setAttribute('aria-valuemax', String(allExercises.length));
+    elements.progressMeter.setAttribute('aria-valuenow', String(count));
+    elements.progressMeter.setAttribute('aria-valuetext', `${count} de ${allExercises.length} evaluaciones completadas, ${percent}%`);
+  }
   if (elements.heroCompleted) elements.heroCompleted.textContent = count;
   const course = courses.find(item => item.id === state.activeCourse);
   if (elements.heroTitle) elements.heroTitle.textContent = course ? course.name : 'Certámenes completos para tus seis ramos.';
@@ -341,9 +373,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (elements.topic) elements.topic.addEventListener('change', event => { state.topic = event.target.value; renderExercises(); });
   if (elements.askTutorButton) elements.askTutorButton.addEventListener('click', () => {
     const question = elements.tutorQuestion ? elements.tutorQuestion.value.trim() : '';
-    if (!question) return showToast('Escribe una duda para el tutor');
+    if (!question) {
+      elements.tutorQuestion?.setAttribute('aria-invalid', 'true');
+      elements.tutorQuestion?.focus();
+      return showToast('Escribe una duda para el tutor');
+    }
+    elements.tutorQuestion?.removeAttribute('aria-invalid');
     sendToTutor(tutorPrompt(null, question));
   });
+  if (elements.tutorQuestion) elements.tutorQuestion.addEventListener('input', () => elements.tutorQuestion.removeAttribute('aria-invalid'));
 
   if (typeof window.addEventListener === 'function') {
     window.addEventListener('online', updateOnlineStatus);
@@ -365,7 +403,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       const card = document.querySelector(`#${exercise.id}`);
       if (card) {
         card.classList.add('random-focus');
-        if (typeof card.scrollIntoView === 'function') card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof card.scrollIntoView === 'function') card.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        card.focus({ preventScroll: true });
       }
       showToast(`Reto: ${exercise.title}`);
     });
