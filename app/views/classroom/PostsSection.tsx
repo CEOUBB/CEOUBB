@@ -13,12 +13,14 @@ import { RichText } from "./RichText";
 export function PostsSection({
   posts,
   user,
+  canManageContent,
   editPost,
   deletePost,
   openMaterials,
 }: {
   posts: ClassroomPost[];
   user: User;
+  canManageContent: boolean;
   editPost: (post: ClassroomPost, values: { title: string; body: string }) => Promise<boolean>;
   deletePost: (post: ClassroomPost) => void;
   openMaterials: () => void;
@@ -50,7 +52,7 @@ export function PostsSection({
         <div className="empty-state">
           <strong>Todavía no hay avisos publicados.</strong>
           <p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p>
-          {user.role === "teacher" || user.role === "owner" ? (
+          {canManageContent ? (
             <button className="empty-state-action" onClick={openMaterials} type="button">
               Publicar primer aviso <ArrowRight size={15} />
             </button>

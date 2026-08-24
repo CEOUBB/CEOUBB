@@ -20,6 +20,7 @@ import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { CoursesDashboard } from "./views/CoursesDashboard";
+import type { SectionRole } from "../lib/section-roles";
 
 import {
   AdminSkeleton,
@@ -270,6 +271,7 @@ export function PortalMainView({
   activity,
   gradebooks,
   seen,
+  sectionRole,
   entries,
   openCourse,
   setScreen,
@@ -282,6 +284,7 @@ export function PortalMainView({
   activity: CourseActivity[];
   gradebooks: CourseGradebook[];
   seen: Record<string, string>;
+  sectionRole: SectionRole | null;
   entries: ReturnType<typeof calendarEntries>;
   openCourse: (course: Course) => void;
   setScreen: (screen: Screen) => void;
@@ -300,7 +303,12 @@ export function PortalMainView({
       <AnimatePresence initial={false} mode="wait">
         {screen === "course" && openedCourse ? (
           <PortalScreen key={`course-${openedCourse.id}`}>
-            <Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} />
+            <Classroom
+              course={openedCourse}
+              user={user}
+              sectionRole={sectionRole}
+              goBack={() => setScreen("courses")}
+            />
           </PortalScreen>
         ) : (
           <PortalScreen key={screen}>

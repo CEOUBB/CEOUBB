@@ -1,5 +1,8 @@
 import { getSessionUser } from "../../../../lib/auth";
-import { MAX_PAGE_SIZE, listUserSectionIds } from "../../../../lib/services/academic-catalog";
+import {
+  MAX_PAGE_SIZE,
+  listUserSectionMemberships,
+} from "../../../../lib/services/academic-catalog";
 
 /*
   Secciones con matrícula activa de la sesión actual. El portal las necesita
@@ -11,9 +14,10 @@ export async function GET(request: Request) {
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
   try {
-    const sectionIds = await listUserSectionIds(actor.id, { limit: MAX_PAGE_SIZE });
-    return Response.json({ sectionIds });
+    const memberships = await listUserSectionMemberships(actor.id, { limit: MAX_PAGE_SIZE });
+    const sectionIds = memberships.map((membership) => membership.sectionId);
+    return Response.json({ sectionIds, memberships });
   } catch {
-    return Response.json({ sectionIds: [] });
+    return Response.json({ sectionIds: [], memberships: [] });
   }
 }

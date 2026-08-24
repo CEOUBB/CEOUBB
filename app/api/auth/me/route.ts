@@ -2,7 +2,10 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { sessions, users } from "../../../../db/schema";
 import { destroySession, getSessionUser } from "../../../../lib/auth";
-import { MAX_PAGE_SIZE, listUserSectionIds } from "../../../../lib/services/academic-catalog";
+import {
+  MAX_PAGE_SIZE,
+  listUserSectionMemberships,
+} from "../../../../lib/services/academic-catalog";
 
 const UNAUTHORIZED = 401;
 
@@ -10,8 +13,11 @@ const UNAUTHORIZED = 401;
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return Response.json({ user: null });
-  const sectionIds = await listUserSectionIds(user.id, { limit: MAX_PAGE_SIZE }).catch(() => []);
-  return Response.json({ user, sectionIds });
+  const memberships = await listUserSectionMemberships(user.id, { limit: MAX_PAGE_SIZE }).catch(
+    () => []
+  );
+  const sectionIds = memberships.map((membership) => membership.sectionId);
+  return Response.json({ user, sectionIds, memberships });
 }
 
 // Implements: REQ-DATA-01, REQ-API-02, REQ-SEC-13

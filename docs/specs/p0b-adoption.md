@@ -31,6 +31,8 @@ Risk today: consumer Google sign-in plus email-domain string matching in `lib/ac
 
 ## P0B.4 Legal and data protection
 
+Estado: carpeta borrador preparada en [`docs/legal/`](../legal/README.md) por CEO-40. Sigue pendiente la revisión de Jurídica, individualizar al operador legal de CEOUBB, cerrar las brechas técnicas, autorizar subencargados y firmar el convenio; el borrador no cambia la condición independiente del proyecto.
+
 1. Define UBB as controller and CEOUBB as processor under Ley 19.628 and the Ley 21.719 regime; execute a data-processing agreement.
 2. Publish retention periods, deletion process, data-protection contact.
 3. Confirm and document that Firestore, Storage and Functions remain in `southamerica-west1`.

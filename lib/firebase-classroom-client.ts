@@ -20,6 +20,7 @@ export {
 export {
   firestore,
   cloudStorage,
+  cloudFunctions,
   currentUser,
   emailOf,
   roleOf,

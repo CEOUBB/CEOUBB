@@ -782,3 +782,81 @@ Production deployed: no.
 Known risks: 3.000 secciones es una envolvente derivada porque no existe un extracto DARCA vigente en el repositorio; CLP 450 es un modelo de infraestructura, no costo total institucional; Cloud Storage concentra más de la mitad del caso base; SLO/RPO/RTO son objetivos hasta que staging los demuestre.
 
 Next recommended action: provisionar staging, ejecutar la carga de 3.000 sesiones durante 30 minutos, capturar lecturas/costo y realizar el simulacro RPO 1 h / RTO 4 h.
+
+## 2026-08-23: CEO-40 — carpeta legal de tratamiento, retención y salida
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-40-preparar-la-carpeta-legal-convenio-retencion-y-borrado-de` / `b58f57d`; PR [#69](https://github.com/CEOUBB/CEOUBB/pull/69).
+
+Goal: preparar para revisión de Jurídica el convenio UBB-responsable / CEOUBB-encargado, los plazos y métodos de eliminación, el procedimiento de derechos sin WhatsApp, la residencia y transferencias, y la devolución o supresión si el proyecto termina.
+
+Files changed: `docs/legal/README.md`, cinco documentos de `docs/legal/`, `README.md`, `docs/specs/p0b-adoption.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: rama publicada y PR #69 creado en GitHub. Se consultaron fuentes oficiales BCN/Ley Chile, Ministerio de Economía, Google/Firebase, Vercel, Turso y Sentry. Sin cambios en Firebase, Turso, Vercel, Sentry, correo ni producción.
+
+Checks passed: enlaces internos de la carpeta; escaneo de patrones de secretos; `git diff --check`; `pnpm run format:check`; `pnpm run lint`; `pnpm test` con build Next.js 16.3, TypeScript y 252/252 pruebas.
+
+Checks not run: revisión o aprobación jurídica; verificación en consola de región de Storage, Turso y Sentry; prueba real del buzón `contacto@ceoubb.com`; borrado integral multisistema; respaldo y simulacro de restauración. Son bloqueos externos u operativos documentados, no afirmaciones cerradas por esta PR.
+
+Production deployed: no.
+
+Known risks: el operador legal de CEOUBB todavía no está individualizado; el convenio y la autorización del piloto no están firmados; los plazos son una propuesta pendiente de normativa académica UBB; Vercel, Auth/FCM, Turso y Sentry implican o pueden implicar tratamiento internacional; los dos caminos actuales de eliminación son parciales; no hay respaldo ni restore probado.
+
+Next recommended action: Jurídica y DTI completan las partes y bases legales, validan la tabla de retención y subencargados, provisionan el canal de derechos, cierran borrado/backup/residencia y recién entonces firman el convenio y autorizan datos reales.
+
+## 2026-08-23: CEO-7 — historial inmutable de cambios de notas
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-7-guardar-historial-de-cambios-de-notas-quien-cambio-que-y` / `5c6b496` más commit de handoff
+
+Goal: registrar quién cambió cada nota, cuándo lo hizo y cuáles fueron los valores anterior y nuevo, sin permitir que la aplicación edite, elimine u omita esa evidencia.
+
+Files changed: `firebase/functions/grade-audit.js`, `firebase/functions/index.js`, `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `lib/firebase/grades.ts`, `lib/firebase/sdk.ts`, `tests/grade-audit.test.ts`, pruebas de reglas/render, `openspec/specs/grades/spec.md`, cambio OpenSpec archivado `2026-08-23-add-immutable-grade-audit-trail`, `docs/specs/p17-immutable-grade-audit-trail.md`, `docs/specs/p0-pilot-safety.md`, documentación Firebase y `PLAN.md`.
+
+External services changed: rama publicada y PR [#70](https://github.com/CEOUBB/CEOUBB/pull/70) creado en GitHub. Sin cambios en Firebase, Turso, Vercel ni producción.
+
+Checks passed: RED registrado por ausencia del módulo; suite focal 9/9; `pnpm run verify:fast` 236/236 con 29 hashes; `pnpm run verify:invariants` 31/31; `pnpm run lint`; `pnpm run format:check`; `pnpm run check:functions`; carga local de `saveAuditedStudentScores`, `saveAuditedGradebook`, `notifyStudentsOnCoursePost` y `deleteMyAccount`; `pnpm test` con build Next.js 16.3 y 261/261; OpenSpec validado y archivado.
+
+Checks not run: Emulator Suite de reglas y matriz manual con cuentas owner/docente/estudiante; P0.10 todavía no provee ese arnés. No se verificó producción porque este PR no despliega infraestructura.
+
+Production deployed: no.
+
+Known risks: el despliegue debe respetar Functions -> portal -> índice -> reglas para no bloquear escrituras; no existe historial retroactivo para notas anteriores; la vista read-only del historial sigue pendiente para completar el criterio “surfaced” de P0.9.
+
+Next recommended action: revisar y fusionar PR #70; luego desplegar en el orden documentado, ejecutar la matriz multirol y comprobar que una corrección 5,0 -> 6,0 produce una entrada inmutable visible sólo para el equipo docente, owner y el estudiante afectado.
+
+## 2026-08-23: CEO-25 — rol de ayudante por ramo
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-25-agregar-el-rol-de-ayudante` / commit de esta PR
+
+Goal: permitir que una cuenta estudiantil colabore como ayudante sólo en las secciones asignadas, con capacidad para publicar y subir material sin promoción global ni acceso a datos docentes sensibles.
+
+Files changed: `lib/section-roles.ts`, `lib/services/academic-catalog.ts`, `lib/services/enrollment-projection.ts`, `lib/portal-utils.ts`, `app/api/auth/me/route.ts`, `app/api/enrollments/me/route.ts`, `app/Portal.tsx`, `app/portal-shell.tsx`, `app/views/classroom/`, `firebase/firestore.rules`, `firebase/storage.rules`, `tests/assistant-role.test.ts`, `package.json`, `.agents/.test-hashes.json`, `openspec/specs/academic/spec.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: ninguno; no se desplegaron reglas, no se mutaron matrículas y no se modificó producción.
+
+Checks passed: cambio OpenSpec estricto válido; prueba focal de ayudantía 5/5; `pnpm run verify:fast` (232/232, 29 hashes y 14 specs); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` (build Next.js 16.3 y 257/257); React Doctor `--scope changed --base origin/main --include-untracked --blocking warning` sin hallazgos.
+
+Checks not run: Firebase Emulator Suite y smoke test con una matrícula real `assistant`; el repositorio aún no dispone del arnés de emuladores y este cambio no autoriza mutaciones en producción.
+
+Production deployed: no.
+
+Known risks: las nuevas capacidades no funcionarán en producción hasta desplegar ambas reglas después del merge. CEO-25 consume roles ya presentes en Turso y su proyección, pero no incluye una interfaz docente para nombrar o revocar ayudantes; ese flujo permanece en el backlog de participantes.
+
+Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.

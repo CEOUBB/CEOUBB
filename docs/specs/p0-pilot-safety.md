@@ -129,6 +129,8 @@ Acceptance: changing a score leaves an immutable record; deleting that record is
 
 Risk today: `grades/{uid}` is overwritten in place. Acceptable under the "convenience copy, not the institutional record" disclaimer in a pilot; disqualifying for an official gradebook, where the first disputed grade has no evidence behind it.
 
+Estado implementado en CEO-7 (2026-08-23): las notas y la configuración del libro se mutan mediante Functions autenticadas, y estado más evidencia se confirman en una transacción. `gradeAudit` registra autor confiable, reloj de servidor y valor anterior/nuevo; las reglas deniegan toda escritura cliente y aíslan la lectura estudiantil por UID. Pendiente operacional: desplegar Functions, índice y reglas en el orden documentado, ejecutar la matriz manual en staging/producción y construir la vista de consulta para completar el criterio de “surfaced”.
+
 ## P0.10 Continuous integration and rules tests
 
 - GitHub Actions running `pnpm run lint`, `pnpm test`, the production build, and the Functions `pnpm run check`.
