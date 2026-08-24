@@ -1,4 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -11,6 +12,12 @@ import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy.ts";
 
+declare global {
+  interface Window {
+    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string;
+  }
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
   authDomain: "centro-de-estudio-ubb.firebaseapp.com",
@@ -21,6 +28,19 @@ const firebaseConfig = {
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+if (typeof window !== "undefined") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaEnterpriseProvider("6Lc_K5UtAAAAAAke6LXqyn3gVV4L3DxDGXfUoZMb"),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 function institutionalProvider() {
   const provider = new GoogleAuthProvider();

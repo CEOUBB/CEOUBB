@@ -198,8 +198,6 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
     "style-src": "style-src 'self' 'unsafe-inline'",
     "img-src": "img-src 'self' data: blob: https:",
     "font-src": "font-src 'self' data:",
-    "frame-src":
-      "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
     "worker-src": "worker-src 'self' blob:",
     "manifest-src": "manifest-src 'self'",
     "object-src": "object-src 'none'",
@@ -214,6 +212,13 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
       `${name} must not differ from the pre-migration policy`
     );
   }
+  assert.equal(
+    directives.get("frame-src"),
+    "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/"
+  );
+  assert.match(directives.get("script-src") ?? "", /https:\/\/www\.google\.com\/recaptcha\//);
+  assert.match(directives.get("script-src") ?? "", /https:\/\/www\.gstatic\.com\/recaptcha\//);
+  assert.match(directives.get("connect-src") ?? "", /https:\/\/www\.google\.com\/recaptcha\//);
 });
 
 test("serves a sitemap", async () => {

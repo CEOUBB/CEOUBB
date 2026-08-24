@@ -17,6 +17,7 @@ ext {
     // Implements: REQ-CAP-12 — habilita Google Sign-In nativo en @capacitor-firebase/authentication.
     rgcfaIncludeGoogle = true
     firebaseAuthVersion = '23.2.0'
+    firebaseAppCheckVersion = '19.4.0'
     playServicesAuthVersion = '21.3.0'
     androidxCredentialsVersion = '1.3.0'
     androidxCredentialsPlayServicesAuthVersion = '1.3.0'
