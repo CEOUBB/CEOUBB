@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
   pull-requests: write
   deployments: write
 
@@ -17,7 +18,17 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  staging:
+    name: Validate main in staging
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/firebase-release.yml
+    with:
+      promote_to_production: false
+    secrets: inherit
+
   deploy:
+    needs: staging
+    if: always() && (github.event_name == 'pull_request' || needs.staging.result == 'success')
     runs-on: ubuntu-latest
     env:
       VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"

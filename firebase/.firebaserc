@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "centro-de-estudio-ubb"
+    "staging": "centro-de-estudio-ubb-staging",
+    "production": "centro-de-estudio-ubb"
   }
 }

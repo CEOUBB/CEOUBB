@@ -2,6 +2,16 @@
 
 El proyecto usa Firebase Authentication, Cloud Firestore, Cloud Storage y Cloud Messaging.
 
+## Ambientes y publicación
+
+- Staging: `centro-de-estudio-ubb-staging`, alias CLI `staging`, Firestore en `southamerica-west1`.
+- Producción: `centro-de-estudio-ubb`, alias CLI `production`.
+- Los aliases viven en `firebase/.firebaserc`; no existe alias `default`.
+- `.github/workflows/firebase-release.yml` verifica, publica y siembra staging antes de habilitar una promoción productiva del mismo commit.
+- La operación completa, variables y rollback están en `docs/operations/staging.md`.
+
+No se debe ejecutar un `firebase deploy` productivo directo. La promoción manual del workflow con `promote_to_production=true` vuelve a probar staging y sólo entonces habilita el job `Production`.
+
 ## Cuentas y roles
 
 - `@alumnos.ubiobio.cl`: estudiante automático.
@@ -22,11 +32,12 @@ Variables necesarias en el entorno del portal web:
 
 Sin secciones proyectadas, el portal no abre ninguna escucha y el aula queda vacía: la proyección debe ejecutarse antes de habilitar el acceso.
 
-## Proyecto conectado
+## Proyectos conectados
 
-- Proyecto Firebase: `centro-de-estudio-ubb`.
+- Proyecto Firebase staging: `centro-de-estudio-ubb-staging`.
+- Proyecto Firebase producción: `centro-de-estudio-ubb`.
 - Aplicación Android: `cl.ubb.centroestudio`.
-- Firestore: región `southamerica-west1`.
+- Firestore de ambos proyectos: región `southamerica-west1`.
 - Curso beta sincronizado: Estática.
 
 ## Componentes pendientes de despliegue
