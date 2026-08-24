@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { Archive, ArrowRight } from "@phosphor-icons/react";
+import { Archive, ArrowRight, ChalkboardTeacher } from "@phosphor-icons/react";
 import { Course, PERIOD } from "../../lib/courses";
 import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
@@ -29,6 +29,7 @@ export function CoursesDashboard({
   activity,
   seen,
   entries,
+  manageCourses,
   openCourse,
   onLoadMoreArchived,
 }: {
@@ -40,6 +41,7 @@ export function CoursesDashboard({
   activity: CourseActivity[];
   seen: Record<string, string>;
   entries: CalendarEntry[];
+  manageCourses?: () => void;
   openCourse: (course: Course) => void;
   onLoadMoreArchived: () => void;
 }) {
@@ -151,6 +153,22 @@ export function CoursesDashboard({
         initial={shouldReduceMotion ? "show" : "hidden"}
         variants={shouldReduceMotion ? undefined : stagger}
       >
+        {courses.length === 0 && (
+          <div className="course-empty-state">
+            <ChalkboardTeacher aria-hidden="true" size={30} />
+            <strong>No hay ramos activos en tu portal</strong>
+            <p>
+              {manageCourses
+                ? "Crea una sección para comenzar a preparar el aula."
+                : "Tus ramos aparecerán aquí cuando tu matrícula esté activa."}
+            </p>
+            {manageCourses && (
+              <button className="primary-button" onClick={manageCourses} type="button">
+                Administrar ramos
+              </button>
+            )}
+          </div>
+        )}
         {courses.map((course) => {
           const summary = activitySummaryByCourse.get(course.id);
           const upcoming = summary?.upcoming;

@@ -18,6 +18,7 @@ import {
   type AcademicSectionSummary,
   type Course,
 } from "../lib/courses";
+import { loadMyCourses } from "../lib/teacher-course-client";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
@@ -328,6 +329,14 @@ export function Portal() {
 
   useHardwareBack(handleHardwareBack);
 
+  const refreshCourses = useCallback(async () => {
+    const session = await loadCurrentSession();
+    if (session.sections) {
+      setAcademicSections(session.sections);
+    }
+    await loadMyCourses();
+  }, []);
+
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
@@ -518,6 +527,8 @@ export function Portal() {
     forgetPhoto();
     setCommunications({ threads: [], cursors: [] });
     setCommunicationError("");
+    setActivity([]);
+    setGradebooks([]);
     setUser(null);
     setMemberships([]);
     setAcademicSections(null);
@@ -542,7 +553,11 @@ export function Portal() {
   const openedSectionRole = openedCourse
     ? (openedCourse.sectionRole ?? sectionRoleFor(memberships, openedCourse.id))
     : null;
-  const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
+  const views = navItems.filter(
+    (item) =>
+      (item.key !== "admin" || user.role === "owner") &&
+      (item.key !== "teacher" || user.role === "teacher" || user.role === "owner")
+  );
   const context =
     screen === "course" && openedCourse
       ? openedCourse.name
@@ -664,6 +679,7 @@ export function Portal() {
             openCourse={openCourse}
             onLoadMoreArchived={loadMoreArchived}
             openedCourse={openedCourse}
+            onCoursesChanged={refreshCourses}
             screen={screen}
             seen={seen}
             sectionRole={openedSectionRole}

@@ -125,6 +125,22 @@ export const secciones = sqliteTable(
   ]
 );
 
+export const sectionProfiles = sqliteTable("section_profiles", {
+  seccionId: text("section_id")
+    .primaryKey()
+    .references(() => secciones.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  modality: text("modality", { enum: ["presencial", "hibrida", "remota"] })
+    .notNull()
+    .default("presencial"),
+  room: text("room").notNull().default(""),
+  tone: text("tone", { enum: ["sky", "emerald", "gold", "red", "teal", "purple"] })
+    .notNull()
+    .default("sky"),
+  updatedAt: text("updated_at").notNull(),
+});
+
 // Implements: REQ-ACAD-01, REQ-ACAD-02
 export const matriculas = sqliteTable(
   "matriculas",
@@ -148,6 +164,33 @@ export const matriculas = sqliteTable(
     uniqueIndex("idx_matriculas_seccion_usuario").on(table.seccionId, table.usuarioId),
     index("idx_matriculas_usuario").on(table.usuarioId),
     index("idx_matriculas_seccion_estado").on(table.seccionId, table.estado),
+  ]
+);
+
+export const assistantAssignments = sqliteTable(
+  "assistant_assignments",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("section_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    usuarioId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    previousRole: text("previous_role", {
+      enum: ["teacher", "student", "coordinator"],
+    }),
+    previousStatus: text("previous_status", {
+      enum: ["activa", "retirada", "congelada"],
+    }),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_assistant_section_user").on(table.seccionId, table.usuarioId),
+    index("idx_assistant_section").on(table.seccionId),
   ]
 );
 

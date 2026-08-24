@@ -1,5 +1,6 @@
 import { createSign } from "node:crypto";
 import { SECTION_ROLES, type SectionRole } from "../section-roles.ts";
+export type { SectionRole };
 
 /*
   Proyección unidireccional Turso -> Firestore. Turso manda; Firestore sólo

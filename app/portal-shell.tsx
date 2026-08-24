@@ -20,6 +20,7 @@ import { AnimatePresence } from "motion/react";
 import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
+import type { ManagedCourse } from "../lib/course-management";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { CoursesDashboard } from "./views/CoursesDashboard";
 import type { SectionMembership, SectionRole } from "../lib/section-roles";
@@ -59,6 +60,14 @@ const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminV
   ssr: false,
   loading: () => <AdminSkeleton />,
 });
+
+const TeacherCoursesView = dynamic(
+  () => import("./views/TeacherCoursesView").then((m) => m.TeacherCoursesView),
+  {
+    ssr: false,
+    loading: () => <AdminSkeleton />,
+  }
+);
 
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
@@ -218,7 +227,11 @@ export function PortalSidebar({
   setScreen: (screen: Screen) => void;
   openCourse: (course: Course) => void;
 }) {
-  const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
+  const views = navItems.filter(
+    (item) =>
+      (item.key !== "admin" || user.role === "owner") &&
+      (item.key !== "teacher" || user.role === "teacher" || user.role === "owner")
+  );
   return (
     // Con el menú plegado el panel sigue en el DOM para animar: `inert` lo saca del foco y del lector.
     <aside className="app-sidebar" id="portal-sidebar" inert={!open ? true : undefined}>
@@ -314,6 +327,7 @@ export function PortalMainView({
   entries,
   openCourse,
   onLoadMoreArchived,
+  onCoursesChanged,
   setScreen,
 }: {
   screen: Screen;
@@ -335,6 +349,7 @@ export function PortalMainView({
   entries: ReturnType<typeof calendarEntries>;
   openCourse: (course: Course) => void;
   onLoadMoreArchived: () => void;
+  onCoursesChanged: () => Promise<void>;
   setScreen: (screen: Screen) => void;
 }) {
   return (
@@ -371,6 +386,11 @@ export function PortalMainView({
                   activity={activity}
                   seen={seen}
                   entries={entries}
+                  manageCourses={
+                    user.role === "teacher" || user.role === "owner"
+                      ? () => setScreen("teacher")
+                      : undefined
+                  }
                   openCourse={openCourse}
                   onLoadMoreArchived={onLoadMoreArchived}
                 />
@@ -396,6 +416,12 @@ export function PortalMainView({
                 />
               )}
               {screen === "resources" && <ResourcesView />}
+              {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (
+                <TeacherCoursesView
+                  onCoursesChanged={onCoursesChanged}
+                  openCourse={(course: ManagedCourse) => openCourse(course)}
+                />
+              )}
               {screen === "admin" && user.role === "owner" && <AdminView />}
             </div>
           </PortalScreen>
