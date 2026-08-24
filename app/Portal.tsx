@@ -272,6 +272,7 @@ export function Portal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
+  const [memberships, setMemberships] = useState<SectionMembership[]>([]);
   const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(null);
   const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(null);
   const [archivedLoading, setArchivedLoading] = useState(false);

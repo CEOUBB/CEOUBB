@@ -29,5 +29,5 @@
 - [x] 5.1 Run focused RED/GREEN/REFACTOR suite and regenerate the test lock only for the final approved assertions.
 - [x] 5.2 Run `pnpm run verify:fast`, `pnpm run verify:invariants`, `pnpm run lint`, `pnpm run format:check` and `pnpm test`.
 - [x] 5.3 Run changed-scope React Doctor and browser QA for desktop/mobile, keyboard, empty and failure states.
-- [ ] 5.4 Update `PLAN.md`, append the structured handoff, archive OpenSpec and validate living specs.
-- [ ] 5.5 Commit in Spanish, push the requested branch and open a Spanish GitHub PR linked to CEO-26.
+- [x] 5.4 Update `PLAN.md`, append the structured handoff, archive OpenSpec and validate living specs.
+- [x] 5.5 Commit in Spanish, push the requested branch and open a Spanish GitHub PR linked to CEO-26.

@@ -861,6 +861,8 @@ Known risks: las nuevas capacidades no funcionarán en producción hasta despleg
 
 Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.
 
+<<<<<<< HEAD
+
 ## 2026-08-24: CEO-18 — cierre de semestre y archivo de secciones
 
 Date: 2026-08-24
@@ -912,3 +914,29 @@ Production deployed: no.
 Known risks: la búsqueda `%término%` queda acotada a una sección, pero debe medirse con la distribución real antes de superar la envolvente institucional; la disponibilidad del grupo Ayudantes depende de matrículas `assistant` ya creadas y esta PR no asigna ni revoca roles; el correo abre el cliente local mediante `mailto:` y no garantiza entrega.
 
 Next recommended action: revisar y fusionar PR #74; validar el preview con una matrícula real de cada rol y luego abordar la administración docente para asignar o revocar ayudantes por sección.
+
+## 2026-08-23: CEO-26 — centro de avisos y mensajes
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-26-centro-de-avisos-y-mensajes-dentro-de-la-plataforma` / `15818db` más commit de handoff; PR [#75](https://github.com/CEOUBB/CEOUBB/pull/75).
+
+Goal: ofrecer en web y Capacitor un lugar persistente para revisar publicaciones recientes desde la última visita y mantener una conversación privada entre cada estudiante y el equipo docente de su sección.
+
+Files changed: `lib/communications.ts`, `lib/firebase/communications.ts`, `lib/firebase-classroom-client.ts`, `app/Portal.tsx`, `app/portal-types.ts`, `app/portal-shell.tsx`, `app/views/CommunicationsCenter.tsx`, `app/globals.css`, `firebase/firestore.rules`, `tests/communications.test.ts`, candados de reglas/render, `package.json`, `.agents/.test-hashes.json`, `openspec/specs/communications/center/spec.md`, cambio OpenSpec archivado `2026-08-23-add-communications-center`, `PLAN.md` y `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: rama publicada y PR #75 creado en GitHub. Sin cambios en Firebase, Turso, Vercel, FCM ni producción.
+
+Checks passed: RED por ausencia inicial de `lib/communications.ts`; prueba focal 9/9; `pnpm run verify:fast` 257/257 y test-locking 32/32; `pnpm run verify:invariants` 31/31; `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm run check:functions`; `pnpm test` con build Next.js 16.3 y 282/282; React Doctor sobre líneas modificadas sin hallazgos; OpenSpec estricto y 15 specs vivas válidas; QA Chromium a 1280, 390 y 320 px sin errores de consola ni overflow, con objetivos táctiles mínimos de 44 px.
+
+Checks not run: Firebase Emulator Suite y smoke multirol con cuentas reales de estudiante, docente/coordinación y secciones cruzadas; el repositorio aún no dispone del arnés de emuladores y esta PR no autoriza mutaciones en producción. El flujo visual se verificó con fixtures sintéticos temporales no versionados.
+
+Production deployed: no.
+
+Known risks: las reglas de Firestore deben desplegarse antes que el portal; un docente ve los 25 hilos más recientes por sección y la paginación histórica queda como deuda explícita fuera de CEO-26; no existe política automática de retención o eliminación de mensajes; la matriz multirol en staging sigue siendo obligatoria antes de producción.
+
+Next recommended action: revisar y fusionar la PR; después desplegar reglas de Firestore, publicar el portal y ejecutar la matriz multirol, incluida una lectura IDOR entre estudiantes y una sección no asignada al docente.
