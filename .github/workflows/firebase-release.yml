@@ -1,0 +1,137 @@
+name: Firebase staging and release
+
+on:
+  workflow_call:
+    inputs:
+      promote_to_production:
+        description: Promote the same verified commit after staging succeeds
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      promote_to_production:
+        description: Promover a producción después de validar staging
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firebase-release-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify application and infrastructure
+        run: |
+          pnpm run verify:fast
+          pnpm run verify:invariants
+          pnpm run check:functions
+
+  deploy_staging:
+    name: Deploy and seed staging
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: Staging
+    env:
+      CEOUBB_ENVIRONMENT: staging
+      FIREBASE_PROJECT_ID: centro-de-estudio-ubb-staging
+      FIRESTORE_LOCATION: southamerica-west1
+      TURSO_DATABASE_URL: libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Firebase Functions dependencies
+        working-directory: firebase/functions
+        run: pnpm install --frozen-lockfile
+
+      - name: Authenticate staging with short-lived OIDC credentials
+        id: google-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: centro-de-estudio-ubb-staging
+          workload_identity_provider: projects/500468423377/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: "Implements: REQ-STG-01 validate isolated targets"
+        env:
+          STAGING_SEED_DRY_RUN: "1"
+        run: pnpm run staging:seed
+
+      - name: "Implements: REQ-STG-05 deploy Firebase staging"
+        working-directory: firebase
+        run: pnpm dlx firebase-tools@latest deploy --project staging --only firestore,storage,functions --non-interactive
+
+      - name: "Implements: REQ-STG-02 seed synthetic data"
+        env:
+          FIREBASE_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
+        run: pnpm run staging:seed
+
+  deploy_production:
+    name: Promote Firebase to production
+    needs: deploy_staging
+    if: inputs.promote_to_production == true
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Install Firebase Functions dependencies
+        working-directory: firebase/functions
+        run: pnpm install --frozen-lockfile
+
+      - name: Authenticate dedicated production service account
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+      - name: "Implements: REQ-STG-03 promote the same commit"
+        working-directory: firebase
+        run: pnpm dlx firebase-tools@latest deploy --project production --only firestore,storage,functions --non-interactive

@@ -7,11 +7,11 @@ import {
   roleForEmail,
 } from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
+import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
 
-const FIREBASE_API_KEY =
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
+const FIREBASE_API_KEY = firebaseConfigFromEnvironment().apiKey;
 
 type FirebaseAccount = {
   localId?: string;

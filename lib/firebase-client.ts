@@ -11,6 +11,7 @@ import {
 import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy.ts";
+import { firebaseConfigFromEnvironment } from "./firebase-config.ts";
 
 declare global {
   interface Window {
@@ -18,14 +19,7 @@ declare global {
   }
 }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
-  authDomain: "centro-de-estudio-ubb.firebaseapp.com",
-  projectId: "centro-de-estudio-ubb",
-  storageBucket: "centro-de-estudio-ubb.firebasestorage.app",
-  messagingSenderId: "411177916202",
-  appId: "1:411177916202:web:57986cb2e14d676fe93053",
-};
+const firebaseConfig = firebaseConfigFromEnvironment();
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
