@@ -184,6 +184,7 @@ export function ClassroomView({
                 course={course}
                 files={files}
                 user={user}
+                canTeach={canTeach}
                 canManageContent={canManageContent}
                 publish={publish}
                 upload={upload}

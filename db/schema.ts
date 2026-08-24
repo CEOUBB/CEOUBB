@@ -212,6 +212,65 @@ export const matriculasPendientes = sqliteTable(
   ]
 );
 
+// Implements: REQ-MOODLE-05, REQ-MOODLE-08
+export const moodleImports = sqliteTable(
+  "moodle_imports",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    fingerprint: text("fingerprint").notNull(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status", { enum: ["running", "completed", "partial"] })
+      .notNull()
+      .default("running"),
+    sourceCourseId: text("source_course_id").notNull().default(""),
+    sourceCourseName: text("source_course_name").notNull().default(""),
+    sourceMoodleVersion: text("source_moodle_version").notNull().default(""),
+    sourceFileName: text("source_file_name").notNull(),
+    contentCount: integer("content_count").notNull().default(0),
+    fileCount: integer("file_count").notNull().default(0),
+    participantCount: integer("participant_count").notNull().default(0),
+    warningCount: integer("warning_count").notNull().default(0),
+    reportJson: text("report_json").notNull().default("{}"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_moodle_imports_section_fingerprint").on(table.seccionId, table.fingerprint),
+    index("idx_moodle_imports_section_updated").on(table.seccionId, table.updatedAt),
+  ]
+);
+
+// Implements: REQ-MOODLE-06
+export const pendingMatriculas = sqliteTable(
+  "pending_matriculas",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    rolSeccion: text("rol_seccion", { enum: ["student"] })
+      .notNull()
+      .default("student"),
+    sourceImportId: text("source_import_id")
+      .notNull()
+      .references(() => moodleImports.id, { onDelete: "cascade" }),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_pending_matriculas_section_email").on(table.seccionId, table.email),
+    index("idx_pending_matriculas_email").on(table.email),
+    index("idx_pending_matriculas_expiry").on(table.expiresAt),
+  ]
+);
+
 /*
   Bitácora inmutable de notas: sólo se inserta. Cada corrección de una nota
   oficial deja el valor previo, el actor y la IP para auditoría institucional.

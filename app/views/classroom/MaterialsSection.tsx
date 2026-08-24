@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight, Sigma } from "@phosphor-icons/react";
 import { Course, DEFAULT_FOLDER, materialFolders } from "../../../lib/courses";
 import { ClassroomFile } from "../../../lib/firebase-classroom-client";
@@ -11,10 +12,16 @@ import { MobileSheet } from "../../mobile-shell";
 import { groupByFolder, type Note } from "./classroom-utils";
 import { PublicationLauncher } from "./PublicationLauncher";
 
+const MoodleImportDialog = dynamic(
+  () => import("./MoodleImportDialog").then((module) => module.MoodleImportDialog),
+  { ssr: false }
+);
+
 export function MaterialsSection({
   course,
   files,
   user,
+  canTeach,
   canManageContent,
   publish,
   upload,
@@ -27,6 +34,7 @@ export function MaterialsSection({
   course: Course;
   files: ClassroomFile[];
   user: User;
+  canTeach?: boolean;
   canManageContent: boolean;
   publish: (event: FormEvent<HTMLFormElement>) => Promise<boolean>;
   upload: (event: FormEvent<HTMLFormElement>) => void;
@@ -77,7 +85,10 @@ export function MaterialsSection({
         <div className="section-title compact-title publication-section-title">
           <h2>Archivos compartidos</h2>
           {canManageContent && (
-            <PublicationLauncher folders={availableFolders} publish={publish} status={status} />
+            <span className="materials-title-actions">
+              {canTeach && <MoodleImportDialog course={course} />}
+              <PublicationLauncher folders={availableFolders} publish={publish} status={status} />
+            </span>
           )}
         </div>
         <Link className="material-row featured" href="/biblioteca/index.html" prefetch={false}>

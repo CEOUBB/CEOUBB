@@ -43,9 +43,15 @@ export type AcademicPeriodProjection = {
   updatedAt?: string;
 };
 
-type FirestoreWrite =
+export type FirestoreValue =
+  | { stringValue: string }
+  | { integerValue: string }
+  | { booleanValue: boolean }
+  | { timestampValue: string };
+
+export type FirestoreWrite =
   | {
-      update: { name: string; fields: Record<string, { stringValue: string }> };
+      update: { name: string; fields: Record<string, FirestoreValue> };
       updateMask: { fieldPaths: string[] };
     }
   | { delete: string };
@@ -229,11 +235,17 @@ export async function projectEnrollments(
 ): Promise<FirestoreWrite[]> {
   const writes = entries.map((entry) => toFirestoreWrite(parseEnrollmentProjection(entry)));
   if (writes.length === 0) return [];
+  await commitFirestoreWrites(writes);
+  return writes;
+}
+
+// Implements: REQ-MOODLE-05
+export async function commitFirestoreWrites(writes: FirestoreWrite[]): Promise<void> {
+  if (writes.length === 0) return;
   const token = await accessToken();
   for (const batch of chunkWrites(writes)) {
     await commit(batch, token);
   }
-  return writes;
 }
 
 export async function projectAcademicSectionsToFirestore(
