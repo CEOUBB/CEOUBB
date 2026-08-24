@@ -85,3 +85,20 @@ export {
 } from "./firebase/calendar.ts";
 
 export { syncProfile } from "./firebase/profile.ts";
+
+export type {
+  CommunicationReadCursor,
+  CommunicationState,
+  DirectMessage,
+  MessageThreadSummary,
+} from "./communications.ts";
+
+export {
+  MAX_MESSAGES_PER_THREAD,
+  MAX_READ_CURSORS,
+  MAX_THREAD_SUMMARIES_PER_SECTION,
+  markCommunicationRead,
+  sendDirectMessage,
+  watchCommunications,
+  watchDirectMessages,
+} from "./firebase/communications.ts";

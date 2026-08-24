@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
+import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
   useExternalLinks,
   useHardwareBack,
@@ -33,6 +33,11 @@ import {
 } from "../lib/portal-utils";
 import { CommandPalette, type PaletteItem } from "./command-palette";
 import { sectionRoleFor, type SectionMembership } from "../lib/section-roles";
+import {
+  firebaseUserId,
+  unreadCommunicationCount,
+  type CommunicationState,
+} from "../lib/communications.ts";
 
 const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
 const SKELETON_NAV = [0, 1, 2];
@@ -271,6 +276,11 @@ export function Portal() {
   const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(null);
   const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(null);
   const [archivedLoading, setArchivedLoading] = useState(false);
+  const [communications, setCommunications] = useState<CommunicationState>({
+    threads: [],
+    cursors: [],
+  });
+  const [communicationError, setCommunicationError] = useState("");
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
   const previousView = useRef<string | null>(null);
 
@@ -397,6 +407,28 @@ export function Portal() {
   }, [user, sectionIds]);
 
   useEffect(() => {
+    if (!user || memberships.length === 0) return;
+    let alive = true;
+    let unsub: (() => void) | undefined;
+    import("../lib/firebase-classroom-client").then(({ watchCommunications }) => {
+      if (!alive) return;
+      unsub = watchCommunications(
+        memberships,
+        user.role,
+        (state) => {
+          setCommunications(state);
+          setCommunicationError("");
+        },
+        setCommunicationError
+      );
+    });
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [user, memberships]);
+
+  useEffect(() => {
     if (!user || sectionIds.length === 0) return;
     let alive = true;
     let unsub: (() => void) | undefined;
@@ -447,6 +479,18 @@ export function Portal() {
   }, []);
 
   const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
+  const unreadCommunications = useMemo(
+    () =>
+      user
+        ? unreadCommunicationCount(
+            activity,
+            communications.threads,
+            communications.cursors,
+            firebaseUserId(user.id)
+          )
+        : 0,
+    [activity, communications, user]
+  );
 
   const enterCourse = (next: Course) => {
     const latest = activity.find((item) => item.courseId === next.id)?.createdAt;
@@ -472,6 +516,8 @@ export function Portal() {
       // Ignore network failure
     }
     forgetPhoto();
+    setCommunications({ threads: [], cursors: [] });
+    setCommunicationError("");
     setUser(null);
     setMemberships([]);
     setAcademicSections(null);
@@ -537,6 +583,13 @@ export function Portal() {
       onSelect: () => setCoursesSheet(true),
     },
     {
+      key: "notifications",
+      label: "Avisos",
+      Icon: Bell,
+      active: screen === "notifications",
+      onSelect: () => setScreen("notifications"),
+    },
+    {
       key: "calendar",
       label: "Calendario",
       Icon: CalendarBlank,
@@ -567,10 +620,12 @@ export function Portal() {
           <PortalHeader
             context={context}
             onHome={() => setScreen("courses")}
+            onCommunications={() => setScreen("notifications")}
             onLogout={logout}
             onSearch={() => setSearchOpen(true)}
             sidebarOpen={sidebarOpen}
             toggleSidebar={() => setSidebarOpen((open) => !open)}
+            unreadCommunications={unreadCommunications}
             user={user}
           />
           <CommandPalette
@@ -598,10 +653,14 @@ export function Portal() {
             archivedCourses={archivedCourses}
             archivedHasMore={archivedNextCursor !== null}
             archivedLoading={archivedLoading}
+            communicationCursors={communications.cursors}
+            communicationError={communicationError}
+            communicationThreads={communications.threads}
             courses={courses}
             context={context}
             entries={entries}
             gradebooks={gradebooks}
+            memberships={memberships}
             openCourse={openCourse}
             onLoadMoreArchived={loadMoreArchived}
             openedCourse={openedCourse}
