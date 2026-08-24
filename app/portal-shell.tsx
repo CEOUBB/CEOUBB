@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Archive,
+  Bell,
   CaretDown,
   FolderSimple,
   MagnifyingGlass,
@@ -18,9 +19,10 @@ import { navItems, type Screen } from "./portal-types";
 import { AnimatePresence } from "motion/react";
 import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
+import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { CoursesDashboard } from "./views/CoursesDashboard";
-import type { SectionRole } from "../lib/section-roles";
+import type { SectionMembership, SectionRole } from "../lib/section-roles";
 
 import {
   AdminSkeleton,
@@ -45,6 +47,14 @@ const ResourcesView = dynamic(
   }
 );
 
+const CommunicationsCenter = dynamic(
+  () => import("./views/CommunicationsCenter").then((m) => m.CommunicationsCenter),
+  {
+    ssr: false,
+    loading: () => <ResourcesSkeleton />,
+  }
+);
+
 const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
   ssr: false,
   loading: () => <AdminSkeleton />,
@@ -61,7 +71,9 @@ export function PortalHeader({
   context,
   onLogout,
   onHome,
+  onCommunications,
   onSearch,
+  unreadCommunications,
   toggleSidebar,
 }: {
   sidebarOpen: boolean;
@@ -69,7 +81,9 @@ export function PortalHeader({
   context: string;
   onLogout: () => void;
   onHome: () => void;
+  onCommunications: () => void;
   onSearch: () => void;
+  unreadCommunications: number;
   toggleSidebar: () => void;
 }) {
   const shortcut =
@@ -146,6 +160,24 @@ export function PortalHeader({
         <kbd aria-hidden="true">{shortcut}</kbd>
       </button>
       <div className="header-actions">
+        <button
+          aria-label={`Avisos y mensajes${unreadCommunications > 0 ? `, ${unreadCommunications} sin leer` : ""}`}
+          className="header-notifications"
+          data-requirement="Implements: REQ-COMM-02 REQ-COMM-08"
+          onClick={onCommunications}
+          type="button"
+        >
+          <Bell
+            aria-hidden="true"
+            size={20}
+            weight={unreadCommunications > 0 ? "fill" : "regular"}
+          />
+          {unreadCommunications > 0 && (
+            <span className="header-notification-count num">
+              {unreadCommunications > 99 ? "99+" : unreadCommunications}
+            </span>
+          )}
+        </button>
         <details className="account-menu" ref={account}>
           <summary aria-label={`Cuenta de ${user.name}`}>
             <Avatar email={user.email} name={user.name} />
@@ -272,7 +304,11 @@ export function PortalMainView({
   archivedHasMore,
   archivedLoading,
   activity,
+  communicationCursors,
+  communicationError,
+  communicationThreads,
   gradebooks,
+  memberships,
   seen,
   sectionRole,
   entries,
@@ -289,7 +325,11 @@ export function PortalMainView({
   archivedHasMore: boolean;
   archivedLoading: boolean;
   activity: CourseActivity[];
+  communicationCursors: CommunicationReadCursor[];
+  communicationError: string;
+  communicationThreads: MessageThreadSummary[];
   gradebooks: CourseGradebook[];
+  memberships: SectionMembership[];
   seen: Record<string, string>;
   sectionRole: SectionRole | null;
   entries: ReturnType<typeof calendarEntries>;
@@ -341,6 +381,18 @@ export function PortalMainView({
                   gradebooks={gradebooks}
                   activity={activity}
                   openCourse={openCourse}
+                />
+              )}
+              {screen === "notifications" && (
+                <CommunicationsCenter
+                  activity={activity}
+                  connectionError={communicationError}
+                  courses={courses}
+                  cursors={communicationCursors}
+                  memberships={memberships}
+                  openCourse={openCourse}
+                  threads={communicationThreads}
+                  user={user}
                 />
               )}
               {screen === "resources" && <ResourcesView />}

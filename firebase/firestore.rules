@@ -58,6 +58,68 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/academicPeriods/$(sectionPeriodId(seccionId))).data.status == 'abierto';
     }
 
+    function validCommunicationBody(value) {
+      return value is string && value.size() > 0 && value.size() <= 2000;
+    }
+
+    function validParticipantName(value) {
+      return value is string && value.size() > 0 && value.size() <= 120;
+    }
+
+    function threadParticipant(courseId, threadId) {
+      return teachesCommunicationSection(courseId) || signedIn() && request.auth.uid == threadId && isEnrolled(courseId);
+    }
+
+    function validThreadShape(courseId, threadId) {
+      return request.resource.data.keys().hasOnly(['courseId', 'studentId', 'studentName', 'studentEmail', 'latestBody', 'latestAuthorId', 'latestAuthorName', 'createdAt', 'updatedAt'])
+        && request.resource.data.courseId == courseId
+        && request.resource.data.studentId == threadId
+        && validParticipantName(request.resource.data.studentName)
+        && request.resource.data.studentEmail is string
+        && request.resource.data.studentEmail.size() <= 254
+        && validCommunicationBody(request.resource.data.latestBody)
+        && request.resource.data.latestAuthorId == request.auth.uid
+        && validParticipantName(request.resource.data.latestAuthorName)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validThreadCreate(courseId, threadId) {
+      return signedIn() && request.auth.uid == threadId && isEnrolled(courseId)
+        && validCourse(courseId)
+        && validThreadShape(courseId, threadId)
+        && request.resource.data.studentEmail == email()
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validThreadUpdate(courseId, threadId) {
+      return validThreadShape(courseId, threadId)
+        && request.resource.data.studentName == resource.data.studentName
+        && request.resource.data.studentEmail == resource.data.studentEmail
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function validDirectMessage(courseId, threadId) {
+      return request.resource.data.keys().hasOnly(['courseId', 'threadId', 'authorId', 'authorName', 'body', 'createdAt'])
+        && request.resource.data.courseId == courseId
+        && request.resource.data.threadId == threadId
+        && request.resource.data.authorId == request.auth.uid
+        && validParticipantName(request.resource.data.authorName)
+        && validCommunicationBody(request.resource.data.body)
+        && request.resource.data.body.size() <= 2000
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/courses/$(courseId)/messageThreads/$(threadId))
+        && getAfter(/databases/$(database)/documents/courses/$(courseId)/messageThreads/$(threadId)).data.latestBody == request.resource.data.body
+        && getAfter(/databases/$(database)/documents/courses/$(courseId)/messageThreads/$(threadId)).data.latestAuthorId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/courses/$(courseId)/messageThreads/$(threadId)).data.updatedAt == request.time;
+    }
+
+    function validReadCursor(cursorId) {
+      return request.resource.data.keys().hasOnly(['key', 'readAt'])
+        && request.resource.data.key == cursorId
+        && cursorId.size() <= 180
+        && request.resource.data.readAt == request.time;
+    }
+
     // Implements: REQ-LIVE-02, REQ-LIVE-06
     function validLiveClass(courseId) {
       return request.resource.data.keys().hasOnly(['courseId', 'url', 'provider', 'updatedBy', 'updatedAt'])
@@ -89,6 +151,10 @@ service cloud.firestore {
       return isOwner() || isTeacher() && isEnrolled(seccionId);
     }
 
+    function teachesCommunicationSection(seccionId) {
+      return isOwner() || teachesSection(seccionId) && (sectionRole(seccionId) == 'teacher' || sectionRole(seccionId) == 'coordinator');
+    }
+
     // Implements: REQ-ASST-03, REQ-ASST-04, REQ-ASST-05
     function assistsSection(seccionId) {
       return isMember() && isEnrolled(seccionId) && sectionRole(seccionId) == 'assistant';
@@ -112,6 +178,12 @@ service cloud.firestore {
       match /calendar_events/{eventId} {
         allow read, write: if signedIn() && request.auth.uid == userId;
       }
+
+      match /notificationReads/{cursorId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() && request.auth.uid == userId && validReadCursor(cursorId);
+        allow delete: if signedIn() && request.auth.uid == userId;
+      }
     }
 
     /*
@@ -131,6 +203,19 @@ service cloud.firestore {
       allow create: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.authorId == request.auth.uid;
       allow update: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) && sectionIsWritable(courseId);
       allow delete: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid) && sectionIsWritable(courseId);
+    }
+
+    match /courses/{courseId}/messageThreads/{threadId} {
+      allow read: if threadParticipant(courseId, threadId);
+      allow create: if validThreadCreate(courseId, threadId);
+      allow update: if threadParticipant(courseId, threadId) && validThreadUpdate(courseId, threadId);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if threadParticipant(courseId, threadId);
+        allow create: if threadParticipant(courseId, threadId) && validDirectMessage(courseId, threadId);
+        allow update, delete: if false;
+      }
     }
 
     // Implements: REQ-SEC-02

@@ -1,7 +1,7 @@
-import { Books, CalendarBlank, House, Sliders } from "@phosphor-icons/react";
+import { Bell, Books, CalendarBlank, House, Sliders } from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
 
-export type Screen = "courses" | "course" | "calendar" | "resources" | "admin";
+export type Screen = "courses" | "course" | "notifications" | "calendar" | "resources" | "admin";
 
 export interface NavState {
   screen: Screen;
@@ -19,6 +19,7 @@ export type NavAction =
 
 export const navItems = [
   { key: "courses", label: "Área personal", Icon: House },
+  { key: "notifications", label: "Avisos y mensajes", Icon: Bell },
   { key: "calendar", label: "Calendario", Icon: CalendarBlank },
   { key: "resources", label: "Recursos", Icon: Books },
   { key: "admin", label: "Administración", Icon: Sliders },
