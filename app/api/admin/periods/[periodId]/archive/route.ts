@@ -14,7 +14,12 @@ export async function POST(
     return Response.json({ error: "No tienes permisos para cerrar períodos." }, { status: 403 });
   }
 
-  const { periodId } = await params;
+  const { periodId: rawPeriodId } = await params;
+  const periodId = (rawPeriodId ?? "").trim().slice(0, 50);
+  if (!periodId) {
+    return Response.json({ error: "Identificador de período no válido." }, { status: 400 });
+  }
+
   try {
     return Response.json(await archiveAcademicPeriod(periodId));
   } catch (cause) {

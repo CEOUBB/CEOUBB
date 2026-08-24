@@ -12,11 +12,14 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const cursor = searchParams.get("cursor");
+  const rawCursor = searchParams.get("cursor");
+  const cursor = rawCursor ? rawCursor.trim().slice(0, 100) : undefined;
   const requestedLimit = Number(searchParams.get("limit") ?? 50);
-  const limit = Number.isFinite(requestedLimit) ? requestedLimit : 50;
+  const limit = Number.isInteger(requestedLimit)
+    ? Math.max(1, Math.min(100, requestedLimit))
+    : 50;
   try {
-    return Response.json(await listAcademicPeriods({ cursor, limit }));
+    return Response.json(await listAcademicPeriods({ cursor: cursor || null, limit }));
   } catch {
     return Response.json({ error: "No fue posible cargar los períodos." }, { status: 500 });
   }
