@@ -23,6 +23,7 @@ const {
 
 initializeApp();
 setGlobalOptions({ region: "southamerica-west1", maxInstances: 4 });
+const APP_CHECK_OBSERVATION_OPTIONS = { enforceAppCheck: false };
 
 function text(value, fallback, limit) {
   const normalized = typeof value === "string" ? value.trim() : "";
@@ -99,7 +100,7 @@ async function inConcurrentGroups(items, limit, operation) {
 }
 
 // Implements: REQ-AUDIT-01, REQ-AUDIT-02, REQ-AUDIT-04, REQ-AUDIT-06
-exports.saveAuditedStudentScores = onCall(async (request) => {
+exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
   try {
     const { courseId, rows } = normalizeScoreRequest(request.data);
     const db = getFirestore();
@@ -226,7 +227,7 @@ exports.saveAuditedGradeFeedback = onCall(async (request) => {
 });
 
 // Implements: REQ-AUDIT-02, REQ-AUDIT-04, REQ-AUDIT-07
-exports.saveAuditedGradebook = onCall(async (request) => {
+exports.saveAuditedGradebook = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
   try {
     const next = normalizeGradebookRequest(request.data);
     const db = getFirestore();
@@ -306,7 +307,7 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
 );
 
 // Implements: REQ-PERF-09
-exports.deleteMyAccount = onCall(async (request) => {
+exports.deleteMyAccount = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid)
     throw new HttpsError("unauthenticated", "Debes iniciar sesión para eliminar tu cuenta.");

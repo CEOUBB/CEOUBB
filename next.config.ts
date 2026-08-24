@@ -4,7 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 /*
   La WebView de Capacitor sirve el bridge desde `capacitor://localhost` (Android) y
   `https://localhost` (iOS): sin esos orígenes el puente muere y la app queda en blanco.
-  Sólo se amplían `default-src`, `script-src` y `connect-src`; ninguna otra directiva cambia.
+  App Check añade únicamente los orígenes oficiales de reCAPTCHA a script, conexión y frame.
 */
 // Implements: REQ-CAP-14
 const capacitorBridgeOrigins = "capacitor://localhost https://localhost";
@@ -21,12 +21,12 @@ const connectSrc =
 
 const contentSecurityPolicy = [
   `default-src 'self' ${capacitorBridgeOrigins}`,
-  `script-src ${scriptSrc}`,
+  `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src ${connectSrc}`,
-  "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com",
+  `connect-src ${connectSrc} https://www.google.com/recaptcha/`,
+  "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",

@@ -56,6 +56,8 @@ Estado verificado el 2026-08-20 (CEO-10): presupuesto mensual de CLP 10.000 limi
 
 Acceptance: unauthorized clients rejected after enforcement; production clients keep working.
 
+Estado de etapa 1 verificado el 2026-08-23 (CEO-47): las apps Web y Android están registradas con reCAPTCHA Enterprise y Play Integrity; Firestore, Storage y Authentication permanecen `UNENFORCED`, y las callable Functions declaran `enforceAppCheck: false`. El cliente y el runbook están listos para revisión. Tras merge y despliegue se deben completar 24 horas de tráfico representativo, incluida una app Android física, antes del enforcement gradual. Contrato y evidencia: [`p18-firebase-app-check-rollout.md`](p18-firebase-app-check-rollout.md); operación: [`firebase-app-check-rollout.md`](../operations/firebase-app-check-rollout.md).
+
 ## P0.6 Account deletion and privacy compliance
 
 - Review current Google Play and Apple deletion requirements.
