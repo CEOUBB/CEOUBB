@@ -15,7 +15,7 @@ export function MaterialsSection({
   course,
   files,
   user,
-  canTeach,
+  canManageContent,
   publish,
   upload,
   openFile,
@@ -27,7 +27,7 @@ export function MaterialsSection({
   course: Course;
   files: ClassroomFile[];
   user: User;
-  canTeach: boolean;
+  canManageContent: boolean;
   publish: (event: FormEvent<HTMLFormElement>) => Promise<boolean>;
   upload: (event: FormEvent<HTMLFormElement>) => void;
   openFile: (file: ClassroomFile) => void;
@@ -76,7 +76,7 @@ export function MaterialsSection({
       <div className="materials-list">
         <div className="section-title compact-title publication-section-title">
           <h2>Archivos compartidos</h2>
-          {canTeach && (
+          {canManageContent && (
             <PublicationLauncher folders={availableFolders} publish={publish} status={status} />
           )}
         </div>
@@ -143,14 +143,14 @@ export function MaterialsSection({
           </details>
         ))}
       </div>
-      {canTeach && !mobile && (
+      {canManageContent && !mobile && (
         <aside className="teacher-tools">
           <h2>Subir un archivo</h2>
           {tools}
         </aside>
       )}
       {/* Implements: REQ-CAP-05 — el selector de archivos del docente, como hoja. */}
-      {canTeach && mobile && (
+      {canManageContent && mobile && (
         <>
           <button
             className="sheet-cta"

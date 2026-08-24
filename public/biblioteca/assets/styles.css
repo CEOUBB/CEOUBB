@@ -12,11 +12,12 @@
 
   --ink: #0f172a;
   --ink-2: #334155;
-  --ink-3: #64748b;
-  --ink-4: #94a3b8;
+  --ink-3: #475569;
+  --ink-4: #59697f;
 
   --line: #e2e8f0;
   --line-2: #e2e8f0;
+  --control-line: #64748b;
 
   --blue: #0055b8;
   --blue-deep: #003d82;
@@ -71,9 +72,41 @@ button, input, select, textarea { font: inherit; }
 button, select { cursor: pointer; }
 button { color: inherit; }
 
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex="-1"]:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
+  scroll-margin-block: 80px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--r-control);
+  background: var(--navy);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+}
+
+.skip-link:focus {
+  color: #fff;
+  transform: translateY(0);
 }
 
 .app-shell { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100vh; }
@@ -158,7 +191,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .primary-button { border: 1px solid transparent; background: var(--blue); color: #fff; }
 .primary-button:hover { background: var(--blue-deep); }
 .primary-button:active, .ghost-button:active { transform: scale(.985); }
-.ghost-button { border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.ghost-button { border: 1px solid var(--control-line); background: var(--card); color: var(--ink); }
 .ghost-button:hover { background: var(--paper); }
 
 .main-content { width: min(1300px, 100%); padding: 28px clamp(24px, 4vw, 48px) 64px; }
@@ -171,7 +204,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   gap: 8px;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-input);
   background: var(--card);
   transition: border-color var(--fast), box-shadow var(--fast);
@@ -188,7 +221,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   min-width: 150px;
   min-height: 44px;
   padding: 0 32px 0 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-input);
   background: var(--card);
   color: var(--ink);
@@ -244,7 +277,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #onlineStatus.offline { background: rgba(245, 158, 11, .15); color: #92400e; }
 .tutor-question { display: grid; gap: 6px; }
 .tutor-question label { color: var(--ink-2); font-size: 14px; font-weight: 500; }
-.tutor-question textarea { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: var(--r-input); background: var(--card); color: var(--ink); padding: 10px 12px; font: inherit; font-size: 15px; line-height: 1.5; }
+.tutor-question textarea { width: 100%; resize: vertical; border: 1px solid var(--control-line); border-radius: var(--r-input); background: var(--card); color: var(--ink); padding: 10px 12px; font: inherit; font-size: 15px; line-height: 1.5; }
 .tutor-question textarea::placeholder { color: var(--ink-4); }
 .tutor-question textarea:focus { outline: 0; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 85, 184, .28); }
 .tutor-question .primary-button { margin-top: 2px; }
@@ -261,7 +294,7 @@ section { margin-top: 48px; }
   overflow: hidden;
   min-height: 150px;
   padding: 24px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-card);
   background: var(--card);
   color: inherit;
@@ -281,6 +314,7 @@ section { margin-top: 48px; }
 .exercise-card { border: 1px solid var(--line); border-radius: var(--r-card); background: var(--card); overflow: hidden; transition: border-color var(--base), box-shadow var(--base); }
 .exercise-card.completed { border-color: rgba(16, 185, 129, .45); }
 .exercise-card.random-focus { box-shadow: var(--shadow-lift); border-color: var(--blue); }
+.exercise-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .exercise-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: start; padding: 16px 24px; }
 
 .complete-check {
@@ -288,8 +322,10 @@ section { margin-top: 48px; }
   place-items: center;
   width: 24px;
   height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   margin-top: 2px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-input);
   background: var(--card);
   color: transparent;
@@ -298,7 +334,7 @@ section { margin-top: 48px; }
 }
 
 .complete-check:hover { border-color: var(--blue); }
-.complete-check.checked { color: #fff; border-color: #10b981; background: #10b981; }
+.complete-check.checked { color: #fff; border-color: var(--success); background: var(--success); }
 
 .exercise-title h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; line-height: 1.4; }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -312,7 +348,7 @@ section { margin-top: 48px; }
 .small-button {
   min-height: 34px;
   padding: 4px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-control);
   background: var(--card);
   color: var(--ink);
@@ -332,7 +368,7 @@ section { margin-top: 48px; }
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 8px 2px; margin: 8px 0; }
 .prompt .katex, .reveal .katex { white-space: normal; }
 
-.notes-area { width: 100%; min-height: 82px; margin-top: 12px; padding: 10px 12px; resize: vertical; border: 1px solid var(--line); border-radius: var(--r-input); outline: 0; background: var(--card); color: var(--ink); font-size: 15px; line-height: 1.5; }
+.notes-area { width: 100%; min-height: 82px; margin-top: 12px; padding: 10px 12px; resize: vertical; border: 1px solid var(--control-line); border-radius: var(--r-input); outline: 0; background: var(--card); color: var(--ink); font-size: 15px; line-height: 1.5; }
 .notes-area::placeholder { color: var(--ink-4); }
 .notes-area:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 85, 184, .28); }
 
@@ -356,8 +392,28 @@ section { margin-top: 48px; }
 
 .material-link:hover { background: var(--paper); }
 .file-type { display: grid; place-items: center; height: 32px; border-radius: var(--r-control); background: var(--paper); color: var(--ink-3); font-family: var(--mono); font-size: 11px; font-weight: 600; }
-.file-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.file-name { min-width: 0; overflow-wrap: anywhere; font-size: 15px; }
 .file-size { color: var(--ink-4); font-family: var(--mono); font-size: 11px; }
+
+.library-footer {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.library-footer p { margin: 0; overflow-wrap: anywhere; }
+.library-footer a { color: var(--blue); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.brand,
+.nav-item,
+.course-card,
+.exercise-card,
+.material-link,
+.tutor-panel,
+.hero { overflow-wrap: anywhere; }
 
 .toast {
   position: fixed;
@@ -404,6 +460,15 @@ section { margin-top: 48px; }
 
 @media (max-width: 720px) {
   .main-content { padding-inline: 16px; }
+  .course-nav {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow-x: visible;
+  }
+  .nav-item { min-width: 0; white-space: normal; }
   .topbar { grid-template-columns: 1fr 1fr; }
   .search-box { grid-column: 1 / -1; }
   .select-box select { min-width: 0; width: 100%; }
@@ -417,6 +482,20 @@ section { margin-top: 48px; }
   .section-heading { align-items: start; flex-direction: column; gap: 6px; }
 }
 
+@media (max-width: 320px) {
+  .main-content { padding-inline: 12px; }
+  .course-nav { grid-template-columns: 1fr; }
+  .topbar { grid-template-columns: 1fr; }
+  .search-box { grid-column: auto; }
+  .hero, .tutor-panel, .course-card, .exercise-head, .exercise-body, .material-panel { padding-inline: 16px; }
+  .exercise-head { gap: 10px; }
+  .exercise-body { padding-left: 16px; }
+  .exercise-actions > * { flex: 1 1 100%; }
+  .material-link { grid-template-columns: 34px minmax(0, 1fr); }
+  .file-size { grid-column: 2; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  * { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
