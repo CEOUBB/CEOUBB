@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, isNotNull, lt, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, lt, ne, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { getDb } from "../../db/index.ts";
 import {
@@ -9,7 +9,8 @@ import {
   secciones,
   users,
 } from "../../db/schema.ts";
-import type { SectionMembership, SectionRole } from "../section-roles.ts";
+import { SECTION_ROLES, type SectionMembership, type SectionRole } from "../section-roles.ts";
+import { emptyParticipantCounts, type ParticipantRoleCounts } from "../participants.ts";
 
 /*
   Catálogo académico institucional. Toda consulta viaja con `.limit()` y un
@@ -147,10 +148,48 @@ export async function listUserSectionIds(
   return memberships.map((membership) => membership.sectionId);
 }
 
+export async function activeSectionRoleForUser(
+  usuarioId: string,
+  seccionId: string
+): Promise<SectionRole | null> {
+  const rows = await getDb()
+    .select({ role: matriculas.rolSeccion })
+    .from(matriculas)
+    .where(
+      and(
+        eq(matriculas.usuarioId, usuarioId),
+        eq(matriculas.seccionId, seccionId),
+        eq(matriculas.estado, "activa")
+      )
+    )
+    .limit(1);
+  return rows[0]?.role ?? null;
+}
+
+function rosterSearchCondition(query: string | undefined) {
+  const normalized = query?.trim().toLowerCase() ?? "";
+  if (!normalized) return undefined;
+  const escaped = normalized.replace(/[%_\\]/g, "\\$&");
+  const pattern = `%${escaped}%`;
+  return or(
+    sql`lower(${users.name}) LIKE ${pattern} ESCAPE '\\'`,
+    sql`lower(${users.email}) LIKE ${pattern} ESCAPE '\\'`
+  );
+}
+
+function rosterRolesCondition(roles: readonly SectionRole[] | undefined) {
+  return roles?.length ? inArray(matriculas.rolSeccion, [...roles]) : undefined;
+}
+
 /** Nómina de una sección, paginada por `usuarioId`. */
 export async function listSectionRoster(
   seccionId: string,
-  options: { limit?: number; cursor?: string | null } = {}
+  options: {
+    limit?: number;
+    cursor?: string | null;
+    query?: string;
+    roles?: readonly SectionRole[];
+  } = {}
 ): Promise<Page<RosterEntry>> {
   const limit = boundedLimit(options.limit);
   const rows = await getDb()
@@ -167,12 +206,36 @@ export async function listSectionRoster(
       and(
         eq(matriculas.seccionId, seccionId),
         eq(matriculas.estado, "activa"),
+        rosterSearchCondition(options.query),
+        rosterRolesCondition(options.roles),
         options.cursor ? gt(users.id, options.cursor) : undefined
       )
     )
     .orderBy(asc(users.id))
     .limit(limit + 1);
   return paginate(rows, limit, (row) => row.usuarioId);
+}
+
+export async function countSectionRosterByRole(
+  seccionId: string,
+  query?: string
+): Promise<ParticipantRoleCounts> {
+  const rows = await getDb()
+    .select({ role: matriculas.rolSeccion, count: sql<number>`count(*)` })
+    .from(matriculas)
+    .innerJoin(users, eq(matriculas.usuarioId, users.id))
+    .where(
+      and(
+        eq(matriculas.seccionId, seccionId),
+        eq(matriculas.estado, "activa"),
+        rosterSearchCondition(query)
+      )
+    )
+    .groupBy(matriculas.rolSeccion)
+    .limit(SECTION_ROLES.length);
+  const counts = emptyParticipantCounts();
+  for (const row of rows) counts[row.role] = Number(row.count);
+  return counts;
 }
 
 /**
