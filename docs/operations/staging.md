@@ -7,7 +7,7 @@
 | Firebase           | `centro-de-estudio-ubb-staging`   | `centro-de-estudio-ubb`           |
 | Firestore          | `(default)`, `southamerica-west1` | `(default)`, `southamerica-west1` |
 | Turso              | `ceoubb-staging`                  | `ceoubb`                          |
-| Vercel             | Preview                           | Production (`ceoubb.com`)         |
+| Vercel             | `ceoubb-staging.vercel.app`       | Production (`ceoubb.com`)         |
 | GitHub Environment | `Staging`                         | `Production`                      |
 
 Staging no contiene una copia de producción. Su dataset ordinario usa cuatro identidades sintéticas, dos secciones y ocho matrículas deterministas. La carga de CEO-9 se genera por un proceso separado y nunca mediante el sembrado ordinario.
@@ -18,7 +18,7 @@ Staging no contiene una copia de producción. Su dataset ordinario usa cuatro id
 - Turso `ceoubb-staging`: cinco migraciones aplicadas; el sembrado repetido converge a 4 usuarios, 2 secciones y 8 matrículas.
 - Firestore staging: 24 documentos sintéticos deterministas verificados.
 - GitHub `Staging`: federación OIDC activa y `TURSO_AUTH_TOKEN` cifrado en el Environment.
-- Vercel Preview: Firebase y Turso separados de los valores que conserva Production.
+- Vercel Preview: alias estable `ceoubb-staging.vercel.app`, autorizado para OAuth en Firebase staging, con Firebase y Turso separados de los valores que conserva Production.
 
 El primer token Turso emitido durante el provisionamiento fue revocado antes de usarse. Sólo el reemplazo instalado en GitHub y Vercel permanece vigente.
 
@@ -38,6 +38,8 @@ La URL no secreta de `ceoubb-staging` queda declarada en el workflow. Firebase n
 2. El workflow verifica el commit, publica reglas, índices y Functions al alias `staging`, y ejecuta el sembrado.
 3. Sólo después del éxito del mismo SHA continúa el despliegue web productivo ya existente.
 4. Una promoción Firebase productiva se inicia manualmente con `promote_to_production=true`; el workflow vuelve a ejecutar staging y su job productivo depende de ese resultado.
+
+Cada despliegue Preview actualiza el alias `ceoubb-staging.vercel.app`. Los comentarios de PR conservan además la URL inmutable de la versión para trazabilidad, pero el acceso funcional y los redireccionamientos OAuth usan siempre el alias autorizado.
 
 Para validar o resembrar staging localmente con credenciales dedicadas:
 

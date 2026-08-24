@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change create-staging-environment. Update Purpose after archive.
+Definir el aislamiento, los datos sintéticos y las puertas de promoción del ambiente staging de CEOUBB antes de cualquier cambio productivo.
 
 ## Requirements
 
@@ -42,7 +42,7 @@ WHEN a production infrastructure promotion is requested, the release workflow SH
 
 ### Requirement: Preview Uses Staging Services (REQ-STG-04)
 
-WHERE a Vercel Preview deployment is built for CEOUBB, the application SHALL use the staging Turso database and the staging Firebase web application, while the production deployment SHALL retain only production identifiers.
+WHERE a Vercel Preview deployment is built for CEOUBB, the application SHALL use the staging Turso database and the staging Firebase web application through the stable OAuth-authorized alias `ceoubb-staging.vercel.app`, while the production deployment SHALL retain only production identifiers.
 
 #### Scenario: Preview configuration is resolved
 
@@ -50,6 +50,7 @@ WHERE a Vercel Preview deployment is built for CEOUBB, the application SHALL use
 - **WHEN** Firebase and database configuration is evaluated
 - **THEN** the Firebase project SHALL equal `centro-de-estudio-ubb-staging`
 - **AND** the Turso host SHALL be identified as `ceoubb-staging`
+- **AND** the workflow SHALL update `ceoubb-staging.vercel.app` to the new Preview deployment
 - **AND** neither client nor server SHALL fall back to a mixed pair of environments
 
 ### Requirement: Regional Security Parity (REQ-STG-05)

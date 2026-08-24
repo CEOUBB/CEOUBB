@@ -40,7 +40,9 @@ export function resolveFirebaseConfig(environment: FirebaseEnvironment): Firebas
   const environmentName = environment.CEOUBB_ENVIRONMENT?.trim().toLowerCase() ?? "";
   const configuredValues = Object.values(selected).filter(Boolean).length;
 
-  if (!environmentName && configuredValues === 0) return PRODUCTION_FIREBASE_CONFIG;
+  if ((!environmentName || environmentName === "production") && configuredValues === 0) {
+    return PRODUCTION_FIREBASE_CONFIG;
+  }
   if (configuredValues !== Object.keys(selected).length) {
     throw new Error("STAGING_CONFIG_INCOMPLETE: la configuración Firebase debe estar completa.");
   }

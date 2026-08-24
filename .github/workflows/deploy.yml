@@ -138,7 +138,9 @@ jobs:
         run: |
           if [ -n "$VERCEL_TOKEN" ]; then
             PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
-            echo "url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+            pnpm exec vercel alias set "$PREVIEW_URL" ceoubb-staging.vercel.app --token=$VERCEL_TOKEN
+            echo "deployment_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+            echo "url=https://ceoubb-staging.vercel.app" >> $GITHUB_OUTPUT
           fi
 
       - name: Register GitHub Deployment Status
@@ -190,12 +192,14 @@ jobs:
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy-preview.outputs.url }}
+          DEPLOYMENT_URL: ${{ steps.deploy-preview.outputs.deployment_url }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const previewUrl = process.env.PREVIEW_URL || '';
+            const deploymentUrl = process.env.DEPLOYMENT_URL || '';
             const commentHeader = '### 🚀 Vercel Preview Deployment';
-            const body = `${commentHeader}\n\n| Attribute | Details |\n| --- | --- |\n| 🔨 **Commit** | \`${context.sha.slice(0, 7)}\` |\n| 🌐 **Preview Link** | [${previewUrl}](${previewUrl}) |\n\n*Deployed via GitHub Actions*`;
+            const body = `${commentHeader}\n\n| Attribute | Details |\n| --- | --- |\n| 🔨 **Commit** | \`${context.sha.slice(0, 7)}\` |\n| 🌐 **Staging Link** | [${previewUrl}](${previewUrl}) |\n| 📦 **Immutable Deployment** | [${deploymentUrl}](${deploymentUrl}) |\n\n*Deployed via GitHub Actions*`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,

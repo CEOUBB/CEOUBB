@@ -85,6 +85,10 @@ test("REQ-STG-02: Turso migrations and fixtures converge after two seed executio
 
 test("REQ-STG-04: Firebase config is complete per build and never mixes staging with fallback", () => {
   assert.deepEqual(resolveFirebaseConfig({}), PRODUCTION_FIREBASE_CONFIG);
+  assert.deepEqual(
+    resolveFirebaseConfig({ CEOUBB_ENVIRONMENT: "production" }),
+    PRODUCTION_FIREBASE_CONFIG
+  );
   assert.throws(
     () =>
       resolveFirebaseConfig({
@@ -136,4 +140,6 @@ test("REQ-STG-03, REQ-STG-05: release workflow gates production on same-run stag
   assert.match(webDeploy, /id-token:\s*write/);
   assert.match(webDeploy, /needs:\s*staging/);
   assert.match(webDeploy, /needs\.staging\.result == 'success'/);
+  assert.match(webDeploy, /vercel alias set .*ceoubb-staging\.vercel\.app/);
+  assert.match(webDeploy, /url=https:\/\/ceoubb-staging\.vercel\.app/);
 });
