@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
@@ -21,11 +21,12 @@ import {
   calendarEntries,
   forgetPhoto,
   loadCurrentSession,
-  loadEnrolledSectionIds,
+  loadEnrolledSectionMemberships,
   rememberPhoto,
   type User,
 } from "../lib/portal-utils";
 import { CommandPalette, type PaletteItem } from "./command-palette";
+import { sectionRoleFor, type SectionMembership } from "../lib/section-roles";
 
 const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
 const SKELETON_NAV = [0, 1, 2];
@@ -144,6 +145,9 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
 
   return (
     <main className="access-page">
+      <a className="skip-link" href="#contenido-principal">
+        Saltar al contenido principal
+      </a>
       <section className="access-brand">
         <div className="access-brand-lockup">
           <Image
@@ -158,11 +162,16 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
           </h1>
         </div>
       </section>
-      <section className="access-panel">
+      <section
+        aria-labelledby="access-title"
+        className="access-panel"
+        id="contenido-principal"
+        tabIndex={-1}
+      >
         <div className="access-panel-inner">
           <div className="login-card" id="inicio">
             <span className="login-rule" aria-hidden="true" />
-            <h2>Ingresa con tu correo institucional</h2>
+            <h2 id="access-title">Ingresa con tu correo institucional</h2>
             <button
               className="google-button"
               disabled={working}
@@ -220,7 +229,8 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
           <p className="legal-note">
             Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
             Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link> ·{" "}
-            <Link href="/terminos">Términos</Link>
+            <Link href="/terminos">Términos</Link> ·{" "}
+            <Link href="/accesibilidad">Accesibilidad</Link>
           </p>
         </div>
       </section>
@@ -251,8 +261,9 @@ export function Portal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
-  const [sectionIds, setSectionIds] = useState<string[]>([]);
+  const [memberships, setMemberships] = useState<SectionMembership[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
+  const previousView = useRef<string | null>(null);
 
   const mobile = useIsMobileApp();
   useStatusBar(user !== null ? "canvas" : "hero");
@@ -301,10 +312,10 @@ export function Portal() {
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
-      .then(({ user: current, sectionIds: currentSectionIds }) => {
+      .then(({ user: current, memberships: currentMemberships }) => {
         if (!alive) return;
         setUser(current);
-        if (currentSectionIds.length > 0) setSectionIds(currentSectionIds);
+        if (currentMemberships.length > 0) setMemberships(currentMemberships);
         setChecking(false);
       })
       .catch(() => {
@@ -318,18 +329,22 @@ export function Portal() {
   }, []);
 
   const courses = useMemo(() => COURSES, []);
+  const sectionIds = useMemo(
+    () => memberships.map((membership) => membership.sectionId),
+    [memberships]
+  );
 
-  // Implements: REQ-PERF-01
+  // Implements: REQ-PERF-01, REQ-ASST-01, REQ-ASST-02
   useEffect(() => {
-    if (!user || sectionIds.length > 0) return;
+    if (!user || memberships.length > 0) return;
     let alive = true;
-    loadEnrolledSectionIds().then((ids) => {
-      if (alive && ids.length > 0) setSectionIds(ids);
+    loadEnrolledSectionMemberships().then((currentMemberships) => {
+      if (alive && currentMemberships.length > 0) setMemberships(currentMemberships);
     });
     return () => {
       alive = false;
     };
-  }, [user, sectionIds.length]);
+  }, [user, memberships.length]);
 
   useEffect(() => {
     if (!user || sectionIds.length === 0) return;
@@ -365,6 +380,24 @@ export function Portal() {
       registerPushNotifications().catch(() => {});
     });
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      previousView.current = null;
+      return;
+    }
+    const view = [screen, course?.id ?? ""].join(":");
+    if (previousView.current === null) {
+      previousView.current = view;
+      return;
+    }
+    if (previousView.current === view) return;
+    previousView.current = view;
+    const frame = requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>("#contenido-principal")?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [course?.id, screen, user]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -411,6 +444,7 @@ export function Portal() {
   if (!user) return <AccessScreen onSignedIn={setUser} />;
 
   const openedCourse = course ?? courseById(COURSES[0].id);
+  const openedSectionRole = openedCourse ? sectionRoleFor(memberships, openedCourse.id) : null;
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   const context =
     screen === "course" && openedCourse
@@ -470,8 +504,12 @@ export function Portal() {
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
+        <a className="skip-link" href="#contenido-principal">
+          Saltar al contenido principal
+        </a>
         <div
           className="app-shell"
+          data-requirement="Implements: REQ-A11Y-01 REQ-A11Y-02 REQ-A11Y-05"
           data-mobile={mobile}
           data-sidebar={sidebarOpen ? "open" : "closed"}
         >
@@ -507,12 +545,14 @@ export function Portal() {
           <PortalMainView
             activity={activity}
             courses={courses}
+            context={context}
             entries={entries}
             gradebooks={gradebooks}
             openCourse={openCourse}
             openedCourse={openedCourse}
             screen={screen}
             seen={seen}
+            sectionRole={openedSectionRole}
             setScreen={setScreen}
             user={user}
           />

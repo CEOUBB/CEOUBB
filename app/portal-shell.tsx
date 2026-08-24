@@ -3,7 +3,14 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Archive, CaretDown, FolderSimple, MagnifyingGlass, SignOut } from "@phosphor-icons/react";
+import {
+  Archive,
+  CaretDown,
+  FolderSimple,
+  MagnifyingGlass,
+  PersonArmsSpread,
+  SignOut,
+} from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
 import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
@@ -13,6 +20,7 @@ import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { CoursesDashboard } from "./views/CoursesDashboard";
+import type { SectionRole } from "../lib/section-roles";
 
 import {
   AdminSkeleton,
@@ -93,6 +101,7 @@ export function PortalHeader({
   return (
     <header className="app-header">
       <button
+        aria-controls="portal-sidebar"
         aria-expanded={sidebarOpen}
         aria-label={sidebarOpen ? "Cerrar el menú" : "Abrir el menú"}
         className="icon-button menu-button"
@@ -150,7 +159,7 @@ export function PortalHeader({
             <strong>{user.name}</strong>
             <span>{user.email}</span>
             <button onClick={onLogout} type="button">
-              <SignOut size={16} />
+              <SignOut aria-hidden="true" size={16} />
               Cerrar sesión
             </button>
           </div>
@@ -180,7 +189,7 @@ export function PortalSidebar({
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   return (
     // Con el menú plegado el panel sigue en el DOM para animar: `inert` lo saca del foco y del lector.
-    <aside className="app-sidebar" inert={!open ? true : undefined}>
+    <aside className="app-sidebar" id="portal-sidebar" inert={!open ? true : undefined}>
       <nav aria-label="Navegación principal" className="side-nav">
         {views.map(({ key, label, Icon }) => {
           const active = screen === key;
@@ -192,7 +201,7 @@ export function PortalSidebar({
               onClick={() => setScreen(key)}
               type="button"
             >
-              <span className="side-icon">
+              <span aria-hidden="true" className="side-icon">
                 <Icon size={18} />
               </span>
               <span className="side-label">{label}</span>
@@ -220,7 +229,7 @@ export function PortalSidebar({
               style={{ "--course-tone": course.tone } as React.CSSProperties}
               type="button"
             >
-              <span className="side-icon tone">
+              <span aria-hidden="true" className="side-icon tone">
                 <FolderSimple size={18} weight="fill" />
               </span>
               <span className="side-label">
@@ -238,10 +247,16 @@ export function PortalSidebar({
         prefetch={false}
         title="Biblioteca de Estudio (abre en la misma pestaña)"
       >
-        <span className="side-icon">
+        <span aria-hidden="true" className="side-icon">
           <Archive size={18} />
         </span>
         <span className="side-label">Biblioteca de Estudio</span>
+      </Link>
+      <Link className="side-item side-foot side-foot-secondary" href="/accesibilidad">
+        <span aria-hidden="true" className="side-icon">
+          <PersonArmsSpread size={18} />
+        </span>
+        <span className="side-label">Accesibilidad</span>
       </Link>
     </aside>
   );
@@ -249,33 +264,51 @@ export function PortalSidebar({
 
 export function PortalMainView({
   screen,
+  context,
   openedCourse,
   user,
   courses,
   activity,
   gradebooks,
   seen,
+  sectionRole,
   entries,
   openCourse,
   setScreen,
 }: {
   screen: Screen;
+  context: string;
   openedCourse: Course | null;
   user: User;
   courses: Course[];
   activity: CourseActivity[];
   gradebooks: CourseGradebook[];
   seen: Record<string, string>;
+  sectionRole: SectionRole | null;
   entries: ReturnType<typeof calendarEntries>;
   openCourse: (course: Course) => void;
   setScreen: (screen: Screen) => void;
 }) {
   return (
-    <main className="app-main">
+    <main
+      aria-labelledby="portal-view-title"
+      className="app-main"
+      data-requirement="Implements: REQ-A11Y-01 REQ-A11Y-02"
+      id="contenido-principal"
+      tabIndex={-1}
+    >
+      <p aria-atomic="true" aria-live="polite" className="sr-only" id="portal-view-title">
+        Vista actual: {context}
+      </p>
       <AnimatePresence initial={false} mode="wait">
         {screen === "course" && openedCourse ? (
           <PortalScreen key={`course-${openedCourse.id}`}>
-            <Classroom course={openedCourse} user={user} goBack={() => setScreen("courses")} />
+            <Classroom
+              course={openedCourse}
+              user={user}
+              sectionRole={sectionRole}
+              goBack={() => setScreen("courses")}
+            />
           </PortalScreen>
         ) : (
           <PortalScreen key={screen}>

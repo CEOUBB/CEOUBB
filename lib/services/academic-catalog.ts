@@ -8,6 +8,7 @@ import {
   secciones,
   users,
 } from "../../db/schema.ts";
+import type { SectionMembership, SectionRole } from "../section-roles.ts";
 
 /*
   Catálogo académico institucional. Toda consulta viaja con `.limit()` y un
@@ -19,7 +20,6 @@ import {
 export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_PAGE_SIZE = 50;
 
-export type SectionRole = (typeof matriculas.$inferSelect)["rolSeccion"];
 export type EnrollmentStatus = (typeof matriculas.$inferSelect)["estado"];
 
 export type Page<T> = {
@@ -107,18 +107,27 @@ export async function listUserSections(
 }
 
 /** Identificadores de sección que alimentan las escuchas de Firestore. */
-export async function listUserSectionIds(
+// Implements: REQ-ASST-02
+export async function listUserSectionMemberships(
   usuarioId: string,
   options: { limit?: number } = {}
-): Promise<string[]> {
+): Promise<SectionMembership[]> {
   const limit = boundedLimit(options.limit);
-  const rows = await getDb()
-    .select({ seccionId: matriculas.seccionId })
+  return getDb()
+    .select({ sectionId: matriculas.seccionId, role: matriculas.rolSeccion })
     .from(matriculas)
     .where(and(eq(matriculas.usuarioId, usuarioId), eq(matriculas.estado, "activa")))
     .orderBy(asc(matriculas.seccionId))
     .limit(limit);
-  return rows.map((row) => row.seccionId);
+}
+
+/** Identificadores de sección que alimentan las escuchas de Firestore. */
+export async function listUserSectionIds(
+  usuarioId: string,
+  options: { limit?: number } = {}
+): Promise<string[]> {
+  const memberships = await listUserSectionMemberships(usuarioId, options);
+  return memberships.map((membership) => membership.sectionId);
 }
 
 /** Nómina de una sección, paginada por `usuarioId`. */

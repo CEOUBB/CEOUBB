@@ -12,6 +12,10 @@ let storageHandle: Promise<{
   sdk: typeof import("firebase/storage");
   storage: ReturnType<typeof import("firebase/storage").getStorage>;
 }> | null = null;
+let functionsHandle: Promise<{
+  sdk: typeof import("firebase/functions");
+  functions: ReturnType<typeof import("firebase/functions").getFunctions>;
+}> | null = null;
 
 export function firestore() {
   firestoreHandle ??= import("firebase/firestore").then((sdk) => ({
@@ -27,6 +31,15 @@ export function cloudStorage() {
     storage: sdk.getStorage(firebaseApp),
   }));
   return storageHandle;
+}
+
+// Implements: REQ-AUDIT-01, REQ-AUDIT-07
+export function cloudFunctions() {
+  functionsHandle ??= import("firebase/functions").then((sdk) => ({
+    sdk,
+    functions: sdk.getFunctions(firebaseApp, "southamerica-west1"),
+  }));
+  return functionsHandle;
 }
 
 export function currentUser(): Promise<FirebaseUser> {
