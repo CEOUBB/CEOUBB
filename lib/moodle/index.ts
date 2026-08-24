@@ -7,11 +7,11 @@ export {
   openMoodleArchive,
 } from "./archive.ts";
 
+export { sha1Text, stableMoodleDocumentId } from "./ids.ts";
 export {
   chunkImportRecords,
   fileIsSupported,
   prepareCourseImport,
-  stableMoodleDocumentId,
   verifyMoodleFileBytes,
 } from "./parser.ts";
 

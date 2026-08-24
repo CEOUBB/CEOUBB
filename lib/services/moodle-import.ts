@@ -4,7 +4,7 @@ import { getDb } from "../../db/index.ts";
 import { matriculas, moodleImports, pendingMatriculas, secciones, users } from "../../db/schema.ts";
 import type { PublicUser } from "../auth.ts";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
-import { stableMoodleDocumentId } from "../moodle/parser.ts";
+import { stableMoodleDocumentId } from "../moodle/ids.ts";
 import type {
   MoodleImportPost,
   MoodleImportReport,
