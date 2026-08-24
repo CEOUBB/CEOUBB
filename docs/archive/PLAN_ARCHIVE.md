@@ -967,6 +967,7 @@ Known risks: las reglas de Firestore deben desplegarse antes que el portal; un d
 
 Next recommended action: revisar y fusionar la PR; después desplegar reglas de Firestore, publicar el portal y ejecutar la matriz multirol, incluida una lectura IDOR entre estudiantes y una sección no asignada al docente.
 =======
+
 Branch / commit: `elpapijuaco325/ceo-16-poder-cargar-matriculas-masivamente-desde-una-planilla` / `f0a5022`
 
 Pull request: [#68](https://github.com/CEOUBB/CEOUBB/pull/68), no borrador.
@@ -986,4 +987,5 @@ Production deployed: no.
 Known risks: el entorno destino fallará cerrado en el importador hasta aplicar `0005_curly_kylun.sql`; una caída de Firestore después del commit Turso deja una salida durable en `matriculas_pendientes` y requiere repetir la carga o iniciar sesión para reparar la proyección; el presupuesto de latencia para 12.000 filas sigue siendo deuda de validación de staging, no una consulta ni escritura sin límite.
 
 Next recommended action: revisar y fusionar la PR, aplicar la migración 0005 en Turso antes del despliegue, ejecutar un smoke test con sección sintética y credenciales Firebase, y medir la carga máxima en staging antes de habilitarla institucionalmente.
->>>>>>> 025aa21 (docs(plan): registrar entrega de CEO-16 según P17)
+
+> > > > > > > 025aa21 (docs(plan): registrar entrega de CEO-16 según P17)

@@ -258,49 +258,65 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
   }
 
   const now = "2026-08-23T12:00:00.000Z";
-  await db.insert(users).values([
-    { id: "owner", email: "owner@ubiobio.cl", name: "Owner", role: "owner", createdAt: now },
-    {
-      id: "teacher",
-      email: "teacher@ubiobio.cl",
-      name: "Teacher",
-      role: "teacher",
-      createdAt: now,
-    },
-    {
-      id: "student-existing",
-      email: "ana@alumnos.ubiobio.cl",
-      name: "Ana",
-      role: "student",
-      createdAt: now,
-    },
-  ]);
-  await db.insert(facultades).values({ id: "fi", nombre: "Ingeniería", sede: "Concepcion" });
+  await db
+    .insert(users)
+    .values([
+      { id: "owner", email: "owner@ubiobio.cl", name: "Owner", role: "owner", createdAt: now },
+      {
+        id: "teacher",
+        email: "teacher@ubiobio.cl",
+        name: "Teacher",
+        role: "teacher",
+        createdAt: now,
+      },
+      {
+        id: "student-existing",
+        email: "ana@alumnos.ubiobio.cl",
+        name: "Ana",
+        role: "student",
+        createdAt: now,
+      },
+    ])
+    .onConflictDoNothing();
+  await db
+    .insert(facultades)
+    .values({ id: "fi", nombre: "Ingeniería", sede: "Concepcion" })
+    .onConflictDoNothing();
   await db
     .insert(departamentos)
-    .values({ id: "dim", facultadId: "fi", nombre: "Ingeniería Mecánica" });
-  await db.insert(asignaturas).values({
-    id: "estatica-asignatura",
-    codigo: "440299",
-    nombre: "Estática",
-    creditosSct: 6,
-    departamentoId: "dim",
-  });
-  await db.insert(periodos).values({
-    id: "2026-2",
-    nombre: "Segundo semestre 2026",
-    fechaInicio: "2026-08-01",
-    fechaFin: "2026-12-31",
-    estado: "abierto",
-  });
-  await db.insert(secciones).values({
-    id: "440299-2026-2-1",
-    asignaturaId: "estatica-asignatura",
-    periodoId: "2026-2",
-    numeroSeccion: 1,
-    docenteId: "teacher",
-    createdAt: now,
-  });
+    .values({ id: "dim", facultadId: "fi", nombre: "Ingeniería Mecánica" })
+    .onConflictDoNothing();
+  await db
+    .insert(asignaturas)
+    .values({
+      id: "estatica-asignatura",
+      codigo: "440299",
+      nombre: "Estática",
+      creditosSct: 6,
+      departamentoId: "dim",
+    })
+    .onConflictDoNothing();
+  await db
+    .insert(periodos)
+    .values({
+      id: "2026-2",
+      nombre: "Segundo semestre 2026",
+      fechaInicio: "2026-08-01",
+      fechaFin: "2026-12-31",
+      estado: "abierto",
+    })
+    .onConflictDoNothing();
+  await db
+    .insert(secciones)
+    .values({
+      id: "440299-2026-2-1",
+      asignaturaId: "estatica-asignatura",
+      periodoId: "2026-2",
+      numeroSeccion: 1,
+      docenteId: "teacher",
+      createdAt: now,
+    })
+    .onConflictDoNothing();
 
   const actor = {
     id: "owner",
