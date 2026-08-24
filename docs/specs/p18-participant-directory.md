@@ -131,7 +131,7 @@ Parámetros GET: `q` (0–80), `role` (`all | teaching | assistant | student`), 
 - [x] **TASK-02 — REQ-PART-03, REQ-PART-04, REQ-PART-05.** Implementar contrato cliente, búsqueda, grupos, contacto y estados responsive. Verificar: prueba focal y lint.
 - [x] **TASK-03 — REQ-PART-01…06.** Añadir pruebas de contrato, parser y UI, registrar hash. Verificar: `pnpm run verify:fast`.
 - [x] **TASK-04 — REQ-PART-01…06.** Ejecutar invariantes, formato, lint y suite integral. Verificar: `pnpm run verify:invariants`, `pnpm run format:check`, `pnpm run lint`, `pnpm test`.
-- [ ] **TASK-05 — REQ-PART-01…06.** Actualizar handoff y publicar rama/PR en español. Verificar: estado y checks de GitHub.
+- [x] **TASK-05 — REQ-PART-01…06.** Actualizar handoff y publicar rama/PR en español. Verificar: rama publicada y PR [#74](https://github.com/CEOUBB/CEOUBB/pull/74) abierto.
 
 ## 6. Trazabilidad
 

@@ -886,3 +886,29 @@ Production deployed: no.
 Known risks: las reglas dependen de la nueva proyección `academicSections`/`academicPeriods`; desplegarlas antes de sincronizar los períodos abiertos bloquearía correctamente pero prematuramente toda escritura. El orden obligatorio es portal y backfill, Functions, Storage y Firestore rules, seguido por la matriz multirol. Un fallo de Turso posterior a la proyección deja Firebase en el estado seguro de solo lectura y requiere repetir la operación idempotente.
 
 Next recommended action: revisar y fusionar la PR; desplegar el portal, sincronizar todos los períodos abiertos mediante la ruta owner-only, publicar Functions y reglas, verificar una sección vigente y otra archivada con estudiante/docente y sólo entonces archivar el primer período real.
+
+## 2026-08-23: CEO-24 — directorio de participantes
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-24-mejorar-la-lista-de-participantes-buscador-roles-y-contacto` / `7ab8e1b` más commit de handoff; PR [#74](https://github.com/CEOUBB/CEOUBB/pull/74).
+
+Goal: reemplazar la grilla plana por un directorio útil para secciones de 300 o más personas, con búsqueda, separación por función académica y contacto individual.
+
+Files changed: `app/api/sections/[sectionId]/participants/route.ts`, `app/views/classroom/PeopleSection.tsx`, `app/globals.css`, `lib/participants.ts`, `lib/services/academic-catalog.ts`, `tests/participants.test.ts`, `package.json`, `.agents/.test-hashes.json`, `docs/specs/p18-participant-directory.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: rama publicada y PR #74 creado en GitHub. Sin cambios en Turso, Firebase, Vercel, datos ni producción.
+
+Checks passed: prueba focal 5/5; `pnpm run verify:fast` 253/253 con 32 hashes y 14 specs; `pnpm run verify:invariants` 31/31; `pnpm run format:check`; `pnpm run lint`; `pnpm run check:functions`; `pnpm test` con build Next.js 16.3 y 278/278. QA local con 304 matrículas: búsqueda, filtros, agrupación, contacto, paginación 24 → 48, API autenticada `200` y anónima `401`, escritorio y 390 × 844 sin overflow ni errores de consola; Axe sobre el directorio con 0 infracciones y 0 resultados incompletos.
+
+Checks not run: matriz con matrículas institucionales reales ni WebView Android física; se usaron datos Turso locales sintéticos y Chromium responsive. React Doctor conserva una advertencia revisada por carga autenticada dentro de un efecto; el flujo usa aborto y versión de solicitud para descartar carreras.
+
+Production deployed: no.
+
+Known risks: la búsqueda `%término%` queda acotada a una sección, pero debe medirse con la distribución real antes de superar la envolvente institucional; la disponibilidad del grupo Ayudantes depende de matrículas `assistant` ya creadas y esta PR no asigna ni revoca roles; el correo abre el cliente local mediante `mailto:` y no garantiza entrega.
+
+Next recommended action: revisar y fusionar PR #74; validar el preview con una matrícula real de cada rol y luego abordar la administración docente para asignar o revocar ayudantes por sección.
