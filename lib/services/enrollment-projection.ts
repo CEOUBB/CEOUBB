@@ -29,6 +29,19 @@ export type EnrollmentProjection = {
   updatedAt?: string;
 };
 
+export type PeriodStatus = "abierto" | "cerrado" | "archivado";
+
+export type AcademicSectionProjection = {
+  seccionId: string;
+  periodoId: string;
+};
+
+export type AcademicPeriodProjection = {
+  periodoId: string;
+  status: PeriodStatus;
+  updatedAt?: string;
+};
+
 type FirestoreWrite =
   | {
       update: { name: string; fields: Record<string, { stringValue: string }> };
@@ -75,6 +88,14 @@ export function enrollmentDocumentPath(
   return `projects/${projectId}/databases/(default)/documents/enrollments/${cleanUid}/sections/${seccionId}`;
 }
 
+export function academicSectionDocumentPath(seccionId: string, projectId = FIREBASE_PROJECT_ID) {
+  return `projects/${projectId}/databases/(default)/documents/academicSections/${seccionId}`;
+}
+
+export function academicPeriodDocumentPath(periodoId: string, projectId = FIREBASE_PROJECT_ID) {
+  return `projects/${projectId}/databases/(default)/documents/academicPeriods/${periodoId}`;
+}
+
 /** Parte una lista de operaciones en lotes que Firestore acepta de una vez. */
 export function chunkWrites<T>(items: T[], size = MAX_WRITES_PER_COMMIT): T[][] {
   const limit = Math.max(1, Math.trunc(size));
@@ -104,6 +125,49 @@ export function toFirestoreWrite(
       },
     },
     updateMask: { fieldPaths: ["seccionId", "role", "status", "updatedAt"] },
+  };
+}
+
+export function toAcademicSectionWrite(
+  entry: AcademicSectionProjection,
+  projectId = FIREBASE_PROJECT_ID
+): FirestoreWrite {
+  if (!isValidPathSegment(entry.seccionId) || !isValidPathSegment(entry.periodoId)) {
+    throw new Error("La sección académica no trae identificadores válidos.");
+  }
+  return {
+    update: {
+      name: academicSectionDocumentPath(entry.seccionId, projectId),
+      fields: {
+        seccionId: { stringValue: entry.seccionId },
+        periodoId: { stringValue: entry.periodoId },
+      },
+    },
+    updateMask: { fieldPaths: ["seccionId", "periodoId"] },
+  };
+}
+
+export function toAcademicPeriodWrite(
+  entry: AcademicPeriodProjection,
+  projectId = FIREBASE_PROJECT_ID
+): FirestoreWrite {
+  if (!isValidPathSegment(entry.periodoId)) {
+    throw new Error("El período académico no trae un identificador válido.");
+  }
+  if (!["abierto", "cerrado", "archivado"].includes(entry.status)) {
+    throw new Error("El período académico no trae un estado válido.");
+  }
+  const updatedAt = entry.updatedAt ?? new Date().toISOString();
+  return {
+    update: {
+      name: academicPeriodDocumentPath(entry.periodoId, projectId),
+      fields: {
+        periodoId: { stringValue: entry.periodoId },
+        status: { stringValue: entry.status },
+        updatedAt: { stringValue: updatedAt },
+      },
+    },
+    updateMask: { fieldPaths: ["periodoId", "status", "updatedAt"] },
   };
 }
 
@@ -169,6 +233,27 @@ export async function projectEnrollments(
     await commit(batch, token);
   }
   return writes;
+}
+
+export async function projectAcademicSectionsToFirestore(
+  entries: AcademicSectionProjection[]
+): Promise<FirestoreWrite[]> {
+  const writes = entries.map((entry) => toAcademicSectionWrite(entry));
+  if (writes.length === 0) return [];
+  const token = await accessToken();
+  for (const batch of chunkWrites(writes)) {
+    await commit(batch, token);
+  }
+  return writes;
+}
+
+export async function projectAcademicPeriodToFirestore(
+  entry: AcademicPeriodProjection
+): Promise<FirestoreWrite> {
+  const write = toAcademicPeriodWrite(entry);
+  const token = await accessToken();
+  await commit([write], token);
+  return write;
 }
 
 async function commit(writes: FirestoreWrite[], token: string) {

@@ -1,5 +1,5 @@
 import type { AccountRole as Role } from "./access-policy";
-import type { Course } from "./courses";
+import { parseAcademicSections, type AcademicSectionSummary, type Course } from "./courses.ts";
 import type { CourseActivity, CourseGradebook } from "./firebase-classroom-client";
 import { dueDateParts } from "./planner.ts";
 import { parseSectionMemberships, type SectionMembership } from "./section-roles.ts";
@@ -237,25 +237,64 @@ export type SessionState = {
   user: User | null;
   sectionIds: string[];
   memberships: SectionMembership[];
+  sections: AcademicSectionSummary[] | null;
+  archivedNextCursor: string | null;
 };
 
 export async function loadCurrentSession(): Promise<SessionState> {
   try {
-    const response = await fetch("/api/auth/me", { cache: "no-store" });
-    if (!response.ok) return { user: null, sectionIds: [], memberships: [] };
+    const response = await fetch("/api/auth/me?includeSections=1", { cache: "no-store" });
+    if (!response.ok)
+      return {
+        user: null,
+        sectionIds: [],
+        memberships: [],
+        sections: null,
+        archivedNextCursor: null,
+      };
     const data = (await response.json()) as {
       user?: User | null;
       sectionIds?: unknown;
       memberships?: unknown;
+      sections?: unknown;
+      archivedNextCursor?: unknown;
     };
     const memberships = parseSectionMemberships(data.memberships);
     return {
       user: data.user ?? null,
-      sectionIds: memberships.map((membership) => membership.sectionId),
+      sectionIds: Array.isArray(data.sectionIds)
+        ? data.sectionIds.filter((value): value is string => typeof value === "string")
+        : memberships.map((membership) => membership.sectionId),
       memberships,
+      sections: Array.isArray(data.sections) ? parseAcademicSections(data.sections) : null,
+      archivedNextCursor:
+        typeof data.archivedNextCursor === "string" ? data.archivedNextCursor : null,
     };
   } catch {
-    return { user: null, sectionIds: [], memberships: [] };
+    return {
+      user: null,
+      sectionIds: [],
+      memberships: [],
+      sections: null,
+      archivedNextCursor: null,
+    };
+  }
+}
+
+export async function loadArchivedAcademicSections(cursor: string) {
+  try {
+    const response = await fetch(
+      `/api/enrollments/me?scope=archived&limit=100&cursor=${encodeURIComponent(cursor)}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return { sections: [], nextCursor: null };
+    const data = (await response.json()) as { sections?: unknown; nextCursor?: unknown };
+    return {
+      sections: parseAcademicSections(data.sections),
+      nextCursor: typeof data.nextCursor === "string" ? data.nextCursor : null,
+    };
+  } catch {
+    return { sections: [], nextCursor: null };
   }
 }
 
@@ -295,6 +334,50 @@ export type AdminUsersResponse = {
   page: number;
   totalPages: number;
 };
+
+export type AcademicPeriodSummary = {
+  id: string;
+  nombre: string;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: "abierto" | "cerrado" | "archivado";
+};
+
+export async function loadAcademicPeriods(): Promise<AcademicPeriodSummary[]> {
+  try {
+    const response = await fetch("/api/admin/periods?limit=100", { cache: "no-store" });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { items?: unknown };
+    if (!Array.isArray(data.items)) return [];
+    return data.items.filter(
+      (item): item is AcademicPeriodSummary =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        typeof item.id === "string" &&
+        "nombre" in item &&
+        typeof item.nombre === "string" &&
+        "fechaInicio" in item &&
+        typeof item.fechaInicio === "string" &&
+        "fechaFin" in item &&
+        typeof item.fechaFin === "string" &&
+        "estado" in item &&
+        (item.estado === "abierto" || item.estado === "cerrado" || item.estado === "archivado")
+    );
+  } catch {
+    return [];
+  }
+}
+
+export async function archiveAcademicPeriod(periodId: string) {
+  const response = await fetch(`/api/admin/periods/${encodeURIComponent(periodId)}/archive`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "No fue posible archivar el período.");
+  }
+}
 
 export async function loadAdminUsers(
   page = 1,

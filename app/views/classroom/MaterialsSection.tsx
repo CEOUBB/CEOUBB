@@ -108,8 +108,9 @@ export function MaterialsSection({
             </summary>
             {items.map((file) => {
               const canManage =
-                user.role === "owner" ||
-                file.authorEmail.toLowerCase() === user.email.toLowerCase();
+                canManageContent &&
+                (user.role === "owner" ||
+                  file.authorEmail.toLowerCase() === user.email.toLowerCase());
               return (
                 <div className="material-row" key={file.id}>
                   <span className="file-icon">{fileExtension(file.name)}</span>

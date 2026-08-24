@@ -12,7 +12,12 @@ import {
   useStatusBar,
 } from "../lib/mobile-bridge";
 import { MobileBottomNav, type MobileTab } from "./mobile-shell";
-import { COURSES, Course, courseById } from "../lib/courses";
+import {
+  COURSES,
+  partitionAcademicCourses,
+  type AcademicSectionSummary,
+  type Course,
+} from "../lib/courses";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
@@ -20,6 +25,7 @@ import { SEEN_KEY, navItems, navReducer, readSeen, type Screen } from "./portal-
 import {
   calendarEntries,
   forgetPhoto,
+  loadArchivedAcademicSections,
   loadCurrentSession,
   loadEnrolledSectionMemberships,
   rememberPhoto,
@@ -262,6 +268,9 @@ export function Portal() {
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
   const [memberships, setMemberships] = useState<SectionMembership[]>([]);
+  const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(null);
+  const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(null);
+  const [archivedLoading, setArchivedLoading] = useState(false);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
   const previousView = useRef<string | null>(null);
 
@@ -312,12 +321,21 @@ export function Portal() {
   useEffect(() => {
     let alive = true;
     loadCurrentSession()
-      .then(({ user: current, memberships: currentMemberships }) => {
-        if (!alive) return;
-        setUser(current);
-        if (currentMemberships.length > 0) setMemberships(currentMemberships);
-        setChecking(false);
-      })
+      .then(
+        ({
+          user: current,
+          memberships: currentMemberships,
+          sections,
+          archivedNextCursor: nextArchivedCursor,
+        }) => {
+          if (!alive) return;
+          setUser(current);
+          if (currentMemberships.length > 0) setMemberships(currentMemberships);
+          setAcademicSections(sections);
+          setArchivedNextCursor(nextArchivedCursor);
+          setChecking(false);
+        }
+      )
       .catch(() => {
         if (!alive) return;
         setUser(null);
@@ -328,11 +346,29 @@ export function Portal() {
     };
   }, []);
 
-  const courses = useMemo(() => COURSES, []);
-  const sectionIds = useMemo(
-    () => memberships.map((membership) => membership.sectionId),
-    [memberships]
+  const { current, archived } = useMemo(
+    () =>
+      academicSections === null
+        ? { current: COURSES, archived: [] }
+        : partitionAcademicCourses(academicSections),
+    [academicSections]
   );
+  const courses = current;
+  const archivedCourses = archived;
+  const sectionIds = useMemo(() => current.map((item) => item.id), [current]);
+
+  const loadMoreArchived = useCallback(async () => {
+    if (!archivedNextCursor || archivedLoading) return;
+    setArchivedLoading(true);
+    const page = await loadArchivedAcademicSections(archivedNextCursor);
+    setAcademicSections((existing) => {
+      const byId = new Map((existing ?? []).map((section) => [section.seccionId, section]));
+      for (const section of page.sections) byId.set(section.seccionId, section);
+      return [...byId.values()];
+    });
+    setArchivedNextCursor(page.nextCursor);
+    setArchivedLoading(false);
+  }, [archivedLoading, archivedNextCursor]);
 
   // Implements: REQ-PERF-01, REQ-ASST-01, REQ-ASST-02
   useEffect(() => {
@@ -437,14 +473,29 @@ export function Portal() {
     }
     forgetPhoto();
     setUser(null);
+    setMemberships([]);
+    setAcademicSections(null);
+    setArchivedNextCursor(null);
     dispatchNav({ type: "LOGOUT" });
   };
 
-  if (checking) return <LoadingScreen />;
-  if (!user) return <AccessScreen onSignedIn={setUser} />;
+  const finishSignedIn = useCallback(async (signedInUser: User) => {
+    setChecking(true);
+    const session = await loadCurrentSession();
+    setUser(session.user ?? signedInUser);
+    setMemberships(session.memberships);
+    setAcademicSections(session.sections ?? []);
+    setArchivedNextCursor(session.archivedNextCursor);
+    setChecking(false);
+  }, []);
 
-  const openedCourse = course ?? courseById(COURSES[0].id);
-  const openedSectionRole = openedCourse ? sectionRoleFor(memberships, openedCourse.id) : null;
+  if (checking) return <LoadingScreen />;
+  if (!user) return <AccessScreen onSignedIn={finishSignedIn} />;
+
+  const openedCourse = course ?? courses[0] ?? archivedCourses[0] ?? null;
+  const openedSectionRole = openedCourse
+    ? (openedCourse.sectionRole ?? sectionRoleFor(memberships, openedCourse.id))
+    : null;
   const views = navItems.filter((item) => item.key !== "admin" || user.role === "owner");
   const context =
     screen === "course" && openedCourse
@@ -544,11 +595,15 @@ export function Portal() {
           />
           <PortalMainView
             activity={activity}
+            archivedCourses={archivedCourses}
+            archivedHasMore={archivedNextCursor !== null}
+            archivedLoading={archivedLoading}
             courses={courses}
             context={context}
             entries={entries}
             gradebooks={gradebooks}
             openCourse={openCourse}
+            onLoadMoreArchived={loadMoreArchived}
             openedCourse={openedCourse}
             screen={screen}
             seen={seen}

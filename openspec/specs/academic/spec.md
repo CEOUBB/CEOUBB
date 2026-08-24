@@ -103,3 +103,24 @@ The system SHALL prohibit wildcard collection-group reads (`match /{path=**}/...
 - **THEN** `owner`, `teacher` and `coordinator` SHALL retain teaching capabilities
 - **AND** only `assistant`, `teacher`, `coordinator` and `owner` SHALL receive content-authoring capability
 - **AND** `student` SHALL receive neither capability
+
+### Requirement: Semester Archival Preserves Read Access
+
+**REQ-ARCH-01..04:** WHEN an academic period is archived, the system SHALL preserve its sections, enrollments, and classroom records, SHALL remove those sections from active dashboard and real-time surfaces, and SHALL expose them in a separate read-only history on Web and Capacitor.
+
+#### Scenario: Archived section remains available outside active work
+
+- **GIVEN** a member has an active enrollment in a section whose period is archived
+- **WHEN** the member opens the portal
+- **THEN** the section SHALL appear only in the archived-course history
+- **AND** opening it SHALL preserve authorized reads and deny every mutation
+
+### Requirement: Retaking a Subject Creates New History
+
+**REQ-ARCH-05:** IF a student retakes a subject in a later period, THEN the system SHALL create a distinct enrollment in a distinct section and SHALL leave the previous enrollment unchanged.
+
+#### Scenario: Two attempts never share enrollment identity
+
+- **GIVEN** a student has a historical enrollment for a subject
+- **WHEN** the student enrolls in that subject in a later period
+- **THEN** both enrollment records SHALL coexist with different section identifiers

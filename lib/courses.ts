@@ -1,3 +1,5 @@
+import { isSectionId, isSectionRole, type SectionRole } from "./section-roles.ts";
+
 export type CourseUnit = {
   title: string;
   subtitle: string;
@@ -23,6 +25,27 @@ export type Course = {
   facts: string[];
   units: CourseUnit[];
   evaluations: CourseEvaluation[];
+  periodId?: string;
+  periodStatus?: PeriodStatus;
+  readOnly?: boolean;
+  sectionRole?: SectionRole;
+};
+
+export const PERIOD_STATUSES = ["abierto", "cerrado", "archivado"] as const;
+
+export type PeriodStatus = (typeof PERIOD_STATUSES)[number];
+
+export type AcademicSectionSummary = {
+  seccionId: string;
+  asignaturaCodigo: string;
+  asignaturaNombre: string;
+  periodoId: string;
+  periodoNombre: string;
+  periodoEstado: PeriodStatus;
+  numeroSeccion: number;
+  docenteId: string;
+  docenteNombre: string;
+  rolSeccion: SectionRole;
 };
 
 export const PERIOD = "2026-2";
@@ -153,6 +176,91 @@ export const COURSES: Course[] = [
 
 export function courseById(id: string) {
   return COURSES.find((course) => course.id === id) ?? null;
+}
+
+export function parseAcademicSections(value: unknown): AcademicSectionSummary[] {
+  if (!Array.isArray(value)) return [];
+  const sections = new Map<string, AcademicSectionSummary>();
+  const duplicates = new Set<string>();
+
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) continue;
+    const input = item as Partial<AcademicSectionSummary>;
+    const valid =
+      isSectionId(input.seccionId) &&
+      typeof input.asignaturaCodigo === "string" &&
+      input.asignaturaCodigo.trim().length > 0 &&
+      typeof input.asignaturaNombre === "string" &&
+      input.asignaturaNombre.trim().length > 0 &&
+      isSectionId(input.periodoId) &&
+      typeof input.periodoNombre === "string" &&
+      input.periodoNombre.trim().length > 0 &&
+      PERIOD_STATUSES.includes(input.periodoEstado as PeriodStatus) &&
+      Number.isInteger(input.numeroSeccion) &&
+      Number(input.numeroSeccion) > 0 &&
+      typeof input.docenteId === "string" &&
+      input.docenteId.length > 0 &&
+      typeof input.docenteNombre === "string" &&
+      input.docenteNombre.trim().length > 0 &&
+      isSectionRole(input.rolSeccion);
+    if (!valid || duplicates.has(input.seccionId as string)) continue;
+    if (sections.has(input.seccionId as string)) {
+      sections.delete(input.seccionId as string);
+      duplicates.add(input.seccionId as string);
+      continue;
+    }
+    sections.set(input.seccionId as string, input as AcademicSectionSummary);
+  }
+
+  return [...sections.values()];
+}
+
+export function courseFromAcademicSection(section: AcademicSectionSummary): Course {
+  const template = COURSES.find(
+    (course) =>
+      course.id === section.seccionId ||
+      course.code.toLocaleLowerCase("es-CL") === section.asignaturaCodigo.toLocaleLowerCase("es-CL")
+  );
+  const tone = template?.tone ?? courseTone(section.asignaturaCodigo);
+  const readOnly = section.periodoEstado !== "abierto";
+  return {
+    id: section.seccionId,
+    name: section.asignaturaNombre,
+    code: section.asignaturaCodigo,
+    section: String(section.numeroSeccion),
+    teacher: section.docenteNombre,
+    period: section.periodoNombre,
+    tone,
+    eyebrow: readOnly ? "Ramo archivado" : (template?.eyebrow ?? "Aula del curso"),
+    headline: section.asignaturaNombre,
+    summary:
+      template?.summary ??
+      "Aula académica de la sección con materiales, evaluaciones y seguimiento del período.",
+    facts: template?.facts ?? [],
+    units: template?.units ?? [],
+    evaluations: template?.evaluations ?? [],
+    periodId: section.periodoId,
+    periodStatus: section.periodoEstado,
+    readOnly,
+    sectionRole: section.rolSeccion,
+  };
+}
+
+export function partitionAcademicCourses(sections: readonly AcademicSectionSummary[]) {
+  const current: Course[] = [];
+  const archived: Course[] = [];
+  for (const section of sections) {
+    const course = courseFromAcademicSection(section);
+    if (course.readOnly) archived.push(course);
+    else current.push(course);
+  }
+  return { current, archived };
+}
+
+function courseTone(code: string): string {
+  const tones = ["#38bdf8", "#10b981", "#f59e0b", "#e31b23", "#8b5cf6", "#0d9488"];
+  const index = [...code].reduce((total, character) => total + character.codePointAt(0)!, 0);
+  return tones[index % tones.length];
 }
 
 export function materialFolders(course: Course) {

@@ -1,4 +1,5 @@
-import { and, asc, eq, gt, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, lt, ne } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import { getDb } from "../../db/index.ts";
 import {
   asignaturas,
@@ -33,8 +34,10 @@ export type EnrolledSection = {
   asignaturaNombre: string;
   periodoId: string;
   periodoNombre: string;
+  periodoEstado: (typeof periodos.$inferSelect)["estado"];
   numeroSeccion: number;
   docenteId: string;
+  docenteNombre: string;
   rolSeccion: SectionRole;
 };
 
@@ -76,9 +79,10 @@ function paginate<T>(rows: T[], limit: number, cursorOf: (row: T) => string): Pa
 /** Secciones con matrícula activa del usuario, paginadas por `seccionId`. */
 export async function listUserSections(
   usuarioId: string,
-  options: { limit?: number; cursor?: string | null } = {}
+  options: { limit?: number; cursor?: string | null; scope?: "current" | "archived" } = {}
 ): Promise<Page<EnrolledSection>> {
   const limit = boundedLimit(options.limit);
+  const teachers = alias(users, "teachers");
   const rows = await getDb()
     .select({
       seccionId: secciones.id,
@@ -86,18 +90,23 @@ export async function listUserSections(
       asignaturaNombre: asignaturas.nombre,
       periodoId: periodos.id,
       periodoNombre: periodos.nombre,
+      periodoEstado: periodos.estado,
       numeroSeccion: secciones.numeroSeccion,
       docenteId: secciones.docenteId,
+      docenteNombre: teachers.name,
       rolSeccion: matriculas.rolSeccion,
     })
     .from(matriculas)
     .innerJoin(secciones, eq(matriculas.seccionId, secciones.id))
     .innerJoin(asignaturas, eq(secciones.asignaturaId, asignaturas.id))
     .innerJoin(periodos, eq(secciones.periodoId, periodos.id))
+    .innerJoin(teachers, eq(secciones.docenteId, teachers.id))
     .where(
       and(
         eq(matriculas.usuarioId, usuarioId),
         eq(matriculas.estado, "activa"),
+        options.scope === "current" ? eq(periodos.estado, "abierto") : undefined,
+        options.scope === "archived" ? ne(periodos.estado, "abierto") : undefined,
         options.cursor ? gt(secciones.id, options.cursor) : undefined
       )
     )
@@ -116,7 +125,15 @@ export async function listUserSectionMemberships(
   return getDb()
     .select({ sectionId: matriculas.seccionId, role: matriculas.rolSeccion })
     .from(matriculas)
-    .where(and(eq(matriculas.usuarioId, usuarioId), eq(matriculas.estado, "activa")))
+    .innerJoin(secciones, eq(matriculas.seccionId, secciones.id))
+    .innerJoin(periodos, eq(secciones.periodoId, periodos.id))
+    .where(
+      and(
+        eq(matriculas.usuarioId, usuarioId),
+        eq(matriculas.estado, "activa"),
+        eq(periodos.estado, "abierto")
+      )
+    )
     .orderBy(asc(matriculas.seccionId))
     .limit(limit);
 }

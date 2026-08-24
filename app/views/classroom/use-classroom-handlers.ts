@@ -38,7 +38,8 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
 
   const note = (text: string, tone: Note["tone"] = "info") => setStatus({ text, tone });
-  const canManageContent = canManageSectionContent(user.role, sectionRole);
+  const readOnly = course.readOnly === true;
+  const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
   const canTeach = canTeachSection(user.role, sectionRole);
   const { files, students, posts } = classroom;
   const units = course.units;
@@ -47,6 +48,11 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
       ? classroom.ownProgress
       : 0;
   const courseReference = `${course.code} - ${course.section}`;
+  const rejectReadOnly = () => {
+    if (!readOnly) return false;
+    note("Este ramo está archivado y sólo admite lectura.", "bad");
+    return true;
+  };
 
   useEffect(
     () =>
@@ -64,6 +70,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   }, [tab]);
 
   const updateProgress = async (next: number) => {
+    if (rejectReadOnly()) return;
     const safeNext = typeof next === "number" && !Number.isNaN(next) ? Math.max(0, next) : 0;
     setClassroom((current) => ({ ...current, ownProgress: safeNext }));
     await saveClassroomProgress(course.id, safeNext, units.length).catch((cause) =>
@@ -73,6 +80,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
 
   const publish = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (rejectReadOnly()) return false;
     note("Publicando…");
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
@@ -103,6 +111,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
 
   const upload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (rejectReadOnly()) return;
     note("Subiendo archivo…");
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
@@ -120,6 +129,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   };
 
   const editPost = async (post: ClassroomPost, values: { title: string; body: string }) => {
+    if (rejectReadOnly()) return false;
     try {
       await editClassroomPost(course.id, post.id, values);
       note("Publicación actualizada.", "ok");
@@ -131,6 +141,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   };
 
   const deletePost = async (post: ClassroomPost) => {
+    if (rejectReadOnly()) return;
     if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
     try {
       await deleteClassroomPost(course.id, post.id, post.storagePath);
@@ -167,6 +178,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   };
 
   const renameFile = async (file: ClassroomFile) => {
+    if (rejectReadOnly()) return;
     const name = window.prompt("Nombre del archivo", file.name);
     if (name === null) return;
     try {
@@ -178,6 +190,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   };
 
   const moveFile = async (file: ClassroomFile) => {
+    if (rejectReadOnly()) return;
     const folder = window.prompt(
       `Carpeta del archivo (${materialFolders(course).join(", ")})`,
       file.folder
@@ -192,6 +205,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   };
 
   const deleteFile = async (file: ClassroomFile) => {
+    if (rejectReadOnly()) return;
     if (!window.confirm(`¿Eliminar “${file.name}”?`)) return;
     try {
       await deleteClassroomPost(course.id, file.id, file.storagePath);
@@ -215,6 +229,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   // Implements: REQ-LIVE-01, REQ-LIVE-02, REQ-LIVE-05, REQ-LIVE-07
   const saveLiveClass = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (rejectReadOnly()) return;
     const formElement = event.currentTarget;
     const value = String(new FormData(formElement).get("liveClassUrl") ?? "");
     setLiveClassInvalid(false);
@@ -239,6 +254,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
 
   // Implements: REQ-LIVE-05, REQ-LIVE-07
   const clearLiveClass = async () => {
+    if (rejectReadOnly()) return;
     setLiveClassInvalid(false);
     setLiveClassStatus({ text: "Quitando enlace…", tone: "info" });
     try {
@@ -261,6 +277,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     liveClassInvalid,
     note,
     copiedCourseReference,
+    readOnly,
     canManageContent,
     canTeach,
     files,

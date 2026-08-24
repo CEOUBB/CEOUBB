@@ -118,7 +118,7 @@ function gradeMutationError(cause: unknown) {
   if (code.endsWith("permission-denied"))
     return new Error("No tienes permisos para editar notas en esta sección.");
   if (code.endsWith("failed-precondition"))
-    return new Error("La matrícula de la sección no está sincronizada.");
+    return new Error("La sección está archivada o su matrícula no está sincronizada.");
   if (cause instanceof Error && cause.message) return cause;
   return new Error("No fue posible guardar el libro de notas.");
 }

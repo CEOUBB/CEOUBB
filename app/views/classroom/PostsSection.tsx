@@ -66,6 +66,7 @@ export function PostsSection({
       <div className="post-list">
         {posts.map((post) => {
           const canManage =
+            canManageContent &&
             Boolean(post.authorId) &&
             (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase());
           const safePostLink = post.linkUrl ? safeLinkDestination(post.linkUrl) : null;

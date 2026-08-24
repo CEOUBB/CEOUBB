@@ -1,9 +1,14 @@
 "use client";
 
-import { CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
+import { Archive, CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useState } from "react";
-import { loadAdminUsers, roleLabel } from "../../lib/portal-utils";
-import type { User } from "../../lib/portal-utils";
+import {
+  archiveAcademicPeriod,
+  loadAcademicPeriods,
+  loadAdminUsers,
+  roleLabel,
+} from "../../lib/portal-utils";
+import type { AcademicPeriodSummary, User } from "../../lib/portal-utils";
 
 // Implements: REQ-PERF-05
 export function AdminView() {
@@ -14,6 +19,9 @@ export function AdminView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [periods, setPeriods] = useState<AcademicPeriodSummary[]>([]);
+  const [periodsLoading, setPeriodsLoading] = useState(true);
+  const [archivingPeriod, setArchivingPeriod] = useState("");
 
   const fetchAccounts = useCallback(async (targetPage: number, query: string) => {
     setLoading(true);
@@ -63,6 +71,40 @@ export function AdminView() {
     };
   }, [page, searchQuery]);
 
+  useEffect(() => {
+    let active = true;
+    loadAcademicPeriods()
+      .then((items) => {
+        if (active) setPeriods(items);
+      })
+      .finally(() => {
+        if (active) setPeriodsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const archivePeriod = async (period: AcademicPeriodSummary) => {
+    if (
+      !window.confirm(
+        `¿Archivar ${period.nombre}? Sus ramos quedarán disponibles únicamente en modo lectura.`
+      )
+    )
+      return;
+    setArchivingPeriod(period.id);
+    setMessage("");
+    try {
+      await archiveAcademicPeriod(period.id);
+      setPeriods(await loadAcademicPeriods());
+      setMessage(`Período ${period.nombre} archivado. Sus ramos quedaron en modo lectura.`);
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : "No fue posible archivar el período.");
+    } finally {
+      setArchivingPeriod("");
+    }
+  };
+
   const changeRole = async (userId: string, role: "teacher" | "student") => {
     try {
       const response = await fetch("/api/admin/users", {
@@ -109,6 +151,45 @@ export function AdminView() {
           <span>el rango se asigna por dominio institucional</span>
         </p>
       </div>
+
+      <section className="admin-periods" aria-labelledby="admin-periods-title">
+        <div>
+          <h2 id="admin-periods-title">Períodos académicos</h2>
+          <p>El cierre conserva todos los ramos y los mueve al historial de solo lectura.</p>
+        </div>
+        {periodsLoading && <p className="empty-row">Cargando períodos…</p>}
+        {!periodsLoading && periods.length === 0 && (
+          <p className="empty-row">Todavía no hay períodos académicos registrados.</p>
+        )}
+        <div className="admin-period-list">
+          {periods.map((period) => (
+            <article key={period.id}>
+              <span>
+                <strong>{period.nombre}</strong>
+                <small className="num">
+                  {period.fechaInicio} — {period.fechaFin}
+                </small>
+              </span>
+              <span className={`period-state ${period.estado}`}>{period.estado}</span>
+              {period.estado === "archivado" ? (
+                <span className="period-archived-label">
+                  <Archive aria-hidden="true" size={16} /> Solo lectura
+                </span>
+              ) : (
+                <button
+                  className="secondary-button"
+                  disabled={archivingPeriod.length > 0}
+                  onClick={() => archivePeriod(period)}
+                  type="button"
+                >
+                  <Archive aria-hidden="true" size={16} />
+                  {archivingPeriod === period.id ? "Archivando…" : "Archivar período"}
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="admin-toolbar">
         <div className="admin-search-box">
@@ -208,7 +289,7 @@ export function AdminView() {
 
       {message && (
         <p
-          className={`tool-status ${message.startsWith("Rol actualizado") ? "ok" : "bad"}`}
+          className={`tool-status ${message.startsWith("Rol actualizado") || message.startsWith("Período") ? "ok" : "bad"}`}
           role="status"
         >
           {message}
