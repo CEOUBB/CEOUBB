@@ -10,7 +10,6 @@ import {
   MAX_SUBMISSION_BYTES,
   StudentSubmission,
   saveGradeFeedback,
-  saveGradebook,
   saveSimulation,
   saveStudentScores,
   uploadStudentSubmission,

@@ -18,7 +18,6 @@ import {
   type AcademicSectionSummary,
   type Course,
 } from "../lib/courses";
-import type { ManagedCourse } from "../lib/course-management";
 import { loadMyCourses } from "../lib/teacher-course-client";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
@@ -337,14 +336,6 @@ export function Portal() {
     }
     await loadMyCourses();
   }, []);
-
-  const handleSignedIn = useCallback(
-    (current: User) => {
-      setUser(current);
-      void refreshCourses();
-    },
-    [refreshCourses]
-  );
 
   useEffect(() => {
     let alive = true;

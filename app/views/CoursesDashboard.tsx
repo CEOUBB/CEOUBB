@@ -49,9 +49,6 @@ export function CoursesDashboard({
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
   const shouldReduceMotion = useReducedMotion();
-  const periods = [...new Set(courses.flatMap((course) => (course.period ? [course.period] : [])))];
-  const periodLabel =
-    periods.length === 1 ? periods[0] : periods.length > 1 ? "Varios" : "Sin ramos";
 
   // Implements: REQ-PERF-07
   const activitySummaryByCourse = useMemo(() => {
