@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { ArrowRight } from "@phosphor-icons/react";
+import { Archive, ArrowRight } from "@phosphor-icons/react";
 import { Course, PERIOD } from "../../lib/courses";
 import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
@@ -23,17 +23,25 @@ import type { CalendarEntry, User } from "../../lib/portal-utils";
 export function CoursesDashboard({
   user,
   courses,
+  archivedCourses,
+  archivedHasMore,
+  archivedLoading,
   activity,
   seen,
   entries,
   openCourse,
+  onLoadMoreArchived,
 }: {
   user: User;
   courses: Course[];
+  archivedCourses: Course[];
+  archivedHasMore: boolean;
+  archivedLoading: boolean;
   activity: CourseActivity[];
   seen: Record<string, string>;
   entries: CalendarEntry[];
   openCourse: (course: Course) => void;
+  onLoadMoreArchived: () => void;
 }) {
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
@@ -88,7 +96,7 @@ export function CoursesDashboard({
           <span>{user.carrera?.trim() ? user.carrera.trim() : "Sin carrera"}</span>
           <span>·</span>
           <span>
-            Periodo <b className="num">{PERIOD}</b>
+            Periodo <b className="num">{courses[0]?.periodId ?? PERIOD}</b>
           </span>
           <span>·</span>
           <span>
@@ -131,6 +139,12 @@ export function CoursesDashboard({
       <div className="section-title">
         <h2>Mis cursos</h2>
       </div>
+      {courses.length === 0 && (
+        <div className="empty-state course-empty-state">
+          <strong>No tienes ramos vigentes en este período.</strong>
+          <p>Las nuevas secciones aparecerán aquí cuando tu matrícula quede activa.</p>
+        </div>
+      )}
       <m.section
         animate="show"
         className="course-grid"
@@ -185,6 +199,50 @@ export function CoursesDashboard({
           );
         })}
       </m.section>
+      {archivedCourses.length > 0 && (
+        <details className="archived-courses">
+          <summary>
+            <span>
+              <Archive aria-hidden="true" size={20} weight="fill" />
+              <strong>Ramos archivados</strong>
+            </span>
+            <small className="num">
+              {archivedCourses.length} {archivedCourses.length === 1 ? "ramo" : "ramos"}
+            </small>
+          </summary>
+          <div className="archived-course-list">
+            {archivedCourses.map((course) => (
+              <article className="archived-course-row" key={course.id}>
+                <span
+                  aria-hidden="true"
+                  className="archived-course-tone"
+                  style={{ "--course-tone": course.tone } as React.CSSProperties}
+                />
+                <div>
+                  <strong>{course.name}</strong>
+                  <small>
+                    <span className="num">{course.code}</span> · {course.period} · Sección{" "}
+                    <span className="num">{course.section}</span>
+                  </small>
+                </div>
+                <button onClick={() => openCourse(course)} type="button">
+                  Abrir en solo lectura <ArrowRight aria-hidden="true" size={15} />
+                </button>
+              </article>
+            ))}
+          </div>
+          {archivedHasMore && (
+            <button
+              className="secondary-button archived-load-more"
+              disabled={archivedLoading}
+              onClick={onLoadMoreArchived}
+              type="button"
+            >
+              {archivedLoading ? "Cargando historial…" : "Cargar más ramos"}
+            </button>
+          )}
+        </details>
+      )}
     </>
   );
 }

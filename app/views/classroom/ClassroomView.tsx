@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "motion/react";
-import { Check, CopySimple, Info } from "@phosphor-icons/react";
+import { Check, CopySimple, Info, LockKey } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
@@ -37,6 +37,7 @@ export function ClassroomView({
     liveClassInvalid,
     note,
     copiedCourseReference,
+    readOnly,
     canManageContent,
     canTeach,
     files,
@@ -66,6 +67,15 @@ export function ClassroomView({
     >
       <RichTextAssets />
       <main className="classroom-main">
+        {course.readOnly && (
+          <div className="classroom-archive-notice" role="status">
+            <LockKey aria-hidden="true" size={19} weight="fill" />
+            <span>
+              <strong>Solo lectura.</strong> Este ramo pertenece a {course.period} y conserva sus
+              materiales, entregas y notas como historial académico.
+            </span>
+          </div>
+        )}
         <header className="classroom-top">
           <div>
             <span className="breadcrumb">
@@ -115,7 +125,7 @@ export function ClassroomView({
               <>
                 <LiveClassSection
                   liveClass={classroom.liveClass}
-                  canTeach={canTeach}
+                  canTeach={canTeach && !readOnly}
                   status={liveClassStatus}
                   invalid={liveClassInvalid}
                   onSave={saveLiveClass}
@@ -191,6 +201,7 @@ export function ClassroomView({
                 canTeach={canTeach}
                 note={note}
                 status={status}
+                readOnly={readOnly}
               />
             )}
             {tab === "progress" && (
@@ -200,6 +211,7 @@ export function ClassroomView({
                 completed={completed}
                 students={students}
                 updateProgress={updateProgress}
+                readOnly={readOnly}
               />
             )}
             {tab === "people" && (

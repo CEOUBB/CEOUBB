@@ -860,3 +860,29 @@ Production deployed: no.
 Known risks: las nuevas capacidades no funcionarán en producción hasta desplegar ambas reglas después del merge. CEO-25 consume roles ya presentes en Turso y su proyección, pero no incluye una interfaz docente para nombrar o revocar ayudantes; ese flujo permanece en el backlog de participantes.
 
 Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.
+
+## 2026-08-24: CEO-18 — cierre de semestre y archivo de secciones
+
+Date: 2026-08-24
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-18-cierre-de-semestre-archivar-ramos-del-periodo-anterior` / `92379b3`; PR [#76](https://github.com/CEOUBB/CEOUBB/pull/76).
+
+Goal: sacar los ramos de períodos cerrados del trabajo vigente sin borrar su historia, mantenerlos consultables en solo lectura y preservar una matrícula independiente cuando un estudiante repite una asignatura en otra sección.
+
+Files changed: `lib/services/academic-period-archive.ts`, `lib/services/academic-catalog.ts`, `lib/services/enrollment-projection.ts`, `lib/courses.ts`, `lib/portal-utils.ts`, rutas `app/api/admin/periods/`, sesión y matrículas, portal, administración y aula, reglas Firestore/Storage, Functions de notas, `tests/semester-archival.test.ts`, contrato OpenSpec, especificación SDD, hashes y `PLAN.md`.
+
+External services changed: rama publicada y PR [#76](https://github.com/CEOUBB/CEOUBB/pull/76) creado en GitHub; CEO-18 actualizado en Linear. No se archivaron períodos reales, no se desplegaron Functions ni reglas y no se modificaron Firebase, Turso o Vercel de producción.
+
+Checks passed: prueba focal CEO-18 6/6; `pnpm run verify:fast` 254/254 con 32 hashes y 14 specs; `pnpm run lint`; `pnpm run typecheck`; `pnpm run check:functions`; React Doctor changed-scope 89/100; comprobación local de escritorio y móvil con contenido, árbol interactivo y sin overlay; `pnpm test` con build Next.js 16.3 y 279/279 pruebas.
+
+Checks not run: Emulator Suite de reglas y matriz autenticada owner/docente/estudiante con datos reales; el repositorio todavía no dispone del arnés de emuladores y esta tarea no autoriza mutaciones de producción.
+
+Production deployed: no.
+
+Known risks: las reglas dependen de la nueva proyección `academicSections`/`academicPeriods`; desplegarlas antes de sincronizar los períodos abiertos bloquearía correctamente pero prematuramente toda escritura. El orden obligatorio es portal y backfill, Functions, Storage y Firestore rules, seguido por la matriz multirol. Un fallo de Turso posterior a la proyección deja Firebase en el estado seguro de solo lectura y requiere repetir la operación idempotente.
+
+Next recommended action: revisar y fusionar la PR; desplegar el portal, sincronizar todos los períodos abiertos mediante la ruta owner-only, publicar Functions y reglas, verificar una sección vigente y otra archivada con estudiante/docente y sólo entonces archivar el primer período real.

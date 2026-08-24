@@ -268,12 +268,16 @@ export function PortalMainView({
   openedCourse,
   user,
   courses,
+  archivedCourses,
+  archivedHasMore,
+  archivedLoading,
   activity,
   gradebooks,
   seen,
   sectionRole,
   entries,
   openCourse,
+  onLoadMoreArchived,
   setScreen,
 }: {
   screen: Screen;
@@ -281,12 +285,16 @@ export function PortalMainView({
   openedCourse: Course | null;
   user: User;
   courses: Course[];
+  archivedCourses: Course[];
+  archivedHasMore: boolean;
+  archivedLoading: boolean;
   activity: CourseActivity[];
   gradebooks: CourseGradebook[];
   seen: Record<string, string>;
   sectionRole: SectionRole | null;
   entries: ReturnType<typeof calendarEntries>;
   openCourse: (course: Course) => void;
+  onLoadMoreArchived: () => void;
   setScreen: (screen: Screen) => void;
 }) {
   return (
@@ -317,10 +325,14 @@ export function PortalMainView({
                 <CoursesDashboard
                   user={user}
                   courses={courses}
+                  archivedCourses={archivedCourses}
+                  archivedHasMore={archivedHasMore}
+                  archivedLoading={archivedLoading}
                   activity={activity}
                   seen={seen}
                   entries={entries}
                   openCourse={openCourse}
+                  onLoadMoreArchived={onLoadMoreArchived}
                 />
               )}
               {screen === "calendar" && (

@@ -46,6 +46,18 @@ service cloud.firestore {
       return courseId.matches('^[a-z0-9][a-z0-9-]{1,60}$');
     }
 
+    function sectionPeriodId(seccionId) {
+      return get(/databases/$(database)/documents/academicSections/$(seccionId)).data.periodoId;
+    }
+
+    function sectionIsWritable(seccionId) {
+      return signedIn()
+        && validCourse(seccionId)
+        && exists(/databases/$(database)/documents/academicSections/$(seccionId))
+        && exists(/databases/$(database)/documents/academicPeriods/$(sectionPeriodId(seccionId)))
+        && get(/databases/$(database)/documents/academicPeriods/$(sectionPeriodId(seccionId))).data.status == 'abierto';
+    }
+
     // Implements: REQ-LIVE-02, REQ-LIVE-06
     function validLiveClass(courseId) {
       return request.resource.data.keys().hasOnly(['courseId', 'url', 'provider', 'updatedBy', 'updatedAt'])
@@ -116,22 +128,22 @@ service cloud.firestore {
     // Implements: REQ-SEC-02
     match /courses/{courseId}/posts/{postId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow create: if managesSectionContent(courseId) && validCourse(courseId) && request.resource.data.authorId == request.auth.uid;
-      allow update: if isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId;
-      allow delete: if isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid;
+      allow create: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.authorId == request.auth.uid;
+      allow update: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) && sectionIsWritable(courseId);
+      allow delete: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid) && sectionIsWritable(courseId);
     }
 
     // Implements: REQ-SEC-02
     match /courses/{courseId}/progress/{userId} {
       allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
-      allow delete: if isOwner() || signedIn() && request.auth.uid == userId;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
+      allow delete: if (isOwner() || signedIn() && request.auth.uid == userId) && sectionIsWritable(courseId);
     }
 
     // Implements: REQ-SEC-02, REQ-LIVE-02, REQ-LIVE-06
     match /courses/{courseId}/meta/{documentId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow write: if teachesSection(courseId) && validCourse(courseId) && documentId != 'gradebook'
+      allow write: if teachesSection(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && documentId != 'gradebook'
         && (documentId != 'live-class' || request.method == 'delete' || validLiveClass(courseId));
     }
 
@@ -150,8 +162,8 @@ service cloud.firestore {
     // Implements: REQ-EVAL-01, REQ-SEC-08
     match /courses/{courseId}/submissions/{submissionId} {
       allow read: if isOwner() || teachesSection(courseId) || signedIn() && resource.data.uid == request.auth.uid;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid);
-      allow delete: if isOwner() || signedIn() && resource.data.uid == request.auth.uid;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid);
+      allow delete: if (isOwner() || signedIn() && resource.data.uid == request.auth.uid) && sectionIsWritable(courseId);
     }
   }
 }

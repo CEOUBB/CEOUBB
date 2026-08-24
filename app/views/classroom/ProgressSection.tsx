@@ -14,12 +14,14 @@ export function ProgressSection({
   completed,
   students,
   updateProgress,
+  readOnly,
 }: {
   units: Course["units"];
   canTeach: boolean;
   completed: number;
   students: ClassroomStudent[];
   updateProgress: (next: number) => void;
+  readOnly: boolean;
 }) {
   const shouldReduceMotion = useReducedMotion();
   const total = units.length;
@@ -38,7 +40,11 @@ export function ProgressSection({
           </strong>
           <div>
             <h3>Resultados de aprendizaje completados</h3>
-            <p>Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos.</p>
+            <p>
+              {readOnly
+                ? "Este es el avance conservado al cierre del período."
+                : "Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos."}
+            </p>
             <div className="big-progress">
               <Bar ratio={total > 0 ? completed / total : 0} />
             </div>
@@ -56,6 +62,7 @@ export function ProgressSection({
               <label className="unit-check">
                 <input
                   checked={index < completed}
+                  disabled={readOnly}
                   onChange={(event) =>
                     updateProgress(
                       event.target.checked

@@ -35,10 +35,23 @@ function callableError(cause) {
   return new HttpsError("internal", "No fue posible guardar el libro de notas.");
 }
 
+async function assertSectionWritable(db, courseId) {
+  const section = await db.collection("academicSections").doc(courseId).get();
+  const periodId = section.exists ? section.get("periodoId") : "";
+  const period = periodId ? await db.collection("academicPeriods").doc(periodId).get() : null;
+  if (!period || !period.exists || period.get("status") !== "abierto") {
+    throw new HttpsError(
+      "failed-precondition",
+      "El período de esta sección está cerrado o no está sincronizado."
+    );
+  }
+}
+
 async function authorizedGradeActor(request, db, courseId) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
+  await assertSectionWritable(db, courseId);
   const actor = actorFromAuth(request.auth);
   const profile = await db.collection("users").doc(actor.actorUid).get();
   const role = profile.exists ? profile.get("role") : "";

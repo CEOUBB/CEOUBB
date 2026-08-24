@@ -38,18 +38,28 @@ export function GradesSection({
   course,
   classroom,
   canTeach,
+  readOnly,
   note,
   status,
 }: {
   course: Course;
   classroom: ClassroomState;
   canTeach: boolean;
+  readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
   status: Note;
 }) {
   const { gradebook, exemption } = classroom;
   if (canTeach)
-    return <TeacherGrades course={course} classroom={classroom} note={note} status={status} />;
+    return (
+      <TeacherGrades
+        course={course}
+        classroom={classroom}
+        note={note}
+        readOnly={readOnly}
+        status={status}
+      />
+    );
   return (
     <StudentGrades
       course={course}
@@ -57,6 +67,7 @@ export function GradesSection({
       exemption={exemption}
       officialScores={classroom.officialScores}
       simulation={classroom.simulation}
+      readOnly={readOnly}
       note={note}
       status={status}
     />
@@ -69,6 +80,7 @@ function StudentGrades({
   exemption,
   officialScores,
   simulation,
+  readOnly,
   note,
   status,
 }: {
@@ -77,6 +89,7 @@ function StudentGrades({
   exemption: number | null;
   officialScores: GradeScores;
   simulation: GradeScores;
+  readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
   status: Note;
 }) {
@@ -84,7 +97,7 @@ function StudentGrades({
   const mobile = useIsMobileApp();
   const [detail, setDetail] = useState<GradeItem | null>(null);
   const submissions = useOwnSubmissions(course.id);
-  const upload = useSubmissionUpload(course.id, note);
+  const upload = useSubmissionUpload(course.id, note, !readOnly);
   const draft =
     typed ??
     Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
@@ -106,6 +119,7 @@ function StudentGrades({
   const exempt = requiredGrade(gradebook, scores, exemptionTarget);
 
   const persist = async () => {
+    if (readOnly) return;
     const next: GradeScores = {};
     for (const [id, value] of Object.entries(draft)) {
       const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
@@ -131,7 +145,7 @@ function StudentGrades({
   const simulationField = (item: GradeItem) => (
     <input
       aria-label={`Nota simulada de ${item.name}`}
-      disabled={isValidGrade(officialScores[item.id])}
+      disabled={readOnly || isValidGrade(officialScores[item.id])}
       max={MAX_GRADE}
       min={MIN_GRADE}
       onBlur={persist}
@@ -240,6 +254,7 @@ function StudentGrades({
                 item={detail}
                 onPick={upload.pick}
                 percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
+                readOnly={readOnly}
                 receipt={submissions.get(detail.id)}
               />
             </div>
@@ -277,6 +292,7 @@ function StudentGrades({
                 item={item}
                 onPick={upload.pick}
                 percent={upload.state?.evalId === item.id ? upload.state.percent : null}
+                readOnly={readOnly}
                 receipt={submissions.get(item.id)}
               />
             </span>
@@ -349,15 +365,23 @@ function useOwnSubmissions(courseId: string) {
 }
 
 // Implements: REQ-EVAL-01
-function useSubmissionUpload(courseId: string, note: (text: string, tone?: Note["tone"]) => void) {
+function useSubmissionUpload(
+  courseId: string,
+  note: (text: string, tone?: Note["tone"]) => void,
+  enabled: boolean
+) {
   const input = useRef<HTMLInputElement | null>(null);
   const pending = useRef("");
   const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
 
-  const pick = useCallback((evalId: string) => {
-    pending.current = evalId;
-    input.current?.click();
-  }, []);
+  const pick = useCallback(
+    (evalId: string) => {
+      if (!enabled) return note("Este ramo está archivado y no recibe nuevas entregas.", "bad");
+      pending.current = evalId;
+      input.current?.click();
+    },
+    [enabled, note]
+  );
 
   const send = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -405,11 +429,13 @@ function SubmissionSlot({
   receipt,
   percent,
   onPick,
+  readOnly,
 }: {
   item: GradeItem;
   receipt: StudentSubmission | undefined;
   percent: number | null;
   onPick: (evalId: string) => void;
+  readOnly: boolean;
 }) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -442,17 +468,21 @@ function SubmissionSlot({
         <small className="num">
           {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
         </small>
-        <button
-          aria-label={`Reemplazar la entrega de ${item.name}`}
-          className="grades-attach"
-          onClick={() => onPick(item.id)}
-          type="button"
-        >
-          Reemplazar
-        </button>
+        {!readOnly && (
+          <button
+            aria-label={`Reemplazar la entrega de ${item.name}`}
+            className="grades-attach"
+            onClick={() => onPick(item.id)}
+            type="button"
+          >
+            Reemplazar
+          </button>
+        )}
       </span>
     );
   }
+
+  if (readOnly) return <span className="grades-closed">Sin nuevas entregas</span>;
 
   return (
     <button
@@ -494,11 +524,13 @@ function TeacherGrades({
   course,
   classroom,
   note,
+  readOnly,
   status,
 }: {
   course: Course;
   classroom: ClassroomState;
   note: (text: string, tone?: Note["tone"]) => void;
+  readOnly: boolean;
   status: Note;
 }) {
   const { gradebook, exemption, students, classScores } = classroom;
@@ -523,6 +555,7 @@ function TeacherGrades({
   };
 
   const save = async () => {
+    if (readOnly) return note("Este ramo está archivado y no admite cambios.", "bad");
     const target = typeof exempt === "string" && exempt.trim() !== "" ? Number(exempt) : Number.NaN;
     note("Guardando ponderación…");
     try {
@@ -550,6 +583,7 @@ function TeacherGrades({
 
   const handleSetScore = useCallback(
     async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
+      if (readOnly) return note("Este ramo está archivado y no admite cambios.", "bad");
       const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
       const next = { ...currentScores };
       if (isValidGrade(score)) next[itemId] = score;
@@ -560,7 +594,7 @@ function TeacherGrades({
         note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
       }
     },
-    [course.id, note]
+    [course.id, note, readOnly]
   );
 
   return (
@@ -575,6 +609,7 @@ function TeacherGrades({
             <label>
               Evaluación
               <input
+                disabled={readOnly}
                 onChange={(event) => patch(item.id, { name: event.target.value })}
                 value={item.name}
               />
@@ -582,6 +617,7 @@ function TeacherGrades({
             <label>
               Pondera %
               <input
+                disabled={readOnly}
                 max={100}
                 min={0}
                 onChange={(event) => {
@@ -598,6 +634,7 @@ function TeacherGrades({
             <label>
               Fecha
               <input
+                disabled={readOnly}
                 onChange={(event) => patch(item.id, { date: event.target.value })}
                 type="date"
                 value={item.date}
@@ -605,6 +642,7 @@ function TeacherGrades({
             </label>
             <button
               className="remove-row"
+              disabled={readOnly}
               onClick={() => setItems((current) => current.filter((row) => row.id !== item.id))}
               type="button"
             >
@@ -616,6 +654,7 @@ function TeacherGrades({
           <label>
             Nota de eximición
             <input
+              disabled={readOnly}
               max={MAX_GRADE}
               min={MIN_GRADE}
               onChange={(event) => setDraftExempt(event.target.value)}
@@ -627,10 +666,10 @@ function TeacherGrades({
           <span className={totalWeight === 100 ? "weight-total ok num" : "weight-total num"}>
             Suma {totalWeight}%
           </span>
-          <button className="secondary-button" onClick={addItem} type="button">
+          <button className="secondary-button" disabled={readOnly} onClick={addItem} type="button">
             Agregar evaluación
           </button>
-          <button className="primary-button" onClick={save} type="button">
+          <button className="primary-button" disabled={readOnly} onClick={save} type="button">
             Guardar ponderación
           </button>
         </div>
@@ -665,6 +704,7 @@ function TeacherGrades({
               onSetScore={handleSetScore}
               scores={classScores[student.userId] ?? EMPTY_SCORES}
               student={student}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -684,11 +724,13 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
   gradebook,
   scores,
   onSetScore,
+  readOnly,
 }: {
   student: ClassroomStudent;
   gradebook: GradeItem[];
   scores: GradeScores;
   onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
+  readOnly: boolean;
 }) {
   const summary = summarize(gradebook, scores);
   return (
@@ -701,6 +743,7 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
         <span key={item.id}>
           <input
             aria-label={`${item.name} de ${student.name}`}
+            disabled={readOnly}
             defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
             key={`${item.id}-${scores[item.id] ?? ""}`}
             max={MAX_GRADE}
