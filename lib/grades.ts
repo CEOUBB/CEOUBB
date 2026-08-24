@@ -2,6 +2,15 @@ export const MIN_GRADE = 1;
 export const MAX_GRADE = 7;
 export const PASSING_GRADE = 4;
 export const DEFAULT_EXEMPTION_GRADE = 5;
+export const MAX_GRADE_FEEDBACK_LENGTH = 2_000;
+export const GRADE_FEEDBACK_REQUIREMENTS = [
+  "REQ-FEEDBACK-01",
+  "REQ-FEEDBACK-02",
+  "REQ-FEEDBACK-03",
+  "REQ-FEEDBACK-04",
+  "REQ-FEEDBACK-05",
+  "REQ-FEEDBACK-06",
+] as const;
 
 export type GradeItem = {
   id: string;
@@ -11,6 +20,7 @@ export type GradeItem = {
 };
 
 export type GradeScores = Record<string, number>;
+export type GradeFeedback = Record<string, string>;
 
 export type GradeSummary = {
   totalWeight: number;
@@ -42,6 +52,17 @@ export function normalizeScores(value: unknown): GradeScores {
     }
   }
   return scores;
+}
+
+export function normalizeGradeFeedback(value: unknown): GradeFeedback {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const feedback: GradeFeedback = {};
+  for (const [key, rawText] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(key) || typeof rawText !== "string") continue;
+    const text = rawText.trim().slice(0, MAX_GRADE_FEEDBACK_LENGTH);
+    if (text) feedback[key] = text;
+  }
+  return feedback;
 }
 
 export function normalizeItems(value: unknown): GradeItem[] {

@@ -6473,6 +6473,41 @@ div.editor-latex-token {
   cursor: not-allowed;
 }
 
+.grade-feedback-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-sm);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.grade-feedback-note > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.grade-feedback-note strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.grade-feedback-note p {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  white-space: pre-wrap;
+}
+
 /* Aula · entregas del estudiante (REQ-EVAL-01) */
 
 .grades-submission {
@@ -6767,6 +6802,99 @@ div.editor-latex-token {
 .grades-matrix-row b,
 .grades-matrix-row small {
   display: block;
+}
+
+.grades-matrix-head > .grade-column,
+.grades-matrix-row > .grade-cell {
+  flex-basis: 142px;
+}
+
+.grade-cell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+  align-items: center;
+}
+
+.grade-feedback-action {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.grade-feedback-action:hover,
+.grade-feedback-action.has-feedback {
+  background: color-mix(in srgb, var(--color-primary) 6%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--border-hairline));
+  color: var(--color-primary);
+}
+
+.grade-feedback-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.grade-feedback-action:disabled {
+  background: var(--canvas-soft);
+  border-color: var(--border-hairline);
+  color: var(--text-faint);
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.grade-feedback-context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.grade-feedback-context strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.grade-feedback-context span,
+.grade-feedback-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.grade-feedback-dialog textarea {
+  min-height: 168px;
+  line-height: 1.5;
+}
+
+.grade-feedback-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+@media (hover: none) {
+  .grade-feedback-action {
+    width: 44px;
+    height: 44px;
+  }
+
+  .grade-cell {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
 }
 .grades-matrix-row b {
   font-size: 15px;

@@ -1,5 +1,11 @@
 import { cloudFunctions, firestore, currentUser, emailOf } from "./sdk.ts";
-import { type GradeItem, type GradeScores, normalizeItems, normalizeScores } from "../grades.ts";
+import {
+  type GradeItem,
+  type GradeScores,
+  MAX_GRADE_FEEDBACK_LENGTH,
+  normalizeItems,
+  normalizeScores,
+} from "../grades.ts";
 import { toGradebookState } from "./mappers.ts";
 import { watchableSections } from "./posts.ts";
 
@@ -110,15 +116,26 @@ export async function saveSimulation(courseId: string, scores: GradeScores) {
   );
 }
 
-function gradeMutationError(cause: unknown) {
+function gradeMutationError(cause: unknown, mutation: string) {
   const code =
     cause && typeof cause === "object" && "code" in cause ? String(cause.code).toLowerCase() : "";
+  const feedbackMutation = mutation === "saveAuditedGradeFeedback";
   if (code.endsWith("unauthenticated"))
     return new Error("Tu sesión expiró. Cierra sesión y vuelve a ingresar.");
   if (code.endsWith("permission-denied"))
     return new Error("No tienes permisos para editar notas en esta sección.");
   if (code.endsWith("failed-precondition"))
-    return new Error("La sección está archivada o su matrícula no está sincronizada.");
+    return new Error(
+      feedbackMutation
+        ? "Guarda primero una nota oficial antes de agregar retroalimentación."
+        : "La sección está archivada o su matrícula no está sincronizada."
+    );
+  if (code.endsWith("invalid-argument"))
+    return new Error(
+      feedbackMutation
+        ? "La retroalimentación no es válida. Revisa su extensión e inténtalo de nuevo."
+        : "Las notas enviadas no son válidas. Revisa sus valores e inténtalo de nuevo."
+    );
   if (cause instanceof Error && cause.message) return cause;
   return new Error("No fue posible guardar el libro de notas.");
 }
@@ -129,7 +146,7 @@ async function callAuditedMutation<TRequest>(name: string, data: TRequest) {
     const callable = sdk.httpsCallable<TRequest, AuditedMutationResult>(functions, name);
     return (await callable(data)).data;
   } catch (cause) {
-    throw gradeMutationError(cause);
+    throw gradeMutationError(cause, name);
   }
 }
 
@@ -149,6 +166,25 @@ export async function saveGradebook(
 // Implements: REQ-AUDIT-01
 export async function saveStudentScores(courseId: string, userId: string, scores: GradeScores) {
   await saveSectionScores(courseId, [{ userId, scores }]);
+}
+
+export async function saveGradeFeedback(
+  courseId: string,
+  userId: string,
+  gradeItemId: string,
+  feedback: string
+) {
+  if (feedback.length > MAX_GRADE_FEEDBACK_LENGTH) {
+    throw new Error(
+      `La retroalimentación admite hasta ${MAX_GRADE_FEEDBACK_LENGTH.toLocaleString("es-CL")} caracteres.`
+    );
+  }
+  await callAuditedMutation("saveAuditedGradeFeedback", {
+    courseId,
+    userId,
+    gradeItemId,
+    feedback: feedback.trim(),
+  });
 }
 
 /** Parte una lista de operaciones en lotes que Firestore acepta de una vez. */

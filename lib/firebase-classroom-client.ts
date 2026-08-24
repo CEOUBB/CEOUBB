@@ -68,6 +68,7 @@ export {
   saveSimulation,
   saveGradebook,
   saveStudentScores,
+  saveGradeFeedback,
   saveSectionScores,
   chunkOperations,
   MAX_BATCH_OPERATIONS,
