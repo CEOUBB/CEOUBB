@@ -24,9 +24,9 @@
 
 - [x] 5.1 Crear Firebase staging, Firestore regional, apps web y reglas/índices/Functions de staging. Requisito: REQ-STG-05. Verificación: inventario Firebase y despliegue exitoso.
 - [x] 5.2 Crear `ceoubb-staging`, generar credencial dedicada y ejecutar el sembrado dos veces. Requisito: REQ-STG-02. Verificación: conteos deterministas.
-- [ ] 5.3 Configurar GitHub Environment y Vercel Preview sin mostrar secretos. Requisito: REQ-STG-04. Verificación: inventarios de variables y ejecución del workflow.
+- [x] 5.3 Configurar GitHub Environment y Vercel Preview sin mostrar secretos. Requisito: REQ-STG-04. Verificación: inventarios de variables y ejecución del workflow.
 
 ## 6. REFACTOR y cierre
 
 - [x] 6.1 Ejecutar `verify:fast`, invariantes, formato, lint y suite integral.
-- [ ] 6.2 Archivar el cambio OpenSpec, actualizar PLAN/handoff y abrir PR en español vinculada a CEO-12.
+- [x] 6.2 Archivar el cambio OpenSpec, actualizar PLAN/handoff y abrir PR en español vinculada a CEO-12.

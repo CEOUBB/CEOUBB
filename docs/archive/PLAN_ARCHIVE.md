@@ -4,6 +4,15 @@ Moved out of `PLAN.md` on 2026-08-12 so the live plan stays small. Nothing here 
 
 ## Implemented milestones
 
+### 0. CEO-12 — Ambiente staging aislado de producción — completado 2026-08-23, PR [#78](https://github.com/CEOUBB/CEOUBB/pull/78)
+
+- Codex / Joaquín — provisionó Firebase `centro-de-estudio-ubb-staging`, Firestore y Storage en `southamerica-west1`, Google Authentication y las cuatro Cloud Functions del repositorio. Turso `ceoubb-staging` recibió las cinco migraciones vigentes y un fixture determinista de 4 usuarios, 2 secciones y 8 matrículas; Firestore recibió 24 documentos sintéticos.
+- El portal resuelve Firebase por entorno con configuración completa o fallo cerrado. Vercel Preview usa exclusivamente los identificadores y la base staging, mientras Production conserva sus valores anteriores.
+- `.github/workflows/firebase-release.yml` verifica, despliega y siembra staging antes de permitir una promoción productiva del mismo commit. GitHub autentica staging con OIDC restringido al repositorio y al Environment `Staging`; no existe una llave JSON persistente. El token Turso está separado entre Preview y Production.
+- Smoke real [#32686413407](https://github.com/CEOUBB/CEOUBB/actions/runs/32686413407): verificación, OIDC, guardas de targets, despliegue Firebase y resembrado aprobados; Production quedó omitido. El primer token Turso emitido fue revocado antes de usarse y sólo el reemplazo cifrado permanece activo.
+- Verificación local: `verify:fast` 253/253, invariantes 31/31, formato, lint, Functions, OpenSpec estricto y `pnpm test` con build Next.js 16.3 + 278/278. Producción no fue desplegada ni modificada.
+- Contrato vivo: [`openspec/specs/operations/staging/spec.md`](../../openspec/specs/operations/staging/spec.md). Cambio archivado: [`2026-08-23-create-staging-environment`](../../openspec/changes/archive/2026-08-23-create-staging-environment/proposal.md). Runbook: [`docs/operations/staging.md`](../operations/staging.md).
+
 ### 1. Study library
 
 - Created a multi-course study library for EDO, Estadística, Estática, Inglés Comunicacional I, Termodinámica Aplicada, and Programación en Ingeniería/MATLAB.
