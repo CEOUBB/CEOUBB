@@ -21,4 +21,4 @@
 - [x] 4.1 Ejecutar GREEN/REFACTOR sin alterar la suite sellada. Verificación: `pnpm run verify:fast`.
 - [x] 4.2 Ejecutar invariantes, lint, formato, Functions, React Doctor y suite integral. Verificación: `pnpm test`.
 - [x] 4.3 Archivar el delta OpenSpec y actualizar PLAN/handoff. Verificación: `pnpm exec openspec validate --specs`.
-- [ ] 4.4 Crear commit, publicar la rama y abrir el PR en español vinculado a CEO-21. Verificación: `gh pr view --json url,state`.
+- [x] 4.4 Crear commit, publicar la rama y abrir el PR en español vinculado a CEO-21. Verificación: PR #73 abierto en GitHub.
