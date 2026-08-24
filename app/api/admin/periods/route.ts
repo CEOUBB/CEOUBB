@@ -15,9 +15,7 @@ export async function GET(request: Request) {
   const rawCursor = searchParams.get("cursor");
   const cursor = rawCursor ? rawCursor.trim().slice(0, 100) : undefined;
   const requestedLimit = Number(searchParams.get("limit") ?? 50);
-  const limit = Number.isInteger(requestedLimit)
-    ? Math.max(1, Math.min(100, requestedLimit))
-    : 50;
+  const limit = Number.isInteger(requestedLimit) ? Math.max(1, Math.min(100, requestedLimit)) : 50;
   try {
     return Response.json(await listAcademicPeriods({ cursor: cursor || null, limit }));
   } catch {
