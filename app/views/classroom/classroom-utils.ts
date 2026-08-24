@@ -26,8 +26,10 @@ export const emptyClassroom: ClassroomState = {
   gradebook: [],
   exemption: null,
   officialScores: {},
+  officialFeedback: {},
   simulation: {},
   classScores: {},
+  classFeedback: {},
   liveClass: null,
 };
 

@@ -2,13 +2,14 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { CheckCircle, Paperclip } from "@phosphor-icons/react";
+import { ChatCenteredText, CheckCircle, Paperclip, X } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
   ClassroomStudent,
   MAX_SUBMISSION_BYTES,
   StudentSubmission,
+  saveGradeFeedback,
   saveGradebook,
   saveSimulation,
   saveStudentScores,
@@ -17,9 +18,11 @@ import {
 } from "../../../lib/firebase-classroom-client";
 import {
   DEFAULT_EXEMPTION_GRADE,
+  GradeFeedback,
   GradeItem,
   GradeScores,
   MAX_GRADE,
+  MAX_GRADE_FEEDBACK_LENGTH,
   MIN_GRADE,
   PASSING_GRADE,
   formatGrade,
@@ -33,6 +36,13 @@ import { MobileSheet } from "../../mobile-shell";
 import type { Note } from "./classroom-utils";
 
 const EMPTY_SCORES: GradeScores = {};
+const EMPTY_FEEDBACK: GradeFeedback = {};
+
+type FeedbackEditor = {
+  student: ClassroomStudent;
+  item: GradeItem;
+  feedback: string;
+};
 
 export function GradesSection({
   course,
@@ -65,6 +75,7 @@ export function GradesSection({
       course={course}
       gradebook={gradebook}
       exemption={exemption}
+      officialFeedback={classroom.officialFeedback}
       officialScores={classroom.officialScores}
       simulation={classroom.simulation}
       readOnly={readOnly}
@@ -78,6 +89,7 @@ function StudentGrades({
   course,
   gradebook,
   exemption,
+  officialFeedback,
   officialScores,
   simulation,
   readOnly,
@@ -87,6 +99,7 @@ function StudentGrades({
   course: Course;
   gradebook: GradeItem[];
   exemption: number | null;
+  officialFeedback: GradeFeedback;
   officialScores: GradeScores;
   simulation: GradeScores;
   readOnly: boolean;
@@ -185,6 +198,7 @@ function StudentGrades({
                     {isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : "sin nota"}
                   </span>
                   {submissions.has(item.id) ? " · entregado" : ""}
+                  {officialFeedback[item.id] ? " · con retroalimentación" : ""}
                 </small>
               </span>
             </button>
@@ -241,6 +255,7 @@ function StudentGrades({
                 </dd>
               </div>
             </dl>
+            <GradeFeedbackNote feedback={officialFeedback[detail.id]} />
             <label className="sheet-field">
               {isValidGrade(officialScores[detail.id])
                 ? "Simulación (bloqueada: ya hay nota oficial)"
@@ -296,6 +311,7 @@ function StudentGrades({
                 receipt={submissions.get(item.id)}
               />
             </span>
+            <GradeFeedbackNote feedback={officialFeedback[item.id]} />
           </div>
         ))}
       </div>
@@ -520,6 +536,19 @@ function TargetLine({
   );
 }
 
+function GradeFeedbackNote({ feedback }: { feedback: string | undefined }) {
+  if (!feedback) return null;
+  return (
+    <div className="grade-feedback-note">
+      <ChatCenteredText aria-hidden="true" size={20} weight="duotone" />
+      <div>
+        <strong>Retroalimentación del docente</strong>
+        <p>{feedback}</p>
+      </div>
+    </div>
+  );
+}
+
 function TeacherGrades({
   course,
   classroom,
@@ -533,9 +562,12 @@ function TeacherGrades({
   readOnly: boolean;
   status: Note;
 }) {
-  const { gradebook, exemption, students, classScores } = classroom;
+  const { gradebook, exemption, students, classScores, classFeedback } = classroom;
   const [draftItems, setDraftItems] = useState<GradeItem[] | null>(null);
   const [draftExempt, setDraftExempt] = useState<string | null>(null);
+  const [feedbackEditor, setFeedbackEditor] = useState<FeedbackEditor | null>(null);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
   const items = draftItems ?? gradebook;
   const exempt = draftExempt ?? String(exemption ?? DEFAULT_EXEMPTION_GRADE);
   const setItems = (update: (current: GradeItem[]) => GradeItem[]) => setDraftItems(update(items));
@@ -596,6 +628,42 @@ function TeacherGrades({
     },
     [course.id, note, readOnly]
   );
+
+  const openFeedback = useCallback(
+    (student: ClassroomStudent, item: GradeItem, feedback: string) => {
+      setFeedbackError("");
+      setFeedbackEditor({ student, item, feedback });
+    },
+    []
+  );
+
+  const persistFeedback = async (value: string) => {
+    if (!feedbackEditor) return;
+    setFeedbackBusy(true);
+    setFeedbackError("");
+    try {
+      await saveGradeFeedback(
+        course.id,
+        feedbackEditor.student.userId,
+        feedbackEditor.item.id,
+        value
+      );
+      note(
+        value.trim()
+          ? `Retroalimentación de ${feedbackEditor.item.name} guardada.`
+          : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
+        "ok"
+      );
+      setFeedbackEditor(null);
+    } catch (cause) {
+      const message =
+        cause instanceof Error ? cause.message : "No fue posible guardar la retroalimentación.";
+      setFeedbackError(message);
+      note(message, "bad");
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
 
   return (
     <section className="grades-teacher">
@@ -688,7 +756,9 @@ function TeacherGrades({
           <div className="grades-matrix-head">
             <span>Estudiante</span>
             {gradebook.map((item) => (
-              <span key={item.id}>{item.name}</span>
+              <span className="grade-column" key={item.id}>
+                {item.name}
+              </span>
             ))}
             <span>Promedio</span>
           </div>
@@ -700,7 +770,9 @@ function TeacherGrades({
           {students.map((student) => (
             <TeacherStudentRow
               gradebook={gradebook}
+              feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
               key={student.userId}
+              onEditFeedback={openFeedback}
               onSetScore={handleSetScore}
               scores={classScores[student.userId] ?? EMPTY_SCORES}
               student={student}
@@ -708,6 +780,15 @@ function TeacherGrades({
             />
           ))}
         </div>
+      )}
+      {feedbackEditor && (
+        <FeedbackDialog
+          busy={feedbackBusy}
+          editor={feedbackEditor}
+          error={feedbackError}
+          onClose={() => !feedbackBusy && setFeedbackEditor(null)}
+          onSave={persistFeedback}
+        />
       )}
       {status.text && (
         <p className={`tool-status ${status.tone}`} role="status">
@@ -722,13 +803,17 @@ function TeacherGrades({
 const TeacherStudentRow = React.memo(function TeacherStudentRow({
   student,
   gradebook,
+  feedback,
+  onEditFeedback,
   scores,
   onSetScore,
   readOnly,
 }: {
   student: ClassroomStudent;
   gradebook: GradeItem[];
+  feedback: GradeFeedback;
   scores: GradeScores;
+  onEditFeedback: (student: ClassroomStudent, item: GradeItem, feedback: string) => void;
   onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
   readOnly: boolean;
 }) {
@@ -740,7 +825,7 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
         <small>{student.email}</small>
       </span>
       {gradebook.map((item) => (
-        <span key={item.id}>
+        <span className="grade-cell" key={item.id}>
           <input
             aria-label={`${item.name} de ${student.name}`}
             disabled={readOnly}
@@ -752,6 +837,26 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
             step="0.1"
             type="number"
           />
+          <button
+            aria-label={`${feedback[item.id] ? "Editar" : "Agregar"} retroalimentación de ${item.name} para ${student.name}`}
+            className={`grade-feedback-action${feedback[item.id] ? " has-feedback" : ""}`}
+            disabled={!isValidGrade(scores[item.id])}
+            onClick={() => onEditFeedback(student, item, feedback[item.id] ?? "")}
+            title={
+              isValidGrade(scores[item.id])
+                ? feedback[item.id]
+                  ? "Editar retroalimentación"
+                  : "Agregar retroalimentación"
+                : "Guarda primero una nota oficial"
+            }
+            type="button"
+          >
+            <ChatCenteredText
+              aria-hidden="true"
+              size={16}
+              weight={feedback[item.id] ? "fill" : "regular"}
+            />
+          </button>
         </span>
       ))}
       <span className="grades-official num">
@@ -760,3 +865,101 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
     </div>
   );
 });
+
+function FeedbackDialog({
+  editor,
+  busy,
+  error,
+  onClose,
+  onSave,
+}: {
+  editor: FeedbackEditor;
+  busy: boolean;
+  error: string;
+  onClose: () => void;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [value, setValue] = useState(editor.feedback);
+
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+      textareaRef.current?.focus();
+    }
+  }, []);
+
+  return (
+    <dialog
+      aria-labelledby="grade-feedback-dialog-title"
+      className="planner-dialog grade-feedback-dialog"
+      data-requirement="Implements: REQ-FEEDBACK-03 REQ-FEEDBACK-04"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) onClose();
+      }}
+      onClose={onClose}
+      ref={dialogRef}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSave(value);
+        }}
+      >
+        <header>
+          <h2 id="grade-feedback-dialog-title">Retroalimentación de {editor.item.name}</h2>
+          <button
+            aria-label="Cerrar retroalimentación"
+            disabled={busy}
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" size={18} />
+          </button>
+        </header>
+        <p className="grade-feedback-context">
+          <strong>{editor.student.name}</strong>
+          <span>{editor.student.email}</span>
+        </p>
+        <label htmlFor="grade-feedback-text">
+          Comentario privado para el estudiante
+          <textarea
+            aria-describedby={
+              error ? "grade-feedback-help grade-feedback-error" : "grade-feedback-help"
+            }
+            aria-invalid={Boolean(error)}
+            id="grade-feedback-text"
+            maxLength={MAX_GRADE_FEEDBACK_LENGTH}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="Explica qué estuvo bien, qué debe revisar y cómo puede mejorar."
+            ref={textareaRef}
+            rows={7}
+            value={value}
+          />
+        </label>
+        <div className="grade-feedback-meta" id="grade-feedback-help">
+          <span>Déjalo vacío para retirar la retroalimentación.</span>
+          <span className="num">
+            {value.length.toLocaleString("es-CL")} /{" "}
+            {MAX_GRADE_FEEDBACK_LENGTH.toLocaleString("es-CL")}
+          </span>
+        </div>
+        {error && (
+          <p className="planner-dialog-error" id="grade-feedback-error" role="alert">
+            {error}
+          </p>
+        )}
+        <footer>
+          <button className="planner-dialog-cancel" disabled={busy} onClick={onClose} type="button">
+            Cancelar
+          </button>
+          <button className="planner-dialog-save" disabled={busy} type="submit">
+            {busy ? "Guardando…" : "Guardar retroalimentación"}
+          </button>
+        </footer>
+      </form>
+    </dialog>
+  );
+}

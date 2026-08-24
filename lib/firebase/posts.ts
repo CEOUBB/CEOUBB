@@ -14,7 +14,13 @@ import {
   toStudent,
 } from "./mappers.ts";
 import { normalizeDueDate } from "../planner.ts";
-import { type GradeItem, type GradeScores, normalizeScores } from "../grades.ts";
+import {
+  type GradeFeedback,
+  type GradeItem,
+  type GradeScores,
+  normalizeGradeFeedback,
+  normalizeScores,
+} from "../grades.ts";
 import { normalizeRichTextBody, safeLinkDestination } from "../rich-text.ts";
 import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 
@@ -42,8 +48,10 @@ export type ClassroomState = {
   gradebook: GradeItem[];
   exemption: number | null;
   officialScores: GradeScores;
+  officialFeedback: GradeFeedback;
   simulation: GradeScores;
   classScores: Record<string, GradeScores>;
+  classFeedback: Record<string, GradeFeedback>;
   liveClass: LiveClassLink | null;
 };
 
@@ -139,6 +147,12 @@ export function watchClassroom(
                     normalizeScores(document.data().scores),
                   ])
                 ),
+                classFeedback: Object.fromEntries(
+                  snapshot.docs.map((document) => [
+                    document.id,
+                    normalizeGradeFeedback(document.data().feedback),
+                  ])
+                ),
               }),
             () => onError("No se pudieron sincronizar las notas del curso.")
           )
@@ -161,6 +175,9 @@ export function watchClassroom(
             (snapshot) =>
               onChange({
                 officialScores: snapshot.exists() ? normalizeScores(snapshot.data().scores) : {},
+                officialFeedback: snapshot.exists()
+                  ? normalizeGradeFeedback(snapshot.data().feedback)
+                  : {},
               }),
             () => onError("No se pudieron cargar tus notas.")
           )

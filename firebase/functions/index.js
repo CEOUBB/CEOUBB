@@ -11,9 +11,12 @@ const {
   GradeAuditInputError,
   actorFromAuth,
   canEditSection,
+  diffFeedback,
   diffScores,
+  normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
+  storedFeedbackMap,
   storedGradebook,
   storedScoreMap,
 } = require("./grade-audit");
@@ -111,12 +114,22 @@ exports.saveAuditedStudentScores = onCall(async (request) => {
           .doc(row.userId);
         const current = await transaction.get(gradeRef);
         const previousScores = storedScoreMap(current.exists ? current.get("scores") : {});
+        const previousFeedback = storedFeedbackMap(current.exists ? current.get("feedback") : {});
         const changes = diffScores(previousScores, row.scores);
         if (changes.length === 0) return 0;
+        const nextFeedback = { ...previousFeedback };
+        const feedbackChanges = changes.flatMap((change) => {
+          if (change.newValue !== null) return [];
+          const feedbackChange = diffFeedback(previousFeedback, change.gradeItemId, null);
+          if (!feedbackChange) return [];
+          delete nextFeedback[change.gradeItemId];
+          return [{ gradeItemId: change.gradeItemId, ...feedbackChange }];
+        });
         transaction.set(gradeRef, {
           uid: row.userId,
           courseId,
           scores: row.scores,
+          feedback: nextFeedback,
           updatedBy: actor.actorUid,
           updatedAt: FieldValue.serverTimestamp(),
         });
@@ -131,10 +144,82 @@ exports.saveAuditedStudentScores = onCall(async (request) => {
             changedAt: FieldValue.serverTimestamp(),
           });
         }
-        return changes.length;
+        for (const change of feedbackChanges) {
+          const auditRef = db.collection("courses").doc(courseId).collection("gradeAudit").doc();
+          transaction.create(auditRef, {
+            targetType: "feedback",
+            courseId,
+            studentId: row.userId,
+            ...change,
+            ...actor,
+            changedAt: FieldValue.serverTimestamp(),
+          });
+        }
+        return changes.length + feedbackChanges.length;
       })
     );
     return { changedCount: changesByRow.reduce((total, count) => total + count, 0) };
+  } catch (cause) {
+    throw callableError(cause);
+  }
+});
+
+exports.saveAuditedGradeFeedback = onCall(async (request) => {
+  try {
+    const next = normalizeFeedbackRequest(request.data);
+    const db = getFirestore();
+    const actor = await authorizedGradeActor(request, db, next.courseId);
+    await assertStudentsEnrolled(db, next.courseId, [next]);
+    const changedCount = await db.runTransaction(async (transaction) => {
+      const gradeRef = db
+        .collection("courses")
+        .doc(next.courseId)
+        .collection("grades")
+        .doc(next.userId);
+      const current = await transaction.get(gradeRef);
+      const scores = storedScoreMap(current.exists ? current.get("scores") : {});
+      if (!Object.hasOwn(scores, next.gradeItemId)) {
+        throw new HttpsError(
+          "failed-precondition",
+          "La evaluación debe tener una nota oficial antes de recibir retroalimentación."
+        );
+      }
+      const previousFeedback = storedFeedbackMap(current.get("feedback"));
+      const change = diffFeedback(previousFeedback, next.gradeItemId, next.feedback);
+      if (!change) return 0;
+      const nextFeedback = { ...previousFeedback };
+      if (next.feedback === null) delete nextFeedback[next.gradeItemId];
+      else {
+        if (
+          !Object.hasOwn(nextFeedback, next.gradeItemId) &&
+          Object.keys(nextFeedback).length >= 100
+        ) {
+          throw new GradeAuditInputError("Una fila admite como máximo 100 retroalimentaciones.");
+        }
+        nextFeedback[next.gradeItemId] = next.feedback;
+      }
+      transaction.set(
+        gradeRef,
+        {
+          feedback: nextFeedback,
+          updatedBy: actor.actorUid,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      const auditRef = db.collection("courses").doc(next.courseId).collection("gradeAudit").doc();
+      transaction.create(auditRef, {
+        targetType: "feedback",
+        courseId: next.courseId,
+        studentId: next.userId,
+        gradeItemId: next.gradeItemId,
+        ...change,
+        ...actor,
+        changedAt: FieldValue.serverTimestamp(),
+      });
+      return 1;
+    });
+    return { changedCount };
   } catch (cause) {
     throw callableError(cause);
   }

@@ -4,6 +4,7 @@ const MIN_GRADE = 1;
 const MAX_GRADE = 7;
 const MAX_ROWS_PER_REQUEST = 100;
 const MAX_SCORE_KEYS = 100;
+const MAX_FEEDBACK_LENGTH = 2000;
 const MAX_CONCURRENT_TRANSACTIONS = 10;
 const COURSE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,60}$/;
 const ENTITY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
@@ -69,6 +70,31 @@ function storedScoreMap(value) {
   return scores;
 }
 
+function feedbackValue(value) {
+  if (typeof value !== "string" || value.length > MAX_FEEDBACK_LENGTH) {
+    throw new GradeAuditInputError(
+      `La retroalimentación debe tener como máximo ${MAX_FEEDBACK_LENGTH.toLocaleString("es-CL")} caracteres.`
+    );
+  }
+  return value.trim() || null;
+}
+
+function storedFeedbackMap(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const feedback = {};
+  for (const [rawId, rawText] of Object.entries(value).slice(0, MAX_SCORE_KEYS)) {
+    if (!ENTITY_ID_PATTERN.test(rawId) || typeof rawText !== "string") continue;
+    const text = rawText.trim().slice(0, MAX_FEEDBACK_LENGTH);
+    if (text) feedback[rawId] = text;
+  }
+  return feedback;
+}
+
+function diffFeedback(previous, gradeItemId, nextValue) {
+  const previousValue = Object.hasOwn(previous, gradeItemId) ? previous[gradeItemId] : null;
+  return previousValue === nextValue ? null : { previousValue, newValue: nextValue };
+}
+
 // Implements: REQ-AUDIT-01, REQ-AUDIT-06
 function diffScores(previous, next) {
   const changes = [];
@@ -118,6 +144,16 @@ function normalizeScoreRequest(value) {
     return { userId, scores: scoreMap(row.scores) };
   });
   return { courseId, rows };
+}
+
+function normalizeFeedbackRequest(value) {
+  const record = inputRecord(value, "La solicitud");
+  return {
+    courseId: identifier(record.courseId, "La sección", COURSE_ID_PATTERN),
+    userId: identifier(record.userId, "El identificador de estudiante"),
+    gradeItemId: identifier(record.gradeItemId, "El identificador de evaluación"),
+    feedback: feedbackValue(record.feedback),
+  };
 }
 
 function gradebookItems(value) {
@@ -176,9 +212,12 @@ module.exports = {
   GradeAuditInputError,
   actorFromAuth,
   canEditSection,
+  diffFeedback,
   diffScores,
+  normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
+  storedFeedbackMap,
   storedGradebook,
   storedScoreMap,
 };

@@ -155,7 +155,7 @@ service cloud.firestore {
 
     // Implements: REQ-AUDIT-03, REQ-AUDIT-05
     match /courses/{courseId}/gradeAudit/{auditId} {
-      allow read: if teachesSection(courseId) || signedIn() && isStudent() && role() == 'student' && isEnrolled(courseId) && resource.data.targetType == 'score' && resource.data.studentId == request.auth.uid;
+      allow read: if teachesSection(courseId) || signedIn() && isStudent() && role() == 'student' && isEnrolled(courseId) && resource.data.targetType in ['score', 'feedback'] && resource.data.studentId == request.auth.uid;
       allow write: if false;
     }
 
