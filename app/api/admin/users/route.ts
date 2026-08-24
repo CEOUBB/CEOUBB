@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawPage = parseInt(url.searchParams.get("page") ?? "1", 10);
   const rawLimit = parseInt(url.searchParams.get("limit") ?? "50", 10);
-  const q = (url.searchParams.get("q") ?? "").trim();
+  const q = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
 
   const page = Number.isInteger(rawPage) && rawPage >= 1 ? rawPage : 1;
   const limit = Number.isInteger(rawLimit) ? Math.max(1, Math.min(100, rawLimit)) : 50;
@@ -71,8 +71,20 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
   try {
-    const payload = (await request.json()) as { userId?: string; role?: string };
-    if (!payload.userId || !["teacher", "student"].includes(payload.role ?? ""))
+    let payload: { userId?: unknown; role?: unknown } | null = null;
+    try {
+      payload = (await request.json()) as { userId?: unknown; role?: unknown };
+    } catch {
+      return Response.json({ error: "Datos inválidos." }, { status: 400 });
+    }
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      typeof payload.userId !== "string" ||
+      !payload.userId.trim() ||
+      typeof payload.role !== "string" ||
+      !["teacher", "student"].includes(payload.role)
+    )
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
     if (payload.userId === actor.id)
       return Response.json(
