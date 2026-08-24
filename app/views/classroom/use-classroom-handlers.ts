@@ -21,9 +21,15 @@ import { isNativeShell } from "../../../lib/mobile-bridge";
 import { openDocumentNatively } from "../../../lib/native-files";
 import type { User } from "../../../lib/portal-utils";
 import { LIVE_CLASS_INVALID_MESSAGE } from "../../../lib/live-class";
+import {
+  canManageSectionContent,
+  canTeachSection,
+  type SectionRole,
+} from "../../../lib/section-roles";
 import { emptyClassroom, type Note, type Tab } from "./classroom-utils";
 
-export function useClassroomHandlers(course: Course, user: User) {
+// Implements: REQ-ASST-01, REQ-ASST-03, REQ-ASST-04, REQ-ASST-05
+export function useClassroomHandlers(course: Course, user: User, sectionRole: SectionRole | null) {
   const [tab, setTab] = useState<Tab>("home");
   const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
   const [status, setStatus] = useState<Note>({ text: "", tone: "info" });
@@ -32,7 +38,8 @@ export function useClassroomHandlers(course: Course, user: User) {
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
 
   const note = (text: string, tone: Note["tone"] = "info") => setStatus({ text, tone });
-  const canTeach = user.role === "teacher" || user.role === "owner";
+  const canManageContent = canManageSectionContent(user.role, sectionRole);
+  const canTeach = canTeachSection(user.role, sectionRole);
   const { files, students, posts } = classroom;
   const units = course.units;
   const completed =
@@ -254,6 +261,7 @@ export function useClassroomHandlers(course: Course, user: User) {
     liveClassInvalid,
     note,
     copiedCourseReference,
+    canManageContent,
     canTeach,
     files,
     students,

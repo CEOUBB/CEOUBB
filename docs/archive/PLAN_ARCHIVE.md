@@ -834,3 +834,29 @@ Production deployed: no.
 Known risks: el despliegue debe respetar Functions -> portal -> índice -> reglas para no bloquear escrituras; no existe historial retroactivo para notas anteriores; la vista read-only del historial sigue pendiente para completar el criterio “surfaced” de P0.9.
 
 Next recommended action: revisar y fusionar PR #70; luego desplegar en el orden documentado, ejecutar la matriz multirol y comprobar que una corrección 5,0 -> 6,0 produce una entrada inmutable visible sólo para el equipo docente, owner y el estudiante afectado.
+
+## 2026-08-23: CEO-25 — rol de ayudante por ramo
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-25-agregar-el-rol-de-ayudante` / commit de esta PR
+
+Goal: permitir que una cuenta estudiantil colabore como ayudante sólo en las secciones asignadas, con capacidad para publicar y subir material sin promoción global ni acceso a datos docentes sensibles.
+
+Files changed: `lib/section-roles.ts`, `lib/services/academic-catalog.ts`, `lib/services/enrollment-projection.ts`, `lib/portal-utils.ts`, `app/api/auth/me/route.ts`, `app/api/enrollments/me/route.ts`, `app/Portal.tsx`, `app/portal-shell.tsx`, `app/views/classroom/`, `firebase/firestore.rules`, `firebase/storage.rules`, `tests/assistant-role.test.ts`, `package.json`, `.agents/.test-hashes.json`, `openspec/specs/academic/spec.md`, `PLAN.md`, `docs/archive/PLAN_ARCHIVE.md`.
+
+External services changed: ninguno; no se desplegaron reglas, no se mutaron matrículas y no se modificó producción.
+
+Checks passed: cambio OpenSpec estricto válido; prueba focal de ayudantía 5/5; `pnpm run verify:fast` (232/232, 29 hashes y 14 specs); `pnpm run verify:invariants` (31/31 y reglas Firebase); `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` (build Next.js 16.3 y 257/257); React Doctor `--scope changed --base origin/main --include-untracked --blocking warning` sin hallazgos.
+
+Checks not run: Firebase Emulator Suite y smoke test con una matrícula real `assistant`; el repositorio aún no dispone del arnés de emuladores y este cambio no autoriza mutaciones en producción.
+
+Production deployed: no.
+
+Known risks: las nuevas capacidades no funcionarán en producción hasta desplegar ambas reglas después del merge. CEO-25 consume roles ya presentes en Turso y su proyección, pero no incluye una interfaz docente para nombrar o revocar ayudantes; ese flujo permanece en el backlog de participantes.
+
+Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.

@@ -3,18 +3,27 @@
 import { Course } from "../../../lib/courses";
 import { ClassroomStudent } from "../../../lib/firebase-classroom-client";
 import { initials, roleLabel, type User } from "../../../lib/portal-utils";
+import { sectionRoleLabel, type SectionRole } from "../../../lib/section-roles";
 import { Avatar } from "../../portal-ui";
 
 export function PeopleSection({
   course,
   user,
+  sectionRole,
   students,
 }: {
   course: Course;
   user: User;
+  sectionRole: SectionRole | null;
   students: ClassroomStudent[];
 }) {
   const currentEmail = user.email.toLowerCase();
+  const contextualRole =
+    user.role === "owner"
+      ? roleLabel(user.role)
+      : sectionRole
+        ? sectionRoleLabel(sectionRole)
+        : roleLabel(user.role);
   return (
     <section>
       <div className="people-grid">
@@ -30,7 +39,7 @@ export function PeopleSection({
           <div>
             <strong>{user.name}</strong>
             <small>
-              {roleLabel(user.role)} · {user.email}
+              {contextualRole} · {user.email}
             </small>
           </div>
         </article>
