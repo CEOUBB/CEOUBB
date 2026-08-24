@@ -28,6 +28,7 @@ import {
 import { initials, type User } from "../../../lib/portal-utils";
 import { sectionRoleLabel, type SectionRole } from "../../../lib/section-roles";
 import { Avatar } from "../../portal-ui";
+import { EnrollmentImport } from "./EnrollmentImport";
 
 const GROUPS: { key: ParticipantGroup; label: string; action: string }[] = [
   { key: "teaching", label: "Equipo docente", action: "Ver equipo docente" },
@@ -178,11 +179,13 @@ export function PeopleSection({
   user,
   sectionRole,
   students,
+  canTeach,
 }: {
   course: Course;
   user: User;
   sectionRole: SectionRole | null;
   students: ClassroomStudent[];
+  canTeach: boolean;
 }) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
@@ -325,6 +328,13 @@ export function PeopleSection({
           {filteredTotal === 1 ? " participante" : " participantes"}
         </span>
       </header>
+
+      {canTeach && (
+        <EnrollmentImport
+          sectionId={course.id}
+          sectionLabel={`${course.code} · Sección ${course.section}`}
+        />
+      )}
 
       <div className="participants-toolbar">
         <div className="participant-search">

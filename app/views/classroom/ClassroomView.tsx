@@ -216,10 +216,11 @@ export function ClassroomView({
             )}
             {tab === "people" && (
               <PeopleSection
+                canTeach={canTeach}
                 course={course}
-                user={user}
                 sectionRole={sectionRole}
                 students={students}
+                user={user}
               />
             )}
           </Screen>

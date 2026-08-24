@@ -7,6 +7,7 @@ import {
   roleForEmail,
 } from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
+import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 
 const FIREBASE_API_KEY =
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "";
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
       await db.insert(users).values(user);
     }
 
+    await claimPendingEnrollments({ id: user.id, email: user.email }).catch(() => undefined);
     const cookie = await createSession(user.id);
     const googlePhoto =
       account.photoUrl ||

@@ -194,6 +194,24 @@ export const assistantAssignments = sqliteTable(
   ]
 );
 
+export const matriculasPendientes = sqliteTable(
+  "matriculas_pendientes",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    nombre: text("nombre").notNull(),
+    importedBy: text("imported_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_matriculas_pendientes_seccion_email").on(table.seccionId, table.email),
+    index("idx_matriculas_pendientes_email").on(table.email),
+  ]
+);
+
 /*
   Bitácora inmutable de notas: sólo se inserta. Cada corrección de una nota
   oficial deja el valor previo, el actor y la IP para auditoría institucional.

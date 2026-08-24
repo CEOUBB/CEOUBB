@@ -783,6 +783,34 @@ Known risks: 3.000 secciones es una envolvente derivada porque no existe un extr
 
 Next recommended action: provisionar staging, ejecutar la carga de 3.000 sesiones durante 30 minutos, capturar lecturas/costo y realizar el simulacro RPO 1 h / RTO 4 h.
 
+## 2026-08-23: CEO-16 — carga masiva de matrículas desde CSV
+
+Date: 2026-08-23
+
+Human maintainer: Juako
+
+AI assistant: Codex
+
+Branch / commit: `elpapijuaco325/ceo-16-poder-cargar-matriculas-masivamente-desde-una-planilla` / `f0a5022`
+
+Pull request: [#68](https://github.com/CEOUBB/CEOUBB/pull/68), no borrador.
+
+Goal: permitir que el equipo docente cargue hasta 12.000 matrículas por sección desde CSV, revise cada resultado antes de escribir y repita el mismo archivo sin crear duplicados.
+
+Files changed: parser y plan puro en `lib/bulk-enrollment.ts`; persistencia, autorización, lotes y reclamo en `lib/services/bulk-enrollment.ts`; rutas `app/api/enrollments/import/`; reclamo desde `app/api/auth/firebase/route.ts`; importador docente y estilos en `app/views/classroom/EnrollmentImport.tsx`, `PeopleSection.tsx`, `ClassroomView.tsx` y `app/globals.css`; tabla y migración en `db/schema.ts` y `drizzle/0006_curly_kylun.sql`; pruebas en `tests/bulk-enrollment.test.ts` y `tests/academic-model.test.ts`; contrato en `docs/specs/p17-bulk-enrollment-import.md`.
+
+External services changed: rama y PR #68 publicados en GitHub. Sin cambios en Firebase, Turso, Vercel ni producción.
+
+Checks passed: prueba focal 11/11 sobre libSQL migrado; `pnpm run verify:fast` 239/239 con hashes 29/29 y OpenSpec 14/14; `pnpm run verify:invariants` 32/32 y reglas Firebase; `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` con build Next.js 16.3.0 y 264/264; React Doctor changed-scope 90/100 sin hallazgos en archivos CEO-16; QA Chromium 1440×1000 y 390×844 para preview, aplicación, repetición idempotente, rechazo de Gmail, paginación, accesibilidad básica, overflow y consola; endpoint sin sesión verificado con HTTP 401 acotado.
+
+Checks not run: carga end-to-end de 12.000 filas contra Turso y Firestore de staging; proyección con credenciales Firebase reales; smoke test en WebView Android físico. Los límites, lotes de 100/400 y DOM de 50 filas sí quedaron protegidos por contrato y pruebas deterministas.
+
+Production deployed: no.
+
+Known risks: el entorno destino fallará cerrado en el importador hasta aplicar `0006_curly_kylun.sql`; una caída de Firestore después del commit Turso deja una salida durable en `matriculas_pendientes` y requiere repetir la carga o iniciar sesión para reparar la proyección; el presupuesto de latencia para 12.000 filas sigue siendo deuda de validación de staging, no una consulta ni escritura sin límite.
+
+Next recommended action: revisar y fusionar la PR, aplicar la migración 0006 en Turso antes del despliegue, ejecutar un smoke test con sección sintética y credenciales Firebase, y medir la carga máxima en staging antes de habilitarla institucionalmente.
+
 ## 2026-08-23: CEO-40 — carpeta legal de tratamiento, retención y salida
 
 Date: 2026-08-23
@@ -861,8 +889,6 @@ Known risks: las nuevas capacidades no funcionarán en producción hasta despleg
 
 Next recommended action: revisar y fusionar la PR, desplegar Firestore y Storage de forma selectiva, asignar una matrícula `assistant` mediante el flujo académico autorizado y ejecutar la matriz ayudante/estudiante en dos secciones distintas.
 
-<<<<<<< HEAD
-
 ## 2026-08-24: CEO-18 — cierre de semestre y archivo de secciones
 
 Date: 2026-08-24
@@ -940,3 +966,26 @@ Production deployed: no.
 Known risks: las reglas de Firestore deben desplegarse antes que el portal; un docente ve los 25 hilos más recientes por sección y la paginación histórica queda como deuda explícita fuera de CEO-26; no existe política automática de retención o eliminación de mensajes; la matriz multirol en staging sigue siendo obligatoria antes de producción.
 
 Next recommended action: revisar y fusionar la PR; después desplegar reglas de Firestore, publicar el portal y ejecutar la matriz multirol, incluida una lectura IDOR entre estudiantes y una sección no asignada al docente.
+=======
+
+Branch / commit: `elpapijuaco325/ceo-16-poder-cargar-matriculas-masivamente-desde-una-planilla` / `f0a5022`
+
+Pull request: [#68](https://github.com/CEOUBB/CEOUBB/pull/68), no borrador.
+
+Goal: permitir que el equipo docente cargue hasta 12.000 matrículas por sección desde CSV, revise cada resultado antes de escribir y repita el mismo archivo sin crear duplicados.
+
+Files changed: parser y plan puro en `lib/bulk-enrollment.ts`; persistencia, autorización, lotes y reclamo en `lib/services/bulk-enrollment.ts`; rutas `app/api/enrollments/import/`; reclamo desde `app/api/auth/firebase/route.ts`; importador docente y estilos en `app/views/classroom/EnrollmentImport.tsx`, `PeopleSection.tsx`, `ClassroomView.tsx` y `app/globals.css`; tabla y migración en `db/schema.ts` y `drizzle/0005_curly_kylun.sql`; pruebas en `tests/bulk-enrollment.test.ts` y `tests/academic-model.test.ts`; contrato en `docs/specs/p17-bulk-enrollment-import.md`.
+
+External services changed: rama y PR #68 publicados en GitHub. Sin cambios en Firebase, Turso, Vercel ni producción.
+
+Checks passed: prueba focal 11/11 sobre libSQL migrado, incluida una nómina de 102 filas que cruza el límite de chunk; `pnpm run verify:fast` 239/239 con hashes 29/29 y OpenSpec 14/14; `pnpm run verify:invariants` 32/32 y reglas Firebase; `pnpm run lint`; `pnpm run typecheck`; `pnpm run format:check`; `pnpm test` con build Next.js 16.3.0 y 264/264; React Doctor changed-scope 90/100 sin hallazgos en archivos CEO-16; QA Chromium 1440×1000 y 390×844 para preview, aplicación, repetición idempotente, rechazo de Gmail, paginación, accesibilidad básica, overflow y consola; endpoint sin sesión verificado con HTTP 401 acotado.
+
+Checks not run: carga end-to-end de 12.000 filas contra Turso y Firestore de staging; proyección con credenciales Firebase reales; smoke test en WebView Android físico. Los límites, lotes de 100/400 y DOM de 50 filas sí quedaron protegidos por contrato y pruebas deterministas.
+
+Production deployed: no.
+
+Known risks: el entorno destino fallará cerrado en el importador hasta aplicar `0005_curly_kylun.sql`; una caída de Firestore después del commit Turso deja una salida durable en `matriculas_pendientes` y requiere repetir la carga o iniciar sesión para reparar la proyección; el presupuesto de latencia para 12.000 filas sigue siendo deuda de validación de staging, no una consulta ni escritura sin límite.
+
+Next recommended action: revisar y fusionar la PR, aplicar la migración 0005 en Turso antes del despliegue, ejecutar un smoke test con sección sintética y credenciales Firebase, y medir la carga máxima en staging antes de habilitarla institucionalmente.
+
+> > > > > > > 025aa21 (docs(plan): registrar entrega de CEO-16 según P17)

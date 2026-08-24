@@ -9,6 +9,7 @@ import {
   facultades,
   gradeAuditLogs,
   matriculas,
+  matriculasPendientes,
   periodos,
   secciones,
 } from "../db/schema.ts";
@@ -42,6 +43,7 @@ test("the academic hierarchy declares every institutional table", () => {
   assert.equal(getTableConfig(periodos).name, "periodos");
   assert.equal(getTableConfig(secciones).name, "secciones");
   assert.equal(getTableConfig(matriculas).name, "matriculas");
+  assert.equal(getTableConfig(matriculasPendientes).name, "matriculas_pendientes");
   assert.equal(getTableConfig(gradeAuditLogs).name, "grade_audit_logs");
 });
 
@@ -79,6 +81,21 @@ test("an enrollment is unique per section and user and carries a lifecycle state
   assert.deepEqual(estado?.enumValues, ["activa", "retirada", "congelada"]);
   const rol = config.columns.find((column) => column.name === "rol_seccion");
   assert.deepEqual(rol?.enumValues, ["teacher", "student", "assistant", "coordinator"]);
+});
+
+test("REQ-ENR-04: pending enrollments are unique per section and normalized email", () => {
+  const config = getTableConfig(matriculasPendientes);
+  const unique = config.indexes.find(
+    (entry) => entry.config.name === "idx_matriculas_pendientes_seccion_email"
+  );
+  assert.ok(unique);
+  assert.equal(unique.config.unique, true);
+  assert.deepEqual(
+    unique.config.columns.map((column) => (column as { name: string }).name),
+    ["seccion_id", "email"]
+  );
+  assert.ok(indexNames(matriculasPendientes).has("idx_matriculas_pendientes_email"));
+  assert.deepEqual(foreignTargets(matriculasPendientes), new Set(["secciones", "users"]));
 });
 
 test("the grade audit log records the full mutation tuple", () => {
@@ -155,10 +172,12 @@ test("the academic tables are materialized in a generated migration", async () =
     "periodos",
     "secciones",
     "matriculas",
+    "matriculas_pendientes",
     "grade_audit_logs",
   ]) {
     assert.match(sql, new RegExp(`CREATE TABLE \`${table}\``));
   }
   assert.match(sql, /CREATE UNIQUE INDEX `idx_seccion_asignatura_periodo_num`/);
   assert.match(sql, /CREATE UNIQUE INDEX `idx_matriculas_seccion_usuario`/);
+  assert.match(sql, /CREATE UNIQUE INDEX `idx_matriculas_pendientes_seccion_email`/);
 });
