@@ -6,11 +6,12 @@
   <meta name="theme-color" content="#0055b8">
   <title>Biblioteca académica · Centro de Estudio UBB</title>
   <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/styles.css?v=8">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+  <div class="app-shell" data-requirement="Implements: REQ-A11Y-01 REQ-A11Y-02 REQ-A11Y-06 REQ-A11Y-08">
+    <aside class="sidebar" aria-label="Navegación de la biblioteca">
       <div class="brand">
         <img src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width="388" height="594">
         <div><strong>Centro de Estudio UBB</strong><span>Biblioteca académica</span></div>
@@ -21,17 +22,27 @@
       </a>
       <nav id="courseNav" class="course-nav" aria-label="Ramos"></nav>
       <div class="sidebar-panel">
-        <span class="sidebar-section-label">Progreso total</span>
-        <div class="progress-line"><span id="progressBar"></span></div>
+        <span id="progressLabel" class="sidebar-section-label">Progreso total</span>
+        <div
+          id="progressMeter"
+          class="progress-line"
+          role="progressbar"
+          aria-labelledby="progressLabel"
+          aria-describedby="progressText"
+          aria-valuemin="0"
+          aria-valuemax="18"
+          aria-valuenow="0"
+        ><span id="progressBar"></span></div>
         <strong id="progressText">0 de 18</strong>
       </div>
       <button id="randomButton" class="primary-button" type="button">Ejercicio aleatorio</button>
       <button id="resetButton" class="ghost-button" type="button">Reiniciar progreso</button>
     </aside>
 
-    <main class="main-content">
+    <main id="contenido-principal" class="main-content" tabindex="-1">
       <header class="topbar">
-        <label class="search-box">
+        <label class="search-box" for="searchInput">
+          <span class="sr-only">Buscar por ramo, tema o palabra</span>
           <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>
           <input id="searchInput" type="search" placeholder="Buscar por ramo, tema o palabra..." autocomplete="off">
         </label>
@@ -58,11 +69,12 @@
         <div class="tutor-copy">
           <h2 id="tutorTitle">Tutor de Ingeniería Mecánica</h2>
           <p>Estudia sin conexión o envía una duda con contexto a ChatGPT cuando tengas internet.</p>
-          <div class="tutor-status"><span>Biblioteca disponible sin conexión</span><span id="onlineStatus">Comprobando conexión</span></div>
+          <div class="tutor-status"><span>Biblioteca disponible sin conexión</span><span id="onlineStatus" role="status" aria-live="polite">Comprobando conexión</span></div>
         </div>
         <div class="tutor-question">
           <label for="tutorQuestion">Escribe tu duda</label>
-          <textarea id="tutorQuestion" rows="4" placeholder="Ejemplo: explícame por qué el trabajo de compresión resulta negativo con esta convención de signos."></textarea>
+          <textarea id="tutorQuestion" rows="4" aria-describedby="tutorQuestionHelp" placeholder="Ejemplo: explícame por qué el trabajo de compresión resulta negativo con esta convención de signos."></textarea>
+          <span id="tutorQuestionHelp" class="sr-only">Escribe una pregunta antes de consultar. Se copiará el contexto académico para abrirlo en ChatGPT.</span>
           <button id="askTutorButton" class="primary-button" type="button">Consultar con IA Académica</button>
         </div>
       </section>
@@ -77,8 +89,8 @@
 
       <section aria-labelledby="exercisesTitle">
         <div class="section-heading">
-          <h2 id="exercisesTitle">Certámenes completos</h2>
-          <span id="resultCount" class="muted"></span>
+          <h2 id="exercisesTitle" tabindex="-1">Certámenes completos</h2>
+          <span id="resultCount" class="muted" role="status" aria-live="polite" aria-atomic="true"></span>
         </div>
         <div id="exerciseList" class="exercise-list"></div>
       </section>
@@ -89,12 +101,19 @@
         </div>
         <div id="materialPanel" class="material-panel"></div>
       </section>
+
+      <footer class="library-footer">
+        <p>
+          Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la Universidad del Bío-Bío.
+          <a href="/accesibilidad">Accesibilidad</a> · <a href="/privacidad">Privacidad</a> · <a href="/terminos">Términos</a>
+        </p>
+      </footer>
     </main>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="assets/vendor/katex/katex.min.js"></script>
   <script src="assets/vendor/katex/contrib/auto-render.min.js"></script>
   <script src="assets/data.js"></script>
-  <script src="assets/app.js"></script>
+  <script src="assets/app.js?v=8"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
@@ -145,6 +145,9 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
 
   return (
     <main className="access-page">
+      <a className="skip-link" href="#contenido-principal">
+        Saltar al contenido principal
+      </a>
       <section className="access-brand">
         <div className="access-brand-lockup">
           <Image
@@ -159,11 +162,16 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
           </h1>
         </div>
       </section>
-      <section className="access-panel">
+      <section
+        aria-labelledby="access-title"
+        className="access-panel"
+        id="contenido-principal"
+        tabIndex={-1}
+      >
         <div className="access-panel-inner">
           <div className="login-card" id="inicio">
             <span className="login-rule" aria-hidden="true" />
-            <h2>Ingresa con tu correo institucional</h2>
+            <h2 id="access-title">Ingresa con tu correo institucional</h2>
             <button
               className="google-button"
               disabled={working}
@@ -221,7 +229,8 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
           <p className="legal-note">
             Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
             Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link> ·{" "}
-            <Link href="/terminos">Términos</Link>
+            <Link href="/terminos">Términos</Link> ·{" "}
+            <Link href="/accesibilidad">Accesibilidad</Link>
           </p>
         </div>
       </section>
@@ -254,6 +263,7 @@ export function Portal() {
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
   const [memberships, setMemberships] = useState<SectionMembership[]>([]);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
+  const previousView = useRef<string | null>(null);
 
   const mobile = useIsMobileApp();
   useStatusBar(user !== null ? "canvas" : "hero");
@@ -372,6 +382,24 @@ export function Portal() {
   }, [user]);
 
   useEffect(() => {
+    if (!user) {
+      previousView.current = null;
+      return;
+    }
+    const view = [screen, course?.id ?? ""].join(":");
+    if (previousView.current === null) {
+      previousView.current = view;
+      return;
+    }
+    if (previousView.current === view) return;
+    previousView.current = view;
+    const frame = requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>("#contenido-principal")?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [course?.id, screen, user]);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
@@ -476,8 +504,12 @@ export function Portal() {
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
+        <a className="skip-link" href="#contenido-principal">
+          Saltar al contenido principal
+        </a>
         <div
           className="app-shell"
+          data-requirement="Implements: REQ-A11Y-01 REQ-A11Y-02 REQ-A11Y-05"
           data-mobile={mobile}
           data-sidebar={sidebarOpen ? "open" : "closed"}
         >
@@ -513,6 +545,7 @@ export function Portal() {
           <PortalMainView
             activity={activity}
             courses={courses}
+            context={context}
             entries={entries}
             gradebooks={gradebooks}
             openCourse={openCourse}

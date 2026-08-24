@@ -46,7 +46,7 @@
   --color-text-primary: oklch(0.2 0.03 260);
   --color-text-secondary: oklch(0.36 0.03 255);
   --color-text-muted: oklch(0.48 0.03 250);
-  --color-text-faint: oklch(0.58 0.03 250);
+  --color-text-faint: oklch(0.52 0.03 250);
 
   /* Tipografías del Sistema */
   /* Implements: REQ-DELIB-01 */
@@ -77,7 +77,7 @@
   --ink-900: var(--color-text-primary, oklch(0.2 0.03 260));
   --ink-700: var(--color-text-secondary, oklch(0.36 0.03 255));
   --ink-500: var(--color-text-muted, oklch(0.48 0.03 250));
-  --ink-400: var(--color-text-faint, oklch(0.58 0.03 250));
+  --ink-400: var(--color-text-faint, oklch(0.52 0.03 250));
 
   --shield-sky: var(--color-shield-sky, oklch(0.75 0.14 235));
   --shield-gold: var(--color-shield-gold, oklch(0.75 0.16 75));
@@ -101,6 +101,7 @@
   --canvas-soft: var(--paper);
   --surface-card: var(--white);
   --border-hairline: var(--hairline);
+  --border-control: #64748b;
 
   --text-body: var(--ink-900);
   --text-secondary: var(--ink-700);
@@ -181,7 +182,7 @@ html {
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   background: var(--canvas-soft);
   color: var(--text-body);
@@ -241,6 +242,27 @@ img {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+  scroll-margin-block: calc(var(--header-height) + var(--space-sm))
+    calc(var(--mobile-nav-height, 0px) + var(--space-sm));
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-secondary);
+  color: var(--text-on-dark);
+  font-size: 15px;
+  font-weight: 600;
+  transform: translateY(calc(-100% - var(--space-lg)));
+}
+
+.skip-link:focus {
+  color: var(--text-on-dark);
+  transform: translateY(0);
 }
 
 ::selection {
@@ -922,7 +944,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-body);
@@ -1199,6 +1221,27 @@ img {
 .policy-page .policy-index a:hover {
   color: var(--text-link);
   text-decoration: underline;
+}
+
+.policy-page code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.conformance-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--academic-emerald) 55%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--academic-emerald) 9%, var(--surface-card));
+  color: var(--text-body) !important;
+}
+
+.conformance-status svg {
+  flex: 0 0 auto;
+  color: oklch(0.42 0.12 155);
 }
 
 @media (max-width: 600px) {
@@ -1728,6 +1771,10 @@ img {
 .side-foot:hover {
   color: var(--text-body);
   background: var(--hairline);
+}
+
+.side-foot-secondary {
+  margin-top: var(--space-xs);
 }
 
 .sidebar-scrim {
@@ -2563,7 +2610,7 @@ img {
   min-height: 44px;
   padding: 8px 10px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   color: var(--text-body);
   font-size: 16px;
@@ -3090,7 +3137,7 @@ img {
 .post-edit-form input {
   width: 100%;
   padding: 9px 10px;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   background: var(--surface-card);
   color: var(--text-body);
@@ -3727,7 +3774,7 @@ div.editor-latex-token {
   min-height: 34px;
   padding: 6px 10px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   font-size: 15px;
   font-weight: 400;
@@ -3764,7 +3811,7 @@ div.editor-latex-token {
   margin-right: var(--space-sm);
   min-height: 28px;
   padding: 2px 12px;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--canvas-soft);
   font-size: 13px;
@@ -4270,7 +4317,7 @@ div.editor-latex-token {
   min-height: 44px;
   padding: 8px 10px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   color: var(--text-body);
   font-size: 15px;
@@ -4775,7 +4822,7 @@ div.editor-latex-token {
   height: 34px;
   padding: 0 10px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   font-size: 14px;
   color: var(--text-secondary);
@@ -5491,7 +5538,7 @@ div.editor-latex-token {
   width: 100%;
   padding: 8px 10px;
   background: var(--canvas);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 400;
@@ -5977,7 +6024,7 @@ div.editor-latex-token {
   min-height: 34px;
   padding: 4px 10px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   font-size: 14px;
 }
@@ -6034,7 +6081,7 @@ div.editor-latex-token {
   min-height: 38px;
   padding: 6px 36px 6px 38px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   font-size: 14px;
   color: var(--ink);
@@ -6178,7 +6225,7 @@ div.editor-latex-token {
   min-height: 34px;
   padding: 4px 8px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   font-variant-numeric: var(--num);
   font-size: 15px;
@@ -6884,7 +6931,12 @@ div.editor-latex-token {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
