@@ -5,6 +5,7 @@ import {
   ACCESS_REJECTION_MESSAGE,
   normalizeAccessEmail,
   roleForEmail,
+} from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
