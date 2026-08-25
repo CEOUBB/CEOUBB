@@ -71,9 +71,9 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
   try {
-    let payload: { userId?: unknown; role?: unknown } | null = null;
+    let payload: { userId?: string; role?: string } | null = null;
     try {
-      payload = (await request.json()) as { userId?: unknown; role?: unknown };
+      payload = (await request.json()) as { userId?: string; role?: string };
     } catch {
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
     }
@@ -86,6 +86,7 @@ export async function PATCH(request: Request) {
       !["teacher", "student"].includes(payload.role)
     )
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
+    payload.userId = payload.userId.trim();
     if (payload.userId === actor.id)
       return Response.json(
         { error: "La cuenta propietaria no puede degradarse." },
