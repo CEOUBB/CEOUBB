@@ -167,7 +167,7 @@ export function AdminView() {
               <span>
                 <strong>{period.nombre}</strong>
                 <small className="num">
-                  {period.fechaInicio} — {period.fechaFin}
+                  {period.fechaInicio} al {period.fechaFin}
                 </small>
               </span>
               <span className={`period-state ${period.estado}`}>{period.estado}</span>

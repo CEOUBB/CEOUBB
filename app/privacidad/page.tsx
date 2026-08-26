@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Política de privacidad · Centro de Estudio UBB",
@@ -121,8 +122,8 @@ export default function PrivacyPage() {
 
         <h3>Estructura académica</h3>
         <p>
-          Tus matrículas y el estado de cada una, las secciones a las que perteneces —asignatura,
-          período académico y número de sección— y si estás en ellas como estudiante o como docente.
+          Tus matrículas y el estado de cada una, las secciones a las que perteneces (asignatura,
+          período académico y número de sección) y si estás en ellas como estudiante o como docente.
           Cuando un docente importa una nómina de Moodle, podemos conservar temporalmente el correo
           institucional de una cuenta que todavía no existe para vincularla cuando inicie sesión.
         </p>
@@ -216,11 +217,18 @@ export default function PrivacyPage() {
           <dd>
             El historial de puntajes se conserva íntegro. La dirección IP de cada cambio se borra a
             los <span className="num">12</span> meses de ocurrido: identifica un dispositivo, no un
-            acto académico, y pasado ese plazo deja de ser necesaria. El resto de la entrada —quién,
-            qué puntaje, cuándo— permanece intacto.
+            acto académico, y pasado ese plazo deja de ser necesaria. El resto de la entrada (quién,
+            qué puntaje, cuándo) permanece intacto.
           </dd>
           <dt>Token de notificaciones</dt>
           <dd>Hasta que cierres sesión en ese dispositivo o desinstales la aplicación.</dd>
+          <dt>Solicitudes de soporte</dt>
+          <dd>
+            Tu nombre, tu correo y el texto del mensaje se conservan <span className="num">12</span>{" "}
+            meses desde el envío, y después la solicitud completa se elimina. La dirección desde la
+            que escribiste nunca se guarda en claro: solo queda un identificador cifrado que no
+            permite reconstruirla, y que existe para limitar envíos automatizados.
+          </dd>
         </dl>
 
         <h2 id="proveedores">
@@ -231,6 +239,12 @@ export default function PrivacyPage() {
           almacenamiento de archivos y notificaciones; en Turso para la estructura académica
           relacional; y en Vercel para publicar ceoubb.com. Cada proveedor procesa la información
           conforme a sus propias condiciones y medidas de seguridad.
+        </p>
+        <p>
+          El formulario de <Link href="/contacto">contacto y soporte</Link> entrega tu mensaje al
+          buzón institucional a través de Brevo, un servicio de correo transaccional. Brevo procesa
+          tu nombre, tu dirección de correo y el texto que escribiste con el único fin de
+          entregarlos, y no se le envía ningún otro dato de tu cuenta.
         </p>
         <p>
           Usamos Sentry para detectar errores. Junto al reporte de error se graba una muestra de
@@ -272,7 +286,7 @@ export default function PrivacyPage() {
         <p>
           Para ejercer cualquiera de ellos escribe a{" "}
           <a href="mailto:contacto@ceoubb.com">contacto@ceoubb.com</a> desde tu correo institucional
-          —así verificamos tu identidad— indicando qué derecho quieres ejercer y sobre qué datos.
+          (así verificamos tu identidad) indicando qué derecho quieres ejercer y sobre qué datos.
           Respondemos en un plazo máximo de <span className="num">30</span> días corridos desde que
           recibimos la solicitud. Si necesitamos más antecedentes para identificarte, te los
           pediremos dentro de ese mismo plazo.
@@ -299,6 +313,7 @@ export default function PrivacyPage() {
           <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }

@@ -240,7 +240,8 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
 
           <p className="legal-note">
             Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
-            Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link> ·{" "}
+            Universidad del Bío-Bío. <Link href="/faq">Preguntas frecuentes</Link> ·{" "}
+            <Link href="/contacto">Contacto</Link> · <Link href="/privacidad">Privacidad</Link> ·{" "}
             <Link href="/terminos">Términos</Link> ·{" "}
             <Link href="/accesibilidad">Accesibilidad</Link>
           </p>

@@ -1,8 +1,35 @@
 import { eq, or, sql } from "drizzle-orm";
+import { z } from "zod";
 import { getDb } from "../../../../db";
 import { users } from "../../../../db/schema";
 import { getSessionUser } from "../../../../lib/auth";
 import { projectUserRoleToFirestore } from "../../../../lib/services/enrollment-projection";
+
+/*
+  Implements: REQ-SUP-01
+  Los parámetros de consulta se declaran en un esquema en lugar de interpretarse
+  con sentencias sueltas. Los límites son los mismos de siempre: la página cae a
+  1 ante cualquier valor no entero o menor que 1, el tamaño se recorta al rango
+  1..100 y cae a 50 ante un valor no entero, y la búsqueda se recorta a 100
+  caracteres. Se conserva `parseInt` en vez de una coerción estricta porque
+  acepta prefijos numéricos, que es como la ruta se ha comportado desde siempre.
+*/
+const consultaUsuariosSchema = z.object({
+  page: z
+    .string()
+    .nullable()
+    .transform((valor) => parseInt(valor ?? "1", 10))
+    .transform((numero) => (Number.isInteger(numero) && numero >= 1 ? numero : 1)),
+  limit: z
+    .string()
+    .nullable()
+    .transform((valor) => parseInt(valor ?? "50", 10))
+    .transform((numero) => (Number.isInteger(numero) ? Math.max(1, Math.min(100, numero)) : 50)),
+  q: z
+    .string()
+    .nullable()
+    .transform((valor) => (valor ?? "").trim().slice(0, 100)),
+});
 
 // Implements: REQ-PERF-03, REQ-PERF-04, REQ-SEC-06, REQ-API-02
 export async function GET(request: Request) {
@@ -11,12 +38,11 @@ export async function GET(request: Request) {
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
   const url = new URL(request.url);
-  const rawPage = parseInt(url.searchParams.get("page") ?? "1", 10);
-  const rawLimit = parseInt(url.searchParams.get("limit") ?? "50", 10);
-  const q = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
-
-  const page = Number.isInteger(rawPage) && rawPage >= 1 ? rawPage : 1;
-  const limit = Number.isInteger(rawLimit) ? Math.max(1, Math.min(100, rawLimit)) : 50;
+  const { page, limit, q } = consultaUsuariosSchema.parse({
+    page: url.searchParams.get("page"),
+    limit: url.searchParams.get("limit"),
+    q: url.searchParams.get("q"),
+  });
   const offset = (page - 1) * limit;
 
   const sanitizedQ = q.replace(/[%_\\]/g, "\\$&").toLowerCase();

@@ -153,7 +153,7 @@ export function MoodleImportDialog({ course }: { course: Course }) {
                   <ul>
                     {preview.omissions.slice(0, 50).map((item) => (
                       <li key={`${item.category}-${item.title}-${item.reason}`}>
-                        <strong>{item.title}</strong> — {item.reason}
+                        <strong>{item.title}</strong>: {item.reason}
                       </li>
                     ))}
                   </ul>

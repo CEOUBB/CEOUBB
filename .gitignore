@@ -72,6 +72,7 @@ serviceAccountKey.json
 .claude/
 .impeccable/
 .codex/
+.opencode/
 .cache/
 skills-lock.json
 capturas-mobile/
