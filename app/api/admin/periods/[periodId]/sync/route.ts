@@ -17,7 +17,12 @@ export async function POST(
     );
   }
 
-  const { periodId } = await params;
+  const { periodId: rawPeriodId } = await params;
+  const periodId = (rawPeriodId ?? "").trim().slice(0, 50);
+  if (!periodId) {
+    return Response.json({ error: "Identificador de período no válido." }, { status: 400 });
+  }
+
   try {
     return Response.json(await synchronizeAcademicPeriod(periodId));
   } catch (cause) {

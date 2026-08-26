@@ -988,6 +988,88 @@ img {
   animation: spin 0.7s linear infinite;
 }
 
+/* Accesos rápidos de testing para entornos no productivos */
+.dev-auth-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px dashed var(--border-control);
+  border-radius: var(--radius-md);
+}
+
+.dev-auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.dev-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .dev-auth-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dev-auth-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-control);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.dev-auth-button:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+
+.dev-auth-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--shadow-1);
+}
+
+.dev-auth-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.dev-auth-button-student {
+  color: var(--ubb-royal-blue);
+}
+
+.dev-auth-button-teacher {
+  color: var(--ubb-navy);
+}
+
 .institution-note {
   margin: 0;
   padding-top: 1.05rem;

@@ -151,3 +151,14 @@ test("REQ-SEC-15: admin users route bounds search query length to 100 and parses
     "PATCH handler must validate userId is string"
   );
 });
+
+// Implements: REQ-SEC-16
+test("REQ-SEC-16: section participants route validates sectionId presence and max length", () => {
+  const routePath = path.resolve("app/api/sections/[sectionId]/participants/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /sectionId\.length > 100/,
+    "Participants route must check sectionId length bounds"
+  );
+});
