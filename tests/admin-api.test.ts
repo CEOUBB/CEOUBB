@@ -579,3 +579,14 @@ test("admin academic periods routes enforce periodId, limit and cursor sanitizat
   assert.match(periodsSource, /\.slice\(0,\s*100\)/);
   assert.match(periodsSource, /Math\.max\(1,\s*Math\.min\(100,\s*requestedLimit\)\)/);
 });
+
+test("admin users PATCH route sanitizes and trims userId before lookup and projection", async () => {
+  const source = await readFile(
+    new URL("../app/api/admin/users/route.ts", import.meta.url),
+    "utf8"
+  );
+  assert.match(source, /payload\.userId\.trim\(\)/);
+  assert.match(source, /eq\(users\.id,\s*userId\)/);
+  assert.match(source, /projectUserRoleToFirestore\(userId,\s*role\)/);
+});
+

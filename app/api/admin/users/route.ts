@@ -90,7 +90,7 @@ export async function GET(request: Request) {
   }
 }
 
-// Implements: REQ-SEC-01, REQ-API-01, REQ-API-02
+// Implements: REQ-SEC-01, REQ-API-01, REQ-API-02, REQ-SEC-15
 export async function PATCH(request: Request) {
   const actor = await getSessionUser(request);
   if (!actor || actor.role !== "owner")
@@ -112,7 +112,11 @@ export async function PATCH(request: Request) {
       !["teacher", "student"].includes(payload.role)
     )
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
-    if (payload.userId === actor.id)
+
+    const userId = payload.userId.trim();
+    const role = payload.role as "teacher" | "student";
+
+    if (userId === actor.id || payload.userId === actor.id)
       return Response.json(
         { error: "La cuenta propietaria no puede degradarse." },
         { status: 400 }
@@ -124,7 +128,7 @@ export async function PATCH(request: Request) {
     const target = await getDb()
       .select({ role: users.role })
       .from(users)
-      .where(eq(users.id, payload.userId))
+      .where(eq(users.id, userId))
       .limit(1);
     if (!target[0]) return Response.json({ error: "Usuario no encontrado." }, { status: 404 });
     if (target[0]?.role === "owner")
@@ -134,14 +138,15 @@ export async function PATCH(request: Request) {
       );
     await getDb()
       .update(users)
-      .set({ role: payload.role as "teacher" | "student" })
-      .where(eq(users.id, payload.userId));
+      .set({ role })
+      .where(eq(users.id, userId));
 
     // Implements: REQ-SEC-10
-    await projectUserRoleToFirestore(payload.userId, payload.role as "teacher" | "student");
+    await projectUserRoleToFirestore(userId, role);
 
     return Response.json({ ok: true });
   } catch {
     return Response.json({ error: "Error al actualizar usuario." }, { status: 500 });
   }
 }
+
