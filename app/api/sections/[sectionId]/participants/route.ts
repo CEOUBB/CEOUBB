@@ -16,6 +16,7 @@ function json(body: object, status = 200) {
   return Response.json(body, { status, headers: privateHeaders });
 }
 
+// Implements: REQ-SEC-16
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ sectionId: string }> }
@@ -24,7 +25,9 @@ export async function GET(
   if (!actor) return json({ error: "Sesión no válida." }, 401);
 
   const { sectionId } = await params;
-  if (!isSectionId(sectionId)) return json({ error: "La sección no es válida." }, 400);
+  if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+    return json({ error: "La sección no es válida." }, 400);
+  }
 
   const directoryRequest = parseParticipantDirectoryRequest(request.url);
   if ("error" in directoryRequest) return json({ error: directoryRequest.error }, 400);
