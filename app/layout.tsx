@@ -79,6 +79,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${manrope.variable} ${merriweather.variable} ${jetBrainsMono.variable}`}
       lang="es"
     >
+      <head>
+        <link rel="preconnect" href="https://accounts.google.com" />
+        <link rel="dns-prefetch" href="https://accounts.google.com" />
+        <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+        <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+        <link rel="preconnect" href="https://firestore.googleapis.com" />
+        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+      </head>
       <body>{children}</body>
     </html>
   );

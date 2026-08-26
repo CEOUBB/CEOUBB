@@ -2,6 +2,8 @@ import { and, eq, gt, lte } from "drizzle-orm";
 import { getDb } from "../db/index.ts";
 import { sessions, users } from "../db/schema.ts";
 import type { AccountRole } from "./access-policy.ts";
+import type { SessionState } from "./portal-utils.ts";
+import { MAX_PAGE_SIZE, listUserSections } from "./services/academic-catalog.ts";
 
 export type PublicUser = {
   id: string;
@@ -11,7 +13,7 @@ export type PublicUser = {
   carrera?: string | null;
 };
 
-const SESSION_COOKIE = "centro_estudio_session";
+export const SESSION_COOKIE = "centro_estudio_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const SESSION_SECURE = process.env.NODE_ENV === "production" ? "; Secure" : "";
 
@@ -47,9 +49,8 @@ export async function destroySession(request: Request) {
   return `${SESSION_COOKIE}=; HttpOnly${SESSION_SECURE}; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
-// Implements: REQ-TYPE-01
-export async function getSessionUser(request: Request): Promise<PublicUser | null> {
-  const rawToken = readCookie(request, SESSION_COOKIE);
+// Implements: REQ-AUTH-01, REQ-PERF-01
+export async function getSessionUserFromToken(rawToken: string): Promise<PublicUser | null> {
   if (!rawToken) return null;
   const db = getDb();
   const tokenHash = await sha256(rawToken);
@@ -67,6 +68,61 @@ export async function getSessionUser(request: Request): Promise<PublicUser | nul
     .limit(1);
   const user = rows[0];
   return user ? publicUser(user) : null;
+}
+
+// Implements: REQ-TYPE-01
+export async function getSessionUser(request: Request): Promise<PublicUser | null> {
+  const rawToken = readCookie(request, SESSION_COOKIE);
+  if (!rawToken) return null;
+  return getSessionUserFromToken(rawToken);
+}
+
+// Implements: REQ-AUTH-01, REQ-PERF-01
+export async function getServerSessionState(rawToken: string | null): Promise<SessionState> {
+  if (!rawToken) {
+    return {
+      user: null,
+      sectionIds: [],
+      memberships: [],
+      sections: null,
+      archivedNextCursor: null,
+    };
+  }
+  const user = await getSessionUserFromToken(rawToken);
+  if (!user) {
+    return {
+      user: null,
+      sectionIds: [],
+      memberships: [],
+      sections: null,
+      archivedNextCursor: null,
+    };
+  }
+
+  const [current, archived] = await Promise.all([
+    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "current" }).catch(() => ({
+      items: [],
+      nextCursor: null,
+    })),
+    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "archived" }).catch(() => ({
+      items: [],
+      nextCursor: null,
+    })),
+  ]);
+
+  const memberships = current.items.map((section) => ({
+    sectionId: section.seccionId,
+    role: section.rolSeccion,
+  }));
+  const sectionIds = current.items.map((section) => section.seccionId);
+
+  return {
+    user,
+    sectionIds,
+    memberships,
+    sections: [...current.items, ...archived.items],
+    archivedNextCursor: archived.nextCursor,
+  };
 }
 
 export function publicUser(user: {

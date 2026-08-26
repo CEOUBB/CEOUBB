@@ -15,6 +15,7 @@
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
   "tests/deep-security-remediation.test.ts": "9f27fa0c64c7f097fe83a9f142060001d2885b0ffdbae1c4965a85fb0fe73a3c",
   "tests/discord-interactions.test.ts": "c552bdcb242b75e39bf4861b7b181ccb443f79856f61024c48bfd35a01e50a4d",
+  "tests/fast-boot-session.test.ts": "23d7d4cde7ac24946bfb018923215de6ca88f016d017d65429cd8022f801c800",
   "tests/firebase-mappers.test.ts": "5cbc80506cd06854792a7172fa583427672b93c0a3df51b67b6978467b1ad6d4",
   "tests/github-webhook.test.ts": "99afb3c4814aae88c88bb691fd79d1f7b2817cf0b4c2ac53ec3d9417b777f1e3",
   "tests/grade-audit.test.ts": "823d495d9501e3e7a248dfa3ae475b5e4c63c8add3fca5162906875262f68373",
@@ -37,6 +38,10 @@
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
   "tests/staging-environment.test.ts": "96fe77e623d90a5db81681e9193ebd9532f73cc26d428a06fc6509d899571e8a",
+  "tests/support-api.test.ts": "78f607c1a109bdda38b0b740de8992e72eb91b9f332359a8b9381d2a89557b56",
+  "tests/support-mail.test.ts": "acddc7fd1f6cc1a2f654853ab30c39167f410555bb868c20f305a2492b0ec78e",
+  "tests/support-pages.test.ts": "df3fa52e4b2543731888a23645fc25f243f435cbfd306bd34d7898bd4c6008a7",
+  "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
   "tests/teacher-course-management.test.ts": "da9329d15f9b9d5624801706a469e17f7933d39edf885a3fbd8fdd5a11d0f030",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb"
 }

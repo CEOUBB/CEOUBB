@@ -207,7 +207,7 @@ function StudentGrades({
         <aside className="grades-summary">
           <div className="grades-average">
             <strong className="num">
-              {summary.average === null ? "—" : formatGrade(summary.average)}
+              {summary.average === null ? "sin nota" : formatGrade(summary.average)}
             </strong>
             <div>
               <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
@@ -251,7 +251,7 @@ function StudentGrades({
                 <dd className="num">
                   {isValidGrade(officialScores[detail.id])
                     ? formatGrade(officialScores[detail.id])
-                    : "—"}
+                    : "sin nota"}
                 </dd>
               </div>
             </dl>
@@ -298,7 +298,9 @@ function StudentGrades({
             </span>
             <span className="grades-weight num">{item.weight}%</span>
             <span className="grades-official num">
-              {isValidGrade(officialScores[item.id]) ? formatGrade(officialScores[item.id]) : "—"}
+              {isValidGrade(officialScores[item.id])
+                ? formatGrade(officialScores[item.id])
+                : "sin nota"}
             </span>
             <span>{simulationField(item)}</span>
             {/* Implements: REQ-EVAL-01 */}
@@ -318,7 +320,7 @@ function StudentGrades({
       <aside className="grades-summary">
         <div className="grades-average">
           <strong className="num">
-            {summary.average === null ? "—" : formatGrade(summary.average)}
+            {summary.average === null ? "sin nota" : formatGrade(summary.average)}
           </strong>
           <div>
             <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
@@ -743,7 +745,7 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
         </span>
       ))}
       <span className="grades-official num">
-        {summary.average === null ? "—" : formatGrade(summary.average)}
+        {summary.average === null ? "sin nota" : formatGrade(summary.average)}
       </span>
     </div>
   );

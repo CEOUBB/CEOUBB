@@ -300,3 +300,42 @@ export const gradeAuditLogs = sqliteTable(
     index("idx_grade_audit_timestamp").on(table.timestamp),
   ]
 );
+
+/*
+  Implements: REQ-SUP-05, REQ-SUP-07, REQ-SUP-10
+  Solicitudes recibidas por el formulario público de /contacto. La fila se
+  escribe antes de intentar la entrega, así que una caída del proveedor de
+  correo degrada a ticket en cola y no a mensaje perdido.
+
+  `ipHash` guarda SHA-256 de la dirección con un pepper del servidor. La
+  dirección cruda nunca se persiste: sirve para contar envíos por origen, no
+  para reconstruir quién escribió desde dónde.
+
+  `userId` solo se completa cuando la petición trae sesión válida. El endpoint
+  es público a propósito: quien no puede entrar es justamente quien más
+  necesita escribir.
+*/
+export const solicitudesSoporte = sqliteTable(
+  "solicitudes_soporte",
+  {
+    id: text("id").primaryKey(),
+    nombre: text("nombre").notNull(),
+    email: text("email").notNull(),
+    rolDeclarado: text("rol_declarado", { enum: ["owner", "teacher", "student"] }),
+    categoria: text("categoria", {
+      enum: ["soporte-tecnico", "sugerencia", "reporte-error", "duda-academica"],
+    }).notNull(),
+    asunto: text("asunto").notNull(),
+    mensaje: text("mensaje").notNull(),
+    estado: text("estado", { enum: ["pendiente", "enviado", "fallido"] }).notNull(),
+    errorEntrega: text("error_entrega"),
+    ipHash: text("ip_hash").notNull(),
+    userId: text("user_id").references(() => users.id),
+    createdAt: text("created_at").notNull(),
+    enviadoEn: text("enviado_en"),
+  },
+  (table) => [
+    index("idx_soporte_ip_created").on(table.ipHash, table.createdAt),
+    index("idx_soporte_estado_created").on(table.estado, table.createdAt),
+  ]
+);

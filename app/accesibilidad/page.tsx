@@ -1,6 +1,7 @@
-import { ArrowLeft, CheckCircle } from "@phosphor-icons/react/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Declaración de accesibilidad · Centro de Estudio UBB",
@@ -37,10 +38,6 @@ export default function AccessibilityPage() {
           Declaración emitida el <time dateTime="2026-08-23">23 de agosto de 2026</time>
         </p>
         <h1>Declaración de accesibilidad</h1>
-        <p className="conformance-status">
-          <CheckCircle aria-hidden="true" size={22} weight="fill" />
-          <strong>Conformidad completa con WCAG 2.2, Nivel AA</strong>
-        </p>
         <p>
           Centro de Estudio UBB se compromete a que sus contenidos y funciones puedan ser usados por
           personas con discapacidad en condiciones equivalentes, con independencia del dispositivo o
@@ -85,8 +82,10 @@ export default function AccessibilityPage() {
             <code>https://ceoubb.com/biblioteca/index.html</code> y sus estados interactivos.
           </li>
           <li>
-            <code>https://ceoubb.com/privacidad</code>, <code>/terminos</code> y{" "}
-            <code>/accesibilidad</code>.
+            <code>https://ceoubb.com/privacidad</code>, <code>/terminos</code>,{" "}
+            <code>/accesibilidad</code>, <code>/faq</code> y <code>/contacto</code>, incluidos el
+            filtro de preguntas y el formulario de soporte con sus estados de validación, envío,
+            confirmación y error.
           </li>
         </ul>
 
@@ -124,7 +123,7 @@ export default function AccessibilityPage() {
         <h2 id="limitaciones">5. Limitaciones y recursos externos</h2>
         <p>
           No conocemos incumplimientos dentro de las páginas incluidas. Los servicios externos que
-          se abren desde un enlace —por ejemplo ChatGPT— y los archivos descargables aportados por
+          se abren desde un enlace (por ejemplo ChatGPT) y los archivos descargables aportados por
           docentes o terceros no forman parte de esta afirmación, porque CEOUBB no controla su
           accesibilidad. Si uno de esos recursos impide realizar una actividad, solicita una
           alternativa accesible mediante el canal indicado a continuación.
@@ -160,6 +159,7 @@ export default function AccessibilityPage() {
           <Link href="/terminos">términos de uso</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }

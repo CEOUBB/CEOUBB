@@ -5,6 +5,8 @@ export async function GET(request: Request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${origin}/</loc><lastmod>${updated}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>${origin}/biblioteca/index.html</loc><lastmod>${updated}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>${origin}/faq</loc><lastmod>${updated}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>${origin}/contacto</loc><lastmod>${updated}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>${origin}/privacidad</loc><lastmod>${updated}</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
   <url><loc>${origin}/terminos</loc><lastmod>${updated}</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
   <url><loc>${origin}/accesibilidad</loc><lastmod>${updated}</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
