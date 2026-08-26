@@ -8,7 +8,11 @@ export async function reviewPullRequest(
   prNum: string | number
 ): Promise<{ content: string; isError?: boolean }> {
   try {
-    const prData = await getPullRequest(prNum);
+    const [prData, diffText, comments] = await Promise.all([
+      getPullRequest(prNum),
+      getPullRequestDiff(prNum).catch(() => ""),
+      getPullRequestComments(prNum).catch(() => []),
+    ]);
 
     if (!prData) {
       return {
@@ -17,26 +21,20 @@ export async function reviewPullRequest(
       };
     }
 
-    const diffText = await getPullRequestDiff(prNum);
     const truncatedDiff = diffText.slice(0, 6000);
 
     let reactDoctorNotes = "Sin comentarios de React Doctor detectados en el PR.";
-    try {
-      const comments = await getPullRequestComments(prNum);
-      const doctorComments = (comments || []).filter(
-        (c) =>
-          c.body?.toLowerCase().includes("react doctor") ||
-          c.body?.toLowerCase().includes("million") ||
-          c.author?.toLowerCase().includes("doctor")
-      );
-      if (doctorComments.length > 0) {
-        reactDoctorNotes = doctorComments
-          .map((c) => c.body)
-          .join("\n\n---\n\n")
-          .slice(0, 3000);
-      }
-    } catch {
-      // Ignorar error al consultar comentarios
+    const doctorComments = (comments || []).filter(
+      (c) =>
+        c.body?.toLowerCase().includes("react doctor") ||
+        c.body?.toLowerCase().includes("million") ||
+        c.author?.toLowerCase().includes("doctor")
+    );
+    if (doctorComments.length > 0) {
+      reactDoctorNotes = doctorComments
+        .map((c) => c.body)
+        .join("\n\n---\n\n")
+        .slice(0, 3000);
     }
 
     const prompt = `

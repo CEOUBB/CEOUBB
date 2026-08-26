@@ -163,6 +163,7 @@ export const matriculas = sqliteTable(
   (table) => [
     uniqueIndex("idx_matriculas_seccion_usuario").on(table.seccionId, table.usuarioId),
     index("idx_matriculas_usuario").on(table.usuarioId),
+    index("idx_matriculas_usuario_estado").on(table.usuarioId, table.estado),
     index("idx_matriculas_seccion_estado").on(table.seccionId, table.estado),
   ]
 );

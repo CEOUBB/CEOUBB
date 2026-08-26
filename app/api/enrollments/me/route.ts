@@ -29,10 +29,13 @@ export async function GET(request: Request) {
         nextCursor: sections.nextCursor,
       });
     }
-    const [memberships, sections] = await Promise.all([
-      listUserSectionMemberships(actor.id, { limit: MAX_PAGE_SIZE }),
-      listUserSections(actor.id, { limit, cursor, scope }),
-    ]);
+    const sections = await listUserSections(actor.id, { limit, cursor, scope });
+    const memberships = cursor
+      ? await listUserSectionMemberships(actor.id, { limit: MAX_PAGE_SIZE })
+      : sections.items.map((section) => ({
+          sectionId: section.seccionId,
+          role: section.rolSeccion,
+        }));
     const sectionIds = sections.items.map((section) => section.seccionId);
     if (!cursor && !searchParams.has("limit")) {
       return Response.json({ sectionIds, memberships });

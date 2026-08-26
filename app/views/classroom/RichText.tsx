@@ -36,24 +36,11 @@ declare global {
 
 const katexSubscribers = new Set<() => void>();
 
-function stableKey(value: unknown) {
-  const serialized = JSON.stringify(value) ?? String(value);
-  let hash = 2_166_136_261;
-  for (let cursor = 0; cursor < serialized.length; cursor += 1) {
-    hash ^= serialized.charCodeAt(cursor);
-    hash = Math.imul(hash, 16_777_619);
-  }
-  return (hash >>> 0).toString(36);
-}
-
 function keyedItems<T>(items: T[], prefix: string) {
-  const occurrences = new Map<string, number>();
-  return items.map((item) => {
-    const signature = `${prefix}-${stableKey(item)}`;
-    const occurrence = occurrences.get(signature) ?? 0;
-    occurrences.set(signature, occurrence + 1);
-    return { item, key: `${signature}-${occurrence}` };
-  });
+  return items.map((item, index) => ({
+    item,
+    key: `${prefix}-${index}`,
+  }));
 }
 
 export function RichTextAssets() {

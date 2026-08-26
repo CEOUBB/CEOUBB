@@ -10,6 +10,62 @@ import { kindLabel } from "./classroom-utils";
 import { RichPostEditor } from "./RichPostEditor";
 import { RichText } from "./RichText";
 
+function PostEditForm({
+  post,
+  onCancel,
+  onSave,
+}: {
+  post: ClassroomPost;
+  onCancel: () => void;
+  onSave: (post: ClassroomPost, values: { title: string; body: string }) => Promise<boolean>;
+}) {
+  const [title, setTitle] = useState(post.title);
+  const [body, setBody] = useState(post.body);
+  const [saving, setSaving] = useState(false);
+
+  const submitEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const saved = await onSave(post, {
+        title: title.trim(),
+        body: body.trim(),
+      });
+      if (saved) onCancel();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="post-edit-form" onSubmit={submitEdit}>
+      <label>
+        Título
+        <input
+          maxLength={140}
+          onChange={(event) => setTitle(event.target.value)}
+          required
+          value={title}
+        />
+      </label>
+      <RichPostEditor
+        name="body"
+        onChange={(nextBody) => setBody(nextBody)}
+        required
+        value={body}
+      />
+      <span className="post-edit-actions">
+        <button className="secondary-button" disabled={saving} onClick={onCancel} type="button">
+          Cancelar
+        </button>
+        <button className="primary-button" disabled={saving} type="submit">
+          {saving ? "Guardando…" : "Guardar cambios"}
+        </button>
+      </span>
+    </form>
+  );
+}
+
 export function PostsSection({
   posts,
   user,
@@ -25,23 +81,7 @@ export function PostsSection({
   deletePost: (post: ClassroomPost) => void;
   openMaterials: () => void;
 }) {
-  const [editing, setEditing] = useState<{ id: string; title: string; body: string } | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const submitEdit = async (event: FormEvent<HTMLFormElement>, post: ClassroomPost) => {
-    event.preventDefault();
-    if (!editing || editing.id !== post.id) return;
-    setSaving(true);
-    try {
-      const saved = await editPost(post, {
-        title: editing.title.trim(),
-        body: editing.body.trim(),
-      });
-      if (saved) setEditing(null);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <section className="posts-section">
@@ -75,37 +115,8 @@ export function PostsSection({
               <span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span>
               <div>
                 <h3>{post.title}</h3>
-                {editing?.id === post.id ? (
-                  <form className="post-edit-form" onSubmit={(event) => submitEdit(event, post)}>
-                    <label>
-                      Título
-                      <input
-                        maxLength={140}
-                        onChange={(event) => setEditing({ ...editing, title: event.target.value })}
-                        required
-                        value={editing.title}
-                      />
-                    </label>
-                    <RichPostEditor
-                      name="body"
-                      onChange={(body) => setEditing({ ...editing, body })}
-                      required
-                      value={editing.body}
-                    />
-                    <span className="post-edit-actions">
-                      <button
-                        className="secondary-button"
-                        disabled={saving}
-                        onClick={() => setEditing(null)}
-                        type="button"
-                      >
-                        Cancelar
-                      </button>
-                      <button className="primary-button" disabled={saving} type="submit">
-                        {saving ? "Guardando…" : "Guardar cambios"}
-                      </button>
-                    </span>
-                  </form>
+                {editingId === post.id ? (
+                  <PostEditForm onCancel={() => setEditingId(null)} onSave={editPost} post={post} />
                 ) : (
                   <>
                     <RichText body={post.body} />
@@ -125,12 +136,7 @@ export function PostsSection({
                       )}
                       {canManage && (
                         <span className="content-actions">
-                          <button
-                            onClick={() =>
-                              setEditing({ id: post.id, title: post.title, body: post.body })
-                            }
-                            type="button"
-                          >
+                          <button onClick={() => setEditingId(post.id)} type="button">
                             Modificar
                           </button>
                           <button onClick={() => deletePost(post)} type="button">

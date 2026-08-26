@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { getDb } from "../../db/index.ts";
 import {
   asignaturas,
@@ -375,7 +375,7 @@ export async function createTeacherCourse(
     db
       .select({ id: asignaturas.id, name: asignaturas.nombre, credits: asignaturas.creditosSct })
       .from(asignaturas)
-      .where(sql`upper(${asignaturas.codigo}) = ${input.code}`)
+      .where(eq(asignaturas.codigo, input.code))
       .limit(1),
   ]);
   if (!departmentRows[0]) {
@@ -570,7 +570,7 @@ export async function assignCourseAssistant(
   const targetRows = await db
     .select({ id: users.id, name: users.name, email: users.email, role: users.role })
     .from(users)
-    .where(sql`lower(${users.email}) = ${input.email}`)
+    .where(eq(users.email, input.email))
     .limit(1);
   const target = targetRows[0];
   if (!target || target.role !== "student") {
