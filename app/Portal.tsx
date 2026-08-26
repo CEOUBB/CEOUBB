@@ -4,7 +4,16 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
+import {
+  Bell,
+  Books,
+  CalendarBlank,
+  ChalkboardTeacher,
+  FolderSimple,
+  GraduationCap,
+  House,
+  Stack,
+} from "@phosphor-icons/react";
 import {
   useExternalLinks,
   useHardwareBack,
@@ -121,9 +130,11 @@ export function LoadingScreen() {
 export function AccessScreen({
   onSignedIn,
   onSignedInWithSession,
+  isQuickAuthAvailable,
 }: {
   onSignedIn?: (user: User) => void;
   onSignedInWithSession?: (session: SessionState) => void;
+  isQuickAuthAvailable?: boolean;
 }) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
@@ -180,6 +191,53 @@ export function AccessScreen({
     }
   };
 
+  const quickAuthActive =
+    isQuickAuthAvailable ??
+    (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview");
+
+  const devAccess = async (role: "student" | "teacher") => {
+    setError("");
+    setWorking(true);
+    try {
+      const response = await fetch("/api/auth/dev-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!response.ok) {
+        let errorMessage = "No fue posible acceder en modo testing.";
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) errorMessage = errorData.error;
+        } catch {
+          // Non-JSON response
+        }
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
+      if (data.sections && onSignedInWithSession) {
+        onSignedInWithSession({
+          user: data.user,
+          sectionIds: Array.isArray(data.sectionIds)
+            ? data.sectionIds.filter((value: unknown): value is string => typeof value === "string")
+            : [],
+          memberships: parseSectionMemberships(data.memberships),
+          sections: Array.isArray(data.sections) ? parseAcademicSections(data.sections) : null,
+          archivedNextCursor:
+            typeof data.archivedNextCursor === "string" ? data.archivedNextCursor : null,
+        });
+      } else if (onSignedIn) {
+        onSignedIn(data.user);
+      }
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "No fue posible acceder.";
+      setError(message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
   return (
     <main className="access-page">
       <a className="skip-link" href="#contenido-principal">
@@ -229,6 +287,37 @@ export function AccessScreen({
               )}
               {working ? "Verificando cuenta…" : "Continuar con Google"}
             </button>
+            {quickAuthActive && (
+              <div
+                className="dev-auth-container"
+                role="region"
+                aria-label="Accesos rápidos de testing"
+              >
+                <div className="dev-auth-divider">
+                  <span>Accesos rápidos de prueba</span>
+                </div>
+                <div className="dev-auth-actions">
+                  <button
+                    className="dev-auth-button dev-auth-button-student"
+                    disabled={working}
+                    onClick={() => devAccess("student")}
+                    type="button"
+                  >
+                    <GraduationCap aria-hidden="true" size={18} weight="bold" />
+                    <span>Entrar como estudiante</span>
+                  </button>
+                  <button
+                    className="dev-auth-button dev-auth-button-teacher"
+                    disabled={working}
+                    onClick={() => devAccess("teacher")}
+                    type="button"
+                  >
+                    <ChalkboardTeacher aria-hidden="true" size={18} weight="bold" />
+                    <span>Entrar como docente</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {error && (
               <p className="form-error" role="alert">
                 {error}
@@ -277,7 +366,13 @@ export function AccessScreen({
   );
 }
 
-export function Portal({ initialSession }: { initialSession?: SessionState } = {}) {
+export function Portal({
+  initialSession,
+  isQuickAuthAvailable,
+}: {
+  initialSession?: SessionState;
+  isQuickAuthAvailable?: boolean;
+} = {}) {
   const [user, setUser] = useState<User | null>(
     initialSession !== undefined ? initialSession.user : null
   );
@@ -595,7 +690,11 @@ export function Portal({ initialSession }: { initialSession?: SessionState } = {
   if (checking) return <LoadingScreen />;
   if (!user) {
     return (
-      <AccessScreen onSignedIn={finishSignedIn} onSignedInWithSession={finishSignedInWithSession} />
+      <AccessScreen
+        isQuickAuthAvailable={isQuickAuthAvailable}
+        onSignedIn={finishSignedIn}
+        onSignedInWithSession={finishSignedInWithSession}
+      />
     );
   }
 
