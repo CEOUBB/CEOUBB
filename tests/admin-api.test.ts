@@ -553,3 +553,29 @@ test("publicUser creates a new object reference without mutating the source", ()
   const mapped = publicUser(user);
   assert.notEqual(mapped, user as unknown as ReturnType<typeof publicUser>);
 });
+
+test("admin academic periods routes enforce periodId, limit and cursor sanitization contracts", async () => {
+  const archiveSource = await readFile(
+    new URL("../app/api/admin/periods/[periodId]/archive/route.ts", import.meta.url),
+    "utf8"
+  );
+  assert.match(archiveSource, /rawPeriodId/);
+  assert.match(archiveSource, /\.slice\(0,\s*50\)/);
+  assert.match(archiveSource, /Identificador de período no válido\./);
+
+  const syncSource = await readFile(
+    new URL("../app/api/admin/periods/[periodId]/sync/route.ts", import.meta.url),
+    "utf8"
+  );
+  assert.match(syncSource, /rawPeriodId/);
+  assert.match(syncSource, /\.slice\(0,\s*50\)/);
+  assert.match(syncSource, /Identificador de período no válido\./);
+
+  const periodsSource = await readFile(
+    new URL("../app/api/admin/periods/route.ts", import.meta.url),
+    "utf8"
+  );
+  assert.match(periodsSource, /rawCursor/);
+  assert.match(periodsSource, /\.slice\(0,\s*100\)/);
+  assert.match(periodsSource, /Math\.max\(1,\s*Math\.min\(100,\s*requestedLimit\)\)/);
+});
