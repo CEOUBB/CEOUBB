@@ -32,6 +32,8 @@ function PostEditForm({
         body: body.trim(),
       });
       if (saved) onCancel();
+    } catch {
+      // Ignorar fallo de guardado y restaurar estado
     } finally {
       setSaving(false);
     }

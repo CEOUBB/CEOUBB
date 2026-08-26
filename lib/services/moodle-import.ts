@@ -399,6 +399,7 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
     .from(pendingMatriculas)
     .where(and(eq(pendingMatriculas.email, email), gt(pendingMatriculas.expiresAt, now)))
     .limit(MAX_IMPORT_BATCH);
+  if (pending.length === 0) return 0;
   const claimedValues = pending.map((entry) => ({
     id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
     seccionId: entry.seccionId,
