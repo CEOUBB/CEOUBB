@@ -12,7 +12,14 @@ Sentry.init({
 
   enableLogs: true,
 
-  integrations: [Sentry.replayIntegration()],
+  // Implements: REQ-PRIV-07
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: true,
+      maskAllInputs: true,
+      blockAllMedia: true,
+    }),
+  ],
 });
 
 // Hook into App Router navigation transitions

@@ -29,10 +29,21 @@ export async function GET(request: Request) {
         nextCursor: sections.nextCursor,
       });
     }
-    const [memberships, sections] = await Promise.all([
-      listUserSectionMemberships(actor.id, { limit: MAX_PAGE_SIZE }),
-      listUserSections(actor.id, { limit, cursor, scope }),
-    ]);
+    const [sections, memberships] = cursor
+      ? await Promise.all([
+          listUserSections(actor.id, { limit, cursor, scope }),
+          listUserSectionMemberships(actor.id, { limit: MAX_PAGE_SIZE }),
+        ])
+      : await (async () => {
+          const sec = await listUserSections(actor.id, { limit, cursor, scope });
+          return [
+            sec,
+            sec.items.map((section) => ({
+              sectionId: section.seccionId,
+              role: section.rolSeccion,
+            })),
+          ] as const;
+        })();
     const sectionIds = sections.items.map((section) => section.seccionId);
     if (!cursor && !searchParams.has("limit")) {
       return Response.json({ sectionIds, memberships });

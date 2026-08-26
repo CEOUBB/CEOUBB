@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   try {
     const [result, catalog] = await Promise.all([
       listManagedCourses(actor, { limit: boundedLimit(request), cursor }),
-      listTeacherCourseCatalog(actor),
+      cursor ? Promise.resolve(undefined) : listTeacherCourseCatalog(actor),
     ]);
     return Response.json({
       courses: result.items,

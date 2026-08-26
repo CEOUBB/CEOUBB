@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
-import "katex/dist/katex.min.css";
 import "./globals.css";
 import "./mobile-shell.css";
 
@@ -21,8 +20,8 @@ const merriweather = Merriweather({
   variable: "--font-merriweather",
   subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "700", "900"],
-  style: ["normal", "italic"],
+  weight: ["700"],
+  style: ["normal"],
 });
 
 export const metadata: Metadata = {

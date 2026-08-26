@@ -311,42 +311,51 @@ export async function reconcileMoodleRoster(
   const now = new Date().toISOString();
   const expiresAt = pendingEnrollmentExpiry(new Date(now));
   const sourceImportId = importId(sectionId, fingerprint);
+  const matchedValues: Array<typeof matriculas.$inferInsert> = [];
+  const pendingValues: Array<typeof pendingMatriculas.$inferInsert> = [];
+  for (const participant of participants) {
+    const user = byEmail.get(participant.email);
+    if (user) {
+      matchedValues.push({
+        id: `mat-${digestId(sectionId, user.id).slice(0, 40)}`,
+        seccionId: sectionId,
+        usuarioId: user.id,
+        rolSeccion: "student" as const,
+        estado: "activa" as const,
+        createdAt: now,
+      });
+    } else {
+      pendingValues.push({
+        id: `pending-${digestId(sectionId, participant.email).slice(0, 40)}`,
+        seccionId: sectionId,
+        email: participant.email,
+        rolSeccion: "student" as const,
+        sourceImportId,
+        expiresAt,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
   await db.transaction(async (tx) => {
-    for (const participant of participants) {
-      const user = byEmail.get(participant.email);
-      if (user) {
-        await tx
-          .insert(matriculas)
-          .values({
-            id: `mat-${digestId(sectionId, user.id).slice(0, 40)}`,
-            seccionId: sectionId,
-            usuarioId: user.id,
-            rolSeccion: "student",
-            estado: "activa",
-            createdAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [matriculas.seccionId, matriculas.usuarioId],
-            set: { rolSeccion: "student", estado: "activa" },
-          });
-      } else {
-        await tx
-          .insert(pendingMatriculas)
-          .values({
-            id: `pending-${digestId(sectionId, participant.email).slice(0, 40)}`,
-            seccionId: sectionId,
-            email: participant.email,
-            rolSeccion: "student",
-            sourceImportId,
-            expiresAt,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [pendingMatriculas.seccionId, pendingMatriculas.email],
-            set: { sourceImportId, expiresAt, updatedAt: now },
-          });
-      }
+    if (matchedValues.length > 0) {
+      await tx
+        .insert(matriculas)
+        .values(matchedValues)
+        .onConflictDoUpdate({
+          target: [matriculas.seccionId, matriculas.usuarioId],
+          set: { rolSeccion: "student", estado: "activa" },
+        });
+    }
+    if (pendingValues.length > 0) {
+      await tx
+        .insert(pendingMatriculas)
+        .values(pendingValues)
+        .onConflictDoUpdate({
+          target: [pendingMatriculas.seccionId, pendingMatriculas.email],
+          set: { sourceImportId, expiresAt, updatedAt: now },
+        });
     }
   });
   try {
@@ -391,23 +400,22 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
     .where(and(eq(pendingMatriculas.email, email), gt(pendingMatriculas.expiresAt, now)))
     .limit(MAX_IMPORT_BATCH);
   if (pending.length === 0) return 0;
+  const claimedValues = pending.map((entry) => ({
+    id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
+    seccionId: entry.seccionId,
+    usuarioId: actor.id,
+    rolSeccion: "student" as const,
+    estado: "activa" as const,
+    createdAt: now,
+  }));
   await db.transaction(async (tx) => {
-    for (const entry of pending) {
-      await tx
-        .insert(matriculas)
-        .values({
-          id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
-          seccionId: entry.seccionId,
-          usuarioId: actor.id,
-          rolSeccion: "student",
-          estado: "activa",
-          createdAt: now,
-        })
-        .onConflictDoUpdate({
-          target: [matriculas.seccionId, matriculas.usuarioId],
-          set: { rolSeccion: "student", estado: "activa" },
-        });
-    }
+    await tx
+      .insert(matriculas)
+      .values(claimedValues)
+      .onConflictDoUpdate({
+        target: [matriculas.seccionId, matriculas.usuarioId],
+        set: { rolSeccion: "student", estado: "activa" },
+      });
   });
   await projectEnrollments(
     pending.map((entry) => ({
