@@ -85,8 +85,10 @@ export default function AccessibilityPage() {
             <code>https://ceoubb.com/biblioteca/index.html</code> y sus estados interactivos.
           </li>
           <li>
-            <code>https://ceoubb.com/privacidad</code>, <code>/terminos</code> y{" "}
-            <code>/accesibilidad</code>.
+            <code>https://ceoubb.com/privacidad</code>, <code>/terminos</code>,{" "}
+            <code>/accesibilidad</code>, <code>/faq</code> y <code>/contacto</code>, incluidos el
+            filtro de preguntas y el formulario de soporte con sus estados de validación, envío,
+            confirmación y error.
           </li>
         </ul>
 
@@ -124,7 +126,7 @@ export default function AccessibilityPage() {
         <h2 id="limitaciones">5. Limitaciones y recursos externos</h2>
         <p>
           No conocemos incumplimientos dentro de las páginas incluidas. Los servicios externos que
-          se abren desde un enlace —por ejemplo ChatGPT— y los archivos descargables aportados por
+          se abren desde un enlace (por ejemplo ChatGPT) y los archivos descargables aportados por
           docentes o terceros no forman parte de esta afirmación, porque CEOUBB no controla su
           accesibilidad. Si uno de esos recursos impide realizar una actividad, solicita una
           alternativa accesible mediante el canal indicado a continuación.

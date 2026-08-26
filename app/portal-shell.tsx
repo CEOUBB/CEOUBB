@@ -8,6 +8,7 @@ import {
   Bell,
   CaretDown,
   FolderSimple,
+  Lifebuoy,
   MagnifyingGlass,
   PersonArmsSpread,
   SignOut,
@@ -296,6 +297,12 @@ export function PortalSidebar({
           <Archive size={18} />
         </span>
         <span className="side-label">Biblioteca de Estudio</span>
+      </Link>
+      <Link className="side-item side-foot side-foot-secondary" href="/contacto">
+        <span aria-hidden="true" className="side-icon">
+          <Lifebuoy size={18} />
+        </span>
+        <span className="side-label">Ayuda y contacto</span>
       </Link>
       <Link className="side-item side-foot side-foot-secondary" href="/accesibilidad">
         <span aria-hidden="true" className="side-icon">

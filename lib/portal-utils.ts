@@ -165,7 +165,7 @@ export function weekRangeLabel(from: string, to: string): string {
   const start = rangeFormat.format(new Date(`${from}T12:00:00`));
   const end = rangeFormat.format(new Date(`${to}T12:00:00`));
   const year = to.slice(0, 4);
-  return `${start} — ${end} de ${year}`;
+  return `${start} al ${end} de ${year}`;
 }
 
 export function formatDueDate(value: string): string {

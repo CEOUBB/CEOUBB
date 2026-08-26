@@ -34,7 +34,7 @@ export async function fetchLatestCIDiagnostics(): Promise<string> {
 
     return (
       `### 🩺 Diagnóstico Real de CI/CD (/doctor)\n\n` +
-      `**Último commit en \`main\`:** [\`${latestRun.headSha}\`](${latestRun.htmlUrl}) — *"${latestRun.commitMessage}"* (por @${latestRun.actor})\n` +
+      `**Último commit en \`main\`:** [\`${latestRun.headSha}\`](${latestRun.htmlUrl}), *"${latestRun.commitMessage}"* (por @${latestRun.actor})\n` +
       `**Estado General del Pipeline:** ${runStatusIcon}\n\n` +
       `**Detalle de verificaciones en GitHub Actions:**\n` +
       `${stepsDetail || "• Verificaciones automáticas completas"}\n\n` +

@@ -95,8 +95,8 @@ export default function TermsPage() {
           institucional.
         </p>
         <p>
-          No reemplaza a Moodle UBB ni a Adecca UBB. Los actos académicos oficiales —actas de notas,
-          inscripción de asignaturas, certificaciones— se realizan en los sistemas de la
+          No reemplaza a Moodle UBB ni a Adecca UBB. Los actos académicos oficiales (actas de notas,
+          inscripción de asignaturas, certificaciones) se realizan en los sistemas de la
           universidad. Lo que ocurre aquí es apoyo al estudio y a la operación cotidiana de una
           sección.
         </p>

@@ -710,7 +710,7 @@ export function gradebookOverview(state: TeacherPreviewState): GradebookOverview
     (review) => review.visibility === "published"
   ).length;
   return {
-    average: summary.average === null ? "—" : formatGrade(summary.average),
+    average: summary.average === null ? "sin nota" : formatGrade(summary.average),
     gradedCount,
     pendingCount: state.submissions.filter((submission) =>
       ["submitted", "late", "review_draft"].includes(submission.state)

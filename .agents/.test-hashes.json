@@ -37,6 +37,10 @@
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
   "tests/staging-environment.test.ts": "96fe77e623d90a5db81681e9193ebd9532f73cc26d428a06fc6509d899571e8a",
+  "tests/support-api.test.ts": "47108f38194ac6dac9ad790e433366b11ebe31a6a38f0419708fdddbd1780996",
+  "tests/support-mail.test.ts": "40ac9d2e530140b38b6e33cd7309c0ef8faa19b6c80cba28efc2862d94b10bf4",
+  "tests/support-pages.test.ts": "94cb539e5b4c422fed3815aae33fba944c4b7de231ae99cae82a131f49146d11",
+  "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
   "tests/teacher-course-management.test.ts": "da9329d15f9b9d5624801706a469e17f7933d39edf885a3fbd8fdd5a11d0f030",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb"
 }

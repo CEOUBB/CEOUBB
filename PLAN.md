@@ -275,3 +275,97 @@ Next recommended action:
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging and schedules the P0.7 load test plus the P0.8 restoration drill against the published targets.
+
+## Handoff: /contacto y /faq (CEO-63, CEO-64)
+
+```text
+Date: 2026-08-26
+Human maintainer: Felipe Arce
+AI assistant: Claude (Opus 5)
+Branch / commit: felipearce2004/ceo-63-64-contacto-y-faq
+Goal: Publicar /contacto y /faq, con formulario de soporte que entrega al buzón institucional.
+Files changed: app/contacto/*, app/faq/*, app/api/soporte/route.ts, lib/support-request.ts,
+  lib/services/support-{mail,requests}.ts, db/schema.ts, drizzle/0008_solicitudes_soporte.sql,
+  app/globals.css, app/sitemap.xml/route.ts, app/Portal.tsx, app/portal-shell.tsx,
+  app/{privacidad,accesibilidad}/page.tsx, app/api/admin/users/route.ts, package.json,
+  tests/support-{request,mail,api,pages}.test.ts
+External services changed: ninguno todavía. Brevo queda elegido pero sin cuenta creada.
+Checks passed: typecheck, lint, verify:fast, verify:invariants, pnpm test (405/405, build incluido),
+  detector de impeccable sin hallazgos en código nuevo, verificación en navegador a 320px y 1280px.
+Checks not run: auditoría manual con lector de pantalla.
+Production deployed: no
+Known risks: ver más abajo.
+Next recommended action: crear la cuenta de Brevo y configurar las cuatro variables de entorno.
+```
+
+### Decisiones que conviene recordar
+
+**Zod entra como dependencia autorizada.** El propietario levantó explícitamente la
+restricción de `AGENTS.md` §5.5 para esta biblioteca y pidió migrar a Zod la validación
+hecha a mano donde exista. En este cambio se migraron los parámetros de consulta de
+`app/api/admin/users/route.ts`, que es el Gold Standard Reference que `AGENTS.md` ya
+describía como validado con Zod sin que lo estuviera.
+
+El cuerpo del `PATCH` de esa misma ruta **no** se migró: `tests/admin-api.test.ts` fija el
+texto fuente `["teacher", "student"].includes` de forma literal, y esa aserción está
+protegida por el bloqueo SHA-256. Migrarla exigiría modificar una prueba bloqueada.
+
+**Sonner se descartó.** El acuse de un formulario de soporte es el único texto que la
+persona necesita leer y recordar, así que se usa el patrón ya establecido en el
+repositorio: región `aria-live` persistente más panel de confirmación que reemplaza al
+formulario. De paso elimina el doble envío.
+
+**Brevo es el proveedor de correo elegido.** Criterio del propietario: el nivel gratuito
+más generoso. Brevo entrega 300 correos diarios de forma permanente, sin tarjeta y sin
+plazo, frente a los 3.000 mensuales de Resend y MailerSend. Zoho ZeptoMail se descartó
+pese a que el buzón ya vive en Zoho Mail, porque su cupo gratuito es un bloque único de
+crédito y no un nivel recurrente.
+
+**El remitente va en un subdominio.** `ceoubb.com` ya tiene los registros MX, SPF y DKIM
+de Zoho Mail, y un dominio admite un solo registro SPF. Brevo se autentica sobre
+`notificaciones.ceoubb.com`, y el destino sigue siendo el buzón Zoho `contacto@ceoubb.com`.
+Los dos sistemas no se tocan el DNS.
+
+**Retención de solicitudes: 12 meses**, tras los cuales la fila completa se elimina. Es el
+mismo plazo que ya usa la política para purgar la IP de la bitácora de auditoría, así que
+el documento gana una fila sin ganar un segundo plazo. La dirección del remitente nunca se
+guarda en claro, solo su hash con pimienta.
+
+**Sin rayas largas en el texto publicado.** Regla del propietario para todo el sitio, no
+solo para el FAQ. Se eliminaron de `/privacidad`, `/terminos`, `/accesibilidad` y de varias
+vistas del portal, preservando el sentido de cada frase. Quedan solo en comentarios de
+código, que la regla no cubre.
+
+### Pendiente para el propietario
+
+1. **Crear la cuenta de Brevo** y autenticar el subdominio `notificaciones.ceoubb.com` con
+   los registros DKIM y SPF que Brevo emita. No tocar los registros del dominio raíz que
+   usa Zoho Mail.
+2. **Configurar en Vercel**: `SOPORTE_MAIL_DRIVER=brevo`, `SOPORTE_MAIL_API_KEY`,
+   `SOPORTE_MAIL_FROM=soporte@notificaciones.ceoubb.com`,
+   `SOPORTE_MAIL_TO=contacto@ceoubb.com` y `SOPORTE_IP_PEPPER` (una cadena aleatoria
+   larga, distinta por ambiente).
+3. **Aplicar la migración** `drizzle/0008_solicitudes_soporte.sql` en Turso antes del
+   despliegue. Es aditiva y no toca ninguna tabla existente.
+
+### Riesgos conocidos
+
+**Hasta que Brevo esté configurado, cada solicitud queda en estado `pendiente` y nadie
+recibe un correo.** Está diseñado así a propósito: el formulario funciona, la persona ve
+un acuse que dice con todas sus letras que el envío está pendiente, y el mensaje no se
+pierde. Pero hay que vigilar la cola:
+
+```sql
+SELECT count(*) FROM solicitudes_soporte WHERE estado = 'pendiente';
+```
+
+**`drizzle/meta` está corrupto desde antes de este cambio.** Falta `0005_snapshot.json` y
+los snapshots `0006` y `0007` apuntan ambos a `0004` como padre, resultado de una fusión de
+ramas mal resuelta. Eso bloquea `pnpm run db:generate` con un error de colisión. No bloquea
+la aplicación de migraciones, porque `migrate()` lee `_journal.json` y los archivos `.sql`,
+nunca los snapshots. Por eso la migración `0008` se escribió a mano y se verificó
+aplicándola contra la base local. **Repararlo es trabajo aparte** y conviene hacerlo antes
+de la próxima migración generada.
+
+**No hay trabajo de reintento ni bandeja de entrada.** La columna `estado` deja ambos
+preparados, pero se construyen cuando el volumen lo justifique.
