@@ -198,7 +198,7 @@ Devuelve estrictamente un JSON válido:
     }
 
     const embed = {
-      title: "☀️ CEOUBB Daily Standup — Apertura de Jornada (12:00 PM)",
+      title: "☀️ CEOUBB Daily Standup: Apertura de Jornada (12:00 PM)",
       description: `${summaryText}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**Lanzador de Tareas para Agentes IA:**\nPresiona cualquier botón para recibir el prompt o comando git listo para usar.`,
       color: 0x0055b8, // UBB Blue
       footer: { text: `CEOUBB LMS • Vercel Cron • Gemini (${usedModel})` },
@@ -259,7 +259,7 @@ ESTRUCTURA:
     const { text, usedModel } = await generateContentWithFallback(ai, prompt);
 
     const embed = {
-      title: "🌙 CEOUBB Daily Standup — Cierre de Jornada (00:00 AM)",
+      title: "🌙 CEOUBB Daily Standup: Cierre de Jornada (00:00 AM)",
       description: text.trim(),
       color: 0x0f172a, // Dark Slate
       footer: { text: `CEOUBB LMS • Vercel Cron • Gemini (${usedModel})` },

@@ -988,6 +988,88 @@ img {
   animation: spin 0.7s linear infinite;
 }
 
+/* Accesos rápidos de testing para entornos no productivos */
+.dev-auth-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px dashed var(--border-control);
+  border-radius: var(--radius-md);
+}
+
+.dev-auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.dev-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .dev-auth-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dev-auth-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-control);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.dev-auth-button:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+
+.dev-auth-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--shadow-1);
+}
+
+.dev-auth-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.dev-auth-button-student {
+  color: var(--ubb-royal-blue);
+}
+
+.dev-auth-button-teacher {
+  color: var(--ubb-navy);
+}
+
 .institution-note {
   margin: 0;
   padding-top: 1.05rem;
@@ -1051,6 +1133,55 @@ img {
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ── Pie institucional compartido ─────────────────────────── */
+
+.site-footer {
+  width: 100%;
+  margin-top: var(--space-3xl);
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-2xl);
+  border-top: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.site-footer-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.site-footer-nav a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-faint);
+  max-width: 640px;
+  text-wrap: balance;
 }
 
 /* ── Privacidad ───────────────────────────────────────────── */
@@ -1226,22 +1357,6 @@ img {
 .policy-page code {
   overflow-wrap: anywhere;
   white-space: normal;
-}
-
-.conformance-status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid color-mix(in srgb, var(--academic-emerald) 55%, var(--border-hairline));
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--academic-emerald) 9%, var(--surface-card));
-  color: var(--text-body) !important;
-}
-
-.conformance-status svg {
-  flex: 0 0 auto;
-  color: oklch(0.42 0.12 155);
 }
 
 @media (max-width: 600px) {
@@ -1796,8 +1911,14 @@ img {
   color: var(--text-faint);
 }
 
-.side-foot {
+.side-foot-group {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.side-foot {
   min-height: 42px;
   border: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
@@ -1808,10 +1929,6 @@ img {
 .side-foot:hover {
   color: var(--text-body);
   background: var(--hairline);
-}
-
-.side-foot-secondary {
-  margin-top: var(--space-xs);
 }
 
 .sidebar-scrim {
@@ -10191,5 +10308,524 @@ div.editor-latex-token {
   .moodle-import-dialog__footer {
     display: grid;
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Contacto y preguntas frecuentes ──────────────────────── */
+
+/*
+  Implements: REQ-HELP-10
+  Aqui viven el anillo de foco, el contraste y la supresion de movimiento de las
+  dos paginas publicas, que la declaracion de accesibilidad ya cubre.
+
+  Estas clases viven bajo `.policy-page` porque pertenecen a la familia de
+  documentos públicos, no a una página concreta. `/privacidad` y `/terminos`
+  ganan la capacidad de llevar un formulario sin cambiar una línea.
+*/
+
+.policy-page .policy-lead {
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* Formulario ------------------------------------------------ */
+
+.policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.policy-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.policy-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.policy-field > label,
+.policy-field-head > label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.43;
+  color: var(--text-body);
+}
+
+.policy-field-counter {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.policy-field input,
+.policy-field select,
+.policy-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-hairline);
+  /* Los controles de formulario van tensos a 4px. La píldora es del botón. */
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-family: var(--font-core);
+  font-size: 15px;
+  line-height: 1.4;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.policy-field textarea {
+  min-height: 9rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.policy-field input::placeholder,
+.policy-field textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.policy-field input:hover,
+.policy-field select:hover,
+.policy-field textarea:hover {
+  border-color: var(--border-control);
+}
+
+.policy-field input[aria-invalid="true"],
+.policy-field textarea[aria-invalid="true"],
+.policy-field select[aria-invalid="true"] {
+  border-color: var(--shield-red-deep);
+}
+
+/*
+  El error se nombra en texto y lleva un icono dibujado. Ni el color ni el icono
+  cargan solos el mensaje: quien no distingue el rojo lee lo mismo.
+*/
+.policy-page .policy-field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--shield-red-deep);
+}
+
+.policy-page .policy-field-error svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* Aviso informativo. No bloquea, no marca el campo como inválido. */
+.policy-page .policy-field-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--text-muted);
+}
+
+.policy-page .policy-field-note svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.policy-page .policy-field-hint {
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--text-muted);
+}
+
+/*
+  Señuelo antiabuso. Fuera del flujo, fuera del orden de tabulación y fuera del
+  árbol de accesibilidad. Con `display: none` muchos clientes automatizados lo
+  detectan y lo esquivan, así que se oculta por recorte.
+*/
+.policy-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.policy-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.policy-page .policy-submit,
+.policy-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  padding: 10px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-core);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+/*
+  El rotulo se declara en cada estado. Sin esto, la regla global `a:hover`
+  gana por especificidad y pinta el texto del mismo azul que el fondo, dejando
+  la pildora vacia cuando es un enlace y no un boton.
+*/
+.policy-page .policy-submit:hover:not(:disabled),
+.policy-page .policy-submit:active:not(:disabled),
+.policy-page .policy-submit:focus-visible:not(:disabled) {
+  background: var(--color-primary-active);
+  color: var(--color-on-primary);
+  text-decoration: none;
+}
+
+.policy-page .policy-submit:disabled {
+  background: var(--canvas-soft);
+  border-color: var(--border-hairline);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.policy-submit svg {
+  flex: 0 0 auto;
+}
+
+/* La región de estado es persistente: no se desvanece sola. */
+.policy-page .policy-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  min-height: 1.43em;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.policy-page .policy-status svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.policy-page .policy-status.bad {
+  color: var(--shield-red-deep);
+}
+
+/*
+  Panel de confirmación. Reemplaza al formulario en su sitio, así que el acuse
+  no depende de que nadie lo lea a tiempo y el doble envío deja de ser posible.
+*/
+.policy-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  padding: var(--space-lg);
+  border: 1px solid color-mix(in srgb, var(--academic-emerald) 45%, var(--border-hairline));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--academic-emerald) 7%, var(--surface-card));
+}
+
+.policy-page .policy-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.policy-page .policy-confirm-head svg {
+  flex: 0 0 auto;
+  color: var(--academic-emerald);
+}
+
+.policy-page .policy-confirm p {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.policy-page .policy-confirm dl {
+  border-top: none;
+  padding-top: 0;
+  font-size: 15px;
+}
+
+.policy-again {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-family: var(--font-core);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.policy-again:hover {
+  background: var(--canvas-soft);
+  border-color: var(--text-faint);
+}
+
+@media (pointer: coarse) {
+  .policy-again {
+    min-height: 44px;
+  }
+}
+
+/* Filtro y recuento del listado de preguntas ---------------- */
+
+.policy-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.policy-filter > label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.policy-filter-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.policy-filter-control svg {
+  position: absolute;
+  left: 12px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.policy-filter input {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-family: var(--font-core);
+  font-size: 15px;
+  line-height: 1.4;
+  transition: border-color var(--transition-fast);
+}
+
+.policy-filter input:hover {
+  border-color: var(--border-control);
+}
+
+.policy-filter input::placeholder {
+  color: var(--text-faint);
+}
+
+.policy-page .policy-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-variant-numeric: var(--num);
+}
+
+/* Preguntas ------------------------------------------------- */
+
+/*
+  Ritmo de la pagina de preguntas: mucho aire entre categorias, menos entre el
+  titulo y su grupo, y el grupo apretado. El encabezado tiene que leerse como
+  parte de lo que viene despues, no flotando a medio camino entre dos bloques.
+*/
+.policy-page .policy-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  /* Se suma al hueco de 16px del articulo: 32px totales entre categorias. */
+  margin-top: var(--space-md);
+}
+
+.policy-page .policy-section h2 {
+  margin-top: 0;
+}
+
+.policy-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.policy-disclosure {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.policy-disclosure > summary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-height: 48px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--text-body);
+  font-family: var(--font-core);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  list-style: none;
+  border-radius: calc(var(--radius-md) - 1px);
+  transition: background var(--transition-fast);
+}
+
+/* El marcador nativo cede su sitio a un icono dibujado. */
+.policy-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.policy-disclosure > summary:hover {
+  background: var(--canvas-soft);
+}
+
+.policy-disclosure > summary svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.policy-disclosure[open] > summary svg {
+  transform: rotate(90deg);
+}
+
+.policy-disclosure[open] > summary {
+  border-bottom: 1px solid var(--border-hairline);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.policy-answer {
+  padding: var(--space-md) 16px var(--space-md) 44px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.policy-page .policy-answer p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.policy-page .policy-answer ul {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/*
+  La apertura se anima sin JavaScript y sin medir alturas. Donde el navegador no
+  soporte `interpolate-size`, el detalle abre de golpe, que es la degradación
+  correcta y lo que ya hacen los demás `<details>` del proyecto.
+*/
+@supports (interpolate-size: allow-keywords) {
+  .policy-disclosure {
+    interpolate-size: allow-keywords;
+  }
+
+  .policy-disclosure::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      block-size 140ms cubic-bezier(0.2, 0, 0, 1),
+      opacity 140ms cubic-bezier(0.2, 0, 0, 1),
+      content-visibility 140ms allow-discrete;
+  }
+
+  .policy-disclosure[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+/* Vacío del filtro ------------------------------------------ */
+
+.policy-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas-soft);
+}
+
+.policy-page .policy-empty p {
+  font-size: 15px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .policy-field input,
+  .policy-field select,
+  .policy-field textarea,
+  .policy-filter input,
+  .policy-submit,
+  .policy-again,
+  .policy-disclosure > summary,
+  .policy-disclosure > summary svg {
+    transition: none;
+  }
+}
+
+@supports (interpolate-size: allow-keywords) {
+  @media (prefers-reduced-motion: reduce) {
+    .policy-disclosure::details-content {
+      transition: none;
+    }
+  }
+}
+
+/*
+  A 320px la sangría de 44px que alinea la respuesta con el texto del resumen
+  deja la columna en unos 160px. Ahí la alineación importa menos que poder leer.
+*/
+@media (max-width: 600px) {
+  .policy-answer {
+    padding-left: 16px;
   }
 }

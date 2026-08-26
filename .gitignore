@@ -72,6 +72,8 @@ serviceAccountKey.json
 .claude/
 .impeccable/
 .codex/
+.opencode/
 .cache/
 skills-lock.json
-capturas-mobile/
+capturas-mobile/
+strix_runs/

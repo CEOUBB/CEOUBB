@@ -76,7 +76,7 @@ const RUBRIC_ROWS = [
 const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
 function formatGrade(grade: number | null | undefined) {
-  return typeof grade === "number" ? grade.toFixed(1).replace(".", ",") : "—";
+  return typeof grade === "number" ? grade.toFixed(1).replace(".", ",") : "sin nota";
 }
 
 function ActivityFlow({ state }: { state: TeacherPreviewState }) {
@@ -718,7 +718,11 @@ export function ReviewPanel({
                       </span>
                       {submission.studentAlias}
                     </td>
-                    <td>{submission.submittedAt ? formatDateTime(submission.submittedAt) : "—"}</td>
+                    <td>
+                      {submission.submittedAt
+                        ? formatDateTime(submission.submittedAt)
+                        : "sin entrega"}
+                    </td>
                     <td>
                       <span className={styles.pill} data-tone={submission.state}>
                         {SUBMISSION_STATE_LABELS[submission.state]}
@@ -836,7 +840,7 @@ export function GradebookPanel({ state }: { state: TeacherPreviewState }) {
             </span>
             <span className={styles.weightChip}>{item.weight}%</span>
             <span className="grades-weight">{ACTIVITY_LIFECYCLE_LABELS[item.lifecycle]}</span>
-            <span className="grades-official">{item.average ?? "—"}</span>
+            <span className="grades-official">{item.average ?? "sin nota"}</span>
           </div>
         ))}
       </section>

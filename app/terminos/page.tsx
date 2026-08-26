@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Términos de uso · Centro de Estudio UBB",
@@ -95,8 +96,8 @@ export default function TermsPage() {
           institucional.
         </p>
         <p>
-          No reemplaza a Moodle UBB ni a Adecca UBB. Los actos académicos oficiales —actas de notas,
-          inscripción de asignaturas, certificaciones— se realizan en los sistemas de la
+          No reemplaza a Moodle UBB ni a Adecca UBB. Los actos académicos oficiales (actas de notas,
+          inscripción de asignaturas, certificaciones) se realizan en los sistemas de la
           universidad. Lo que ocurre aquí es apoyo al estudio y a la operación cotidiana de una
           sección.
         </p>
@@ -226,6 +227,7 @@ export default function TermsPage() {
           <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }

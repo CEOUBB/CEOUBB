@@ -4,7 +4,16 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
+import {
+  Bell,
+  Books,
+  CalendarBlank,
+  ChalkboardTeacher,
+  FolderSimple,
+  GraduationCap,
+  House,
+  Stack,
+} from "@phosphor-icons/react";
 import {
   useExternalLinks,
   useHardwareBack,
@@ -14,6 +23,7 @@ import {
 import { MobileBottomNav, type MobileTab } from "./mobile-shell";
 import {
   COURSES,
+  parseAcademicSections,
   partitionAcademicCourses,
   type AcademicSectionSummary,
   type Course,
@@ -30,10 +40,15 @@ import {
   loadCurrentSession,
   loadEnrolledSectionMemberships,
   rememberPhoto,
+  type SessionState,
   type User,
 } from "../lib/portal-utils";
 import { CommandPalette, type PaletteItem } from "./command-palette";
-import { sectionRoleFor, type SectionMembership } from "../lib/section-roles";
+import {
+  parseSectionMemberships,
+  sectionRoleFor,
+  type SectionMembership,
+} from "../lib/section-roles";
 import {
   firebaseUserId,
   unreadCommunicationCount,
@@ -112,7 +127,15 @@ export function LoadingScreen() {
   );
 }
 
-export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void }) {
+export function AccessScreen({
+  onSignedIn,
+  onSignedInWithSession,
+  isQuickAuthAvailable,
+}: {
+  onSignedIn?: (user: User) => void;
+  onSignedInWithSession?: (session: SessionState) => void;
+  isQuickAuthAvailable?: boolean;
+}) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
@@ -135,9 +158,22 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
       }
       const data = await response.json();
       if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
-      onSignedIn(data.user);
+      if (data.sections && onSignedInWithSession) {
+        onSignedInWithSession({
+          user: data.user,
+          sectionIds: Array.isArray(data.sectionIds)
+            ? data.sectionIds.filter((value: unknown): value is string => typeof value === "string")
+            : [],
+          memberships: parseSectionMemberships(data.memberships),
+          sections: Array.isArray(data.sections) ? parseAcademicSections(data.sections) : null,
+          archivedNextCursor:
+            typeof data.archivedNextCursor === "string" ? data.archivedNextCursor : null,
+        });
+      } else if (onSignedIn) {
+        onSignedIn(data.user);
+      }
     },
-    [onSignedIn]
+    [onSignedIn, onSignedInWithSession]
   );
 
   const googleAccess = async () => {
@@ -149,6 +185,53 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
       await finishGoogleAccess(idToken);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "No fue posible continuar.";
+      setError(message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const quickAuthActive =
+    isQuickAuthAvailable ??
+    (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview");
+
+  const devAccess = async (role: "student" | "teacher") => {
+    setError("");
+    setWorking(true);
+    try {
+      const response = await fetch("/api/auth/dev-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!response.ok) {
+        let errorMessage = "No fue posible acceder en modo testing.";
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) errorMessage = errorData.error;
+        } catch {
+          // Non-JSON response
+        }
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      if (data.photoUrl) rememberPhoto(data.user.email, data.photoUrl);
+      if (data.sections && onSignedInWithSession) {
+        onSignedInWithSession({
+          user: data.user,
+          sectionIds: Array.isArray(data.sectionIds)
+            ? data.sectionIds.filter((value: unknown): value is string => typeof value === "string")
+            : [],
+          memberships: parseSectionMemberships(data.memberships),
+          sections: Array.isArray(data.sections) ? parseAcademicSections(data.sections) : null,
+          archivedNextCursor:
+            typeof data.archivedNextCursor === "string" ? data.archivedNextCursor : null,
+        });
+      } else if (onSignedIn) {
+        onSignedIn(data.user);
+      }
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "No fue posible acceder.";
       setError(message);
     } finally {
       setWorking(false);
@@ -199,10 +282,42 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
                   aria-hidden="true"
                   width={256}
                   height={256}
+                  priority
                 />
               )}
               {working ? "Verificando cuenta…" : "Continuar con Google"}
             </button>
+            {quickAuthActive && (
+              <div
+                className="dev-auth-container"
+                role="region"
+                aria-label="Accesos rápidos de testing"
+              >
+                <div className="dev-auth-divider">
+                  <span>Accesos rápidos de prueba</span>
+                </div>
+                <div className="dev-auth-actions">
+                  <button
+                    className="dev-auth-button dev-auth-button-student"
+                    disabled={working}
+                    onClick={() => devAccess("student")}
+                    type="button"
+                  >
+                    <GraduationCap aria-hidden="true" size={18} weight="bold" />
+                    <span>Entrar como estudiante</span>
+                  </button>
+                  <button
+                    className="dev-auth-button dev-auth-button-teacher"
+                    disabled={working}
+                    onClick={() => devAccess("teacher")}
+                    type="button"
+                  >
+                    <ChalkboardTeacher aria-hidden="true" size={18} weight="bold" />
+                    <span>Entrar como docente</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {error && (
               <p className="form-error" role="alert">
                 {error}
@@ -240,7 +355,8 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
 
           <p className="legal-note">
             Plataforma estudiantil independiente. No reemplaza los sistemas oficiales de la
-            Universidad del Bío-Bío. <Link href="/privacidad">Privacidad</Link> ·{" "}
+            Universidad del Bío-Bío. <Link href="/faq">Preguntas frecuentes</Link> ·{" "}
+            <Link href="/contacto">Contacto</Link> · <Link href="/privacidad">Privacidad</Link> ·{" "}
             <Link href="/terminos">Términos</Link> ·{" "}
             <Link href="/accesibilidad">Accesibilidad</Link>
           </p>
@@ -250,9 +366,17 @@ export function AccessScreen({ onSignedIn }: { onSignedIn: (user: User) => void 
   );
 }
 
-export function Portal() {
-  const [user, setUser] = useState<User | null>(null);
-  const [checking, setChecking] = useState(true);
+export function Portal({
+  initialSession,
+  isQuickAuthAvailable,
+}: {
+  initialSession?: SessionState;
+  isQuickAuthAvailable?: boolean;
+} = {}) {
+  const [user, setUser] = useState<User | null>(
+    initialSession !== undefined ? initialSession.user : null
+  );
+  const [checking, setChecking] = useState(initialSession === undefined);
   const [navState, dispatchNav] = useReducer(navReducer, {
     screen: "courses",
     course: null,
@@ -273,9 +397,15 @@ export function Portal() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activity, setActivity] = useState<CourseActivity[]>([]);
   const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
-  const [memberships, setMemberships] = useState<SectionMembership[]>([]);
-  const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(null);
-  const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(null);
+  const [memberships, setMemberships] = useState<SectionMembership[]>(
+    initialSession ? initialSession.memberships : []
+  );
+  const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(
+    initialSession ? initialSession.sections : null
+  );
+  const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(
+    initialSession ? initialSession.archivedNextCursor : null
+  );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [communications, setCommunications] = useState<CommunicationState>({
     threads: [],
@@ -338,6 +468,7 @@ export function Portal() {
   }, []);
 
   useEffect(() => {
+    if (initialSession !== undefined && initialSession.user !== null) return;
     let alive = true;
     loadCurrentSession()
       .then(
@@ -348,10 +479,12 @@ export function Portal() {
           archivedNextCursor: nextArchivedCursor,
         }) => {
           if (!alive) return;
-          setUser(current);
-          if (currentMemberships.length > 0) setMemberships(currentMemberships);
-          setAcademicSections(sections);
-          setArchivedNextCursor(nextArchivedCursor);
+          if (current) {
+            setUser(current);
+            if (currentMemberships.length > 0) setMemberships(currentMemberships);
+            setAcademicSections(sections);
+            setArchivedNextCursor(nextArchivedCursor);
+          }
           setChecking(false);
         }
       )
@@ -363,7 +496,7 @@ export function Portal() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [initialSession]);
 
   const { current, archived } = useMemo(
     () =>
@@ -536,6 +669,14 @@ export function Portal() {
     dispatchNav({ type: "LOGOUT" });
   };
 
+  const finishSignedInWithSession = useCallback((session: SessionState) => {
+    setUser(session.user);
+    setMemberships(session.memberships);
+    setAcademicSections(session.sections ?? []);
+    setArchivedNextCursor(session.archivedNextCursor);
+    setChecking(false);
+  }, []);
+
   const finishSignedIn = useCallback(async (signedInUser: User) => {
     setChecking(true);
     const session = await loadCurrentSession();
@@ -547,7 +688,15 @@ export function Portal() {
   }, []);
 
   if (checking) return <LoadingScreen />;
-  if (!user) return <AccessScreen onSignedIn={finishSignedIn} />;
+  if (!user) {
+    return (
+      <AccessScreen
+        isQuickAuthAvailable={isQuickAuthAvailable}
+        onSignedIn={finishSignedIn}
+        onSignedInWithSession={finishSignedInWithSession}
+      />
+    );
+  }
 
   const openedCourse = course ?? courses[0] ?? archivedCourses[0] ?? null;
   const openedSectionRole = openedCourse
