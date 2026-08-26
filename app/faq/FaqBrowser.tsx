@@ -25,11 +25,14 @@ function normalizar(valor: string) {
 
 function coincide(pregunta: PreguntaFrecuente, termino: string) {
   if (!termino) return true;
-  const objetivo = normalizar(`${pregunta.pregunta} ${pregunta.respuesta.join(" ")}`);
-  return normalizar(termino)
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((palabra) => objetivo.includes(palabra));
+  const textoObjetivo = normalizar(`${pregunta.pregunta} ${pregunta.respuesta.join(" ")}`);
+  const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
+  for (const palabra of palabras) {
+    if (textoObjetivo.indexOf(palabra) === -1) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /*
@@ -73,14 +76,16 @@ export default function FaqBrowser() {
     document.getElementById(anclaAbierta)?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [anclaAbierta]);
 
-  const grupos = useMemo(
-    () =>
-      CATEGORIAS_FAQ.map((categoria) => ({
-        ...categoria,
-        preguntas: categoria.preguntas.filter((pregunta) => coincide(pregunta, filtro)),
-      })).filter((categoria) => categoria.preguntas.length > 0),
-    [filtro]
-  );
+  const grupos = useMemo(() => {
+    const resultado = [];
+    for (const categoria of CATEGORIAS_FAQ) {
+      const preguntas = categoria.preguntas.filter((pregunta) => coincide(pregunta, filtro));
+      if (preguntas.length > 0) {
+        resultado.push({ ...categoria, preguntas });
+      }
+    }
+    return resultado;
+  }, [filtro]);
 
   const visibles = grupos.reduce((total, grupo) => total + grupo.preguntas.length, 0);
   const filtrando = filtro.length > 0;

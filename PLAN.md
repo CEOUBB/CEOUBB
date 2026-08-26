@@ -286,8 +286,8 @@ Branch / commit: felipearce2004/ceo-63-64-contacto-y-faq
 Goal: Publicar /contacto y /faq, con formulario de soporte que entrega al buzón institucional.
 Files changed: app/contacto/*, app/faq/*, app/api/soporte/route.ts, lib/support-request.ts,
   lib/services/support-{mail,requests}.ts, db/schema.ts, drizzle/0008_solicitudes_soporte.sql,
-  app/globals.css, app/sitemap.xml/route.ts, app/Portal.tsx, app/portal-shell.tsx,
-  app/{privacidad,accesibilidad}/page.tsx, app/api/admin/users/route.ts, package.json,
+  app/globals.css, app/sitemap.xml/route.ts, app/Portal.tsx, app/portal-shell.tsx, app/site-footer.tsx,
+  app/{privacidad,accesibilidad,terminos}/page.tsx, public/biblioteca/index.html, app/api/admin/users/route.ts, package.json,
   tests/support-{request,mail,api,pages}.test.ts
 External services changed: ninguno todavía. Brevo queda elegido pero sin cuenta creada.
 Checks passed: typecheck, lint, verify:fast, verify:invariants, pnpm test (405/405, build incluido),

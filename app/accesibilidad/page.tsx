@@ -1,6 +1,7 @@
-import { ArrowLeft, CheckCircle } from "@phosphor-icons/react/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Declaración de accesibilidad · Centro de Estudio UBB",
@@ -37,10 +38,6 @@ export default function AccessibilityPage() {
           Declaración emitida el <time dateTime="2026-08-23">23 de agosto de 2026</time>
         </p>
         <h1>Declaración de accesibilidad</h1>
-        <p className="conformance-status">
-          <CheckCircle aria-hidden="true" size={22} weight="fill" />
-          <strong>Conformidad completa con WCAG 2.2, Nivel AA</strong>
-        </p>
         <p>
           Centro de Estudio UBB se compromete a que sus contenidos y funciones puedan ser usados por
           personas con discapacidad en condiciones equivalentes, con independencia del dispositivo o
@@ -162,6 +159,7 @@ export default function AccessibilityPage() {
           <Link href="/terminos">términos de uso</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }

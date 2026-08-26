@@ -10,7 +10,6 @@ import {
   FolderSimple,
   Lifebuoy,
   MagnifyingGlass,
-  PersonArmsSpread,
   SignOut,
 } from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
@@ -23,6 +22,7 @@ import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import type { ManagedCourse } from "../lib/course-management";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
+import { SiteFooter } from "./site-footer";
 import { CoursesDashboard } from "./views/CoursesDashboard";
 import type { SectionMembership, SectionRole } from "../lib/section-roles";
 
@@ -287,29 +287,31 @@ export function PortalSidebar({
         })}
       </div>
 
-      <Link
-        className="side-item side-foot"
-        href="/biblioteca/index.html"
-        prefetch={false}
-        title="Biblioteca de Estudio (abre en la misma pestaña)"
-      >
-        <span aria-hidden="true" className="side-icon">
-          <Archive size={18} />
-        </span>
-        <span className="side-label">Biblioteca de Estudio</span>
-      </Link>
-      <Link className="side-item side-foot side-foot-secondary" href="/contacto">
-        <span aria-hidden="true" className="side-icon">
-          <Lifebuoy size={18} />
-        </span>
-        <span className="side-label">Ayuda y contacto</span>
-      </Link>
-      <Link className="side-item side-foot side-foot-secondary" href="/accesibilidad">
-        <span aria-hidden="true" className="side-icon">
-          <PersonArmsSpread size={18} />
-        </span>
-        <span className="side-label">Accesibilidad</span>
-      </Link>
+      {/*
+        El grupo se ancla abajo. Ayuda y contacto es una fila de navegación
+        igual que las de arriba, porque lleva a una vista más de la plataforma.
+        La Biblioteca conserva su caja: sale del portal a un documento aparte.
+        Accesibilidad ya no vive aquí, vive en el pie del sitio.
+      */}
+      <div className="side-foot-group">
+        <Link className="side-item" href="/contacto">
+          <span aria-hidden="true" className="side-icon">
+            <Lifebuoy size={18} />
+          </span>
+          <span className="side-label">Ayuda y contacto</span>
+        </Link>
+        <Link
+          className="side-item side-foot"
+          href="/biblioteca/index.html"
+          prefetch={false}
+          title="Biblioteca de Estudio (abre en la misma pestaña)"
+        >
+          <span aria-hidden="true" className="side-icon">
+            <Archive size={18} />
+          </span>
+          <span className="side-label">Biblioteca de Estudio</span>
+        </Link>
+      </div>
     </aside>
   );
 }
@@ -430,6 +432,7 @@ export function PortalMainView({
                 />
               )}
               {screen === "admin" && user.role === "owner" && <AdminView />}
+              <SiteFooter />
             </div>
           </PortalScreen>
         )}

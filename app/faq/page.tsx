@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import FaqBrowser from "./FaqBrowser.tsx";
 import { CATEGORIAS_FAQ } from "./faq-content.ts";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Preguntas frecuentes · Centro de Estudio UBB",
@@ -76,6 +77,7 @@ export default function FaqPage() {
           <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }

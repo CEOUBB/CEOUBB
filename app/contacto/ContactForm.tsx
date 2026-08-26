@@ -40,6 +40,52 @@ function enfocarPrimerError(fallos: ErroresPorCampo) {
   if (primero) document.getElementById(`soporte-${primero}`)?.focus();
 }
 
+function AcuseRecibo({
+  estado,
+  categoria,
+  email,
+  onReset,
+}: {
+  estado: "entregado" | "diferido";
+  categoria: CategoriaSoporte | null;
+  email: string;
+  onReset: () => void;
+}) {
+  const etiqueta = categoria ? CATEGORIA_ETIQUETAS[categoria] : "tu consulta";
+  return (
+    <div className="policy-confirm">
+      <p className="policy-confirm-head">
+        <CheckCircle aria-hidden="true" size={22} weight="fill" />
+        Recibimos tu mensaje
+      </p>
+      {estado === "entregado" ? (
+        <p>
+          Tu mensaje sobre <strong>{etiqueta}</strong> llegó a {CORREO_INSTITUCIONAL}. Te
+          responderemos a {email}.
+        </p>
+      ) : (
+        /*
+          Implements: REQ-SUP-09
+          202 significa que quedó registrado y aún no salió. Decirlo así es
+          preferible a un visto bueno que no se corresponde con lo ocurrido.
+        */
+        <p>
+          Tu mensaje sobre <strong>{etiqueta}</strong> quedó registrado, y su envío al buzón
+          institucional está pendiente. Lo leeremos igual. Si necesitas una respuesta rápida,
+          escribe también a <a href={`mailto:${CORREO_INSTITUCIONAL}`}>{CORREO_INSTITUCIONAL}</a>.
+        </p>
+      )}
+      <p>
+        Acusamos recibo dentro de cinco días hábiles y procuramos entregar una respuesta dentro de
+        treinta días corridos.
+      </p>
+      <button className="policy-again" onClick={onReset} type="button">
+        Escribir otro mensaje
+      </button>
+    </div>
+  );
+}
+
 export default function ContactForm() {
   const [valores, setValores] = useState(VALORES_INICIALES);
   const [errores, setErrores] = useState<ErroresPorCampo>({});
@@ -62,12 +108,12 @@ export default function ContactForm() {
     formulario funciona igual: esta página no requiere estar autenticado.
   */
   useEffect(() => {
-    let vigente = true;
-    fetch("/api/auth/me")
+    const controller = new AbortController();
+    fetch("/api/auth/me", { signal: controller.signal })
       .then((respuesta) => (respuesta.ok ? respuesta.json() : null))
       .then((datos) => {
         const usuario = datos?.user;
-        if (!vigente || !usuario) return;
+        if (!usuario) return;
         setValores((previos) => ({
           ...previos,
           nombre: previos.nombre || usuario.name || "",
@@ -76,7 +122,7 @@ export default function ContactForm() {
       })
       .catch(() => {});
     return () => {
-      vigente = false;
+      controller.abort();
     };
   }, []);
 
@@ -101,7 +147,7 @@ export default function ContactForm() {
       const fallos = erroresPorCampo(analisis.error);
       setErrores(fallos);
       setEstado("error");
-      setMensajeEstado("Revisa los campos marcados antes de enviar.");
+      setMensajeEstado("");
       enfocarPrimerError(fallos);
       enviandoAhora.current = false;
       return;
@@ -136,6 +182,9 @@ export default function ContactForm() {
       if (datos?.campos) {
         setErrores(datos.campos);
         enfocarPrimerError(datos.campos);
+        setEstado("error");
+        setMensajeEstado("");
+        return;
       }
       setEstado("error");
       setMensajeEstado(
@@ -155,47 +204,18 @@ export default function ContactForm() {
   }
 
   if (estado === "entregado" || estado === "diferido") {
-    const etiqueta = categoriaEnviada ? CATEGORIA_ETIQUETAS[categoriaEnviada] : "tu consulta";
     return (
-      <div className="policy-confirm">
-        <p className="policy-confirm-head">
-          <CheckCircle aria-hidden="true" size={22} weight="fill" />
-          Recibimos tu mensaje
-        </p>
-        {estado === "entregado" ? (
-          <p>
-            Tu mensaje sobre <strong>{etiqueta}</strong> llegó a {CORREO_INSTITUCIONAL}. Te
-            responderemos a {valores.email}.
-          </p>
-        ) : (
-          /*
-            Implements: REQ-SUP-09
-            202 significa que quedó registrado y aún no salió. Decirlo así es
-            preferible a un visto bueno que no se corresponde con lo ocurrido.
-          */
-          <p>
-            Tu mensaje sobre <strong>{etiqueta}</strong> quedó registrado, y su envío al buzón
-            institucional está pendiente. Lo leeremos igual. Si necesitas una respuesta rápida,
-            escribe también a <a href={`mailto:${CORREO_INSTITUCIONAL}`}>{CORREO_INSTITUCIONAL}</a>.
-          </p>
-        )}
-        <p>
-          Acusamos recibo dentro de cinco días hábiles y procuramos entregar una respuesta dentro de
-          treinta días corridos.
-        </p>
-        <button
-          className="policy-again"
-          onClick={() => {
-            setValores({ ...VALORES_INICIALES, nombre: valores.nombre, email: valores.email });
-            setCategoriaEnviada(null);
-            setMensajeEstado("");
-            setEstado("listo");
-          }}
-          type="button"
-        >
-          Escribir otro mensaje
-        </button>
-      </div>
+      <AcuseRecibo
+        categoria={categoriaEnviada}
+        email={valores.email}
+        estado={estado}
+        onReset={() => {
+          setValores({ ...VALORES_INICIALES, nombre: valores.nombre, email: valores.email });
+          setCategoriaEnviada(null);
+          setMensajeEstado("");
+          setEstado("listo");
+        }}
+      />
     );
   }
 
@@ -211,6 +231,7 @@ export default function ContactForm() {
           autoComplete="name"
           id="soporte-nombre"
           onChange={(evento) => actualizar("nombre", evento.target.value)}
+          placeholder="Tu nombre completo"
           type="text"
           value={valores.nombre}
         />
@@ -235,6 +256,7 @@ export default function ContactForm() {
             setAvisoDominio(valores.email.includes("@") && roleForEmail(valores.email) === null)
           }
           onChange={(evento) => actualizar("email", evento.target.value)}
+          placeholder="nombre@alumnos.ubiobio.cl o correo personal"
           type="email"
           value={valores.email}
         />
@@ -286,12 +308,19 @@ export default function ContactForm() {
       </div>
 
       <div className="policy-field">
-        <label htmlFor="soporte-asunto">Asunto</label>
+        <div className="policy-field-head">
+          <label htmlFor="soporte-asunto">Asunto</label>
+          <span aria-live="polite" className="policy-field-counter num">
+            {valores.asunto.length} / 160
+          </span>
+        </div>
         <input
           aria-describedby={errores.asunto ? "error-asunto" : undefined}
           aria-invalid={errores.asunto ? true : undefined}
           id="soporte-asunto"
+          maxLength={160}
           onChange={(evento) => actualizar("asunto", evento.target.value)}
+          placeholder="¿De qué se trata tu consulta o problema?"
           type="text"
           value={valores.asunto}
         />
@@ -304,12 +333,21 @@ export default function ContactForm() {
       </div>
 
       <div className="policy-field">
-        <label htmlFor="soporte-mensaje">Mensaje</label>
+        <div className="policy-field-head">
+          <label htmlFor="soporte-mensaje">Mensaje</label>
+          <span aria-live="polite" className="policy-field-counter num">
+            {valores.mensaje.length < 20
+              ? `${valores.mensaje.length} / 20 mín. (máx. 4000)`
+              : `${valores.mensaje.length} / 4000`}
+          </span>
+        </div>
         <textarea
           aria-describedby={errores.mensaje ? "error-mensaje" : "ayuda-mensaje"}
           aria-invalid={errores.mensaje ? true : undefined}
           id="soporte-mensaje"
+          maxLength={4000}
           onChange={(evento) => actualizar("mensaje", evento.target.value)}
+          placeholder="Describe con detalle lo que intentabas hacer, lo que esperabas y lo que ocurrió…"
           value={valores.mensaje}
         />
         {errores.mensaje ? (
@@ -346,12 +384,14 @@ export default function ContactForm() {
         </button>
       </div>
 
-      <p aria-live="polite" className={estado === "error" ? "policy-status bad" : "policy-status"}>
-        {estado === "error" && mensajeEstado ? (
-          <WarningCircle aria-hidden="true" size={16} weight="fill" />
-        ) : null}
-        {mensajeEstado}
-      </p>
+      {mensajeEstado ? (
+        <p aria-live="polite" className={estado === "error" ? "policy-status bad" : "policy-status"}>
+          {estado === "error" ? (
+            <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          ) : null}
+          {mensajeEstado}
+        </p>
+      ) : null}
     </form>
   );
 }

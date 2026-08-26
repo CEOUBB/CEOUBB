@@ -1053,6 +1053,55 @@ img {
   text-underline-offset: 2px;
 }
 
+/* ── Pie institucional compartido ─────────────────────────── */
+
+.site-footer {
+  width: 100%;
+  margin-top: var(--space-3xl);
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-2xl);
+  border-top: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.site-footer-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.site-footer-nav a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-faint);
+  max-width: 640px;
+  text-wrap: balance;
+}
+
 /* ── Privacidad ───────────────────────────────────────────── */
 
 .policy-page {
@@ -1226,22 +1275,6 @@ img {
 .policy-page code {
   overflow-wrap: anywhere;
   white-space: normal;
-}
-
-.conformance-status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid color-mix(in srgb, var(--academic-emerald) 55%, var(--border-hairline));
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--academic-emerald) 9%, var(--surface-card));
-  color: var(--text-body) !important;
-}
-
-.conformance-status svg {
-  flex: 0 0 auto;
-  color: oklch(0.42 0.12 155);
 }
 
 @media (max-width: 600px) {
@@ -1796,8 +1829,14 @@ img {
   color: var(--text-faint);
 }
 
-.side-foot {
+.side-foot-group {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.side-foot {
   min-height: 42px;
   border: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
@@ -1808,10 +1847,6 @@ img {
 .side-foot:hover {
   color: var(--text-body);
   background: var(--hairline);
-}
-
-.side-foot-secondary {
-  margin-top: var(--space-xs);
 }
 
 .sidebar-scrim {
@@ -10230,15 +10265,26 @@ div.editor-latex-token {
   gap: var(--space-xxs);
 }
 
-/*
-  La etiqueta es permanente. Un marcador de posición desaparece al escribir y
-  deja a quien vuelve al campo sin saber qué contenía.
-*/
-.policy-field > label {
+.policy-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.policy-field > label,
+.policy-field-head > label {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.43;
   color: var(--text-body);
+}
+
+.policy-field-counter {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
 }
 
 .policy-field input,
@@ -10343,6 +10389,7 @@ div.editor-latex-token {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: var(--space-md);
 }
 
@@ -10394,11 +10441,13 @@ div.editor-latex-token {
 .policy-page .policy-status {
   display: flex;
   align-items: flex-start;
+  justify-content: center;
   gap: 6px;
   min-height: 1.43em;
   font-size: 14px;
   line-height: 1.43;
   color: var(--text-muted);
+  text-align: center;
 }
 
 .policy-page .policy-status svg {
@@ -10562,6 +10611,7 @@ div.editor-latex-token {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
   background: var(--surface-card);
+  overflow: hidden;
 }
 
 .policy-disclosure > summary {
@@ -10577,6 +10627,7 @@ div.editor-latex-token {
   font-weight: 600;
   line-height: 1.4;
   list-style: none;
+  border-radius: calc(var(--radius-md) - 1px);
   transition: background var(--transition-fast);
 }
 
@@ -10602,6 +10653,8 @@ div.editor-latex-token {
 
 .policy-disclosure[open] > summary {
   border-bottom: 1px solid var(--border-hairline);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .policy-answer {

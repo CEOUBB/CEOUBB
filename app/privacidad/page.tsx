@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteFooter } from "../site-footer";
 
 export const metadata = {
   title: "Política de privacidad · Centro de Estudio UBB",
@@ -312,6 +313,7 @@ export default function PrivacyPage() {
           <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
+      <SiteFooter />
     </main>
   );
 }
