@@ -281,7 +281,7 @@ export function Portal({ initialSession }: { initialSession?: SessionState } = {
   const [user, setUser] = useState<User | null>(
     initialSession !== undefined ? initialSession.user : null
   );
-  const [checking, setChecking] = useState(false);
+  const [checking, setChecking] = useState(initialSession === undefined);
   const [navState, dispatchNav] = useReducer(navReducer, {
     screen: "courses",
     course: null,
@@ -390,11 +390,13 @@ export function Portal({ initialSession }: { initialSession?: SessionState } = {
             setAcademicSections(sections);
             setArchivedNextCursor(nextArchivedCursor);
           }
+          setChecking(false);
         }
       )
       .catch(() => {
         if (!alive) return;
         setUser(null);
+        setChecking(false);
       });
     return () => {
       alive = false;
