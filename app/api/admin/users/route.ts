@@ -136,10 +136,7 @@ export async function PATCH(request: Request) {
         { error: "Las cuentas propietarias no pueden cambiar de rango." },
         { status: 400 }
       );
-    await getDb()
-      .update(users)
-      .set({ role })
-      .where(eq(users.id, userId));
+    await getDb().update(users).set({ role }).where(eq(users.id, userId));
 
     // Implements: REQ-SEC-10
     await projectUserRoleToFirestore(userId, role);
@@ -149,4 +146,3 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Error al actualizar usuario." }, { status: 500 });
   }
 }
-

@@ -589,4 +589,3 @@ test("admin users PATCH route sanitizes and trims userId before lookup and proje
   assert.match(source, /eq\(users\.id,\s*userId\)/);
   assert.match(source, /projectUserRoleToFirestore\(userId,\s*role\)/);
 });
-
