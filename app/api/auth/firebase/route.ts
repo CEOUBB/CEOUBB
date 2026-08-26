@@ -10,6 +10,7 @@ import { createSession, publicUser } from "../../../../lib/auth";
 import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
+import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academic-catalog";
 
 const FIREBASE_API_KEY = firebaseConfigFromEnvironment().apiKey;
 
@@ -85,7 +86,35 @@ export async function POST(request: Request) {
       account.providerUserInfo?.find((provider) => provider.photoUrl)?.photoUrl ||
       "";
     const photoUrl = googlePhoto.startsWith("https://") ? googlePhoto : "";
-    return Response.json({ user: safeUser, photoUrl }, { headers: { "Set-Cookie": cookie } });
+
+    const [current, archived] = await Promise.all([
+      listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "current" }).catch(() => ({
+        items: [],
+        nextCursor: null,
+      })),
+      listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "archived" }).catch(() => ({
+        items: [],
+        nextCursor: null,
+      })),
+    ]);
+    const memberships = current.items.map((section) => ({
+      sectionId: section.seccionId,
+      role: section.rolSeccion,
+    }));
+    const sectionIds = current.items.map((section) => section.seccionId);
+    const sections = [...current.items, ...archived.items];
+
+    return Response.json(
+      {
+        user: safeUser,
+        photoUrl,
+        sectionIds,
+        memberships,
+        sections,
+        archivedNextCursor: archived.nextCursor,
+      },
+      { headers: { "Set-Cookie": cookie } }
+    );
   } catch (err) {
     // Implements: REQ-OBS-01
     console.error("[Auth Firebase Error]:", err);
