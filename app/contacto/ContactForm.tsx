@@ -385,10 +385,11 @@ export default function ContactForm() {
       </div>
 
       {mensajeEstado ? (
-        <p aria-live="polite" className={estado === "error" ? "policy-status bad" : "policy-status"}>
-          {estado === "error" ? (
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-          ) : null}
+        <p
+          aria-live="polite"
+          className={estado === "error" ? "policy-status bad" : "policy-status"}
+        >
+          {estado === "error" ? <WarningCircle aria-hidden="true" size={16} weight="fill" /> : null}
           {mensajeEstado}
         </p>
       ) : null}
