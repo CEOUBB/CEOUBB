@@ -20,10 +20,7 @@ import { CATEGORIAS_FAQ, TOTAL_PREGUNTAS, type PreguntaFrecuente } from "./faq-c
   acentos y se descartan las marcas diacríticas combinantes (U+0300 a U+036F).
 */
 function normalizar(valor: string) {
-  return valor
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  return valor.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 function coincide(pregunta: PreguntaFrecuente, termino: string) {
@@ -63,11 +60,7 @@ export default function FaqBrowser() {
     refiltrado. Hace el trabajo de un debounce sin temporizadores que limpiar.
   */
   const filtro = useDeferredValue(termino).trim();
-  const fragmento = useSyncExternalStore(
-    suscribirAlFragmento,
-    leerFragmento,
-    fragmentoEnServidor
-  );
+  const fragmento = useSyncExternalStore(suscribirAlFragmento, leerFragmento, fragmentoEnServidor);
   const anclaAbierta = fragmento ? decodeURIComponent(fragmento.slice(1)) : null;
 
   /*
@@ -155,8 +148,8 @@ export default function FaqBrowser() {
       {visibles === 0 ? (
         <div className="policy-empty">
           <p>
-            Ninguna pregunta publicada menciona <strong>{filtro}</strong>. Puede que sea algo
-            que todavía no hemos respondido aquí.
+            Ninguna pregunta publicada menciona <strong>{filtro}</strong>. Puede que sea algo que
+            todavía no hemos respondido aquí.
           </p>
           <Link className="policy-submit" href="/contacto">
             Preguntar directamente

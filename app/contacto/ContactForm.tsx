@@ -34,6 +34,12 @@ const VALORES_INICIALES = {
   mensaje: "",
 };
 
+/** Lleva el foco al primer campo con error, en el orden en que se leen. */
+function enfocarPrimerError(fallos: ErroresPorCampo) {
+  const primero = CAMPOS.find((campo) => fallos[campo]);
+  if (primero) document.getElementById(`soporte-${primero}`)?.focus();
+}
+
 export default function ContactForm() {
   const [valores, setValores] = useState(VALORES_INICIALES);
   const [errores, setErrores] = useState<ErroresPorCampo>({});
@@ -43,6 +49,7 @@ export default function ContactForm() {
   const [categoriaEnviada, setCategoriaEnviada] = useState<CategoriaSoporte | null>(null);
   const senuelo = useRef<HTMLInputElement>(null);
   const montadoEn = useRef<number>(0);
+  const enviandoAhora = useRef(false);
 
   // Tiempo transcurrido medido aquí, no una marca de tiempo: el reloj del
   // dispositivo no tiene por qué coincidir con el del servidor.
@@ -78,14 +85,16 @@ export default function ContactForm() {
     if (errores[campo]) setErrores((previos) => ({ ...previos, [campo]: undefined }));
   }
 
-  function enfocarPrimerError(fallos: ErroresPorCampo) {
-    const primero = CAMPOS.find((campo) => fallos[campo]);
-    if (primero) document.getElementById(`soporte-${primero}`)?.focus();
-  }
-
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (estado === "enviando") return;
+    /*
+      El guardia tiene que ser síncrono. `setEstado("enviando")` no surte efecto
+      hasta el siguiente renderizado, así que dos clics dentro del mismo tick
+      pasarían los dos y crearían dos tickets. El atributo `disabled` del botón
+      llega igual de tarde, porque depende del mismo renderizado.
+    */
+    if (enviandoAhora.current) return;
+    enviandoAhora.current = true;
 
     const analisis = solicitudSoporteSchema.safeParse(valores);
     if (!analisis.success) {
@@ -94,6 +103,7 @@ export default function ContactForm() {
       setEstado("error");
       setMensajeEstado("Revisa los campos marcados antes de enviar.");
       enfocarPrimerError(fallos);
+      enviandoAhora.current = false;
       return;
     }
 
@@ -137,6 +147,10 @@ export default function ContactForm() {
       setMensajeEstado(
         `No pudimos conectar con el servidor. Escríbenos directamente a ${CORREO_INSTITUCIONAL}.`
       );
+    } finally {
+      // Se libera en todas las salidas, incluida la exitosa: tras "escribir otro
+      // mensaje" el componente sigue montado y conserva esta referencia.
+      enviandoAhora.current = false;
     }
   }
 
@@ -162,13 +176,12 @@ export default function ContactForm() {
           <p>
             Tu mensaje sobre <strong>{etiqueta}</strong> quedó registrado, y su envío al buzón
             institucional está pendiente. Lo leeremos igual. Si necesitas una respuesta rápida,
-            escribe también a{" "}
-            <a href={`mailto:${CORREO_INSTITUCIONAL}`}>{CORREO_INSTITUCIONAL}</a>.
+            escribe también a <a href={`mailto:${CORREO_INSTITUCIONAL}`}>{CORREO_INSTITUCIONAL}</a>.
           </p>
         )}
         <p>
-          Acusamos recibo dentro de cinco días hábiles y procuramos entregar una respuesta
-          dentro de treinta días corridos.
+          Acusamos recibo dentro de cinco días hábiles y procuramos entregar una respuesta dentro de
+          treinta días corridos.
         </p>
         <button
           className="policy-again"
@@ -238,13 +251,12 @@ export default function ContactForm() {
           */
           <p className="policy-field-note" id="aviso-email">
             <Info aria-hidden="true" size={16} weight="fill" />
-            No es un correo institucional. Te responderemos igual, pero no podremos verificar
-            tu matrícula desde esa dirección.
+            No es un correo institucional. Te responderemos igual, pero no podremos verificar tu
+            matrícula desde esa dirección.
           </p>
         ) : (
           <p className="policy-field-hint" id="ayuda-email">
-            Usa tu correo institucional si puedes. Si no tienes acceso a él, cualquier otro
-            sirve.
+            Usa tu correo institucional si puedes. Si no tienes acceso a él, cualquier otro sirve.
           </p>
         )}
       </div>
@@ -307,8 +319,8 @@ export default function ContactForm() {
           </p>
         ) : (
           <p className="policy-field-hint" id="ayuda-mensaje">
-            Cuéntanos qué intentabas hacer, qué esperabas y qué ocurrió. Si es un error,
-            indícanos el ramo y el navegador.
+            Cuéntanos qué intentabas hacer, qué esperabas y qué ocurrió. Si es un error, indícanos
+            el ramo y el navegador.
           </p>
         )}
       </div>
@@ -334,10 +346,7 @@ export default function ContactForm() {
         </button>
       </div>
 
-      <p
-        aria-live="polite"
-        className={estado === "error" ? "policy-status bad" : "policy-status"}
-      >
+      <p aria-live="polite" className={estado === "error" ? "policy-status bad" : "policy-status"}>
         {estado === "error" && mensajeEstado ? (
           <WarningCircle aria-hidden="true" size={16} weight="fill" />
         ) : null}

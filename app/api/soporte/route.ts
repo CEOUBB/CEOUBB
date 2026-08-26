@@ -149,8 +149,7 @@ export async function POST(request: Request) {
   } catch {
     return Response.json(
       {
-        error:
-          "No pudimos registrar tu mensaje. Escríbenos directamente a contacto@ceoubb.com.",
+        error: "No pudimos registrar tu mensaje. Escríbenos directamente a contacto@ceoubb.com.",
       },
       { status: 500 }
     );

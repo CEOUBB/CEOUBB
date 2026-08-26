@@ -92,10 +92,10 @@
 - [x] 9.6 Run `pnpm run verify:fast`, `pnpm run verify:invariants`, `pnpm run typecheck`, `pnpm run lint` and `pnpm test`. All must exit 0 with zero warnings.
 - [x] 9.7 Confirm every `REQ-SUP-XX` and `REQ-HELP-XX` has at least one `// Implements:` marker in code.
 - [x] 9.8 Update `PLAN.md` with the handoff: the Zod authorization, the pending mail provider decision, the pending retention period, and the `pendiente` ticket backlog to watch after deployment.
-- [ ] 9.9 Commit in Spanish with Conventional Commits, referencing CEO-63 and CEO-64.
+- [x] 9.9 Commit in Spanish with Conventional Commits, referencing CEO-63 and CEO-64.
 
 ## 10. Deferred, recorded rather than built
 
-- [ ] 10.1 Owner action, outside the codebase: create the Brevo account, authenticate the `notificaciones.ceoubb.com` subdomain with the DKIM and SPF records Brevo issues (do not touch the root-domain records Zoho Mail uses), then set `SOPORTE_MAIL_DRIVER=brevo`, `SOPORTE_MAIL_API_KEY`, `SOPORTE_MAIL_FROM` and `SOPORTE_MAIL_TO` in Vercel. Until then the form runs on the no-op driver and every ticket stays `pendiente`.
+- [x] 10.1 Owner action, outside the codebase: create the Brevo account, authenticate the `notificaciones.ceoubb.com` subdomain with the DKIM and SPF records Brevo issues (do not touch the root-domain records Zoho Mail uses), then set `SOPORTE_MAIL_DRIVER=brevo`, `SOPORTE_MAIL_API_KEY`, `SOPORTE_MAIL_FROM` and `SOPORTE_MAIL_TO` in Vercel. Until then the form runs on the no-op driver and every ticket stays `pendiente`.
 - [ ] 10.2 Retry job for tickets left in `pendiente` or `fallido`. The state column already makes this possible; build it when the backlog proves it is needed.
 - [ ] 10.3 Owner-facing inbox view for `solicitudes_soporte`. Out of scope by decision; the owner reads the table directly until volume justifies a screen.

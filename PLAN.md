@@ -336,24 +336,24 @@ solo para el FAQ. Se eliminaron de `/privacidad`, `/terminos`, `/accesibilidad` 
 vistas del portal, preservando el sentido de cada frase. Quedan solo en comentarios de
 código, que la regla no cubre.
 
-### Pendiente para el propietario
+### Puesta en marcha (completada por el propietario el 26 de agosto de 2026)
 
-1. **Crear la cuenta de Brevo** y autenticar el subdominio `notificaciones.ceoubb.com` con
-   los registros DKIM y SPF que Brevo emita. No tocar los registros del dominio raíz que
-   usa Zoho Mail.
-2. **Configurar en Vercel**: `SOPORTE_MAIL_DRIVER=brevo`, `SOPORTE_MAIL_API_KEY`,
-   `SOPORTE_MAIL_FROM=soporte@notificaciones.ceoubb.com`,
-   `SOPORTE_MAIL_TO=contacto@ceoubb.com` y `SOPORTE_IP_PEPPER` (una cadena aleatoria
-   larga, distinta por ambiente).
-3. **Aplicar la migración** `drizzle/0008_solicitudes_soporte.sql` en Turso antes del
-   despliegue. Es aditiva y no toca ninguna tabla existente.
+1. Cuenta de Brevo creada y subdominio autenticado con los registros DKIM y SPF emitidos
+   por Brevo, cargados en Namecheap. Los registros del dominio raíz que usa Zoho Mail
+   quedaron intactos.
+2. Variables cargadas en Vercel: `SOPORTE_MAIL_DRIVER`, `SOPORTE_MAIL_API_KEY`,
+   `SOPORTE_MAIL_FROM`, `SOPORTE_MAIL_TO` y `SOPORTE_IP_PEPPER`.
+3. Migración `drizzle/0008_solicitudes_soporte.sql` aplicada en Turso.
+
+Queda una sola verificación después del despliegue: enviar un mensaje real desde
+`/contacto` en producción y confirmar que llega a la bandeja de Zoho y que la fila queda
+en estado `enviado`, no `pendiente`.
 
 ### Riesgos conocidos
 
-**Hasta que Brevo esté configurado, cada solicitud queda en estado `pendiente` y nadie
-recibe un correo.** Está diseñado así a propósito: el formulario funciona, la persona ve
-un acuse que dice con todas sus letras que el envío está pendiente, y el mensaje no se
-pierde. Pero hay que vigilar la cola:
+**Si Brevo dejara de responder, cada solicitud queda registrada y sin entregar.** Está
+diseñado así a propósito: la fila se escribe antes de intentar el envío, así que el
+mensaje no se pierde y la persona ve un acuse honesto. Conviene vigilar la cola:
 
 ```sql
 SELECT count(*) FROM solicitudes_soporte WHERE estado = 'pendiente';

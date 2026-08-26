@@ -73,9 +73,7 @@ export async function contarSolicitudesRecientes(ipHash: string): Promise<Conteo
     db
       .select({ total: sql<number>`count(*)` })
       .from(solicitudesSoporte)
-      .where(
-        and(eq(solicitudesSoporte.ipHash, ipHash), gte(solicitudesSoporte.createdAt, desde))
-      )
+      .where(and(eq(solicitudesSoporte.ipHash, ipHash), gte(solicitudesSoporte.createdAt, desde)))
       .limit(1),
     db
       .select({ total: sql<number>`count(*)` })
@@ -110,21 +108,19 @@ export async function registrarSolicitud(entrada: {
   userId: string | null;
 }): Promise<SolicitudPersistida> {
   const id = randomUUID();
-  await getDb()
-    .insert(solicitudesSoporte)
-    .values({
-      id,
-      nombre: entrada.nombre,
-      email: entrada.email,
-      rolDeclarado: entrada.rolDeclarado,
-      categoria: entrada.categoria,
-      asunto: entrada.asunto,
-      mensaje: entrada.mensaje,
-      estado: "pendiente",
-      ipHash: entrada.ipHash,
-      userId: entrada.userId,
-      createdAt: new Date().toISOString(),
-    });
+  await getDb().insert(solicitudesSoporte).values({
+    id,
+    nombre: entrada.nombre,
+    email: entrada.email,
+    rolDeclarado: entrada.rolDeclarado,
+    categoria: entrada.categoria,
+    asunto: entrada.asunto,
+    mensaje: entrada.mensaje,
+    estado: "pendiente",
+    ipHash: entrada.ipHash,
+    userId: entrada.userId,
+    createdAt: new Date().toISOString(),
+  });
 
   return {
     id,

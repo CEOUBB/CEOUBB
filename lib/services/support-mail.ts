@@ -103,7 +103,11 @@ async function entregarPorBrevo(solicitud: SolicitudParaCorreo): Promise<Resulta
     if (!respuesta.ok) {
       // El cuerpo de error del proveedor no se propaga: puede citar la petición
       // completa, credenciales incluidas.
-      return { entregado: false, intentado: true, error: `el proveedor respondió ${respuesta.status}` };
+      return {
+        entregado: false,
+        intentado: true,
+        error: `el proveedor respondió ${respuesta.status}`,
+      };
     }
     return { entregado: true, intentado: true };
   } catch (error) {

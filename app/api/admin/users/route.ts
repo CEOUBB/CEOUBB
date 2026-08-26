@@ -24,9 +24,7 @@ const consultaUsuariosSchema = z.object({
     .string()
     .nullable()
     .transform((valor) => parseInt(valor ?? "50", 10))
-    .transform((numero) =>
-      Number.isInteger(numero) ? Math.max(1, Math.min(100, numero)) : 50
-    ),
+    .transform((numero) => (Number.isInteger(numero) ? Math.max(1, Math.min(100, numero)) : 50)),
   q: z
     .string()
     .nullable()

@@ -34,7 +34,7 @@ Two accessory facts matter. `<details>`/`<summary>` is already the project's dis
 
 **Chosen:** `/contacto` and `/faq` render as standalone `.policy-page` documents, exactly like their three siblings, with `.policy-back` returning to the portal.
 
-**Alternative rejected:** mounting them inside `app/portal-shell.tsx` with the navy app bar and sidebar. The shell assumes an authenticated session and a selected view; these pages must answer a locked-out student. The `.policy-page` family *is* the project's public-document shell, and it is what the sibling pages use.
+**Alternative rejected:** mounting them inside `app/portal-shell.tsx` with the navy app bar and sidebar. The shell assumes an authenticated session and a selected view; these pages must answer a locked-out student. The `.policy-page` family _is_ the project's public-document shell, and it is what the sibling pages use.
 
 **Consequence:** no `hero-band`. `DESIGN.md` reserves the Midnight Navy band for the portal hero, and none of the three sibling pages carries one. A Read-mode document opens on its heading.
 
@@ -76,9 +76,12 @@ export const solicitudSoporteSchema = z.object({
 
 // What travels over the wire: the person's fields plus the two abuse controls.
 // They stay outside the form schema so a failure in either can never surface as
-// an error on a visible field.
+// an error on a visible field. The honeypot deliberately accepts any content:
+// rejecting it here would answer 400 with field errors, telling an automated
+// client exactly what gave it away. The route decides instead, and its answer
+// is indistinguishable from an acceptance.
 export const envioSoporteSchema = solicitudSoporteSchema.extend({
-  sitioWeb: z.string().max(0).optional(),
+  sitioWeb: z.string().max(200).optional(),
   duracionMs: z.number().int().nonnegative().optional(),
 });
 
@@ -91,7 +94,7 @@ export type SolicitudSoporte = z.infer<typeof solicitudSoporteSchema>;
 
 **Chosen:** accept any syntactically valid address. Derive `rolDeclarado` with `roleForEmail()` from `lib/access-policy.ts` and store it (nullable). When the domain is not institutional, the form shows a non-blocking note beneath the field: the message will still be answered, but enrollment cannot be verified from it.
 
-**Alternative rejected:** rejecting non-institutional domains with 403, mirroring the auth policy. `AGENTS.md` §2.1 governs *role derivation and authentication* — deciding who may enter and as what. A contact form decides nothing; and the single most likely sender is a person writing precisely because their institutional address is not working. Rejecting them closes the only door they have left.
+**Alternative rejected:** rejecting non-institutional domains with 403, mirroring the auth policy. `AGENTS.md` §2.1 governs _role derivation and authentication_ — deciding who may enter and as what. A contact form decides nothing; and the single most likely sender is a person writing precisely because their institutional address is not working. Rejecting them closes the only door they have left.
 
 The rule that does carry over intact: the domain check is never reimplemented. `roleForEmail()` is the SSOT, called, not copied.
 
@@ -179,10 +182,10 @@ export const solicitudesSoporte = sqliteTable(
 
 `lib/services/support-mail.ts` exports one function, `enviarCorreoSoporte(solicitud)`, returning `{ entregado: boolean; error?: string }`. Driver selection is by environment:
 
-| `SOPORTE_MAIL_DRIVER` | Behavior |
-| :--- | :--- |
-| unset or `none` | No transport. Returns `{ entregado: false, error: "sin proveedor configurado" }`; the ticket stays `pendiente`. |
-| `brevo` | `POST https://api.brevo.com/v3/smtp/email` with an `api-key` header, plain-text JSON body, `replyTo` set to the submitter. |
+| `SOPORTE_MAIL_DRIVER` | Behavior                                                                                                                   |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| unset or `none`       | No transport. Returns `{ entregado: false, error: "sin proveedor configurado" }`; the ticket stays `pendiente`.            |
+| `brevo`               | `POST https://api.brevo.com/v3/smtp/email` with an `api-key` header, plain-text JSON body, `replyTo` set to the submitter. |
 
 **Chosen provider: Brevo.** The owner's criterion was the most generous permanent free tier, and Brevo carries 300 transactional emails per day with no credit card, no time limit and no expiry, roughly 9,000 a month. Resend and MailerSend both cap at 3,000 a month, Postmark at 100, and SendGrid and Mailgun no longer offer a permanent free tier at all. At the traffic a university support form actually sees, Brevo's ceiling is roughly thirty times the realistic load, so the paid tier only ever arrives if something goes very right or very wrong.
 
@@ -283,17 +286,17 @@ None. The mail provider is resolved in D9, the retention period in D13, and the 
 
 ## Blast Radius
 
-| File | Change | Risk |
-| :--- | :--- | :--- |
-| `app/contacto/page.tsx`, `ContactForm.tsx` | new | none — new route |
-| `app/faq/page.tsx`, `FaqBrowser.tsx`, `faq-content.ts` | new | none — new route |
-| `app/api/soporte/route.ts` | new | new public write endpoint; abuse controls per D7 |
-| `lib/support-request.ts`, `lib/services/support-mail.ts`, `lib/services/support-requests.ts` | new | none |
-| `db/schema.ts` + migration | additive table | low — no existing table touched |
-| `app/globals.css` | new classes under `.policy-page` | low — additive, no existing selector edited |
-| `app/api/admin/users/route.ts` | hand-rolled → Zod | **medium** — live admin endpoint; behavior preserved, covered by `tests/admin-api.test.ts` |
-| `app/sitemap.xml/route.ts` | two `<url>` entries | none |
-| `app/Portal.tsx`, `app/portal-shell.tsx` | footer and sidebar links | low |
-| `app/accesibilidad/page.tsx` | conformance scope list | low — published claim, wording reviewed |
-| `app/privacidad/page.tsx` | new data category and retention row | **medium** — published legal text, wording reviewed |
-| `package.json` | `+ zod` | low — authorized |
+| File                                                                                         | Change                              | Risk                                                                                       |
+| :------------------------------------------------------------------------------------------- | :---------------------------------- | :----------------------------------------------------------------------------------------- |
+| `app/contacto/page.tsx`, `ContactForm.tsx`                                                   | new                                 | none — new route                                                                           |
+| `app/faq/page.tsx`, `FaqBrowser.tsx`, `faq-content.ts`                                       | new                                 | none — new route                                                                           |
+| `app/api/soporte/route.ts`                                                                   | new                                 | new public write endpoint; abuse controls per D7                                           |
+| `lib/support-request.ts`, `lib/services/support-mail.ts`, `lib/services/support-requests.ts` | new                                 | none                                                                                       |
+| `db/schema.ts` + migration                                                                   | additive table                      | low — no existing table touched                                                            |
+| `app/globals.css`                                                                            | new classes under `.policy-page`    | low — additive, no existing selector edited                                                |
+| `app/api/admin/users/route.ts`                                                               | hand-rolled → Zod                   | **medium** — live admin endpoint; behavior preserved, covered by `tests/admin-api.test.ts` |
+| `app/sitemap.xml/route.ts`                                                                   | two `<url>` entries                 | none                                                                                       |
+| `app/Portal.tsx`, `app/portal-shell.tsx`                                                     | footer and sidebar links            | low                                                                                        |
+| `app/accesibilidad/page.tsx`                                                                 | conformance scope list              | low — published claim, wording reviewed                                                    |
+| `app/privacidad/page.tsx`                                                                    | new data category and retention row | **medium** — published legal text, wording reviewed                                        |
+| `package.json`                                                                               | `+ zod`                             | low — authorized                                                                           |

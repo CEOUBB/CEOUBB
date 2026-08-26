@@ -97,15 +97,9 @@ test("una entrega correcta llama al punto de Brevo con la carga esperada", async
 
     // El remitente es la plataforma; quien escribió viaja solo en replyTo, para
     // no romper la autenticación de dominio del remitente.
-    assert.equal(
-      (carga.sender as { email: string }).email,
-      "soporte@notificaciones.ceoubb.com"
-    );
+    assert.equal((carga.sender as { email: string }).email, "soporte@notificaciones.ceoubb.com");
     assert.equal((carga.to as { email: string }[])[0]?.email, "contacto@ceoubb.com");
-    assert.equal(
-      (carga.replyTo as { email: string }).email,
-      "persona@alumnos.ubiobio.cl"
-    );
+    assert.equal((carga.replyTo as { email: string }).email, "persona@alumnos.ubiobio.cl");
 
     // Sin parte HTML, nunca.
     assert.equal("htmlContent" in carga, false);

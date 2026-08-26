@@ -39,8 +39,8 @@ export default function FaqPage() {
         <h1>Preguntas frecuentes</h1>
         <p className="policy-lead">
           Lo que la comunidad UBB pregunta con más frecuencia sobre acceso, secciones,
-          calificaciones, biblioteca y aplicación móvil. Cada respuesta tiene su propio enlace,
-          por si necesitas compartirla.
+          calificaciones, biblioteca y aplicación móvil. Cada respuesta tiene su propio enlace, por
+          si necesitas compartirla.
         </p>
 
         <ul className="policy-index">
@@ -57,9 +57,9 @@ export default function FaqPage() {
 
         <h2 id="sin-respuesta">¿No encontraste tu respuesta?</h2>
         <p>
-          Escríbenos y te respondemos. Acusamos recibo dentro de cinco días hábiles y
-          procuramos entregar una respuesta dentro de treinta días corridos. Si la pregunta se
-          repite, termina publicada en esta página.
+          Escríbenos y te respondemos. Acusamos recibo dentro de cinco días hábiles y procuramos
+          entregar una respuesta dentro de treinta días corridos. Si la pregunta se repite, termina
+          publicada en esta página.
         </p>
         <p>
           <Link className="policy-submit" href="/contacto">

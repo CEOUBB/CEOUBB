@@ -83,9 +83,7 @@ test("REQ-SUP-02: rechaza un cuerpo sobre el máximo declarado en la cabecera", 
 });
 
 test("REQ-SUP-02: rechaza un cuerpo real sobre el máximo aunque la cabecera mienta", async () => {
-  const respuesta = await POST(
-    peticion({ ...CUERPO_VALIDO, mensaje: "a".repeat(9 * 1024) })
-  );
+  const respuesta = await POST(peticion({ ...CUERPO_VALIDO, mensaje: "a".repeat(9 * 1024) }));
   assert.equal(respuesta.status, 413);
   assert.equal((await filas()).length, 0);
 });

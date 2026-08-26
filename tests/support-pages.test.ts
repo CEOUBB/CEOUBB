@@ -188,11 +188,7 @@ test("el FAQ preserva el descargo de independencia", () => {
 test("REQ-HELP-04: cada control del formulario tiene etiqueta permanente", async () => {
   const fuente = await leer("../app/contacto/ContactForm.tsx");
   for (const campo of ["nombre", "email", "categoria", "asunto", "mensaje"]) {
-    assert.match(
-      fuente,
-      new RegExp(`htmlFor="soporte-${campo}"`),
-      `falta la etiqueta de ${campo}`
-    );
+    assert.match(fuente, new RegExp(`htmlFor="soporte-${campo}"`), `falta la etiqueta de ${campo}`);
     assert.match(fuente, new RegExp(`id="soporte-${campo}"`), `falta el id de ${campo}`);
   }
   // La validación se expone de forma programática, no solo por color.
