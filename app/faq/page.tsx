@@ -61,11 +61,14 @@ export default function FaqPage() {
           entregar una respuesta dentro de treinta días corridos. Si la pregunta se repite, termina
           publicada en esta página.
         </p>
-        <p>
-          <Link className="policy-submit" href="/contacto">
-            Ir a contacto y soporte
-          </Link>
-        </p>
+        {/*
+          Sin envoltorio `<p>`: una píldora de acción no es contenido de
+          párrafo, y `.policy-page p a` le impondría subrayado y color de
+          enlace por encima de los suyos.
+        */}
+        <Link className="policy-submit" href="/contacto">
+          Ir a contacto y soporte
+        </Link>
 
         <nav aria-label="Documentos relacionados">
           Ver también la <Link href="/privacidad">política de privacidad</Link>, los{" "}

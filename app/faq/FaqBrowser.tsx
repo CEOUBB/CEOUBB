@@ -108,7 +108,11 @@ export default function FaqBrowser() {
       </div>
 
       {grupos.map((categoria) => (
-        <section aria-labelledby={`titulo-${categoria.slug}`} key={categoria.slug}>
+        <section
+          aria-labelledby={`titulo-${categoria.slug}`}
+          className="policy-section"
+          key={categoria.slug}
+        >
           <h2 id={`titulo-${categoria.slug}`}>{categoria.titulo}</h2>
           <div className="policy-group">
             {categoria.preguntas.map((pregunta) => (

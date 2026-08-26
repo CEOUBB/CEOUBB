@@ -10346,6 +10346,7 @@ div.editor-latex-token {
   gap: var(--space-md);
 }
 
+.policy-page .policy-submit,
 .policy-submit {
   display: inline-flex;
   align-items: center;
@@ -10365,12 +10366,20 @@ div.editor-latex-token {
   transition: background var(--transition-fast);
 }
 
-.policy-submit:hover:not(:disabled),
-.policy-submit:active:not(:disabled) {
+/*
+  El rotulo se declara en cada estado. Sin esto, la regla global `a:hover`
+  gana por especificidad y pinta el texto del mismo azul que el fondo, dejando
+  la pildora vacia cuando es un enlace y no un boton.
+*/
+.policy-page .policy-submit:hover:not(:disabled),
+.policy-page .policy-submit:active:not(:disabled),
+.policy-page .policy-submit:focus-visible:not(:disabled) {
   background: var(--color-primary-active);
+  color: var(--color-on-primary);
+  text-decoration: none;
 }
 
-.policy-submit:disabled {
+.policy-page .policy-submit:disabled {
   background: var(--canvas-soft);
   border-color: var(--border-hairline);
   color: var(--text-muted);
@@ -10525,6 +10534,23 @@ div.editor-latex-token {
 }
 
 /* Preguntas ------------------------------------------------- */
+
+/*
+  Ritmo de la pagina de preguntas: mucho aire entre categorias, menos entre el
+  titulo y su grupo, y el grupo apretado. El encabezado tiene que leerse como
+  parte de lo que viene despues, no flotando a medio camino entre dos bloques.
+*/
+.policy-page .policy-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  /* Se suma al hueco de 16px del articulo: 32px totales entre categorias. */
+  margin-top: var(--space-md);
+}
+
+.policy-page .policy-section h2 {
+  margin-top: 0;
+}
 
 .policy-group {
   display: flex;

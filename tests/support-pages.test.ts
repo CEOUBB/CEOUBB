@@ -221,6 +221,44 @@ test("REQ-SUP-03: el señuelo queda fuera del foco y de la tecnología asistiva"
   assert.match(bloque.slice(0, 300), /clip-path: inset\(50%\)/);
 });
 
+test("REQ-HELP-10: la píldora de acción conserva su rótulo al pasar el cursor", async () => {
+  /*
+    La regla global `a:hover { color: var(--color-primary-active) }` tiene
+    especificidad (0,1,1) y gana a una clase suelta, así que pintaba el texto
+    del mismo azul que el fondo y dejaba el botón vacío. El estado se declara
+    calificado bajo `.policy-page` y nombrando el color de forma explícita.
+  */
+  const estilos = await leer("../app/globals.css");
+  const bloque = estilos.slice(estilos.indexOf("/* ── Contacto y preguntas frecuentes"));
+  const hover = bloque.slice(bloque.indexOf(".policy-page .policy-submit:hover"));
+  assert.ok(
+    hover.startsWith(".policy-page .policy-submit:hover"),
+    "el estado hover debe calificarse bajo .policy-page para ganar a `a:hover`"
+  );
+  const declaraciones = hover.slice(0, hover.indexOf("}"));
+  assert.match(declaraciones, /color: var\(--color-on-primary\)/);
+  assert.match(declaraciones, /text-decoration: none/);
+});
+
+test("REQ-HELP-06: el ritmo vertical decrece de categoría a pregunta", async () => {
+  /*
+    Más aire sobre el título que debajo: el encabezado pertenece a lo que viene
+    después, no a lo que quedó arriba. La escala es 32 / 12 / 8, tomada de los
+    tokens de espaciado.
+  */
+  const estilos = await leer("../app/globals.css");
+  const seccion = estilos.slice(estilos.indexOf(".policy-page .policy-section {"));
+  const declaraciones = seccion.slice(0, seccion.indexOf("}"));
+  assert.match(declaraciones, /gap: var\(--space-sm\)/, "12px entre título y grupo");
+  assert.match(declaraciones, /margin-top: var\(--space-md\)/, "16px extra entre categorías");
+
+  const grupo = estilos.slice(estilos.indexOf(".policy-group {"));
+  assert.match(grupo.slice(0, grupo.indexOf("}")), /gap: var\(--space-xs\)/, "8px entre preguntas");
+
+  const navegador = await leer("../app/faq/FaqBrowser.tsx");
+  assert.match(navegador, /className="policy-section"/);
+});
+
 test("REQ-HELP-10: la apertura del acordeón respeta el movimiento reducido", async () => {
   const estilos = await leer("../app/globals.css");
   const bloque = estilos.slice(estilos.indexOf("/* ── Contacto y preguntas frecuentes"));
