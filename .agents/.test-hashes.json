@@ -13,7 +13,7 @@
   "tests/ci-workflows.test.ts": "0f9444b801bad588abd2e895772bc28214a4751c8f6cabbfc9d166865fe8558b",
   "tests/communications.test.ts": "e8a6d9054fcc22b2c67388dfff2cf064ae6517f5819a677236a99f18064a9468",
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
-  "tests/deep-security-remediation.test.ts": "9f27fa0c64c7f097fe83a9f142060001d2885b0ffdbae1c4965a85fb0fe73a3c",
+  "tests/deep-security-remediation.test.ts": "0ea3f1d7ca7c82ca4ea0f48f8439787fc154df5be35f914b4d67649c257baf0d",
   "tests/dev-auth.test.ts": "fd394231e676537b5ccf08154366b3de93e6efaecda47446e7e3b5717313c71c",
   "tests/discord-interactions.test.ts": "c552bdcb242b75e39bf4861b7b181ccb443f79856f61024c48bfd35a01e50a4d",
   "tests/fast-boot-session.test.ts": "23d7d4cde7ac24946bfb018923215de6ca88f016d017d65429cd8022f801c800",
