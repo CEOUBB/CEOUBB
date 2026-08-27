@@ -291,12 +291,25 @@ function ProfilePhotoPanel({
   /* `movementX` no llega en todos los navegadores táctiles, así que el arrastre
      guarda la última posición del puntero y calcula el avance por su cuenta. */
   const dragFrom = useRef<{ x: number; y: number } | null>(null);
+  const pendingUrl = useRef<string | null>(null);
 
-  /* La URL de objeto se libera al cambiar de imagen y al salir de la pantalla. */
+  /*
+    La URL de objeto se libera al cambiar de imagen y al salir de la pantalla.
+    `pendingUrl` cubre la ventana en que la imagen todavía se está decodificando:
+    si el usuario abandona la pantalla ahí, ni `onload` ni `onerror` llegan a
+    correr y sin este registro el blob quedaría anclado hasta recargar.
+  */
   useEffect(() => {
     if (!source) return;
     return () => URL.revokeObjectURL(source.url);
   }, [source]);
+
+  useEffect(
+    () => () => {
+      if (pendingUrl.current) URL.revokeObjectURL(pendingUrl.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (canvas && source) paintCrop(canvas, source.image, crop);
@@ -321,12 +334,15 @@ function ProfilePhotoPanel({
     }
     setPhotoError("");
     const url = URL.createObjectURL(file);
+    pendingUrl.current = url;
     const image = new Image();
     image.onload = () => {
+      pendingUrl.current = null;
       setCrop(centeredCrop(image, MIN_ZOOM));
       setSource({ url, image });
     };
     image.onerror = () => {
+      pendingUrl.current = null;
       URL.revokeObjectURL(url);
       setPhotoError("No se pudo abrir esa imagen. Prueba con otro archivo.");
     };
