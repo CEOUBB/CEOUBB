@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { ChatCenteredText, CheckCircle, Paperclip, X } from "@phosphor-icons/react";
+import {
+  CaretLeft,
+  CaretRight,
+  ChatCenteredText,
+  CheckCircle,
+  MagnifyingGlass,
+  Paperclip,
+  X,
+} from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import {
   ClassroomState,
@@ -32,7 +40,7 @@ import {
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
-import type { Note } from "./classroom-utils";
+import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 
 const EMPTY_SCORES: GradeScores = {};
@@ -551,6 +559,7 @@ function GradeFeedbackNote({ feedback }: { feedback: string | undefined }) {
   );
 }
 
+// Implements: REQ-PAG-01, REQ-PAG-02, REQ-PAG-03
 function TeacherGrades({
   course,
   classroom,
@@ -568,6 +577,30 @@ function TeacherGrades({
   const [feedbackEditor, setFeedbackEditor] = useState<FeedbackEditor | null>(null);
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query.trim());
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredStudents = useMemo(
+    () => filterRoster(students, deferredQuery),
+    [students, deferredQuery]
+  );
+
+  const paginated = useMemo(
+    () => paginateList(filteredStudents, currentPage, pageSize),
+    [filteredStudents, currentPage, pageSize]
+  );
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const handleSetScore = useCallback(
     async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
@@ -637,34 +670,115 @@ function TeacherGrades({
         </div>
       )}
       {gradebook.length > 0 && (
-        <div className="grades-matrix">
-          <div className="grades-matrix-head">
-            <span>Estudiante</span>
-            {gradebook.map((item) => (
-              <span className="grade-column" key={item.id}>
-                {item.name}
-              </span>
-            ))}
-            <span>Promedio</span>
-          </div>
-          {students.length === 0 && (
-            <p className="empty-row">
-              Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
-            </p>
+        <>
+          {students.length > 0 && (
+            <search className="classroom-list-toolbar">
+              <div className="classroom-search-box">
+                <MagnifyingGlass aria-hidden="true" size={16} />
+                <input
+                  aria-label="Buscar estudiante por nombre o correo"
+                  id="teacher-grades-search"
+                  onChange={(event) => handleQueryChange(event.target.value)}
+                  placeholder="Buscar por nombre o correo…"
+                  type="search"
+                  value={query}
+                />
+                {query && (
+                  <button
+                    aria-label="Limpiar búsqueda"
+                    className="search-clear-btn"
+                    onClick={() => handleQueryChange("")}
+                    type="button"
+                  >
+                    <X aria-hidden="true" size={14} />
+                  </button>
+                )}
+              </div>
+              <div className="classroom-page-size">
+                <label htmlFor="teacher-grades-page-size">Mostrar:</label>
+                <select
+                  id="teacher-grades-page-size"
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                  value={pageSize}
+                >
+                  <option value={25}>25 por página</option>
+                  <option value={50}>50 por página</option>
+                  <option value={100}>100 por página</option>
+                </select>
+              </div>
+            </search>
           )}
-          {students.map((student) => (
-            <TeacherStudentRow
-              gradebook={gradebook}
-              feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
-              key={student.userId}
-              onEditFeedback={openFeedback}
-              onSetScore={handleSetScore}
-              scores={classScores[student.userId] ?? EMPTY_SCORES}
-              student={student}
-              readOnly={readOnly}
-            />
-          ))}
-        </div>
+
+          <div className="grades-matrix" id="teacher-grades-matrix">
+            <div className="grades-matrix-head">
+              <span>Estudiante</span>
+              {gradebook.map((item) => (
+                <span className="grade-column" key={item.id}>
+                  {item.name}
+                </span>
+              ))}
+              <span>Promedio</span>
+            </div>
+            {students.length === 0 && (
+              <p className="empty-row">
+                Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
+              </p>
+            )}
+            {students.length > 0 && filteredStudents.length === 0 && (
+              <p className="empty-row" role="status">
+                No se encontraron estudiantes que coincidan con “{deferredQuery}”.
+              </p>
+            )}
+            {paginated.items.map((student) => (
+              <TeacherStudentRow
+                gradebook={gradebook}
+                feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
+                key={student.userId}
+                onEditFeedback={openFeedback}
+                onSetScore={handleSetScore}
+                scores={classScores[student.userId] ?? EMPTY_SCORES}
+                student={student}
+                readOnly={readOnly}
+              />
+            ))}
+          </div>
+          {filteredStudents.length > 0 && (
+            <nav aria-label="Paginación de libro de notas" className="classroom-pagination">
+              <span className="pagination-summary num">
+                Mostrando {paginated.startIndex}–{paginated.endIndex} de {paginated.totalItems}{" "}
+                estudiantes
+                {deferredQuery ? ` (${students.length} en total)` : ""}
+              </span>
+              {paginated.totalPages > 1 && (
+                <div className="pagination-actions">
+                  <button
+                    aria-label="Página anterior"
+                    className="pagination-btn"
+                    disabled={paginated.page <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    type="button"
+                  >
+                    <CaretLeft aria-hidden="true" size={16} />
+                    Anterior
+                  </button>
+                  <span className="pagination-indicator num">
+                    Página {paginated.page} de {paginated.totalPages}
+                  </span>
+                  <button
+                    aria-label="Página siguiente"
+                    className="pagination-btn"
+                    disabled={paginated.page >= paginated.totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(paginated.totalPages, p + 1))}
+                    type="button"
+                  >
+                    Siguiente
+                    <CaretRight aria-hidden="true" size={16} />
+                  </button>
+                </div>
+              )}
+            </nav>
+          )}
+        </>
       )}
       {feedbackEditor && (
         <FeedbackDialog

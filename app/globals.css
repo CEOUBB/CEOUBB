@@ -5230,6 +5230,161 @@ div.editor-latex-token {
   box-shadow: var(--shadow-1);
 }
 
+/* ── Aula · Listas grandes y paginación ──────────────────── */
+
+.classroom-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.classroom-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+  padding: 6px 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.classroom-search-box:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+  color: var(--text-body);
+}
+
+.classroom-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 13.5px;
+  color: var(--text-body);
+  outline: none;
+}
+
+.classroom-search-box input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.materials-search-box {
+  margin-bottom: var(--space-sm);
+  max-width: 100%;
+}
+
+.search-clear-btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--canvas-soft);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.search-clear-btn:hover {
+  background: var(--hairline);
+  color: var(--ink);
+}
+
+.classroom-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.classroom-page-size select {
+  padding: 5px 8px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+
+.classroom-page-size select:focus-visible {
+  border-color: var(--color-primary);
+}
+
+.classroom-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  padding: var(--space-xs) 0;
+}
+
+.pagination-summary {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pagination-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--canvas-soft);
+  border-color: var(--border-subtle);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-indicator {
+  padding: 0 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .enrollment-import-head,
 .enrollment-import-title,
 .enrollment-import-actions,
