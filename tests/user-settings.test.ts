@@ -163,3 +163,74 @@ test("REQ-CFG-01: Configuración vive en el menú de cuenta y abre la pantalla d
   const portal = source("app/Portal.tsx");
   assert.match(portal, /onSettings=\{\(\) => setScreen\("settings"\)\}/);
 });
+
+test("REQ-CFG-04: el aviso de publicación se envía por token, nunca a un topic", () => {
+  const fn = source("firebase/functions/index.js");
+  const emitter = fn.slice(
+    fn.indexOf("exports.notifyStudentsOnCoursePost"),
+    fn.indexOf("exports.deleteMyAccount")
+  );
+  // El envío a topic no puede consultar la preferencia de cada destinatario.
+  assert.doesNotMatch(emitter, /topic:/);
+  assert.doesNotMatch(fn, /course_\$\{topicCourse\}_students/);
+  assert.match(emitter, /sendEachForMulticast\(\{ \.\.\.message, tokens \}\)/);
+  assert.match(emitter, /enrolledStudentIds\(db, courseId\)/);
+  assert.match(emitter, /authorizedTokens\(db, uids, "sectionPublications"\)/);
+  // Sin matriculados o sin dispositivos autorizados no se llama a Messaging.
+  assert.match(emitter, /if \(uids\.length === 0\) return;/);
+  assert.match(emitter, /if \(refsByToken\.size === 0\) return;/);
+});
+
+test("REQ-CFG-04: la resolución de destinatarios se mantiene acotada por lote", () => {
+  const fn = source("firebase/functions/index.js");
+  // Una lectura por estudiante, no dos: token y permiso viajan en el mismo documento.
+  assert.match(fn, /fieldMask: \["fcmToken", "pushChannels"\]/);
+  assert.match(fn, /\.select\(\)\s*\n\s*\.get\(\)/);
+  assert.match(fn, /const PROFILE_BATCH = 300;/);
+  assert.match(fn, /const MULTICAST_BATCH = 500;/);
+  assert.match(fn, /chunk\(uids, PROFILE_BATCH\)/);
+  assert.match(fn, /chunk\(\[\.\.\.refsByToken\.keys\(\)\], MULTICAST_BATCH\)/);
+  // La ausencia de preferencia significa canal activo.
+  assert.match(fn, /if \(channels && channels\[channel\] === false\) continue;/);
+  // Los tokens muertos se dan de baja para no volver a pagarlos.
+  assert.match(fn, /FieldValue\.delete\(\)/);
+  assert.match(fn, /messaging\/registration-token-not-registered/);
+});
+
+test("REQ-CFG-04: la consulta de matriculados tiene su índice declarado", () => {
+  const indexes = JSON.parse(source("firebase/firestore.indexes.json")) as {
+    indexes: { collectionGroup: string; queryScope: string; fields: { fieldPath: string }[] }[];
+  };
+  const index = indexes.indexes.find(
+    (entry) => entry.collectionGroup === "sections" && entry.queryScope === "COLLECTION_GROUP"
+  );
+  assert.ok(index, "falta el índice de grupo de colección para las matrículas");
+  assert.deepEqual(
+    index.fields.map((field) => field.fieldPath),
+    ["seccionId", "role"]
+  );
+});
+
+test("REQ-CFG-04: las banderas de push se proyectan junto al documento canónico", () => {
+  const service = source("lib/services/user-profile.ts");
+  assert.match(service, /pushChannels: \{ mapValue: \{ fields: pushFields \} \}/);
+  assert.match(service, /updateMask: \{ fieldPaths: \["pushChannels"\] \}/);
+  // Un solo commit: la proyección no puede quedar desfasada del documento real.
+  assert.match(service, /commitFirestoreWrites\(\[write, projection\]\)/);
+  // El cliente no puede escribir esas banderas: la proyección es del servidor.
+  const rules = source("firebase/firestore.rules");
+  const update = rules.slice(rules.indexOf("match /users/{userId}"));
+  assert.doesNotMatch(update.slice(0, 900), /pushChannels/);
+});
+
+test("REQ-AUTH-08: la consulta acotada de sesiones es determinista", () => {
+  const route = source("app/api/profile/sessions/route.ts");
+  const ordered = route.match(
+    /\.orderBy\(desc\(sessions\.createdAt\), desc\(sessions\.tokenHash\)\)/g
+  );
+  // Sin orden, dos consultas acotadas pueden devolver subconjuntos distintos y
+  // la revocación fallaría con 403 sobre una sesión propia.
+  assert.equal(ordered && ordered.length, 2);
+  const limits = route.match(/\.limit\(MAX_ACTIVE_SESSIONS\)/g);
+  assert.equal(limits && limits.length, 2);
+});

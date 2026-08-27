@@ -166,7 +166,27 @@ export async function writePreferencesToFirestore(
     },
     updateMask: { fieldPaths: ["channels", "reducedMotion"] },
   };
-  await commitFirestoreWrites([write]);
+
+  /*
+    Proyección para el emisor de push. La Cloud Function que avisa de una
+    publicación necesita token y permiso del mismo documento: si tuviera que
+    abrir además la subcolección de preferencias, cada publicación costaría dos
+    lecturas por estudiante en vez de una. Las banderas viajan en el mismo
+    commit que el documento canónico, así que no pueden quedar desfasadas.
+  */
+  const pushFields: Record<string, FirestoreValue> = {};
+  for (const channel of NOTIFICATION_CHANNELS) {
+    pushFields[channel] = { booleanValue: preferences.channels[channel].push };
+  }
+  const projection: FirestoreWrite = {
+    update: {
+      name: `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}`,
+      fields: { pushChannels: { mapValue: { fields: pushFields } } },
+    },
+    updateMask: { fieldPaths: ["pushChannels"] },
+  };
+
+  await commitFirestoreWrites([write, projection]);
 }
 
 type FirestoreReadValue = {
@@ -208,22 +228,4 @@ export async function readPreferencesFromFirestore(userId: string): Promise<User
     channels,
     reducedMotion: readBoolean(document.fields?.reducedMotion, false),
   };
-}
-
-/*
-  El emisor de push consulta esta función antes de enviar. Un canal apagado no
-  produce mensaje; ante cualquier fallo de lectura se conserva el valor por
-  defecto para no silenciar avisos por un error transitorio.
-*/
-// Implements: REQ-CFG-04
-export async function pushChannelEnabled(
-  userId: string,
-  channel: NotificationChannel
-): Promise<boolean> {
-  try {
-    const preferences = await readPreferencesFromFirestore(userId);
-    return preferences.channels[channel].push;
-  } catch {
-    return defaultPreferences().channels[channel].push;
-  }
 }

@@ -423,24 +423,34 @@ repare `drizzle/meta`.
 Falta aplicar la migración en Turso de producción antes de desplegar, y publicar las
 reglas nuevas de Firestore y Storage.
 
-### Canales de aviso sin emisor
+### Envío de push dirigido por token
 
-Las cuatro preferencias se persisten y se respetan donde hay a quién respetar, pero sólo
-una tiene emisor hoy:
+`notifyStudentsOnCoursePost` dejó de publicar a un topic. Ahora resuelve la matrícula activa
+de estudiante de la sección con una consulta de grupo de colección sobre `sections`
+(`seccionId` y `role`, con su índice declarado en `firebase/firestore.indexes.json`), lee de
+cada perfil sólo `fcmToken` y `pushChannels` con `getAll` y máscara de campos, descarta a
+quien apagó el canal y envía por lotes con `sendEachForMulticast`. Un token que FCM declara
+muerto se borra en el acto.
 
-- `sectionPublications`: emitida por `notifyStudentsOnCoursePost` en
-  `firebase/functions/index.js`, **a un topic** (`course_{id}_students`) al que hoy no se
-  suscribe ningún dispositivo.
-- `teacherAnnouncements`, `gradeChanges`, `assessmentReminders`: sin emisor. La preferencia
-  queda guardada y la interfaz lo dice en pantalla en vez de prometer un aviso que no
-  existe.
+El costo por publicación queda en una lectura por estudiante matriculado más una llamada de
+mensajería por cada 500 dispositivos. Las banderas de push viajan en el documento del
+usuario, no en la subcolección de preferencias, precisamente para no pagar una segunda
+lectura por estudiante; `writePreferencesToFirestore` escribe documento canónico y proyección
+en el mismo commit, así que no pueden quedar desfasados.
 
-**Limitación conocida.** Un envío por topic no puede consultar la preferencia de cada
-destinatario. Lo que sí quedó implementado es el corte por dispositivo: si la cuenta apagó
-todos sus canales de push, `registerPushNotifications` no registra el dispositivo y limpia
-su `fcmToken`. Honrar la preferencia canal por canal exige convertir esa Cloud Function a
-envío por token, que es trabajo aparte y cambia la semántica de entrega de push en todo el
-producto.
+Sin matriculados o sin dispositivos autorizados la función termina sin llamar a Messaging.
+
+**Canales todavía sin emisor.** `sectionPublications` es el único con emisor.
+`teacherAnnouncements`, `gradeChanges` y `assessmentReminders` se persisten y se respetan en
+cuanto exista quien los envíe; mientras tanto la propia pantalla de configuración lo dice en
+vez de prometer un aviso que no llega.
+
+**Corte por dispositivo.** Complementa al filtro del servidor: si la cuenta apagó todos sus
+canales de push, `registerPushNotifications` no registra el dispositivo y limpia su
+`fcmToken`.
+
+**Al desplegar hay que publicar el índice nuevo** junto con las reglas, o la primera
+publicación fallará con `FAILED_PRECONDITION`.
 
 ### Superficie de reglas
 

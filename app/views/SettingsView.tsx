@@ -176,85 +176,121 @@ function SettingsSwitch({
 }
 
 /*
-  Una sola columna de lectura con cuatro módulos etiquetados. Cada control lleva
-  su etiqueta asociada y cada mensaje de validación apunta a su campo, porque a
-  320 CSS px el error suele quedar fuera de la vista del control que lo produjo.
+  El editor de recorte es presentación pura: recibe el encuadre y devuelve
+  intenciones. Separarlo deja el módulo de foto a la altura de lo que hace, que
+  es hablar con la API, y no de cómo se dibujan tres deslizadores.
 */
-// Implements: REQ-CFG-08
-export function SettingsView({
+// Implements: REQ-CFG-02
+function CropEditor({
+  crop,
+  slack,
+  framePercent,
+  onCanvas,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onZoomChange,
+  onFrameChange,
+}: {
+  crop: CropState;
+  slack: { x: number; y: number };
+  framePercent: { x: number; y: number };
+  onCanvas: (canvas: HTMLCanvasElement | null) => void;
+  onPointerDown: (event: ReactPointerEvent<HTMLCanvasElement>) => void;
+  onPointerMove: (event: ReactPointerEvent<HTMLCanvasElement>) => void;
+  onPointerUp: (event: ReactPointerEvent<HTMLCanvasElement>) => void;
+  onZoomChange: (value: number) => void;
+  onFrameChange: (axis: "x" | "y", percent: number) => void;
+}) {
+  return (
+    <div className="settings-crop">
+      <canvas
+        aria-label="Vista previa del recorte cuadrado. Arrastra sobre la imagen para reencuadrarla."
+        className="settings-crop-canvas"
+        height={CROP_SIZE}
+        onPointerCancel={onPointerUp}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        ref={onCanvas}
+        role="img"
+        width={CROP_SIZE}
+      />
+
+      <div className="settings-slider">
+        <label htmlFor="settings-crop-zoom">Acercamiento</label>
+        <input
+          id="settings-crop-zoom"
+          max={MAX_ZOOM}
+          min={MIN_ZOOM}
+          onChange={(event) => onZoomChange(Number(event.target.value))}
+          step={0.01}
+          type="range"
+          value={crop.zoom}
+        />
+      </div>
+
+      {/*
+            Los dos deslizadores repiten con teclado lo que el arrastre hace
+            con el puntero. Se desactivan cuando el eje no tiene holgura,
+            porque ahí no hay nada que reencuadrar.
+          */}
+      <div className="settings-slider">
+        <label htmlFor="settings-crop-x">Encuadre horizontal</label>
+        <input
+          disabled={slack.x === 0}
+          id="settings-crop-x"
+          max={100}
+          min={0}
+          onChange={(event) => onFrameChange("x", Number(event.target.value))}
+          step={1}
+          type="range"
+          value={framePercent.x}
+        />
+      </div>
+
+      <div className="settings-slider">
+        <label htmlFor="settings-crop-y">Encuadre vertical</label>
+        <input
+          disabled={slack.y === 0}
+          id="settings-crop-y"
+          max={100}
+          min={0}
+          onChange={(event) => onFrameChange("y", Number(event.target.value))}
+          step={1}
+          type="range"
+          value={framePercent.y}
+        />
+      </div>
+    </div>
+  );
+}
+
+/*
+  El módulo de foto vive aparte porque su estado no lo comparte nadie: la imagen
+  cargada, el encuadre y el lienzo sólo importan mientras el recorte está
+  abierto, y mezclarlos con el resto de la pantalla obligaría a leer trescientas
+  líneas para entender un alternador.
+*/
+// Implements: REQ-CFG-02 REQ-CFG-03
+function ProfilePhotoPanel({
   user,
-  onLogout,
   onPhotoChange,
+  onStatus,
 }: {
   user: User;
-  onLogout: () => void;
   onPhotoChange: (photoUrl: string | null) => void;
+  onStatus: (message: string) => void;
 }) {
-  const [status, setStatus] = useState("");
-
   const [source, setSource] = useState<CropSource | null>(null);
   const [crop, setCrop] = useState<CropState>({ zoom: MIN_ZOOM, x: 0, y: 0 });
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
-  const [preferencesBusy, setPreferencesBusy] = useState(false);
-  const [preferencesError, setPreferencesError] = useState("");
-
-  const [sessions, setSessions] = useState<ActiveSession[] | null>(null);
-  const [sessionsError, setSessionsError] = useState("");
-  const [revoking, setRevoking] = useState("");
-
   /* `movementX` no llega en todos los navegadores táctiles, así que el arrastre
      guarda la última posición del puntero y calcula el avance por su cuenta. */
   const dragFrom = useRef<{ x: number; y: number } | null>(null);
-
-  /*
-    Cargar no es guardar: la respuesta sólo alimenta el estado local. Una
-    cuenta que nunca abrió esta pantalla no escribe documento hasta que
-    cambia un valor a mano.
-  */
-  // Implements: REQ-CFG-04
-  useEffect(() => {
-    let alive = true;
-    loadPreferences()
-      .then((value) => {
-        if (alive) setPreferences(value);
-      })
-      .catch(() => {
-        if (alive) {
-          setPreferencesError(
-            "No se pudieron leer tus preferencias. Se muestran los valores por defecto."
-          );
-        }
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  // Implements: REQ-CFG-07
-  useEffect(() => {
-    let alive = true;
-    fetch("/api/profile/sessions")
-      .then(async (response) => {
-        if (!response.ok)
-          throw new Error(await apiError(response, "No se pudieron leer tus sesiones."));
-        return (await response.json()) as { sessions: ActiveSession[] };
-      })
-      .then((data) => {
-        if (alive) setSessions(data.sessions);
-      })
-      .catch((cause: unknown) => {
-        if (!alive) return;
-        setSessions([]);
-        setSessionsError(failureMessage(cause, "No se pudieron leer tus sesiones."));
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   /* La URL de objeto se libera al cambiar de imagen y al salir de la pantalla. */
   useEffect(() => {
@@ -265,7 +301,6 @@ export function SettingsView({
   useEffect(() => {
     if (canvas && source) paintCrop(canvas, source.image, crop);
   }, [canvas, crop, source]);
-
   function closeCropper() {
     setSource(null);
     setCrop({ zoom: MIN_ZOOM, x: 0, y: 0 });
@@ -379,7 +414,7 @@ export function SettingsView({
       const data = (await response.json()) as { photoUrl: string };
       onPhotoChange(data.photoUrl);
       closeCropper();
-      setStatus("Tu foto de perfil quedó actualizada.");
+      onStatus("Tu foto de perfil quedó actualizada.");
     } catch (cause) {
       setPhotoError(failureMessage(cause, "No se pudo guardar la foto de perfil."));
     } finally {
@@ -399,14 +434,311 @@ export function SettingsView({
       }
       onPhotoChange(null);
       closeCropper();
-      setStatus("Tu avatar vuelve a la foto de tu cuenta institucional.");
+      onStatus("Tu avatar vuelve a la foto de tu cuenta institucional.");
     } catch (cause) {
       setPhotoError(failureMessage(cause, "No se pudo restablecer la foto de perfil."));
     } finally {
       setPhotoBusy(false);
     }
   }
+  const slack = source ? cropSlack(source.image, crop.zoom) : { x: 0, y: 0 };
+  const framePercent = {
+    x: slack.x > 0 ? Math.round((-crop.x / slack.x) * 100) : 50,
+    y: slack.y > 0 ? Math.round((-crop.y / slack.y) * 100) : 50,
+  };
+  return (
+    <section aria-labelledby="settings-photo-title" className="settings-panel">
+      <div className="settings-panel-head">
+        <h2 id="settings-photo-title">
+          <ImageIcon aria-hidden="true" size={22} />
+          Foto de perfil
+        </h2>
+        <p className="settings-note">
+          Se sube el recorte cuadrado que dejes encuadrado, no la imagen original. Admite PNG, JPG y
+          WEBP de hasta 2 MB.
+        </p>
+      </div>
 
+      <div className="settings-photo">
+        <div className="settings-photo-current">
+          <Avatar email={user.email} large name={user.name} photoUrl={user.photoUrl} />
+          <span className="settings-photo-caption">Avatar actual</span>
+        </div>
+
+        {source ? (
+          <CropEditor
+            crop={crop}
+            framePercent={framePercent}
+            onCanvas={setCanvas}
+            onFrameChange={onFrameChange}
+            onPointerDown={onCropPointerDown}
+            onPointerMove={onCropPointerMove}
+            onPointerUp={onCropPointerUp}
+            onZoomChange={onZoomChange}
+            slack={slack}
+          />
+        ) : null}
+      </div>
+
+      {photoError ? (
+        <p className="settings-error" id="settings-photo-error" role="alert">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {photoError}
+        </p>
+      ) : null}
+
+      <div className="settings-actions">
+        <span className="settings-file">
+          <input
+            accept={ACCEPTED_TYPES.join(",")}
+            aria-describedby={describedBy(photoError && "settings-photo-error")}
+            aria-invalid={photoError ? true : undefined}
+            className="sr-only"
+            disabled={photoBusy}
+            id="settings-photo-file"
+            onChange={onFilePicked}
+            type="file"
+          />
+          <label className="secondary-button" htmlFor="settings-photo-file">
+            <UploadSimple aria-hidden="true" size={18} />
+            {source ? "Elegir otra imagen" : "Elegir imagen"}
+          </label>
+        </span>
+
+        {source ? (
+          <>
+            <button
+              aria-describedby={describedBy(photoError && "settings-photo-error")}
+              className="primary-button"
+              disabled={photoBusy}
+              onClick={() => void onPhotoSave()}
+              type="button"
+            >
+              {photoBusy ? "Guardando…" : "Guardar recorte"}
+            </button>
+            <button
+              className="secondary-button"
+              disabled={photoBusy}
+              onClick={closeCropper}
+              type="button"
+            >
+              <X aria-hidden="true" size={18} />
+              Descartar
+            </button>
+          </>
+        ) : null}
+
+        <button
+          className="secondary-button"
+          disabled={photoBusy}
+          onClick={() => void onPhotoReset()}
+          type="button"
+        >
+          <ArrowCounterClockwise aria-hidden="true" size={18} />
+          Restablecer la foto de Google
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/*
+  Cuenta y seguridad también se sostiene sola: el listado de sesiones se pide una
+  vez y sólo esta sección lo consume.
+*/
+// Implements: REQ-CFG-06 REQ-CFG-07
+function AccountPanel({
+  user,
+  onLogout,
+  onStatus,
+}: {
+  user: User;
+  onLogout: () => void;
+  onStatus: (message: string) => void;
+}) {
+  const [sessions, setSessions] = useState<ActiveSession[] | null>(null);
+  const [sessionsError, setSessionsError] = useState("");
+  const [revoking, setRevoking] = useState("");
+
+  // Implements: REQ-CFG-07
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/profile/sessions")
+      .then(async (response) => {
+        if (!response.ok)
+          throw new Error(await apiError(response, "No se pudieron leer tus sesiones."));
+        return (await response.json()) as { sessions: ActiveSession[] };
+      })
+      .then((data) => {
+        if (alive) setSessions(data.sessions);
+      })
+      .catch((cause: unknown) => {
+        if (!alive) return;
+        setSessions([]);
+        setSessionsError(failureMessage(cause, "No se pudieron leer tus sesiones."));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  // Implements: REQ-CFG-07
+  async function onSessionRevoke(id: string) {
+    setRevoking(id);
+    setSessionsError("");
+    try {
+      const response = await fetch("/api/profile/sessions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) {
+        setSessionsError(await apiError(response, "No se pudo cerrar esa sesión."));
+        return;
+      }
+      const data = (await response.json()) as { revoked: string; current: boolean };
+      if (data.current) {
+        onLogout();
+        return;
+      }
+      setSessions((current) => (current ?? []).filter((item) => item.id !== data.revoked));
+      onStatus("La sesión quedó cerrada en ese dispositivo.");
+    } catch (cause) {
+      setSessionsError(failureMessage(cause, "No se pudo cerrar esa sesión."));
+    } finally {
+      setRevoking("");
+    }
+  }
+  return (
+    <section aria-labelledby="settings-account-title" className="settings-panel">
+      <div className="settings-panel-head">
+        <h2 id="settings-account-title">
+          <IdentificationCard aria-hidden="true" size={22} />
+          Cuenta y seguridad
+        </h2>
+        <p className="settings-note">
+          Tu correo y tu rango se derivan de la cuenta institucional y no se editan desde aquí.
+        </p>
+      </div>
+
+      <dl className="settings-facts">
+        <div>
+          <dt>Correo institucional</dt>
+          <dd>{user.email}</dd>
+        </div>
+        <div>
+          <dt>Rango</dt>
+          <dd>{roleLabel(user.role)}</dd>
+        </div>
+        {user.carrera ? (
+          <div>
+            <dt>Carrera</dt>
+            <dd>{user.carrera}</dd>
+          </div>
+        ) : null}
+      </dl>
+
+      <h3 className="settings-subhead" id="settings-sessions-title">
+        Sesiones activas
+      </h3>
+
+      {sessionsError ? (
+        <p className="settings-error" id="settings-sessions-error" role="alert">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {sessionsError}
+        </p>
+      ) : null}
+
+      {sessions === null ? (
+        <p className="settings-note">Leyendo tus sesiones…</p>
+      ) : sessions.length === 0 ? (
+        <p className="settings-note">
+          No hay ninguna sesión activa que mostrar además de la que estás usando.
+        </p>
+      ) : (
+        <ul aria-labelledby="settings-sessions-title" className="settings-sessions">
+          {sessions.map((session) => (
+            <li className="settings-session" key={session.id}>
+              <div className="settings-session-copy">
+                <strong>Iniciada el {formatSessionDate(session.createdAt)}</strong>
+                <small>Vence el {formatSessionDate(session.expiresAt)}</small>
+              </div>
+              {session.current ? (
+                <span className="settings-session-current">
+                  <ShieldCheck aria-hidden="true" size={14} weight="fill" />
+                  Sesión actual
+                </span>
+              ) : (
+                <button
+                  aria-describedby={describedBy(sessionsError && "settings-sessions-error")}
+                  className="settings-revoke"
+                  disabled={revoking === session.id}
+                  onClick={() => void onSessionRevoke(session.id)}
+                  type="button"
+                >
+                  <X aria-hidden="true" size={16} />
+                  {revoking === session.id ? "Cerrando…" : "Cerrar sesión"}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="settings-actions">
+        <button className="secondary-button settings-logout" onClick={onLogout} type="button">
+          <SignOut aria-hidden="true" size={18} />
+          Cerrar sesión en este dispositivo
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/*
+  Una sola columna de lectura con cuatro módulos etiquetados. Cada control lleva
+  su etiqueta asociada y cada mensaje de validación apunta a su campo, porque a
+  320 CSS px el error suele quedar fuera de la vista del control que lo produjo.
+  La pantalla sólo conserva lo que dos módulos comparten: el aviso vivo y las
+  preferencias, que alimentan a la vez avisos y accesibilidad.
+*/
+// Implements: REQ-CFG-08
+export function SettingsView({
+  user,
+  onLogout,
+  onPhotoChange,
+}: {
+  user: User;
+  onLogout: () => void;
+  onPhotoChange: (photoUrl: string | null) => void;
+}) {
+  const [status, setStatus] = useState("");
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
+  const [preferencesBusy, setPreferencesBusy] = useState(false);
+  const [preferencesError, setPreferencesError] = useState("");
+
+  /*
+    Cargar no es guardar: la respuesta sólo alimenta el estado local. Una
+    cuenta que nunca abrió esta pantalla no escribe documento hasta que
+    cambia un valor a mano.
+  */
+  // Implements: REQ-CFG-04
+  useEffect(() => {
+    let alive = true;
+    loadPreferences()
+      .then((value) => {
+        if (alive) setPreferences(value);
+      })
+      .catch(() => {
+        if (alive) {
+          setPreferencesError(
+            "No se pudieron leer tus preferencias. Se muestran los valores por defecto."
+          );
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   /*
     El alternador se pinta antes de que responda el servidor y vuelve a su
     valor anterior si la escritura falla: así el control nunca miente sobre lo
@@ -450,41 +782,6 @@ export function SettingsView({
         : "El movimiento del portal vuelve a depender de tu sistema."
     );
   }
-
-  // Implements: REQ-CFG-07
-  async function onSessionRevoke(id: string) {
-    setRevoking(id);
-    setSessionsError("");
-    try {
-      const response = await fetch("/api/profile/sessions", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!response.ok) {
-        setSessionsError(await apiError(response, "No se pudo cerrar esa sesión."));
-        return;
-      }
-      const data = (await response.json()) as { revoked: string; current: boolean };
-      if (data.current) {
-        onLogout();
-        return;
-      }
-      setSessions((current) => (current ?? []).filter((item) => item.id !== data.revoked));
-      setStatus("La sesión quedó cerrada en ese dispositivo.");
-    } catch (cause) {
-      setSessionsError(failureMessage(cause, "No se pudo cerrar esa sesión."));
-    } finally {
-      setRevoking("");
-    }
-  }
-
-  const slack = source ? cropSlack(source.image, crop.zoom) : { x: 0, y: 0 };
-  const framePercent = {
-    x: slack.x > 0 ? Math.round((-crop.x / slack.x) * 100) : 50,
-    y: slack.y > 0 ? Math.round((-crop.y / slack.y) * 100) : 50,
-  };
-
   return (
     <section className="settings-view">
       <div className="page-head lead">
@@ -501,148 +798,7 @@ export function SettingsView({
         ) : null}
       </p>
 
-      {/* Implements: REQ-CFG-02 REQ-CFG-03 */}
-      <section aria-labelledby="settings-photo-title" className="settings-panel">
-        <div className="settings-panel-head">
-          <h2 id="settings-photo-title">
-            <ImageIcon aria-hidden="true" size={22} />
-            Foto de perfil
-          </h2>
-          <p className="settings-note">
-            Se sube el recorte cuadrado que dejes encuadrado, no la imagen original. Admite PNG, JPG
-            y WEBP de hasta 2 MB.
-          </p>
-        </div>
-
-        <div className="settings-photo">
-          <div className="settings-photo-current">
-            <Avatar email={user.email} large name={user.name} photoUrl={user.photoUrl} />
-            <span className="settings-photo-caption">Avatar actual</span>
-          </div>
-
-          {source ? (
-            <div className="settings-crop">
-              <canvas
-                aria-label="Vista previa del recorte cuadrado. Arrastra sobre la imagen para reencuadrarla."
-                className="settings-crop-canvas"
-                height={CROP_SIZE}
-                onPointerCancel={onCropPointerUp}
-                onPointerDown={onCropPointerDown}
-                onPointerMove={onCropPointerMove}
-                onPointerUp={onCropPointerUp}
-                ref={setCanvas}
-                role="img"
-                width={CROP_SIZE}
-              />
-
-              <div className="settings-slider">
-                <label htmlFor="settings-crop-zoom">Acercamiento</label>
-                <input
-                  id="settings-crop-zoom"
-                  max={MAX_ZOOM}
-                  min={MIN_ZOOM}
-                  onChange={(event) => onZoomChange(Number(event.target.value))}
-                  step={0.01}
-                  type="range"
-                  value={crop.zoom}
-                />
-              </div>
-
-              {/*
-                Los dos deslizadores repiten con teclado lo que el arrastre hace
-                con el puntero. Se desactivan cuando el eje no tiene holgura,
-                porque ahí no hay nada que reencuadrar.
-              */}
-              <div className="settings-slider">
-                <label htmlFor="settings-crop-x">Encuadre horizontal</label>
-                <input
-                  disabled={slack.x === 0}
-                  id="settings-crop-x"
-                  max={100}
-                  min={0}
-                  onChange={(event) => onFrameChange("x", Number(event.target.value))}
-                  step={1}
-                  type="range"
-                  value={framePercent.x}
-                />
-              </div>
-
-              <div className="settings-slider">
-                <label htmlFor="settings-crop-y">Encuadre vertical</label>
-                <input
-                  disabled={slack.y === 0}
-                  id="settings-crop-y"
-                  max={100}
-                  min={0}
-                  onChange={(event) => onFrameChange("y", Number(event.target.value))}
-                  step={1}
-                  type="range"
-                  value={framePercent.y}
-                />
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        {photoError ? (
-          <p className="settings-error" id="settings-photo-error" role="alert">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {photoError}
-          </p>
-        ) : null}
-
-        <div className="settings-actions">
-          <span className="settings-file">
-            <input
-              accept={ACCEPTED_TYPES.join(",")}
-              aria-describedby={describedBy(photoError && "settings-photo-error")}
-              aria-invalid={photoError ? true : undefined}
-              className="sr-only"
-              disabled={photoBusy}
-              id="settings-photo-file"
-              onChange={onFilePicked}
-              type="file"
-            />
-            <label className="secondary-button" htmlFor="settings-photo-file">
-              <UploadSimple aria-hidden="true" size={18} />
-              {source ? "Elegir otra imagen" : "Elegir imagen"}
-            </label>
-          </span>
-
-          {source ? (
-            <>
-              <button
-                aria-describedby={describedBy(photoError && "settings-photo-error")}
-                className="primary-button"
-                disabled={photoBusy}
-                onClick={() => void onPhotoSave()}
-                type="button"
-              >
-                {photoBusy ? "Guardando…" : "Guardar recorte"}
-              </button>
-              <button
-                className="secondary-button"
-                disabled={photoBusy}
-                onClick={closeCropper}
-                type="button"
-              >
-                <X aria-hidden="true" size={18} />
-                Descartar
-              </button>
-            </>
-          ) : null}
-
-          <button
-            className="secondary-button"
-            disabled={photoBusy}
-            onClick={() => void onPhotoReset()}
-            type="button"
-          >
-            <ArrowCounterClockwise aria-hidden="true" size={18} />
-            Restablecer la foto de Google
-          </button>
-        </div>
-      </section>
+      <ProfilePhotoPanel onPhotoChange={onPhotoChange} onStatus={setStatus} user={user} />
 
       {/* Implements: REQ-CFG-04 */}
       <section aria-labelledby="settings-notifications-title" className="settings-panel">
@@ -727,89 +883,7 @@ export function SettingsView({
         />
       </section>
 
-      {/* Implements: REQ-CFG-06 REQ-CFG-07 */}
-      <section aria-labelledby="settings-account-title" className="settings-panel">
-        <div className="settings-panel-head">
-          <h2 id="settings-account-title">
-            <IdentificationCard aria-hidden="true" size={22} />
-            Cuenta y seguridad
-          </h2>
-          <p className="settings-note">
-            Tu correo y tu rango se derivan de la cuenta institucional y no se editan desde aquí.
-          </p>
-        </div>
-
-        <dl className="settings-facts">
-          <div>
-            <dt>Correo institucional</dt>
-            <dd>{user.email}</dd>
-          </div>
-          <div>
-            <dt>Rango</dt>
-            <dd>{roleLabel(user.role)}</dd>
-          </div>
-          {user.carrera ? (
-            <div>
-              <dt>Carrera</dt>
-              <dd>{user.carrera}</dd>
-            </div>
-          ) : null}
-        </dl>
-
-        <h3 className="settings-subhead" id="settings-sessions-title">
-          Sesiones activas
-        </h3>
-
-        {sessionsError ? (
-          <p className="settings-error" id="settings-sessions-error" role="alert">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {sessionsError}
-          </p>
-        ) : null}
-
-        {sessions === null ? (
-          <p className="settings-note">Leyendo tus sesiones…</p>
-        ) : sessions.length === 0 ? (
-          <p className="settings-note">
-            No hay ninguna sesión activa que mostrar además de la que estás usando.
-          </p>
-        ) : (
-          <ul aria-labelledby="settings-sessions-title" className="settings-sessions">
-            {sessions.map((session) => (
-              <li className="settings-session" key={session.id}>
-                <div className="settings-session-copy">
-                  <strong>Iniciada el {formatSessionDate(session.createdAt)}</strong>
-                  <small>Vence el {formatSessionDate(session.expiresAt)}</small>
-                </div>
-                {session.current ? (
-                  <span className="settings-session-current">
-                    <ShieldCheck aria-hidden="true" size={14} weight="fill" />
-                    Sesión actual
-                  </span>
-                ) : (
-                  <button
-                    aria-describedby={describedBy(sessionsError && "settings-sessions-error")}
-                    className="settings-revoke"
-                    disabled={revoking === session.id}
-                    onClick={() => void onSessionRevoke(session.id)}
-                    type="button"
-                  >
-                    <X aria-hidden="true" size={16} />
-                    {revoking === session.id ? "Cerrando…" : "Cerrar sesión"}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="settings-actions">
-          <button className="secondary-button settings-logout" onClick={onLogout} type="button">
-            <SignOut aria-hidden="true" size={18} />
-            Cerrar sesión en este dispositivo
-          </button>
-        </div>
-      </section>
+      <AccountPanel onLogout={onLogout} onStatus={setStatus} user={user} />
     </section>
   );
 }

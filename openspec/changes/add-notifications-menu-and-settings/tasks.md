@@ -43,8 +43,8 @@
 
 ## 6. Respeto de preferencias en el envío existente
 
-- [ ] 6.1 Consultar la preferencia del destinatario antes de emitir push desde el emisor existente y omitir el envío cuando el canal está desactivado, y verificar con una prueba que un estudiante con publicaciones de sección desactivadas no recibe mensaje para una publicación nueva. Implements: REQ-CFG-04.
-- [x] 6.2 Documentar en `PLAN.md` qué canales quedan persistidos pero inertes por no tener emisor implementado, y verificar que la nota nombra cada canal explícitamente.
+- [x] 6.1 Reescribir `notifyStudentsOnCoursePost` para que resuelva la matrícula activa de la sección, lea token y preferencia de cada estudiante y envíe sólo a los dispositivos autorizados, en vez del envío a topic que no admitía preferencias, y verificar con pruebas que el emisor ya no usa `topic`, que corta antes de llamar a Messaging cuando no hay destinatarios y que un canal en `false` excluye a ese estudiante. Implements: REQ-CFG-04.
+- [x] 6.2 Documentar en `PLAN.md` qué canales quedan persistidos pero inertes por no tener emisor implementado, y verificar que la nota nombra cada canal explícitamente. Tras la reescritura, `sectionPublications` sí tiene emisor; los otros tres siguen sin él.
 
 ## 7. Verificación integral
 

@@ -1,4 +1,4 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../../../../db";
 import { sessions } from "../../../../db/schema";
@@ -17,6 +17,10 @@ const revocacionSchema = z.object({
   La consulta filtra por la columna indexada `user_id`, descarta las vencidas y
   lleva `.limit()` explícito. Ninguna respuesta expone el hash del token: la
   interfaz sólo recibe el identificador público derivado.
+
+  El orden por fecha de creación no es cosmético: sin él, dos consultas acotadas
+  pueden devolver subconjuntos distintos, y una cuenta con más sesiones que el
+  tope vería fallar la revocación de una sesión que sí le pertenece.
 */
 // Implements: REQ-AUTH-08 REQ-CFG-07
 export async function GET(request: Request) {
@@ -34,6 +38,7 @@ export async function GET(request: Request) {
       })
       .from(sessions)
       .where(and(eq(sessions.userId, actor.id), gt(sessions.expiresAt, now)))
+      .orderBy(desc(sessions.createdAt), desc(sessions.tokenHash))
       .limit(MAX_ACTIVE_SESSIONS);
 
     const currentHash = await currentSessionTokenHash(request);
@@ -81,6 +86,7 @@ export async function DELETE(request: Request) {
       .select({ tokenHash: sessions.tokenHash })
       .from(sessions)
       .where(and(eq(sessions.userId, actor.id), gt(sessions.expiresAt, now)))
+      .orderBy(desc(sessions.createdAt), desc(sessions.tokenHash))
       .limit(MAX_ACTIVE_SESSIONS);
 
     let target = "";
