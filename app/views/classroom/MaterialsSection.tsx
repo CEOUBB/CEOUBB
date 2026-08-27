@@ -1,15 +1,15 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowRight, Sigma } from "@phosphor-icons/react";
-import { Course, DEFAULT_FOLDER, materialFolders } from "../../../lib/courses";
-import { ClassroomFile } from "../../../lib/firebase-classroom-client";
+import { ArrowRight, MagnifyingGlass, Sigma, X } from "@phosphor-icons/react";
+import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
+import type { ClassroomFile } from "../../../lib/firebase-classroom-client.ts";
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { fileExtension, formatBytes, formatDate, type User } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
-import { groupByFolder, type Note } from "./classroom-utils";
+import { filterMaterialsByQuery, groupByFolder, type Note } from "./classroom-utils";
 import { PublicationLauncher } from "./PublicationLauncher";
 
 const MoodleImportDialog = dynamic(
@@ -17,6 +17,7 @@ const MoodleImportDialog = dynamic(
   { ssr: false }
 );
 
+// Implements: REQ-PAG-05
 export function MaterialsSection({
   course,
   files,
@@ -44,7 +45,14 @@ export function MaterialsSection({
   deleteFile: (file: ClassroomFile) => void;
   status: Note;
 }) {
-  const folders = useMemo(() => groupByFolder(course, files), [course, files]);
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query.trim());
+
+  const groupedFolders = useMemo(() => groupByFolder(course, files), [course, files]);
+  const folders = useMemo(
+    () => filterMaterialsByQuery(groupedFolders, deferredQuery),
+    [groupedFolders, deferredQuery]
+  );
   const availableFolders = useMemo(() => materialFolders(course), [course]);
   const mobile = useIsMobileApp();
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -91,6 +99,30 @@ export function MaterialsSection({
             </span>
           )}
         </div>
+        {files.length > 0 && (
+          <search className="classroom-search-box materials-search-box">
+            <MagnifyingGlass aria-hidden="true" size={16} />
+            <input
+              aria-label="Buscar archivos del ramo"
+              id="materials-search"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar archivo por nombre o autor…"
+              type="search"
+              value={query}
+            />
+            {query && (
+              <button
+                aria-label="Limpiar búsqueda"
+                className="search-clear-btn"
+                onClick={() => setQuery("")}
+                type="button"
+              >
+                <X aria-hidden="true" size={14} />
+              </button>
+            )}
+          </search>
+        )}
+
         <Link className="material-row featured" href="/biblioteca/index.html" prefetch={false}>
           <span className="file-icon">
             <Sigma size={20} />
@@ -108,6 +140,11 @@ export function MaterialsSection({
             <strong>Aún no hay archivos del docente.</strong>
             <p>Cuando publique una guía, PPT, PDF o dictamen aparecerá aquí.</p>
           </div>
+        )}
+        {files.length > 0 && folders.length === 0 && (
+          <p className="empty-row" role="status">
+            No se encontraron archivos que coincidan con “{deferredQuery}”.
+          </p>
         )}
         {folders.map(([folder, items]) => (
           <details className="material-folder" key={folder} open>
