@@ -216,7 +216,8 @@ export async function saveGradeFeedback(
 /** Parte una lista de operaciones en lotes que Firestore acepta de una vez. */
 // Implements: REQ-PERF-02
 export function chunkOperations<T>(rows: readonly T[], size = MAX_BATCH_OPERATIONS): T[][] {
-  const limit = Math.max(1, Math.trunc(size));
+  const safeSize = typeof size === "number" && !Number.isNaN(size) ? size : MAX_BATCH_OPERATIONS;
+  const limit = Math.max(1, Math.trunc(safeSize));
   const batches: T[][] = [];
   for (let index = 0; index < rows.length; index += limit) {
     batches.push(rows.slice(index, index + limit));
