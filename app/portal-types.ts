@@ -9,17 +9,39 @@ import {
 import type { Course } from "../lib/courses";
 
 export type Screen =
-  "courses" | "course" | "notifications" | "calendar" | "resources" | "teacher" | "admin";
+  | "courses"
+  | "course"
+  | "notifications"
+  | "calendar"
+  | "resources"
+  | "teacher"
+  | "admin"
+  | "settings";
+
+/*
+  `Configuración` no entra en `navItems`: su acceso vive en el menú de cuenta
+  del header, que es donde el usuario la busca. El rótulo se declara igual
+  porque la miga del header y el anuncio de vista lo leen desde aquí.
+*/
+// Implements: REQ-CFG-01
+export const SETTINGS_SCREEN_LABEL = "Configuración";
 
 export interface NavState {
   screen: Screen;
   course: Course | null;
   coursesSheet: boolean;
   preview: Course | null;
+  /*
+    Clave `courseId:threadId` de la conversación que el centro de comunicaciones
+    debe abrir al montarse. Es estado de navegación, no de datos: lo escribe el
+    panel del header y lo consume la vista destino una sola vez.
+  */
+  focusThread: string;
 }
 
 export type NavAction =
   | { type: "SET_SCREEN"; screen: Screen }
+  | { type: "OPEN_THREAD"; key: string }
   | { type: "ENTER_COURSE"; course: Course }
   | { type: "SET_PREVIEW"; preview: Course | null }
   | { type: "SET_COURSES_SHEET"; open: boolean }
@@ -39,7 +61,9 @@ export const SEEN_KEY = "ceoubb:seen";
 export function navReducer(state: NavState, action: NavAction): NavState {
   switch (action.type) {
     case "SET_SCREEN":
-      return { ...state, screen: action.screen };
+      return { ...state, screen: action.screen, focusThread: "" };
+    case "OPEN_THREAD":
+      return { ...state, screen: "notifications", focusThread: action.key };
     case "ENTER_COURSE":
       return {
         ...state,
@@ -47,6 +71,7 @@ export function navReducer(state: NavState, action: NavAction): NavState {
         course: action.course,
         preview: null,
         coursesSheet: false,
+        focusThread: "",
       };
     case "SET_PREVIEW":
       return { ...state, preview: action.preview };
@@ -59,6 +84,7 @@ export function navReducer(state: NavState, action: NavAction): NavState {
         course: null,
         preview: null,
         coursesSheet: false,
+        focusThread: "",
       };
     default:
       return state;

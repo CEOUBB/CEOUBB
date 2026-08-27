@@ -184,6 +184,18 @@ service cloud.firestore {
         allow create, update: if signedIn() && request.auth.uid == userId && validReadCursor(cursorId);
         allow delete: if signedIn() && request.auth.uid == userId;
       }
+
+      /*
+        Preferencias de notificación y accesibilidad. Sólo su dueño las lee, y
+        la escritura llega desde la ruta API con cuenta de servicio: para el
+        cliente el documento es de sólo lectura, de modo que la validación Zod
+        del servidor no se pueda esquivar escribiendo directo a Firestore.
+      */
+      // Implements: REQ-CFG-04, REQ-CFG-05
+      match /settings/{documentId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow write: if false;
+      }
     }
 
     /*

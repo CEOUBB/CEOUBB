@@ -64,6 +64,13 @@
       "when": 1787725115550,
       "tag": "0008_solicitudes_soporte",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1787833140336,
+      "tag": "0010_users_photo_url",
+      "breakpoints": true
     }
   ]
 }

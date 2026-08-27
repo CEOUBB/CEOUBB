@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -8,6 +8,7 @@ import {
   Bell,
   CaretDown,
   FolderSimple,
+  Gear,
   Lifebuoy,
   MagnifyingGlass,
   SignOut,
@@ -16,12 +17,14 @@ import type { Course } from "../lib/courses";
 import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import type { ManagedCourse } from "../lib/course-management";
 import { Avatar, Screen as PortalScreen } from "./portal-ui";
+import { NotificationList } from "./notification-panel";
+import type { NotificationItem } from "../lib/communications.ts";
 import { SiteFooter } from "./site-footer";
 import { CoursesDashboard } from "./views/CoursesDashboard";
 import type { SectionMembership, SectionRole } from "../lib/section-roles";
@@ -31,6 +34,7 @@ import {
   CalendarSkeleton,
   ClassroomSkeleton,
   ResourcesSkeleton,
+  SettingsSkeleton,
 } from "./views/ViewSkeletons";
 
 const CalendarView = dynamic(
@@ -70,10 +74,85 @@ const TeacherCoursesView = dynamic(
   }
 );
 
+const SettingsView = dynamic(() => import("./views/SettingsView").then((m) => m.SettingsView), {
+  ssr: false,
+  loading: () => <SettingsSkeleton />,
+});
+
 const Classroom = dynamic(() => import("./Classroom"), {
   ssr: false,
   loading: () => <ClassroomSkeleton />,
 });
+
+const FOCUSABLE_POPOVER_ITEMS = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+
+/*
+  Resorte críticamente amortiguado del sistema. `MotionConfig` del portal ya
+  degrada a cambio inmediato cuando el usuario pide movimiento reducido, así
+  que aquí sólo se declara la física.
+*/
+// Implements: REQ-NOTIF-09
+const PANEL_SPRING = { type: "spring", stiffness: 340, damping: 28 } as const;
+
+/*
+  Un solo descarte para los dos desplegables del header: cierre por puntero
+  fuera, cierre con `Escape` devolviendo el foco al disparador, y ciclado de
+  `Tab` dentro del contenido abierto para que el teclado no se escape a la
+  vista que quedó detrás.
+*/
+// Implements: REQ-NOTIF-08 REQ-CFG-01
+function useDismissablePopovers(
+  first: React.RefObject<HTMLDetailsElement | null>,
+  second: React.RefObject<HTMLDetailsElement | null>
+) {
+  useEffect(() => {
+    const menus = [first, second];
+    const openMenu = () => menus.map((ref) => ref.current).find((menu) => menu?.open);
+
+    const close = (menu: HTMLDetailsElement) => {
+      menu.open = false;
+      menu.querySelector("summary")?.focus();
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      for (const ref of menus) {
+        const menu = ref.current;
+        if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const menu = openMenu();
+      if (!menu) return;
+      if (event.key === "Escape") {
+        close(menu);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = [...menu.querySelectorAll<HTMLElement>(FOCUSABLE_POPOVER_ITEMS)];
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === menu.querySelector("summary"))) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [first, second]);
+}
 
 export function PortalHeader({
   sidebarOpen,
@@ -82,7 +161,12 @@ export function PortalHeader({
   onLogout,
   onHome,
   onCommunications,
+  onSettings,
   onSearch,
+  onOpenNotification,
+  onMarkAllNotifications,
+  notifications,
+  notificationsLoading,
   unreadCommunications,
   toggleSidebar,
 }: {
@@ -92,7 +176,12 @@ export function PortalHeader({
   onLogout: () => void;
   onHome: () => void;
   onCommunications: () => void;
+  onSettings: () => void;
   onSearch: () => void;
+  onOpenNotification: (item: NotificationItem) => void;
+  onMarkAllNotifications: () => void;
+  notifications: readonly NotificationItem[];
+  notificationsLoading: boolean;
   unreadCommunications: number;
   toggleSidebar: () => void;
 }) {
@@ -101,25 +190,19 @@ export function PortalHeader({
       ? "⌘K"
       : "Ctrl K";
   const account = useRef<HTMLDetailsElement>(null);
+  const notificationsMenu = useRef<HTMLDetailsElement>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  useEffect(() => {
-    const dismiss = (event: Event) => {
-      const menu = account.current;
-      if (!menu?.open) return;
-      if (event.type === "pointerdown") {
-        if (!menu.contains(event.target as Node)) menu.open = false;
-        return;
-      }
-      if ((event as KeyboardEvent).key !== "Escape") return;
-      menu.open = false;
-      menu.querySelector("summary")?.focus();
-    };
-    window.addEventListener("pointerdown", dismiss);
-    window.addEventListener("keydown", dismiss);
-    return () => {
-      window.removeEventListener("pointerdown", dismiss);
-      window.removeEventListener("keydown", dismiss);
-    };
+  useDismissablePopovers(account, notificationsMenu);
+
+  const closeNotifications = useCallback(() => {
+    const menu = notificationsMenu.current;
+    if (menu) menu.open = false;
+  }, []);
+
+  const closeAccount = useCallback(() => {
+    const menu = account.current;
+    if (menu) menu.open = false;
   }, []);
 
   return (
@@ -170,27 +253,67 @@ export function PortalHeader({
         <kbd aria-hidden="true">{shortcut}</kbd>
       </button>
       <div className="header-actions">
-        <button
-          aria-label={`Avisos y mensajes${unreadCommunications > 0 ? `, ${unreadCommunications} sin leer` : ""}`}
-          className="header-notifications"
-          data-requirement="Implements: REQ-COMM-02 REQ-COMM-08"
-          onClick={onCommunications}
-          type="button"
+        <details
+          className="notifications-menu"
+          data-requirement="Implements: REQ-NOTIF-01 REQ-NOTIF-08 REQ-COMM-02 REQ-COMM-08"
+          onToggle={(event) => setNotificationsOpen(event.currentTarget.open)}
+          ref={notificationsMenu}
         >
-          <Bell
-            aria-hidden="true"
-            size={20}
-            weight={unreadCommunications > 0 ? "fill" : "regular"}
-          />
-          {unreadCommunications > 0 && (
-            <span className="header-notification-count num">
-              {unreadCommunications > 99 ? "99+" : unreadCommunications}
-            </span>
+          <summary
+            aria-expanded={notificationsOpen}
+            aria-haspopup="menu"
+            aria-label={`Notificaciones${unreadCommunications > 0 ? `, ${unreadCommunications} sin leer` : ""}`}
+            className="header-notifications"
+          >
+            <Bell
+              aria-hidden="true"
+              size={20}
+              weight={unreadCommunications > 0 ? "fill" : "regular"}
+            />
+            {unreadCommunications > 0 && (
+              <m.span
+                animate={{ scale: 1 }}
+                className="header-notification-count num"
+                initial={{ scale: 0.86 }}
+                key={unreadCommunications}
+                transition={PANEL_SPRING}
+              >
+                {unreadCommunications > 99 ? "99+" : unreadCommunications}
+              </m.span>
+            )}
+          </summary>
+          {/*
+            El contenido se monta al abrir para que el resorte de entrada corra
+            en cada apertura: `details` conserva sus hijos montados y una
+            animación declarada sobre ellos sólo se vería la primera vez.
+          */}
+          {notificationsOpen && (
+            <m.div
+              animate={{ opacity: 1, y: 0 }}
+              aria-labelledby="notification-panel-title"
+              className="notification-popover"
+              initial={{ opacity: 0, y: -6 }}
+              transition={PANEL_SPRING}
+            >
+              <NotificationList
+                items={notifications}
+                loading={notificationsLoading}
+                onMarkAll={onMarkAllNotifications}
+                onOpen={(item) => {
+                  closeNotifications();
+                  onOpenNotification(item);
+                }}
+                onSeeAll={() => {
+                  closeNotifications();
+                  onCommunications();
+                }}
+              />
+            </m.div>
           )}
-        </button>
+        </details>
         <details className="account-menu" ref={account}>
-          <summary aria-label={`Cuenta de ${user.name}`}>
-            <Avatar email={user.email} name={user.name} />
+          <summary aria-haspopup="menu" aria-label={`Cuenta de ${user.name}`}>
+            <Avatar email={user.email} name={user.name} photoUrl={user.photoUrl} />
             <span className="account-copy">
               <strong>{firstName(user.name)}</strong>
               <small>{roleLabel(user.role)}</small>
@@ -200,6 +323,17 @@ export function PortalHeader({
           <div className="account-popover">
             <strong>{user.name}</strong>
             <span>{user.email}</span>
+            <button
+              data-requirement="Implements: REQ-CFG-01"
+              onClick={() => {
+                closeAccount();
+                onSettings();
+              }}
+              type="button"
+            >
+              <Gear aria-hidden="true" size={16} />
+              Configuración
+            </button>
             <button onClick={onLogout} type="button">
               <SignOut aria-hidden="true" size={16} />
               Cerrar sesión
@@ -329,7 +463,10 @@ export function PortalMainView({
   communicationCursors,
   communicationError,
   communicationThreads,
+  focusThread,
   gradebooks,
+  onLogout,
+  onPhotoChange,
   memberships,
   seen,
   sectionRole,
@@ -351,6 +488,9 @@ export function PortalMainView({
   communicationCursors: CommunicationReadCursor[];
   communicationError: string;
   communicationThreads: MessageThreadSummary[];
+  focusThread: string;
+  onLogout: () => void;
+  onPhotoChange: (photoUrl: string | null) => void;
   gradebooks: CourseGradebook[];
   memberships: SectionMembership[];
   seen: Record<string, string>;
@@ -418,11 +558,15 @@ export function PortalMainView({
                   connectionError={communicationError}
                   courses={courses}
                   cursors={communicationCursors}
+                  focusThread={focusThread}
                   memberships={memberships}
                   openCourse={openCourse}
                   threads={communicationThreads}
                   user={user}
                 />
+              )}
+              {screen === "settings" && (
+                <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
               )}
               {screen === "resources" && <ResourcesView />}
               {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (

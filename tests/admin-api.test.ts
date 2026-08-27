@@ -237,7 +237,7 @@ test("REQ-PERF-02: pruneExpiredSessions removes expired sessions and preserves a
     process.env.TURSO_DATABASE_URL = "file::memory:";
     const db = getDb();
     await db.run(
-      sql`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY NOT NULL, email text NOT NULL, name text NOT NULL, role text NOT NULL, created_at text NOT NULL);`
+      sql`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY NOT NULL, email text NOT NULL, name text NOT NULL, role text NOT NULL, photo_url text, created_at text NOT NULL);`
     );
     await db.run(
       sql`CREATE TABLE IF NOT EXISTS sessions (token_hash text PRIMARY KEY NOT NULL, user_id text NOT NULL, expires_at text NOT NULL, created_at text NOT NULL);`
@@ -311,7 +311,7 @@ test("REQ-PERF-03, REQ-PERF-04: GET /api/admin/users pagination, limit clamping 
     process.env.TURSO_DATABASE_URL = "file::memory:";
     const db = getDb();
     await db.run(
-      sql`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY NOT NULL, email text NOT NULL, name text NOT NULL, role text NOT NULL, created_at text NOT NULL);`
+      sql`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY NOT NULL, email text NOT NULL, name text NOT NULL, role text NOT NULL, photo_url text, created_at text NOT NULL);`
     );
     await db.run(
       sql`CREATE TABLE IF NOT EXISTS sessions (token_hash text PRIMARY KEY NOT NULL, user_id text NOT NULL, expires_at text NOT NULL, created_at text NOT NULL);`
@@ -515,14 +515,21 @@ test("publicUser maps user attributes into PublicUser and omits non-public field
 
   const mapped = publicUser(fullUser);
 
+  // La foto propia sí es pública: el avatar la necesita en cliente. La carrera
+  // y las notas internas siguen fuera del contrato.
   assert.deepEqual(mapped, {
     id: "usr-123",
     email: "estudiante@alumnos.ubiobio.cl",
     name: "María González",
     role: "student",
+    photoUrl: null,
   });
   assert.equal("carrera" in mapped, false);
   assert.equal("internalNotes" in (mapped as Record<string, unknown>), false);
+  assert.equal(
+    publicUser({ ...fullUser, photoUrl: "https://ejemplo/avatar.png" }).photoUrl,
+    "https://ejemplo/avatar.png"
+  );
 });
 
 test("publicUser handles all account roles (student, teacher, owner)", () => {

@@ -11,6 +11,7 @@ export type PublicUser = {
   name: string;
   role: AccountRole;
   carrera?: string | null;
+  photoUrl?: string | null;
 };
 
 export const SESSION_COOKIE = "centro_estudio_session";
@@ -61,6 +62,7 @@ export async function getSessionUserFromToken(rawToken: string): Promise<PublicU
       email: users.email,
       name: users.name,
       role: users.role,
+      photoUrl: users.photoUrl,
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
@@ -68,6 +70,22 @@ export async function getSessionUserFromToken(rawToken: string): Promise<PublicU
     .limit(1);
   const user = rows[0];
   return user ? publicUser(user) : null;
+}
+
+/*
+  Identificador público de una sesión. Es un segundo SHA-256 sobre el hash ya
+  almacenado: la interfaz puede nombrar una sesión para revocarla sin que salga
+  del servidor ningún valor derivado directamente del token de acceso.
+*/
+// Implements: REQ-AUTH-08
+export async function sessionPublicId(tokenHash: string): Promise<string> {
+  return sha256(tokenHash);
+}
+
+// Implements: REQ-AUTH-08
+export async function currentSessionTokenHash(request: Request): Promise<string | null> {
+  const rawToken = readCookie(request, SESSION_COOKIE);
+  return rawToken ? sha256(rawToken) : null;
 }
 
 // Implements: REQ-TYPE-01
@@ -131,8 +149,15 @@ export function publicUser(user: {
   name: string;
   role: AccountRole;
   carrera?: string | null;
+  photoUrl?: string | null;
 }): PublicUser {
-  return { id: user.id, email: user.email, name: user.name, role: user.role };
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    photoUrl: user.photoUrl ?? null,
+  };
 }
 
 function readCookie(request: Request, name: string) {

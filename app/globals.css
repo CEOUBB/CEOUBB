@@ -2065,6 +2065,235 @@ img {
   background: var(--canvas-soft);
 }
 
+.account-popover button + button {
+  margin-top: var(--space-xxs);
+}
+
+/* ── Portal · panel de notificaciones ─────────────────────── */
+
+.notifications-menu {
+  position: relative;
+}
+
+.notifications-menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+.notifications-menu summary::-webkit-details-marker {
+  display: none;
+}
+.notifications-menu[open] summary.header-notifications {
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+
+.notification-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(360px, calc(100vw - 2 * var(--container-pad)));
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  z-index: 50;
+}
+
+.notification-panel-body {
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 480px);
+}
+
+.notification-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.notification-panel-head p {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  color: var(--text-secondary);
+}
+
+.notification-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--color-primary);
+  transition: background var(--transition-fast);
+}
+.notification-mark-all:hover {
+  background: var(--color-primary-wash);
+}
+
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/*
+  La fila se mide por su alto útil: 44px es el mínimo táctil de la WebView, y
+  el esqueleto de carga repite exactamente esta geometría.
+*/
+.notification-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-hairline);
+  transition: background var(--transition-fast);
+}
+.notification-row:hover {
+  background: var(--canvas-soft);
+}
+.notification-row[data-unread="true"] {
+  background: var(--color-primary-wash);
+}
+.notification-row[data-unread="true"]:hover {
+  background: var(--color-primary-tint);
+}
+
+.notification-band {
+  align-self: stretch;
+  min-height: 28px;
+  border-radius: var(--radius-full);
+}
+
+.notification-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
+.notification-copy strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notification-copy small {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.notification-dot {
+  position: absolute;
+  right: 6px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--shield-red);
+}
+
+.notification-empty {
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.notification-see-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-primary);
+  transition: background var(--transition-fast);
+}
+.notification-see-all:hover {
+  background: var(--color-primary-wash);
+}
+
+.notification-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+.notification-skeleton-row {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-hairline);
+}
+.notification-skeleton-band {
+  align-self: stretch;
+  min-height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--border-hairline);
+}
+.notification-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+.notification-skeleton-line {
+  height: 12px;
+  width: 70%;
+  border-radius: var(--radius-xs);
+  background: var(--border-hairline);
+}
+.notification-skeleton-line.short {
+  height: 10px;
+  width: 45%;
+}
+
+/*
+  En ancho móvil el mismo contenido se presenta como hoja inferior. El relleno
+  usa `--safe-bottom`, ya corregido más arriba para la WebView de Android,
+  donde `env(safe-area-inset-bottom)` mide 0px y la última fila quedaría bajo
+  la barra de gestos.
+
+  Implements: REQ-NOTIF-07
+*/
+.app-shell[data-mobile="true"] .notification-popover {
+  position: fixed;
+  inset: auto 0 0 0;
+  top: auto;
+  width: 100%;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-bottom: none;
+  padding-bottom: var(--safe-bottom);
+}
+
+.app-shell[data-mobile="true"] .notification-panel-body {
+  max-height: 70vh;
+}
+
 /* ── Portal · lienzo ──────────────────────────────────────── */
 
 .portal-main {
@@ -10982,5 +11211,465 @@ div.editor-latex-token {
 @media (max-width: 600px) {
   .policy-answer {
     padding-left: 16px;
+  }
+}
+
+/* ── Portal · configuración ─────────────────────────────── */
+
+/*
+  Columna única de lectura. La pantalla es de operación, no de portada: cada
+  módulo se lee de arriba abajo sin que el mobiliario compita con el contenido.
+*/
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: 760px;
+}
+
+/*
+  El proyecto no monta ninguna librería de avisos flotantes, así que la
+  confirmación vive aquí y reserva su alto: si apareciera y desapareciera, el
+  contenido de abajo saltaría en cada guardado.
+*/
+.settings-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-body);
+}
+
+.settings-status svg {
+  flex: 0 0 auto;
+  color: var(--academic-emerald);
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.settings-panel-head {
+  display: grid;
+  gap: var(--space-xxs);
+}
+
+/* Mobiliario en Manrope: la serif queda reservada al h1 de la pantalla. */
+.settings-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-core);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.0125em;
+  color: var(--text-body);
+}
+
+.settings-panel h2 svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+/* Subtítulo dentro de un módulo: baja un escalón sin cambiar de familia. */
+.settings-subhead {
+  font-family: var(--font-core);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-body);
+}
+
+.settings-note {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.settings-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--shield-red-deep);
+}
+
+.settings-error svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ── Configuración · foto de perfil ─────────────────────── */
+
+.settings-photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-lg);
+}
+
+.settings-photo-current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 0 0 auto;
+}
+
+.settings-photo-caption {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.settings-crop {
+  display: grid;
+  gap: var(--space-sm);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+/*
+  `touch-action: none` es lo que hace posible reencuadrar con el dedo: sin esta
+  regla el navegador se queda el gesto para desplazar la página.
+*/
+.settings-crop-canvas {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas-soft);
+  touch-action: none;
+  cursor: grab;
+}
+
+.settings-crop-canvas:active {
+  cursor: grabbing;
+}
+
+.settings-slider {
+  display: grid;
+  gap: var(--space-xxs);
+  max-width: 240px;
+}
+
+.settings-slider label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* `accent-color` tiñe el control nativo del navegador con el azul institucional. */
+.settings-slider input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+}
+
+.settings-slider input:disabled {
+  accent-color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.settings-file {
+  display: inline-flex;
+}
+
+.settings-file input:focus-visible + label {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Configuración · alternadores ───────────────────────── */
+
+.settings-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.settings-switch-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.settings-switch-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 24px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--border-hairline) 70%, var(--canvas-soft));
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.settings-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.24);
+  transition: transform var(--transition-fast);
+}
+
+.settings-switch-input:checked + .settings-switch-track {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.settings-switch-input:checked + .settings-switch-track::after {
+  transform: translateX(16px);
+}
+
+.settings-switch-input:focus-visible + .settings-switch-track {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.settings-switch-input:disabled + .settings-switch-track {
+  opacity: 0.45;
+}
+
+.settings-switch:has(.settings-switch-input:disabled) {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* ── Configuración · canales de aviso ───────────────────── */
+
+.settings-channels {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-channel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xxs) var(--space-md);
+  padding: var(--space-xs) 0;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.settings-channel:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-channel-copy {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.settings-channel-copy strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-body);
+}
+
+.settings-channel-copy small {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.settings-channel-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* ── Configuración · ficha institucional y sesiones ─────── */
+
+.settings-facts {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.settings-facts > div {
+  display: grid;
+  gap: 2px;
+}
+
+.settings-facts dt {
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.settings-facts dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text-body);
+  font-variant-numeric: var(--num);
+  overflow-wrap: anywhere;
+}
+
+.settings-sessions {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xxs) var(--space-md);
+  padding: var(--space-xs) 0;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.settings-session:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-session-copy {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.settings-session-copy strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-body);
+  font-variant-numeric: var(--num);
+}
+
+.settings-session-copy small {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  font-variant-numeric: var(--num);
+}
+
+.settings-session-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.settings-revoke {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.settings-revoke:hover {
+  background: var(--canvas-soft);
+  border-color: color-mix(in srgb, var(--shield-red) 34%, var(--border-hairline));
+  color: var(--shield-red-deep);
+}
+
+.settings-revoke:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.settings-logout {
+  border-color: color-mix(in srgb, var(--shield-red) 30%, var(--border-hairline));
+  color: var(--shield-red-deep);
+}
+
+.settings-logout:hover {
+  background: color-mix(in srgb, var(--shield-red) 8%, var(--surface-card));
+}
+
+/*
+  Bajo 420px la fila de canal ya no cabe con los dos alternadores al costado
+  del nombre: se apilan y el bloque se sigue leyendo sin barrido horizontal.
+*/
+@media (max-width: 420px) {
+  .settings-panel {
+    padding: var(--space-md);
+  }
+
+  .settings-channel,
+  .settings-session {
+    justify-content: flex-start;
+  }
+
+  .settings-channel-toggles {
+    gap: var(--space-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-switch-track,
+  .settings-switch-track::after,
+  .settings-revoke {
+    transition: none;
   }
 }

@@ -266,6 +266,101 @@ exports.saveAuditedGradebook = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (requ
   }
 });
 
+/*
+  Envío dirigido por token. El envío anterior iba a un topic
+  `course_{id}_students`, y un topic no deja consultar la preferencia de cada
+  destinatario: quien apagara los avisos de sección en Configuración los seguiría
+  recibiendo. Ahora se resuelve la matrícula activa de la sección, se leen token y
+  preferencia en un solo viaje por lote y se envía sólo a los dispositivos que
+  quedan autorizados.
+
+  El costo se acota en cada paso: la consulta de matrículas viaja con `select()`
+  y no trae campos, los perfiles se piden con `getAll` y máscara de dos campos en
+  lugar de un documento por viaje, los lotes van en paralelo, y un token que FCM
+  declara muerto se borra en el acto para que la próxima publicación no vuelva a
+  pagarlo.
+*/
+// Implements: REQ-CFG-04
+const PROFILE_BATCH = 300;
+const MULTICAST_BATCH = 500;
+const DEAD_TOKEN_ERRORS = new Set([
+  "messaging/registration-token-not-registered",
+  "messaging/invalid-registration-token",
+  "messaging/invalid-argument",
+]);
+
+function chunk(items, size) {
+  const batches = [];
+  for (let index = 0; index < items.length; index += size) {
+    batches.push(items.slice(index, index + size));
+  }
+  return batches;
+}
+
+/**
+ * Devuelve los uid con matrícula activa de estudiante en la sección. Las
+ * matrículas retiradas no dejan documento: la proyección las borra en vez de
+ * marcarlas, así que basta filtrar por sección y rango.
+ */
+async function enrolledStudentIds(db, courseId) {
+  const snapshot = await db
+    .collectionGroup("sections")
+    .where("seccionId", "==", courseId)
+    .where("role", "==", "student")
+    .select()
+    .get();
+  const ids = [];
+  for (const document of snapshot.docs) {
+    const uid = document.ref.parent.parent && document.ref.parent.parent.id;
+    if (uid) ids.push(uid);
+  }
+  return ids;
+}
+
+/**
+ * Token de cada estudiante que no haya apagado el canal de publicaciones de
+ * sección. La ausencia de preferencia significa canal activo: una cuenta que
+ * nunca abrió Configuración recibe sus avisos igual.
+ */
+async function authorizedTokens(db, uids, channel) {
+  const batches = chunk(uids, PROFILE_BATCH);
+  const results = await Promise.all(
+    batches.map((batch) =>
+      db.getAll(...batch.map((uid) => db.collection("users").doc(uid)), {
+        fieldMask: ["fcmToken", "pushChannels"],
+      })
+    )
+  );
+  const tokens = new Map();
+  for (const snapshot of results.flat()) {
+    if (!snapshot.exists) continue;
+    const token = snapshot.get("fcmToken");
+    if (typeof token !== "string" || !token) continue;
+    const channels = snapshot.get("pushChannels");
+    if (channels && channels[channel] === false) continue;
+    tokens.set(token, snapshot.ref);
+  }
+  return tokens;
+}
+
+/** Borra los tokens que FCM declaró muertos para no reenviarles nunca más. */
+async function pruneDeadTokens(db, refsByToken, tokens, responses) {
+  const dead = [];
+  responses.forEach((response, index) => {
+    if (response.success) return;
+    const code = response.error && response.error.code;
+    if (DEAD_TOKEN_ERRORS.has(code)) dead.push(tokens[index]);
+  });
+  if (dead.length === 0) return 0;
+  const writer = db.bulkWriter();
+  for (const token of dead) {
+    const ref = refsByToken.get(token);
+    if (ref) writer.update(ref, { fcmToken: FieldValue.delete() });
+  }
+  await writer.close();
+  return dead.length;
+}
+
 exports.notifyStudentsOnCoursePost = onDocumentCreated(
   "courses/{courseId}/posts/{postId}",
   async (event) => {
@@ -274,11 +369,17 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
     if (post.notifyStudents === false) return;
     const courseId = event.params.courseId;
     const postId = event.params.postId;
-    const topicCourse = courseId.replace(/[^a-zA-Z0-9-_.~%]/g, "_");
+    const db = getFirestore();
+
+    const uids = await enrolledStudentIds(db, courseId);
+    if (uids.length === 0) return;
+
+    const refsByToken = await authorizedTokens(db, uids, "sectionPublications");
+    if (refsByToken.size === 0) return;
+
     const title = text(post.title, "Nuevo material del curso", 100);
     const body = text(post.body, "Tu profesor publicó un aviso o archivo nuevo.", 240);
-    await getMessaging().send({
-      topic: `course_${topicCourse}_students`,
+    const message = {
       data: {
         title,
         body,
@@ -302,7 +403,23 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
           },
         },
       },
-    });
+    };
+
+    const messaging = getMessaging();
+    const batches = chunk([...refsByToken.keys()], MULTICAST_BATCH);
+    const outcomes = await Promise.all(
+      batches.map(async (tokens) => {
+        const result = await messaging.sendEachForMulticast({ ...message, tokens });
+        const pruned = await pruneDeadTokens(db, refsByToken, tokens, result.responses);
+        return { sent: result.successCount, pruned };
+      })
+    );
+
+    const sent = outcomes.reduce((total, outcome) => total + outcome.sent, 0);
+    const pruned = outcomes.reduce((total, outcome) => total + outcome.pruned, 0);
+    console.log(
+      `[notifyStudentsOnCoursePost] ${courseId}: ${uids.length} matriculados, ${refsByToken.size} dispositivos autorizados, ${sent} entregados, ${pruned} tokens dados de baja.`
+    );
   }
 );
 

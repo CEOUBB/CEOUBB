@@ -47,7 +47,9 @@ export type FirestoreValue =
   | { stringValue: string }
   | { integerValue: string }
   | { booleanValue: boolean }
-  | { timestampValue: string };
+  | { timestampValue: string }
+  | { nullValue: null }
+  | { mapValue: { fields: Record<string, FirestoreValue> } };
 
 export type FirestoreWrite =
   | {
@@ -285,14 +287,20 @@ async function commit(writes: FirestoreWrite[], token: string) {
   }
 }
 
-let cachedToken: { value: string; expiresAt: number } | null = null;
+const DATASTORE_SCOPE = "https://www.googleapis.com/auth/datastore";
+export const STORAGE_SCOPE = "https://www.googleapis.com/auth/devstorage.read_write";
+
+const cachedTokens = new Map<string, { value: string; expiresAt: number }>();
 
 /*
   Sin firebase-admin en el servidor web: se firma un JWT RS256 con la cuenta de
-  servicio y se canjea por un token OAuth. Se cachea hasta 60 s antes de vencer.
+  servicio y se canjea por un token OAuth. Se cachea por ámbito hasta 60 s antes
+  de vencer, porque Firestore y Storage piden ámbitos distintos y un token de
+  datastore no sirve para subir un objeto.
 */
-async function accessToken(): Promise<string> {
+export async function googleAccessToken(scope: string = DATASTORE_SCOPE): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+  const cachedToken = cachedTokens.get(scope);
   if (cachedToken && cachedToken.expiresAt > now + 60) return cachedToken.value;
 
   const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
@@ -305,7 +313,7 @@ async function accessToken(): Promise<string> {
 
   const claim = {
     iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/datastore",
+    scope,
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 3600,
@@ -326,9 +334,12 @@ async function accessToken(): Promise<string> {
   }
   const token = (await response.json()) as { access_token?: string; expires_in?: number };
   if (!token.access_token) throw new Error("Google OAuth no devolvió un token de acceso.");
-  cachedToken = { value: token.access_token, expiresAt: now + (token.expires_in ?? 3600) };
-  return cachedToken.value;
+  const issued = { value: token.access_token, expiresAt: now + (token.expires_in ?? 3600) };
+  cachedTokens.set(scope, issued);
+  return issued.value;
 }
+
+const accessToken = googleAccessToken;
 
 function base64url(value: string) {
   return Buffer.from(value, "utf8").toString("base64url");

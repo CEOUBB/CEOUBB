@@ -10,6 +10,7 @@ export type User = {
   name: string;
   role: Role;
   carrera?: string | null;
+  photoUrl?: string | null;
 };
 
 export type CalendarEntry = {

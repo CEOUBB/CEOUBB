@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "sections",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "seccionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "gradeAudit",
       "queryScope": "COLLECTION",
       "fields": [

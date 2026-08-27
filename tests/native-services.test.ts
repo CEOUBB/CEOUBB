@@ -48,14 +48,16 @@ test("keeps every other guard on the users update rule", async () => {
   una spec aprobada. SPEC-010 la movió de 18 a 21 y CEO-7 agrega las dos reglas
   explícitas de lectura y denegación de escritura para la bitácora de notas. CEO-26
   incorpora diez permisos acotados para cursores, hilos privados y sus mensajes.
+  CEO-65 suma dos: lectura del propio documento de preferencias y denegación de
+  escritura para el cliente, porque la validación Zod vive en la ruta API.
 */
 // REQ-CAP-18, REQ-SEC-02
 test("keeps the allow surface frozen at the approved count", async () => {
   const rules = await read("firebase/firestore.rules");
   assert.equal(
     (rules.match(/^\s*allow /gm) ?? []).length,
-    33,
-    "the ruleset must keep exactly 33 allow rules"
+    35,
+    "the ruleset must keep exactly 35 allow rules"
   );
   // No hay regla comodín: lo que no está listado queda denegado por defecto.
   assert.doesNotMatch(rules, /allow .*: if true;/, "no rule may grant unconditional access");

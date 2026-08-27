@@ -5,10 +5,14 @@
 // Implements: REQ-STAGGERED-SHIMMER-MOTION
 
 import {
+  Bell,
   ChartBar,
+  Eye,
   Files,
   GraduationCap,
   House,
+  IdentificationCard,
+  Image as ImageIcon,
   Info,
   MagnifyingGlass,
   UsersThree,
@@ -27,6 +31,10 @@ const SKELETON_DAYS = [
 const SKELETON_HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
 const SKELETON_FILTER_COURSES = [0, 1, 2, 3, 4];
 const SKELETON_ADMIN_ROWS = [0, 1, 2, 3];
+
+/* Los cuatro canales de aviso de la pantalla real, con el ancho de su rótulo. */
+const SKELETON_SETTINGS_CHANNELS = [230, 210, 205, 260];
+const SKELETON_SETTINGS_SESSIONS = [0, 1];
 
 export function CalendarSkeleton() {
   return (
@@ -586,5 +594,167 @@ export function ClassroomSkeleton() {
         </div>
       </main>
     </div>
+  );
+}
+
+/*
+  El esqueleto repite las clases reales de la pantalla, no una aproximación:
+  así los cuatro módulos ocupan exactamente el alto que ocuparán después y la
+  llegada del bundle no desplaza nada bajo el cursor.
+*/
+// Implements: REQ-CFG-08
+export function SettingsSkeleton() {
+  return (
+    <section
+      aria-busy="true"
+      aria-label="Cargando configuración de la cuenta…"
+      className="settings-view"
+      role="status"
+    >
+      <div className="page-head lead">
+        <h1 style={{ margin: 0 }}>
+          <span className="sr-only">Configuración</span>
+          <span
+            className="sk boot-title"
+            style={{ width: "220px", height: "32px", "--sk-delay": "50ms" } as React.CSSProperties}
+          />
+        </h1>
+        <p style={{ margin: 0 }}>
+          <span
+            className="sk boot-subtitle"
+            style={{ width: "330px", height: "13px", "--sk-delay": "80ms" } as React.CSSProperties}
+          />
+        </p>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "110ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <ImageIcon aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            <span className="sr-only">Foto de perfil</span>
+            <span className="sk" style={{ width: "150px", height: "18px" }} />
+          </h2>
+          <span className="sk" style={{ width: "min(100%, 420px)", height: "13px" }} />
+        </div>
+        <div className="settings-photo">
+          <div className="settings-photo-current">
+            <span className="sk sk-round" style={{ width: "44px", height: "44px" }} />
+            <span className="sk" style={{ width: "84px", height: "12px" }} />
+          </div>
+        </div>
+        <div className="settings-actions">
+          <span
+            className="sk"
+            style={{ width: "160px", height: "44px", borderRadius: "var(--radius-full)" }}
+          />
+          <span
+            className="sk"
+            style={{ width: "230px", height: "44px", borderRadius: "var(--radius-full)" }}
+          />
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "160ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <Bell aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            <span className="sr-only">Avisos</span>
+            <span className="sk" style={{ width: "90px", height: "18px" }} />
+          </h2>
+          <span className="sk" style={{ width: "min(100%, 460px)", height: "13px" }} />
+        </div>
+        <div className="settings-channels">
+          {SKELETON_SETTINGS_CHANNELS.map((width, index) => (
+            <div
+              className="settings-channel"
+              key={`settings-channel-${width}`}
+              style={{ "--sk-delay": `${190 + index * 30}ms` } as React.CSSProperties}
+            >
+              <div className="settings-channel-copy">
+                <span className="sk" style={{ width: `${width}px`, height: "15px" }} />
+              </div>
+              <div className="settings-channel-toggles">
+                <span
+                  className="sk"
+                  style={{ width: "40px", height: "24px", borderRadius: "var(--radius-full)" }}
+                />
+                <span
+                  className="sk"
+                  style={{ width: "40px", height: "24px", borderRadius: "var(--radius-full)" }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "330ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <Eye aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            <span className="sr-only">Accesibilidad</span>
+            <span className="sk" style={{ width: "130px", height: "18px" }} />
+          </h2>
+          <span className="sk" style={{ width: "min(100%, 480px)", height: "13px" }} />
+        </div>
+        <div className="settings-switch">
+          <span
+            className="sk"
+            style={{ width: "40px", height: "24px", borderRadius: "var(--radius-full)" }}
+          />
+          <span className="sk" style={{ width: "225px", height: "14px" }} />
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "380ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <IdentificationCard
+              aria-hidden="true"
+              size={22}
+              style={{ color: "var(--text-faint)" }}
+            />
+            <span className="sr-only">Cuenta y seguridad</span>
+            <span className="sk" style={{ width: "180px", height: "18px" }} />
+          </h2>
+          <span className="sk" style={{ width: "min(100%, 440px)", height: "13px" }} />
+        </div>
+        <div className="settings-facts">
+          <div>
+            <span className="sk" style={{ width: "130px", height: "12px" }} />
+            <span className="sk" style={{ width: "245px", height: "15px" }} />
+          </div>
+          <div>
+            <span className="sk" style={{ width: "60px", height: "12px" }} />
+            <span className="sk" style={{ width: "110px", height: "15px" }} />
+          </div>
+        </div>
+        <span className="sk" style={{ width: "140px", height: "15px" }} />
+        <div className="settings-sessions">
+          {SKELETON_SETTINGS_SESSIONS.map((row) => (
+            <div
+              className="settings-session"
+              key={`settings-session-${row}`}
+              style={{ "--sk-delay": `${420 + row * 35}ms` } as React.CSSProperties}
+            >
+              <div className="settings-session-copy">
+                <span className="sk" style={{ width: "210px", height: "14px" }} />
+                <span className="sk" style={{ width: "175px", height: "12px" }} />
+              </div>
+              <span
+                className="sk"
+                style={{ width: "132px", height: "44px", borderRadius: "var(--radius-md)" }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="settings-actions">
+          <span
+            className="sk"
+            style={{ width: "270px", height: "44px", borderRadius: "var(--radius-full)" }}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
