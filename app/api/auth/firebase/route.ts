@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         email,
         name,
         role,
+        photoUrl: null,
         createdAt: new Date().toISOString(),
       };
       await db.insert(users).values(user);

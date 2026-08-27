@@ -241,12 +241,15 @@ test("returns the signed-in account without RUT or credential fields", async () 
   const response = await request("/api/auth/me", { cookie: await signIn(STUDENT) });
   assert.equal(response.status, 200);
   const { user } = await response.json();
+  // La foto propia sí viaja al cliente: el avatar la necesita. Nada más entra.
   assert.deepEqual(user, {
     id: STUDENT.id,
     email: STUDENT.email,
     name: STUDENT.name,
     role: STUDENT.role,
+    photoUrl: null,
   });
+  assert.deepEqual(Object.keys(user).sort(), ["email", "id", "name", "photoUrl", "role"]);
 });
 
 test("ignores an expired session", async () => {

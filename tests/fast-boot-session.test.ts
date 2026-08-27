@@ -20,6 +20,7 @@ before(async () => {
       name text NOT NULL,
       role text NOT NULL,
       carrera text,
+      photo_url text,
       created_at text NOT NULL
     );`
   );

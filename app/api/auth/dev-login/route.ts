@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         email: targetTestUser.email,
         name: targetTestUser.name,
         role: targetTestUser.role,
+        photoUrl: null,
         createdAt: new Date().toISOString(),
       };
       await db.insert(users).values(user);

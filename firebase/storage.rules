@@ -79,6 +79,23 @@ service firebase.storage {
       return teachesSection(seccionId) || assistsSection(seccionId);
     }
 
+    /*
+      Foto de perfil. Cada cuenta escribe únicamente bajo su propio prefijo, con
+      tipo de imagen admitido y 2 MB de techo: es un avatar, no un adjunto. La
+      lectura queda abierta a cualquier sesión institucional porque el avatar se
+      muestra en listas de participantes y en el hilo de mensajes.
+    */
+    // Implements: REQ-CFG-02, REQ-CFG-03
+    match /avatars/{userId}/{fileName} {
+      allow read: if isMember();
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.size > 0
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('^image/(png|jpeg|webp)$');
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
     // Material del curso publicado por el equipo docente.
     match /courses/{courseId}/{userId}/{fileName} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);

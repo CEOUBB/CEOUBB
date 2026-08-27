@@ -3,14 +3,17 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   MAX_COMMUNICATION_ITEMS,
+  MAX_NOTIFICATION_ITEMS,
   MESSAGE_EMPTY_ERROR,
   MESSAGE_TOO_LONG_ERROR,
   announcementCursorKey,
   canListStudentThreads,
+  deriveNotifications,
   mergeMessageThreads,
   normalizeMessageBody,
   threadCursorKey,
   unreadCommunicationCount,
+  unreadCursorKeys,
   type CommunicationReadCursor,
   type MessageThreadSummary,
 } from "../lib/communications.ts";
@@ -158,11 +161,111 @@ test("REQ-COMM-08: el centro está disponible en cabecera, riel y barra móvil",
     "utf8"
   );
   assert.match(types, /label: "Avisos y mensajes"/);
-  assert.match(shell, /aria-label=.*Avisos y mensajes/);
   assert.match(portal, /label: "Avisos"/);
+  // El control del header abre el panel; la pantalla completa llega por su fila final.
+  assert.match(shell, /aria-label=\{`Notificaciones\$\{/);
+  assert.match(shell, /aria-haspopup="menu"/);
+  assert.doesNotMatch(
+    shell,
+    /className="header-notifications"\s*\n\s*onClick=\{onCommunications\}/
+  );
+  const panel = readFileSync(new URL("../app/notification-panel.tsx", import.meta.url), "utf8");
+  assert.match(panel, /Ver todas las notificaciones/);
   assert.match(center, /role="tablist"/);
   assert.match(center, /Marcar todo como leído/);
   assert.match(center, /Escribir al equipo docente/);
   assert.match(center, /maxLength=\{2000\}/);
   assert.match(center, /role="status"/);
+});
+
+function activity(
+  id: string,
+  courseId: string,
+  createdAt: string,
+  kind: "notice" | "guide" | "assessment" | "resource" = "notice"
+) {
+  return { id, courseId, title: `Publicación ${id}`, kind, dueDate: "", createdAt };
+}
+
+const NOTIFICATION_COURSES = [
+  { id: "estatica", name: "Estática", tone: "#38bdf8" },
+  { id: "calculo", name: "Cálculo", tone: "#10b981" },
+];
+
+test("REQ-NOTIF-02: el panel ordena de forma descendente y se acota a 20 elementos", () => {
+  const many = Array.from({ length: 30 }, (_, index) =>
+    activity(`a${index}`, "estatica", `2026-08-${String(index + 1).padStart(2, "0")}T10:00:00.000Z`)
+  );
+  const items = deriveNotifications(many, [], [], "student-1", NOTIFICATION_COURSES);
+  assert.equal(items.length, MAX_NOTIFICATION_ITEMS);
+  assert.equal(items.length, 20);
+  assert.equal(items[0].createdAt, "2026-08-30T10:00:00.000Z");
+  for (let index = 1; index < items.length; index += 1) {
+    assert.ok(items[index - 1].createdAt > items[index].createdAt);
+  }
+});
+
+test("REQ-NOTIF-02: fusiona avisos y mensajes en una sola lista ordenada", () => {
+  const items = deriveNotifications(
+    [activity("a1", "estatica", "2026-08-20T10:00:00.000Z")],
+    [thread("t1", "calculo", "2026-08-21T10:00:00.000Z")],
+    [],
+    "student-1",
+    NOTIFICATION_COURSES
+  );
+  assert.deepEqual(
+    items.map((item) => item.source),
+    ["thread", "announcement"]
+  );
+  assert.equal(items[0].courseName, "Cálculo");
+  assert.equal(items[1].tone, "#38bdf8");
+  assert.equal(items[1].excerpt, "Nuevo aviso");
+});
+
+test("REQ-NOTIF-02: marca leído contra el cursor y expone su clave", () => {
+  const cursors: CommunicationReadCursor[] = [
+    { key: announcementCursorKey("estatica"), readAt: "2026-08-20T12:00:00.000Z" },
+  ];
+  const items = deriveNotifications(
+    [
+      activity("a1", "estatica", "2026-08-20T10:00:00.000Z"),
+      activity("a2", "estatica", "2026-08-20T13:00:00.000Z"),
+    ],
+    [],
+    cursors,
+    "student-1",
+    NOTIFICATION_COURSES
+  );
+  const [reciente, antiguo] = items;
+  assert.equal(reciente.unread, true);
+  assert.equal(antiguo.unread, false);
+  assert.equal(reciente.cursorKey, "course:estatica");
+  assert.deepEqual(unreadCursorKeys(items), ["course:estatica"]);
+});
+
+test("REQ-NOTIF-02: descarta secciones sin matrícula y los hilos propios", () => {
+  const items = deriveNotifications(
+    [
+      activity("a1", "estatica", "2026-08-20T10:00:00.000Z"),
+      activity("a2", "quimica", "2026-08-22T10:00:00.000Z"),
+    ],
+    [
+      thread("t1", "quimica", "2026-08-23T10:00:00.000Z"),
+      thread("t2", "calculo", "2026-08-24T10:00:00.000Z", "student-1"),
+    ],
+    [],
+    "student-1",
+    NOTIFICATION_COURSES
+  );
+  assert.equal(items.length, 1);
+  assert.equal(items[0].courseId, "estatica");
+});
+
+test("REQ-NOTIF-02: la derivación no abre ninguna lectura remota", () => {
+  const source = readFileSync(new URL("../lib/communications.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /firestore\(\)|collectionGroup|onSnapshot|getDocs/);
+  const runtimeImports = source
+    .split("\n")
+    .filter((line) => line.startsWith("import ") && !line.startsWith("import type "));
+  assert.deepEqual(runtimeImports, []);
 });

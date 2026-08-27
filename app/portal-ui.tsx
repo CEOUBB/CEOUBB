@@ -26,16 +26,25 @@ function useGooglePhoto(email: string) {
   return [photo, () => setPhoto(null)] as const;
 }
 
+/*
+  Precedencia del avatar: foto propia, foto de Google, iniciales. Restablecer
+  la foto por defecto vacía `photoUrl` en la base en vez de copiar la URL de
+  Google, que puede rotar y quedaría congelada.
+*/
+// Implements: REQ-CFG-02, REQ-CFG-03
 export function Avatar({
   email,
   name,
+  photoUrl,
   large = false,
 }: {
   email: string;
   name: string;
+  photoUrl?: string | null;
   large?: boolean;
 }) {
-  const [photo, dropPhoto] = useGooglePhoto(email);
+  const [googlePhoto, dropPhoto] = useGooglePhoto(email);
+  const photo = photoUrl || googlePhoto;
   const size = large ? 44 : 32;
   return (
     <span className={large ? "avatar large" : "avatar"}>

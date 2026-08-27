@@ -7,6 +7,13 @@ export const users = sqliteTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     role: text("role", { enum: ["owner", "teacher", "student"] }).notNull(),
+    /*
+      Foto propia subida desde Configuración. Es anulable porque ese es el
+      estado de toda cuenta existente: con `NULL` el avatar cae a la foto de
+      Google y, si tampoco resuelve, a las iniciales.
+    */
+    // Implements: REQ-CFG-02
+    photoUrl: text("photo_url"),
     createdAt: text("created_at").notNull(),
   },
   (table) => [uniqueIndex("idx_users_email").on(table.email)]

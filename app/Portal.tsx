@@ -32,7 +32,14 @@ import { loadMyCourses } from "../lib/teacher-course-client";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
-import { SEEN_KEY, navItems, navReducer, readSeen, type Screen } from "./portal-types";
+import {
+  SEEN_KEY,
+  SETTINGS_SCREEN_LABEL,
+  navItems,
+  navReducer,
+  readSeen,
+  type Screen,
+} from "./portal-types";
 import {
   calendarEntries,
   forgetPhoto,
@@ -50,10 +57,16 @@ import {
   type SectionMembership,
 } from "../lib/section-roles";
 import {
+  announcementCursorKey,
+  deriveNotifications,
   firebaseUserId,
+  threadCursorKey,
   unreadCommunicationCount,
+  unreadCursorKeys,
   type CommunicationState,
+  type NotificationItem,
 } from "../lib/communications.ts";
+import { forgetPreferences, useReducedMotionPreference } from "../lib/user-preferences";
 
 const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
 const SKELETON_NAV = [0, 1, 2];
@@ -382,8 +395,9 @@ export function Portal({
     course: null,
     coursesSheet: false,
     preview: null,
+    focusThread: "",
   });
-  const { screen, course, preview, coursesSheet } = navState;
+  const { screen, course, preview, coursesSheet, focusThread } = navState;
   const setScreen = useCallback((s: Screen) => dispatchNav({ type: "SET_SCREEN", screen: s }), []);
   const setCoursesSheet = useCallback(
     (open: boolean) => dispatchNav({ type: "SET_COURSES_SHEET", open }),
@@ -416,6 +430,13 @@ export function Portal({
   const previousView = useRef<string | null>(null);
 
   const mobile = useIsMobileApp();
+  /*
+    La preferencia del usuario sólo puede sumar supresión de movimiento: con
+    "user" Motion ya respeta `prefers-reduced-motion`, y "always" la impone
+    cuando la cuenta lo pidió desde Configuración.
+  */
+  // Implements: REQ-CFG-05
+  const prefersReducedMotion = useReducedMotionPreference(user !== null);
   useStatusBar(user !== null ? "canvas" : "hero");
   useExternalLinks();
 
@@ -558,7 +579,7 @@ export function Portal({
         memberships,
         user.role,
         (state) => {
-          setCommunications(state);
+          setCommunications({ ...state, ready: true });
           setCommunicationError("");
         },
         setCommunicationError
@@ -633,6 +654,21 @@ export function Portal({
         : 0,
     [activity, communications, user]
   );
+  // Implements: REQ-NOTIF-02
+  const notifications = useMemo(
+    () =>
+      user
+        ? deriveNotifications(
+            activity,
+            communications.threads,
+            communications.cursors,
+            firebaseUserId(user.id),
+            courses
+          )
+        : [],
+    [activity, communications, courses, user]
+  );
+  const notificationsLoading = memberships.length > 0 && !communications.ready;
 
   const enterCourse = (next: Course) => {
     const latest = activity.find((item) => item.courseId === next.id)?.createdAt;
@@ -648,6 +684,33 @@ export function Portal({
 
   const openCourse = (next: Course) => (mobile ? setPreview(next) : enterCourse(next));
 
+  const persistRead = (keys: readonly string[]) => {
+    if (keys.length === 0) return;
+    void import("../lib/firebase-classroom-client").then(({ markCommunicationRead }) =>
+      markCommunicationRead(keys).catch(() => {
+        setCommunicationError("No se pudo actualizar el estado de lectura.");
+      })
+    );
+  };
+
+  // Implements: REQ-NOTIF-03
+  const openNotification = (item: NotificationItem) => {
+    if (item.source === "announcement") {
+      persistRead([announcementCursorKey(item.courseId)]);
+      const target = courses.find((course) => course.id === item.courseId);
+      if (target) enterCourse(target);
+      return;
+    }
+    const threadId = item.threadId ?? "";
+    persistRead([threadCursorKey(item.courseId, threadId)]);
+    dispatchNav({ type: "OPEN_THREAD", key: `${item.courseId}:${threadId}` });
+  };
+
+  // Implements: REQ-NOTIF-04
+  const markAllNotifications = () => {
+    persistRead(unreadCursorKeys(notifications));
+  };
+
   const logout = async () => {
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
@@ -658,6 +721,7 @@ export function Portal({
       // Ignore network failure
     }
     forgetPhoto();
+    forgetPreferences();
     setCommunications({ threads: [], cursors: [] });
     setCommunicationError("");
     setActivity([]);
@@ -710,7 +774,9 @@ export function Portal({
   const context =
     screen === "course" && openedCourse
       ? openedCourse.name
-      : (views.find((item) => item.key === screen)?.label ?? "Área personal");
+      : screen === "settings"
+        ? SETTINGS_SCREEN_LABEL
+        : (views.find((item) => item.key === screen)?.label ?? "Área personal");
 
   const paletteItems: PaletteItem[] = [
     ...views.map(({ key, label, Icon }) => ({
@@ -771,7 +837,7 @@ export function Portal({
 
   return (
     <LazyMotion features={domAnimation}>
-      <MotionConfig reducedMotion="user">
+      <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "user"}>
         <a className="skip-link" href="#contenido-principal">
           Saltar al contenido principal
         </a>
@@ -783,10 +849,15 @@ export function Portal({
         >
           <PortalHeader
             context={context}
+            notifications={notifications}
+            notificationsLoading={notificationsLoading}
             onHome={() => setScreen("courses")}
             onCommunications={() => setScreen("notifications")}
             onLogout={logout}
+            onMarkAllNotifications={markAllNotifications}
+            onOpenNotification={openNotification}
             onSearch={() => setSearchOpen(true)}
+            onSettings={() => setScreen("settings")}
             sidebarOpen={sidebarOpen}
             toggleSidebar={() => setSidebarOpen((open) => !open)}
             unreadCommunications={unreadCommunications}
@@ -821,6 +892,11 @@ export function Portal({
             communicationError={communicationError}
             communicationThreads={communications.threads}
             courses={courses}
+            focusThread={focusThread}
+            onLogout={logout}
+            onPhotoChange={(photoUrl) =>
+              setUser((current) => (current ? { ...current, photoUrl } : current))
+            }
             context={context}
             entries={entries}
             gradebooks={gradebooks}

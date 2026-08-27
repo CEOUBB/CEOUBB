@@ -371,3 +371,81 @@ de la próxima migración generada.
 
 **No hay trabajo de reintento ni bandeja de entrada.** La columna `estado` deja ambos
 preparados, pero se construyen cuando el volumen lo justifique.
+
+## Handoff: panel de notificaciones y configuración (CEO-66, CEO-65)
+
+Branch `felipearce2004/ceo-66-65-notificaciones-y-configuracion`. Change OpenSpec
+`openspec/changes/add-notifications-menu-and-settings/` con propuesta, cuatro deltas de
+spec, diseño y tareas.
+
+El control de campana del header dejó de navegar: ahora abre un panel efímero sobre la
+vista actual, y `Ver todas las notificaciones` es el camino a `Avisos y mensajes`. El menú
+de cuenta suma `Configuración` sobre `Cerrar sesión`, y detrás vive una pantalla nueva del
+portal con foto de perfil, preferencias de aviso, reducción de movimiento y sesiones
+activas.
+
+### Decisiones que conviene recordar
+
+**El panel no abre ninguna colección propia.** `deriveNotifications` en
+`lib/communications.ts` reordena la actividad y los hilos que el portal ya mantiene
+suscritos. CEO-66 pedía un listener sobre `users/{uid}/notifications`, pero esa colección
+obligaría a escribir un documento por miembro de sección en cada publicación y a escala
+institucional no compra ningún aviso que no se derive hoy. El tipo `NotificationItem` es
+el contrato del panel: una fuente futura entra por un adaptador, sin tocar la vista.
+
+**Configuración es una `Screen` del portal, no la ruta `/configuracion`.** El portal es un
+cliente único montado en `app/page.tsx`; una ruta paralela repetiría el montaje de sesión,
+header y sidebar y rompería el manejo de foco sobre `#contenido-principal`. Consecuencia
+aceptada: todavía no hay URL enlazable a configuración. Cuando el portal sincronice
+`Screen` con la URL, esta pantalla lo hereda sin cambios.
+
+**La foto se resuelve por precedencia: propia, Google, iniciales.** Restablecer vacía
+`users.photo_url` en vez de copiar la URL de Google, que puede rotar y quedaría congelada.
+El recorte es propio, sobre `canvas`, sin dependencia nueva.
+
+**Las preferencias viven en Firestore y son de sólo lectura para el cliente.** La
+escritura entra por `PUT /api/profile/preferences` con esquema Zod cerrado, para que la
+validación no se pueda esquivar escribiendo directo al documento.
+
+**La revocación de sesiones nunca expone el hash del token.** La interfaz recibe un
+identificador derivado (`sessionPublicId`, un segundo SHA-256) y el servidor comprueba la
+pertenencia contra las filas del propio usuario antes de borrar.
+
+### Migración
+
+`drizzle/0010_users_photo_url.sql` agrega `photo_url` como texto anulable, sin backfill.
+Se escribió a mano por la misma razón que `0008` y `0009`: `drizzle/meta` sigue corrupto y
+`pnpm run db:generate` falla con la colisión de snapshots. Su entrada quedó registrada en
+`_journal.json`, que es lo que `migrate()` lee de verdad. **Nota aparte: `0009` nunca se
+registró en el journal**, así que `migrate()` no lo aplica; conviene revisarlo cuando se
+repare `drizzle/meta`.
+
+Falta aplicar la migración en Turso de producción antes de desplegar, y publicar las
+reglas nuevas de Firestore y Storage.
+
+### Canales de aviso sin emisor
+
+Las cuatro preferencias se persisten y se respetan donde hay a quién respetar, pero sólo
+una tiene emisor hoy:
+
+- `sectionPublications`: emitida por `notifyStudentsOnCoursePost` en
+  `firebase/functions/index.js`, **a un topic** (`course_{id}_students`) al que hoy no se
+  suscribe ningún dispositivo.
+- `teacherAnnouncements`, `gradeChanges`, `assessmentReminders`: sin emisor. La preferencia
+  queda guardada y la interfaz lo dice en pantalla en vez de prometer un aviso que no
+  existe.
+
+**Limitación conocida.** Un envío por topic no puede consultar la preferencia de cada
+destinatario. Lo que sí quedó implementado es el corte por dispositivo: si la cuenta apagó
+todos sus canales de push, `registerPushNotifications` no registra el dispositivo y limpia
+su `fcmToken`. Honrar la preferencia canal por canal exige convertir esa Cloud Function a
+envío por token, que es trabajo aparte y cambia la semántica de entrega de push en todo el
+producto.
+
+### Superficie de reglas
+
+El contador congelado de `allow` en `firebase/firestore.rules` pasó de 33 a 35: lectura del
+propio documento de preferencias y denegación de escritura para el cliente. En
+`firebase/storage.rules` se agregó el prefijo `avatars/{userId}/`, restringido al propio
+`uid`, con 2 MB de techo y sólo `png`, `jpeg` o `webp`. Ninguna regla nueva toca rutas de
+sección ni introduce lecturas de grupo de colección.

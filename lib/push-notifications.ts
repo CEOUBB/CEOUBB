@@ -56,15 +56,49 @@ async function persistToken(fcmToken: string): Promise<void> {
 }
 
 /**
+ * Borra el token guardado. Se usa cuando la cuenta apagó todos sus canales de
+ * push: sin token no queda destino al que enviar desde el servidor.
+ */
+// Implements: REQ-CFG-04
+async function clearToken(): Promise<void> {
+  const [sdk, user] = await Promise.all([import("firebase/firestore"), currentUser()]);
+  const db = sdk.getFirestore(firebaseApp);
+  await sdk.setDoc(sdk.doc(db, "users", user.uid), { fcmToken: "" }, { merge: true });
+}
+
+/*
+  La preferencia de la cuenta manda sobre el registro del dispositivo. Si el
+  usuario apagó todos sus canales de push, no se pide permiso, no se registra
+  y se limpia el token existente. Un fallo de lectura no apaga push: se
+  conservan los valores por defecto para no silenciar avisos por un error de
+  red pasajero.
+*/
+// Implements: REQ-CFG-04
+async function pushIsWanted(): Promise<boolean> {
+  try {
+    const { loadPreferences } = await import("./user-preferences.ts");
+    const preferences = await loadPreferences();
+    return Object.values(preferences.channels).some((channel) => channel.push);
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Pide el permiso de notificaciones sólo cuando el sistema aún no tiene una
  * respuesta guardada, registra el dispositivo en FCM y persiste el token.
  * Fuera del contenedor nativo no hace absolutamente nada.
  */
-// Implements: REQ-CAP-10, REQ-CAP-10b
+// Implements: REQ-CAP-10, REQ-CAP-10b, REQ-CFG-04
 export async function registerPushNotifications(): Promise<void> {
   if (!isNativeShell()) return;
   if (registrationStarted) return;
   registrationStarted = true;
+
+  if (!(await pushIsWanted())) {
+    await clearToken().catch(() => undefined);
+    return;
+  }
 
   try {
     const current = await PushNotifications.checkPermissions();

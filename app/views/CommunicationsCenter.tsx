@@ -432,6 +432,7 @@ export function CommunicationsCenter({
   threads,
   cursors,
   connectionError,
+  focusThread = "",
   openCourse,
 }: {
   user: User;
@@ -441,6 +442,7 @@ export function CommunicationsCenter({
   threads: MessageThreadSummary[];
   cursors: CommunicationReadCursor[];
   connectionError: string;
+  focusThread?: string;
   openCourse: (course: Course) => void;
 }) {
   const [ui, updateUi] = useReducer(updateCommunicationsUi, INITIAL_COMMUNICATIONS_UI);
@@ -496,6 +498,26 @@ export function CommunicationsCenter({
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ block: "end" });
   }, [ui.messages]);
+
+  /*
+    El panel del header abre una conversación concreta. La selección se aplica
+    cuando el destino ya existe entre los objetivos calculados; hasta entonces
+    la vista queda en la pestaña de avisos y no pierde el foco del usuario.
+  */
+  // Implements: REQ-NOTIF-03
+  useEffect(() => {
+    if (!focusThread) return;
+    const target = targets.find((item) => item.key === focusThread);
+    if (!target) return;
+    updateUi({
+      mode: "messages",
+      selected: target,
+      messages: [],
+      loadingMessages: true,
+      messageError: "",
+      feedback: "",
+    });
+  }, [focusThread, targets]);
 
   const chooseTarget = (target: ConversationTarget) => {
     updateUi({
