@@ -52,3 +52,13 @@ The system SHALL render subtle, staggered shimmer wave animations that gracefull
 
 - **WHEN** the user's operating system has `prefers-reduced-motion: reduce` enabled
 - **THEN** the system MUST display static geometric placeholders without moving gradient sweeps
+
+#### Requirement: Elimination of Unauthenticated Boot Waterfall Skeleton
+
+The system SHALL eliminate the client-side boot loading skeleton for unauthenticated visitors by serving the access interface directly in the initial server-rendered document.
+
+##### Scenario: Direct access screen presentation
+
+- **WHEN** an unauthenticated visitor requests the root URL
+- **THEN** the initial server response SHALL contain the complete institutional login UI structure and brand assets
+- **AND** the viewport SHALL display the login form without flashing intermediate skeleton loaders (`LoadingScreen`)

@@ -108,3 +108,68 @@ IF any client sends a request to the quick testing authentication endpoint while
 - **THEN** the server SHALL respond with status code 404 (Not Found) or 403 (Forbidden)
 - **AND** SHALL NOT set any session cookie
 - **AND** SHALL NOT insert or update any record in Turso or Firestore
+
+### Requirement: Server-Side Session Bootstrap
+
+The system SHALL inspect the session cookie (`centro_estudio_session`) during Server Component execution in `app/page.tsx` on initial HTTP request to immediately resolve the user's authentication state without triggering client-side waterfalls.
+
+#### Scenario: Unauthenticated visitor initial page load
+
+- **GIVEN** a visitor without a valid `centro_estudio_session` cookie
+- **WHEN** the user navigates to `/`
+- **THEN** the server SHALL render and return the `AccessScreen` immediately in the initial HTML payload
+- **AND** the client SHALL NOT execute an initial client-side network request to check authentication state
+
+#### Scenario: Authenticated user initial page load
+
+- **GIVEN** a user with a valid `centro_estudio_session` cookie
+- **WHEN** the user navigates to `/`
+- **THEN** the server SHALL resolve the session and academic course memberships on the server
+- **AND** pass the initial user and section data directly to the client portal component
+
+### Requirement: Unified Post-Auth Payload
+
+The `/api/auth/firebase` endpoint SHALL return user profile, enrolled section IDs, section memberships, and active academic courses in a single JSON response upon successful institutional authentication.
+
+#### Scenario: Successful Google institutional sign-in
+
+- **GIVEN** a valid Google `idToken` for an authorized institutional email
+- **WHEN** the client submits the token to `POST /api/auth/firebase`
+- **THEN** the endpoint SHALL verify the token, create the session cookie
+- **AND** return a JSON object containing `{ user, photoUrl, sectionIds, memberships, sections }`
+- **AND** the client SHALL render the dashboard immediately without performing a separate fetch to `/api/auth/me`
+
+### Requirement: Self-Service Active Session Management (REQ-AUTH-08)
+
+The system SHALL let an authenticated user enumerate the non-expired rows of `sessions` that belong to that user, identify which row is the current session, and revoke any of the others; the enumeration SHALL use the indexed user column with an explicit limit, and no endpoint SHALL return or revoke a session that belongs to a different account.
+
+#### Scenario: User enumerates their own sessions
+
+- **GIVEN** an authenticated user with four non-expired session rows and two expired ones
+- **WHEN** the user requests the list of active sessions
+- **THEN** only the four non-expired rows for that user SHALL be returned
+- **AND** exactly one of them SHALL be marked as the current session
+- **AND** the query SHALL apply an explicit limit and use the indexed user column
+
+#### Scenario: Revocation invalidates the target device only
+
+- **GIVEN** an authenticated user with a session open on another device
+- **WHEN** the user revokes that other session
+- **THEN** its row SHALL be deleted from `sessions`
+- **AND** the next request carrying that token SHALL be treated as unauthenticated
+- **AND** the requesting session SHALL remain valid
+
+#### Scenario: Session belonging to another account is not exposed
+
+- **GIVEN** an authenticated user
+- **WHEN** a request references a session token hash that belongs to a different user
+- **THEN** the system SHALL respond with an authorization error
+- **AND** SHALL NOT reveal whether that session exists
+- **AND** SHALL delete nothing
+
+#### Scenario: Revoking the current session ends it cleanly
+
+- **GIVEN** an authenticated user viewing their session list
+- **WHEN** the user revokes the session marked as current
+- **THEN** that row SHALL be deleted
+- **AND** the user SHALL be returned to the access screen as an unauthenticated visitor

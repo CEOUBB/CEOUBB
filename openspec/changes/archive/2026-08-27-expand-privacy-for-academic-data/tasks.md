@@ -58,5 +58,5 @@ Requirement traceability markers used in this change, one per spec requirement i
 - [x] 7.3 Run `pnpm run verify:invariants` and confirm the security invariants and Firebase rules still validate.
 - [x] 7.4 Run `pnpm run lint` and `pnpm test` and confirm exit code 0 with zero warnings.
 - [x] 7.5 Read `/privacidad` and `/terminos` at 375px and 1280px and confirm no horizontal overflow and no layout regression against the existing `.policy-page` responsive rules.
-- [ ] 7.6 After deploy, call `/api/cron/audit-retention` without the credential and confirm HTTP 401 with no mutation, then with the credential and confirm a `{ purged: <count> }` response.
-- [ ] 7.7 Update `PLAN.md` with the handoff notes, then move Linear CEO-11 to done and unblock real grade uploads.
+- [x] 7.6 After deploy, call `/api/cron/audit-retention` without the credential and confirm HTTP 401 with no mutation, then with the credential and confirm a `{ purged: <count> }` response.
+- [x] 7.7 Update `PLAN.md` with the handoff notes, then move Linear CEO-11 to done and unblock real grade uploads.

@@ -51,7 +51,7 @@
 - [x] 7.1 Ejecutar `pnpm run verify:fast` y `pnpm run verify:invariants` y verificar que ambos salen con código 0 sin ninguna aserción de `tests/` modificada ni debilitada.
 - [x] 7.2 Ejecutar `pnpm run typecheck` y `pnpm run lint` y verificar cero errores y cero advertencias.
 - [x] 7.3 Ejecutar el detector mecánico de Impeccable sobre los archivos de interfaz cambiados y verificar que no queda ningún hallazgo sin resolver o sin justificación escrita.
-- [ ] 7.4 Recorrer panel y configuración a 320, 768 y 1440 CSS pixels con teclado únicamente, y verificar que no hay desplazamiento horizontal de página, que todo control es alcanzable con foco visible y que los objetivos táctiles miden al menos 44 CSS pixels.
+- [x] 7.4 Recorrer panel y configuración a 320, 768 y 1440 CSS pixels con teclado únicamente, y verificar que no hay desplazamiento horizontal de página, que todo control es alcanzable con foco visible y que los objetivos táctiles miden al menos 44 CSS pixels.
 - [x] 7.5 Ejecutar `pnpm test` completo y verificar que las quince suites de integración pasan.
 
 ## 8. Cierre
