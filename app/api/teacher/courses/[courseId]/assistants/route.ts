@@ -1,4 +1,5 @@
 import { getSessionUser } from "../../../../../../lib/auth";
+import { isSectionId } from "../../../../../../lib/section-roles";
 import {
   CourseManagementError,
   assignCourseAssistant,
@@ -29,10 +30,14 @@ async function teacher(request: Request) {
   return { actor };
 }
 
+// Implements: REQ-SEC-17
 export async function GET(request: Request, context: CourseContext) {
   const session = await teacher(request);
   if ("response" in session) return session.response;
   const { courseId } = await context.params;
+  if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
+    return Response.json({ error: "El ramo no es válido." }, { status: 400 });
+  }
   const url = new URL(request.url);
   const rawLimit = Number(url.searchParams.get("limit") ?? 50);
   const limit = Number.isInteger(rawLimit) ? Math.max(1, Math.min(100, rawLimit)) : 50;
@@ -47,9 +52,14 @@ export async function GET(request: Request, context: CourseContext) {
   }
 }
 
+// Implements: REQ-SEC-17
 export async function POST(request: Request, context: CourseContext) {
   const session = await teacher(request);
   if ("response" in session) return session.response;
+  const { courseId } = await context.params;
+  if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
+    return Response.json({ error: "El ramo no es válido." }, { status: 400 });
+  }
   let payload: unknown;
   try {
     payload = await request.json();
@@ -57,7 +67,6 @@ export async function POST(request: Request, context: CourseContext) {
     return Response.json({ error: "El correo de la ayudante no es válido." }, { status: 400 });
   }
   try {
-    const { courseId } = await context.params;
     const assistant = await assignCourseAssistant(session.actor, courseId, payload);
     return Response.json({ assistant }, { status: 201 });
   } catch (cause) {
@@ -65,9 +74,14 @@ export async function POST(request: Request, context: CourseContext) {
   }
 }
 
+// Implements: REQ-SEC-17
 export async function DELETE(request: Request, context: CourseContext) {
   const session = await teacher(request);
   if ("response" in session) return session.response;
+  const { courseId } = await context.params;
+  if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
+    return Response.json({ error: "El ramo no es válido." }, { status: 400 });
+  }
   let payload: unknown;
   try {
     payload = await request.json();
@@ -82,7 +96,6 @@ export async function DELETE(request: Request, context: CourseContext) {
     return Response.json({ error: "La ayudantía no es válida." }, { status: 400 });
   }
   try {
-    const { courseId } = await context.params;
     await removeCourseAssistant(session.actor, courseId, userId);
     return Response.json({ removed: true });
   } catch (cause) {

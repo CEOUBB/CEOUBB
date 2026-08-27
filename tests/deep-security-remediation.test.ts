@@ -162,3 +162,27 @@ test("REQ-SEC-16: section participants route validates sectionId presence and ma
     "Participants route must check sectionId length bounds"
   );
 });
+
+// Implements: REQ-SEC-17
+test("REQ-SEC-17: teacher course routes validate courseId presence, format and max length", () => {
+  const routePath = path.resolve("app/api/teacher/courses/[courseId]/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /isSectionId\(courseId\)/,
+    "Teacher course PATCH route must validate courseId with isSectionId"
+  );
+  assert.match(
+    routeContent,
+    /courseId\.length > 100/,
+    "Teacher course PATCH route must check courseId length bounds"
+  );
+
+  const asstPath = path.resolve("app/api/teacher/courses/[courseId]/assistants/route.ts");
+  const asstContent = fs.readFileSync(asstPath, "utf8");
+  assert.match(
+    asstContent,
+    /isSectionId\(courseId\)/,
+    "Teacher course assistants route must validate courseId with isSectionId"
+  );
+});
