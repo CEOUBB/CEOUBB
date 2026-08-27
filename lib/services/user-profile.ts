@@ -45,19 +45,15 @@ const channelPreferenceSchema = z.object({ web: z.boolean(), push: z.boolean() }
   preferencia mal formada no puede escribir nada.
 */
 // Implements: REQ-CFG-04
-export const preferencesSchema = z
-  .object({
-    channels: z
-      .object({
-        sectionPublications: channelPreferenceSchema,
-        teacherAnnouncements: channelPreferenceSchema,
-        gradeChanges: channelPreferenceSchema,
-        assessmentReminders: channelPreferenceSchema,
-      })
-      .strict(),
-    reducedMotion: z.boolean(),
-  })
-  .strict();
+export const preferencesSchema = z.strictObject({
+  channels: z.strictObject({
+    sectionPublications: channelPreferenceSchema,
+    teacherAnnouncements: channelPreferenceSchema,
+    gradeChanges: channelPreferenceSchema,
+    assessmentReminders: channelPreferenceSchema,
+  }),
+  reducedMotion: z.boolean(),
+});
 
 /*
   Toda cuenta parte con cada canal activo. El valor por defecto vive aquí y no

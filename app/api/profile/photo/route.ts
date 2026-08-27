@@ -81,9 +81,13 @@ export async function DELETE(request: Request) {
 
   try {
     const uid = firebaseUid(actor.id);
-    for (const contentType of AVATAR_CONTENT_TYPES) {
-      await deleteAvatarObject(avatarStoragePath(uid, contentType));
-    }
+    // Las tres extensiones posibles se borran a la vez: son independientes y
+    // encadenarlas triplicaría la latencia de una acción que el usuario espera.
+    await Promise.all(
+      AVATAR_CONTENT_TYPES.map((contentType) =>
+        deleteAvatarObject(avatarStoragePath(uid, contentType))
+      )
+    );
     const db = getDb();
     await db.update(users).set({ photoUrl: null }).where(eq(users.id, actor.id));
     await projectUserPhotoToFirestore(actor.id, null);

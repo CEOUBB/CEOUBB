@@ -59,12 +59,18 @@ const CHANNEL_TARGETS: readonly { key: ChannelTarget; label: string }[] = [
   { key: "push", label: "Push móvil" },
 ];
 
+/*
+  La hora de una sesión se lee en el huso de la universidad, no en el del
+  dispositivo: un estudiante de intercambio tiene que poder comparar lo que ve
+  con lo que registró el servidor.
+*/
 const SESSION_DATE = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
   month: "short",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "America/Santiago",
 });
 
 function formatSessionDate(value: string): string {
