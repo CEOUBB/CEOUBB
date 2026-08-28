@@ -33,31 +33,31 @@ typography:
     fontSize: 64px
     fontWeight: 700
     lineHeight: 1.0
-    letterSpacing: -1.28px
+    letterSpacing: -2.125px
   display-2:
     fontFamily: Merriweather
     fontSize: 54px
     fontWeight: 700
     lineHeight: 1.04
-    letterSpacing: -1.08px
+    letterSpacing: -1.875px
   heading-1:
     fontFamily: Merriweather
-    fontSize: 38px
+    fontSize: 40px
     fontWeight: 700
     lineHeight: 1.1
-    letterSpacing: -0.76px
+    letterSpacing: -1px
   heading-2:
     fontFamily: Merriweather
-    fontSize: 23px
+    fontSize: 26px
     fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: -0.345px
+    lineHeight: 1.23
+    letterSpacing: -0.625px
   heading-3:
     fontFamily: Merriweather
-    fontSize: 21px
+    fontSize: 22px
     fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: -0.21px
+    lineHeight: 1.27
+    letterSpacing: -0.25px
   title:
     fontFamily: Manrope
     fontSize: 20px
@@ -381,7 +381,7 @@ CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered mic
 
 - Same dimensions as `feature-card` with Level-1 micro shadow.
 
-**`pricing-plan-card`** / **`pricing-plan-card-featured`**: Module / Track Cards
+**`study-track-card`** / **`study-track-card-featured`**: Module / Track Cards
 
 - Repurposed for course track and study plan cards using `{colors.surface}` and `{colors.canvas-soft}` backgrounds.
 
@@ -407,10 +407,10 @@ CEOUBB uses minimal depth: elevation relies on crisp 1px borders and layered mic
 
 ### Examples (illustrative)
 
-**`ex-pricing-tier`**: Default Course Track card. Uses feature-card style with `{colors.canvas-soft}` background.
-**`ex-pricing-tier-featured`**: Highlighted Course Track, inverted surface (`{colors.ink}` fill with `{colors.on-primary}` text).
-**`ex-product-selector`**: Resource summary card for academic materials.
-**`ex-cart-drawer`**: Selected study materials list drawer.
+**`ex-study-track`**: Default Course Track card. Uses feature-card style with `{colors.canvas-soft}` background.
+**`ex-study-track-featured`**: Highlighted Course Track, inverted surface (`{colors.ink}` fill with `{colors.on-primary}` text).
+**`ex-resource-card`**: Resource summary card for academic materials.
+**`ex-materials-drawer`**: Selected study materials list drawer.
 **`ex-app-shell-row`**: Sidebar navigation item with `{colors.primary}` active indicator.
 **`ex-data-table-cell`**: Academic gradebook th + td cell style.
 **`ex-auth-form-card`**: Student login / auth card.

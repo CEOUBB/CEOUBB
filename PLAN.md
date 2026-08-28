@@ -1,174 +1,174 @@
-# Centro de Estudio UBB: Plan y Agent Handoff
+# Centro de Estudio UBB: Project Plan & Agent Handoff
 
 Last verified 2026-08-28 · baseline `e9e85c4` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
-**Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment and verification.
+**Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment, and verification.
 
 ## How to use
 
-Read `AGENTS.md` first: invariants, setup, commands and identifiers live there and are not repeated here. Update this file after any material feature, infra change, deploy, store submission, security change or architectural decision.
+Read `AGENTS.md` first: invariants, setup, commands, and identifiers live there and are not repeated here. Update this file after any material feature, infrastructure change, deployment, store submission, security update, or architectural decision.
 
-Status labels: `DONE` (implemented and verified at the level stated) · `ACTIVE` (owner working on it) · `NEXT` (ready and prioritized) · `BLOCKED` (needs an external decision, account, approval or credential) · `BACKLOG` (valuable, not release-critical).
+Status labels: `DONE` (implemented and verified at the stated level) · `ACTIVE` (owner working on it) · `NEXT` (ready and prioritized) · `BLOCKED` (requires an external decision, account, approval, or credential) · `BACKLOG` (valuable, not release-critical).
 
-Before starting: add a row to Active work with task, branch, owner and files. Remove it when merged (completed rows go to `docs/archive/PLAN_ARCHIVE.md`).
+Before starting: add a row to Active work with task, branch, owner, and files. Remove it when merged (completed rows are archived in `docs/archive/PLAN_ARCHIVE.md`).
 
 Companion files:
 
-- [`DESIGN.md`](DESIGN.md): Fuente canónica del sistema de diseño institucional, tokens de color y tipografía.
-- [`docs/archive/PLAN_ARCHIVE.md`](docs/archive/PLAN_ARCHIVE.md): completed work, implemented milestones, full handoff history.
+- [`DESIGN.md`](DESIGN.md): Canonical institutional design system, color tokens, and typography.
+- [`docs/archive/PLAN_ARCHIVE.md`](docs/archive/PLAN_ARCHIVE.md): Completed work, implemented milestones, and full handoff history.
 - [`docs/institutional/moodle-adecca-comparison.md`](docs/institutional/moodle-adecca-comparison.md): Moodle & Adecca institutional comparison and adoption dossier.
-- [`docs/legal/README.md`](docs/legal/README.md): CEO-40, carpeta borrador para Jurídica sobre encargo UBB/CEOUBB, retención y borrado, derechos, residencia/subencargados y término del servicio.
-- [`docs/operations/capacity-cost-baseline.md`](docs/operations/capacity-cost-baseline.md): CEO-9, envolvente de 12.000 estudiantes, 3.000 secciones y 3.000 concurrentes; modelo CLP 450 base / CLP 1.000 techo por estudiante-año; SLO, RPO/RTO y protocolo de evidencia.
+- [`docs/legal/README.md`](docs/legal/README.md): Legal draft folder for UBB/CEOUBB data processing agreement, retention, data subject rights, residency/subprocessors, and service termination.
+- [`docs/operations/capacity-cost-baseline.md`](docs/operations/capacity-cost-baseline.md): Capacity envelope for 12,000 students, 3,000 sections, 3,000 concurrent sessions; CLP 450 base / CLP 1,000 ceiling per student-year; SLOs, RPO/RTO, and evidence protocol.
 - [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md): P0.1-P0.11 detail and acceptance criteria.
 - [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md): P0B.1-P0B.7 institutional adoption dossier.
 - [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md): React Doctor quality & frontend reliability remediation spec (SDD).
-- [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md): canonical academic data model / enrollment migration spec.
+- [`docs/specs/p1-academic-model.md`](docs/specs/p1-academic-model.md): Canonical academic data model and enrollment migration spec.
 - [`docs/specs/p2-academic-time-blocking-planner.md`](docs/specs/p2-academic-time-blocking-planner.md): Academic Time-Blocking Planner & deadline sync spec (SDD).
 - [`docs/specs/p3-study-resources-hub.md`](docs/specs/p3-study-resources-hub.md): Study Resources Hub, AI Models & UBB Perks spec (SDD).
-- [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md): portal views modularization spec (SDD).
+- [`docs/specs/p4-portal-views-modularization.md`](docs/specs/p4-portal-views-modularization.md): Portal views modularization spec (SDD).
 - [`docs/specs/p5-capacitor-mobile-migration.md`](docs/specs/p5-capacitor-mobile-migration.md): Capacitor mobile architecture migration & mobile-first UX spec (SDD).
 - [`docs/specs/p6-ci-cd-automation-enhancements.md`](docs/specs/p6-ci-cd-automation-enhancements.md): CI/CD Automations & Integration Quality Enhancement spec (SDD).
 - [`docs/specs/p7-enterprise-repository-standards.md`](docs/specs/p7-enterprise-repository-standards.md): Enterprise Repository Standards, Document Architecture & Governance spec (SDD).
-- [`docs/specs/p7-teacher-workspace-preview.md`](docs/specs/p7-teacher-workspace-preview.md) — preview navegable exclusivamente docente, inspirado conceptualmente en Canvas UdeC, ADECCA y Moodle, con datos sintéticos y aislamiento total del backend productivo.
-- [`docs/specs/p8-live-class-banner.md`](docs/specs/p8-live-class-banner.md): CEO-56, contrato verificado para el enlace Zoom/Teams por sección y su banner inmediato en la portada del aula.
-- [`docs/specs/p8-performance-and-scalability-remediations.md`](docs/specs/p8-performance-and-scalability-remediations.md): Optimizaciones de Rendimiento, Escalabilidad y Desacoplamiento de Carga (SDD).
+- [`docs/specs/p7-teacher-workspace-preview.md`](docs/specs/p7-teacher-workspace-preview.md): Navigable teacher-exclusive preview inspired by Canvas UdeC, ADECCA, and Moodle, with synthetic data and total isolation from productive backend.
+- [`docs/specs/p8-live-class-banner.md`](docs/specs/p8-live-class-banner.md): Verified contract for per-section Zoom/Teams link and classroom banner.
+- [`docs/specs/p8-performance-and-scalability-remediations.md`](docs/specs/p8-performance-and-scalability-remediations.md): Performance, Scalability & Load Decoupling Optimizations (SDD).
 - [`docs/specs/p9-enterprise-harness-evolution.md`](docs/specs/p9-enterprise-harness-evolution.md): Enterprise AI Agent Harness Evolution, Test-Locking & Deterministic Governance (SDD).
 - [`docs/specs/p10-institutional-lms-evolution.md`](docs/specs/p10-institutional-lms-evolution.md): Institutional LMS core, enrollment isolation, and bounded real-time architecture spec (SDD).
-- [`openspec/specs/academic/spec.md`](openspec/specs/academic/spec.md): contrato vivo del modelo académico y de CEO-25.
+- [`openspec/specs/academic/spec.md`](openspec/specs/academic/spec.md): Living specification contract for academic data model and section identity.
 - [`docs/specs/p11-ui-ux-deliberate-remediation.md`](docs/specs/p11-ui-ux-deliberate-remediation.md): UI/UX Deliberate Quality Remediation, Manrope/Merriweather Typography SSOT & Layout Performance spec (SDD).
-- [`docs/specs/p16-classroom-retrocompatibility-mobile-parity.md`](docs/specs/p16-classroom-retrocompatibility-mobile-parity.md): CEO-61, contrato verificado de retrocompatibilidad de avisos históricos, tablas Markdown seguras y overflow técnico local en Web/Capacitor.
-- [`docs/specs/p17-wcag-22-aa-conformance.md`](docs/specs/p17-wcag-22-aa-conformance.md): CEO-42, auditoría verificada del portal, biblioteca y documentos públicos; contrato de teclado, lector de pantalla, contraste, reflujo, movimiento reducido, formularios y declaración WCAG 2.2 AA.
-- [`docs/specs/p17-immutable-grade-audit-trail.md`](docs/specs/p17-immutable-grade-audit-trail.md): CEO-7, historial transaccional e inmutable de notas y configuración del libro.
-- [`docs/specs/p18-firebase-app-check-rollout.md`](docs/specs/p18-firebase-app-check-rollout.md): CEO-47, atestación web y Android, observación previa y despliegue gradual de enforcement para Firebase.
-- [`docs/specs/p17-bulk-enrollment-import.md`](docs/specs/p17-bulk-enrollment-import.md): CEO-16, importación CSV de matrículas por sección con previsualización, pendientes reclamables en el primer ingreso e idempotencia estricta.
-- [`docs/specs/p17-moodle-course-import.md`](docs/specs/p17-moodle-course-import.md): CEO-39, importación segura e idempotente de respaldos Moodle TGZ/ZIP y nóminas CSV, con materiales compatibles, matrículas pendientes y auditoría.
-- [`openspec/specs/classroom/rich-posts/spec.md`](openspec/specs/classroom/rich-posts/spec.md): CEO-55, especificación viva de publicaciones técnicas seguras con Markdown, código, KaTeX y vista previa compartida en web/Android.
-- [`openspec/specs/operations/capacity-cost/spec.md`](openspec/specs/operations/capacity-cost/spec.md): CEO-9, contrato operativo de capacidad, costo unitario y continuidad.
-- [`openspec/specs/editor/multimodal-authoring/spec.md`](openspec/specs/editor/multimodal-authoring/spec.md): CEO-59, contrato vivo del editor académico sincronizado en modos Visual, Markdown + LaTeX y HTML libre.
-- [`docs/specs/p15-publication-wizard.md`](docs/specs/p15-publication-wizard.md): CEO-60, contrato verificado para el wizard docente de tres pasos, split-button, preferencia local y alertas silenciosas.
-- **Discord AI Bridges & Automation Suite**: Inyección de contexto histórico del canal en bridges locales, persistencia de sesiones en disco (`.cache/`), ejecución de comandos `/doctor`, `/review-pr` y webhook de CI/CD en `app/api/webhooks/github/route.ts`. **Asistente Cloud 24/7 en Vercel Serverless** implementado en `app/api/discord/interactions/route.ts`.
+- [`docs/specs/p16-classroom-retrocompatibility-mobile-parity.md`](docs/specs/p16-classroom-retrocompatibility-mobile-parity.md): Verified retrocompatibility contract for legacy posts, secure Markdown tables, and local technical overflow in Web/Capacitor.
+- [`docs/specs/p17-wcag-22-aa-conformance.md`](docs/specs/p17-wcag-22-aa-conformance.md): Verified audit contract for portal, library, and public documents; keyboard navigation, screen reader, contrast, reflow, reduced motion, forms, and WCAG 2.2 AA statement.
+- [`docs/specs/p17-immutable-grade-audit-trail.md`](docs/specs/p17-immutable-grade-audit-trail.md): Transactional and immutable audit history for grades and gradebook configuration.
+- [`docs/specs/p18-firebase-app-check-rollout.md`](docs/specs/p18-firebase-app-check-rollout.md): Web and Android attestation, pre-enforcement observation, and phased rollout for Firebase App Check.
+- [`docs/specs/p17-bulk-enrollment-import.md`](docs/specs/p17-bulk-enrollment-import.md): CSV enrollment import per section with preview, claimable pending enrollments on first login, and strict idempotency.
+- [`docs/specs/p17-moodle-course-import.md`](docs/specs/p17-moodle-course-import.md): Secure and idempotent import of Moodle TGZ/ZIP backups and CSV rosters, with compatible materials, pending enrollments, and audit trails.
+- [`openspec/specs/classroom/rich-posts/spec.md`](openspec/specs/classroom/rich-posts/spec.md): Living specification of secure technical posts with Markdown, code highlighting, KaTeX math, and shared Web/Android previews.
+- [`openspec/specs/operations/capacity-cost/spec.md`](openspec/specs/operations/capacity-cost/spec.md): Operational contract for capacity, unit cost, and business continuity.
+- [`openspec/specs/editor/multimodal-authoring/spec.md`](openspec/specs/editor/multimodal-authoring/spec.md): Living contract for synchronized academic editor across Visual, Markdown + LaTeX, and Raw HTML modes.
+- [`docs/specs/p15-publication-wizard.md`](docs/specs/p15-publication-wizard.md): Verified contract for teacher 3-step publishing wizard, split-button, local preference, and silent alerts.
+- **Discord AI Bridges & Automation Suite**: Historical channel context injection in local bridges, disk session persistence (`.cache/`), `/doctor` and `/review-pr` command execution, and CI/CD webhook in `app/api/webhooks/github/route.ts`. **24/7 Cloud Assistant on Vercel Serverless** implemented in `app/api/discord/interactions/route.ts`.
 
 ## Active work
 
-- [NEXT] **P6: deuda declarada: el inset inferior de Android es una constante, no una medida.** `--safe-bottom` usa `max(env(...), 24px)` por debajo de 768px porque la WebView no expone el alto real de la barra de gestos. En un teléfono con navegación de tres botones o sin barra, esos 24px son relleno que nadie pidió. La solución correcta es leer el inset desde el contenedor nativo y publicarlo como variable CSS al arrancar. `app/globals.css`, `lib/mobile-bridge.ts`
-- [NEXT] **Declared debt from P5 §0.3: no kill switch.** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this needs a minimum-version / kill-switch endpoint the shell checks on launch. `app/api/`, `capacitor.config.ts`
-- [NEXT] **P5 conditional debt: DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1 500 active nodes, p95 interaction under 200 ms, long tasks under 50 ms during scroll) and `content-visibility: auto` is the current answer. `@tanstack/react-virtual` may only be introduced against a measurement on a low-end device that exceeds those thresholds. `app/globals.css`, `app/Classroom.tsx`
-- [NEXT] **P5: iOS is a scaffold, not a target.** `ios/` is versioned and consistent but never built: no macOS/Xcode, no `GoogleService-Info.plist`, no Apple Developer enrolment or APNs key. Apple guideline 4.2 (minimum functionality) is the reason push, haptics, downloads and offline library had to land first. `ios/`
-- [NEXT] Run the classroom, gradebook and calendar manual matrix with owner, teacher and student accounts. Rules deployed 2026-08-14; only the verification remains. Firebase
-- [NEXT] Institutional SSO (SAML 2.0 / OIDC / CAS) against the UBB directory, replacing consumer Google sign-in; role from directory membership, not the email suffix (P0B.1). `lib/access-policy.ts`, `lib/auth.ts`, `app/api/`, Firebase Auth
-- [NEXT] Desplegar y cerrar operación P0.9 después de fusionar CEO-7: Functions primero, portal, índice y reglas al final; ejecutar matriz owner/docente/estudiante y añadir la vista de consulta del historial. `firebase/functions/`, `firebase/firestore.*`, `app/views/classroom/`
-- [NEXT] Backups and a **drilled** restore: scheduled Firestore export, Turso backup, stated RPO/RTO (P0.8). Sharpest risk in the repository. Firebase, Turso, `firebase/functions/`
-- [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as merge gate (P0.10). `tests/`, `firebase/`
-- [NEXT] Demostrar P0.7 en staging: 3.000 sesiones concurrentes por 30 minutos, apertura inicial ≤ 200 lecturas Firestore, p95 ≤ 2 s, 5xx < 0,1%, costo anualizado ≤ CLP 1.000 por estudiante y simulacro RPO 1 h / RTO 4 h. Los objetivos y el modelo ya están definidos por CEO-9; todavía no son garantías. `docs/operations/capacity-cost-baseline.md`, staging, billing export
-- [NEXT] Run the production authentication, Storage and notification test matrix (P0.1-P0.3). Web, Android, Firebase
-- [NEXT] Desplegar la etapa de observación de CEO-47, validar la matriz Web/Android físico durante 24 horas con ≥99 % de tokens válidos y aplicar App Check por producto sólo si supera el gate. Firebase, Vercel, Android
-- [BLOCKED] Project owner: **written authorization for an institutional pilot** with one departamento or carrera: named academic sponsor, one semester, real students, signed data-processing annex. No agent can do this; every adoption item depends on it. UBB (DTI, VRA, jurídica)
-- [BLOCKED] Project owner: Google Play verification and official listing URL. Play Console
-- [BLOCKED] Project owner: choose and fund the native iOS strategy and Apple Developer enrollment. App Store Connect
-- [BACKLOG] "Mi Bodega" personal file locker. Deferred by decision; needs a per-student quota and a Storage cost estimate first. Firebase Storage, `firebase/storage.rules`
-- [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in the planner grid. The weekly view shipped with P2. `app/views/calendar/`, `lib/courses.ts`
-- [BACKLOG] Load real learning outcomes and evaluation schedules for the five non-Estática ramos. `lib/courses.ts`
-- [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI runtime, IMS Common Cartridge, QTI (P0B.3; importador Moodle `.mbz` completado en CEO-39). Required for adoption. New surface
-- [BACKLOG] Project owner: tenancy, licensing and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (P0B.6). Governance
+- [NEXT] **P6: declared debt: Android bottom inset is a constant, not a measurement.** `--safe-bottom` uses `max(env(...), 24px)` below 768px because the WebView does not expose the true gesture bar height. On a three-button device or gesture-less phone, 24px is unrequested padding. The correct solution is reading the inset from the native container and publishing it as a CSS variable on boot. `app/globals.css`, `lib/mobile-bridge.ts`
+- [NEXT] **Declared debt from P5 §0.3: no kill switch.** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this requires a minimum-version / kill-switch endpoint checked by the shell on launch. `app/api/`, `capacitor.config.ts`
+- [NEXT] **P5 conditional debt: DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1,500 active nodes, p95 interaction under 200ms, long tasks under 50ms during scroll) and `content-visibility: auto` is the current solution. `@tanstack/react-virtual` may only be introduced against physical measurements on low-end hardware exceeding those thresholds. `app/globals.css`, `app/Classroom.tsx`
+- [NEXT] **P5: iOS is a scaffold, not a target.** `ios/` is versioned and consistent but unbuilt: no macOS/Xcode build runner, no `GoogleService-Info.plist`, no Apple Developer enrollment, and no APNs key. Apple guideline 4.2 (minimum functionality) requires push, haptics, downloads, and offline library to land first. `ios/`
+- [NEXT] Run classroom, gradebook, and calendar manual test matrix across owner, teacher, and student accounts. Security rules deployed 2026-08-14; verification pending. Firebase
+- [NEXT] Institutional SSO (SAML 2.0 / OIDC / CAS) integration with the UBB directory, replacing consumer Google Sign-In; roles derived from directory membership rather than email suffix (P0B.1). `lib/access-policy.ts`, `lib/auth.ts`, `app/api/`, Firebase Auth
+- [NEXT] Deploy and conclude operational milestone P0.9 after merging CEO-7: Functions first, portal, index, and rules last; run multi-role matrix and surface read-only grade history UI. `firebase/functions/`, `firebase/firestore.*`, `app/views/classroom/`
+- [NEXT] Backups and a **drilled** restore: scheduled Firestore exports, Turso backups, stated RPO/RTO (P0.8). Critical repository priority. Firebase, Turso, `firebase/functions/`
+- [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as a mandatory merge gate (P0.10). `tests/`, `firebase/`
+- [NEXT] Demonstrate P0.7 in staging: 3,000 concurrent sessions for 30 minutes, initial launch <= 200 Firestore reads, p95 <= 2s, 5xx < 0.1%, annualized cost <= CLP 1,000 per student, and simulated RPO 1h / RTO 4h drill. Objectives defined by CEO-9. `docs/operations/capacity-cost-baseline.md`, staging, billing export
+- [NEXT] Execute production authentication, Storage, and push notification verification matrix (P0.1-P0.3). Web, Android, Firebase
+- [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Vercel, Android
+- [BLOCKED] Project owner: **written authorization for an institutional pilot** with one department or degree program: named academic sponsor, single semester, real students, signed data-processing agreement. External institutional dependency. UBB (DTI, VRA, legal counsel)
+- [BLOCKED] Project owner: Google Play developer verification and official listing URL. Play Console
+- [BLOCKED] Project owner: choose and fund native iOS strategy and Apple Developer enrollment. App Store Connect
+- [BACKLOG] "Mi Bodega" personal file locker. Deferred by decision; requires per-student quota and Storage cost estimation first. Firebase Storage, `firebase/storage.rules`
+- [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in planner grid. Weekly view shipped with P2. `app/views/calendar/`, `lib/courses.ts`
+- [BACKLOG] Load real learning outcomes and evaluation schedules for five non-Estatica courses. `lib/courses.ts`
+- [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI runtime, IMS Common Cartridge, QTI (P0B.3; Moodle `.mbz` importer completed in CEO-39). Required for institutional adoption. New surface
+- [BACKLOG] Project owner: tenancy, licensing, and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (P0B.6). Governance
 
 ## Production inventory: what is NOT done
 
-Everything not listed here is done and verified; the full inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and working today: `ceoubb.com` on Vercel with Turso, Firebase Auth with the institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
+Everything not listed here is implemented and verified; the full historical inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and operational: `ceoubb.com` on Vercel with Turso libSQL, Firebase Auth with institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` Cloud Functions on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
 
-- Web: store badges have no listing URLs (placeholders, non-clickable); no public account-deletion entry page; the local portal/library redesign is uncommitted and undeployed.
-- Android: release AAB install, Google sign-in, upload/download, role behaviour, account deletion and FCM delivery **not verified** on a clean physical device. Bundled library still on the old dark maroon theme.
-- iOS: nothing exists: no Xcode project, bundle ID, APNs config or iOS Firebase app. Badge is a placeholder and must not be linked.
-- Firebase/GCP: App Check Web/Android está registrado y Firestore, Storage y Authentication permanecen en observación `UNENFORCED`; faltan despliegue de clientes, tráfico representativo por 24 horas, Android físico y enforcement gradual. No hay web push VAPID key ni pruebas de reglas con Emulator Suite. Cloud Billing alerts are configured, but the account remains in Free Trial and must be activated as paid before expiry to avoid service interruption.
-- GitHub: branch protection and required review not documented as enabled.
+- Web: app store badges remain non-clickable placeholders; no public account-deletion entry page; local portal/library redesign uncommitted/undeployed.
+- Android: release AAB installation, Google Sign-In, upload/download, role behavior, account deletion, and FCM delivery **not verified** on a clean physical device. Bundled offline library remains on legacy maroon theme.
+- iOS: unbuilt scaffold: no Xcode project configuration, bundle ID, APNs certificates, or iOS Firebase app. Badge remains non-clickable.
+- Firebase/GCP: App Check Web/Android registered with Firestore, Storage, and Auth remaining in observation (`UNENFORCED`); pending client deployment, 24-hour representative traffic, physical Android validation, and gradual enforcement. No web push VAPID key configured; no rules emulator suite tests. Cloud Billing alerts configured, but account remains in Free Trial and must be converted to paid prior to expiration.
+- GitHub: branch protection rules and required review status not documented as active.
 
 ## Architectural risks and technical debt
 
-Detail and remediation live in the spec files; this is the index.
+Detailed context and specifications reside in `docs/specs/`.
 
-- **Static catalogue, no enrollment model**: the blocking debt. `courseId` carries no section and no period, so paralelos and successive years collide in one collection; roles are global and email-derived; no bulk enrollment path. Cost rises with every day of real pilot data. -> [`p1-academic-model.md`](docs/specs/p1-academic-model.md)
-- **Grade audit trail not deployed or surfaced**: PR #70 captura cada cambio de forma transaccional e inmutable, pero producción aún sobrescribe `grades/{uid}` hasta desplegar Functions/portal/índice/reglas; la vista de consulta sigue pendiente. -> P0.9
-- **No backups, no proven restore**: no Firestore export, no Turso backup, no restore ever performed. -> P0.8
-- **Consumer identity and personal-account superusers**: two hardcoded Gmail owners across web, both rules files and the Android service. -> P0B.1
-- **Rules lack emulator coverage**: staging now deploys and seeds before production, but Firestore and Storage rules still have no Emulator Suite tests. -> P0.10
-- **Capacity targets are defined but not demonstrated**: CEO-9 fija 12.000 estudiantes, 3.000 secciones, 3.000 concurrentes, CLP 450 base / CLP 1.000 techo y RPO 1 h / RTO 4 h. Falta la prueba de carga, el costo pagado medido y el simulacro de restauración en staging. -> P0.7, P0.8
-- **Governance and continuity**: personal Firebase/Vercel/Turso accounts, convenio de tratamiento sólo en borrador, sin revisión jurídica ni firma, no accessibility statement, no external pentest, bus factor of two. La licencia MIT existe, pero faltan transferencia de tenencias y salida ensayada. -> P0B.4, P0B.6
-- **Account deletion compliance gap**: backend Function and Android invocation exist; the public `/eliminar-cuenta` route was removed from the web UI. -> P0.6
-- **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles and the native bridge differ. Academic corrections may reach only one platform. Needs a content-sync script that copies portable content and verifies hashes without overwriting native-only behaviour.
-- **Test coverage gap**: no Firebase rule emulator tests, no Android unit/instrumentation tests, no end-to-end multi-role tests.
-- **Store distribution gap**: Play approval, testing tracks, listing assets, policy declarations and final AAB verification remain; no iOS app.
-- **D1 leftovers**: `posts`, `files`, `progress` tables still physically exist in the imported Turso copy, unreferenced. Drop only after confirming the rows are not needed.
+- **Static catalogue, no enrollment model**: blocking architectural debt. `courseId` lacks section and period dimensions, causing successive semesters and sections to collide; roles are global and email-derived; no automated bulk enrollment. -> [`p1-academic-model.md`](docs/specs/p1-academic-model.md)
+- **Grade audit trail deployment**: PR #70 implements transactional, immutable logging, but production continues overwriting `grades/{uid}` until Functions/portal/index/rules are fully deployed; read-only history UI remains pending. -> P0.9
+- **No automated backups, unverified restore**: no scheduled Firestore exports, no automated Turso database backups, no restore drill executed. -> P0.8
+- **Institutional SSO directory transition**: Google Workspace OAuth federates access by email domain (@ubiobio.cl / @alumnos.ubiobio.cl), with superuser/owner administrative state persisted in Turso/Firestore (REQ-SEC-01 / SPEC-010). Direct integration with UBB Active Directory via SAML 2.0 / OIDC is required for official institutional adoption. -> P0B.1
+- **Rules lack emulator test coverage**: staging deploys and seeds prior to production, but Firestore and Storage rules lack automated Emulator Suite tests in CI. -> P0.10
+- **Capacity targets unverified under load**: CEO-9 specifies 12,000 students, 3,000 sections, 3,000 concurrent sessions, CLP 450 base / CLP 1,000 ceiling, and RPO 1h / RTO 4h. Load test, measured paid costs, and staging restore drill remain to be demonstrated. -> P0.7, P0.8
+- **Governance and continuity**: personal accounts for Firebase/Vercel/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization. -> P0B.4, P0B.6
+- **Account deletion compliance**: backend Cloud Function and Android invocation exist; public `/eliminar-cuenta` route was removed from web navigation. -> P0.6
+- **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles, and native bridge differ. Academic corrections risk reaching only one platform without a bidirectional content synchronization script.
+- **Test coverage gaps**: no Firebase rule emulator tests, no Android unit/instrumentation tests, no multi-role end-to-end integration tests.
+- **Store distribution**: Play Console review, internal/closed testing tracks, listing assets, policy declarations, and final AAB verification remain; no iOS application.
+- **D1 legacy leftovers**: `posts`, `files`, `progress` tables remain in imported Turso database copy, unreferenced. Drop only after verifying data is obsolete.
 
 ## Remaining work: two parallel tracks
 
-- **P0 pilot safety**: protects today's students; deployment- and correctness-blocking. -> [`p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md)
-- **P0B institutional adoption**: what DTI, Vicerrectoría Académica and jurídica require before CEOUBB can be proposed as official. Cannot be produced in the week before a presentation. -> [`p0b-adoption.md`](docs/specs/p0b-adoption.md)
+- **P0 pilot safety**: protects active students; blocks deployment and correctness. -> [`p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md)
+- **P0B institutional adoption**: requirements from DTI, Academic Directorate (VRA), and legal counsel prior to formal proposal. -> [`p0b-adoption.md`](docs/specs/p0b-adoption.md)
 
 ### Track A: pilot safety, in order
 
-1. Deploy the wildcard course rules, run P0.1-P0.3 on real accounts and devices, fix functional failures.
-2. Add rules emulator tests (P0.10); staging (P0.11) now deploys and seeds before production.
-3. Backups and a drilled restore (P0.8) prior to teachers entering real grades.
-4. P0.5 before inviting a larger beta group; P0.4 billing alerts are configured.
-5. P0.6 and the `/privacidad` grade update, before store submission or real grades, whichever comes first.
-6. Deploy the verified grade audit trail from CEO-7, run the multi-role matrix and surface its read-only history (P0.9).
-7. Ejecutar la prueba P0.7 contra los objetivos ya definidos por CEO-9 y cerrar el simulacro P0.8; la identidad de sección y las reglas por matrícula ya forman la base del conjunto de datos.
-8. Finish the Google Play testing/submission path.
-9. Decide and begin the iOS architecture in a separate workstream.
+1. Deploy wildcard course security rules; execute P0.1-P0.3 on physical devices with real accounts; resolve defects.
+2. Add rules emulator tests (P0.10); ensure staging (P0.11) deploys and seeds prior to production.
+3. Establish automated backups and execute a drilled restoration (P0.8) before instructors input authentic grade records.
+4. Complete P0.5 prior to expanding beta cohort; P0.4 billing alerts are active.
+5. Restore P0.6 public account deletion and `/privacidad` grade policy update prior to store submission or real grades.
+6. Deploy grade audit trail (CEO-7); execute multi-role matrix; expose read-only grade history UI (P0.9).
+7. Execute P0.7 load test against CEO-9 targets; complete P0.8 restoration drill.
+8. Complete Google Play testing and store submission pipeline.
+9. Formalize iOS architecture decisions and initiate native build track.
 
 ### Track B: adoption, in order
 
-1. Owner obtains the written pilot authorization (`BLOCKED`). Items 2-4 can start immediately without it.
-2. Legal and data protection (P0B.4); ownership, tenancy, continuity (P0B.6).
-3. Institutional identity design (P0B.1): it constrains the data model, so specify it before P1 work item 2 is written.
-4. Accessibility audit (P0B.5).
-5. Interoperability and the Moodle importer (P0B.3): largest single item, and the first thing an evaluation asks about.
-6. Records integration and the actas decision (P0B.2).
-7. Pilot evidence, then the proposal (P0B.7).
+1. Project owner obtains written pilot authorization (`BLOCKED`). Items 2-4 proceed in parallel.
+2. Legal annex and data protection compliance (P0B.4); tenancy, ownership, and continuity dossier (P0B.6).
+3. Institutional identity architecture (P0B.1): constraints academic data model, required prior to P1 item 2.
+4. Full WCAG 2.2 AA accessibility audit (P0B.5).
+5. Interoperability and Moodle course package importer (P0B.3): core institutional requirement.
+6. Academic records integration and official grade certification (P0B.2).
+7. Compile empirical pilot evidence, then present formal institutional proposal (P0B.7).
 
 ## P1: Google Play release
 
-1. Play Console developer identity and phone verification.
-2. Confirm final app name, developer name, support email, country/legal details.
-3. Create the Play app with application ID `cl.ubb.centroestudio`.
-4. Prepare icon, feature graphic, phone/tablet screenshots, descriptions, category, contact details, privacy URL.
-5. Complete Data safety, content rating, target audience, ads, app access and account-deletion declarations truthfully.
-6. Preserve the release keystore; configure Play App Signing.
-7. Increment `versionCode`, verify `versionName`, build the signed AAB, install and test an artifact from that release source.
-8. Use the testing track and tester requirements Play Console currently shows; do not rely on outdated policy numbers.
+1. Complete Play Console developer identity and phone verification.
+2. Confirm app name, developer identity, support mailbox, and Chilean legal disclosures.
+3. Create Play app listing for `cl.ubb.centroestudio`.
+4. Upload app icons, feature graphics, screenshots, descriptions, category, and privacy policy URL.
+5. Complete Data Safety, Content Rating, Target Audience, Ads, and Account Deletion questionnaires.
+6. Secure release keystore and enable Play App Signing.
+7. Increment `versionCode`, verify `versionName`, compile signed release AAB, test on physical hardware.
+8. Follow current Play Console testing track policies.
 9. Resolve pre-launch report issues.
-10. Submit production release.
-11. Replace the Play badge placeholder with the official listing URL only after it works publicly.
+10. Submit for production review.
+11. Update Play Store badge placeholder with active listing URL upon public approval.
 
 ## P1: iOS implementation and App Store release
 
-1. Decide architecture (native SwiftUI, shared cross-platform shell, or other maintainable approach); document before scaffolding.
-2. Enroll in the Apple Developer Program, configure App Store Connect.
-3. Reserve a stable bundle ID aligned with the product identity.
-4. Register the iOS Firebase app; configure Google sign-in, Firestore, Storage, Functions, FCM/APNs, App Check.
-5. Implement institutional role behaviour, offline library, classroom, uploads, notifications, privacy, account deletion.
-6. Test on physical iPhone and iPad.
-7. Prepare App Privacy answers, screenshots, metadata, support/privacy URLs, TestFlight.
+1. Determine architecture (native SwiftUI vs. Capacitor remote shell); document before implementation.
+2. Enroll in Apple Developer Program and configure App Store Connect.
+3. Reserve bundle identifier matching institutional naming.
+4. Register iOS Firebase app: configure Google Sign-In, Firestore, Storage, Functions, FCM/APNs, App Check.
+5. Implement institutional domain role enforcement, offline library, classroom, file uploads, notifications, and account deletion.
+6. Verify on physical iPhone and iPad devices.
+7. Complete App Privacy disclosures, screenshots, metadata, and TestFlight build.
 8. Submit for App Review.
-9. Link the App Store badge only after the listing is public.
+9. Activate App Store badge upon public listing.
 
 ## P2: Quality, automation, operations
 
-- Android debug build in CI (the GitHub Actions and rules-emulator items were promoted to P0.10).
-- Android unit/instrumentation tests and a release smoke-test checklist.
-- Error/crash monitoring and a privacy-conscious logging policy.
-- Content synchronization tool for web/Android academic material.
-- Accessibility review: keyboard, screen reader, contrast, text scaling, reduced motion.
-- Performance, caching, PWA update behaviour, offline failure modes.
-- Academic content review: correctness, references, copyright, units, notation, encoding.
-- Replace the direct Drive APK link inside the authenticated portal once Play is public.
-- Decide whether browser push is required; configure a VAPID key only if it is.
+- Android debug build automation in CI (promoted to P0.10).
+- Android unit/instrumentation tests and release smoke-test checklist.
+- Crash and error monitoring with privacy-preserving logging policies.
+- Academic content synchronization tool across Web and Android assets.
+- Accessibility review: keyboard navigation, screen readers, contrast ratios, text scaling, reduced motion.
+- Caching performance, PWA updates, and graceful offline fallback handling.
+- Academic content verification: accuracy, citations, copyright, mathematical notation, character encoding.
+- Replace direct APK links in portal with official Play Store listing upon launch.
+- Evaluate browser push requirements; configure VAPID keys only if warranted.
 
 ## Settled decisions: do not relitigate
 
-1. **Catalogue storage**: Turso is the system of record; Firestore holds a single-writer enrollment projection so rules can call `exists()`.
-2. **Course identity is a section**: asignatura × periodo × sección, and must change before a second cohort exists.
-3. **The domain-to-role invariant is authentication only.** Authorization moves to per-enrollment roles. `AGENTS.md` still states it as absolute; amending it is deliberate work in one commit with tests, not drift.
-4. **Do not propose adoption first.** Get a written authorization for a pilot with one departamento or carrera, keep the non-official disclaimer in the UI until it exists, let the pilot produce the evidence.
+1. **Catalogue storage**: Turso libSQL is the system of record; Firestore maintains a single-writer enrollment projection for O(1) `exists()` security checks.
+2. **Course identity is a section**: course = subject x academic period x section; foundational for multi-cohort isolation.
+3. **Domain-to-role invariant governs authentication only.** Authorization is enforced per section enrollment.
+4. **Do not propose adoption prematurely.** Secure written pilot authorization with a single academic department, retain independent disclaimers in the UI, and allow empirical pilot data to demonstrate superiority.
 
 ## Handoff template
 
@@ -193,4 +193,4 @@ Next recommended action:
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
-In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging and schedules the P0.7 load test plus the P0.8 restoration drill against the published targets.
+In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging, and schedules the P0.7 load test plus the P0.8 restoration drill against published targets.

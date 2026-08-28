@@ -19,7 +19,7 @@ Derive user roles deterministically from the authenticated Google Workspace emai
 
 - `@alumnos.ubiobio.cl` $\rightarrow$ `student`
 - `@ubiobio.cl` $\rightarrow$ `teacher`
-- `elpapijuaco325@gmail.com`, `felipearce.2004@gmail.com` $\rightarrow$ `owner` / `superuser`
+- _SPEC-010 / REQ-SEC-01 amendment:_ The `owner` / `superuser` rank is NOT derived from an email address. It is an administrative state stored in Turso (`users.role = 'owner'`) and projected to Firestore (`users/{uid}.role`). No personal emails are hardcoded in code or rules.
 - Any other domain is rejected with HTTP 403.
 
 **Single Source of Truth:** `lib/access-policy.ts` -> `roleForEmail()`. Reimplementing regex checks in other components is prohibited. Synchronized across four mirrors:
