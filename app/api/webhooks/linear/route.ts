@@ -30,7 +30,10 @@ export async function POST(request: Request) {
     try {
       payload = JSON.parse(rawBody);
     } catch {
-      return NextResponse.json({ error: "El cuerpo de la petición no es un JSON válido" }, { status: 400 });
+      return NextResponse.json(
+        { error: "El cuerpo de la petición no es un JSON válido" },
+        { status: 400 }
+      );
     }
 
     if (!isFreshTimestamp(payload.webhookTimestamp, Date.now())) {
