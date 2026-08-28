@@ -12,11 +12,7 @@ import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
 import { CommandPalette } from "./command-palette";
 import { MobileBottomNav } from "./mobile-shell";
 import { parseAcademicSections } from "../lib/courses";
-import {
-  rememberPhoto,
-  type SessionState,
-  type User,
-} from "../lib/portal-utils";
+import { rememberPhoto, type SessionState, type User } from "../lib/portal-utils";
 import { parseSectionMemberships } from "../lib/section-roles";
 
 export { LoadingScreen };

@@ -53,7 +53,12 @@ type TeacherCoursesState = {
 };
 
 type TeacherCoursesAction =
-  | { type: "LOAD_WORKSPACE_SUCCESS"; courses: ManagedCourse[]; catalog: TeacherCourseCatalog; preferredId?: string }
+  | {
+      type: "LOAD_WORKSPACE_SUCCESS";
+      courses: ManagedCourse[];
+      catalog: TeacherCourseCatalog;
+      preferredId?: string;
+    }
   | { type: "SET_STATUS"; status: string }
   | { type: "SET_LOADING"; loading: boolean }
   | { type: "SELECT_COURSE"; id: string }
@@ -83,8 +88,8 @@ function teacherCoursesReducer(
         action.preferredId && action.courses.some((course) => course.id === action.preferredId)
           ? action.preferredId
           : state.selectedId && action.courses.some((course) => course.id === state.selectedId)
-          ? state.selectedId
-          : (action.courses[0]?.id ?? "");
+            ? state.selectedId
+            : (action.courses[0]?.id ?? "");
       return {
         ...state,
         courses: action.courses,
@@ -158,7 +163,11 @@ export function TeacherCoursesView({
         });
       })
       .catch((cause) => {
-        if (active) dispatch({ type: "SET_STATUS", status: message(cause, "No fue posible cargar tus ramos.") });
+        if (active)
+          dispatch({
+            type: "SET_STATUS",
+            status: message(cause, "No fue posible cargar tus ramos."),
+          });
       })
       .finally(() => {
         if (active) dispatch({ type: "SET_LOADING", loading: false });

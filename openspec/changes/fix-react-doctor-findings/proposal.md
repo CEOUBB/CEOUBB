@@ -1,6 +1,6 @@
 ## Why
 
-The codebase scan with React Doctor revealed 27 diagnostics across 22 files (health score 50, critical level) comprising lifecycle hazards (`no-fetch-in-effect` race conditions, unrevoked `URL.createObjectURL` Blob memory leaks), state synchronization antipatterns (multiple interdependent `useState` hooks instead of unified `useReducer` in `Portal.tsx` and `TeacherCoursesView.tsx`), sequential loop blocking (`async-await-in-loop` in Moodle processing), linear scan overhead (`js-set-map-lookups` in FAQ filtering), Next.js navigation regressions (plain `<a>` in `ResourcesView.tsx`), giant monolithic components (>300 lines), unused dead exports, and scanner noise from build directories (`.claude`, `.next`). 
+The codebase scan with React Doctor revealed 27 diagnostics across 22 files (health score 50, critical level) comprising lifecycle hazards (`no-fetch-in-effect` race conditions, unrevoked `URL.createObjectURL` Blob memory leaks), state synchronization antipatterns (multiple interdependent `useState` hooks instead of unified `useReducer` in `Portal.tsx` and `TeacherCoursesView.tsx`), sequential loop blocking (`async-await-in-loop` in Moodle processing), linear scan overhead (`js-set-map-lookups` in FAQ filtering), Next.js navigation regressions (plain `<a>` in `ResourcesView.tsx`), giant monolithic components (>300 lines), unused dead exports, and scanner noise from build directories (`.claude`, `.next`).
 
 Remediating these findings hardens CEOUBB's runtime stability, prevents memory leaks on low-end client devices, boosts Moodle import performance, and enforces strict React 19 / Next.js 16 best practices aligned with our institutional scale mission.
 
@@ -33,9 +33,11 @@ Remediating these findings hardens CEOUBB's runtime stability, prevents memory l
 ## Capabilities
 
 ### New Capabilities
+
 - `quality/react-doctor-hardening`: Comprehensive React Doctor quality gate, lifecycle safety, reducer consolidation, asynchronous batching, and dead-code eradication across all web views and utilities.
 
 ### Modified Capabilities
+
 <!-- None: functional requirements of existing capabilities remain preserved; this change hardens implementation quality and compliance. -->
 
 ## Impact

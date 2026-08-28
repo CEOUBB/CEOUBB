@@ -1,6 +1,7 @@
 ## Context
 
 The React Doctor local audit identified 27 diagnostics across 22 files. The primary issues stem from:
+
 1. Interdependent state variables updated in handlers causing multiple re-renders and potential race conditions (`prefer-useReducer` in `Portal.tsx` and `TeacherCoursesView.tsx`).
 2. Data fetching within `useEffect` without abort signals or cleanup (`no-fetch-in-effect` in `SettingsView.tsx`, `PeopleSection.tsx`, `user-preferences.ts`).
 3. Memory leaks caused by unrevoked `URL.createObjectURL` references (`no-create-object-url-without-revoke` in `SettingsView.tsx`).
@@ -14,6 +15,7 @@ See [proposal.md](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/C
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Eliminate all React Doctor errors/warnings in active source code, raising the score from 50 to 100 / Clean.
 - Consolidate state transitions in `Portal.tsx` and `TeacherCoursesView.tsx` into typed reducers.
 - Implement robust `AbortController` cleanup for all client-side `fetch` calls in effects.
@@ -24,6 +26,7 @@ See [proposal.md](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/C
 - Configure `doctor.config.json` to filter out build worktrees (`.claude`, `.next`, `dist`).
 
 **Non-Goals:**
+
 - Changing existing database schemas (Turso) or security rules (Firestore / Storage).
 - Modifying visual design tokens, typography, or core role derivation policies.
 
@@ -34,6 +37,7 @@ See [proposal.md](file:///c:/Users/Pipe/Documents/Proyectos/Web/Next.js/ceoubb/C
 **Decision**: Replace multiple `useState` hooks in `app/Portal.tsx` and `app/views/TeacherCoursesView.tsx` with a strongly-typed `useReducer(reducer, initialState)`.
 **Rationale**: In `Portal.tsx`, 8 interdependent states (view, activeCourseId, search query, dialog states, drawer toggles) are updated simultaneously during navigation and deep-linking. A single action dispatch guarantees that React 19 processes the state change in one atomic pass, eliminating state-tearing and impossible intermediate states.
 **Alternatives Considered**:
+
 - Keeping `useState` with `startTransition`: Does not solve atomic coordination or clarity of action intents.
 - External store (Zustand/Jotai): Violates the project's zero-unnecessary-dependency principle; native `useReducer` provides full type safety without external dependencies.
 
@@ -53,6 +57,7 @@ stateDiagram-v2
 **Decision**: Wrap all client-side `fetch()` operations inside `useEffect` with an `AbortController` whose `.abort()` is called in the effect cleanup function.
 **Rationale**: Prevents React 19 StrictMode double-fire bugs, memory leaks, and setting state on unmounted components when users rapidly toggle views.
 **Pattern**:
+
 ```typescript
 useEffect(() => {
   const controller = new AbortController();
@@ -85,10 +90,11 @@ useEffect(() => {
 ### 5. Component Modularization
 
 **Decision**:
+
 - Split `app/contacto/ContactForm.tsx` into `ContactFormHeader`, `ContactFormFields`, and `ContactFormSuccess`.
 - Split `app/privacidad/page.tsx` into `PrivacySectionList`, `PrivacySectionCard`, and `PrivacyTable`.
 - Split `app/Portal.tsx` navigation and dialog management into helper components.
-**Rationale**: Keeps all components under 300 LOC, maximizing readability, testability, and maintainability.
+  **Rationale**: Keeps all components under 300 LOC, maximizing readability, testability, and maintainability.
 
 ### 6. Dead File & Export Pruning
 
@@ -96,11 +102,11 @@ useEffect(() => {
 
 ## Risks / Trade-offs
 
-| Risk | Mitigation |
-| :--- | :--- |
-| Reducer refactor in `Portal.tsx` disrupts navigation | Comprehensive manual navigation tests and automated integration test validation |
-| AbortController triggers unhandled rejection | Explicitly check `err.name === 'AbortError'` in catch blocks |
-| Concurrent `Promise.all` in Moodle parser overwhelms client memory | Use bounded concurrency if array size exceeds 50 items |
+| Risk                                                               | Mitigation                                                                      |
+| :----------------------------------------------------------------- | :------------------------------------------------------------------------------ |
+| Reducer refactor in `Portal.tsx` disrupts navigation               | Comprehensive manual navigation tests and automated integration test validation |
+| AbortController triggers unhandled rejection                       | Explicitly check `err.name === 'AbortError'` in catch blocks                    |
+| Concurrent `Promise.all` in Moodle parser overwhelms client memory | Use bounded concurrency if array size exceeds 50 items                          |
 
 ## Migration Plan
 

@@ -1,25 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import {
-  Bell,
-  Books,
-  CalendarBlank,
-  FolderSimple,
-  House,
-  Stack,
-} from "@phosphor-icons/react";
+import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
   useExternalLinks,
   useHardwareBack,
   useIsMobileApp,
   useStatusBar,
 } from "../lib/mobile-bridge";
-import {
-  COURSES,
-  partitionAcademicCourses,
-  type Course,
-} from "../lib/courses";
+import { COURSES, partitionAcademicCourses, type Course } from "../lib/courses";
 import { loadMyCourses } from "../lib/teacher-course-client";
 import {
   SEEN_KEY,
@@ -257,7 +246,10 @@ export function usePortalCore(initialSession?: SessionState) {
         memberships,
         user.role,
         (state) => {
-          dispatchSession({ type: "SET_COMMUNICATIONS", communications: { ...state, ready: true } });
+          dispatchSession({
+            type: "SET_COMMUNICATIONS",
+            communications: { ...state, ready: true },
+          });
         },
         (error) => {
           dispatchSession({ type: "SET_COMMUNICATION_ERROR", error });
@@ -372,20 +364,17 @@ export function usePortalCore(initialSession?: SessionState) {
     [enterCourse, mobile, setPreview]
   );
 
-  const persistRead = useCallback(
-    (keys: readonly string[]) => {
-      if (keys.length === 0) return;
-      void import("../lib/firebase-classroom-client").then(({ markCommunicationRead }) =>
-        markCommunicationRead(keys).catch(() => {
-          dispatchSession({
-            type: "SET_COMMUNICATION_ERROR",
-            error: "No se pudo actualizar el estado de lectura.",
-          });
-        })
-      );
-    },
-    []
-  );
+  const persistRead = useCallback((keys: readonly string[]) => {
+    if (keys.length === 0) return;
+    void import("../lib/firebase-classroom-client").then(({ markCommunicationRead }) =>
+      markCommunicationRead(keys).catch(() => {
+        dispatchSession({
+          type: "SET_COMMUNICATION_ERROR",
+          error: "No se pudo actualizar el estado de lectura.",
+        });
+      })
+    );
+  }, []);
 
   // Implements: REQ-NOTIF-03
   const openNotification = useCallback(

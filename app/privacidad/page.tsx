@@ -18,20 +18,20 @@ function GovernanceSection() {
       </h2>
       <p>
         Centro de Estudio UBB es una plataforma estudiantil independiente. No representa a la
-        Universidad del Bío-Bío, no reemplaza sus sistemas oficiales y no existe todavía un
-        acuerdo institucional que la respalde.
+        Universidad del Bío-Bío, no reemplaza sus sistemas oficiales y no existe todavía un acuerdo
+        institucional que la respalde.
       </p>
       <p>
-        Las calificaciones registradas aquí <strong>no son</strong> el registro académico oficial
-        de la Universidad del Bío-Bío. El acta oficial de una asignatura sigue siendo la que emite
-        la universidad por sus canales; lo que ves en esta plataforma es la copia de trabajo que
-        tu docente decidió publicar.
+        Las calificaciones registradas aquí <strong>no son</strong> el registro académico oficial de
+        la Universidad del Bío-Bío. El acta oficial de una asignatura sigue siendo la que emite la
+        universidad por sus canales; lo que ves en esta plataforma es la copia de trabajo que tu
+        docente decidió publicar.
       </p>
       <p>
         El tratamiento de tus datos personales se rige por la Ley{" "}
-        <span className="num">21.719</span> sobre Protección de Datos Personales. Tratamos tus
-        datos porque los necesitamos para prestarte el servicio académico que solicitaste al
-        ingresar con tu cuenta institucional, y sólo mientras esa relación exista.
+        <span className="num">21.719</span> sobre Protección de Datos Personales. Tratamos tus datos
+        porque los necesitamos para prestarte el servicio académico que solicitaste al ingresar con
+        tu cuenta institucional, y sólo mientras esa relación exista.
       </p>
     </>
   );
@@ -47,8 +47,7 @@ function InventorySection() {
       <h3>Identidad y acceso</h3>
       <p>
         Tu nombre, tu correo institucional verificado, tu identificador de Firebase, el rol que se
-        deriva de tu dominio de correo y los registros de sesión activa con su fecha de
-        expiración.
+        deriva de tu dominio de correo y los registros de sesión activa con su fecha de expiración.
       </p>
 
       <h3>Estructura académica</h3>
@@ -62,9 +61,9 @@ function InventorySection() {
       <h3>Desempeño académico</h3>
       <p>
         Las calificaciones que tu docente publica en la escala chilena de{" "}
-        <span className="num">1,0</span> a <span className="num">7,0</span>, las evaluaciones a
-        las que corresponden, sus ponderaciones, el promedio ponderado que se calcula con ellas y
-        tu progreso dentro de cada ramo.
+        <span className="num">1,0</span> a <span className="num">7,0</span>, las evaluaciones a las
+        que corresponden, sus ponderaciones, el promedio ponderado que se calcula con ellas y tu
+        progreso dentro de cada ramo.
       </p>
 
       <h3>Contenido</h3>
@@ -76,9 +75,9 @@ function InventorySection() {
       <h3>Operación</h3>
       <p>
         El token de tu dispositivo para enviarte notificaciones, y la bitácora de auditoría de
-        calificaciones: cada vez que una nota se crea o se modifica se registra quién la cambió,
-        el puntaje anterior, el puntaje nuevo, la fecha y hora, y la dirección IP desde la que se
-        hizo el cambio.
+        calificaciones: cada vez que una nota se crea o se modifica se registra quién la cambió, el
+        puntaje anterior, el puntaje nuevo, la fecha y hora, y la dirección IP desde la que se hizo
+        el cambio.
       </p>
 
       <h2 id="finalidad">
@@ -115,15 +114,15 @@ function RecipientsSection() {
         </dd>
         <dt>Tu docente</dt>
         <dd>
-          Ve las notas, entregas y progreso de las secciones que dicta, y sólo de esas. Es la
-          única persona que puede escribir una calificación en su sección.
+          Ve las notas, entregas y progreso de las secciones que dicta, y sólo de esas. Es la única
+          persona que puede escribir una calificación en su sección.
         </dd>
         <dt>El administrador</dt>
         <dd>
           La cuenta administradora de la plataforma puede leer las calificaciones de cualquier
-          sección, en todas las carreras y facultades. Ese acceso existe para auditar la
-          plataforma y responder disputas de notas, y su uso queda registrado en la bitácora de
-          auditoría descrita en la sección <span className="num">2</span>.
+          sección, en todas las carreras y facultades. Ese acceso existe para auditar la plataforma
+          y responder disputas de notas, y su uso queda registrado en la bitácora de auditoría
+          descrita en la sección <span className="num">2</span>.
         </dd>
         <dt>Nadie más</dt>
         <dd>
@@ -185,16 +184,16 @@ function RetentionSection() {
       </p>
       <p>
         El formulario de <Link href="/contacto">contacto y soporte</Link> entrega tu mensaje al
-        buzón institucional a través de Brevo, un servicio de correo transaccional. Brevo procesa
-        tu nombre, tu dirección de correo y el texto que escribiste con el único fin de
-        entregarlos, y no se le envía ningún otro dato de tu cuenta.
+        buzón institucional a través de Brevo, un servicio de correo transaccional. Brevo procesa tu
+        nombre, tu dirección de correo y el texto que escribiste con el único fin de entregarlos, y
+        no se le envía ningún otro dato de tu cuenta.
       </p>
       <p>
         Usamos Sentry para detectar errores. Junto al reporte de error se graba una muestra de
         sesiones de uso, que registra la disposición de la pantalla y la secuencia de clics.{" "}
         <strong>Esas grabaciones enmascaran todo el texto y todo lo que escribes</strong>: una
-        grabación tomada sobre una pantalla de notas conserva la forma de la tabla, no los
-        puntajes ni los nombres. Los datos técnicos de error incluyen tu dirección IP.
+        grabación tomada sobre una pantalla de notas conserva la forma de la tabla, no los puntajes
+        ni los nombres. Los datos técnicos de error incluyen tu dirección IP.
       </p>
     </>
   );
@@ -207,8 +206,8 @@ function RightsSection() {
         <span className="num">7</span>. Tus derechos y cómo ejercerlos
       </h2>
       <p>
-        La Ley <span className="num">21.719</span> te reconoce derechos sobre tus datos
-        personales, y puedes ejercerlos sin costo:
+        La Ley <span className="num">21.719</span> te reconoce derechos sobre tus datos personales,
+        y puedes ejercerlos sin costo:
       </p>
       <ul>
         <li>
@@ -228,8 +227,8 @@ function RightsSection() {
           común.
         </li>
         <li>
-          <strong>Bloqueo</strong>: suspender temporalmente el tratamiento mientras se resuelve
-          una solicitud.
+          <strong>Bloqueo</strong>: suspender temporalmente el tratamiento mientras se resuelve una
+          solicitud.
         </li>
       </ul>
       <p>
@@ -237,8 +236,8 @@ function RightsSection() {
         <a href="mailto:contacto@ceoubb.com">contacto@ceoubb.com</a> desde tu correo institucional
         (así verificamos tu identidad) indicando qué derecho quieres ejercer y sobre qué datos.
         Respondemos en un plazo máximo de <span className="num">30</span> días corridos desde que
-        recibimos la solicitud. Si necesitamos más antecedentes para identificarte, te los
-        pediremos dentro de ese mismo plazo.
+        recibimos la solicitud. Si necesitamos más antecedentes para identificarte, te los pediremos
+        dentro de ese mismo plazo.
       </p>
       <p>
         <strong>Corrección de una nota:</strong> si crees que una calificación está equivocada, la
