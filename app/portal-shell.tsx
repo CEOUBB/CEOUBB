@@ -192,6 +192,7 @@ export function PortalHeader({
   const account = useRef<HTMLDetailsElement>(null);
   const notificationsMenu = useRef<HTMLDetailsElement>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useDismissablePopovers(account, notificationsMenu);
 
@@ -206,7 +207,10 @@ export function PortalHeader({
   }, []);
 
   return (
-    <header className="app-header">
+    <header
+      className="app-header"
+      data-menu-open={notificationsOpen || accountOpen ? "true" : undefined}
+    >
       <button
         aria-controls="portal-sidebar"
         aria-expanded={sidebarOpen}
@@ -288,30 +292,44 @@ export function PortalHeader({
             animación declarada sobre ellos sólo se vería la primera vez.
           */}
           {notificationsOpen && (
-            <m.div
-              animate={{ opacity: 1, y: 0 }}
-              aria-labelledby="notification-panel-title"
-              className="notification-popover"
-              initial={{ opacity: 0, y: -6 }}
-              transition={PANEL_SPRING}
-            >
-              <NotificationList
-                items={notifications}
-                loading={notificationsLoading}
-                onMarkAll={onMarkAllNotifications}
-                onOpen={(item) => {
-                  closeNotifications();
-                  onOpenNotification(item);
-                }}
-                onSeeAll={() => {
-                  closeNotifications();
-                  onCommunications();
-                }}
+            <>
+              <button
+                aria-hidden="true"
+                aria-label="Cerrar notificaciones"
+                className="notification-scrim"
+                onClick={closeNotifications}
+                tabIndex={-1}
+                type="button"
               />
-            </m.div>
+              <m.div
+                animate={{ opacity: 1, y: 0 }}
+                aria-labelledby="notification-panel-title"
+                className="notification-popover"
+                initial={{ opacity: 0, y: 8 }}
+                transition={PANEL_SPRING}
+              >
+                <NotificationList
+                  items={notifications}
+                  loading={notificationsLoading}
+                  onMarkAll={onMarkAllNotifications}
+                  onOpen={(item) => {
+                    closeNotifications();
+                    onOpenNotification(item);
+                  }}
+                  onSeeAll={() => {
+                    closeNotifications();
+                    onCommunications();
+                  }}
+                />
+              </m.div>
+            </>
           )}
         </details>
-        <details className="account-menu" ref={account}>
+        <details
+          className="account-menu"
+          onToggle={(event) => setAccountOpen(event.currentTarget.open)}
+          ref={account}
+        >
           <summary aria-haspopup="menu" aria-label={`Cuenta de ${user.name}`}>
             <Avatar email={user.email} name={user.name} photoUrl={user.photoUrl} />
             <span className="account-copy">

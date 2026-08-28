@@ -1409,6 +1409,11 @@ img {
   border-bottom: 1px solid var(--border-hairline);
 }
 
+.app-header:has(details[open]),
+.app-header[data-menu-open="true"] {
+  z-index: 60;
+}
+
 /* Implements: REQ-CAP-09 */
 /* El contenido pasa por debajo de la cabecera al hacer scroll: se vela, no se tapa.
    El velo cuesta una capa compuesta por frame y en gama baja Android eso se paga en
@@ -2272,6 +2277,10 @@ img {
   width: 45%;
 }
 
+.notification-scrim {
+  display: none;
+}
+
 /*
   En ancho móvil el mismo contenido se presenta como hoja inferior. El relleno
   usa `--safe-bottom`, ya corregido más arriba para la WebView de Android,
@@ -2280,6 +2289,21 @@ img {
 
   Implements: REQ-NOTIF-07
 */
+@media (max-width: 767px) {
+  .app-shell[data-mobile="true"] .notification-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 49;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 .app-shell[data-mobile="true"] .notification-popover {
   position: fixed;
   inset: auto 0 0 0;
@@ -2287,11 +2311,27 @@ img {
   width: 100%;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   border-bottom: none;
-  padding-bottom: var(--safe-bottom);
+  border-left: none;
+  border-right: none;
+  padding-bottom: max(var(--safe-bottom), var(--space-sm));
+  box-shadow:
+    0 -8px 28px -4px rgba(0, 0, 0, 0.16),
+    0 -2px 8px -1px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+}
+
+.app-shell[data-mobile="true"] .notification-popover::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 10px auto 4px;
+  border-radius: var(--radius-full);
+  background: var(--border-hairline);
 }
 
 .app-shell[data-mobile="true"] .notification-panel-body {
-  max-height: 70vh;
+  max-height: min(75vh, 520px);
 }
 
 /* ── Portal · lienzo ──────────────────────────────────────── */
