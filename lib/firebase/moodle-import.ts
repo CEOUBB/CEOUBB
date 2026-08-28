@@ -143,46 +143,40 @@ export async function executeMoodleImport(
 
   // Implements: REQ-QMD-03
   const postBatches = chunkImportRecords(posts);
-  const postResults = await Promise.all(
-    postBatches.map(async (rawBatch, index) => {
-      const batch = rawBatch.map((post) => ({ ...post, notifyStudents: false }));
-      onProgress({
-        phase: "content",
-        current: index,
-        total: postBatches.length,
-        message: "Publicando contenido histórico",
-      });
-      await callImportApi(sectionId, {
-        action: "content",
-        sourceKey: preview.source.sourceKey,
-        fingerprint: preview.source.fingerprint,
-        posts: batch,
-      });
-      return batch.length;
-    })
-  );
-  const contentImported = postResults.reduce((acc, count) => acc + count, 0);
+  let contentImported = 0;
+  for (let index = 0; index < postBatches.length; index += 1) {
+    const batch = postBatches[index].map((post) => ({ ...post, notifyStudents: false }));
+    onProgress({
+      phase: "content",
+      current: index,
+      total: postBatches.length,
+      message: "Publicando contenido histórico",
+    });
+    await callImportApi(sectionId, {
+      action: "content",
+      sourceKey: preview.source.sourceKey,
+      fingerprint: preview.source.fingerprint,
+      posts: batch,
+    });
+    contentImported += batch.length;
+  }
 
   let participantsMatched = 0;
   let participantsPending = 0;
   if (includeParticipants) {
     const participantBatches = chunkImportRecords(preview.participants);
-    const participantResults = await Promise.all(
-      participantBatches.map(async (batch, index) => {
-        onProgress({
-          phase: "participants",
-          current: index,
-          total: participantBatches.length,
-          message: "Vinculando participantes institucionales",
-        });
-        return callImportApi(sectionId, {
-          action: "roster",
-          fingerprint: preview.source.fingerprint,
-          participants: batch,
-        });
-      })
-    );
-    for (const result of participantResults) {
+    for (let index = 0; index < participantBatches.length; index += 1) {
+      onProgress({
+        phase: "participants",
+        current: index,
+        total: participantBatches.length,
+        message: "Vinculando participantes institucionales",
+      });
+      const result = await callImportApi(sectionId, {
+        action: "roster",
+        fingerprint: preview.source.fingerprint,
+        participants: participantBatches[index],
+      });
       participantsMatched += result.matched ?? 0;
       participantsPending += result.pending ?? 0;
     }
