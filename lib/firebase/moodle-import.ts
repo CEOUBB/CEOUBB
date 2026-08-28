@@ -152,6 +152,7 @@ export async function executeMoodleImport(
       total: postBatches.length,
       message: "Publicando contenido histórico",
     });
+    // react-doctor-disable-next-line async-await-in-loop
     await callImportApi(sectionId, {
       action: "content",
       sourceKey: preview.source.sourceKey,
@@ -172,6 +173,7 @@ export async function executeMoodleImport(
         total: participantBatches.length,
         message: "Vinculando participantes institucionales",
       });
+      // react-doctor-disable-next-line async-await-in-loop
       const result = await callImportApi(sectionId, {
         action: "roster",
         fingerprint: preview.source.fingerprint,

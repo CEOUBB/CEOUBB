@@ -127,6 +127,7 @@ export function ResourcesView() {
             <h2>Biblioteca académica</h2>
             {/* Implements: REQ-QMD-03 */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            {/* react-doctor-disable-next-line nextjs-no-a-element */}
             <a className="library-cta" href="/biblioteca/index.html">
               Abrir biblioteca <ArrowRight size={16} />
             </a>
