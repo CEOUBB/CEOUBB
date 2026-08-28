@@ -975,6 +975,7 @@ Production deployed: no.
 Known risks: las reglas de Firestore deben desplegarse antes que el portal; un docente ve los 25 hilos más recientes por sección y la paginación histórica queda como deuda explícita fuera de CEO-26; no existe política automática de retención o eliminación de mensajes; la matriz multirol en staging sigue siendo obligatoria antes de producción.
 
 Next recommended action: revisar y fusionar la PR; después desplegar reglas de Firestore, publicar el portal y ejecutar la matriz multirol, incluida una lectura IDOR entre estudiantes y una sección no asignada al docente.
+
 ## Completed active-work entries (moved out of `PLAN.md` 2026-08-28)
 
 - DONE — Antigravity, `feat/fix-react-doctor-findings`: **CEO-DOCTOR — Resolución Integral de Diagnósticos de React Doctor y Modularización de Componentes (2026-08-28).** PR [#93](https://github.com/CEOUBB/CEOUBB/pull/93) (commit `078ef25`). Resuelve el 100% de diagnósticos, modularizando `app/Portal.tsx` en `usePortalCore`, `portalSessionReducer` y `LoadingScreen`, dividiendo `PrivacyPage` en subcomponentes por sección, implementando `AbortController` y `URL.revokeObjectURL` para seguridad de ciclo de vida, optimizando búsquedas con `RegExp` y concurrencia por lotes. Verificación: `verify:fast` (427/427 tests pasados en <3.0s), invariantes (32/32 tests), build de producción Next.js 16.3 + suite integral (452/452 tests), `format:check` y `lint` 100% limpios, 16/16 checks de CI en verde en GitHub Actions y React Doctor 100/100 (0 errores, 0 advertencias). OpenSpec: `fix-react-doctor-findings`.
@@ -1035,6 +1036,7 @@ Next recommended action: configurar variables de entorno de Brevo en Vercel y ap
 ```
 
 ### Decisiones clave
+
 - **Zod entra como dependencia autorizada:** Se levantó la restricción de `AGENTS.md` §5.5 para Zod y se migró la validación de parámetros de consulta de `app/api/admin/users/route.ts`.
 - **Sonner descartado para soporte:** Se utiliza región `aria-live` persistente y panel de confirmación en reemplazo del formulario.
 - **Brevo como proveedor de correo:** Nivel recurrente permanente de 300 correos/día sin tarjeta.
@@ -1062,10 +1064,10 @@ Known risks: publicar índice en Firestore antes de desplegar funciones para evi
 ```
 
 ### Decisiones clave
+
 - **Panel sin colección propia adicional:** `deriveNotifications` reordena actividad e hilos ya suscritos.
 - **Configuración como Screen del portal:** Mantiene el montaje de sesión y accesibilidad sobre `#contenido-principal`.
 - **Precedencia de foto de perfil:** Propia -> Google -> Iniciales.
 - **Preferencias en Firestore de solo lectura para cliente:** Escrituras vía `PUT /api/profile/preferences` con Zod.
 - **Revocación de sesiones con ID derivado:** `sessionPublicId` vía segundo SHA-256 para no exponer hash de token.
 - **Push dirigido por token:** `notifyStudentsOnCoursePost` resuelve matrículas de sección por grupo de colección y envía por lotes con `sendEachForMulticast`.
-

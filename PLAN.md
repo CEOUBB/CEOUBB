@@ -194,4 +194,3 @@ Next recommended action:
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging and schedules the P0.7 load test plus the P0.8 restoration drill against the published targets.
-
