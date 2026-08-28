@@ -61,6 +61,11 @@ Companion files:
 - [NEXT] Demonstrate P0.7 in staging: 3,000 concurrent sessions for 30 minutes, initial launch <= 200 Firestore reads, p95 <= 2s, 5xx < 0.1%, annualized cost <= CLP 1,000 per student, and simulated RPO 1h / RTO 4h drill (CEO-71). `docs/operations/capacity-cost-baseline.md`, staging, billing export
 - [NEXT] Execute production authentication, Storage, and push notification verification matrix on physical device (CEO-33). Web, Android, Firebase
 - [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Vercel, Android
+- [NEXT] **P0: Generación y certificación oficial de actas de notas finales UBB (DUE 5420/2023) (CEO-74 / P0B.2).** Juako. Exportación en 1 clic de pre-actas y actas en planilla Excel/PDF estructurada para Intranet UBB y Registro Académico con cálculo del 40% de evaluación integradora. `lib/grades.ts`, `app/views/classroom/`
+- [NEXT] **P1: Bandeja rápida de corrección docente con visor PDF integrado vía PDFSlick (CEO-78).** Felipe Arce. Visualización fluida de entregas de estudiantes con `@pdfslick/react` (SSR diferido), panel de nota y feedback privado en contexto. `app/views/classroom/`
+- [NEXT] **P1: Motor de cuestionarios rápidos (Quizzes) e importador de bancos de preguntas GIFT (CEO-79).** Juako. Cuestionarios en React 19 con temporizador, guardado automático, parser GIFT/CSV e integración directa a notas 1.0–7.0. `app/views/classroom/`, `lib/`
+- [NEXT] **P1: Soporte de entregas grupales y asignación de equipos en evaluaciones (CEO-80).** Felipe Arce. Configuración grupal en buzones de entrega con réplica atómica de comprobantes, notas y retroalimentación. `app/views/classroom/`, `lib/`
+- [NEXT] **P2: Refactor(classroom): retirar pestaña volátil de Progreso y purgar tablas legacy en Turso (CEO-81).** Felipe Arce. Simplificación de navegación en el aula y purga de tablas residuales huérfanas (`posts`, `files`, `progress`). `app/views/classroom/`, `db/schema.ts`
 - [BLOCKED] Project owner: **written authorization for an institutional pilot** with one department or degree program (CEO-36): named academic sponsor, single semester, real students, signed data-processing agreement. External institutional dependency. UBB (DTI, VRA, legal counsel)
 - [BLOCKED] Project owner: Google Play developer verification and official listing URL (CEO-32). Play Console
 - [BLOCKED] Project owner: choose and fund native iOS strategy and Apple Developer enrollment (CEO-35). App Store Connect
@@ -68,7 +73,6 @@ Companion files:
 - [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in planner grid (CEO-72). Weekly view shipped with P2. `app/views/calendar/`
 - [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI runtime, IMS Common Cartridge, QTI (CEO-73; Moodle `.mbz` importer completed in CEO-39). Required for institutional adoption. New surface
 - [BACKLOG] Project owner: tenancy, licensing, and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (CEO-41). Governance
-- [BACKLOG] Academic records integration and official grade certification (CEO-74 / P0B.2). `lib/grades.ts`, `app/views/classroom/`
 - [BACKLOG] Unit and instrumented testing suite for Android native shell (CEO-75 / P2). `android/`
 - [BACKLOG] Web Push notifications with VAPID keys for desktop browsers (CEO-76 / P2). Web, Firebase
 
