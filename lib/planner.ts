@@ -260,19 +260,22 @@ export function placeBlocks(items: PlannerItem[]): PlacedBlock[] {
   const placed: PlacedBlock[] = [];
   let cluster: PlacedBlock[] = [];
   let columnEnds: number[] = [];
+  let clusterMaxEnd = 0;
 
   const flush = () => {
     for (const block of cluster) block.columns = columnEnds.length;
     placed.push(...cluster);
     cluster = [];
     columnEnds = [];
+    clusterMaxEnd = 0;
   };
 
   for (const block of timed) {
-    if (cluster.length > 0 && block.startMinutes >= Math.max(...columnEnds)) flush();
+    if (cluster.length > 0 && block.startMinutes >= clusterMaxEnd) flush();
     const free = columnEnds.findIndex((end) => end <= block.startMinutes);
     block.column = free === -1 ? columnEnds.length : free;
     columnEnds[block.column] = block.endMinutes;
+    clusterMaxEnd = Math.max(clusterMaxEnd, block.endMinutes);
     cluster.push(block);
   }
   flush();
