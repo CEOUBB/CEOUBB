@@ -21,10 +21,9 @@ El proyecto **Centro de Estudio UBB (CEOUBB)** mantiene un compromiso riguroso c
 
 Ante el hallazgo de una vulnerabilidad de seguridad o potencial fallo de autorización en CEOUBB, se solicita **no divulgar la incidencia a través de issues públicos**. En su lugar, se debe canalizar el reporte a través de medios confidenciales:
 
-1. **GitHub Security Advisory**: Abrir un reporte confidencial en la sección [Security Advisories](https://github.com/CEOUBB/CEOUBB/security/advisories/new).
-2. **Contacto Directo con Mantenedores**:
-   - `felipearce.2004@gmail.com`
-   - `elpapijuaco325@gmail.com`
+1. **GitHub Security Advisory**: Abrir un reporte confidencial en la sección [Security Advisories](https://github.com/CEOUBB/CEOUBB/security/advisories/new) (Canal preferente y cifrado).
+2. **Contacto Directo de Seguridad**:
+   - Correo electrónico: `contacto@ceoubb.com` (Mantenedor: `felipearce.2004@gmail.com`)
 
 ### Estructura Recomendada del Reporte:
 

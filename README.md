@@ -107,7 +107,7 @@ flowchart TD
 - **Node.js**: `>= 22.13.0`
 - **Gestor de paquetes**: `pnpm >= 11.18.0`
 - **Java JDK**: `Java 21` (Temurin) para compilación de Android
-- **Android SDK**: Build Tools 36.0.0+ (para desarrollo móvil)
+- **Android SDK**: Android API 34+ / Build Tools 34.0.0+ (para desarrollo móvil con Capacitor 7)
 
 ### 1. Desarrollo Web
 
@@ -115,13 +115,15 @@ flowchart TD
 # Instalar dependencias
 pnpm install
 
+# Configurar variables de entorno locales
+cp .env.example .env.local
+
 # Iniciar servidor de desarrollo en http://localhost:3000
 pnpm run dev
 
-# Ejecutar compuertas de calidad
-pnpm run typecheck
+# Ejecutar compuertas de calidad rápida (<3s: Typecheck + Tests + Hash Guard)
+pnpm run verify:fast
 pnpm run lint
-pnpm run test:unit
 ```
 
 ### 2. Desarrollo Móvil (Android / Capacitor)
@@ -155,6 +157,7 @@ pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only sto
   - [ADR-0001: Separación de Responsabilidades Turso / Firestore](docs/adr/0001-turso-firestore-split.md)
   - [ADR-0002: Adopción del Runtime Capacitor 7 Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)
   - [ADR-0003: Derivación de Roles por Dominio Institucional](docs/adr/0003-domain-role-derivation.md)
+  - [ADR-0004: Test-Locking, Checksums SHA-256 y Calidad Determinística](docs/adr/0004-test-locking-and-deterministic-qa.md)
 - **[Dossier de Adopción Institucional (`docs/institutional/`)](docs/institutional/moodle-adecca-comparison.md):** Comparativa técnica exhaustiva frente a Moodle UBB y Adecca UBB.
 - **[Carpeta Legal (`docs/legal/`)](docs/legal/README.md):** Borradores para revisión jurídica sobre encargo de tratamiento, retención, derechos, residencia de datos y término del servicio.
 - **[Guía de Contribución (`CONTRIBUTING.md`)](CONTRIBUTING.md):** Flujo de trabajo, branching y Conventional Commits en español.

@@ -26,8 +26,7 @@ Se establece una **invariante de seguridad estricta basada en el dominio de corr
 1. **Matriz Canónica de Derivación de Roles:**
    - `@alumnos.ubiobio.cl` $\rightarrow$ Rol **`student`** (Estudiante).
    - `@ubiobio.cl` $\rightarrow$ Rol **`teacher`** (Docente).
-   - `elpapijuaco325@gmail.com` $\rightarrow$ Rol **`owner`** (Propietario / Superusuario).
-   - `felipearce.2004@gmail.com` $\rightarrow$ Rol **`collaborator`** (Colaborador / Superusuario).
+   - _Enmienda SPEC-010 / REQ-SEC-01:_ El rol de Propietario / Superusuario (`owner`) no se deriva del correo electrónico. Es un estado administrativo verificado en base de datos (`users.role = 'owner'`) y proyectado a Firestore (`users/{uid}.role`), leído en reglas mediante la función `role()`. Ningún correo personal está hardcodeado en el código fuente ni en las reglas de seguridad.
    - _Cualquier otro dominio de correo electrónico es rechazado inmediatamente con error de acceso no autorizado (`UNAUTHORIZED_DOMAIN`)._
 
 2. **Centralización en `lib/access-policy.ts`:**

@@ -4,7 +4,7 @@
 
 ## Platform
 
-web
+web, mobile-android (Capacitor 7: `cl.ubb.centroestudio`)
 
 ## Users
 

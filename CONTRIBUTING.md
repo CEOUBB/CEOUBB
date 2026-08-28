@@ -9,7 +9,7 @@ Este documento establece las directrices y estándares de desarrollo para contri
 - **Node.js**: `>= 22.13.0`
 - **Gestor de paquetes**: `pnpm >= 11.18.0` (obligatorio; no utilizar `npm` ni `bun`)
 - **Java JDK**: `Java 21` (distribución Temurin recomendada, requerida para compilación de Android en Capacitor)
-- **Android Studio / SDK**: Build Tools 34+ (requerido para emulación y depuración móvil)
+- **Android Studio / SDK**: Android API 34+ / Build Tools 34.0.0+ (requerido para emulación y depuración móvil en Capacitor 7)
 
 ---
 
@@ -86,19 +86,18 @@ docs(readme): actualizar instrucciones de compilación local
 Previo a la apertura de un Pull Request, es obligatorio ejecutar y validar satisfactoriamente el conjunto de compuertas de calidad:
 
 ```bash
+# Verificación rápida con candado criptográfico (<3s: Typecheck + Tests + Hash Guard)
+pnpm run verify:fast
+
+# Verificación de invariantes de seguridad y reglas de Firebase (<500ms)
+pnpm run verify:invariants
+
 # Verificación de formato y sintaxis
 pnpm run format:check
 pnpm run lint
 
-# Verificación de tipos TypeScript
-pnpm run typecheck
-
-# Suite de pruebas unitarias
-pnpm run test:unit
-
-# Verificación de reglas e infraestructura Firebase
-pnpm run check:functions
-pnpm run check:rules
+# Suite completa de integración y compilación productiva (Pre-flight)
+pnpm test
 ```
 
 ---
@@ -107,7 +106,7 @@ pnpm run check:rules
 
 Al contribuir código al repositorio, se deben respetar los siguientes principios de diseño:
 
-1. **Derivación de Roles (`lib/access-policy.ts`)**: La asignación de roles (Estudiante, Docente, Superusuario) se deriva exclusivamente del dominio de correo institucional (`@alumnos.ubiobio.cl` -> Estudiante, `@ubiobio.cl` -> Docente). No debe duplicarse la lógica de análisis de dominio en ningún otro módulo.
+1. **Derivación de Roles (`lib/access-policy.ts`)**: La asignación de roles base (Estudiante, Docente) se deriva exclusivamente del dominio de correo institucional (`@alumnos.ubiobio.cl` -> Estudiante, `@ubiobio.cl` -> Docente). El rango de Propietario / Superusuario (`owner`) es un estado administrativo verificado en base de datos (`users.role = 'owner'`), nunca derivado del correo. No debe duplicarse la lógica de análisis de dominio en ningún otro módulo.
 2. **Protección de Datos Académicos (Leyes N° 19.628 y N° 21.719)**: El acceso a calificaciones y registros de estudiantes debe estar aislado por sección académica y protegido por reglas de seguridad en Firestore (`firestore.rules`).
 3. **Seam Móvil (`lib/mobile-bridge.ts`)**: Toda llamada a plugins nativos de Capacitor debe degradar a una operación silenciosa sin efecto (no-op) al ejecutarse en navegador web.
 4. **Sistema de Diseño (`DESIGN.md`)**: Se deben respetar los tokens institucionales, paleta UBB y componentes documentados en `DESIGN.md`.

@@ -92,8 +92,8 @@ To optimize semantic density and prevent context contamination, the following gl
    - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
    - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via micro-borders (`border border-surface-border`) and layered micro-shadows.
    - **Badges & Emojis:** Prohibited use of pulsating pill badges with `animate-ping` and decorative emojis (✨, 🚀, ⚡) as icons.
-   - **Motion & Physics:** Prohibited use of `transition: all` or `transition-all duration-300 ease-in-out`. Specify exact properties (`transform`, `opacity`) with critically damped spring physics (`stiffness: 340, damping: 28`) or micro-times ($\le 150\text{ms}$). Keyboard actions must be instantaneous ($0\text{ms}$).
-   - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle $y$ translation).
+   - **Motion & Physics:** Prohibited use of `transition: all` or `transition-all duration-300 ease-in-out`. Specify exact properties (`transform`, `opacity`) with critically damped spring physics (`stiffness: 340, damping: 28`) or micro-times (`<= 150ms`). Keyboard actions must be instantaneous (`0ms`).
+   - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle y-axis translation).
    - **Data & Numerals:** Mandatory application of `font-variant-numeric: tabular-nums lining-nums` (`.num`) on all tables, grades, counters, and dates.
    - **Iconography:** Mandatory exclusive use of `@phosphor-icons/react`. Do not hand-roll raw inline SVG icons.
 
