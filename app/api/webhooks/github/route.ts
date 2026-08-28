@@ -82,7 +82,15 @@ export async function POST(req: NextRequest) {
     }
 
     const event = req.headers.get("x-github-event") || "";
-    const payload = JSON.parse(rawBody);
+    let payload: ReturnType<typeof JSON.parse>;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: "El cuerpo de la petición no es un JSON válido" },
+        { status: 400 }
+      );
+    }
 
     // Evento de ejecución de CI/CD (GitHub Actions)
     if (event === "workflow_run") {
