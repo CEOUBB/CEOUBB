@@ -169,18 +169,34 @@ export function MaterialsSection({
                     </small>
                   </div>
                   <span className="material-actions">
-                    <button onClick={() => openFile(file)} type="button">
+                    <button
+                      aria-label={`Descargar ${file.name}`}
+                      onClick={() => openFile(file)}
+                      type="button"
+                    >
                       Descargar
                     </button>
                     {canManage && (
                       <span className="content-actions">
-                        <button onClick={() => renameFile(file)} type="button">
+                        <button
+                          aria-label={`Modificar ${file.name}`}
+                          onClick={() => renameFile(file)}
+                          type="button"
+                        >
                           Modificar
                         </button>
-                        <button onClick={() => moveFile(file)} type="button">
+                        <button
+                          aria-label={`Mover ${file.name}`}
+                          onClick={() => moveFile(file)}
+                          type="button"
+                        >
                           Mover
                         </button>
-                        <button onClick={() => deleteFile(file)} type="button">
+                        <button
+                          aria-label={`Eliminar ${file.name}`}
+                          onClick={() => deleteFile(file)}
+                          type="button"
+                        >
                           Eliminar
                         </button>
                       </span>
