@@ -294,9 +294,11 @@ export function PortalHeader({
           {notificationsOpen && (
             <>
               <button
+                aria-hidden="true"
                 aria-label="Cerrar notificaciones"
                 className="notification-scrim"
                 onClick={closeNotifications}
+                tabIndex={-1}
                 type="button"
               />
               <m.div
