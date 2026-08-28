@@ -150,11 +150,11 @@ test("keeps Firebase, Storage and Turso out of the teacher preview bundle", asyn
   for (const chunk of chunks) {
     const source = await (await request(chunk)).text();
     assert.ok(
-      !source.includes("firestore.googleapis.com"),
+      !/(?:^|[^a-z0-9.-])firestore\.googleapis\.com(?:[^a-z0-9.-]|$)/i.test(source),
       `${chunk} ships Firestore into the isolated preview`
     );
     assert.ok(
-      !source.includes("firebasestorage.googleapis.com"),
+      !/(?:^|[^a-z0-9.-])firebasestorage\.googleapis\.com(?:[^a-z0-9.-]|$)/i.test(source),
       `${chunk} ships Storage into the isolated preview`
     );
     assert.ok(
@@ -462,11 +462,11 @@ test("keeps the Firestore and Storage SDKs out of the initial page bundle", asyn
   for (const chunk of chunks) {
     const source = await (await request(chunk)).text();
     assert.ok(
-      !source.includes("firestore.googleapis.com"),
+      !/(?:^|[^a-z0-9.-])firestore\.googleapis\.com(?:[^a-z0-9.-]|$)/i.test(source),
       `${chunk} still ships the Firestore SDK`
     );
     assert.ok(
-      !source.includes("firebasestorage.googleapis.com"),
+      !/(?:^|[^a-z0-9.-])firebasestorage\.googleapis\.com(?:[^a-z0-9.-]|$)/i.test(source),
       `${chunk} still ships the Cloud Storage SDK`
     );
   }

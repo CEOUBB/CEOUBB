@@ -27,7 +27,9 @@ test("REQ-RENDER-01 elimina scripts, handlers y protocolos ejecutables", () => {
     "html"
   );
 
-  assert.doesNotMatch(html, /<script|onerror|javascript:/i);
+  assert.doesNotMatch(html, /<script\b/i);
+  assert.doesNotMatch(html, /\bonerror\b/i);
+  assert.doesNotMatch(html, /javascript:/i);
   assert.match(html, />Abrir<\/a>/);
 });
 

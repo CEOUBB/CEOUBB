@@ -1,12 +1,12 @@
 /* global renderMathInElement */
 
 const courses = typeof window !== 'undefined' && window.COURSES ? window.COURSES : [];
-const storeKey = 'centro-estudio-2026-certamenes-v2';
+const storeKey = 'ceoubb_study_library_progress_v2';
 let state = { activeCourse: 'all', difficulty: 'all', topic: 'all', search: '', progress: { completed: {}, notes: {} } };
 
 if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
   try {
-    const saved = JSON.parse(localStorage.getItem(storeKey));
+    const saved = JSON.parse(localStorage.getItem(storeKey) || localStorage.getItem('centro-estudio-2026-certamenes-v2'));
     if (saved && saved.completed && saved.notes) state.progress = saved;
   } catch {
     state.progress = { completed: {}, notes: {} };

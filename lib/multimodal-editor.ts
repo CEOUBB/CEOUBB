@@ -157,7 +157,13 @@ function attributeValue(attributes: string, name: string) {
 }
 
 function textFromHtml(value: string) {
-  return decodeHtml(value.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, ""));
+  let cleaned = value.replace(/<br\s*\/?>/gi, "\n");
+  let prev = "";
+  while (cleaned !== prev) {
+    prev = cleaned;
+    cleaned = cleaned.replace(/<[^>]*>/g, "");
+  }
+  return decodeHtml(cleaned);
 }
 
 function preserveHtml(

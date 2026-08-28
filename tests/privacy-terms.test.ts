@@ -26,8 +26,13 @@ function readSurface(path: string) {
 */
 async function readProse(path: string): Promise<string> {
   const source = await readSurface(path);
-  return source
-    .replace(/<[^>]*>/g, "")
+  let text = source;
+  let prev = "";
+  while (text !== prev) {
+    prev = text;
+    text = text.replace(/<[^>]*>/g, "");
+  }
+  return text
     .replace(/\{"\s*"\}/g, " ")
     .replace(/&ldquo;|&rdquo;/g, '"');
 }

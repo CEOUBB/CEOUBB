@@ -1,5 +1,5 @@
 {
-  "tests/academic-content-renderer.test.ts": "c49c689f7cd9bdecaa1108aba63871a82a18c129ab5f7fa9ed94ac6ca02ee6ce",
+  "tests/academic-content-renderer.test.ts": "d68963043846127916e80bcc9248099e1aec811a25f73c91b42e883221aa875d",
   "tests/academic-content.test.ts": "2681b5915732da18c808290cf6e3de0102041f2143eedf1390180f125d00cd6e",
   "tests/academic-model.test.ts": "233bbab5eeb9b2257a7df3bfabe2ae81cbbfd61b4fe0d3933af7bddd604aa3fc",
   "tests/access-policy.test.ts": "63d48f22736dbd3bea0412822529e94344f129aedacc2e0fcca2aa288d2511cc",
@@ -34,9 +34,9 @@
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "b3f47ff8ec6ee7ba956501d466e730cecbf124da134a223f4b7e1f67b6498b47",
-  "tests/privacy-terms.test.ts": "bd61c0e7e49b842cd1a1681cc0a674132e4a1fa29c896d4710b493addf52297d",
+  "tests/privacy-terms.test.ts": "32b5ee5705b7658d2a6f09a077000768600292d68f9b3649f27aacb208cf272a",
   "tests/publication-workflow.test.ts": "96058d3aff2f52b4d653c49406751a008b261456f6929b264e49da8e32451591",
-  "tests/rendered-html.test.mjs": "e95b3e690d69594487e6655782890d1a147194aa836f1f116dee4947a349e8ff",
+  "tests/rendered-html.test.mjs": "6aa8a0ddc44550cceccd7444d0d5cd2b092add892eb28ba6bfd2b27dad6339df",
   "tests/rich-text.test.ts": "b1ac05689c03178a56c1537a3629d384b3e20cccd07b12a943533ea69638d657",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
