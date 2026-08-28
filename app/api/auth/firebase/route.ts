@@ -25,7 +25,12 @@ type FirebaseAccount = {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as { idToken?: string };
+    let payload: { idToken?: string };
+    try {
+      payload = (await request.json()) as { idToken?: string };
+    } catch {
+      return error("El cuerpo de la petición no es un JSON válido.", 400);
+    }
     const idToken = payload.idToken?.trim() ?? "";
     if (!idToken) return error("No se recibió una credencial de Google válida.", 400);
 

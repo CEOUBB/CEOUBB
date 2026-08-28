@@ -121,7 +121,7 @@ export async function GET(request: Request, context: MoodleRouteContext) {
 export async function POST(request: Request, context: MoodleRouteContext) {
   try {
     const { actor, sectionId } = await sessionAndSection(request, context);
-    const input = (await request.json()) as {
+    let input: {
       action?: string;
       source?: unknown;
       sourceKey?: string;
@@ -131,6 +131,11 @@ export async function POST(request: Request, context: MoodleRouteContext) {
       report?: MoodleImportReport;
       warningCount?: number;
     };
+    try {
+      input = (await request.json()) as typeof input;
+    } catch {
+      return failure("El cuerpo de la petición no es un JSON válido.", 400, "INVALID_JSON");
+    }
     if (input.action === "start") {
       await purgeExpiredPendingMoodleEnrollments();
       return Response.json(await startMoodleImport(actor, sectionId, sourceFrom(input.source)));
