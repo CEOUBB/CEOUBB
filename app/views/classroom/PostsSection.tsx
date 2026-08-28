@@ -138,10 +138,18 @@ export function PostsSection({
                       )}
                       {canManage && (
                         <span className="content-actions">
-                          <button onClick={() => setEditingId(post.id)} type="button">
+                          <button
+                            aria-label={`Modificar aviso "${post.title}"`}
+                            onClick={() => setEditingId(post.id)}
+                            type="button"
+                          >
                             Modificar
                           </button>
-                          <button onClick={() => deletePost(post)} type="button">
+                          <button
+                            aria-label={`Eliminar aviso "${post.title}"`}
+                            onClick={() => deletePost(post)}
+                            type="button"
+                          >
                             Eliminar
                           </button>
                         </span>
