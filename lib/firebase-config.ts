@@ -7,7 +7,7 @@ export type FirebaseClientConfig = {
   appId: string;
 };
 
-export const FIREBASE_CONFIG_REQUIREMENT = "Implements: REQ-STG-01, REQ-STG-04";
+// Implements: REQ-STG-01, REQ-STG-04
 
 export const PRODUCTION_FIREBASE_CONFIG: FirebaseClientConfig = Object.freeze({
   apiKey: "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",

@@ -12,21 +12,22 @@ import {
   solicitudSoporteSchema,
 } from "../../lib/support-request.ts";
 
-/*
-  Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03
+const CORREO_INSTITUCIONAL = "contacto@ceoubb.com";
 
-  El acuse no se muestra en un aviso que se desvanece. Es el único texto que
-  quien escribe necesita leer, recordar y a veces capturar en pantalla, así que
-  reemplaza al formulario y se queda. De paso el doble envío deja de ser posible.
-*/
-
+// Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01
 type Estado = "listo" | "enviando" | "entregado" | "diferido" | "error";
 
-const CORREO_INSTITUCIONAL = "contacto@ceoubb.com";
+type FormValues = {
+  nombre: string;
+  email: string;
+  categoria: CategoriaSoporte | "";
+  asunto: string;
+  mensaje: string;
+};
 
 const CAMPOS = ["nombre", "email", "categoria", "asunto", "mensaje"] as const;
 
-const VALORES_INICIALES = {
+const VALORES_INICIALES: FormValues = {
   nombre: "",
   email: "",
   categoria: "" as CategoriaSoporte | "",
@@ -34,13 +35,12 @@ const VALORES_INICIALES = {
   mensaje: "",
 };
 
-/** Lleva el foco al primer campo con error, en el orden en que se leen. */
 function enfocarPrimerError(fallos: ErroresPorCampo) {
   const primero = CAMPOS.find((campo) => fallos[campo]);
   if (primero) document.getElementById(`soporte-${primero}`)?.focus();
 }
 
-function AcuseRecibo({
+function ContactReceipt({
   estado,
   categoria,
   email,
@@ -53,7 +53,7 @@ function AcuseRecibo({
 }) {
   const etiqueta = categoria ? CATEGORIA_ETIQUETAS[categoria] : "tu consulta";
   return (
-    <div className="policy-confirm">
+    <div className="policy-confirm" aria-live="polite">
       <p className="policy-confirm-head">
         <CheckCircle aria-hidden="true" size={22} weight="fill" />
         Recibimos tu mensaje
@@ -64,11 +64,6 @@ function AcuseRecibo({
           responderemos a {email}.
         </p>
       ) : (
-        /*
-          Implements: REQ-SUP-09
-          202 significa que quedó registrado y aún no salió. Decirlo así es
-          preferible a un visto bueno que no se corresponde con lo ocurrido.
-        */
         <p>
           Tu mensaje sobre <strong>{etiqueta}</strong> quedó registrado, y su envío al buzón
           institucional está pendiente. Lo leeremos igual. Si necesitas una respuesta rápida,
@@ -87,7 +82,7 @@ function AcuseRecibo({
 }
 
 export default function ContactForm() {
-  const [valores, setValores] = useState(VALORES_INICIALES);
+  const [valores, setValores] = useState<FormValues>(VALORES_INICIALES);
   const [errores, setErrores] = useState<ErroresPorCampo>({});
   const [estado, setEstado] = useState<Estado>("listo");
   const [mensajeEstado, setMensajeEstado] = useState("");
@@ -97,16 +92,10 @@ export default function ContactForm() {
   const montadoEn = useRef<number>(0);
   const enviandoAhora = useRef(false);
 
-  // Tiempo transcurrido medido aquí, no una marca de tiempo: el reloj del
-  // dispositivo no tiene por qué coincidir con el del servidor.
   useEffect(() => {
     montadoEn.current = performance.now();
   }, []);
 
-  /*
-    Prefill de cortesía para quien ya tiene sesión abierta. Si falla, el
-    formulario funciona igual: esta página no requiere estar autenticado.
-  */
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/auth/me", { signal: controller.signal })
@@ -126,19 +115,13 @@ export default function ContactForm() {
     };
   }, []);
 
-  function actualizar(campo: (typeof CAMPOS)[number], valor: string) {
+  function actualizar(campo: keyof FormValues, valor: string) {
     setValores((previos) => ({ ...previos, [campo]: valor }));
     if (errores[campo]) setErrores((previos) => ({ ...previos, [campo]: undefined }));
   }
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    /*
-      El guardia tiene que ser síncrono. `setEstado("enviando")` no surte efecto
-      hasta el siguiente renderizado, así que dos clics dentro del mismo tick
-      pasarían los dos y crearían dos tickets. El atributo `disabled` del botón
-      llega igual de tarde, porque depende del mismo renderizado.
-    */
     if (enviandoAhora.current) return;
     enviandoAhora.current = true;
 
@@ -197,15 +180,13 @@ export default function ContactForm() {
         `No pudimos conectar con el servidor. Escríbenos directamente a ${CORREO_INSTITUCIONAL}.`
       );
     } finally {
-      // Se libera en todas las salidas, incluida la exitosa: tras "escribir otro
-      // mensaje" el componente sigue montado y conserva esta referencia.
       enviandoAhora.current = false;
     }
   }
 
   if (estado === "entregado" || estado === "diferido") {
     return (
-      <AcuseRecibo
+      <ContactReceipt
         categoria={categoriaEnviada}
         email={valores.email}
         estado={estado}
@@ -266,11 +247,6 @@ export default function ContactForm() {
             {errores.email}
           </p>
         ) : avisoDominio ? (
-          /*
-            Implements: REQ-HELP-05
-            Aviso, no error. Quien escribe desde un correo personal suele ser
-            justamente quien no puede usar el institucional.
-          */
           <p className="policy-field-note" id="aviso-email">
             <Info aria-hidden="true" size={16} weight="fill" />
             No es un correo institucional. Te responderemos igual, pero no podremos verificar tu
@@ -363,10 +339,6 @@ export default function ContactForm() {
         )}
       </div>
 
-      {/*
-        Señuelo antiabuso. Está fuera del orden de tabulación y fuera del árbol
-        de accesibilidad, así que ninguna persona lo encuentra ni lo oye.
-      */}
       <input
         aria-hidden="true"
         autoComplete="off"

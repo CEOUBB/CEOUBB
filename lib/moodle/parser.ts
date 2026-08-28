@@ -215,6 +215,7 @@ function courseInformation(root: MoodleXmlNode) {
   return information;
 }
 
+// Implements: REQ-QMD-03
 async function sectionsFromManifest(
   archive: MoodleArchive,
   information: MoodleXmlNode,
@@ -222,21 +223,28 @@ async function sectionsFromManifest(
 ) {
   const sectionMap = new Map<string, string>();
   const sections = xmlChildren(xmlChild(xmlChild(information, "contents"), "sections"), "section");
-  for (const section of sections) {
-    const id = xmlValue(section, "sectionid");
-    const directory = xmlValue(section, "directory");
-    const title = xmlValue(section, "title");
-    if (!id || !directory || !archive.has(`${directory}/section.xml`)) {
-      omission(omissions, "section", title || id, "La sección no contiene su section.xml.");
-      continue;
+  const parsedSections = await Promise.all(
+    sections.map(async (section) => {
+      const id = xmlValue(section, "sectionid");
+      const directory = xmlValue(section, "directory");
+      const title = xmlValue(section, "title");
+      if (!id || !directory || !archive.has(`${directory}/section.xml`)) {
+        omission(omissions, "section", title || id, "La sección no contiene su section.xml.");
+        return null;
+      }
+      const data = await readXml(archive, `${directory}/section.xml`);
+      const name = xmlValue(data, "name") || title || `Sección ${xmlValue(data, "number") || id}`;
+      if (xmlValue(data, "visible") === "0") {
+        omission(omissions, "hidden-section", name, "La sección estaba oculta en Moodle.");
+        return null;
+      }
+      return { id, folder: safeFolder(name) };
+    })
+  );
+  for (const item of parsedSections) {
+    if (item) {
+      sectionMap.set(item.id, item.folder);
     }
-    const data = await readXml(archive, `${directory}/section.xml`);
-    const name = xmlValue(data, "name") || title || `Sección ${xmlValue(data, "number") || id}`;
-    if (xmlValue(data, "visible") === "0") {
-      omission(omissions, "hidden-section", name, "La sección estaba oculta en Moodle.");
-      continue;
-    }
-    sectionMap.set(id, safeFolder(name));
   }
   return sectionMap;
 }
@@ -246,55 +254,57 @@ function activityDataNode(root: MoodleXmlNode | null, moduleName: string) {
   return xmlDescendants(root, moduleName)[0] ?? null;
 }
 
+// Implements: REQ-QMD-03
 async function activitiesFromManifest(
   archive: MoodleArchive,
   information: MoodleXmlNode,
   sectionMap: Map<string, string>,
   omissions: MoodleImportOmission[]
 ) {
-  const activities: ActivityDescriptor[] = [];
   const nodes = xmlChildren(xmlChild(xmlChild(information, "contents"), "activities"), "activity");
-  for (const node of nodes) {
-    const moduleId = xmlValue(node, "moduleid");
-    const sectionId = xmlValue(node, "sectionid");
-    const moduleName = xmlValue(node, "modulename").toLowerCase();
-    const title = safeTitle(xmlValue(node, "title"), `${moduleName || "Actividad"} ${moduleId}`);
-    const directory = xmlValue(node, "directory");
-    const folder = sectionMap.get(sectionId);
-    if (!moduleId || !moduleName || !directory || !folder) {
-      omission(
-        omissions,
-        "activity",
+  const activityItems = await Promise.all(
+    nodes.map(async (node): Promise<ActivityDescriptor | null> => {
+      const moduleId = xmlValue(node, "moduleid");
+      const sectionId = xmlValue(node, "sectionid");
+      const moduleName = xmlValue(node, "modulename").toLowerCase();
+      const title = safeTitle(xmlValue(node, "title"), `${moduleName || "Actividad"} ${moduleId}`);
+      const directory = xmlValue(node, "directory");
+      const folder = sectionMap.get(sectionId);
+      if (!moduleId || !moduleName || !directory || !folder) {
+        omission(
+          omissions,
+          "activity",
+          title,
+          "La actividad no pertenece a una sección visible válida."
+        );
+        return null;
+      }
+      const moduleXml = await optionalXml(archive, `${directory}/module.xml`);
+      const visible = xmlValue(moduleXml ?? undefined, "visible") !== "0";
+      if (!visible) {
+        omission(omissions, "hidden", title, "La actividad estaba oculta en Moodle.");
+        return null;
+      }
+      const activityXml = await optionalXml(archive, `${directory}/${moduleName}.xml`);
+      if (!activityXml) {
+        omission(omissions, moduleName, title, `Falta ${moduleName}.xml.`);
+        return null;
+      }
+      return {
+        moduleId,
+        sectionId,
+        moduleName,
         title,
-        "La actividad no pertenece a una sección visible válida."
-      );
-      continue;
-    }
-    const moduleXml = await optionalXml(archive, `${directory}/module.xml`);
-    const visible = xmlValue(moduleXml ?? undefined, "visible") !== "0";
-    if (!visible) {
-      omission(omissions, "hidden", title, "La actividad estaba oculta en Moodle.");
-      continue;
-    }
-    const activityXml = await optionalXml(archive, `${directory}/${moduleName}.xml`);
-    if (!activityXml) {
-      omission(omissions, moduleName, title, `Falta ${moduleName}.xml.`);
-      continue;
-    }
-    activities.push({
-      moduleId,
-      sectionId,
-      moduleName,
-      title,
-      directory,
-      folder,
-      contextId: activityXml.attributes.contextid ?? "",
-      visible,
-      added: xmlValue(moduleXml ?? undefined, "added"),
-      data: activityDataNode(activityXml, moduleName),
-    });
-  }
-  return activities;
+        directory,
+        folder,
+        contextId: activityXml.attributes.contextid ?? "",
+        visible,
+        added: xmlValue(moduleXml ?? undefined, "added"),
+        data: activityDataNode(activityXml, moduleName),
+      };
+    })
+  );
+  return activityItems.filter((item): item is ActivityDescriptor => item !== null);
 }
 
 function postsFromActivities(

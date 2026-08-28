@@ -3,6 +3,7 @@
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -126,9 +127,10 @@ export function ResourcesView() {
             </span>
             <h2>Biblioteca académica</h2>
             <p>Certámenes, controles y apuntes que la comunidad va sumando período a período.</p>
-            <a className="library-cta" href="/biblioteca/index.html">
+            {/* // Implements: REQ-QMD-03 */}
+            <Link className="library-cta" href="/biblioteca/index.html">
               Abrir biblioteca <ArrowRight size={16} />
-            </a>
+            </Link>
           </div>
           <ul className="library-points">
             {LIBRARY_POINTS.map((point) => (
