@@ -117,7 +117,7 @@ Para compilar y ejecutar el proyecto en un entorno local, se requieren las sigui
 | Componente      | Versión Mínima Requerida          | Propósito                                                  |
 | :-------------- | :-------------------------------- | :--------------------------------------------------------- |
 | **Node.js**     | `>= 22.13.0`                      | Runtime de ejecución backend y herramientas de compilación |
-| **pnpm**        | `>= 11.18.0`                      | Gestor de paquetes determinístico obligatorio              |
+| **pnpm**        | `>= 12.0.0`                       | Gestor de paquetes determinístico obligatorio              |
 | **Java JDK**    | `Java 21` (Eclipse Temurin)       | Compilación nativa de la aplicación Android en Gradle      |
 | **Android SDK** | `API 34+` / Build Tools `34.0.0+` | Compilación y emulación móvil de Capacitor                 |
 
