@@ -136,14 +136,30 @@ export async function listPullRequests(
   }
 }
 
+function sanitizePositiveInt(value: number | string): number | null {
+  const parsed = typeof value === "number" ? Math.floor(value) : parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function sanitizeBranchName(branch: string): string {
+  const cleaned = branch.trim().replace(/[^a-zA-Z0-9._/-]/g, "");
+  return cleaned || "main";
+}
+
 /**
  * Obtener detalles completos de un Pull Request por su número.
  */
 export async function getPullRequest(
   number: number | string
 ): Promise<GitHubPullRequestDetails | null> {
+  const safeNumber = sanitizePositiveInt(number);
+  if (safeNumber === null) return null;
+
   try {
-    const res = await fetch(`${GITHUB_API_BASE}/pulls/${number}`, {
+    const res = await fetch(`${GITHUB_API_BASE}/pulls/${safeNumber}`, {
       headers: getGitHubHeaders(),
       signal: AbortSignal.timeout(6000),
       next: { revalidate: 0 },
@@ -164,7 +180,7 @@ export async function getPullRequest(
       base: data.base,
     };
   } catch (err) {
-    console.warn(`⚠️ Error consultando PR #${number} en GitHub API:`, err);
+    console.warn("⚠️ Error consultando PR en GitHub API:", safeNumber, err);
     return null;
   }
 }
@@ -173,8 +189,11 @@ export async function getPullRequest(
  * Obtener el diff unificado en formato de texto de un Pull Request.
  */
 export async function getPullRequestDiff(number: number | string): Promise<string> {
+  const safeNumber = sanitizePositiveInt(number);
+  if (safeNumber === null) return "";
+
   try {
-    const res = await fetch(`${GITHUB_API_BASE}/pulls/${number}`, {
+    const res = await fetch(`${GITHUB_API_BASE}/pulls/${safeNumber}`, {
       headers: getGitHubHeaders("application/vnd.github.v3.diff"),
       signal: AbortSignal.timeout(8000),
     });
@@ -182,7 +201,7 @@ export async function getPullRequestDiff(number: number | string): Promise<strin
     if (!res.ok) return "";
     return await res.text();
   } catch (err) {
-    console.warn(`⚠️ Error obteniendo diff de PR #${number}:`, err);
+    console.warn("⚠️ Error obteniendo diff de PR en GitHub API:", safeNumber, err);
     return "";
   }
 }
@@ -193,8 +212,11 @@ export async function getPullRequestDiff(number: number | string): Promise<strin
 export async function getPullRequestComments(
   number: number | string
 ): Promise<GitHubCommentItem[]> {
+  const safeNumber = sanitizePositiveInt(number);
+  if (safeNumber === null) return [];
+
   try {
-    const res = await fetch(`${GITHUB_API_BASE}/issues/${number}/comments`, {
+    const res = await fetch(`${GITHUB_API_BASE}/issues/${safeNumber}/comments`, {
       headers: getGitHubHeaders(),
       signal: AbortSignal.timeout(6000),
       next: { revalidate: 0 },
@@ -210,7 +232,7 @@ export async function getPullRequestComments(
       })
     );
   } catch (err) {
-    console.warn(`⚠️ Error obteniendo comentarios de PR #${number}:`, err);
+    console.warn("⚠️ Error obteniendo comentarios de PR en GitHub API:", safeNumber, err);
     return [];
   }
 }
@@ -221,12 +243,16 @@ export async function getPullRequestComments(
 export async function getLatestWorkflowRun(
   branch: string = "main"
 ): Promise<WorkflowRunDetails | null> {
+  const safeBranch = sanitizeBranchName(branch);
   try {
-    const runsRes = await fetch(`${GITHUB_API_BASE}/actions/runs?branch=${branch}&per_page=1`, {
-      headers: getGitHubHeaders(),
-      signal: AbortSignal.timeout(5000),
-      next: { revalidate: 0 },
-    });
+    const runsRes = await fetch(
+      `${GITHUB_API_BASE}/actions/runs?branch=${encodeURIComponent(safeBranch)}&per_page=1`,
+      {
+        headers: getGitHubHeaders(),
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 0 },
+      }
+    );
 
     if (!runsRes.ok) return null;
     const runsData = await runsRes.json();
@@ -234,7 +260,10 @@ export async function getLatestWorkflowRun(
     if (!latestRun) return null;
 
     let steps: WorkflowStep[] = [];
-    if (latestRun.jobs_url) {
+    if (
+      typeof latestRun.jobs_url === "string" &&
+      latestRun.jobs_url.startsWith("https://api.github.com/repos/CEOUBB/CEOUBB/")
+    ) {
       try {
         const jobsRes = await fetch(latestRun.jobs_url, {
           headers: getGitHubHeaders(),

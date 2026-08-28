@@ -28,6 +28,11 @@ export async function getLinearIssue(id: string): Promise<LinearIssueDetails | n
   const apiKey = getLinearApiKey();
   if (!apiKey) return null;
 
+  const safeId = typeof id === "string" ? id.trim().toUpperCase() : "";
+  if (!/^[A-Z0-9]+-\d+$/i.test(safeId) && !/^[0-9a-fA-F-]{8,36}$/.test(safeId)) {
+    return null;
+  }
+
   try {
     const query = `
       query GetIssue($id: String!) {
@@ -49,7 +54,7 @@ export async function getLinearIssue(id: string): Promise<LinearIssueDetails | n
         "Content-Type": "application/json",
         Authorization: apiKey,
       },
-      body: JSON.stringify({ query, variables: { id: id.toUpperCase() } }),
+      body: JSON.stringify({ query, variables: { id: safeId } }),
       signal: AbortSignal.timeout(5000),
     });
 
@@ -68,7 +73,7 @@ export async function getLinearIssue(id: string): Promise<LinearIssueDetails | n
       description: issue.description ? issue.description.slice(0, 500) : "Sin descripción",
     };
   } catch (err) {
-    console.warn(`⚠️ Error consultando issue '${id}' en Linear:`, err);
+    console.warn("⚠️ Error consultando issue en Linear:", safeId, err);
     return null;
   }
 }

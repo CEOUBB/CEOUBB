@@ -7,16 +7,24 @@ import { getGeminiClient, generateContentWithFallback } from "../services/gemini
 export async function reviewPullRequest(
   prNum: string | number
 ): Promise<{ content: string; isError?: boolean }> {
+  const safePrNum = typeof prNum === "number" ? Math.floor(prNum) : parseInt(String(prNum), 10);
+  if (!Number.isFinite(safePrNum) || safePrNum <= 0) {
+    return {
+      content: "⚠️ Número de Pull Request inválido.",
+      isError: true,
+    };
+  }
+
   try {
     const [prData, diffText, comments] = await Promise.all([
-      getPullRequest(prNum),
-      getPullRequestDiff(prNum).catch(() => ""),
-      getPullRequestComments(prNum).catch(() => []),
+      getPullRequest(safePrNum),
+      getPullRequestDiff(safePrNum).catch(() => ""),
+      getPullRequestComments(safePrNum).catch(() => []),
     ]);
 
     if (!prData) {
       return {
-        content: `⚠️ No se encontró el PR #${prNum} en el repositorio CEOUBB/CEOUBB.`,
+        content: `⚠️ No se encontró el PR #${safePrNum} en el repositorio CEOUBB/CEOUBB.`,
         isError: true,
       };
     }
@@ -39,7 +47,7 @@ export async function reviewPullRequest(
 
     const prompt = `
 Eres el Revisor Senior de Código y Arquitectura de CEOUBB (LMS Universidad del Bío-Bío).
-Audita el Pull Request #${prNum}: "${prData.title}" (${prData.branch} -> ${prData.baseBranch})
+Audita el Pull Request #${safePrNum}: "${prData.title}" (${prData.branch} -> ${prData.baseBranch})
 
 === DIFF DE CÓDIGO ===
 ${truncatedDiff}
@@ -68,18 +76,18 @@ Emite un informe conciso en español formal con este formato:
         const result = await generateContentWithFallback(ai, prompt);
         review = result.text;
       } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        review = `⚠️ Error al generar auditoría con Gemini: ${errMsg}`;
+        console.warn("⚠️ Error al generar auditoría con Gemini:", err);
+        review = "⚠️ Error al generar auditoría con el modelo de IA.";
       }
     }
 
     const responseMarkdown =
-      `### 🔍 Auditoría de PR #${prNum}: [${prData.title}](${prData.html_url || prData.url})\n\n` +
+      `### 🔍 Auditoría de PR #${safePrNum}: [${prData.title}](${prData.html_url || prData.url})\n\n` +
       `${review}`;
 
     return { content: responseMarkdown, isError: false };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { content: `❌ Error auditando PR #${prNum}: ${msg}`, isError: true };
+    console.error("❌ Error auditando PR en GitHub API:", safePrNum, err);
+    return { content: `❌ Error auditando PR #${safePrNum}.`, isError: true };
   }
 }

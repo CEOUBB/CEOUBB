@@ -146,6 +146,17 @@ export async function executeGeminiToolCall(
   return { error: `Herramienta desconocida: ${name}` };
 }
 
+const SYSTEM_INSTRUCTION = `Eres el Asistente de IA Senior y Copiloto de Desarrollo de CEOUBB (Centro de Estudio UBB - LMS Universidad del Bío-Bío).
+Tienes conocimiento profundo del proyecto CEOUBB y acceso a herramientas para consultar Linear (issues, sprints) y GitHub (commits, PRs, CI).
+
+Reglas indispensables de CEOUBB:
+- Stack: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, Firebase southamerica-west1.
+- Paquetes: Usar SIEMPRE pnpm (no npm, no bun).
+- Auth & Roles: Gobernado estrictamente por lib/access-policy.ts (@ubiobio.cl docente, @alumnos.ubiobio.cl estudiante).
+- Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (DESIGN.md).
+- Idioma: Responde siempre en español formal, técnico y educado.
+- Seguridad: Mantener límites estrictos de rol y no exponer variables de entorno sensibles.`;
+
 /**
  * Ejecución de Gemini con Function Calling loop y fallbacks automáticos de modelo.
  */
@@ -165,21 +176,16 @@ export async function processGeminiQueryWithTools(
     fetchDiscordChannelHistory(channelId, 12),
   ]);
 
-  const systemInstruction = `Eres el Asistente de IA Senior y Copiloto de Desarrollo de CEOUBB (Centro de Estudio UBB - LMS Universidad del Bío-Bío).
-Estás interactuando en Discord con el mantenedor del proyecto (${userDisplayName}).
-Tienes conocimiento profundo del proyecto CEOUBB a través de los archivos del repositorio (AGENTS.md, PLAN.md, DESIGN.md).
-Tienes acceso a herramientas para consultar Linear (issues, sprints) y GitHub (commits, PRs, CI).
-Si el usuario pregunta por temas conversados previamente en el canal o acuerdos recientes, revisa el historial reciente de conversación en este canal.
-
-Reglas indispensables de CEOUBB:
-- Stack: Next.js 16 (App Router), React 19, TypeScript, Turso/libSQL, Firebase southamerica-west1.
-- Paquetes: Usar SIEMPRE pnpm (no npm, no bun).
-- Auth & Roles: Gobernado estrictamente por lib/access-policy.ts (@ubiobio.cl docente, @alumnos.ubiobio.cl estudiante).
-- Diseño: Paper-soft (#f4f6f9), sobrio, académico, Phosphor Icons (DESIGN.md).
-- Idioma: Responde siempre en español formal, técnico y educado.
-
-${projectContext}
-${channelHistory}`;
+  const safeDisplayName = userDisplayName.replace(/[\r\n]/g, " ").slice(0, 100);
+  const contextSections: string[] = [];
+  if (projectContext) {
+    contextSections.push(projectContext);
+  }
+  if (channelHistory) {
+    contextSections.push(channelHistory);
+  }
+  contextSections.push(`[Usuario en Discord: @${safeDisplayName}]\nConsulta: ${userPrompt}`);
+  const fullUserPrompt = contextSections.join("\n\n");
 
   let lastError: unknown;
 
@@ -187,9 +193,9 @@ ${channelHistory}`;
     try {
       const firstRes = await ai.models.generateContent({
         model: modelId,
-        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        contents: [{ role: "user", parts: [{ text: fullUserPrompt }] }],
         config: {
-          systemInstruction,
+          systemInstruction: SYSTEM_INSTRUCTION,
           tools: [{ functionDeclarations: geminiToolsDeclarations }],
         },
       });
@@ -222,7 +228,7 @@ ${channelHistory}`;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const followUpContents: any[] = [
-          { role: "user", parts: [{ text: userPrompt }] },
+          { role: "user", parts: [{ text: fullUserPrompt }] },
           firstCandidateContent,
           { role: "user", parts: toolResponseParts },
         ];
@@ -230,7 +236,7 @@ ${channelHistory}`;
         const followUpRes = await ai.models.generateContent({
           model: modelId,
           contents: followUpContents,
-          config: { systemInstruction },
+          config: { systemInstruction: SYSTEM_INSTRUCTION },
         });
 
         const followUpText =
@@ -241,7 +247,7 @@ ${channelHistory}`;
       const directText = firstRes.text || firstCandidateContent?.parts?.[0]?.text || "";
       if (directText) return directText.trim();
     } catch (err) {
-      console.warn(`⚠️ Error en modelo '${modelId}' en Vercel:`, err);
+      console.warn("⚠️ Error en modelo de Gemini en Vercel:", modelId, err);
       lastError = err;
     }
   }

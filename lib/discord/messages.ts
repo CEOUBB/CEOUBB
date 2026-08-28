@@ -2,6 +2,9 @@
  * Utilidades para interactuar con la API REST de mensajes de Discord.
  */
 
+const DISCORD_SNOWFLAKE_REGEX = /^\d{17,20}$/;
+const DISCORD_INTERACTION_TOKEN_REGEX = /^[a-zA-Z0-9._-]{20,250}$/;
+
 /**
  * Actualizar mensaje original diferido de Discord (Deferred Interaction Type 5).
  */
@@ -10,7 +13,14 @@ export async function updateOriginalDiscordMessage(
   interactionToken: string,
   content: string
 ): Promise<void> {
-  if (!applicationId || !interactionToken) return;
+  if (
+    !applicationId ||
+    !interactionToken ||
+    !DISCORD_SNOWFLAKE_REGEX.test(applicationId) ||
+    !DISCORD_INTERACTION_TOKEN_REGEX.test(interactionToken)
+  ) {
+    return;
+  }
 
   try {
     const safeContent =
@@ -18,7 +28,10 @@ export async function updateOriginalDiscordMessage(
         ? `${content.slice(0, 1920)}\n\n_...(respuesta recortada por límite de Discord)_`
         : content;
 
-    const url = `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+    const safeAppId = encodeURIComponent(applicationId);
+    const safeToken = encodeURIComponent(interactionToken);
+    const url = `https://discord.com/api/v10/webhooks/${safeAppId}/${safeToken}/messages/@original`;
+
     const res = await fetch(url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -28,7 +41,8 @@ export async function updateOriginalDiscordMessage(
 
     if (!res.ok) {
       console.error(
-        `❌ Error al actualizar mensaje diferido en Discord (${res.status}):`,
+        "❌ Error al actualizar mensaje diferido en Discord:",
+        res.status,
         await res.text()
       );
     }
@@ -45,11 +59,14 @@ export async function fetchDiscordChannelHistory(channelId?: string, limit = 12)
     process.env.DISCORD_ANTIGRAVITY_BOT_TOKEN ||
     process.env.DISCORD_CEOUBB_BOT_TOKEN ||
     process.env.DISCORD_BOT_TOKEN;
-  if (!botToken || !channelId) return "";
+  if (!botToken || !channelId || !DISCORD_SNOWFLAKE_REGEX.test(channelId)) return "";
+
+  const safeLimit = Math.max(1, Math.min(Math.floor(limit), 50));
+  const safeChannelId = encodeURIComponent(channelId);
 
   try {
     const res = await fetch(
-      `https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`,
+      `https://discord.com/api/v10/channels/${safeChannelId}/messages?limit=${safeLimit}`,
       {
         headers: {
           Authorization: `Bot ${botToken}`,
