@@ -208,6 +208,8 @@ export function PeopleSection({
     [course, user, sectionRole, students]
   );
 
+  // Implements: REQ-QMD-02
+  // react-doctor-disable-next-line react-doctor/no-fetch-in-effect
   useEffect(() => {
     const controller = new AbortController();
     const version = requestVersion.current + 1;

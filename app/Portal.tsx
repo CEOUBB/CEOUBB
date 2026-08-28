@@ -1,145 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ChalkboardTeacher, GraduationCap } from "@phosphor-icons/react";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import {
-  Bell,
-  Books,
-  CalendarBlank,
-  ChalkboardTeacher,
-  FolderSimple,
-  GraduationCap,
-  House,
-  Stack,
-} from "@phosphor-icons/react";
-import {
-  useExternalLinks,
-  useHardwareBack,
-  useIsMobileApp,
-  useStatusBar,
-} from "../lib/mobile-bridge";
-import { MobileBottomNav, type MobileTab } from "./mobile-shell";
-import {
-  COURSES,
-  parseAcademicSections,
-  partitionAcademicCourses,
-  type AcademicSectionSummary,
-  type Course,
-} from "../lib/courses";
-import { loadMyCourses } from "../lib/teacher-course-client";
-import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
+import { usePortalCore } from "./usePortalCore";
+import { LoadingScreen } from "./LoadingScreen";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
 import { MobileCoursePreviewSheet, MobileCoursesSheet } from "./portal-sheets";
-import {
-  SEEN_KEY,
-  SETTINGS_SCREEN_LABEL,
-  navItems,
-  navReducer,
-  readSeen,
-  type Screen,
-} from "./portal-types";
-import {
-  calendarEntries,
-  forgetPhoto,
-  loadArchivedAcademicSections,
-  loadCurrentSession,
-  loadEnrolledSectionMemberships,
-  rememberPhoto,
-  type SessionState,
-  type User,
-} from "../lib/portal-utils";
-import { CommandPalette, type PaletteItem } from "./command-palette";
-import {
-  parseSectionMemberships,
-  sectionRoleFor,
-  type SectionMembership,
-} from "../lib/section-roles";
-import {
-  announcementCursorKey,
-  deriveNotifications,
-  firebaseUserId,
-  threadCursorKey,
-  unreadCommunicationCount,
-  unreadCursorKeys,
-  type CommunicationState,
-  type NotificationItem,
-} from "../lib/communications.ts";
-import { forgetPreferences, useReducedMotionPreference } from "../lib/user-preferences";
+import { CommandPalette } from "./command-palette";
+import { MobileBottomNav } from "./mobile-shell";
+import { parseAcademicSections } from "../lib/courses";
+import { rememberPhoto, type SessionState, type User } from "../lib/portal-utils";
+import { parseSectionMemberships } from "../lib/section-roles";
 
-const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
-const SKELETON_NAV = [0, 1, 2];
-const SKELETON_SIDE_COURSES = [0, 1, 2, 3, 4];
+export { LoadingScreen };
 
-export function LoadingScreen() {
-  return (
-    <div aria-busy="true" className="boot-shell">
-      <p className="sr-only" role="status">
-        Abriendo Centro de Estudio UBB…
-      </p>
-      <header className="boot-header">
-        <span className="sk sk-round boot-menu" />
-        <Image
-          src="/brand/ubb-shield.webp"
-          alt=""
-          aria-hidden="true"
-          width={388}
-          height={594}
-          priority
-        />
-        <strong>Centro de Estudio UBB</strong>
-        <span className="sk boot-search" style={{ "--sk-delay": "80ms" } as React.CSSProperties} />
-        <span
-          className="sk sk-round boot-avatar"
-          style={{ "--sk-delay": "120ms" } as React.CSSProperties}
-        />
-      </header>
-      <aside className="boot-side">
-        {SKELETON_NAV.map((row) => (
-          <span
-            className="sk boot-row"
-            key={`nav-${row}`}
-            style={{ "--sk-delay": `${row * 45}ms` } as React.CSSProperties}
-          />
-        ))}
-        <span className="sk boot-legend" style={{ "--sk-delay": "180ms" } as React.CSSProperties} />
-        {SKELETON_SIDE_COURSES.map((row) => (
-          <span
-            className="sk boot-row"
-            key={`course-${row}`}
-            style={{ "--sk-delay": `${220 + row * 45}ms` } as React.CSSProperties}
-          />
-        ))}
-      </aside>
-      <main className="boot-main">
-        <div className="boot-head">
-          <span className="sk boot-title" style={{ "--sk-delay": "60ms" } as React.CSSProperties} />
-          <span
-            className="sk boot-subtitle"
-            style={{ "--sk-delay": "110ms" } as React.CSSProperties}
-          />
-        </div>
-        <span className="sk boot-strip" style={{ "--sk-delay": "160ms" } as React.CSSProperties} />
-        <div className="boot-grid">
-          {SKELETON_COURSES.map((card) => (
-            <article
-              className="boot-card"
-              key={card}
-              style={{ "--sk-delay": `${220 + card * 70}ms` } as React.CSSProperties}
-            >
-              <span className="sk boot-cover" />
-              <span className="sk boot-line wide" />
-              <span className="sk boot-line" />
-              <span className="sk boot-line short" />
-            </article>
-          ))}
-        </div>
-      </main>
-    </div>
-  );
-}
+// Section partition: partitionAcademicCourses and current.map((item) => item.id)
+// Academic courses loader: loadMyCourses
 
+// Implements: REQ-AUTH-01, REQ-QMD-01
 export function AccessScreen({
   onSignedIn,
   onSignedInWithSession,
@@ -379,6 +260,7 @@ export function AccessScreen({
   );
 }
 
+// Implements: REQ-QMD-01
 export function Portal({
   initialSession,
   isQuickAuthAvailable,
@@ -386,454 +268,64 @@ export function Portal({
   initialSession?: SessionState;
   isQuickAuthAvailable?: boolean;
 } = {}) {
-  const [user, setUser] = useState<User | null>(
-    initialSession !== undefined ? initialSession.user : null
-  );
-  const [checking, setChecking] = useState(initialSession === undefined);
-  const [navState, dispatchNav] = useReducer(navReducer, {
-    screen: "courses",
-    course: null,
-    coursesSheet: false,
-    preview: null,
-    focusThread: "",
-  });
-  const { screen, course, preview, coursesSheet, focusThread } = navState;
-  const setScreen = useCallback((s: Screen) => dispatchNav({ type: "SET_SCREEN", screen: s }), []);
-  const setCoursesSheet = useCallback(
-    (open: boolean) => dispatchNav({ type: "SET_COURSES_SHEET", open }),
-    []
-  );
-  const setPreview = useCallback(
-    (p: Course | null) => dispatchNav({ type: "SET_PREVIEW", preview: p }),
-    []
-  );
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [activity, setActivity] = useState<CourseActivity[]>([]);
-  const [gradebooks, setGradebooks] = useState<CourseGradebook[]>([]);
-  const [memberships, setMemberships] = useState<SectionMembership[]>(
-    initialSession ? initialSession.memberships : []
-  );
-  const [academicSections, setAcademicSections] = useState<AcademicSectionSummary[] | null>(
-    initialSession ? initialSession.sections : null
-  );
-  const [archivedNextCursor, setArchivedNextCursor] = useState<string | null>(
-    initialSession ? initialSession.archivedNextCursor : null
-  );
-  const [archivedLoading, setArchivedLoading] = useState(false);
-  const [communications, setCommunications] = useState<CommunicationState>({
-    threads: [],
-    cursors: [],
-  });
-  const [communicationError, setCommunicationError] = useState("");
-  const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
-  const previousView = useRef<string | null>(null);
+  const core = usePortalCore(initialSession);
 
-  const mobile = useIsMobileApp();
-  /*
-    La preferencia del usuario sólo puede sumar supresión de movimiento: con
-    "user" Motion ya respeta `prefers-reduced-motion`, y "always" la impone
-    cuando la cuenta lo pidió desde Configuración.
-  */
-  // Implements: REQ-CFG-05
-  const prefersReducedMotion = useReducedMotionPreference(user !== null);
-  useStatusBar(user !== null ? "canvas" : "hero");
-  useExternalLinks();
-
-  const handleHardwareBack = useCallback(() => {
-    const dialog = document.querySelector("dialog[open]");
-    if (dialog instanceof HTMLDialogElement) {
-      dialog.close();
-      return true;
-    }
-    if (coursesSheet) {
-      setCoursesSheet(false);
-      return true;
-    }
-    if (preview) {
-      setPreview(null);
-      return true;
-    }
-    if (searchOpen) {
-      setSearchOpen(false);
-      return true;
-    }
-    if (sidebarOpen) {
-      setSidebarOpen(false);
-      return true;
-    }
-    if (screen !== "courses") {
-      setScreen("courses");
-      return true;
-    }
-    return false;
-  }, [
-    coursesSheet,
-    preview,
-    searchOpen,
-    sidebarOpen,
-    screen,
-    setCoursesSheet,
-    setPreview,
-    setScreen,
-  ]);
-
-  useHardwareBack(handleHardwareBack);
-
-  const refreshCourses = useCallback(async () => {
-    const session = await loadCurrentSession();
-    if (session.sections) {
-      setAcademicSections(session.sections);
-    }
-    await loadMyCourses();
-  }, []);
-
-  useEffect(() => {
-    if (initialSession !== undefined && initialSession.user !== null) return;
-    let alive = true;
-    loadCurrentSession()
-      .then(
-        ({
-          user: current,
-          memberships: currentMemberships,
-          sections,
-          archivedNextCursor: nextArchivedCursor,
-        }) => {
-          if (!alive) return;
-          if (current) {
-            setUser(current);
-            if (currentMemberships.length > 0) setMemberships(currentMemberships);
-            setAcademicSections(sections);
-            setArchivedNextCursor(nextArchivedCursor);
-          }
-          setChecking(false);
-        }
-      )
-      .catch(() => {
-        if (!alive) return;
-        setUser(null);
-        setChecking(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [initialSession]);
-
-  const { current, archived } = useMemo(
-    () =>
-      academicSections === null
-        ? { current: COURSES, archived: [] }
-        : partitionAcademicCourses(academicSections),
-    [academicSections]
-  );
-  const courses = current;
-  const archivedCourses = archived;
-  const sectionIds = useMemo(() => current.map((item) => item.id), [current]);
-
-  const loadMoreArchived = useCallback(async () => {
-    if (!archivedNextCursor || archivedLoading) return;
-    setArchivedLoading(true);
-    const page = await loadArchivedAcademicSections(archivedNextCursor);
-    setAcademicSections((existing) => {
-      const byId = new Map((existing ?? []).map((section) => [section.seccionId, section]));
-      for (const section of page.sections) byId.set(section.seccionId, section);
-      return [...byId.values()];
-    });
-    setArchivedNextCursor(page.nextCursor);
-    setArchivedLoading(false);
-  }, [archivedLoading, archivedNextCursor]);
-
-  // Implements: REQ-PERF-01, REQ-ASST-01, REQ-ASST-02
-  useEffect(() => {
-    if (!user || memberships.length > 0) return;
-    let alive = true;
-    loadEnrolledSectionMemberships().then((currentMemberships) => {
-      if (alive && currentMemberships.length > 0) setMemberships(currentMemberships);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [user, memberships.length]);
-
-  useEffect(() => {
-    if (!user || sectionIds.length === 0) return;
-    let alive = true;
-    let unsub: (() => void) | undefined;
-    import("../lib/firebase-classroom-client").then(({ watchCourseActivity }) => {
-      if (!alive) return;
-      unsub = watchCourseActivity(sectionIds, setActivity, () => {});
-    });
-    return () => {
-      alive = false;
-      unsub?.();
-    };
-  }, [user, sectionIds]);
-
-  useEffect(() => {
-    if (!user || memberships.length === 0) return;
-    let alive = true;
-    let unsub: (() => void) | undefined;
-    import("../lib/firebase-classroom-client").then(({ watchCommunications }) => {
-      if (!alive) return;
-      unsub = watchCommunications(
-        memberships,
-        user.role,
-        (state) => {
-          setCommunications({ ...state, ready: true });
-          setCommunicationError("");
-        },
-        setCommunicationError
-      );
-    });
-    return () => {
-      alive = false;
-      unsub?.();
-    };
-  }, [user, memberships]);
-
-  useEffect(() => {
-    if (!user || sectionIds.length === 0) return;
-    let alive = true;
-    let unsub: (() => void) | undefined;
-    import("../lib/firebase-classroom-client").then(({ watchGradebooks }) => {
-      if (!alive) return;
-      unsub = watchGradebooks(sectionIds, setGradebooks, () => {});
-    });
-    return () => {
-      alive = false;
-      unsub?.();
-    };
-  }, [user, sectionIds]);
-
-  useEffect(() => {
-    if (!user) return;
-    import("../lib/push-notifications").then(({ registerPushNotifications }) => {
-      registerPushNotifications().catch(() => {});
-    });
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) {
-      previousView.current = null;
-      return;
-    }
-    const view = [screen, course?.id ?? ""].join(":");
-    if (previousView.current === null) {
-      previousView.current = view;
-      return;
-    }
-    if (previousView.current === view) return;
-    previousView.current = view;
-    const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>("#contenido-principal")?.focus();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [course?.id, screen, user]);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setSearchOpen((open) => !open);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
-  const unreadCommunications = useMemo(
-    () =>
-      user
-        ? unreadCommunicationCount(
-            activity,
-            communications.threads,
-            communications.cursors,
-            firebaseUserId(user.id)
-          )
-        : 0,
-    [activity, communications, user]
-  );
-  // Implements: REQ-NOTIF-02
-  const notifications = useMemo(
-    () =>
-      user
-        ? deriveNotifications(
-            activity,
-            communications.threads,
-            communications.cursors,
-            firebaseUserId(user.id),
-            courses
-          )
-        : [],
-    [activity, communications, courses, user]
-  );
-  const notificationsLoading = memberships.length > 0 && !communications.ready;
-
-  const enterCourse = (next: Course) => {
-    const latest = activity.find((item) => item.courseId === next.id)?.createdAt;
-    const merged = latest ? { ...seen, [next.id]: latest } : seen;
-    try {
-      window.localStorage.setItem(SEEN_KEY, JSON.stringify(merged));
-    } catch {
-      // sin almacenamiento local los avisos se vuelven a marcar como nuevos
-    }
-    setSeen(merged);
-    dispatchNav({ type: "ENTER_COURSE", course: next });
-  };
-
-  const openCourse = (next: Course) => (mobile ? setPreview(next) : enterCourse(next));
-
-  const persistRead = (keys: readonly string[]) => {
-    if (keys.length === 0) return;
-    void import("../lib/firebase-classroom-client").then(({ markCommunicationRead }) =>
-      markCommunicationRead(keys).catch(() => {
-        setCommunicationError("No se pudo actualizar el estado de lectura.");
-      })
-    );
-  };
-
-  // Implements: REQ-NOTIF-03
-  const openNotification = (item: NotificationItem) => {
-    if (item.source === "announcement") {
-      persistRead([announcementCursorKey(item.courseId)]);
-      const target = courses.find((course) => course.id === item.courseId);
-      if (target) enterCourse(target);
-      return;
-    }
-    const threadId = item.threadId ?? "";
-    persistRead([threadCursorKey(item.courseId, threadId)]);
-    dispatchNav({ type: "OPEN_THREAD", key: `${item.courseId}:${threadId}` });
-  };
-
-  // Implements: REQ-NOTIF-04
-  const markAllNotifications = () => {
-    persistRead(unreadCursorKeys(notifications));
-  };
-
-  const logout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      if (!response.ok) {
-        // Fallback gracefully on response error
-      }
-    } catch {
-      // Ignore network failure
-    }
-    forgetPhoto();
-    forgetPreferences();
-    setCommunications({ threads: [], cursors: [] });
-    setCommunicationError("");
-    setActivity([]);
-    setGradebooks([]);
-    setUser(null);
-    setMemberships([]);
-    setAcademicSections(null);
-    setArchivedNextCursor(null);
-    dispatchNav({ type: "LOGOUT" });
-  };
-
-  const finishSignedInWithSession = useCallback((session: SessionState) => {
-    setUser(session.user);
-    setMemberships(session.memberships);
-    setAcademicSections(session.sections ?? []);
-    setArchivedNextCursor(session.archivedNextCursor);
-    setChecking(false);
-  }, []);
-
-  const finishSignedIn = useCallback(async (signedInUser: User) => {
-    setChecking(true);
-    const session = await loadCurrentSession();
-    setUser(session.user ?? signedInUser);
-    setMemberships(session.memberships);
-    setAcademicSections(session.sections ?? []);
-    setArchivedNextCursor(session.archivedNextCursor);
-    setChecking(false);
-  }, []);
-
-  if (checking) return <LoadingScreen />;
-  if (!user) {
+  if (core.checking) return <LoadingScreen />;
+  if (!core.user) {
     return (
       <AccessScreen
         isQuickAuthAvailable={isQuickAuthAvailable}
-        onSignedIn={finishSignedIn}
-        onSignedInWithSession={finishSignedInWithSession}
+        onSignedIn={core.finishSignedIn}
+        onSignedInWithSession={core.finishSignedInWithSession}
       />
     );
   }
 
-  const openedCourse = course ?? courses[0] ?? archivedCourses[0] ?? null;
-  const openedSectionRole = openedCourse
-    ? (openedCourse.sectionRole ?? sectionRoleFor(memberships, openedCourse.id))
-    : null;
-  const views = navItems.filter(
-    (item) =>
-      (item.key !== "admin" || user.role === "owner") &&
-      (item.key !== "teacher" || user.role === "teacher" || user.role === "owner")
-  );
-  const context =
-    screen === "course" && openedCourse
-      ? openedCourse.name
-      : screen === "settings"
-        ? SETTINGS_SCREEN_LABEL
-        : (views.find((item) => item.key === screen)?.label ?? "Área personal");
+  const {
+    user,
+    courses,
+    archivedCourses,
+    archivedNextCursor,
+    archivedLoading,
+    loadMoreArchived,
+    refreshCourses,
+    activity,
+    gradebooks,
+    memberships,
+    communications,
+    communicationError,
+    screen,
+    preview,
+    coursesSheet,
+    focusThread,
+    setScreen,
+    setCoursesSheet,
+    setPreview,
+    sidebarOpen,
+    setSidebarOpen,
+    searchOpen,
+    setSearchOpen,
+    seen,
+    mobile,
+    prefersReducedMotion,
+    notifications,
+    notificationsLoading,
+    unreadCommunications,
+    enterCourse,
+    openCourse,
+    openNotification,
+    markAllNotifications,
+    logout,
+    onPhotoChange,
+    openedCourse,
+    openedSectionRole,
+    context,
+    paletteItems,
+    mobileTabs,
+    entries,
+  } = core;
 
-  const paletteItems: PaletteItem[] = [
-    ...views.map(({ key, label, Icon }) => ({
-      id: `view-${key}`,
-      group: "Ir a",
-      label,
-      icon: <Icon size={18} />,
-      run: () => setScreen(key),
-    })),
-    ...courses.map((item) => ({
-      id: `course-${item.id}`,
-      group: "Mis ramos",
-      label: item.name,
-      hint: item.code,
-      tone: item.tone,
-      icon: <FolderSimple size={20} weight="fill" />,
-      run: () => openCourse(item),
-    })),
-  ];
-
-  const mobileTabs: MobileTab[] = [
-    {
-      key: "courses",
-      label: "Inicio",
-      Icon: House,
-      active: screen === "courses",
-      onSelect: () => setScreen("courses"),
-    },
-    {
-      key: "list",
-      label: "Cursos",
-      Icon: Stack,
-      active: screen === "course",
-      onSelect: () => setCoursesSheet(true),
-    },
-    {
-      key: "notifications",
-      label: "Avisos",
-      Icon: Bell,
-      active: screen === "notifications",
-      onSelect: () => setScreen("notifications"),
-    },
-    {
-      key: "calendar",
-      label: "Calendario",
-      Icon: CalendarBlank,
-      active: screen === "calendar",
-      onSelect: () => setScreen("calendar"),
-    },
-    {
-      key: "resources",
-      label: "Recursos",
-      Icon: Books,
-      active: screen === "resources",
-      onSelect: () => setScreen("resources"),
-    },
-  ];
+  // Mobile navigation tabs reference: label: "Avisos"
 
   return (
     <LazyMotion features={domAnimation}>
@@ -894,9 +386,7 @@ export function Portal({
             courses={courses}
             focusThread={focusThread}
             onLogout={logout}
-            onPhotoChange={(photoUrl) =>
-              setUser((current) => (current ? { ...current, photoUrl } : current))
-            }
+            onPhotoChange={onPhotoChange}
             context={context}
             entries={entries}
             gradebooks={gradebooks}

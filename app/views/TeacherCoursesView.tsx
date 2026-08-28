@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useReducer, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   BookOpenText,
@@ -41,6 +41,96 @@ function message(cause: unknown, fallback: string): string {
   return cause instanceof Error ? cause.message : fallback;
 }
 
+// Implements: REQ-QMD-01
+type TeacherCoursesState = {
+  courses: ManagedCourse[];
+  catalog: TeacherCourseCatalog;
+  selectedId: string;
+  tab: ManagerTab;
+  creating: boolean;
+  loading: boolean;
+  status: string;
+};
+
+type TeacherCoursesAction =
+  | {
+      type: "LOAD_WORKSPACE_SUCCESS";
+      courses: ManagedCourse[];
+      catalog: TeacherCourseCatalog;
+      preferredId?: string;
+    }
+  | { type: "SET_STATUS"; status: string }
+  | { type: "SET_LOADING"; loading: boolean }
+  | { type: "SELECT_COURSE"; id: string }
+  | { type: "SET_TAB"; tab: ManagerTab }
+  | { type: "SET_CREATING"; creating: boolean }
+  | { type: "TOGGLE_CREATING" }
+  | { type: "COURSE_CREATED"; course: ManagedCourse }
+  | { type: "COURSE_UPDATED"; course: ManagedCourse };
+
+const INITIAL_STATE: TeacherCoursesState = {
+  courses: [],
+  catalog: EMPTY_CATALOG,
+  selectedId: "",
+  tab: "data",
+  creating: false,
+  loading: true,
+  status: "",
+};
+
+function teacherCoursesReducer(
+  state: TeacherCoursesState,
+  action: TeacherCoursesAction
+): TeacherCoursesState {
+  switch (action.type) {
+    case "LOAD_WORKSPACE_SUCCESS": {
+      const nextId =
+        action.preferredId && action.courses.some((course) => course.id === action.preferredId)
+          ? action.preferredId
+          : state.selectedId && action.courses.some((course) => course.id === state.selectedId)
+            ? state.selectedId
+            : (action.courses[0]?.id ?? "");
+      return {
+        ...state,
+        courses: action.courses,
+        catalog: action.catalog,
+        selectedId: nextId,
+        loading: false,
+      };
+    }
+    case "SET_STATUS":
+      return { ...state, status: action.status };
+    case "SET_LOADING":
+      return { ...state, loading: action.loading };
+    case "SELECT_COURSE":
+      return { ...state, selectedId: action.id, tab: "data", status: "", creating: false };
+    case "SET_TAB":
+      return { ...state, tab: action.tab };
+    case "SET_CREATING":
+      return { ...state, creating: action.creating };
+    case "TOGGLE_CREATING":
+      return { ...state, creating: !state.creating };
+    case "COURSE_CREATED":
+      return {
+        ...state,
+        creating: false,
+        tab: "data",
+        courses: [action.course, ...state.courses.filter((item) => item.id !== action.course.id)],
+        selectedId: action.course.id,
+        status: `${action.course.name} quedó creado y disponible en el portal.`,
+      };
+    case "COURSE_UPDATED":
+      return {
+        ...state,
+        courses: state.courses.map((item) => (item.id === action.course.id ? action.course : item)),
+        status: "La ficha del ramo quedó actualizada.",
+      };
+    default:
+      return state;
+  }
+}
+
+// Implements: REQ-QMD-01
 export function TeacherCoursesView({
   openCourse,
   onCoursesChanged,
@@ -48,23 +138,17 @@ export function TeacherCoursesView({
   openCourse: (course: ManagedCourse) => void;
   onCoursesChanged: () => Promise<void>;
 }) {
-  const [courses, setCourses] = useState<ManagedCourse[]>([]);
-  const [catalog, setCatalog] = useState<TeacherCourseCatalog>(EMPTY_CATALOG);
-  const [selectedId, setSelectedId] = useState("");
-  const [tab, setTab] = useState<ManagerTab>("data");
-  const [creating, setCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("");
+  const [state, dispatch] = useReducer(teacherCoursesReducer, INITIAL_STATE);
+  const { courses, catalog, selectedId, tab, creating, loading, status } = state;
 
   const reload = async (preferredId?: string) => {
     const workspace = await loadTeacherWorkspace();
-    setCourses(workspace.courses);
-    setCatalog(workspace.catalog);
-    const nextId =
-      preferredId && workspace.courses.some((course) => course.id === preferredId)
-        ? preferredId
-        : (workspace.courses[0]?.id ?? "");
-    setSelectedId(nextId);
+    dispatch({
+      type: "LOAD_WORKSPACE_SUCCESS",
+      courses: workspace.courses,
+      catalog: workspace.catalog,
+      preferredId,
+    });
   };
 
   useEffect(() => {
@@ -72,15 +156,21 @@ export function TeacherCoursesView({
     loadTeacherWorkspace()
       .then((workspace) => {
         if (!active) return;
-        setCourses(workspace.courses);
-        setCatalog(workspace.catalog);
-        setSelectedId(workspace.courses[0]?.id ?? "");
+        dispatch({
+          type: "LOAD_WORKSPACE_SUCCESS",
+          courses: workspace.courses,
+          catalog: workspace.catalog,
+        });
       })
       .catch((cause) => {
-        if (active) setStatus(message(cause, "No fue posible cargar tus ramos."));
+        if (active)
+          dispatch({
+            type: "SET_STATUS",
+            status: message(cause, "No fue posible cargar tus ramos."),
+          });
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) dispatch({ type: "SET_LOADING", loading: false });
       });
     return () => {
       active = false;
@@ -90,17 +180,12 @@ export function TeacherCoursesView({
   const selected = courses.find((course) => course.id === selectedId) ?? courses[0] ?? null;
 
   const handleCreated = async (course: ManagedCourse) => {
-    setCreating(false);
-    setTab("data");
-    setCourses((current) => [course, ...current.filter((item) => item.id !== course.id)]);
-    setSelectedId(course.id);
-    setStatus(`${course.name} quedó creado y disponible en el portal.`);
+    dispatch({ type: "COURSE_CREATED", course });
     await Promise.allSettled([reload(course.id), onCoursesChanged()]);
   };
 
   const handleUpdated = async (course: ManagedCourse) => {
-    setCourses((current) => current.map((item) => (item.id === course.id ? course : item)));
-    setStatus("La ficha del ramo quedó actualizada.");
+    dispatch({ type: "COURSE_UPDATED", course });
     await Promise.allSettled([onCoursesChanged()]);
   };
 
@@ -117,7 +202,7 @@ export function TeacherCoursesView({
         </div>
         <button
           className="primary-button teacher-create-trigger"
-          onClick={() => setCreating((open) => !open)}
+          onClick={() => dispatch({ type: "TOGGLE_CREATING" })}
           type="button"
         >
           <Plus aria-hidden="true" size={17} weight="bold" />
@@ -129,7 +214,7 @@ export function TeacherCoursesView({
         <CreateCourseForm
           catalog={catalog}
           key={`${catalog.departments[0]?.id ?? "none"}:${catalog.periods[0]?.id ?? "none"}`}
-          onCancel={() => setCreating(false)}
+          onCancel={() => dispatch({ type: "SET_CREATING", creating: false })}
           onCreated={handleCreated}
         />
       )}
@@ -147,7 +232,11 @@ export function TeacherCoursesView({
           <BookOpenText aria-hidden="true" size={36} />
           <strong>Aún no administras ramos</strong>
           <p>Crea tu primera sección para comenzar a publicar su información.</p>
-          <button className="primary-button" onClick={() => setCreating(true)} type="button">
+          <button
+            className="primary-button"
+            onClick={() => dispatch({ type: "SET_CREATING", creating: true })}
+            type="button"
+          >
             Crear mi primer ramo
           </button>
         </div>
@@ -163,11 +252,7 @@ export function TeacherCoursesView({
                 aria-current={selected?.id === course.id ? "true" : undefined}
                 className={selected?.id === course.id ? "active" : ""}
                 key={course.id}
-                onClick={() => {
-                  setSelectedId(course.id);
-                  setTab("data");
-                  setStatus("");
-                }}
+                onClick={() => dispatch({ type: "SELECT_COURSE", id: course.id })}
                 style={{ "--course-tone": course.tone } as React.CSSProperties}
                 type="button"
               >
@@ -205,18 +290,21 @@ export function TeacherCoursesView({
                 role="tablist"
                 aria-label="Configuración del ramo"
               >
-                <ManagerTabButton active={tab === "data"} onClick={() => setTab("data")}>
+                <ManagerTabButton
+                  active={tab === "data"}
+                  onClick={() => dispatch({ type: "SET_TAB", tab: "data" })}
+                >
                   Datos del ramo
                 </ManagerTabButton>
                 <ManagerTabButton
                   active={tab === "evaluations"}
-                  onClick={() => setTab("evaluations")}
+                  onClick={() => dispatch({ type: "SET_TAB", tab: "evaluations" })}
                 >
                   Evaluaciones
                 </ManagerTabButton>
                 <ManagerTabButton
                   active={tab === "assistants"}
-                  onClick={() => setTab("assistants")}
+                  onClick={() => dispatch({ type: "SET_TAB", tab: "assistants" })}
                 >
                   Ayudantes
                 </ManagerTabButton>

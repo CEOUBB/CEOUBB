@@ -23,14 +23,16 @@ function normalizar(valor: string) {
   return valor.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-function coincide(pregunta: PreguntaFrecuente, termino: string) {
-  if (!termino) return true;
+function escaparRegExp(texto: string) {
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Implements: REQ-QMD-03
+function coincide(pregunta: PreguntaFrecuente, patrones: readonly RegExp[]) {
+  if (patrones.length === 0) return true;
   const textoObjetivo = normalizar(`${pregunta.pregunta} ${pregunta.respuesta.join(" ")}`);
-  const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
-  for (const palabra of palabras) {
-    if (textoObjetivo.indexOf(palabra) === -1) {
-      return false;
-    }
+  for (let i = 0; i < patrones.length; i++) {
+    if (!patrones[i].test(textoObjetivo)) return false;
   }
   return true;
 }
@@ -76,16 +78,25 @@ export default function FaqBrowser() {
     document.getElementById(anclaAbierta)?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [anclaAbierta]);
 
+  const patrones = useMemo(
+    () =>
+      normalizar(filtro)
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((p) => new RegExp(escaparRegExp(p))),
+    [filtro]
+  );
+
   const grupos = useMemo(() => {
     const resultado = [];
     for (const categoria of CATEGORIAS_FAQ) {
-      const preguntas = categoria.preguntas.filter((pregunta) => coincide(pregunta, filtro));
+      const preguntas = categoria.preguntas.filter((pregunta) => coincide(pregunta, patrones));
       if (preguntas.length > 0) {
         resultado.push({ ...categoria, preguntas });
       }
     }
     return resultado;
-  }, [filtro]);
+  }, [patrones]);
 
   const visibles = grupos.reduce((total, grupo) => total + grupo.preguntas.length, 0);
   const filtrando = filtro.length > 0;

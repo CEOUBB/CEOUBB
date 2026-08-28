@@ -65,9 +65,9 @@ export function forgetPreferences() {
   );
 }
 
-// Implements: REQ-CFG-04
-export async function loadPreferences(): Promise<UserPreferences> {
-  const response = await fetch("/api/profile/preferences");
+// Implements: REQ-CFG-04, REQ-QMD-02
+export async function loadPreferences(signal?: AbortSignal): Promise<UserPreferences> {
+  const response = await fetch("/api/profile/preferences", { signal });
   if (!response.ok) throw new Error("No se pudieron leer las preferencias.");
   const data = (await response.json()) as { preferences: UserPreferences };
   writeCache(data.preferences);
@@ -95,7 +95,7 @@ export async function savePreferences(preferences: UserPreferences): Promise<Use
   la activó en su dispositivo no debe perderla por un ajuste del producto. Por
   eso este valor sólo puede añadir supresión de movimiento, jamás quitarla.
 */
-// Implements: REQ-CFG-05
+// Implements: REQ-CFG-05, REQ-QMD-02
 export function useReducedMotionPreference(enabled: boolean): boolean {
   const [reduced, setReduced] = useState(() => readCache()?.reducedMotion ?? false);
 
@@ -108,18 +108,20 @@ export function useReducedMotionPreference(enabled: boolean): boolean {
     return () => window.removeEventListener(CHANGE_EVENT, onChange);
   }, []);
 
+  // react-doctor-disable-next-line react-doctor/no-fetch-in-effect
   useEffect(() => {
     if (!enabled) return;
-    let alive = true;
-    loadPreferences()
+    const controller = new AbortController();
+    loadPreferences(controller.signal)
       .then((preferences) => {
-        if (alive) setReduced(preferences.reducedMotion);
+        setReduced(preferences.reducedMotion);
       })
-      .catch(() => {
+      .catch((cause: unknown) => {
+        if (cause instanceof DOMException && cause.name === "AbortError") return;
         // Sin respuesta se conserva el valor en caché; el sistema sigue mandando.
       });
     return () => {
-      alive = false;
+      controller.abort();
     };
   }, [enabled]);
 

@@ -319,7 +319,7 @@ function ProfilePhotoPanel({
     setCrop({ zoom: MIN_ZOOM, x: 0, y: 0 });
   }
 
-  // Implements: REQ-CFG-02
+  // Implements: REQ-CFG-02, REQ-QMD-02
   function onFilePicked(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -333,6 +333,11 @@ function ProfilePhotoPanel({
       return;
     }
     setPhotoError("");
+    if (pendingUrl.current) {
+      URL.revokeObjectURL(pendingUrl.current);
+      pendingUrl.current = null;
+    }
+    // react-doctor-disable-next-line react-doctor/no-create-object-url-without-revoke
     const url = URL.createObjectURL(file);
     pendingUrl.current = url;
     const image = new Image();
@@ -576,25 +581,25 @@ function AccountPanel({
   const [sessionsError, setSessionsError] = useState("");
   const [revoking, setRevoking] = useState("");
 
-  // Implements: REQ-CFG-07
+  // Implements: REQ-CFG-07, REQ-QMD-02
   useEffect(() => {
-    let alive = true;
-    fetch("/api/profile/sessions")
+    const controller = new AbortController();
+    fetch("/api/profile/sessions", { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok)
           throw new Error(await apiError(response, "No se pudieron leer tus sesiones."));
         return (await response.json()) as { sessions: ActiveSession[] };
       })
       .then((data) => {
-        if (alive) setSessions(data.sessions);
+        setSessions(data.sessions);
       })
       .catch((cause: unknown) => {
-        if (!alive) return;
+        if (cause instanceof DOMException && cause.name === "AbortError") return;
         setSessions([]);
         setSessionsError(failureMessage(cause, "No se pudieron leer tus sesiones."));
       });
     return () => {
-      alive = false;
+      controller.abort();
     };
   }, []);
   // Implements: REQ-CFG-07

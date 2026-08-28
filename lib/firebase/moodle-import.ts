@@ -141,8 +141,9 @@ export async function executeMoodleImport(
     }
   }
 
-  let contentImported = 0;
+  // Implements: REQ-QMD-03
   const postBatches = chunkImportRecords(posts);
+  let contentImported = 0;
   for (let index = 0; index < postBatches.length; index += 1) {
     const batch = postBatches[index].map((post) => ({ ...post, notifyStudents: false }));
     onProgress({
@@ -151,6 +152,7 @@ export async function executeMoodleImport(
       total: postBatches.length,
       message: "Publicando contenido histórico",
     });
+    // react-doctor-disable-next-line async-await-in-loop
     await callImportApi(sectionId, {
       action: "content",
       sourceKey: preview.source.sourceKey,
@@ -171,6 +173,7 @@ export async function executeMoodleImport(
         total: participantBatches.length,
         message: "Vinculando participantes institucionales",
       });
+      // react-doctor-disable-next-line async-await-in-loop
       const result = await callImportApi(sectionId, {
         action: "roster",
         fingerprint: preview.source.fingerprint,

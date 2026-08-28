@@ -42,7 +42,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Verify application and infrastructure
         run: |
@@ -75,11 +75,11 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Install Firebase Functions dependencies
         working-directory: firebase/functions
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Authenticate staging with short-lived OIDC credentials
         id: google-auth
@@ -125,7 +125,7 @@ jobs:
 
       - name: Install Firebase Functions dependencies
         working-directory: firebase/functions
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Authenticate dedicated production service account
         uses: google-github-actions/auth@v3

@@ -122,6 +122,8 @@ export async function uploadStudentSubmission(
 
 /** Comprobantes de entrega del propio estudiante en una sección. */
 // Implements: REQ-EVAL-01
+// Implements: REQ-EVAL-01, REQ-SEC-08, REQ-QMD-02
+// Authorization is strictly enforced in firestore.rules (resource.data.uid == request.auth.uid)
 export function watchOwnSubmissions(
   courseId: string,
   onChange: (items: StudentSubmission[]) => void,

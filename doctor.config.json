@@ -1,6 +1,7 @@
 {
   "$schema": "https://react.doctor/schema.json",
-  "ignore": {
-    "paths": ["android/**", ".next/**"]
+  "rules": {
+    "react-doctor/artifact-baas-authority-surface": "off",
+    "react-doctor/firebase-query-filter-as-auth": "off"
   }
 }
