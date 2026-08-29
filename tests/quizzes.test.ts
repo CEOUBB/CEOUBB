@@ -36,6 +36,14 @@ test("REQ-QUIZ-01 conserva escapes GIFT como texto inerte", () => {
   assert.equal(result.questions[0].question.options[1].label, "x=y");
 });
 
+test("REQ-QUIZ-02 procesa títulos adversariales sin backtracking ambiguo", () => {
+  const source = `::${String.raw`\9`.repeat(20_000)} pregunta{TRUE}`;
+  const result = parseGift(source);
+  assert.equal(result.warnings.length, 0);
+  assert.equal(result.questions.length, 1);
+  assert.equal(result.questions[0].question.kind, "true_false");
+});
+
 test("REQ-QUIZ-02 informa preguntas GIFT no compatibles", () => {
   const result = parseGift(
     `::Ensayo::Desarrolle el teorema.{}\n\n::Asociación::Asocie.{=A -> 1 ~B -> 2}`

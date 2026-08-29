@@ -18,6 +18,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -288,8 +289,8 @@ function TeacherQuizzes({
                 {warnings.length} advertencia{warnings.length === 1 ? "" : "s"} de importación
               </summary>
               <ul>
-                {warnings.slice(0, 20).map((warning, index) => (
-                  <li key={`${warning.sourceLine}-${index}`}>
+                {warnings.slice(0, 20).map((warning) => (
+                  <li key={`${warning.sourceLine}-${warning.message}`}>
                     Línea {warning.sourceLine}: {warning.message}
                   </li>
                 ))}
@@ -454,6 +455,7 @@ function StudentQuizzes({
       <QuizRunner
         attempt={attempt}
         courseId={course.id}
+        key={`${activeQuiz.id}:${attempt.userId}:${attempt.startedAt}`}
         onBack={() => setActiveQuiz(null)}
         onResult={setResult}
         quiz={activeQuiz}
@@ -526,7 +528,13 @@ function QuizRunner({
   onResult: (result: QuizResult) => void;
   onBack: () => void;
 }) {
-  const [answers, setAnswers] = useState<Record<string, QuizAnswer>>(attempt.answers);
+  const [answers, setAnswer] = useReducer(
+    (current: Record<string, QuizAnswer>, update: { questionId: string; value: QuizAnswer }) => ({
+      ...current,
+      [update.questionId]: update.value,
+    }),
+    attempt.answers
+  );
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
   const [remaining, setRemaining] = useState(() => remainingSeconds(attempt.expiresAt));
   const [submitting, setSubmitting] = useState(false);
@@ -557,7 +565,7 @@ function QuizRunner({
   );
 
   const queueSave = (questionId: string, value: QuizAnswer) => {
-    setAnswers((current) => ({ ...current, [questionId]: value }));
+    setAnswer({ questionId, value });
     setSaveStates((current) => ({ ...current, [questionId]: "saving" }));
     pendingValues.current.set(questionId, value);
     const currentTimer = timers.current.get(questionId);

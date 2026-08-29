@@ -37,7 +37,7 @@
   "tests/privacy-terms.test.ts": "6224da71dce0d578425a4777816bc9d76f54e31ec8348c2bf80081afa355cbcc",
   "tests/publication-workflow.test.ts": "96058d3aff2f52b4d653c49406751a008b261456f6929b264e49da8e32451591",
   "tests/quiz-engine.test.ts": "a9b9d73985ec3487602c75f987349e67d70d18329efe6e83e99cdf7bea1a2590",
-  "tests/quizzes.test.ts": "9d86bb234f17bafc9a144e664334755436fff2a7f941f6485c1afaac81a17d1e",
+  "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
   "tests/rendered-html.test.mjs": "b01c29acb7a4ad4b083029881046203b31d874c01c5f8d5c0ee20d3419e4027f",
   "tests/rich-text.test.ts": "b1ac05689c03178a56c1537a3629d384b3e20cccd07b12a943533ea69638d657",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",

@@ -16,8 +16,8 @@ Files changed: app/views/classroom/QuizzesSection.tsx, app/views/classroom/Class
   firebase/functions/generated/grades.js, firebase/functions/index.js, firebase/firestore.rules,
   tests/quizzes.test.ts, tests/quiz-engine.test.ts, tests/grades.test.ts, docs/specs/p19-quiz-engine-gift-import.md
 External services changed: ninguno; no se desplegaron Functions ni reglas.
-Checks passed: typecheck, ESLint, Prettier, sintaxis de Functions, next build, suite integral 464/464,
-  test-locking, git diff --check y navegador docente a 1280 px/390 px sin overflow ni overlay.
+Checks passed: typecheck, ESLint, Prettier, sintaxis de Functions, next build, suite integral 465/465,
+  React Doctor sin hallazgos, test-locking, git diff --check y navegador docente a 1280 px/390 px sin overflow ni overlay.
 Checks not run: emulador Firestore y matriz real owner/docente/estudiante en staging.
 Production deployed: no
 Known risks: GIFT Cloze, matching, ensayo, ponderación parcial y multimedia quedan fuera de alcance;

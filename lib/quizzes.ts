@@ -218,7 +218,7 @@ function parseGiftBlock(
   if (trailing) throw new Error("Hay contenido inesperado después de la pauta.");
   let prompt = text.slice(0, bounds.open).trim();
   let title = `Pregunta ${index + 1}`;
-  const titleMatch = prompt.match(/^::((?:\\.|[^:])+)::/);
+  const titleMatch = prompt.match(/^::((?:\\[\s\S]|[^:\\])+)::/);
   if (titleMatch) {
     title = unescapeGift(titleMatch[1]).trim() || title;
     prompt = prompt.slice(titleMatch[0].length).trim();

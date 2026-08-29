@@ -241,7 +241,8 @@ Una prueba de sincronización compara el módulo TypeScript y el artefacto consu
 - Parsers, motor de corrección y escala: pruebas focales aprobadas para GIFT, CSV, normalización, límites, idempotencia y conversión 1.0–7.0.
 - TypeScript: `tsc --noEmit` aprobado.
 - Calidad: ESLint, Prettier y sintaxis de Firebase Functions aprobados.
-- Producción local: `next build` aprobado con 28 rutas; suite integral aprobada con 464/464 pruebas.
+- Producción local: `next build` aprobado con 28 rutas; suite integral aprobada con 465/465 pruebas.
+- Revisión estática: React Doctor sobre el diff contra `origin/main` aprobado sin hallazgos y prueba adversarial del parser agregada tras la observación CodeQL.
 - Gobernanza: test-locking regenerado y verificado; `git diff --check` aprobado.
 - Navegador: vista docente comprobada a 1280 px y 390 px, sin overflow, overlay de error ni advertencias de consola. El endpoint local de preferencias devolvió el 500 esperado por ausencia de credenciales administrativas Firebase, sin afectar el módulo.
 - Despliegue: no ejecutado. Functions y reglas deben pasar primero por staging y por la matriz manual multirol antes de producción.
