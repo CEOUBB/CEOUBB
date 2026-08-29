@@ -85,9 +85,7 @@ export function firstName(value: string): string {
 export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]): CalendarEntry[] {
   const gradebookMap = new Map(gradebooks.map((gb) => [gb.courseId, gb]));
   const entries = courses.flatMap((course) => {
-    const dated =
-      gradebookMap.get(course.id)?.items.filter((item) => item.date) ??
-      [];
+    const dated = gradebookMap.get(course.id)?.items.filter((item) => item.date) ?? [];
     const source =
       dated.length > 0
         ? dated.map((item) => ({
