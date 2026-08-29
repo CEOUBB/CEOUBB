@@ -33,7 +33,7 @@
   "tests/native-services.test.ts": "c816bee2f23315bf821e7c5dc6be8b900d9879c1d17a279f5a40d2903131c056",
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
-  "tests/portal-utils.test.ts": "b7dd5b0d27a89e14463524e9cabd08eadfc5885ed8da2b7ea30e228c0866a7a5",
+  "tests/portal-utils.test.ts": "29ce883eca56b1c3840ced7cde1694c6cb90f0294d42ca264d9d6ff53534199a",
   "tests/privacy-terms.test.ts": "6224da71dce0d578425a4777816bc9d76f54e31ec8348c2bf80081afa355cbcc",
   "tests/publication-workflow.test.ts": "96058d3aff2f52b4d653c49406751a008b261456f6929b264e49da8e32451591",
   "tests/rendered-html.test.mjs": "6aa8a0ddc44550cceccd7444d0d5cd2b092add892eb28ba6bfd2b27dad6339df",

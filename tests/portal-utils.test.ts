@@ -55,7 +55,9 @@ test("calendarEntries genera y ordena las entradas de calendario correctamente",
     },
   ];
 
-  const entries = calendarEntries(courses as any, gradebooks as any);
+  type CourseInput = Parameters<typeof calendarEntries>[0];
+  type GradebookInput = Parameters<typeof calendarEntries>[1];
+  const entries = calendarEntries(courses as unknown as CourseInput, gradebooks as unknown as GradebookInput);
 
   assert.equal(entries.length, 2);
   assert.equal(entries[0].key, "course-1-gb-1");
