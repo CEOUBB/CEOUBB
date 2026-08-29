@@ -34,7 +34,7 @@
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "b3f47ff8ec6ee7ba956501d466e730cecbf124da134a223f4b7e1f67b6498b47",
-  "tests/privacy-terms.test.ts": "32b5ee5705b7658d2a6f09a077000768600292d68f9b3649f27aacb208cf272a",
+  "tests/privacy-terms.test.ts": "6224da71dce0d578425a4777816bc9d76f54e31ec8348c2bf80081afa355cbcc",
   "tests/publication-workflow.test.ts": "96058d3aff2f52b4d653c49406751a008b261456f6929b264e49da8e32451591",
   "tests/rendered-html.test.mjs": "6aa8a0ddc44550cceccd7444d0d5cd2b092add892eb28ba6bfd2b27dad6339df",
   "tests/rich-text.test.ts": "b1ac05689c03178a56c1537a3629d384b3e20cccd07b12a943533ea69638d657",

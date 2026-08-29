@@ -32,9 +32,7 @@ async function readProse(path: string): Promise<string> {
     prev = text;
     text = text.replace(/<[^>]*>/g, "");
   }
-  return text
-    .replace(/\{"\s*"\}/g, " ")
-    .replace(/&ldquo;|&rdquo;/g, '"');
+  return text.replace(/\{"\s*"\}/g, " ").replace(/&ldquo;|&rdquo;/g, '"');
 }
 
 // Implements: REQ-PRIV-05
