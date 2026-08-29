@@ -18,8 +18,7 @@ import {
   participantCount,
   participantGroupCount,
   participantGroupForRole,
-  parseParticipantDirectoryPage,
-  PARTICIPANT_PAGE_SIZE,
+  loadParticipantDirectoryPage,
   type ParticipantDirectoryEntry,
   type ParticipantDirectoryPage,
   type ParticipantGroup,
@@ -73,48 +72,6 @@ function fallbackDirectory(
     result.push(participant);
   }
   return result;
-}
-
-function directoryUrl(
-  sectionId: string,
-  query: string,
-  role: ParticipantRoleFilter,
-  cursor?: string | null
-) {
-  const params = new URLSearchParams({ role, limit: String(PARTICIPANT_PAGE_SIZE) });
-  if (query) params.set("q", query);
-  if (cursor) params.set("cursor", cursor);
-  return `/api/sections/${encodeURIComponent(sectionId)}/participants?${params}`;
-}
-
-async function loadDirectory(
-  sectionId: string,
-  query: string,
-  role: ParticipantRoleFilter,
-  cursor: string | null,
-  signal?: AbortSignal
-) {
-  const response = await fetch(directoryUrl(sectionId, query, role, cursor), {
-    cache: "no-store",
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  if (!response.ok) {
-    const payload: unknown = await response.json().catch(() => null);
-    const message =
-      typeof payload === "object" &&
-      payload !== null &&
-      "error" in payload &&
-      typeof payload.error === "string"
-        ? payload.error
-        : "No se pudo cargar el directorio completo.";
-    throw new Error(message);
-  }
-  const payload: unknown = await response.json().catch(() => null);
-  const page = parseParticipantDirectoryPage(payload);
-  if (!page) throw new Error("El directorio recibió una respuesta no válida.");
-  return page;
 }
 
 function fallbackCounts(participants: readonly ParticipantDirectoryEntry[]) {
@@ -214,7 +171,7 @@ export function PeopleSection({
     const controller = new AbortController();
     const version = requestVersion.current + 1;
     requestVersion.current = version;
-    loadDirectory(course.id, deferredQuery, roleFilter, null, controller.signal)
+    loadParticipantDirectoryPage(course.id, deferredQuery, roleFilter, null, controller.signal)
       .then((nextPage) => {
         if (requestVersion.current === version)
           setDirectory({ key: directoryKey, page: nextPage, error: "" });
@@ -278,7 +235,12 @@ export function PeopleSection({
     const version = requestVersion.current;
     setLoadingMore(true);
     try {
-      const nextPage = await loadDirectory(course.id, deferredQuery, roleFilter, page.nextCursor);
+      const nextPage = await loadParticipantDirectoryPage(
+        course.id,
+        deferredQuery,
+        roleFilter,
+        page.nextCursor
+      );
       if (requestVersion.current !== version) return;
       setDirectory((current) => {
         if (current.key !== directoryKey || !current.page) return current;

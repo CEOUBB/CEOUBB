@@ -3,6 +3,8 @@ import { isSectionRole, type SectionRole } from "./section-roles.ts";
 export const PARTICIPANT_PAGE_SIZE = 24;
 export const PARTICIPANT_PAGE_LIMIT = 50;
 export const PARTICIPANT_QUERY_MAX_LENGTH = 80;
+export const COMPLETE_ROSTER_LIMIT = 12_000;
+export const COMPLETE_ROSTER_PAGE_LIMIT = Math.ceil(COMPLETE_ROSTER_LIMIT / PARTICIPANT_PAGE_LIMIT);
 
 export const PARTICIPANT_ROLE_FILTERS = ["all", "teaching", "assistant", "student"] as const;
 
@@ -163,4 +165,106 @@ export function parseParticipantDirectoryPage(value: unknown): ParticipantDirect
   if (nextCursor !== null && (typeof nextCursor !== "string" || nextCursor.length > 160))
     return null;
   return { items, counts, nextCursor };
+}
+
+export function participantDirectoryUrl(
+  sectionId: string,
+  query: string,
+  role: ParticipantRoleFilter,
+  cursor?: string | null,
+  limit = PARTICIPANT_PAGE_SIZE
+): string {
+  const params = new URLSearchParams({
+    role,
+    limit: String(Math.max(1, Math.min(PARTICIPANT_PAGE_LIMIT, Math.trunc(limit)))),
+  });
+  if (query) params.set("q", query);
+  if (cursor) params.set("cursor", cursor);
+  return `/api/sections/${encodeURIComponent(sectionId)}/participants?${params}`;
+}
+
+export async function loadParticipantDirectoryPage(
+  sectionId: string,
+  query: string,
+  role: ParticipantRoleFilter,
+  cursor: string | null,
+  signal?: AbortSignal,
+  limit = PARTICIPANT_PAGE_SIZE
+): Promise<ParticipantDirectoryPage> {
+  const response = await fetch(participantDirectoryUrl(sectionId, query, role, cursor, limit), {
+    cache: "no-store",
+    credentials: "same-origin",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    const message =
+      typeof payload === "object" &&
+      payload !== null &&
+      "error" in payload &&
+      typeof payload.error === "string"
+        ? payload.error
+        : "No se pudo cargar el directorio completo.";
+    throw new Error(message);
+  }
+  const payload: unknown = await response.json().catch(() => null);
+  const page = parseParticipantDirectoryPage(payload);
+  if (!page) throw new Error("El directorio recibió una respuesta no válida.");
+  return page;
+}
+
+// Implements: REQ-ACTA-05
+export async function loadCompleteStudentDirectory(
+  sectionId: string,
+  signal?: AbortSignal
+): Promise<ParticipantDirectoryEntry[]> {
+  const students: ParticipantDirectoryEntry[] = [];
+  const ids = new Set<string>();
+  const cursors = new Set<string>();
+  let cursor: string | null = null;
+  let expectedTotal: number | null = null;
+  let pages = 0;
+  do {
+    pages += 1;
+    if (pages > COMPLETE_ROSTER_PAGE_LIMIT) {
+      throw new Error("La nómina excedió el máximo de páginas permitido.");
+    }
+    const page = await loadParticipantDirectoryPage(
+      sectionId,
+      "",
+      "student",
+      cursor,
+      signal,
+      PARTICIPANT_PAGE_LIMIT
+    );
+    if (expectedTotal === null) expectedTotal = page.counts.student;
+    else if (expectedTotal !== page.counts.student) {
+      throw new Error(
+        "La nómina cambió durante la carga. Reintenta para generar una acta consistente."
+      );
+    }
+    for (const student of page.items) {
+      if (student.role !== "student" || ids.has(student.id)) {
+        throw new Error("La nómina de la sección contiene filas inconsistentes.");
+      }
+      ids.add(student.id);
+      students.push(student);
+    }
+    if (students.length > COMPLETE_ROSTER_LIMIT) {
+      throw new Error(
+        `La nómina supera el máximo de ${COMPLETE_ROSTER_LIMIT.toLocaleString("es-CL")} estudiantes.`
+      );
+    }
+    cursor = page.nextCursor;
+    if (cursor && cursors.has(cursor)) {
+      throw new Error("La paginación de la nómina devolvió un cursor repetido.");
+    }
+    if (cursor) cursors.add(cursor);
+  } while (cursor);
+
+  if (students.length !== expectedTotal) {
+    throw new Error("No se pudo completar la nómina activa. Reintenta antes de exportar.");
+  }
+  return students;
 }
