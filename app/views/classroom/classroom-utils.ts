@@ -1,4 +1,4 @@
-import { ChartBar, Files, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
+import { ChartBar, Exam, Files, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
 import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
 import type {
   ClassroomFile,
@@ -6,12 +6,13 @@ import type {
   ClassroomState,
 } from "../../../lib/firebase-classroom-client.ts";
 
-export type Tab = "home" | "materials" | "grades" | "progress" | "people";
+export type Tab = "home" | "materials" | "grades" | "quizzes" | "progress" | "people";
 
 export const COURSE_TABS: { key: Tab; label: string; Icon: typeof House }[] = [
   { key: "home", label: "Portada", Icon: House },
   { key: "materials", label: "Materiales", Icon: Files },
   { key: "grades", label: "Notas", Icon: GraduationCap },
+  { key: "quizzes", label: "Cuestionarios", Icon: Exam },
   { key: "progress", label: "Progreso", Icon: ChartBar },
   { key: "people", label: "Participantes", Icon: UsersThree },
 ];
@@ -59,11 +60,13 @@ export function tabTitle(tab: Tab) {
     ? "Materiales del curso"
     : tab === "grades"
       ? "Notas y ponderaciones"
-      : tab === "progress"
-        ? "Progreso y monitoreo"
-        : tab === "people"
-          ? "Participantes"
-          : "Portada del curso";
+      : tab === "quizzes"
+        ? "Cuestionarios y controles"
+        : tab === "progress"
+          ? "Progreso y monitoreo"
+          : tab === "people"
+            ? "Participantes"
+            : "Portada del curso";
 }
 
 export function studentCount(total: number) {

@@ -357,7 +357,7 @@ test("keeps profile deletion and course paths locked down", async () => {
   */
   assert.equal(
     firestoreRules.match(/validCourse\(courseId\)/g).length,
-    6,
+    7,
     "every course write path must be guarded by validCourse"
   );
   assert.equal(

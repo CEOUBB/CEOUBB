@@ -1,6 +1,6 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-Last verified 2026-08-28 · baseline `e9e85c4` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
+Last verified 2026-08-29 · baseline `af37446` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
 **Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment, and verification.
 
@@ -40,6 +40,7 @@ Companion files:
 - [`docs/specs/p17-wcag-22-aa-conformance.md`](docs/specs/p17-wcag-22-aa-conformance.md): Verified audit contract for portal, library, and public documents; keyboard navigation, screen reader, contrast, reflow, reduced motion, forms, and WCAG 2.2 AA statement.
 - [`docs/specs/p17-immutable-grade-audit-trail.md`](docs/specs/p17-immutable-grade-audit-trail.md): Transactional and immutable audit history for grades and gradebook configuration.
 - [`docs/specs/p18-firebase-app-check-rollout.md`](docs/specs/p18-firebase-app-check-rollout.md): Web and Android attestation, pre-enforcement observation, and phased rollout for Firebase App Check.
+- [`docs/specs/p19-quiz-engine-gift-import.md`](docs/specs/p19-quiz-engine-gift-import.md): Verified contract for bounded GIFT/CSV import, timed quiz attempts, per-question auto-save, immediate correction, and auditable gradebook integration.
 - [`docs/specs/p17-bulk-enrollment-import.md`](docs/specs/p17-bulk-enrollment-import.md): CSV enrollment import per section with preview, claimable pending enrollments on first login, and strict idempotency.
 - [`docs/specs/p17-moodle-course-import.md`](docs/specs/p17-moodle-course-import.md): Secure and idempotent import of Moodle TGZ/ZIP backups and CSV rosters, with compatible materials, pending enrollments, and audit trails.
 - [`openspec/specs/classroom/rich-posts/spec.md`](openspec/specs/classroom/rich-posts/spec.md): Living specification of secure technical posts with Markdown, code highlighting, KaTeX math, and shared Web/Android previews.
@@ -63,7 +64,6 @@ Companion files:
 - [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Vercel, Android
 - [NEXT] **P0: Generación y certificación oficial de actas de notas finales UBB (DUE 5420/2023) (CEO-74 / P0B.2).** Juako. Exportación en 1 clic de pre-actas y actas en planilla Excel/PDF estructurada para Intranet UBB y Registro Académico con cálculo del 40% de evaluación integradora. `lib/grades.ts`, `app/views/classroom/`
 - [NEXT] **P1: Bandeja rápida de corrección docente con visor PDF integrado vía PDFSlick (CEO-78).** Felipe Arce. Visualización fluida de entregas de estudiantes con `@pdfslick/react` (SSR diferido), panel de nota y feedback privado en contexto. `app/views/classroom/`
-- [NEXT] **P1: Motor de cuestionarios rápidos (Quizzes) e importador de bancos de preguntas GIFT (CEO-79).** Juako. Cuestionarios en React 19 con temporizador, guardado automático, parser GIFT/CSV e integración directa a notas 1.0–7.0. `app/views/classroom/`, `lib/`
 - [NEXT] **P1: Soporte de entregas grupales y asignación de equipos en evaluaciones (CEO-80).** Felipe Arce. Configuración grupal en buzones de entrega con réplica atómica de comprobantes, notas y retroalimentación. `app/views/classroom/`, `lib/`
 - [NEXT] **P2: Refactor(classroom): retirar pestaña volátil de Progreso y purgar tablas legacy en Turso (CEO-81).** Felipe Arce. Simplificación de navegación en el aula y purga de tablas residuales huérfanas (`posts`, `files`, `progress`). `app/views/classroom/`, `db/schema.ts`
 - [BLOCKED] Project owner: **written authorization for an institutional pilot** with one department or degree program (CEO-36): named academic sponsor, single semester, real students, signed data-processing agreement. External institutional dependency. UBB (DTI, VRA, legal counsel)

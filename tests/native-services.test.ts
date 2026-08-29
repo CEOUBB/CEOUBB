@@ -56,8 +56,8 @@ test("keeps the allow surface frozen at the approved count", async () => {
   const rules = await read("firebase/firestore.rules");
   assert.equal(
     (rules.match(/^\s*allow /gm) ?? []).length,
-    35,
-    "the ruleset must keep exactly 35 allow rules"
+    43,
+    "the ruleset must keep exactly 43 allow rules"
   );
   // No hay regla comodín: lo que no está listado queda denegado por defecto.
   assert.doesNotMatch(rules, /allow .*: if true;/, "no rule may grant unconditional access");
