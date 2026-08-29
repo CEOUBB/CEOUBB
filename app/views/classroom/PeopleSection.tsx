@@ -165,7 +165,11 @@ function ParticipantRow({
           <span>Escribir</span>
         </a>
       ) : (
-        <span className="participant-contact unavailable" aria-label="Correo no disponible">
+        <span
+          className="participant-contact unavailable"
+          aria-label="Correo no disponible"
+          role="img"
+        >
           <EnvelopeSimple size={18} aria-hidden="true" />
           <span>Sin correo</span>
         </span>
