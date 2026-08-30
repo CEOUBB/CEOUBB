@@ -57,7 +57,18 @@ export function PlannerBlockArticle({
           <Check aria-hidden="true" size={10} weight="bold" />
         </m.span>
       </button>
-      <button className="planner-block-open" onClick={() => onEdit(block)} type="button">
+      <button
+        aria-label={`Ver detalles de “${block.title}”, ${block.startTime} a ${block.endTime}${
+          block.courseName
+            ? `, ${block.courseName}`
+            : block.kind && KIND_LABEL[block.kind as PersonalEventKind]
+              ? `, ${KIND_LABEL[block.kind as PersonalEventKind]}`
+              : ""
+        }`}
+        className="planner-block-open"
+        onClick={() => onEdit(block)}
+        type="button"
+      >
         <strong>{block.title}</strong>
         <small>
           {block.startTime}–{block.endTime}
