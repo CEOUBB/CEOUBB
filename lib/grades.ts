@@ -122,7 +122,7 @@ export function formatGrade(value: number) {
 }
 
 export function round1(value: number) {
-  return Math.round(value * 10) / 10;
+  return Math.round((value + Number.EPSILON) * 10) / 10;
 }
 
 function ceil1(value: number) {
