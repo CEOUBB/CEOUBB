@@ -10,9 +10,18 @@ import { createSession, publicUser } from "../../../../lib/auth";
 import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
+import { z } from "zod";
 import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academic-catalog";
 
 const FIREBASE_API_KEY = firebaseConfigFromEnvironment().apiKey;
+
+const firebaseAuthSchema = z.object({
+  idToken: z
+    .string()
+    .trim()
+    .min(1, "No se recibió una credencial de Google válida.")
+    .max(4096, "Credencial de Google no válida."),
+});
 
 type FirebaseAccount = {
   localId?: string;
@@ -25,14 +34,20 @@ type FirebaseAccount = {
 
 export async function POST(request: Request) {
   try {
-    let payload: { idToken?: string };
+    let jsonBody: unknown;
     try {
-      payload = (await request.json()) as { idToken?: string };
+      jsonBody = await request.json();
     } catch {
       return error("El cuerpo de la petición no es un JSON válido.", 400);
     }
-    const idToken = payload.idToken?.trim() ?? "";
-    if (!idToken) return error("No se recibió una credencial de Google válida.", 400);
+
+    const parseResult = firebaseAuthSchema.safeParse(jsonBody);
+    if (!parseResult.success) {
+      const issueMessage =
+        parseResult.error.issues[0]?.message || "No se recibió una credencial de Google válida.";
+      return error(issueMessage, 400);
+    }
+    const { idToken } = parseResult.data;
 
     const verification = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
