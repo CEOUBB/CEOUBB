@@ -96,7 +96,9 @@ export function NotificationList({
                   </small>
                 </span>
                 <span className="notification-time num">{notificationDate(item.createdAt)}</span>
-                {item.unread && <span className="notification-dot" aria-label="Sin leer" />}
+                {item.unread && (
+                  <span className="notification-dot" aria-label="Sin leer" role="img" />
+                )}
               </button>
             </li>
           ))}
