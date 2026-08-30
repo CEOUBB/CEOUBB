@@ -13,6 +13,7 @@ import { GradesSection } from "./GradesSection";
 import { ProgressSection } from "./ProgressSection";
 import { PeopleSection } from "./PeopleSection";
 import { LiveClassSection } from "./LiveClassSection";
+import { QuizzesSection } from "./QuizzesSection";
 import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 import type { SectionRole } from "../../../lib/section-roles";
@@ -202,6 +203,15 @@ export function ClassroomView({
                 canTeach={canTeach}
                 note={note}
                 status={status}
+                readOnly={readOnly}
+              />
+            )}
+            {tab === "quizzes" && (
+              <QuizzesSection
+                course={course}
+                classroom={classroom}
+                canTeach={canTeach}
+                note={note}
                 readOnly={readOnly}
               />
             )}

@@ -2,6 +2,29 @@
 
 Moved out of `PLAN.md` on 2026-08-12 so the live plan stays small. Nothing here is active work. Verbatim as written; read only when you need the history of a decision.
 
+## 2026-08-29: CEO-79 — motor de cuestionarios rápidos e importador GIFT/CSV
+
+```text
+Date: 2026-08-29
+Human maintainer: Juako
+AI assistant: Codex
+Branch: elpapijuaco325/ceo-79-motor-de-cuestionarios-rapidos-quizzes-e-importador-de
+Goal: Importar bancos GIFT/CSV y rendir controles temporizados con auto-save, corrección inmediata y nota auditable.
+Files changed: app/views/classroom/QuizzesSection.tsx, app/views/classroom/ClassroomView.tsx,
+  app/views/classroom/classroom-utils.ts, app/globals.css, lib/quizzes.ts, lib/firebase/quizzes.ts,
+  lib/firebase-classroom-client.ts, lib/grades.ts, firebase/functions/quiz-engine.js,
+  firebase/functions/generated/grades.js, firebase/functions/index.js, firebase/firestore.rules,
+  tests/quizzes.test.ts, tests/quiz-engine.test.ts, tests/grades.test.ts, docs/specs/p19-quiz-engine-gift-import.md
+External services changed: ninguno; no se desplegaron Functions ni reglas.
+Checks passed: typecheck, ESLint, Prettier, sintaxis de Functions, next build, suite integral 465/465,
+  React Doctor sin hallazgos, test-locking, git diff --check y navegador docente a 1280 px/390 px sin overflow ni overlay.
+Checks not run: emulador Firestore y matriz real owner/docente/estudiante en staging.
+Production deployed: no
+Known risks: GIFT Cloze, matching, ensayo, ponderación parcial y multimedia quedan fuera de alcance;
+  Functions y reglas deben desplegarse juntas en staging antes del portal.
+Next recommended action: ejecutar matriz multirol en staging, validar un control completo y promover reglas/Functions/portal en ese orden.
+```
+
 ## Implemented milestones
 
 ### 0. CEO-12 — Ambiente staging aislado de producción — completado 2026-08-23, PR [#78](https://github.com/CEOUBB/CEOUBB/pull/78)

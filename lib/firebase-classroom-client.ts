@@ -103,3 +103,15 @@ export {
   watchCommunications,
   watchDirectMessages,
 } from "./firebase/communications.ts";
+
+export type { StartQuizOutcome } from "./firebase/quizzes.ts";
+
+export {
+  MAX_QUIZZES_PER_SECTION,
+  watchQuizzes,
+  publishQuiz,
+  startQuizAttempt,
+  loadOwnQuizResult,
+  saveQuizAnswer,
+  submitQuizAttempt,
+} from "./firebase/quizzes.ts";

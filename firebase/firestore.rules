@@ -120,6 +120,24 @@ service cloud.firestore {
         && request.resource.data.readAt == request.time;
     }
 
+    function validQuizDraftUpdate(courseId, quizId, userId) {
+      return signedIn()
+        && request.auth.uid == userId
+        && isEnrolled(courseId)
+        && validCourse(courseId)
+        && sectionIsWritable(courseId)
+        && resource.data.userId == userId
+        && resource.data.quizId == quizId
+        && resource.data.courseId == courseId
+        && resource.data.submittedAt == null
+        && request.time <= resource.data.expiresAt
+        && request.resource.data.keys().hasOnly(['courseId', 'quizId', 'userId', 'answers', 'startedAt', 'expiresAt', 'submittedAt', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'updatedAt'])
+        && request.resource.data.answers is map
+        && request.resource.data.answers.size() <= 50
+        && request.resource.data.updatedAt == request.time;
+    }
+
     // Implements: REQ-LIVE-02, REQ-LIVE-06
     function validLiveClass(courseId) {
       return request.resource.data.keys().hasOnly(['courseId', 'url', 'provider', 'updatedBy', 'updatedAt'])
@@ -227,6 +245,26 @@ service cloud.firestore {
         allow read: if threadParticipant(courseId, threadId);
         allow create: if threadParticipant(courseId, threadId) && validDirectMessage(courseId, threadId);
         allow update, delete: if false;
+      }
+    }
+
+    match /courses/{courseId}/quizKeys/{quizId} {
+      allow read, write: if false;
+    }
+
+    match /courses/{courseId}/quizzes/{quizId} {
+      allow read: if teachesCommunicationSection(courseId) || signedIn() && isEnrolled(courseId) && resource.data.status == 'published';
+      allow write: if false;
+
+      match /drafts/{userId} {
+        allow read: if teachesCommunicationSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
+        allow create, delete: if false;
+        allow update: if validQuizDraftUpdate(courseId, quizId, userId);
+      }
+
+      match /results/{userId} {
+        allow read: if teachesCommunicationSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
+        allow write: if false;
       }
     }
 

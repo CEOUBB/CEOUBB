@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   MAX_GRADE,
+  gradeFromPoints,
   normalizeItems,
   normalizeScores,
   requiredGrade,
@@ -74,6 +75,20 @@ test("normalizeItems descarta filas sin ponderacion", () => {
   ]);
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "a");
+});
+
+test("gradeFromPoints aplica la escala chilena con exigencia de 60 por ciento", () => {
+  assert.equal(gradeFromPoints(0, 10), 1);
+  assert.equal(gradeFromPoints(6, 10), 4);
+  assert.equal(gradeFromPoints(10, 10), 7);
+  assert.equal(gradeFromPoints(8, 10), 5.5);
+});
+
+test("gradeFromPoints rechaza puntajes y exigencias invalidas", () => {
+  assert.equal(gradeFromPoints(-1, 10), null);
+  assert.equal(gradeFromPoints(11, 10), null);
+  assert.equal(gradeFromPoints(1, 0), null);
+  assert.equal(gradeFromPoints(1, 10, 1), null);
 });
 
 test("round1 aplica el redondeo institucional a una decimal", () => {

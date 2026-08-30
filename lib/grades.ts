@@ -125,6 +125,32 @@ export function round1(value: number) {
   return Math.round((value + Number.EPSILON) * 10) / 10;
 }
 
+export function gradeFromPoints(
+  earnedPoints: number,
+  totalPoints: number,
+  passingRatio = 0.6
+): number | null {
+  if (
+    !Number.isFinite(earnedPoints) ||
+    !Number.isFinite(totalPoints) ||
+    !Number.isFinite(passingRatio) ||
+    totalPoints <= 0 ||
+    earnedPoints < 0 ||
+    earnedPoints > totalPoints ||
+    passingRatio <= 0 ||
+    passingRatio >= 1
+  ) {
+    return null;
+  }
+  const achievement = earnedPoints / totalPoints;
+  const value =
+    achievement <= passingRatio
+      ? MIN_GRADE + ((PASSING_GRADE - MIN_GRADE) * achievement) / passingRatio
+      : PASSING_GRADE +
+        ((MAX_GRADE - PASSING_GRADE) * (achievement - passingRatio)) / (1 - passingRatio);
+  return round1(Math.min(MAX_GRADE, Math.max(MIN_GRADE, value)));
+}
+
 function ceil1(value: number) {
   return Math.ceil(value * 10 - 1e-9) / 10;
 }

@@ -1,6 +1,6 @@
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
-const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { FieldValue, Timestamp, getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getStorage } = require("firebase-admin/storage");
 const { setGlobalOptions } = require("firebase-functions/v2");
@@ -20,6 +20,12 @@ const {
   storedGradebook,
   storedScoreMap,
 } = require("./grade-audit");
+const {
+  QuizInputError,
+  normalizePublishRequest,
+  normalizeQuizRequest,
+  scoreQuizAnswers,
+} = require("./quiz-engine");
 
 initializeApp();
 setGlobalOptions({ region: "southamerica-west1", maxInstances: 4 });
@@ -32,11 +38,11 @@ function text(value, fallback, limit) {
 
 function callableError(cause) {
   if (cause instanceof HttpsError) return cause;
-  if (cause instanceof GradeAuditInputError) {
+  if (cause instanceof GradeAuditInputError || cause instanceof QuizInputError) {
     return new HttpsError("invalid-argument", cause.message);
   }
-  console.error("[grade-audit] Error inesperado:", cause);
-  return new HttpsError("internal", "No fue posible guardar el libro de notas.");
+  console.error("[callable] Error inesperado:", cause);
+  return new HttpsError("internal", "No fue posible completar la operación.");
 }
 
 async function assertSectionWritable(db, courseId) {
@@ -77,6 +83,312 @@ async function authorizedGradeActor(request, db, courseId) {
   }
   return actor;
 }
+
+async function authorizedQuizStudent(request, db, courseId) {
+  if (!request.auth || request.auth.token.email_verified !== true) {
+    throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
+  }
+  await assertSectionWritable(db, courseId);
+  const [profile, enrollment] = await Promise.all([
+    db.collection("users").doc(request.auth.uid).get(),
+    db.collection("enrollments").doc(request.auth.uid).collection("sections").doc(courseId).get(),
+  ]);
+  if (
+    !profile.exists ||
+    profile.get("role") !== "student" ||
+    !enrollment.exists ||
+    enrollment.get("role") !== "student"
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "Debes estar matriculado como estudiante para rendir este cuestionario."
+    );
+  }
+  return actorFromAuth(request.auth);
+}
+
+async function authorizedQuizPublisher(request, db, courseId) {
+  if (!request.auth || request.auth.token.email_verified !== true) {
+    throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
+  }
+  await assertSectionWritable(db, courseId);
+  const actor = actorFromAuth(request.auth);
+  const profile = await db.collection("users").doc(actor.actorUid).get();
+  const role = profile.exists ? profile.get("role") : "";
+  if (role === "owner") return actor;
+  const enrollment = await db
+    .collection("enrollments")
+    .doc(actor.actorUid)
+    .collection("sections")
+    .doc(courseId)
+    .get();
+  if (
+    role !== "teacher" ||
+    !enrollment.exists ||
+    !["teacher", "coordinator"].includes(enrollment.get("role"))
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "No tienes permisos docentes para publicar cuestionarios en esta sección."
+    );
+  }
+  return actor;
+}
+
+function timestampIso(value) {
+  return value && typeof value.toDate === "function" ? value.toDate().toISOString() : "";
+}
+
+function quizResultDto(value) {
+  return {
+    quizId: value.quizId,
+    userId: value.userId,
+    earnedPoints: value.earnedPoints,
+    totalPoints: value.totalPoints,
+    grade: value.grade,
+    corrections: Array.isArray(value.corrections) ? value.corrections : [],
+    submittedAt: timestampIso(value.submittedAt),
+  };
+}
+
+exports.publishQuiz = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
+  try {
+    const next = normalizePublishRequest(request.data);
+    const db = getFirestore();
+    const actor = await authorizedQuizPublisher(request, db, next.courseId);
+    const gradebookRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("meta")
+      .doc("gradebook");
+    const [gradebook, duplicate] = await Promise.all([
+      gradebookRef.get(),
+      db
+        .collection("courses")
+        .doc(next.courseId)
+        .collection("quizzes")
+        .where("gradeItemId", "==", next.gradeItemId)
+        .limit(1)
+        .get(),
+    ]);
+    const items =
+      gradebook.exists && Array.isArray(gradebook.get("items")) ? gradebook.get("items") : [];
+    if (!items.some((item) => item && item.id === next.gradeItemId)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "El ítem seleccionado ya no existe en el libro de notas."
+      );
+    }
+    if (!duplicate.empty) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Ese ítem del libro de notas ya está vinculado a otro cuestionario."
+      );
+    }
+    const quizRef = db.collection("courses").doc(next.courseId).collection("quizzes").doc();
+    const keyRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("quizKeys")
+      .doc(quizRef.id);
+    const batch = db.batch();
+    batch.create(quizRef, {
+      courseId: next.courseId,
+      title: next.title,
+      description: next.description,
+      durationMinutes: next.durationMinutes,
+      gradeItemId: next.gradeItemId,
+      status: "published",
+      questions: next.questions,
+      totalPoints: next.totalPoints,
+      createdBy: actor.actorUid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    batch.create(keyRef, {
+      courseId: next.courseId,
+      quizId: quizRef.id,
+      answers: next.answers,
+      createdBy: actor.actorUid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+    return { quizId: quizRef.id };
+  } catch (cause) {
+    throw callableError(cause);
+  }
+});
+
+exports.startQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
+  try {
+    const next = normalizeQuizRequest(request.data);
+    const db = getFirestore();
+    await authorizedQuizStudent(request, db, next.courseId);
+    const quizRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("quizzes")
+      .doc(next.quizId);
+    const draftRef = quizRef.collection("drafts").doc(request.auth.uid);
+    const resultRef = quizRef.collection("results").doc(request.auth.uid);
+    const outcome = await db.runTransaction(async (transaction) => {
+      const [quiz, draft, result] = await transaction.getAll(quizRef, draftRef, resultRef);
+      if (!quiz.exists || quiz.get("status") !== "published") {
+        throw new HttpsError("not-found", "El cuestionario no está disponible.");
+      }
+      if (result.exists) return { status: "submitted", result: quizResultDto(result.data()) };
+      if (draft.exists) {
+        return {
+          status: "active",
+          attempt: {
+            quizId: next.quizId,
+            userId: request.auth.uid,
+            answers: draft.get("answers") || {},
+            startedAt: timestampIso(draft.get("startedAt")),
+            expiresAt: timestampIso(draft.get("expiresAt")),
+            submittedAt: null,
+          },
+        };
+      }
+      const startedAt = Timestamp.now();
+      const durationMinutes = Number(quiz.get("durationMinutes"));
+      const expiresAt = Timestamp.fromMillis(startedAt.toMillis() + durationMinutes * 60 * 1000);
+      transaction.create(draftRef, {
+        courseId: next.courseId,
+        quizId: next.quizId,
+        userId: request.auth.uid,
+        answers: {},
+        startedAt,
+        expiresAt,
+        submittedAt: null,
+        updatedAt: startedAt,
+      });
+      return {
+        status: "active",
+        attempt: {
+          quizId: next.quizId,
+          userId: request.auth.uid,
+          answers: {},
+          startedAt: startedAt.toDate().toISOString(),
+          expiresAt: expiresAt.toDate().toISOString(),
+          submittedAt: null,
+        },
+      };
+    });
+    return outcome;
+  } catch (cause) {
+    throw callableError(cause);
+  }
+});
+
+exports.submitQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
+  try {
+    const next = normalizeQuizRequest(request.data);
+    const db = getFirestore();
+    const actor = await authorizedQuizStudent(request, db, next.courseId);
+    const quizRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("quizzes")
+      .doc(next.quizId);
+    const keyRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("quizKeys")
+      .doc(next.quizId);
+    const draftRef = quizRef.collection("drafts").doc(request.auth.uid);
+    const resultRef = quizRef.collection("results").doc(request.auth.uid);
+    const gradebookRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("meta")
+      .doc("gradebook");
+    const gradeRef = db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("grades")
+      .doc(request.auth.uid);
+    const result = await db.runTransaction(async (transaction) => {
+      const [quiz, key, draft, existingResult, gradebook, grade] = await transaction.getAll(
+        quizRef,
+        keyRef,
+        draftRef,
+        resultRef,
+        gradebookRef,
+        gradeRef
+      );
+      if (existingResult.exists) return quizResultDto(existingResult.data());
+      if (!quiz.exists || quiz.get("status") !== "published") {
+        throw new HttpsError("not-found", "El cuestionario no está disponible.");
+      }
+      if (!key.exists || !draft.exists) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Debes iniciar el cuestionario antes de entregarlo."
+        );
+      }
+      if (draft.get("submittedAt")) {
+        throw new HttpsError("failed-precondition", "Este cuestionario ya fue entregado.");
+      }
+      const gradeItemId = quiz.get("gradeItemId");
+      const gradeItems =
+        gradebook.exists && Array.isArray(gradebook.get("items")) ? gradebook.get("items") : [];
+      if (!gradeItems.some((item) => item && item.id === gradeItemId)) {
+        throw new HttpsError(
+          "failed-precondition",
+          "El cuestionario ya no está vinculado a un ítem válido del libro de notas."
+        );
+      }
+      const scored = scoreQuizAnswers(
+        quiz.get("questions"),
+        key.get("answers"),
+        draft.get("answers") || {}
+      );
+      const submittedAt = Timestamp.now();
+      const resultData = {
+        courseId: next.courseId,
+        quizId: next.quizId,
+        userId: request.auth.uid,
+        gradeItemId,
+        ...scored,
+        submittedAt,
+      };
+      transaction.create(resultRef, resultData);
+      transaction.update(draftRef, { submittedAt, updatedAt: submittedAt });
+      const previousScores = storedScoreMap(grade.exists ? grade.get("scores") : {});
+      const previousFeedback = storedFeedbackMap(grade.exists ? grade.get("feedback") : {});
+      const previousValue = Object.hasOwn(previousScores, gradeItemId)
+        ? previousScores[gradeItemId]
+        : null;
+      transaction.set(gradeRef, {
+        uid: request.auth.uid,
+        courseId: next.courseId,
+        scores: { ...previousScores, [gradeItemId]: scored.grade },
+        feedback: previousFeedback,
+        updatedBy: actor.actorUid,
+        updatedAt: submittedAt,
+      });
+      if (previousValue !== scored.grade) {
+        const auditRef = db.collection("courses").doc(next.courseId).collection("gradeAudit").doc();
+        transaction.create(auditRef, {
+          targetType: "score",
+          source: "quiz",
+          courseId: next.courseId,
+          quizId: next.quizId,
+          studentId: request.auth.uid,
+          gradeItemId,
+          previousValue,
+          newValue: scored.grade,
+          ...actor,
+          changedAt: submittedAt,
+        });
+      }
+      return quizResultDto(resultData);
+    });
+    return result;
+  } catch (cause) {
+    throw callableError(cause);
+  }
+});
 
 async function assertStudentsEnrolled(db, courseId, rows) {
   const refs = rows.map((row) =>
