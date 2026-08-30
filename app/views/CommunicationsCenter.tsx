@@ -320,7 +320,9 @@ function CommunicationsPanels({
                       <small>{target.detail}</small>
                       <span>{target.thread?.latestBody ?? "Iniciar una consulta privada"}</span>
                     </span>
-                    {itemUnread && <span aria-label="No leído" className="conversation-unread" />}
+                    {itemUnread && (
+                      <span aria-label="No leído" className="conversation-unread" role="img" />
+                    )}
                   </button>
                 </li>
               );

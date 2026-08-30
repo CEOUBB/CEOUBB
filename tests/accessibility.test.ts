@@ -39,10 +39,12 @@ test("REQ-A11Y-01: portal and library expose a visible bypass target", async () 
 });
 
 test("REQ-A11Y-02: dynamic portal and library state is programmatically exposed", async () => {
-  const [shell, library, libraryApp] = await Promise.all([
+  const [shell, library, libraryApp, notificationPanel, commCenter] = await Promise.all([
     source("app/portal-shell.tsx"),
     source("public/biblioteca/index.html"),
     source("public/biblioteca/assets/app.js"),
+    source("app/notification-panel.tsx"),
+    source("app/views/CommunicationsCenter.tsx"),
   ]);
   assert.match(shell, /aria-live="polite"/);
   assert.match(shell, /aria-labelledby="portal-view-title"/);
@@ -51,6 +53,14 @@ test("REQ-A11Y-02: dynamic portal and library state is programmatically exposed"
   assert.match(libraryApp, /aria-pressed/);
   assert.match(libraryApp, /aria-expanded/);
   assert.match(libraryApp, /aria-controls/);
+  assert.match(
+    notificationPanel,
+    /<span[^>]+className="notification-dot"[^>]+aria-label="Sin leer"[^>]+role="img"/
+  );
+  assert.match(
+    commCenter,
+    /<span[^>]+aria-label="No leído"[^>]+className="conversation-unread"[^>]+role="img"/
+  );
 });
 
 test("REQ-A11Y-03: portal and library text and controls meet contrast contracts", async () => {
