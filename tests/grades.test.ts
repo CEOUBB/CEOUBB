@@ -5,6 +5,7 @@ import {
   normalizeItems,
   normalizeScores,
   requiredGrade,
+  round1,
   summarize,
 } from "../lib/grades.ts";
 import type { GradeItem } from "../lib/grades.ts";
@@ -73,4 +74,10 @@ test("normalizeItems descarta filas sin ponderacion", () => {
   ]);
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "a");
+});
+
+test("round1 aplica el redondeo institucional a una decimal", () => {
+  assert.equal(round1(3.94), 3.9);
+  assert.equal(round1(3.95), 4);
+  assert.equal(round1(6.96), 7);
 });

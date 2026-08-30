@@ -8302,6 +8302,263 @@ div.editor-latex-token {
   overflow-wrap: anywhere;
 }
 
+.final-grade-records {
+  display: grid;
+  gap: var(--space-lg);
+  padding: clamp(var(--space-md), 2.5vw, var(--space-xl));
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.final-grade-records-head,
+.final-grade-records-head > div,
+.final-grade-record-actions,
+.final-grade-roster-error {
+  display: flex;
+  align-items: center;
+}
+
+.final-grade-records-head {
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.final-grade-records-head > div,
+.final-grade-record-actions {
+  gap: var(--space-sm);
+}
+
+.final-grade-records-head h2,
+.final-grade-records-head p,
+.final-grade-records-copy,
+.final-grade-roster-status,
+.final-grade-roster-error p {
+  margin: 0;
+}
+
+.final-grade-records-head h2 {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.4vw, 26px);
+  letter-spacing: -0.025em;
+}
+
+.final-grade-records-icon {
+  display: grid;
+  flex: 0 0 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--surface-card));
+  color: var(--color-primary);
+}
+
+.final-grade-records-copy {
+  max-width: 88ch;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.final-grade-roster-status,
+.final-grade-roster-error {
+  padding: var(--space-md);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.final-grade-roster-error {
+  gap: var(--space-sm);
+  border-color: color-mix(in srgb, var(--shield-red) 26%, var(--border-hairline));
+  background: color-mix(in srgb, var(--shield-red) 5%, var(--surface-card));
+}
+
+.final-grade-roster-error > svg {
+  flex: 0 0 auto;
+  color: var(--shield-red-deep);
+}
+
+.final-grade-roster-error > div {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.final-grade-statistics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas-soft);
+}
+
+.final-grade-statistics > div {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-md);
+  border-left: 1px solid var(--border-hairline);
+}
+
+.final-grade-statistics > div:first-child {
+  border-left: 0;
+}
+
+.final-grade-statistics dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.final-grade-statistics dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.final-grade-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.final-grade-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  background: var(--surface-card);
+  font-size: 14px;
+}
+
+.final-grade-table th,
+.final-grade-table td {
+  padding: 11px var(--space-md);
+  border-bottom: 1px solid var(--border-hairline);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.final-grade-table thead th {
+  background: var(--canvas-soft);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.final-grade-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.final-grade-table tbody th {
+  min-width: 220px;
+  font-weight: 500;
+}
+
+.final-grade-table tbody th strong,
+.final-grade-table tbody th small {
+  display: block;
+}
+
+.final-grade-table tbody th small {
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.final-grade-table input {
+  width: 92px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.final-grade-table input:focus-visible {
+  border-color: var(--color-primary);
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  outline-offset: 1px;
+}
+
+.final-grade-table input:disabled {
+  background: var(--canvas-soft);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.final-grade-not-applicable {
+  color: var(--text-faint);
+}
+
+@media (max-width: 760px) {
+  .final-grade-records-head,
+  .final-grade-roster-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .final-grade-record-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .final-grade-record-actions button,
+  .final-grade-roster-error button {
+    justify-content: center;
+  }
+
+  .final-grade-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .final-grade-statistics > div {
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .final-grade-statistics > div:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .final-grade-statistics > div:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .final-grade-record-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .final-grade-statistics {
+    grid-template-columns: 1fr;
+  }
+
+  .final-grade-statistics > div {
+    border-left: 0;
+  }
+
+  .final-grade-statistics > div:nth-last-child(2) {
+    border-bottom: 1px solid var(--border-hairline);
+  }
+}
+
 .communications-center {
   display: grid;
   gap: var(--space-md);
