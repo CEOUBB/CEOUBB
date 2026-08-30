@@ -43,7 +43,8 @@ export async function POST(request: Request) {
 
     const parseResult = firebaseAuthSchema.safeParse(jsonBody);
     if (!parseResult.success) {
-      const issueMessage = parseResult.error.issues[0]?.message || "No se recibió una credencial de Google válida.";
+      const issueMessage =
+        parseResult.error.issues[0]?.message || "No se recibió una credencial de Google válida.";
       return error(issueMessage, 400);
     }
     const { idToken } = parseResult.data;
