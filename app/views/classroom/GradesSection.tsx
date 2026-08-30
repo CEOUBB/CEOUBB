@@ -42,6 +42,7 @@ import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
+import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
 
 const EMPTY_SCORES: GradeScores = {};
 const EMPTY_FEEDBACK: GradeFeedback = {};
@@ -778,6 +779,13 @@ function TeacherGrades({
               )}
             </nav>
           )}
+          <FinalGradeRecordsPanel
+            classScores={classScores}
+            course={course}
+            gradebook={gradebook}
+            note={note}
+            readOnly={readOnly}
+          />
         </>
       )}
       {feedbackEditor && (

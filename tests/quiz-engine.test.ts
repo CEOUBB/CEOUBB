@@ -109,7 +109,49 @@ test("REQ-QUIZ-07 mantiene sincronizada la escala TypeScript y Functions", () =>
 test("REQ-QUIZ-08 rechaza duración, ids y pautas manipuladas", () => {
   assert.throws(() => engine.normalizePublishRequest({ ...REQUEST, durationMinutes: 0 }));
   assert.throws(() => engine.normalizePublishRequest({ ...REQUEST, courseId: "../otra" }));
+  assert.throws(() =>
+    engine.normalizePublishRequest({
+      ...REQUEST,
+      questions: [
+        {
+          ...REQUEST.questions[0],
+          question: { ...REQUEST.questions[0].question, id: "q.with.dots" },
+        },
+      ],
+    })
+  );
   const invalid = structuredClone(REQUEST);
   invalid.questions[0].answer.correctOptionId = "inexistente";
   assert.throws(() => engine.normalizePublishRequest(invalid));
+});
+
+test("REQ-QUIZ-06 no califica respuestas vacías como correctas cuando la respuesta es 0", () => {
+  const questions = [
+    {
+      id: "q-num",
+      title: "Cero",
+      prompt: "Valor de cero",
+      kind: "numerical",
+      options: [],
+      points: 1,
+    },
+  ];
+  const answers = [
+    {
+      questionId: "q-num",
+      kind: "numerical",
+      acceptedAnswers: [],
+      correctOptionId: null,
+      numericalAnswer: 0,
+      tolerance: 0,
+      feedback: "",
+    },
+  ];
+  const emptyResult = engine.scoreQuizAnswers(questions, answers, { "q-num": "   " });
+  assert.equal(emptyResult.earnedPoints, 0);
+  assert.equal(emptyResult.corrections[0].correct, false);
+
+  const zeroResult = engine.scoreQuizAnswers(questions, answers, { "q-num": "0" });
+  assert.equal(zeroResult.earnedPoints, 1);
+  assert.equal(zeroResult.corrections[0].correct, true);
 });

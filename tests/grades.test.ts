@@ -6,6 +6,7 @@ import {
   normalizeItems,
   normalizeScores,
   requiredGrade,
+  round1,
   summarize,
 } from "../lib/grades.ts";
 import type { GradeItem } from "../lib/grades.ts";
@@ -88,4 +89,10 @@ test("gradeFromPoints rechaza puntajes y exigencias invalidas", () => {
   assert.equal(gradeFromPoints(11, 10), null);
   assert.equal(gradeFromPoints(1, 0), null);
   assert.equal(gradeFromPoints(1, 10, 1), null);
+});
+
+test("round1 aplica el redondeo institucional a una decimal", () => {
+  assert.equal(round1(3.94), 3.9);
+  assert.equal(round1(3.95), 4);
+  assert.equal(round1(6.96), 7);
 });

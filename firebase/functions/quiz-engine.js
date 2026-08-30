@@ -6,7 +6,7 @@ const MAX_QUIZ_QUESTIONS = 50;
 const MAX_QUIZ_OPTIONS = 10;
 const MAX_QUIZ_DURATION_MINUTES = 180;
 const COURSE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,60}$/;
-const ENTITY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+const ENTITY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 const QUESTION_KINDS = new Set(["single_choice", "true_false", "short_answer", "numerical"]);
 const QUIZ_REQUIREMENTS = [
   "REQ-QUIZ-03",
@@ -232,8 +232,8 @@ function scoreQuizAnswers(rawQuestions, rawKeys, rawAnswers) {
       const numeric =
         typeof submitted === "number"
           ? submitted
-          : typeof submitted === "string"
-            ? Number(submitted.replace(",", "."))
+          : typeof submitted === "string" && submitted.trim() !== ""
+            ? Number(submitted.trim().replace(",", "."))
             : Number.NaN;
       correct =
         Number.isFinite(numeric) &&
