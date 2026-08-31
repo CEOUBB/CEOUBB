@@ -22,7 +22,7 @@ overrides:
 
 patchedDependencies:
   '@opennextjs/cloudflare':
-    hash: d416ee911eac2b7dd223ca1cbd1637b471a9d30cb62c37ef1d0a0b017ce10e4a
+    hash: ef1e6bed79c7b9770237ce6d3f703af2d75fdcebe9c91f2ba09749e81a0b657b
     path: patches/@opennextjs__cloudflare.patch
 
 importers:
@@ -61,7 +61,7 @@ importers:
         version: 0.17.4
       '@opennextjs/cloudflare':
         specifier: ^1.20.4
-        version: 1.20.4(patch_hash=d416ee911eac2b7dd223ca1cbd1637b471a9d30cb62c37ef1d0a0b017ce10e4a)(next@16.3.4(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.127.1)
+        version: 1.20.4(patch_hash=ef1e6bed79c7b9770237ce6d3f703af2d75fdcebe9c91f2ba09749e81a0b657b)(next@16.3.4(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.127.1)
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -9499,7 +9499,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opennextjs/cloudflare@1.20.4(patch_hash=d416ee911eac2b7dd223ca1cbd1637b471a9d30cb62c37ef1d0a0b017ce10e4a)(next@16.3.4(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.127.1)':
+  '@opennextjs/cloudflare@1.20.4(patch_hash=ef1e6bed79c7b9770237ce6d3f703af2d75fdcebe9c91f2ba09749e81a0b657b)(next@16.3.4(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.127.1)':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@dotenvx/dotenvx': 1.31.0
