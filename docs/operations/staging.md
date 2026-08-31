@@ -30,6 +30,8 @@ El GitHub Environment `Staging` guarda el secreto de Turso con acceso acotado:
 
 - `TURSO_AUTH_TOKEN`: token dedicado a `ceoubb-staging`.
 
+La prueba institucional P0.7 usa email/password sólo como proveedor temporal para cuentas sintéticas verificadas `load-*`; el workflow lo deshabilita al consolidar. El acceso normal de Staging continúa usando Google. Procedimiento y salvaguardas: [`capacity-load-test.md`](capacity-load-test.md).
+
 La URL no secreta de `ceoubb-staging` queda declarada en el workflow. Firebase no usa llaves JSON persistentes en staging. GitHub obtiene una credencial efímera mediante OIDC, limitada al repositorio `CEOUBB/CEOUBB`, al Environment `Staging` y a la cuenta `github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com`. `Production` conserva sus credenciales independientes y nunca comparte acceso con staging. Ningún valor secreto se copia a archivos versionados, logs o descripciones de PR.
 
 ## Flujo de publicación
