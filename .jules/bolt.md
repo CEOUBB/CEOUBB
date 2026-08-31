@@ -11,3 +11,10 @@
 - **Attempted / Identified Solution:** Indexación previa de `gradebooks` en un `Map<string, CourseGradebook>` mapeado por `courseId` antes de recorrer los cursos.
 - **Outcome / Learning:** Se redujo la complejidad temporal de $O(N \times M)$ a $O(N + M)$ con búsquedas $O(1)$ por curso, manteniendo exactitud funcional en las entradas generadas.
 - **Future Rule:** Indexar siempre relaciones uno-a-uno o uno-a-varios mediante Map/Set antes de iteraciones anidadas sobre colecciones del estado global.
+
+## 2026-08-31 - Conteo de bloques y entregas en `CalendarView` (`app/views/calendar/CalendarView.tsx`)
+
+- **Finding:** `CalendarView` realizaba múltiples pasadas con `visible.filter(...)` en cada renderizado para calcular por separado los contadores `dueCount` y `blockCount`.
+- **Attempted / Identified Solution:** Consolidación de ambos contadores en una única pasada $O(N)$ y memoización del objeto resultado con `useMemo`.
+- **Outcome / Learning:** Se eliminaron alojamientos temporales repetidos y pasadas sobrantes sobre el arreglo de elementos visibles manteniendo comportamiento idéntico.
+- **Future Rule:** Consolidar pasadas y asignaciones temporales en lecturas estadísticas derivadas de colecciones en componentes de React.
