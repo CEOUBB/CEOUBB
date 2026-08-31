@@ -23,6 +23,7 @@
 # next.js
 /.next/
 /.vinext/
+/.open-next/
 /out/
 
 # misc

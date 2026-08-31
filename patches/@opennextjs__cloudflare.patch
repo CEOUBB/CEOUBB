@@ -1,0 +1,118 @@
+diff --git a/dist/cli/build/patches/plugins/instrumentation.js b/dist/cli/build/patches/plugins/instrumentation.js
+index 5848543b789719b91df85130caa0a571c9a0544f..77e32e777e3235f62b66635711cef546162af85f 100644
+--- a/dist/cli/build/patches/plugins/instrumentation.js
++++ b/dist/cli/build/patches/plugins/instrumentation.js
+@@ -21,13 +21,18 @@ export function patchInstrumentation(updater, buildOpts, { loadInstrumentation =
+     const builtInstrumentationPath = loadInstrumentation ? getBuiltInstrumentationPath(buildOpts) : null;
+     updater.updateContent("patch-instrumentation-next15-4", [
+         {
+-            filter: getCrossPlatformPathRegex(String.raw `/server/lib/router-utils/instrumentation-globals.external\.js$`, {
+-                escape: false,
+-            }),
+-            contentFilter: /getInstrumentationModule\(/,
++            filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
++            contentFilter: /getInstrumentationModule/,
+             callback: ({ contents }) => patchCode(contents, getNext154Rule(builtInstrumentationPath)),
+         },
+     ]);
++    updater.updateContent("patch-instrumentation-hook-bypass", [
++        {
++            filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
++            contentFilter: /runInstrumentationHookIfAvailable/,
++            callback: ({ contents }) => patchCode(contents, getHookBypassRule()),
++        },
++    ]);
+     updater.updateContent("patch-instrumentation-next15", [
+         {
+             filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
+@@ -50,31 +55,30 @@ export function patchInstrumentation(updater, buildOpts, { loadInstrumentation =
+ export function getNext154Rule(builtInstrumentationPath) {
+     return `
+ rule:
+-  kind: expression_statement
+-  has:
+-    kind: assignment_expression
+-    all:
+-      - has: { pattern: "cachedInstrumentationModule" }
+-      - has: { kind: call_expression, regex: "INSTRUMENTATION_HOOK_FILENAME"}
+-  inside:
+-    kind: try_statement
+-    stopBy: end
+-    has: { regex: "return cachedInstrumentationModule" }
+-    inside:
+-      kind: function_declaration
+-      stopBy: end
+-      has: { field: name, pattern: getInstrumentationModule }
++  kind: function_declaration
++  has: { field: name, regex: ^getInstrumentationModule$ }
+ fix: |-
+-      cachedInstrumentationModule = ${builtInstrumentationPath ? `require('${builtInstrumentationPath}')` : "null"};
++  function getInstrumentationModule() {
++    return ${builtInstrumentationPath ? `require('${builtInstrumentationPath}')` : "null"};
++  }
++`;
++}
++export function getHookBypassRule() {
++    return `
++rule:
++  kind: method_definition
++  has: { field: name, regex: ^runInstrumentationHookIfAvailable$ }
++fix: |-
++  async runInstrumentationHookIfAvailable() {
++    return;
++  }
+ `;
+ }
+ export function getNext15Rule(builtInstrumentationPath) {
+     return `
+     rule:
+       kind: method_definition
+-      all:
+-        - has: {field: name, regex: ^loadInstrumentationModule$}
+-        - has: {pattern: dynamicRequire, stopBy: end}
++      has: {field: name, regex: ^loadInstrumentationModule$}
+ 
+     fix:
+       async loadInstrumentationModule() {
+diff --git a/dist/cli/build/patches/plugins/next-server.js b/dist/cli/build/patches/plugins/next-server.js
+index d816e838c1b2a23355161f0859ba9cd81f76d6d0..8e77f139eb05a4771dc61db763d1cf7bf92fb893 100644
+--- a/dist/cli/build/patches/plugins/next-server.js
++++ b/dist/cli/build/patches/plugins/next-server.js
+@@ -83,27 +83,18 @@ fix: |-
+ export function createComposableCacheHandlersRule(handlerPath) {
+     return `
+ rule:
+-  # matches
+-  # - const { cacheHandlers } = this.nextConfig.experimental; pre Next 16
+-  # - const { cacheMaxMemorySize, cacheHandlers } = this.nextConfig; from Next 16
+-  kind: lexical_declaration
+-  regex: cacheHandlers
+-  inside:
+-    kind: method_definition
+-    has:
+-      field: name
+-      regex: ^loadCustomCacheHandlers$
+-    stopBy: end
++  kind: method_definition
++  has: { field: name, regex: ^loadCustomCacheHandlers$ }
+ 
+ fix: |-
+-  const cacheHandlers = null;
+-  const handlersSymbol = Symbol.for('@next/cache-handlers');
+-  const handlersMapSymbol = Symbol.for('@next/cache-handlers-map');
+-  const handlersSetSymbol = Symbol.for('@next/cache-handlers-set');
+-  globalThis[handlersMapSymbol] = new Map();
+-  globalThis[handlersMapSymbol].set("default", require('${normalizePath(handlerPath)}').default);
+-  globalThis[handlersMapSymbol].set("remote", require('${normalizePath(handlerPath)}').default);
+-  globalThis[handlersSetSymbol] = new Set(globalThis[handlersMapSymbol].values());
++  async loadCustomCacheHandlers() {
++    const handlersMapSymbol = Symbol.for('@next/cache-handlers-map');
++    const handlersSetSymbol = Symbol.for('@next/cache-handlers-set');
++    globalThis[handlersMapSymbol] = new Map();
++    globalThis[handlersMapSymbol].set("default", require('${normalizePath(handlerPath)}').default);
++    globalThis[handlersMapSymbol].set("remote", require('${normalizePath(handlerPath)}').default);
++    globalThis[handlersSetSymbol] = new Set(globalThis[handlersMapSymbol].values());
++  }
+ `;
+ }
+ /**

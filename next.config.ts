@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
 
 /*
   La WebView de Capacitor sirve el bridge desde `capacitor://localhost` (Android) y
@@ -37,8 +36,18 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ["@phosphor-icons/react", "@phosphor-icons/react/ssr"],
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@phosphor-icons/react/ssr",
+      "katex",
+      "highlight.js",
+      "motion",
+      "vaul",
+      "zod",
+      "drizzle-orm",
+    ],
   },
+  productionBrowserSourceMaps: false,
   env: {
     NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV ?? "",
   },
@@ -83,11 +92,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: "ceoubb",
-  project: "javascript-nextjs",
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
-  silent: !process.env.CI,
-});
+export default nextConfig;
+
