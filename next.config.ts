@@ -49,7 +49,8 @@ const nextConfig: NextConfig = {
   },
   productionBrowserSourceMaps: false,
   env: {
-    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV ?? "",
+    NEXT_PUBLIC_CEOUBB_ENVIRONMENT:
+      process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ?? process.env.CEOUBB_ENVIRONMENT ?? "",
   },
   allowedDevOrigins: ["192.168.1.7", "192.168.1.*", "localhost", "127.0.0.1"],
   async headers() {

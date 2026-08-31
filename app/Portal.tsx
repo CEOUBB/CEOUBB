@@ -87,7 +87,9 @@ export function AccessScreen({
 
   const quickAuthActive =
     isQuickAuthAvailable ??
-    (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview");
+    (process.env.NODE_ENV === "development" ||
+      process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview" ||
+      process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "staging");
 
   const devAccess = async (role: "student" | "teacher") => {
     setError("");

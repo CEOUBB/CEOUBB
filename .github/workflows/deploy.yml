@@ -1,4 +1,4 @@
-name: Deploy to Vercel
+name: Deploy to Cloudflare Workers
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
   deployments: write
 
 concurrency:
-  group: deploy-vercel-${{ github.event.pull_request.number || github.ref }}
+  group: deploy-cloudflare-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -30,19 +30,9 @@ jobs:
     needs: staging
     if: always() && (github.event_name == 'pull_request' || needs.staging.result == 'success')
     runs-on: ubuntu-latest
-    env:
-      VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "CEOUBB"
-      VERCEL_GIT_COMMIT_AUTHOR_NAME: "CEOUBB"
-      VERCEL_GIT_COMMIT_AUTHOR_EMAIL: "elpapijuaco325@gmail.com"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Configure Git Author for Vercel Hobby Plan
-        run: |
-          git config user.name "CEOUBB"
-          git config user.email "elpapijuaco325@gmail.com"
-          git commit --amend --author="CEOUBB <elpapijuaco325@gmail.com>" --no-edit
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -71,76 +61,35 @@ jobs:
       - name: Lint code
         run: pnpm run lint
 
-      - name: Pull Vercel Environment Information (Production)
-        if: github.event_name == 'push'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            pnpm exec vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-          fi
+      - name: Build Project Artifacts (Cloudflare OpenNext)
+        run: pnpm run cloudflare:build
 
-      - name: Pull Vercel Environment Information (Preview)
-        if: github.event_name == 'pull_request'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            pnpm exec vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
-          fi
-
-      - name: Build Project Artifacts (Production)
-        if: github.event_name == 'push'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            pnpm exec vercel build --prod --token=$VERCEL_TOKEN
-          fi
-
-      - name: Build Project Artifacts (Preview)
-        if: github.event_name == 'pull_request'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            pnpm exec vercel build --token=$VERCEL_TOKEN
-          fi
-
-      - name: Deploy Production Artifacts to Vercel
+      - name: Deploy Production Artifacts to Cloudflare Workers
         id: deploy-prod
         if: github.event_name == 'push'
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            PROD_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --prod --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
-            echo "url=${PROD_URL}" >> $GITHUB_OUTPUT
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            pnpm exec wrangler deploy
           fi
+          echo "url=https://ceoubb.com" >> $GITHUB_OUTPUT
 
-      - name: Deploy Preview Artifacts to Vercel
+      - name: Deploy Preview Artifacts to Cloudflare Workers
         id: deploy-preview
         if: github.event_name == 'pull_request'
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ]; then
-            PREVIEW_URL=$(pnpm exec vercel deploy --prebuilt --archive=tgz --token=$VERCEL_TOKEN | grep -E '^https?://' | tail -n 1)
-            pnpm exec vercel alias set "$PREVIEW_URL" ceoubb-staging.vercel.app --token=$VERCEL_TOKEN
-            echo "deployment_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
-            echo "url=https://ceoubb-staging.vercel.app" >> $GITHUB_OUTPUT
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            pnpm exec wrangler deploy --env preview
+            echo "deployment_url=https://ceoubb-preview.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT
+            echo "url=https://staging.ceoubb.com" >> $GITHUB_OUTPUT
+          else
+            echo "deployment_url=https://ceoubb.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT
+            echo "url=https://staging.ceoubb.com" >> $GITHUB_OUTPUT
           fi
 
       - name: Register GitHub Deployment Status
@@ -163,7 +112,7 @@ jobs:
                 repo: context.repo.repo,
                 ref: context.sha,
                 environment: environment,
-                description: `Despliegue de ${environment} en Vercel`,
+                description: `Despliegue de ${environment} en Cloudflare Workers`,
                 auto_merge: false,
                 required_contexts: [],
                 transient_environment: !isProd,
@@ -198,8 +147,8 @@ jobs:
           script: |
             const previewUrl = process.env.PREVIEW_URL || '';
             const deploymentUrl = process.env.DEPLOYMENT_URL || '';
-            const commentHeader = '### 🚀 Vercel Preview Deployment';
-            const body = `${commentHeader}\n\n| Attribute | Details |\n| --- | --- |\n| 🔨 **Commit** | \`${context.sha.slice(0, 7)}\` |\n| 🌐 **Staging Link** | [${previewUrl}](${previewUrl}) |\n| 📦 **Immutable Deployment** | [${deploymentUrl}](${deploymentUrl}) |\n\n*Deployed via GitHub Actions*`;
+            const commentHeader = '### 🚀 Cloudflare Preview Deployment';
+            const body = `${commentHeader}\n\n| Atributo | Detalle |\n| --- | --- |\n| 🔨 **Commit** | \`${context.sha.slice(0, 7)}\` |\n| 🌐 **Staging / Preview** | [${previewUrl}](${previewUrl}) |\n| 📦 **Worker Preview URL** | [${deploymentUrl}](${deploymentUrl}) |\n\n*Desplegado automáticamente en Cloudflare Workers*`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,

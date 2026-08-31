@@ -11,7 +11,7 @@
 
 Plataforma de gestión del aprendizaje (Learning Management System, LMS) y entorno académico digital diseñado para la comunidad universitaria de la **Universidad del Bío-Bío (UBB)**. El sistema está construido sobre una arquitectura desacoplada, de alta concurrencia y orientada a escala institucional (>5.000 estudiantes simultáneos).
 
-- **Portal Web:** [ceoubb.com](https://ceoubb.com) (Alojado en Vercel Edge Platform)
+- **Portal Web:** [ceoubb.com](https://ceoubb.com) (Alojado en Cloudflare Workers Edge Runtime)
 - **Cliente Móvil:** Runtime nativo Capacitor (`cl.ubb.centroestudio`, Android minSdk 26 / API 34+) con soporte offline y notificaciones push FCM.
 - **Región Cloud:** `southamerica-west1` (Santiago de Chile) para Firebase Authentication, Cloud Firestore, Cloud Storage y Cloud Functions.
 
@@ -47,7 +47,7 @@ flowchart TD
     end
 
     subgraph Edge ["Plataforma de Despliegue"]
-        Vercel["Vercel Edge Platform (ceoubb.com)"]
+        Cloudflare["Cloudflare Workers (ceoubb.com)"]
         SW["Service Worker (PWA Offline /sw.js)"]
     end
 
@@ -62,10 +62,10 @@ flowchart TD
         Functions["Cloud Functions (Node.js 22)\n- Notificaciones Push FCM\n- Auditoría de Calificaciones"]
     end
 
-    Web --> Vercel
-    Mobile --> Vercel
+    Web --> Cloudflare
+    Mobile --> Cloudflare
     Web -.-> SW
-    Vercel -->|libSQL over HTTPS| Turso
+    Cloudflare -->|libSQL over HTTPS| Turso
     Web -->|SDK v12| Auth
     Web -->|SDK v12| Firestore
     Web -->|SDK v12| Storage

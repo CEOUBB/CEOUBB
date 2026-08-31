@@ -52,7 +52,6 @@
     "@opennextjs/cloudflare": "^1.20.4",
     "@phosphor-icons/react": "^2.1.10",
     "@sentry/nextjs": "^10.70.0",
-    "@vercel/functions": "^3.9.5",
     "drizzle-orm": "0.45.2",
     "firebase": "^12.18.0",
     "highlight.js": "^11.12.0",
@@ -100,7 +99,6 @@
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
-    "vercel": "^59.3.0",
     "wrangler": "^4.127.1"
   },
   "type": "module",

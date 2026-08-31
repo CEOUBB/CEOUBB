@@ -33,9 +33,11 @@ export const DEV_TEST_USERS: Record<"student" | "teacher", DevTestUser> = {
 
 // Implements: REQ-AUTH-04, REQ-AUTH-06
 export function isDevOrPreviewAuthAllowed(
-  vercelEnv = process.env.VERCEL_ENV,
+  environment = process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ||
+    process.env.CEOUBB_ENVIRONMENT ||
+    process.env.VERCEL_ENV,
   nodeEnv = process.env.NODE_ENV
 ): boolean {
-  if (vercelEnv === "production") return false;
-  return nodeEnv === "development" || vercelEnv === "preview";
+  if (environment === "production") return false;
+  return nodeEnv === "development" || environment === "preview" || environment === "staging";
 }

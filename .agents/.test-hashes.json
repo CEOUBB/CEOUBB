@@ -44,7 +44,7 @@
   "tests/rich-text.test.ts": "b1ac05689c03178a56c1537a3629d384b3e20cccd07b12a943533ea69638d657",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
-  "tests/staging-environment.test.ts": "96fe77e623d90a5db81681e9193ebd9532f73cc26d428a06fc6509d899571e8a",
+  "tests/staging-environment.test.ts": "c7abb539b106c6ddc40acdd3f99c033943a062718105f5eeece43da2bb86654f",
   "tests/support-api.test.ts": "78f607c1a109bdda38b0b740de8992e72eb91b9f332359a8b9381d2a89557b56",
   "tests/support-mail.test.ts": "acddc7fd1f6cc1a2f654853ab30c39167f410555bb868c20f305a2492b0ec78e",
   "tests/support-pages.test.ts": "df3fa52e4b2543731888a23645fc25f243f435cbfd306bd34d7898bd4c6008a7",
