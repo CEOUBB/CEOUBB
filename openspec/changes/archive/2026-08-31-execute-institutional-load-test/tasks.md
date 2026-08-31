@@ -1,6 +1,6 @@
 # Tareas: Ejecutar la carga institucional CEO-71
 
-Estado: APROBADA; ejecución autorizada por el mantenedor en el mensaje de CEO-71.
+Estado: VERIFICADA; ejecución autorizada por el mantenedor y evidencia aprobada en GitHub Actions #33399710498.
 
 ## DAG
 
@@ -12,6 +12,6 @@ Estado: APROBADA; ejecución autorizada por el mantenedor en el mensaje de CEO-7
 - [x] 3.2 Implementar recolección Cloud Monitoring/Turso y consolidación/costo. Requisitos: REQ-OPS-LOAD-04, REQ-OPS-LOAD-05. Verificación: `node --experimental-strip-types --test tests/capacity-load-test.test.ts`.
 - [x] 4.1 Implementar workflow manual de seis runners, bypass Vercel efímero, artefactos y consolidación. Requisitos: REQ-OPS-LOAD-01..06. Verificación: `pnpm run test:unit`.
 - [x] 4.2 Documentar operación, precios, supuestos y clasificación de evidencia. Requisitos: REQ-OPS-LOAD-04, REQ-OPS-LOAD-05. Verificación: `pnpm run specs:validate`.
-- [ ] 5.1 Ejecutar smoke seguro y luego 3.000 sesiones por 30 minutos en staging; guardar artefactos y reporte. Requisitos: REQ-OPS-LOAD-01..06. Verificación: URL de run y `capacity-evidence.md`.
+- [x] 5.1 Ejecutar smoke seguro y luego 3.000 sesiones por 30 minutos en staging; guardar artefactos y reporte. Requisitos: REQ-OPS-LOAD-01..06. Verificación: `https://github.com/CEOUBB/CEOUBB/actions/runs/33399710498` y `docs/operations/evidence/ceo-71-2026-08-31.md`.
 - [x] 5.2 Ejecutar `pnpm run verify:fast`, `pnpm run lint`, `pnpm test` y confirmar hashes intactos. Requisitos: todos. Verificación: comandos indicados.
-- [ ] 5.3 Archivar OpenSpec, actualizar `PLAN.md` y dossier operativo. Requisitos: REQ-OPS-LOAD-05. Verificación: `pnpm run specs:validate`.
+- [x] 5.3 Archivar OpenSpec, actualizar `PLAN.md` y dossier operativo. Requisitos: REQ-OPS-LOAD-05. Verificación: `pnpm run specs:validate`.

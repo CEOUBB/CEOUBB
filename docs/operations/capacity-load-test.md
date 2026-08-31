@@ -8,6 +8,8 @@ Una ejecución `full` aprobada demuestra, para el intervalo y la versión desple
 
 Una ejecución `smoke`, incompleta o fallida sólo valida el arnés o genera trabajo de remediación. Nunca se presenta como evidencia institucional aprobada.
 
+La primera ejecución institucional aprobada es [CEO-71 del 2026-08-31](evidence/ceo-71-2026-08-31.md), respaldada por [GitHub Actions #33399710498](https://github.com/CEOUBB/CEOUBB/actions/runs/33399710498).
+
 ## Arquitectura de la prueba
 
 El workflow `Capacidad institucional en staging` reparte seis shards entre seis runners. Cada shard prepara 2.500 identidades, 2.000 estudiantes, 500 secciones, 12.000 matrículas y 500 usuarios virtuales activos. Los identificadores son deterministas y no se solapan entre shards; las escrituras son idempotentes y se agrupan en lotes máximos de 400. Después del smoke, todos esperan una barrera común derivada del inicio del mismo run; un shard que llegue con más de 15 segundos de atraso falla cerrado. Cada runner sostiene 31 minutos para garantizar al menos 30 minutos de superposición aun con el desfase admitido.

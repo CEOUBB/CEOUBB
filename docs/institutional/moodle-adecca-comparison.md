@@ -18,7 +18,7 @@ This document compares the two official **Universidad del Bío-Bío (UBB)** virt
 
 As of this revision, CEOUBB has closed the multi-course, hierarchical-content, gradebook and live-badge gaps **at the interface level**. It has not closed them at the data-architecture level: the course catalogue, the academic hierarchy and the enrollment model do not exist in a database. The personal file locker was deliberately deferred.
 
-**The objective is official adoption.** That means the deciding evidence is not feature count — CEOUBB already exceeds both platforms on grade projection and offline study — but institutional fitness: identity federation, records integration, interoperability, accessibility conformance, auditability, continuity and cost per student. Those are section 7. None of them are built, and most are not yet even specified. Until they are, CEOUBB is a well-built pilot, not a candidate service.
+**The objective is official adoption.** That means the deciding evidence is not feature count — CEOUBB already exceeds both platforms on grade projection and offline study — but institutional fitness: identity federation, records integration, interoperability, accessibility conformance, auditability, continuity and cost per student. Those are section 7. Capacity and cost now have approved Staging evidence, while most remaining institutional gates are incomplete. Until they pass, CEOUBB is a well-built pilot, not a candidate service.
 
 ---
 
@@ -158,7 +158,7 @@ Phase 0 is new and comes first. The feature phases below it were previously orde
 - [ ] Staging Firebase project and a seeded emulator dataset. No more direct-to-production deploys.
 - [ ] Firestore and Turso backups, plus a **drilled** restore with stated RPO/RTO.
 - [ ] Audit trail on the gradebook and on official grades.
-- [ ] Stated capacity and cost targets (section 7.4), and a load check against them.
+- [x] Stated capacity and cost targets (section 7.4), with an approved 3,000-session staging load check.
 
 ### Phase 1: Multi-course infrastructure & dynamic enrollment
 
@@ -271,20 +271,20 @@ Standard evaluation checklist, none of it present today:
 
 ### 7.4 Capacity, cost and evidence
 
-CEO-9 defines the architecture and budget envelope. These values are acceptance targets, not claims already demonstrated in production; the reproducible model and source prices are in [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md).
+CEO-9 defines the architecture and budget envelope. CEO-71 demonstrated the capacity and cost gates in Staging on 2026-08-31; this remains distinct from a production SLA. The reproducible model and source prices are in [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md), and the approved report is [`ceo-71-2026-08-31.md`](../operations/evidence/ceo-71-2026-08-31.md).
 
-| Target                                          |                               Value | Evidence status                                   |
-| :---------------------------------------------- | ----------------------------------: | :------------------------------------------------ |
-| Concurrent students at peak (exam week)         |                               3,000 | Target; staging load test pending                 |
-| Active course-sections per period               |                               3,000 | Derived from 72,000 enrollments with 25% headroom |
-| Total active students                           |                              12,000 | UBB 2022 baseline rounded for current design      |
-| Firestore reads per initial student portal load |                               ≤ 200 | Code budget; billing trace pending                |
-| Storage stored / downloaded per academic month  |               1,000 GiB / 2,000 GiB | Cost-model envelope; “Mi Bodega” excluded         |
-| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1,000 ceiling** | Price model; measured paid run rate pending       |
-| Product availability                            |                       99.9% monthly | Internal SLO; not a contractual SLA               |
-| RPO / RTO                                       |                    1 hour / 4 hours | Target; staging restoration drill pending         |
+| Target                                          |                               Value | Evidence status                                     |
+| :---------------------------------------------- | ----------------------------------: | :-------------------------------------------------- |
+| Concurrent students at peak (exam week)         |                               3,000 | PASS: 3,000 authenticated sessions; 1,860 s plateau |
+| Active course-sections per period               |                               3,000 | Exercised by the synthetic staging fixture          |
+| Total active students                           |                              12,000 | Exercised by the synthetic staging fixture          |
+| Firestore reads per initial student portal load |                               ≤ 200 | PASS: 22.41 reads per simulated portal opening      |
+| Storage stored / downloaded per academic month  |               1,000 GiB / 2,000 GiB | Cost-model envelope; “Mi Bodega” excluded           |
+| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1,000 ceiling** | PASS: CLP 425 annualized from measured operations   |
+| Product availability                            |                       99.9% monthly | Internal SLO; not a contractual SLA                 |
+| RPO / RTO                                       |                    1 hour / 4 hours | Target; staging restoration drill pending           |
 
-The cost figure covers recurring cloud infrastructure only. It is not the university's total cost of ownership and excludes staffing, support, Moodle/Adecca migration, training, tax, legal review, security assessment and Enterprise support/SLA contracts. CEOUBB must not present the capacity, RPO or RTO as achieved until the staging evidence passes the unchanged thresholds.
+The cost figure covers recurring cloud infrastructure only. It is not the university's total cost of ownership and excludes staffing, support, Moodle/Adecca migration, training, tax, legal review, security assessment and Enterprise support/SLA contracts. CEOUBB may cite the 2026-08-31 capacity and cost result only as Staging evidence for the tested commit. Product availability, production behavior, RPO and RTO remain unproven until their own unchanged evidence gates pass.
 
 ---
 

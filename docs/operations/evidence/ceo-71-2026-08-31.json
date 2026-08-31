@@ -1,0 +1,61 @@
+{
+  "requirements": [
+    "REQ-OPS-LOAD-01",
+    "REQ-OPS-LOAD-02",
+    "REQ-OPS-LOAD-03",
+    "REQ-OPS-LOAD-04",
+    "REQ-OPS-LOAD-05",
+    "REQ-OPS-LOAD-06",
+    "REQ-STG-07",
+    "REQ-OPS-CAP-03"
+  ],
+  "source": {
+    "runId": "github-33399710498-1",
+    "url": "https://github.com/CEOUBB/CEOUBB/actions/runs/33399710498",
+    "commit": "04ef13a1c4fd0559c1e7717e1c08c63198a31dbd",
+    "artifact": "capacity-evidence-33399710498-1",
+    "originalMarkdownSha256": "886487fb66a7b062ec35f51d9b5008f220ec45c75d1cc29f31dd83df98d298de",
+    "originalJsonSha256": "6409b4ffc878d10c6948d89aa721d08cc76969e249dca7f92e4193f78354a123"
+  },
+  "evidence": {
+    "startedAt": "2026-08-31T14:16:09Z",
+    "finishedAt": "2026-08-31T14:57:53.719Z",
+    "executedShards": 6,
+    "peakVirtualUsers": 3000,
+    "authenticatedSessions": 3000,
+    "authenticationAttemptFailures": 0,
+    "steadyStateSeconds": 1860,
+    "startSkewSeconds": 0,
+    "httpRequests": 2154330,
+    "httpP95Ms": 472.0866452,
+    "httpP99Ms": 784.5304012199997,
+    "http5xx": 0,
+    "http5xxRate": 0,
+    "authorizationErrors": 0,
+    "unexpectedResponses": 0,
+    "unexpectedResponseRate": 0,
+    "portalOpens": 189553,
+    "tursoRequests": 126374,
+    "tursoP95Ms": 75.27133459999999,
+    "vercelP95Ms": 547.6573436,
+    "firestoreP95Ms": 244.27344705,
+    "firestoreReads": 4247686,
+    "firestoreWrites": 60705,
+    "firestoreReadsPerPortalOpen": 22.40896213723866,
+    "firestoreRuleEvaluations": 1887582,
+    "tursoUsage": null,
+    "cost": {
+      "priceDate": "2026-08-30",
+      "activeStudents": 12000,
+      "academicPeakWindowsPerYear": 20,
+      "measuredFirestoreReadUsd": 25.49,
+      "measuredFirestoreWriteUsd": 1.09,
+      "fixedAndNonMeasuredAnnualUsd": 4017,
+      "annualBudgetUsd": 5100,
+      "annualClpPerStudent": 425,
+      "ceilingClpPerStudent": 1000,
+      "verdict": "PASS"
+    },
+    "verdict": "PASS"
+  }
+}

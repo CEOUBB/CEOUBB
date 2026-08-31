@@ -22,7 +22,7 @@ CEOUBB se diseña y se prueba para la siguiente envolvente institucional:
 | RPO de datos académicos                                                      |           1 hora |
 | RTO de un incidente crítico                                                  |          4 horas |
 
-Estos son objetivos de arquitectura, presupuesto y prueba, no evidencia de que producción ya los cumpla. La capacidad requiere una prueba de carga en staging y RPO/RTO requieren una restauración ensayada antes de presentar estas cifras como garantías.
+Estos son objetivos de arquitectura, presupuesto y prueba, no evidencia de que producción ya los cumpla. La capacidad quedó demostrada para Staging en la [ejecución aprobada de CEO-71](evidence/ceo-71-2026-08-31.md); RPO/RTO aún requieren una restauración ensayada antes de presentarlos como garantías.
 
 ## De dónde salen los números
 

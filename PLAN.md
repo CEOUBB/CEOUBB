@@ -19,6 +19,7 @@ Companion files:
 - [`docs/institutional/moodle-adecca-comparison.md`](docs/institutional/moodle-adecca-comparison.md): Moodle & Adecca institutional comparison and adoption dossier.
 - [`docs/legal/README.md`](docs/legal/README.md): Legal draft folder for UBB/CEOUBB data processing agreement, retention, data subject rights, residency/subprocessors, and service termination.
 - [`docs/operations/capacity-cost-baseline.md`](docs/operations/capacity-cost-baseline.md): Capacity envelope for 12,000 students, 3,000 sections, 3,000 concurrent sessions; CLP 450 base / CLP 1,000 ceiling per student-year; SLOs, RPO/RTO, and evidence protocol.
+- [`docs/operations/evidence/ceo-71-2026-08-31.md`](docs/operations/evidence/ceo-71-2026-08-31.md): Approved staging evidence for 3,000 authenticated sessions over a 31-minute synchronized plateau, provider telemetry, latency gates, and CLP 425 projected infrastructure cost per student-year.
 - [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md): P0.1-P0.11 detail and acceptance criteria.
 - [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md): P0B.1-P0B.7 institutional adoption dossier.
 - [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md): React Doctor quality & frontend reliability remediation spec (SDD).
@@ -51,7 +52,6 @@ Companion files:
 
 ## Active work
 
-- [ACTIVE] **CEO-71 — Arnés y evidencia de carga institucional P0.7.** Rama `elpapijuaco325/ceo-71-implementar-arnes-y-ejecutar-pruebas-de-carga-para-3000`, owner Codex/Juako. Alcance: dataset sintético de 12.000 estudiantes/3.000 secciones/72.000 matrículas, 3.000 sesiones autenticadas distribuidas, rampa de 10 minutos, meseta de 30 minutos, métricas de Vercel/Turso/Firestore, proyección anual de costo y reporte reproducible. Archivos: `load-tests/`, `scripts/capacity-*.mjs`, `.github/workflows/capacity-load-test.yml`, `tests/capacity-load-test.test.ts`, `docs/operations/`, `openspec/`.
 - [NEXT] **P6: declared debt: Android bottom inset is a constant, not a measurement (CEO-67).** `--safe-bottom` uses `max(env(...), 24px)` below 768px because the WebView does not expose the true gesture bar height. On a three-button device or gesture-less phone, 24px is unrequested padding. The correct solution is reading the inset from the native container and publishing it as a CSS variable on boot. `app/globals.css`, `lib/mobile-bridge.ts`
 - [NEXT] **Declared debt from P5 §0.3: no kill switch (CEO-68).** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this requires a minimum-version / kill-switch endpoint checked by the shell on launch. `app/api/`, `capacitor.config.ts`
 - [NEXT] **P5 conditional debt: DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1,500 active nodes, p95 interaction under 200ms, long tasks under 50ms during scroll) and `content-visibility: auto` is the current solution. `@tanstack/react-virtual` may only be introduced against physical measurements on low-end hardware exceeding those thresholds. `app/globals.css`, `app/Classroom.tsx`
@@ -93,7 +93,7 @@ Detailed context and specifications reside in `docs/specs/`.
 - **Grade audit trail deployment**: PR #70 implements transactional, immutable logging, but production continues overwriting `grades/{uid}` until Functions/portal/index/rules are fully deployed; read-only history UI remains pending (CEO-69). -> P0.9
 - **No automated backups, unverified restore**: no scheduled Firestore exports, no automated Turso database backups, no restore drill executed (CEO-6). -> P0.8
 - **Rules lack emulator test coverage**: staging deploys and seeds prior to production, but Firestore and Storage rules lack automated Emulator Suite tests in CI (CEO-70). -> P0.10
-- **Capacity targets unverified under load**: CEO-9 specifies 12,000 students, 3,000 sections, 3,000 concurrent sessions, CLP 450 base / CLP 1,000 ceiling, and RPO 1h / RTO 4h. Load test, measured paid costs, and staging restore drill remain to be demonstrated (CEO-71). -> P0.7, P0.8
+- **Capacity proof is staging-specific**: CEO-71 passed 3,000 authenticated sessions for 1,860 synchronized seconds with HTTP p95 472 ms, zero 5xx/authorization errors and CLP 425 projected infrastructure cost per student-year. This is not a production SLA; Turso platform row counters were unavailable and the RPO 1 h / RTO 4 h restoration drill remains unverified (CEO-6). -> P0.8
 - **Governance and continuity**: personal accounts for Firebase/Vercel/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization (CEO-41). -> P0B.4, P0B.6
 - **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles, and native bridge differ. Single library copy in `public/biblioteca/` established as SSOT.
 - **Test coverage gaps**: no Firebase rule emulator tests (CEO-70), no Android unit/instrumentation tests (CEO-75), no multi-role end-to-end integration tests.
@@ -112,7 +112,7 @@ Detailed context and specifications reside in `docs/specs/`.
 3. Establish automated backups and execute a drilled restoration (CEO-6) before instructors input authentic grade records.
 4. Complete P0.5 prior to expanding beta cohort; P0.4 billing alerts are active.
 5. Deploy grade audit trail (CEO-7); execute multi-role matrix; expose read-only grade history UI (CEO-69).
-6. Execute P0.7 load test in staging against CEO-9 targets (CEO-71); complete P0.8 restoration drill.
+6. Preserve the approved P0.7 capacity evidence from CEO-71 and complete the P0.8 restoration drill.
 7. Complete Google Play testing and store submission pipeline (CEO-32).
 8. Formalize iOS architecture decisions and initiate native build track (CEO-77).
 
@@ -193,4 +193,4 @@ Next recommended action:
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
 
-In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging, and schedules the P0.7 load test plus the P0.8 restoration drill against published targets.
+In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.
