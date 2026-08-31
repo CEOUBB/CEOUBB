@@ -1,0 +1,15 @@
+diff --git a/dist/cli/build/patches/plugins/instrumentation.js b/dist/cli/build/patches/plugins/instrumentation.js
+index 5848543b789719b91df85130caa0a571c9a0544f..da2067143ba39457ffd0642ca5b2e86d7fe07e52 100644
+--- a/dist/cli/build/patches/plugins/instrumentation.js
++++ b/dist/cli/build/patches/plugins/instrumentation.js
+@@ -72,9 +72,7 @@ export function getNext15Rule(builtInstrumentationPath) {
+     return `
+     rule:
+       kind: method_definition
+-      all:
+-        - has: {field: name, regex: ^loadInstrumentationModule$}
+-        - has: {pattern: dynamicRequire, stopBy: end}
++      has: {field: name, regex: ^loadInstrumentationModule$}
+ 
+     fix:
+       async loadInstrumentationModule() {

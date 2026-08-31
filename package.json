@@ -103,5 +103,10 @@
     "vercel": "^59.3.0",
     "wrangler": "^4.127.1"
   },
-  "type": "module"
+  "type": "module",
+  "pnpm": {
+    "patchedDependencies": {
+      "@opennextjs/cloudflare": "patches/@opennextjs__cloudflare.patch"
+    }
+  }
 }

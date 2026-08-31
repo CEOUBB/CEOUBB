@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
 
 /*
   La WebView de Capacitor sirve el bridge desde `capacitor://localhost` (Android) y
@@ -93,14 +92,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Para Cloudflare Workers en plan Free (< 3 MiB), se exporta nextConfig optimizado sin el wrapper pesado de OpenTelemetry de Node
-export default process.env.ENABLE_SENTRY_SERVER_WRAPPERS === "true"
-  ? withSentryConfig(nextConfig, {
-      org: "ceoubb",
-      project: "javascript-nextjs",
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      widenClientFileUpload: false,
-      tunnelRoute: "/monitoring",
-      silent: !process.env.CI,
-    })
-  : nextConfig;
+export default nextConfig;
+
