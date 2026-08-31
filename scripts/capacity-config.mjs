@@ -18,7 +18,7 @@ export const CAPACITY_ENVELOPE = Object.freeze({
   enrollmentsPerStudent: 6,
   activeStudentsPerShard: 500,
   rampDuration: "10m",
-  steadyDuration: "30m",
+  steadyDuration: "31m",
   steadyStateSeconds: 1_800,
 });
 
@@ -209,7 +209,12 @@ export function aggregateCapacityEvidence({
   const authorizationErrors = sum(completeSummaries, "authorizationErrors");
   const unexpectedResponses = sum(completeSummaries, "unexpectedResponses");
   const peakVirtualUsers = sum(completeSummaries, "peakVus");
-  const steadyStateSeconds = minimum(completeSummaries, "steadyStateSeconds");
+  const shardSteadyStateSeconds = minimum(completeSummaries, "steadyStateSeconds");
+  const startSkewSeconds = capacityStartSkewSeconds(completeSummaries);
+  const steadyStateSeconds =
+    startSkewSeconds === null
+      ? 0
+      : Math.max(0, shardSteadyStateSeconds - Math.ceil(startSkewSeconds));
   const httpP95Ms = maximum(completeSummaries, "httpP95Ms");
   const httpP99Ms = maximum(completeSummaries, "httpP99Ms");
   const tursoP95Ms = maximum(completeSummaries, "tursoP95Ms");
@@ -244,7 +249,8 @@ export function aggregateCapacityEvidence({
     completeSummaries.some((summary) => summary.profile !== "full") ||
     !hasProviderMetrics ||
     httpP95Ms === null ||
-    httpP99Ms === null;
+    httpP99Ms === null ||
+    startSkewSeconds === null;
   return {
     runId,
     startedAt,
@@ -252,6 +258,7 @@ export function aggregateCapacityEvidence({
     executedShards: completeSummaries.length,
     peakVirtualUsers,
     steadyStateSeconds,
+    startSkewSeconds,
     httpRequests,
     httpP95Ms,
     httpP99Ms,
@@ -309,6 +316,12 @@ function maximum(items, key) {
 function minimum(items, key) {
   const values = items.map((item) => Number(item[key])).filter(Number.isFinite);
   return values.length > 0 ? Math.min(...values) : 0;
+}
+
+function capacityStartSkewSeconds(items) {
+  const starts = items.map((item) => new Date(item.startedAt).getTime()).filter(Number.isFinite);
+  if (starts.length !== items.length || starts.length === 0) return null;
+  return (Math.max(...starts) - Math.min(...starts)) / 1_000;
 }
 
 function round(value) {

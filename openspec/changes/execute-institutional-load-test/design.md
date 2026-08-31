@@ -39,7 +39,7 @@ type CapacityRunManifest = {
   shards: 6;
   virtualUsersPerShard: 500;
   rampDuration: "10m";
-  steadyDuration: "30m";
+  steadyDuration: "31m";
   activeStudents: 12000;
   sections: 3000;
   enrollments: 72000;
@@ -75,9 +75,10 @@ type CapacityEvidence = {
 1. Cada shard obtiene credenciales OIDC efímeras del service account exclusivo de staging.
 2. El preparador converge usuarios Firebase/Turso, secciones, matrículas, avisos, notas, certámenes y borradores sintéticos de su rango.
 3. El preparador emite localmente credenciales Firebase de una hora para 500 estudiantes activos; no las publica como artefactos.
-4. Cada VU intercambia su credencial, crea su cookie de sesión mediante `/api/auth/firebase` y ejecuta navegación, catálogo y datos Firestore con su propia identidad.
-5. El 10% determinista de las iteraciones actualiza únicamente el borrador sintético del propio estudiante.
-6. Al terminar, el shard revoca su bypass Vercel y elimina el archivo local de credenciales; los datos sintéticos permanecen idempotentes para repetir la medición.
+4. Después del smoke, los seis runners esperan una barrera común calculada desde `created_at` del mismo run; llegar más de 15 segundos tarde aborta el shard.
+5. Cada VU intercambia su credencial, crea su cookie de sesión mediante `/api/auth/firebase` y ejecuta navegación, catálogo y datos Firestore con su propia identidad.
+6. El 10% determinista de las iteraciones actualiza únicamente el borrador sintético del propio estudiante.
+7. Al terminar, el shard revoca su bypass Vercel y elimina el archivo local de credenciales; los datos sintéticos permanecen idempotentes para repetir la medición.
 
 ## Métricas y costo
 
@@ -96,7 +97,7 @@ type CapacityEvidence = {
 - Los tokens Firebase y Turso nunca se incluyen en logs, resúmenes ni artefactos.
 - La escritura se limita al 10% de iteraciones y al borrador propio; no se relajan reglas.
 - El arnés descarta cuerpos no necesarios y usa consultas limitadas para mantener memoria y costos acotados.
-- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, respuestas HTTP o de transporte inesperadas < 0,1%, cero autorizaciones incorrectas, 3.000 VU y 1.800 segundos de meseta.
+- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, respuestas HTTP o de transporte inesperadas < 0,1%, cero autorizaciones incorrectas, 3.000 VU y al menos 1.800 segundos de meseta superpuesta. Cada shard sostiene 1.860 segundos para absorber hasta 60 segundos de desfase sin reducir la meta institucional.
 
 ## Taxonomía de errores
 

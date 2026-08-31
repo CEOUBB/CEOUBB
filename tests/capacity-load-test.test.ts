@@ -8,6 +8,7 @@ import {
   buildCapacityShardFixture,
   projectAnnualCost,
 } from "../scripts/capacity-config.mjs";
+import { capacityBarrierSchedule } from "../scripts/capacity-wait-barrier.mjs";
 
 const canonicalTargets = {
   confirmation: "STAGING_ONLY",
@@ -104,7 +105,8 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
     shardIndex,
     profile: "full",
     peakVus: 500,
-    steadyStateSeconds: 1_800,
+    steadyStateSeconds: 1_860,
+    startedAt: `2026-08-31T00:00:${String(shardIndex).padStart(2, "0")}.000Z`,
     httpRequests: 10_000,
     http5xx: 0,
     authorizationErrors: 0,
@@ -123,6 +125,8 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
   });
   assert.equal(evidence.executedShards, 6);
   assert.equal(evidence.peakVirtualUsers, 3_000);
+  assert.equal(evidence.steadyStateSeconds, 1_855);
+  assert.equal(evidence.startSkewSeconds, 5);
   assert.equal(evidence.httpP95Ms, 1_005);
   assert.equal(evidence.httpP99Ms, 2_005);
   assert.equal(evidence.tursoRequests, 6_000);
@@ -186,7 +190,7 @@ test("k6 scenario covers portal, Turso, Firestore grades and quiz drafts", async
   assert.match(source, /discardResponseBodies:\s*true/);
   assert.match(source, /ramping-vus/);
   assert.match(source, /10m/);
-  assert.match(source, /30m/);
+  assert.match(source, /31m/);
   assert.match(source, /api\/auth\/firebase/);
   assert.match(source, /api\/courses\/me/);
   assert.match(source, /documents:runQuery/);
@@ -200,6 +204,33 @@ test("k6 scenario covers portal, Turso, Firestore grades and quiz drafts", async
   assert.match(source, /summaryTrendStats:.*p\(99\)/);
 });
 
+test("shared run barrier synchronizes shards and rejects late generators", () => {
+  const createdAt = "2026-08-31T00:00:00.000Z";
+  assert.deepEqual(
+    capacityBarrierSchedule({
+      createdAt,
+      delaySeconds: 1_200,
+      maximumLatenessSeconds: 15,
+      now: new Date("2026-08-31T00:10:00.000Z").getTime(),
+    }),
+    {
+      startAt: "2026-08-31T00:20:00.000Z",
+      remainingMs: 600_000,
+      maximumLatenessSeconds: 15,
+    }
+  );
+  assert.throws(
+    () =>
+      capacityBarrierSchedule({
+        createdAt,
+        delaySeconds: 1_200,
+        maximumLatenessSeconds: 15,
+        now: new Date("2026-08-31T00:20:16.000Z").getTime(),
+      }),
+    /CAPACITY_BARRIER_MISSED/
+  );
+});
+
 test("manual workflow distributes six shards and always cleans ephemeral access", async () => {
   const workflow = await readFile(".github/workflows/capacity-load-test.yml", "utf8");
   assert.match(workflow, /workflow_dispatch:/);
@@ -209,6 +240,7 @@ test("manual workflow distributes six shards and always cleans ephemeral access"
   assert.match(workflow, /environment:\s*Staging/);
   assert.match(workflow, /google-github-actions\/auth@v3/);
   assert.match(workflow, /grafana\/setup-k6-action@v1/);
+  assert.match(workflow, /capacity-wait-barrier\.mjs/);
   assert.match(workflow, /if:\s*always\(\)/);
   assert.match(workflow, /revoke/);
   assert.match(workflow, /retention-days:\s*30/);

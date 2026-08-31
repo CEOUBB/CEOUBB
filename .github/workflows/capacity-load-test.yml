@@ -19,6 +19,7 @@ on:
     types: [opened, reopened]
 
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -50,6 +51,8 @@ jobs:
       CAPACITY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}
       CAPACITY_SHARD_INDEX: ${{ matrix.shard }}
       CAPACITY_SHARD_COUNT: "6"
+      CAPACITY_BARRIER_DELAY_SECONDS: "1200"
+      CAPACITY_BARRIER_MAX_LATENESS_SECONDS: "15"
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -128,6 +131,12 @@ jobs:
         run: |
           export CAPACITY_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           k6 run load-tests/institutional-capacity.js
+
+      - name: Synchronize full-load start
+        if: env.CAPACITY_PROFILE == 'full'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/capacity-wait-barrier.mjs
 
       - name: Execute authenticated capacity shard
         env:

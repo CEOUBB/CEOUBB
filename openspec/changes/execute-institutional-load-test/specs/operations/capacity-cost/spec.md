@@ -13,14 +13,15 @@ The capacity harness SHALL reject every target except the canonical Vercel, Fire
 
 ### Requirement: Distributed Institutional Load Profile (REQ-OPS-LOAD-02)
 
-WHILE executing the full capacity profile, the harness SHALL distribute exactly 3,000 authenticated student sessions across at least six independent generators, SHALL ramp within ten minutes and SHALL maintain the full concurrency for at least 30 minutes against the representative staging dataset.
+WHILE executing the full capacity profile, the harness SHALL distribute exactly 3,000 authenticated student sessions across at least six independent generators, SHALL synchronize those generators through one shared run barrier, SHALL ramp within ten minutes and SHALL maintain the aggregate full concurrency for at least 30 overlapping minutes against the representative staging dataset.
 
 #### Scenario: The full profile reaches steady state
 
 - **GIVEN** 12,000 synthetic students, 3,000 sections and 72,000 active enrollments in staging
 - **WHEN** all six load generators reach their target
 - **THEN** each generator SHALL maintain 500 distinct authenticated sessions
-- **AND** aggregate steady state SHALL contain 3,000 sessions for at least 1,800 seconds
+- **AND** each generator SHALL sustain a 1,860 second plateau
+- **AND** aggregate steady state SHALL contain 3,000 sessions for at least 1,800 overlapping seconds
 
 ### Requirement: Representative Student Workload (REQ-OPS-LOAD-03)
 

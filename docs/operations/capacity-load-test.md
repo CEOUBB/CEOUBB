@@ -10,7 +10,7 @@ Una ejecución `smoke`, incompleta o fallida sólo valida el arnés o genera tra
 
 ## Arquitectura de la prueba
 
-El workflow `Capacidad institucional en staging` reparte seis shards entre seis runners. Cada shard prepara 2.500 identidades, 2.000 estudiantes, 500 secciones, 12.000 matrículas y 500 usuarios virtuales activos. Los identificadores son deterministas y no se solapan entre shards; las escrituras son idempotentes y se agrupan en lotes máximos de 400.
+El workflow `Capacidad institucional en staging` reparte seis shards entre seis runners. Cada shard prepara 2.500 identidades, 2.000 estudiantes, 500 secciones, 12.000 matrículas y 500 usuarios virtuales activos. Los identificadores son deterministas y no se solapan entre shards; las escrituras son idempotentes y se agrupan en lotes máximos de 400. Después del smoke, todos esperan una barrera común derivada del inicio del mismo run; un shard que llegue con más de 15 segundos de atraso falla cerrado. Cada runner sostiene 31 minutos para garantizar al menos 30 minutos de superposición aun con el desfase admitido.
 
 Cada sesión inicia con Firebase Auth y obtiene una sesión de aplicación real mediante `/api/auth/firebase`. Después mezcla:
 
@@ -37,7 +37,7 @@ Los usuarios virtuales conservan la sesión y esperan entre 5 y 15 segundos entr
 
 Desde GitHub Actions, abrir `Capacidad institucional en staging`, elegir `smoke` o `full` y escribir `STAGING_ONLY`. La PR de la rama específica de CEO-71 inicia una ejecución `full` una vez para producir la primera evidencia. Las ejecuciones posteriores son manuales para evitar consumo accidental.
 
-Antes de un `full` conviene ejecutar `smoke`. El perfil completo dura aproximadamente 41 minutos por shard: hasta 10 minutos de rampa, 30 minutos de meseta y 30 segundos de salida, más preparación y consolidación.
+Antes de un `full` conviene ejecutar `smoke`. El perfil completo inicia en una barrera común 20 minutos después de crear el run y dura aproximadamente 42 minutos por shard: hasta 10 minutos de rampa, 31 minutos de meseta protectora y 30 segundos de salida, más consolidación.
 
 Los prerequisitos del Environment `Staging` son:
 
@@ -50,7 +50,7 @@ Los prerequisitos del Environment `Staging` son:
 
 El consolidador suma conteos y sesiones, pero usa el peor p95/p99 de los seis shards. El resultado `PASS` exige:
 
-- seis shards `full`, 3.000 VU y meseta mínima de 1.800 segundos;
+- seis shards `full`, 3.000 VU y superposición de meseta mínima de 1.800 segundos;
 - p95 HTTP <= 2.000 ms y p99 <= 4.000 ms;
 - HTTP 5xx < 0,1%, respuestas HTTP/transportes inesperadas < 0,1% y cero errores de autorización;
 - lecturas Firestore por apertura simulada <= 200;

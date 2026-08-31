@@ -49,7 +49,7 @@ export const options = {
             startVUs: 0,
             stages: [
               { duration: runtimeEnvironment.CAPACITY_RAMP_DURATION || "10m", target: 500 },
-              { duration: runtimeEnvironment.CAPACITY_STEADY_DURATION || "30m", target: 500 },
+              { duration: runtimeEnvironment.CAPACITY_STEADY_DURATION || "31m", target: 500 },
               { duration: "30s", target: 0 },
             ],
             gracefulRampDown: "30s",
@@ -290,7 +290,7 @@ export function handleSummary(data) {
     profile,
     status: thresholdFailed ? "FAIL" : "PASS",
     peakVus,
-    steadyStateSeconds: profile === "full" && peakVus >= 500 && durationMs >= 2_400_000 ? 1_800 : 0,
+    steadyStateSeconds: profile === "full" && peakVus >= 500 && durationMs >= 2_460_000 ? 1_860 : 0,
     httpRequests: metric(data, "http_reqs", "count"),
     http5xx: metric(data, "http_5xx_total", "count"),
     authorizationErrors: metric(data, "authorization_errors", "count"),

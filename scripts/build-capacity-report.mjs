@@ -64,6 +64,7 @@ ${claim}
 | Shards ejecutados | ${evidence.executedShards} | 6 |
 | Sesiones concurrentes | ${format(evidence.peakVirtualUsers)} | 3.000 |
 | Meseta | ${format(evidence.steadyStateSeconds)} s | >= 1.800 s |
+| Desfase de inicio entre shards | ${decimal(evidence.startSkewSeconds)} s | <= 60 s |
 | HTTP p95 conservador | ${milliseconds(evidence.httpP95Ms)} | <= 2.000 ms |
 | HTTP p99 conservador | ${milliseconds(evidence.httpP99Ms)} | <= 4.000 ms |
 | HTTP 5xx | ${percentage(evidence.http5xxRate)} | < 0,1% |
