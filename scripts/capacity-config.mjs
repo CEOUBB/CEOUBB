@@ -242,7 +242,9 @@ export function aggregateCapacityEvidence({
     new Set(completeSummaries.map((summary) => summary.shardIndex)).size !==
       CAPACITY_ENVELOPE.shards ||
     completeSummaries.some((summary) => summary.profile !== "full") ||
-    !hasProviderMetrics;
+    !hasProviderMetrics ||
+    httpP95Ms === null ||
+    httpP99Ms === null;
   return {
     runId,
     startedAt,
@@ -296,7 +298,11 @@ function sum(items, key) {
 }
 
 function maximum(items, key) {
-  const values = items.map((item) => Number(item[key])).filter(Number.isFinite);
+  const values = items
+    .map((item) => item[key])
+    .filter((value) => value !== null && value !== undefined)
+    .map(Number)
+    .filter(Number.isFinite);
   return values.length > 0 ? Math.max(...values) : null;
 }
 

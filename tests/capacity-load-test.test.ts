@@ -148,6 +148,15 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
   );
   assert.equal(
     aggregateCapacityEvidence({
+      runId: "missing-p99",
+      summaries: summaries.map((summary) => ({ ...summary, httpP99Ms: null })),
+      firestoreReads: 100,
+      firestoreWrites: 10,
+    }).verdict,
+    "INCOMPLETE"
+  );
+  assert.equal(
+    aggregateCapacityEvidence({
       runId: "transient-errors-within-budget",
       summaries: summaries.map((summary, shardIndex) => ({
         ...summary,

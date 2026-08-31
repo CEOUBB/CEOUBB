@@ -296,13 +296,13 @@ export function handleSummary(data) {
     authorizationErrors: metric(data, "authorization_errors", "count"),
     unexpectedResponses: metric(data, "unexpected_responses", "count"),
     unexpectedResponseRate: metric(data, "unexpected_response_rate", "rate"),
-    httpP95Ms: metric(data, "http_req_duration", "p(95)"),
-    httpP99Ms: metric(data, "http_req_duration", "p(99)"),
+    httpP95Ms: metric(data, "http_req_duration", "p(95)", null),
+    httpP99Ms: metric(data, "http_req_duration", "p(99)", null),
     tursoRequests: metric(data, "turso_requests", "count"),
     portalOpens: metric(data, "student_portal_opens", "count"),
-    tursoP95Ms: metric(data, "turso_duration", "p(95)"),
-    vercelP95Ms: metric(data, "vercel_duration", "p(95)"),
-    firestoreP95Ms: metric(data, "firestore_duration", "p(95)"),
+    tursoP95Ms: metric(data, "turso_duration", "p(95)", null),
+    vercelP95Ms: metric(data, "vercel_duration", "p(95)", null),
+    firestoreP95Ms: metric(data, "firestore_duration", "p(95)", null),
     durationMs,
     startedAt: runtimeEnvironment.CAPACITY_STARTED_AT || null,
     finishedAt: new Date().toISOString(),
@@ -314,7 +314,7 @@ export function handleSummary(data) {
   };
 }
 
-function metric(data, name, field) {
+function metric(data, name, field, fallback = 0) {
   const value = data.metrics[name]?.values?.[field];
-  return Number.isFinite(value) ? value : 0;
+  return Number.isFinite(value) ? value : fallback;
 }

@@ -10,7 +10,7 @@
   "tests/backend-remediation.test.ts": "0724547abd4343a79700850aff557f525d78b87916cda07151eeb234022aa4ac",
   "tests/bulk-enrollment.test.ts": "4862aa8a9b9a5803174cdde393b00655a580c834acb47442eee8621292063ea7",
   "tests/capacitor-config.test.ts": "20a694aec62b7c064b1268dfec35ed083e3a5191b119cd857837a555f016cdb0",
-  "tests/capacity-load-test.test.ts": "f15b741d1cf9104f850f26cb39f8dbe387e633f04f921a31b97524c661890d29",
+  "tests/capacity-load-test.test.ts": "5ef7f0ab76690dc22a42e598982e56bcdaef599cbf444b8addec95c8aada63e3",
   "tests/ci-workflows.test.ts": "0f9444b801bad588abd2e895772bc28214a4751c8f6cabbfc9d166865fe8558b",
   "tests/classroom-pagination.test.ts": "8bfddb1d5aeac914d4fb91bcb7814253209b9c9c5b43252ce1257b313ba08897",
   "tests/communications.test.ts": "98e63fae4cf2e86053cd271d04069c02f9d1fd1b118b5ca1fb2b8c990c40c32f",

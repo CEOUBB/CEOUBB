@@ -43,7 +43,7 @@ WHEN a capacity run completes, the evidence pipeline SHALL report Vercel/Turso/F
 - **WHEN** the evidence report is built
 - **THEN** aggregate metrics SHALL preserve total counts and SHALL use the worst shard percentile as a conservative distributed gate
 - **AND** HTTP 5xx and total unexpected response rates SHALL each remain below 0.1 percent while authorization failures SHALL remain zero
-- **AND** missing provider telemetry SHALL be represented as unavailable rather than zero
+- **AND** missing provider telemetry or required latency percentiles SHALL be represented as unavailable rather than zero
 
 ### Requirement: Measured Cost Decision (REQ-OPS-LOAD-05)
 
