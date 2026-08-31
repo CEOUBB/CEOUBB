@@ -5,6 +5,22 @@
   "compatibility_date": "2024-12-30",
   "compatibility_flags": ["nodejs_compat"],
   "minify": true,
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "redact_query_string": false,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1,
+    },
+  },
   "vars": {
     "NEXT_PUBLIC_CEOUBB_ENVIRONMENT": "production",
     "FIREBASE_PROJECT_ID": "centro-de-estudio-ubb",
