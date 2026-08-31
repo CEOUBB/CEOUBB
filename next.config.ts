@@ -93,18 +93,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: "ceoubb",
-  project: "javascript-nextjs",
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: false,
-  tunnelRoute: "/monitoring",
-  silent: !process.env.CI,
-  bundleSizeOptimizations: {
-    excludeDebugStatements: true,
-    excludeReplayIframe: true,
-    excludeReplayShadowDom: true,
-  },
-  disableLogger: true,
-  automaticVercelMonitors: false,
-});
+// Para Cloudflare Workers en plan Free (< 3 MiB), se exporta nextConfig optimizado sin el wrapper pesado de OpenTelemetry de Node
+export default process.env.ENABLE_SENTRY_SERVER_WRAPPERS === "true"
+  ? withSentryConfig(nextConfig, {
+      org: "ceoubb",
+      project: "javascript-nextjs",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      widenClientFileUpload: false,
+      tunnelRoute: "/monitoring",
+      silent: !process.env.CI,
+    })
+  : nextConfig;
