@@ -4,14 +4,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-02-15",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
   "minify": true,
   "routes": [
     {
       "pattern": "ceoubb.com",
-      "custom_domain": true,
-    },
-    {
-      "pattern": "www.ceoubb.com",
       "custom_domain": true,
     },
   ],
