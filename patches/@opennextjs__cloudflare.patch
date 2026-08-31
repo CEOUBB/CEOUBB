@@ -1,8 +1,69 @@
 diff --git a/dist/cli/build/patches/plugins/instrumentation.js b/dist/cli/build/patches/plugins/instrumentation.js
-index 5848543b789719b91df85130caa0a571c9a0544f..da2067143ba39457ffd0642ca5b2e86d7fe07e52 100644
+index 5848543b789719b91df85130caa0a571c9a0544f..77e32e777e3235f62b66635711cef546162af85f 100644
 --- a/dist/cli/build/patches/plugins/instrumentation.js
 +++ b/dist/cli/build/patches/plugins/instrumentation.js
-@@ -72,9 +72,7 @@ export function getNext15Rule(builtInstrumentationPath) {
+@@ -21,13 +21,18 @@ export function patchInstrumentation(updater, buildOpts, { loadInstrumentation =
+     const builtInstrumentationPath = loadInstrumentation ? getBuiltInstrumentationPath(buildOpts) : null;
+     updater.updateContent("patch-instrumentation-next15-4", [
+         {
+-            filter: getCrossPlatformPathRegex(String.raw `/server/lib/router-utils/instrumentation-globals.external\.js$`, {
+-                escape: false,
+-            }),
+-            contentFilter: /getInstrumentationModule\(/,
++            filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
++            contentFilter: /getInstrumentationModule/,
+             callback: ({ contents }) => patchCode(contents, getNext154Rule(builtInstrumentationPath)),
+         },
+     ]);
++    updater.updateContent("patch-instrumentation-hook-bypass", [
++        {
++            filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
++            contentFilter: /runInstrumentationHookIfAvailable/,
++            callback: ({ contents }) => patchCode(contents, getHookBypassRule()),
++        },
++    ]);
+     updater.updateContent("patch-instrumentation-next15", [
+         {
+             filter: /\.(js|mjs|cjs|jsx|ts|tsx)$/,
+@@ -50,31 +55,30 @@ export function patchInstrumentation(updater, buildOpts, { loadInstrumentation =
+ export function getNext154Rule(builtInstrumentationPath) {
+     return `
+ rule:
+-  kind: expression_statement
+-  has:
+-    kind: assignment_expression
+-    all:
+-      - has: { pattern: "cachedInstrumentationModule" }
+-      - has: { kind: call_expression, regex: "INSTRUMENTATION_HOOK_FILENAME"}
+-  inside:
+-    kind: try_statement
+-    stopBy: end
+-    has: { regex: "return cachedInstrumentationModule" }
+-    inside:
+-      kind: function_declaration
+-      stopBy: end
+-      has: { field: name, pattern: getInstrumentationModule }
++  kind: function_declaration
++  has: { field: name, regex: ^getInstrumentationModule$ }
+ fix: |-
+-      cachedInstrumentationModule = ${builtInstrumentationPath ? `require('${builtInstrumentationPath}')` : "null"};
++  function getInstrumentationModule() {
++    return ${builtInstrumentationPath ? `require('${builtInstrumentationPath}')` : "null"};
++  }
++`;
++}
++export function getHookBypassRule() {
++    return `
++rule:
++  kind: method_definition
++  has: { field: name, regex: ^runInstrumentationHookIfAvailable$ }
++fix: |-
++  async runInstrumentationHookIfAvailable() {
++    return;
++  }
+ `;
+ }
+ export function getNext15Rule(builtInstrumentationPath) {
      return `
      rule:
        kind: method_definition
