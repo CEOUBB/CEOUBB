@@ -37,8 +37,18 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ["@phosphor-icons/react", "@phosphor-icons/react/ssr"],
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@phosphor-icons/react/ssr",
+      "katex",
+      "highlight.js",
+      "motion",
+      "vaul",
+      "zod",
+      "drizzle-orm",
+    ],
   },
+  productionBrowserSourceMaps: false,
   env: {
     NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV ?? "",
   },
@@ -87,7 +97,14 @@ export default withSentryConfig(nextConfig, {
   org: "ceoubb",
   project: "javascript-nextjs",
   authToken: process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: true,
+  widenClientFileUpload: false,
   tunnelRoute: "/monitoring",
   silent: !process.env.CI,
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+  },
+  disableLogger: true,
+  automaticVercelMonitors: false,
 });
