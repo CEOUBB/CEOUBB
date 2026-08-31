@@ -189,6 +189,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Download shard summaries
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: capacity-shard-*
@@ -197,6 +198,7 @@ jobs:
 
       - name: Authenticate telemetry collector
         id: google-auth
+        if: always()
         uses: google-github-actions/auth@v3
         with:
           project_id: centro-de-estudio-ubb-staging

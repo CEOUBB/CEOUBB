@@ -31,7 +31,7 @@ export async function prepareCapacityFixtures(options) {
   });
   try {
     const [authUsers, tursoRows, firestoreWrites] = await Promise.all([
-      upsertActiveAuthUsers(getAuth(app), fixture.activeStudents, password),
+      upsertActiveAuthUsers(getAuth(app), fixture.activeStudents, password, targets.shardIndex),
       seedCapacityTurso(client, fixture),
       seedCapacityFirestore({
         projectId: targets.firebaseProjectId,
@@ -98,29 +98,60 @@ export async function enableStagingPasswordAuth(projectId, bearerToken, enabled 
   }
 }
 
-export async function upsertActiveAuthUsers(auth, students, password) {
+export async function upsertActiveAuthUsers(auth, students, password, shardIndex = 0) {
+  const existing = await listUserIds(auth);
   let completed = 0;
-  for (const group of chunks(students, 20)) {
-    await Promise.all(
-      group.map(async (student) => {
-        const attributes = {
-          email: student.email,
-          emailVerified: true,
-          displayName: student.name,
-          password,
-          disabled: false,
-        };
-        try {
-          await auth.updateUser(student.uid, attributes);
-        } catch (error) {
-          if (error?.code !== "auth/user-not-found") throw error;
-          await auth.createUser({ uid: student.uid, ...attributes });
-        }
-        completed += 1;
-      })
-    );
+  await delay(shardIndex * 125);
+  for (const student of students) {
+    const attributes = {
+      email: student.email,
+      emailVerified: true,
+      displayName: student.name,
+      password,
+      disabled: false,
+    };
+    await retryAuthMutation(async () => {
+      if (existing.has(student.uid)) {
+        await auth.updateUser(student.uid, attributes);
+      } else {
+        await auth.createUser({ uid: student.uid, ...attributes });
+        existing.add(student.uid);
+      }
+    });
+    completed += 1;
+    await delay(750);
   }
   return completed;
+}
+
+async function listUserIds(auth) {
+  const result = new Set();
+  let pageToken;
+  do {
+    const page = await auth.listUsers(1_000, pageToken);
+    for (const user of page.users) result.add(user.uid);
+    pageToken = page.pageToken;
+  } while (pageToken);
+  return result;
+}
+
+async function retryAuthMutation(operation) {
+  let failure;
+  for (let attempt = 0; attempt < 7; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      failure = error;
+      const retryable = [
+        "auth/internal-error",
+        "auth/quota-exceeded",
+        "auth/too-many-requests",
+      ].includes(error?.code);
+      if (!retryable || attempt === 6) break;
+      await delay(2_000 * 2 ** attempt);
+    }
+  }
+  throw failure;
 }
 
 export async function seedCapacityTurso(client, fixture) {
@@ -397,6 +428,10 @@ function chunks(items, size) {
     result.push(items.slice(index, index + size));
   }
   return result;
+}
+
+function delay(milliseconds) {
+  return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
 }
 
 async function retry(operation) {

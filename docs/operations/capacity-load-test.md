@@ -29,6 +29,7 @@ Los usuarios virtuales conservan la sesión y esperan entre 5 y 15 segundos entr
 - Turso debe usar el host `ceoubb-staging`.
 - El acceso a un deployment protegido usa un bypass aleatorio por shard, enmascarado y revocado en un paso `always()`.
 - Las contraseñas sintéticas se generan por ejecución, se guardan con permisos `0600`, no se publican como artefacto y se borran al terminar.
+- Las cuentas se crean o actualizan a un máximo coordinado cercano a ocho mutaciones por segundo entre los seis shards, con reintento exponencial ante cuotas transitorias de Identity Platform.
 - Email/password se habilita temporalmente sólo para las identidades sintéticas verificadas y se deshabilita en la consolidación.
 - Los datos sintéticos persistentes llevan identificadores `load-*`; no contienen datos personales reales.
 
