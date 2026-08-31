@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / QuizzesSection
+
+- **Finding:** SVG icon status badges (`CheckCircle` and `XCircle`) using `aria-label` lacked explicit `role="img"`, while quiz attempt progress containers lacked `role="progressbar"` and numeric range attributes (`aria-valuenow`, `aria-valuemin`, `aria-valuemax`), limiting screen reader accessibility (WCAG 2.2 SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added `role="img"` to SVG icon indicators using `aria-label`, and added `role="progressbar"` with `aria-valuenow`, `aria-valuemin={0}`, and `aria-valuemax` to the progress bar element.
+- **Design System Constraint:** Preserved existing DOM structures and CSS styles without altering visual appearance or component props.
+- **Future Rule:** Always ensure icon-based status indicators expose `role="img"` alongside `aria-label`, and progress elements declare explicit `role="progressbar"` with numeric ARIA range attributes.
+
 ## [2026-03-31] - Planner / PlannerBlock
 
 - **Finding:** Main event block action buttons in the calendar grid rendered nested elements (`<strong>` and `<small>`) without structured programmatic labels, creating screen reader ambiguity on time ranges and event context (WCAG 2.2 SC 4.1.2 & SC 2.4.4).

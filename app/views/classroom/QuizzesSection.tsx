@@ -657,6 +657,10 @@ function QuizRunner({
       </header>
       <div
         className="quiz-runner-progress"
+        role="progressbar"
+        aria-valuenow={answered}
+        aria-valuemin={0}
+        aria-valuemax={quiz.questions.length}
         aria-label={`${answered} de ${quiz.questions.length} preguntas respondidas`}
       >
         <span style={{ width: `${percentage}%` }} />
@@ -827,9 +831,9 @@ function QuizCorrectionView({
             >
               <div className="quiz-correction-mark">
                 {correction.correct ? (
-                  <CheckCircle size={24} weight="fill" aria-label="Correcta" />
+                  <CheckCircle size={24} weight="fill" aria-label="Correcta" role="img" />
                 ) : (
-                  <XCircle size={24} weight="fill" aria-label="Incorrecta" />
+                  <XCircle size={24} weight="fill" aria-label="Incorrecta" role="img" />
                 )}
               </div>
               <div>
