@@ -36,8 +36,18 @@ export function isDevOrPreviewAuthAllowed(
   environment = process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ||
     process.env.CEOUBB_ENVIRONMENT ||
     process.env.VERCEL_ENV,
-  nodeEnv = process.env.NODE_ENV
+  nodeEnv = process.env.NODE_ENV,
+  host?: string
 ): boolean {
+  if (host) {
+    const cleanHost = host.split(":")[0]?.toLowerCase();
+    if (cleanHost === "ceoubb.com" || cleanHost === "www.ceoubb.com") {
+      return false;
+    }
+    if (cleanHost.endsWith(".workers.dev") || cleanHost === "staging.ceoubb.com") {
+      return true;
+    }
+  }
   if (environment === "production") return false;
   return nodeEnv === "development" || environment === "preview" || environment === "staging";
 }
