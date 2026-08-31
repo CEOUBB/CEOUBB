@@ -36,7 +36,7 @@
     "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-agent-autostart.ps1 -Agent antigravity",
     "cloudflare:build": "opennextjs-cloudflare build",
     "cloudflare:preview": "opennextjs-cloudflare preview",
-    "cloudflare:deploy": "opennextjs-cloudflare build && wrangler deploy"
+    "cloudflare:deploy": "opennextjs-cloudflare build && wrangler deploy --minify"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.4.0",
