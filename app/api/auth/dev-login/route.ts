@@ -13,8 +13,10 @@ import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academ
 
 // Implements: REQ-AUTH-04, REQ-AUTH-05, REQ-AUTH-06
 export async function POST(request: Request) {
+  const host = request.headers.get("host") ?? "";
+
   // Aislamiento estricto de producción: en producción institucional devuelve 404
-  if (!isDevOrPreviewAuthAllowed()) {
+  if (!isDevOrPreviewAuthAllowed(undefined, undefined, host)) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 

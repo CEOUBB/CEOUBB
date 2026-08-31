@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChalkboardTeacher, GraduationCap } from "@phosphor-icons/react";
@@ -85,9 +85,20 @@ export function AccessScreen({
     }
   };
 
+  const isClientNonProd = useSyncExternalStore(
+    () => () => {},
+    () =>
+      typeof window !== "undefined" &&
+      !["ceoubb.com", "www.ceoubb.com"].includes(window.location.hostname),
+    () => false
+  );
+
   const quickAuthActive =
-    isQuickAuthAvailable ??
-    (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview");
+    isQuickAuthAvailable ||
+    isClientNonProd ||
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview" ||
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "staging";
 
   const devAccess = async (role: "student" | "teacher") => {
     setError("");

@@ -105,7 +105,7 @@ export async function executeGeminiToolCall(
 ): Promise<unknown> {
   if (name === "linear_get_issue") {
     const issueId = String(args.issueId || "").toUpperCase();
-    if (!getLinearApiKey()) return { error: "LINEAR_API_KEY no configurada en Vercel." };
+    if (!getLinearApiKey()) return { error: "LINEAR_API_KEY no configurada en el entorno." };
 
     const issue = await getLinearIssue(issueId);
     if (!issue) return { error: `No se encontró el issue ${issueId} en Linear` };
@@ -113,7 +113,7 @@ export async function executeGeminiToolCall(
   }
 
   if (name === "linear_list_active_issues") {
-    if (!getLinearApiKey()) return { error: "LINEAR_API_KEY no configurada en Vercel." };
+    if (!getLinearApiKey()) return { error: "LINEAR_API_KEY no configurada en el entorno." };
     const limit = typeof args.limit === "number" ? Math.min(args.limit, 20) : 10;
     const issues = await listActiveLinearIssues(limit);
     return {
@@ -167,7 +167,7 @@ export async function processGeminiQueryWithTools(
 ): Promise<string> {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
-    return "⚠️ **Error de configuración:** La variable `STANDUP_GEMINI_API_KEY` o `GEMINI_API_KEY` no está configurada en Vercel.";
+    return "⚠️ **Error de configuración:** La variable `STANDUP_GEMINI_API_KEY` o `GEMINI_API_KEY` no está configurada en Cloudflare / entorno.";
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -247,7 +247,7 @@ export async function processGeminiQueryWithTools(
       const directText = firstRes.text || firstCandidateContent?.parts?.[0]?.text || "";
       if (directText) return directText.trim();
     } catch (err) {
-      console.warn("⚠️ Error en modelo de Gemini en Vercel:", modelId, err);
+      console.warn("⚠️ Error en modelo de Gemini en Cloudflare:", modelId, err);
       lastError = err;
     }
   }

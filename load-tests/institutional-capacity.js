@@ -25,7 +25,6 @@ const credentialBundle = JSON.parse(open(credentialPath));
 const targetUrl = (runtimeEnvironment.TARGET_URL || "").replace(/\/$/, "");
 const firebaseProjectId = runtimeEnvironment.FIREBASE_PROJECT_ID;
 const tursoHttpUrl = (runtimeEnvironment.TURSO_HTTP_URL || "").replace(/\/$/, "");
-const bypass = runtimeEnvironment.VERCEL_AUTOMATION_BYPASS_SECRET;
 const http5xx = new Rate("http_5xx");
 const http5xxTotal = new Counter("http_5xx_total");
 const authenticatedSessions = new Counter("authenticated_sessions");
@@ -33,7 +32,7 @@ const authenticationAttemptFailures = new Counter("authentication_attempt_failur
 const authorizationErrors = new Counter("authorization_errors");
 const unexpectedResponses = new Counter("unexpected_responses");
 const unexpectedResponseRate = new Rate("unexpected_response_rate");
-const vercelDuration = new Trend("vercel_duration", true);
+const edgeDuration = new Trend("edge_duration", true);
 const tursoDuration = new Trend("turso_duration", true);
 const firestoreDuration = new Trend("firestore_duration", true);
 const tursoRequests = new Counter("turso_requests");
@@ -111,13 +110,13 @@ function authenticate() {
   const application = http.post(
     `${targetUrl}/api/auth/firebase`,
     JSON.stringify({ idToken }),
-    jsonParameters("vercel_auth")
+    jsonParameters("edge_auth")
   );
-  observe(application, "vercel_auth", vercelDuration, false);
-  check(application, { "Vercel crea sesión Turso": (response) => response.status === 200 });
+  observe(application, "edge_auth", edgeDuration, false);
+  check(application, { "El hosting crea sesión Turso": (response) => response.status === 200 });
   const cookie = application.cookies.centro_estudio_session?.[0]?.value;
   if (application.status !== 200 || !cookie) {
-    authenticationAttemptFailures.add(1, { operation: "vercel_auth" });
+    authenticationAttemptFailures.add(1, { operation: "edge_auth" });
     return false;
   }
   sessionCookie = `centro_estudio_session=${cookie}`;
@@ -127,16 +126,15 @@ function authenticate() {
 
 function navigatePortal() {
   const web = http.get(`${targetUrl}/`, {
-    headers: bypassHeaders(),
-    tags: { provider: "vercel", operation: "portal_html" },
+    tags: { provider: "cloudflare", operation: "portal_html" },
   });
-  observe(web, "portal_html", vercelDuration);
+  observe(web, "portal_html", edgeDuration);
   const apiResponses = http.batch([
     ["GET", `${targetUrl}/api/auth/me?includeSections=1`, null, sessionParameters("session")],
     ["GET", `${targetUrl}/api/enrollments/me?limit=8`, null, sessionParameters("enrollments")],
     ["GET", `${targetUrl}/api/courses/me?limit=8`, null, sessionParameters("courses")],
   ]);
-  for (const response of apiResponses) observe(response, "vercel_turso_api", vercelDuration);
+  for (const response of apiResponses) observe(response, "edge_turso_api", edgeDuration);
 }
 
 function queryTurso() {
@@ -245,7 +243,7 @@ function saveQuizDraft() {
 
 function jsonParameters(operation) {
   return {
-    headers: { ...bypassHeaders(), "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     responseType: "text",
     tags: { operation },
   };
@@ -253,8 +251,8 @@ function jsonParameters(operation) {
 
 function sessionParameters(operation) {
   return {
-    headers: { ...bypassHeaders(), Cookie: sessionCookie },
-    tags: { provider: "vercel", operation },
+    headers: { Cookie: sessionCookie },
+    tags: { provider: "cloudflare", operation },
   };
 }
 
@@ -263,10 +261,6 @@ function firestoreParameters(operation) {
     headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
     tags: { provider: "firestore", operation },
   };
-}
-
-function bypassHeaders() {
-  return { "x-vercel-protection-bypass": bypass };
 }
 
 function observe(response, operation, trend, countAuthorization = true) {
@@ -314,7 +308,7 @@ export function handleSummary(data) {
     tursoRequests: metric(data, "turso_requests", "count"),
     portalOpens: metric(data, "student_portal_opens", "count"),
     tursoP95Ms: metric(data, "turso_duration", "p(95)", null),
-    vercelP95Ms: metric(data, "vercel_duration", "p(95)", null),
+    edgeP95Ms: metric(data, "edge_duration", "p(95)", null),
     firestoreP95Ms: metric(data, "firestore_duration", "p(95)", null),
     durationMs,
     startedAt: runtimeEnvironment.CAPACITY_STARTED_AT || null,

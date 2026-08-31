@@ -8,7 +8,7 @@ Una ejecución `full` aprobada demuestra, para el intervalo y la versión desple
 
 Una ejecución `smoke`, incompleta o fallida sólo valida el arnés o genera trabajo de remediación. Nunca se presenta como evidencia institucional aprobada.
 
-La primera ejecución institucional aprobada es [CEO-71 del 2026-08-31](evidence/ceo-71-2026-08-31.md), respaldada por [GitHub Actions #33399710498](https://github.com/CEOUBB/CEOUBB/actions/runs/33399710498).
+La primera ejecución institucional aprobada es [CEO-71 del 2026-08-31](evidence/ceo-71-2026-08-31.md), respaldada por [GitHub Actions #33399710498](https://github.com/CEOUBB/CEOUBB/actions/runs/33399710498). Esa evidencia corresponde al hosting Vercel del commit probado; el arnés reutilizable apunta al staging vigente en Cloudflare y una repetición futura debe identificarse como evidencia separada.
 
 ## Arquitectura de la prueba
 
@@ -16,7 +16,7 @@ El workflow `Capacidad institucional en staging` reparte seis shards entre seis 
 
 Cada sesión inicia con Firebase Auth y obtiene una sesión de aplicación real mediante `/api/auth/firebase`. El arnés exige exactamente 500 sesiones establecidas por shard. Los intentos iniciales fallidos se reintentan y se reportan como señal separada; sólo un 401/403 durante el trabajo posterior cuenta como error de autorización. Después mezcla:
 
-- apertura del portal y APIs paginadas de identidad, matrículas y cursos en Vercel/Turso;
+- apertura del portal y APIs paginadas de identidad, matrículas y cursos en Cloudflare/Turso;
 - consulta SQL directa y acotada a Turso para aislar su latencia;
 - lectura de 20 avisos, libro de calificaciones, nota individual, certamen publicado y borrador en Firestore;
 - actualización de un borrador de certamen existente en 10% de las acciones.
@@ -26,10 +26,9 @@ Los usuarios virtuales conservan la sesión y esperan entre 5 y 15 segundos entr
 ## Salvaguardas
 
 - `CONFIRM_STAGING` debe ser exactamente `STAGING_ONLY`.
-- Vercel debe ser `https://ceoubb-staging.vercel.app`.
+- Cloudflare debe ser `https://staging.ceoubb.com`.
 - Firebase debe ser `centro-de-estudio-ubb-staging`.
 - Turso debe usar el host `ceoubb-staging`.
-- El acceso a un deployment protegido usa un bypass aleatorio por shard, enmascarado y revocado en un paso `always()`.
 - Las contraseñas sintéticas se generan por ejecución, se guardan con permisos `0600`, no se publican como artefacto y se borran al terminar.
 - Las cuentas se crean o actualizan a un máximo coordinado cercano a ocho mutaciones por segundo entre los seis shards, con reintento exponencial ante cuotas transitorias de Identity Platform.
 - Email/password se habilita temporalmente sólo para las identidades sintéticas verificadas y se deshabilita en la consolidación.
@@ -45,7 +44,7 @@ Los prerequisitos del Environment `Staging` son:
 
 - federación OIDC ya configurada para `github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com`;
 - `TURSO_AUTH_TOKEN` de la base aislada;
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID` disponibles como secretos de repositorio;
+- `STAGING_FIREBASE_API_KEY` de la aplicación web Firebase aislada;
 - opcionalmente `TURSO_PLATFORM_API_TOKEN` y `TURSO_ORGANIZATION` para adjuntar el contador de uso de la API de Turso.
 
 ## Gates y consolidación
@@ -63,7 +62,7 @@ Cloud Monitoring puede retrasar los puntos hasta cuatro minutos. El recolector e
 
 ## Costo
 
-La proyección conserva el modelo de `capacity-cost-baseline.md`: 12.000 estudiantes, 20 ventanas punta equivalentes por año, CLP 1.000/USD y 25% de contingencia. Sustituye el volumen anual supuesto de operaciones por las lecturas y escrituras observadas durante la carga, anualizadas a 20 ventanas, y mantiene USD 4.017 para Vercel, Turso, almacenamiento, red y reservas no medidas en esta ejecución. Los créditos promocionales no reducen el run rate.
+La proyección conserva el modelo de `capacity-cost-baseline.md`: 12.000 estudiantes, 20 ventanas punta equivalentes por año, CLP 1.000/USD y 25% de contingencia. Sustituye el volumen anual supuesto de operaciones por las lecturas y escrituras observadas durante la carga, anualizadas a 20 ventanas, y mantiene USD 4.017 para hosting, Turso, almacenamiento, red y reservas no medidas en esta ejecución. Los créditos promocionales no reducen el run rate.
 
 La latencia y el volumen de solicitudes Turso sí se informan directamente desde k6. Si existe un token de plataforma, también se adjunta el delta de usage Turso; su ausencia no inventa un contador.
 

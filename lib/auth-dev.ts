@@ -33,9 +33,21 @@ export const DEV_TEST_USERS: Record<"student" | "teacher", DevTestUser> = {
 
 // Implements: REQ-AUTH-04, REQ-AUTH-06
 export function isDevOrPreviewAuthAllowed(
-  vercelEnv = process.env.VERCEL_ENV,
-  nodeEnv = process.env.NODE_ENV
+  environment = process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ||
+    process.env.CEOUBB_ENVIRONMENT ||
+    process.env.VERCEL_ENV,
+  nodeEnv = process.env.NODE_ENV,
+  host?: string
 ): boolean {
-  if (vercelEnv === "production") return false;
-  return nodeEnv === "development" || vercelEnv === "preview";
+  if (host) {
+    const cleanHost = host.split(":")[0]?.toLowerCase();
+    if (cleanHost === "ceoubb.com" || cleanHost === "www.ceoubb.com") {
+      return false;
+    }
+    if (cleanHost.endsWith(".workers.dev") || cleanHost === "staging.ceoubb.com") {
+      return true;
+    }
+  }
+  if (environment === "production") return false;
+  return nodeEnv === "development" || environment === "preview" || environment === "staging";
 }

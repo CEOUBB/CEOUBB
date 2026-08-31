@@ -48,7 +48,7 @@ Companion files:
 - [`openspec/specs/operations/capacity-cost/spec.md`](openspec/specs/operations/capacity-cost/spec.md): Operational contract for capacity, unit cost, and business continuity.
 - [`openspec/specs/editor/multimodal-authoring/spec.md`](openspec/specs/editor/multimodal-authoring/spec.md): Living contract for synchronized academic editor across Visual, Markdown + LaTeX, and Raw HTML modes.
 - [`docs/specs/p15-publication-wizard.md`](docs/specs/p15-publication-wizard.md): Verified contract for teacher 3-step publishing wizard, split-button, local preference, and silent alerts.
-- **Discord AI Bridges & Automation Suite**: Historical channel context injection in local bridges, disk session persistence (`.cache/`), `/doctor` and `/review-pr` command execution, and CI/CD webhook in `app/api/webhooks/github/route.ts`. **24/7 Cloud Assistant on Vercel Serverless** implemented in `app/api/discord/interactions/route.ts`.
+- **Discord AI Bridges & Automation Suite**: Historical channel context injection in local bridges, disk session persistence (`.cache/`), `/doctor` and `/review-pr` command execution, and CI/CD webhook in `app/api/webhooks/github/route.ts`. **24/7 Cloud Assistant on Edge Serverless** implemented in `app/api/discord/interactions/route.ts`.
 
 ## Active work
 
@@ -61,7 +61,7 @@ Companion files:
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore exports, Turso backups, stated RPO/RTO (CEO-6). Critical repository priority. Firebase, Turso, `firebase/functions/`
 - [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as a mandatory merge gate (CEO-70). `tests/`, `firebase/`
 - [NEXT] Execute production authentication, Storage, and push notification verification matrix on physical device (CEO-33). Web, Android, Firebase
-- [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Vercel, Android
+- [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Cloudflare, Android
 - [NEXT] **P1: Bandeja rápida de corrección docente con visor PDF integrado vía PDFSlick (CEO-78).** Felipe Arce. Visualización fluida de entregas de estudiantes con `@pdfslick/react` (SSR diferido), panel de nota y feedback privado en contexto. `app/views/classroom/`
 - [NEXT] **P1: Soporte de entregas grupales y asignación de equipos en evaluaciones (CEO-80).** Felipe Arce. Configuración grupal en buzones de entrega con réplica atómica de comprobantes, notas y retroalimentación. `app/views/classroom/`, `lib/`
 - [NEXT] **P2: Refactor(classroom): retirar pestaña volátil de Progreso y purgar tablas legacy en Turso (CEO-81).** Felipe Arce. Simplificación de navegación en el aula y purga de tablas residuales huérfanas (`posts`, `files`, `progress`). `app/views/classroom/`, `db/schema.ts`
@@ -71,13 +71,13 @@ Companion files:
 - [BACKLOG] "Mi Bodega" personal file locker (CEO-31). Deferred by decision; requires per-student quota and Storage cost estimation first. Firebase Storage, `firebase/storage.rules`
 - [BACKLOG] Calendar month view, recurring weekly class schedules, and drag-to-create/move in planner grid (CEO-72). Weekly view shipped with P2. `app/views/calendar/`
 - [BACKLOG] Interoperability: LTI 1.3, SCORM/xAPI runtime, IMS Common Cartridge, QTI (CEO-73; Moodle `.mbz` importer completed in CEO-39). Required for institutional adoption. New surface
-- [BACKLOG] Project owner: tenancy, licensing, and continuity dossier: transfer procedure for Firebase/Vercel/Turso, declared license or escrow, maintenance commitment, external penetration test (CEO-41). Governance
+- [BACKLOG] Project owner: tenancy, licensing, and continuity dossier: transfer procedure for Firebase/Cloudflare/Turso, declared license or escrow, maintenance commitment, external penetration test (CEO-41). Governance
 - [BACKLOG] Unit and instrumented testing suite for Android native shell (CEO-75 / P2). `android/`
 - [BACKLOG] Web Push notifications with VAPID keys for desktop browsers (CEO-76 / P2). Web, Firebase
 
 ## Production inventory: what is NOT done
 
-Everything not listed here is implemented and verified; the full historical inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and operational: `ceoubb.com` on Vercel with Turso libSQL, Firebase Auth with institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` Cloud Functions on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
+Everything not listed here is implemented and verified; the full historical inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and operational: `ceoubb.com` on Cloudflare Workers with Turso libSQL, Firebase Auth with institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` Cloud Functions on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
 
 - Web: app store badges remain non-clickable placeholders; local portal/library redesign uncommitted/undeployed.
 - Android: release AAB installation, Google Sign-In, upload/download, role behavior, account deletion, and FCM delivery **not verified** on a clean physical device (CEO-33). Bundled offline library remains on legacy maroon theme.
@@ -93,8 +93,8 @@ Detailed context and specifications reside in `docs/specs/`.
 - **Grade audit trail deployment**: PR #70 implements transactional, immutable logging, but production continues overwriting `grades/{uid}` until Functions/portal/index/rules are fully deployed; read-only history UI remains pending (CEO-69). -> P0.9
 - **No automated backups, unverified restore**: no scheduled Firestore exports, no automated Turso database backups, no restore drill executed (CEO-6). -> P0.8
 - **Rules lack emulator test coverage**: staging deploys and seeds prior to production, but Firestore and Storage rules lack automated Emulator Suite tests in CI (CEO-70). -> P0.10
-- **Capacity proof is staging-specific**: CEO-71 passed 3,000 authenticated sessions for 1,860 synchronized seconds with HTTP p95 472 ms, zero 5xx/authorization errors and CLP 425 projected infrastructure cost per student-year. This is not a production SLA; Turso platform row counters were unavailable and the RPO 1 h / RTO 4 h restoration drill remains unverified (CEO-6). -> P0.8
-- **Governance and continuity**: personal accounts for Firebase/Vercel/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization (CEO-41). -> P0B.4, P0B.6
+- **Capacity proof is staging-specific**: CEO-71 passed 3,000 authenticated sessions for 1,860 synchronized seconds with HTTP p95 472 ms, zero 5xx/authorization errors and CLP 425 projected infrastructure cost per student-year on the tested Vercel commit. This is not a production SLA; the later Cloudflare hosting migration needs separate latency evidence, Turso platform row counters were unavailable and the RPO 1 h / RTO 4 h restoration drill remains unverified (CEO-6). -> P0.8
+- **Governance and continuity**: personal accounts for Firebase/Cloudflare/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization (CEO-41). -> P0B.4, P0B.6
 - **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles, and native bridge differ. Single library copy in `public/biblioteca/` established as SSOT.
 - **Test coverage gaps**: no Firebase rule emulator tests (CEO-70), no Android unit/instrumentation tests (CEO-75), no multi-role end-to-end integration tests.
 - **Store distribution**: Play Console review, internal/closed testing tracks, listing assets, policy declarations, and final AAB verification remain (CEO-32); iOS application unbuilt (CEO-77).
@@ -191,6 +191,6 @@ Next recommended action:
 
 ## Next recommended step
 
-Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Vercel production deployment.
+Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.

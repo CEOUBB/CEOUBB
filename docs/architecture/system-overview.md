@@ -18,8 +18,8 @@ Centro de Estudio UBB is an institutional Learning Management System (LMS) desig
                  HTTPS / REST    │     Real-Time Listeners (onSnapshot)
                                  ▼
       ┌──────────────────────────────────────┐       ┌──────────────────────────────┐
-      │   Vercel Edge / Serverless API       │       │    Cloud Firestore Database  │
-      │   - Next.js 16 App Router            │       │   - Live Posts & Feed        │
+      │   Cloudflare Workers Edge API        │       │    Cloud Firestore Database  │
+      │   - Next.js 16 App Router (OpenNext) │       │   - Live Posts & Feed        │
       │   - Session Auth (Cookie / JWT)      │       │   - Weekly Calendar Events   │
       │   - Administrative Mutations         │       │   - Student Grade Overviews  │
       └──────────────┬───────────────────────┘       │   - Membership Projections   │

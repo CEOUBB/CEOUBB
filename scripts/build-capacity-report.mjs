@@ -76,7 +76,7 @@ ${claim}
 | Escrituras Firestore | ${format(evidence.firestoreWrites)} | observado |
 | Lecturas por apertura simulada | ${decimal(evidence.firestoreReadsPerPortalOpen)} | <= 200 |
 | Turso p95 directo | ${milliseconds(evidence.tursoP95Ms)} | informativo |
-| Vercel p95 | ${milliseconds(evidence.vercelP95Ms)} | <= 2.000 ms |
+| Cloudflare p95 | ${milliseconds(evidence.edgeP95Ms)} | <= 2.000 ms |
 | Firestore p95 cliente | ${milliseconds(evidence.firestoreP95Ms)} | informativo |
 | Solicitudes Turso | ${format(evidence.tursoRequests)} | observado |
 | Evaluaciones de reglas | ${format(telemetry.firestoreRuleEvaluations)} | observado |
@@ -97,11 +97,11 @@ La proyección usa 12.000 estudiantes activos, 20 ventanas punta equivalentes po
 - Los percentiles distribuidos usan el peor shard como gate conservador; los conteos se suman.
 - Los reintentos transitorios del establecimiento inicial de sesión se informan aparte; el gate de autorización cuenta sólo denegaciones 401/403 durante la navegación ya autenticada.
 - Cloud Monitoring incluye lecturas dependientes de reglas dentro del intervalo medido.
-- La latencia Turso directa se separa de las rutas Vercel que también consultan Turso.
+- La latencia Turso directa se separa de las rutas Cloudflare que también consultan Turso.
 - El resultado sigue siendo evidencia de staging, no un SLA contractual ni una garantía de producción.
 - RPO y RTO permanecen fuera de esta prueba y requieren el simulacro P0.8.
 
-Fuentes metodológicas: \`docs/operations/capacity-cost-baseline.md\`, [métricas Firestore](https://cloud.google.com/monitoring/api/metrics_gcp_d_h), [precios Firestore](https://cloud.google.com/firestore/pricing), [ejecución distribuida k6](https://grafana.com/docs/k6/latest/testing-guides/running-large-tests/), [usage Turso](https://docs.turso.tech/api-reference/databases/usage) y [bypass de automatización Vercel](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation).
+Fuentes metodológicas: \`docs/operations/capacity-cost-baseline.md\`, [métricas Firestore](https://cloud.google.com/monitoring/api/metrics_gcp_d_h), [precios Firestore](https://cloud.google.com/firestore/pricing), [ejecución distribuida k6](https://grafana.com/docs/k6/latest/testing-guides/running-large-tests/) y [usage Turso](https://docs.turso.tech/api-reference/databases/usage).
 `;
 }
 

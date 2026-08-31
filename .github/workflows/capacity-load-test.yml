@@ -43,8 +43,9 @@ jobs:
         shard: [0, 1, 2, 3, 4, 5]
     env:
       CONFIRM_STAGING: STAGING_ONLY
-      TARGET_URL: https://ceoubb-staging.vercel.app
+      TARGET_URL: https://staging.ceoubb.com
       FIREBASE_PROJECT_ID: centro-de-estudio-ubb-staging
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.STAGING_FIREBASE_API_KEY }}
       TURSO_DATABASE_URL: libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
       TURSO_HTTP_URL: https://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -53,9 +54,6 @@ jobs:
       CAPACITY_SHARD_COUNT: "6"
       CAPACITY_BARRIER_DELAY_SECONDS: "1200"
       CAPACITY_BARRIER_MAX_LATENESS_SECONDS: "15"
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,19 +79,10 @@ jobs:
           service_account: github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com
           token_format: access_token
 
-      - name: Pull isolated Vercel preview configuration
-        run: pnpm exec vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
-
-      - name: Create ephemeral Vercel automation bypass
-        id: bypass
-        run: node scripts/capacity-vercel-bypass.mjs generate
-
       - name: Wait for the staging alias
-        env:
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ steps.bypass.outputs.secret }}
         run: |
           for attempt in $(seq 1 18); do
-            status=$(curl --silent --output /dev/null --write-out "%{http_code}" --header "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET" "$TARGET_URL/")
+            status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$TARGET_URL/")
             if [ "$status" = "200" ]; then exit 0; fi
             sleep 10
           done
@@ -103,17 +92,6 @@ jobs:
         env:
           CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
         run: |
-          set -a
-          source .vercel/.env.preview.local
-          set +a
-          export CONFIRM_STAGING=STAGING_ONLY
-          export TARGET_URL=https://ceoubb-staging.vercel.app
-          export FIREBASE_PROJECT_ID=centro-de-estudio-ubb-staging
-          export TURSO_DATABASE_URL=libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
-          export TURSO_AUTH_TOKEN="${{ secrets.TURSO_AUTH_TOKEN }}"
-          export CAPACITY_PROFILE="${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}"
-          export CAPACITY_SHARD_INDEX=${{ matrix.shard }}
-          export CAPACITY_SHARD_COUNT=6
           pnpm run capacity:preflight
           pnpm run capacity:prepare
 
@@ -125,7 +103,6 @@ jobs:
         env:
           CAPACITY_PROFILE: smoke
           CAPACITY_SMOKE_DURATION: 20s
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ steps.bypass.outputs.secret }}
           CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
           CAPACITY_SUMMARY_PATH: ${{ github.workspace }}/.capacity/smoke-summary-${{ matrix.shard }}.json
         run: |
@@ -140,22 +117,15 @@ jobs:
 
       - name: Execute authenticated capacity shard
         env:
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ steps.bypass.outputs.secret }}
           CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
           CAPACITY_SUMMARY_PATH: ${{ github.workspace }}/.capacity/capacity-summary-${{ matrix.shard }}.json
         run: |
           export CAPACITY_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           k6 run load-tests/institutional-capacity.js
 
-      - name: Revoke ephemeral Vercel access
+      - name: Remove ephemeral credentials
         if: always()
-        env:
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ steps.bypass.outputs.secret }}
-        run: |
-          if [ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
-            node scripts/capacity-vercel-bypass.mjs revoke
-          fi
-          rm -f "${GITHUB_WORKSPACE}/.capacity/shard-${{ matrix.shard }}-credentials.json"
+        run: rm -f "${GITHUB_WORKSPACE}/.capacity/shard-${{ matrix.shard }}-credentials.json"
 
       - name: Upload shard summary
         if: always()

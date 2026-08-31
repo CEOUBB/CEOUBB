@@ -12,7 +12,7 @@ import { capacityBarrierSchedule } from "../scripts/capacity-wait-barrier.mjs";
 
 const canonicalTargets = {
   confirmation: "STAGING_ONLY",
-  targetUrl: "https://ceoubb-staging.vercel.app",
+  targetUrl: "https://staging.ceoubb.com",
   firebaseProjectId: "centro-de-estudio-ubb-staging",
   tursoDatabaseUrl: "libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io",
   shardIndex: 0,
@@ -22,7 +22,7 @@ const canonicalTargets = {
 
 test("capacity target guard only accepts canonical isolated staging", () => {
   assert.deepEqual(assertCapacityTargets(canonicalTargets), {
-    targetUrl: "https://ceoubb-staging.vercel.app/",
+    targetUrl: "https://staging.ceoubb.com/",
     firebaseProjectId: "centro-de-estudio-ubb-staging",
     tursoDatabaseUrl: "libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io",
     shardIndex: 0,
@@ -31,7 +31,7 @@ test("capacity target guard only accepts canonical isolated staging", () => {
   });
   for (const override of [
     { targetUrl: "https://ceoubb.com" },
-    { targetUrl: "https://ceoubb-staging.vercel.app.attacker.invalid" },
+    { targetUrl: "https://staging.ceoubb.com.attacker.invalid" },
     { firebaseProjectId: "centro-de-estudio-ubb" },
     { tursoDatabaseUrl: "libsql://ceoubb-production.turso.io" },
     { confirmation: "yes" },
@@ -213,7 +213,7 @@ test("k6 scenario covers portal, Turso, Firestore grades and quiz drafts", async
   assert.match(source, /courses\/.*grades/);
   assert.match(source, /quizzes/);
   assert.match(source, /drafts/);
-  assert.match(source, /x-vercel-protection-bypass/);
+  assert.match(source, /provider:\s*"cloudflare"/);
   assert.match(source, /http_req_duration.*p\(95\)<2000/);
   assert.match(source, /http_5xx.*rate<0\.001/);
   assert.match(source, /authenticated_sessions.*count==500/);
@@ -249,7 +249,7 @@ test("shared run barrier synchronizes shards and rejects late generators", () =>
   );
 });
 
-test("manual workflow distributes six shards and always cleans ephemeral access", async () => {
+test("manual workflow distributes six shards and always cleans ephemeral credentials", async () => {
   const workflow = await readFile(".github/workflows/capacity-load-test.yml", "utf8");
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /confirm_staging/);
@@ -260,7 +260,8 @@ test("manual workflow distributes six shards and always cleans ephemeral access"
   assert.match(workflow, /grafana\/setup-k6-action@v1/);
   assert.match(workflow, /capacity-wait-barrier\.mjs/);
   assert.match(workflow, /if:\s*always\(\)/);
-  assert.match(workflow, /revoke/);
+  assert.match(workflow, /staging\.ceoubb\.com/);
+  assert.doesNotMatch(workflow, /VERCEL_/);
   assert.match(workflow, /retention-days:\s*30/);
 });
 

@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
-import { waitUntil } from "@vercel/functions";
+import { after, NextRequest, NextResponse } from "next/server";
 import { verifyDiscordRequestSignature } from "../../../../lib/discord/signature";
 import { updateOriginalDiscordMessage } from "../../../../lib/discord/messages";
 import {
@@ -79,30 +78,28 @@ export async function POST(req: NextRequest) {
         }
 
         if (applicationId && interactionToken) {
-          waitUntil(
-            (async () => {
-              try {
-                const aiResponse = await processGeminiQueryWithTools(
-                  userPrompt,
-                  userDisplayName,
-                  channelId
-                );
-                const header = `> **Consulta:** ${userPrompt}\n\n`;
-                await updateOriginalDiscordMessage(
-                  applicationId,
-                  interactionToken,
-                  `${header}${aiResponse}`
-                );
-              } catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
-                await updateOriginalDiscordMessage(
-                  applicationId,
-                  interactionToken,
-                  `❌ Error procesando consulta con Gemini: ${msg}`
-                );
-              }
-            })()
-          );
+          after(async () => {
+            try {
+              const aiResponse = await processGeminiQueryWithTools(
+                userPrompt,
+                userDisplayName,
+                channelId
+              );
+              const header = `> **Consulta:** ${userPrompt}\n\n`;
+              await updateOriginalDiscordMessage(
+                applicationId,
+                interactionToken,
+                `${header}${aiResponse}`
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              await updateOriginalDiscordMessage(
+                applicationId,
+                interactionToken,
+                `❌ Error procesando consulta con Gemini: ${msg}`
+              );
+            }
+          });
 
           return NextResponse.json({
             type: 5,

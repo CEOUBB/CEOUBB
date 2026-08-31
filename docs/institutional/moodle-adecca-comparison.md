@@ -271,7 +271,7 @@ Standard evaluation checklist, none of it present today:
 
 ### 7.4 Capacity, cost and evidence
 
-CEO-9 defines the architecture and budget envelope. CEO-71 demonstrated the capacity and cost gates in Staging on 2026-08-31; this remains distinct from a production SLA. The reproducible model and source prices are in [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md), and the approved report is [`ceo-71-2026-08-31.md`](../operations/evidence/ceo-71-2026-08-31.md).
+CEO-9 defines the architecture and budget envelope. CEO-71 demonstrated the capacity and cost gates on the Vercel-based Staging commit tested on 2026-08-31; this remains distinct from a production SLA and does not certify the later Cloudflare hosting migration. The reproducible model and source prices are in [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md), and the approved report is [`ceo-71-2026-08-31.md`](../operations/evidence/ceo-71-2026-08-31.md).
 
 | Target                                          |                               Value | Evidence status                                     |
 | :---------------------------------------------- | ----------------------------------: | :-------------------------------------------------- |

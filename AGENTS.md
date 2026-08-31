@@ -63,7 +63,7 @@ Access to course data is granted **if and only if** an active enrollment project
 | **Firebase Region**        | `southamerica-west1`                                    |
 | **Default Storage Bucket** | `centro-de-estudio-ubb.firebasestorage.app`             |
 | **Android Application ID** | `cl.ubb.centroestudio` (minSdk 26)                      |
-| **Web Hosting**            | Vercel (`https://ceoubb.com`)                           |
+| **Web Hosting**            | Cloudflare Workers (`https://ceoubb.com`)               |
 | **Web Database**           | Turso/libSQL (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`) |
 | **Canonical Repository**   | `https://github.com/CEOUBB/CEOUBB.git` (branch `main`)  |
 

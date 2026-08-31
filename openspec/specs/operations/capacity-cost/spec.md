@@ -116,7 +116,7 @@ The system SHALL process external webhooks and interactive bots with parallel ne
 
 ### Requirement: Fail-Closed Capacity Target (REQ-OPS-LOAD-01)
 
-The capacity harness SHALL reject every target except the canonical Vercel, Firebase and Turso staging resources before it creates identities, fixtures, sessions or load.
+The capacity harness SHALL reject every target except the canonical Cloudflare, Firebase and Turso staging resources before it creates identities, fixtures, sessions or load.
 
 #### Scenario: A production resource is supplied
 
@@ -139,7 +139,7 @@ WHILE executing the full capacity profile, the harness SHALL distribute exactly 
 
 ### Requirement: Representative Student Workload (REQ-OPS-LOAD-03)
 
-WHEN an authenticated virtual student executes an iteration, the harness SHALL exercise Vercel navigation, Turso-backed enrollment/catalog routes, Firestore announcements, grade and quiz reads, and SHALL limit quiz-draft writes to at most ten percent of iterations.
+WHEN an authenticated virtual student executes an iteration, the harness SHALL exercise Cloudflare navigation, Turso-backed enrollment/catalog routes, Firestore announcements, grade and quiz reads, and SHALL limit quiz-draft writes to at most ten percent of iterations.
 
 #### Scenario: A student completes a load iteration
 
@@ -150,7 +150,7 @@ WHEN an authenticated virtual student executes an iteration, the harness SHALL e
 
 ### Requirement: Provider-Level Evidence (REQ-OPS-LOAD-04)
 
-WHEN a capacity run completes, the evidence pipeline SHALL report Vercel/Turso/Firestore latency, HTTP p95 and p99, 5xx rate, initial authentication attempt failures, authorization failures during authenticated work, distinct authenticated sessions, peak VUs, steady-state duration, Firestore document reads/writes and Turso request volume for the measured interval; it SHOULD add Turso row counters when platform telemetry is configured.
+WHEN a capacity run completes, the evidence pipeline SHALL report Cloudflare/Turso/Firestore latency, HTTP p95 and p99, 5xx rate, initial authentication attempt failures, authorization failures during authenticated work, distinct authenticated sessions, peak VUs, steady-state duration, Firestore document reads/writes and Turso request volume for the measured interval; it SHOULD add Turso row counters when platform telemetry is configured.
 
 #### Scenario: Six shard summaries are consolidated
 
@@ -174,11 +174,11 @@ WHEN provider counters and the load result are available, the reporter SHALL ann
 
 ### Requirement: Reproducible and Secret-Safe Execution (REQ-OPS-LOAD-06)
 
-WHERE the capacity workflow runs, it SHALL require an explicit staging confirmation, SHALL use only synthetic data, SHALL keep credentials out of artifacts and logs, and SHALL revoke every temporary Vercel bypass even after a failed load shard.
+WHERE the capacity workflow runs, it SHALL require an explicit staging confirmation, SHALL use only synthetic data, SHALL keep credentials out of artifacts and logs, and SHALL remove every local temporary credential even after a failed load shard.
 
 #### Scenario: A shard fails during steady state
 
-- **GIVEN** an ephemeral Vercel bypass and local Firebase credentials
+- **GIVEN** local temporary Firebase credentials
 - **WHEN** k6 exits with a threshold or runtime failure
-- **THEN** cleanup SHALL still revoke the bypass and remove the local credential file
+- **THEN** cleanup SHALL still remove the local credential file
 - **AND** the uploaded artifact SHALL contain only non-secret summaries and evidence

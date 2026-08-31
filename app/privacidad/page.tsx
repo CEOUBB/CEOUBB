@@ -179,7 +179,7 @@ function RetentionSection() {
       <p>
         La plataforma se apoya en Google Firebase para autenticación, base de datos operacional,
         almacenamiento de archivos y notificaciones; en Turso para la estructura académica
-        relacional; y en Vercel para publicar ceoubb.com. Cada proveedor procesa la información
+        relacional; y en Cloudflare para publicar ceoubb.com. Cada proveedor procesa la información
         conforme a sus propias condiciones y medidas de seguridad.
       </p>
       <p>

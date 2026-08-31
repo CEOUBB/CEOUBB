@@ -48,9 +48,6 @@ const nextConfig: NextConfig = {
     ],
   },
   productionBrowserSourceMaps: false,
-  env: {
-    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV ?? "",
-  },
   allowedDevOrigins: ["192.168.1.7", "192.168.1.*", "localhost", "127.0.0.1"],
   async headers() {
     return [
@@ -93,4 +90,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

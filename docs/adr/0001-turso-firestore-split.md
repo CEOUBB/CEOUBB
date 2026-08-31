@@ -14,7 +14,7 @@ El LMS CEOUBB requiere gestionar dos naturalezas distintas de datos con requerim
 1. **Estructura Académica Institucional:** Jerarquía relacional estricta compuesta por facultades, departamentos, carreras, asignaturas, períodos lectivos, secciones académicas y matrículas de estudiantes. Estos datos requieren integridad referencial relacional (claves foráneas, unicidad compuesta, transacciones ACID y esquemas versionados mediante migraciones SQL).
 2. **Operación del Aula en Tiempo Real:** Flujos de publicación de anuncios, archivos adjuntos en almacenamiento masivo, actualización de estados de lectura, notificaciones push inmediatas y control de acceso descentralizado a nivel de documento.
 
-El uso exclusivo de Firestore como base de datos única provocaba duplicación de datos de matrícula, dificultad para ejecutar consultas agregadas complejas (e.g. catálogos de cursos con filtros relacionales) y altos costos por operaciones de lectura en barridos globales. Por otro lado, usar una base de datos relacional tradicional para feeds en vivo exigía infraestructura de WebSockets compleja y costosa de mantener en Vercel Serverless.
+El uso exclusivo de Firestore como base de datos única provocaba duplicación de datos de matrícula, dificultad para ejecutar consultas agregadas complejas (e.g. catálogos de cursos con filtros relacionales) y altos costos por operaciones de lectura en barridos globales. Por otro lado, usar una base de datos relacional tradicional para feeds en vivo exigía infraestructura de WebSockets compleja y costosa de mantener en Edge Serverless.
 
 ---
 

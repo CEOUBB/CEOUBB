@@ -9,7 +9,7 @@ export const CAPACITY_REQUIREMENTS = Object.freeze([
 ]);
 
 export const CAPACITY_ENVELOPE = Object.freeze({
-  targetUrl: "https://ceoubb-staging.vercel.app/",
+  targetUrl: "https://staging.ceoubb.com/",
   firebaseProjectId: "centro-de-estudio-ubb-staging",
   shards: 6,
   studentsPerShard: 2_000,
@@ -50,7 +50,7 @@ export function assertCapacityTargets(configuration) {
   }
   if (
     targetUrl.protocol !== "https:" ||
-    targetUrl.hostname !== "ceoubb-staging.vercel.app" ||
+    targetUrl.hostname !== "staging.ceoubb.com" ||
     targetUrl.pathname !== "/" ||
     targetUrl.search ||
     targetUrl.hash
@@ -220,7 +220,7 @@ export function aggregateCapacityEvidence({
   const httpP95Ms = maximum(completeSummaries, "httpP95Ms");
   const httpP99Ms = maximum(completeSummaries, "httpP99Ms");
   const tursoP95Ms = maximum(completeSummaries, "tursoP95Ms");
-  const vercelP95Ms = maximum(completeSummaries, "vercelP95Ms");
+  const edgeP95Ms = maximum(completeSummaries, "edgeP95Ms");
   const firestoreP95Ms = maximum(completeSummaries, "firestoreP95Ms");
   const http5xxRate = httpRequests > 0 ? http5xx / httpRequests : null;
   const unexpectedResponseRate = httpRequests > 0 ? unexpectedResponses / httpRequests : null;
@@ -279,7 +279,7 @@ export function aggregateCapacityEvidence({
     portalOpens,
     tursoRequests: sum(completeSummaries, "tursoRequests"),
     tursoP95Ms,
-    vercelP95Ms,
+    edgeP95Ms,
     firestoreP95Ms,
     firestoreReads: hasProviderMetrics ? Number(firestoreReads) : null,
     firestoreWrites: hasProviderMetrics ? Number(firestoreWrites) : null,

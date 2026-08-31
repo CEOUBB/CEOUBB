@@ -74,7 +74,7 @@ Context: the callable Function and Android invocation exist, but `/eliminar-cuen
 
 CEO-9 fija la línea base. El detalle, las fórmulas, exclusiones, fuentes y protocolo de prueba viven en [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md); el contrato canónico es `operations/capacity-cost` en OpenSpec.
 
-Estado verificado el 2026-08-31 (CEO-71): la [evidencia aprobada](../operations/evidence/ceo-71-2026-08-31.md) sostuvo 3.000 sesiones autenticadas durante 1.860 segundos superpuestos, con HTTP p95 472 ms, cero 5xx y una proyección de CLP 425 por estudiante-año. El resultado corresponde a Staging y al commit probado; no demuestra disponibilidad mensual, producción ni RPO/RTO.
+Estado verificado el 2026-08-31 (CEO-71): la [evidencia aprobada](../operations/evidence/ceo-71-2026-08-31.md) sostuvo 3.000 sesiones autenticadas durante 1.860 segundos superpuestos, con HTTP p95 472 ms, cero 5xx y una proyección de CLP 425 por estudiante-año. El resultado corresponde al Staging Vercel y al commit probado antes de la migración a Cloudflare; no demuestra el nuevo hosting, disponibilidad mensual, producción ni RPO/RTO.
 
 | Target                                          |                               Value | Notes                                                              |
 | :---------------------------------------------- | ----------------------------------: | :----------------------------------------------------------------- |
@@ -148,7 +148,7 @@ Risk today: two maintainers with two different assistants can merge a rules chan
 ## P0.11 Staging environment
 
 - Second Firebase project for staging in `southamerica-west1`, own rules deploys, seeded emulator dataset.
-- Vercel preview environment pointed at a staging Turso database.
+- Cloudflare Preview y Staging apuntan a la base Turso aislada.
 - Production deploys only after the same change ran in staging.
 
 Acceptance: no rules or schema change reaches production without having run somewhere else first.
