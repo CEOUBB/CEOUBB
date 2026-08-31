@@ -33,7 +33,10 @@
     "bot:register": "node scripts/register-discord-commands.js",
     "bot:autostart:claude": "powershell -ExecutionPolicy Bypass -File scripts/setup-agent-autostart.ps1 -Agent claude",
     "bot:autostart:codex": "powershell -ExecutionPolicy Bypass -File scripts/setup-agent-autostart.ps1 -Agent codex",
-    "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-agent-autostart.ps1 -Agent antigravity"
+    "bot:autostart:antigravity": "powershell -ExecutionPolicy Bypass -File scripts/setup-agent-autostart.ps1 -Agent antigravity",
+    "cloudflare:build": "opennextjs-cloudflare build",
+    "cloudflare:preview": "opennextjs-cloudflare preview",
+    "cloudflare:deploy": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.4.0",
@@ -46,6 +49,7 @@
     "@capacitor/status-bar": "^8.0.3",
     "@google/genai": "^2.18.0",
     "@libsql/client": "^0.17.4",
+    "@opennextjs/cloudflare": "^1.20.4",
     "@phosphor-icons/react": "^2.1.10",
     "@sentry/nextjs": "^10.70.0",
     "@vercel/functions": "^3.9.5",
@@ -96,7 +100,8 @@
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
-    "vercel": "^59.3.0"
+    "vercel": "^59.3.0",
+    "wrangler": "^4.127.1"
   },
   "type": "module"
 }
