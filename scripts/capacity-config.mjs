@@ -206,6 +206,8 @@ export function aggregateCapacityEvidence({
   const completeSummaries = Array.isArray(summaries) ? summaries : [];
   const httpRequests = sum(completeSummaries, "httpRequests");
   const http5xx = sum(completeSummaries, "http5xx");
+  const authenticatedSessions = sum(completeSummaries, "authenticatedSessions");
+  const authenticationAttemptFailures = sum(completeSummaries, "authenticationAttemptFailures");
   const authorizationErrors = sum(completeSummaries, "authorizationErrors");
   const unexpectedResponses = sum(completeSummaries, "unexpectedResponses");
   const peakVirtualUsers = sum(completeSummaries, "peakVus");
@@ -227,9 +229,13 @@ export function aggregateCapacityEvidence({
   const cost = hasProviderMetrics ? projectAnnualCost({ firestoreReads, firestoreWrites }) : null;
   const firestoreReadsPerPortalOpen =
     hasProviderMetrics && portalOpens > 0 ? Number(firestoreReads) / portalOpens : null;
+  const hasAuthenticatedSessionMetrics = completeSummaries.every((summary) =>
+    Number.isFinite(summary.authenticatedSessions)
+  );
   const hardFailure =
     completeSummaries.some((summary) => summary.status === "FAIL") ||
     peakVirtualUsers < 3_000 ||
+    authenticatedSessions !== 3_000 ||
     steadyStateSeconds < CAPACITY_ENVELOPE.steadyStateSeconds ||
     httpP95Ms === null ||
     httpP95Ms > 2_000 ||
@@ -247,6 +253,7 @@ export function aggregateCapacityEvidence({
     new Set(completeSummaries.map((summary) => summary.shardIndex)).size !==
       CAPACITY_ENVELOPE.shards ||
     completeSummaries.some((summary) => summary.profile !== "full") ||
+    !hasAuthenticatedSessionMetrics ||
     !hasProviderMetrics ||
     httpP95Ms === null ||
     httpP99Ms === null ||
@@ -257,6 +264,8 @@ export function aggregateCapacityEvidence({
     finishedAt,
     executedShards: completeSummaries.length,
     peakVirtualUsers,
+    authenticatedSessions,
+    authenticationAttemptFailures,
     steadyStateSeconds,
     startSkewSeconds,
     httpRequests,

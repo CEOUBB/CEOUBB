@@ -36,13 +36,14 @@ WHEN an authenticated virtual student executes an iteration, the harness SHALL e
 
 ### Requirement: Provider-Level Evidence (REQ-OPS-LOAD-04)
 
-WHEN a capacity run completes, the evidence pipeline SHALL report Vercel/Turso/Firestore latency, HTTP p95 and p99, 5xx rate, authorization failures, peak sessions, steady-state duration, Firestore document reads/writes and Turso request volume for the measured interval; it SHOULD add Turso row counters when platform telemetry is configured.
+WHEN a capacity run completes, the evidence pipeline SHALL report Vercel/Turso/Firestore latency, HTTP p95 and p99, 5xx rate, initial authentication attempt failures, authorization failures during authenticated work, distinct authenticated sessions, peak VUs, steady-state duration, Firestore document reads/writes and Turso request volume for the measured interval; it SHOULD add Turso row counters when platform telemetry is configured.
 
 #### Scenario: Six shard summaries are consolidated
 
 - **GIVEN** one machine-readable summary from each generator and provider counter snapshots
 - **WHEN** the evidence report is built
 - **THEN** aggregate metrics SHALL preserve total counts and SHALL use the worst shard percentile as a conservative distributed gate
+- **AND** exactly 3,000 distinct sessions SHALL have completed authentication
 - **AND** HTTP 5xx and total unexpected response rates SHALL each remain below 0.1 percent while authorization failures SHALL remain zero
 - **AND** missing provider telemetry or required latency percentiles SHALL be represented as unavailable rather than zero
 

@@ -62,7 +62,9 @@ ${claim}
 | Indicador | Resultado | Meta |
 | :--- | ---: | ---: |
 | Shards ejecutados | ${evidence.executedShards} | 6 |
-| Sesiones concurrentes | ${format(evidence.peakVirtualUsers)} | 3.000 |
+| VU concurrentes máximos | ${format(evidence.peakVirtualUsers)} | 3.000 |
+| Sesiones autenticadas distintas | ${format(evidence.authenticatedSessions)} | 3.000 |
+| Reintentos de autenticación fallidos | ${format(evidence.authenticationAttemptFailures)} | observado |
 | Meseta | ${format(evidence.steadyStateSeconds)} s | >= 1.800 s |
 | Desfase de inicio entre shards | ${decimal(evidence.startSkewSeconds)} s | <= 60 s |
 | HTTP p95 conservador | ${milliseconds(evidence.httpP95Ms)} | <= 2.000 ms |
@@ -93,6 +95,7 @@ La proyección usa 12.000 estudiantes activos, 20 ventanas punta equivalentes po
 ## Interpretación
 
 - Los percentiles distribuidos usan el peor shard como gate conservador; los conteos se suman.
+- Los reintentos transitorios del establecimiento inicial de sesión se informan aparte; el gate de autorización cuenta sólo denegaciones 401/403 durante la navegación ya autenticada.
 - Cloud Monitoring incluye lecturas dependientes de reglas dentro del intervalo medido.
 - La latencia Turso directa se separa de las rutas Vercel que también consultan Turso.
 - El resultado sigue siendo evidencia de staging, no un SLA contractual ni una garantía de producción.

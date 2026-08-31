@@ -12,7 +12,7 @@ Una ejecución `smoke`, incompleta o fallida sólo valida el arnés o genera tra
 
 El workflow `Capacidad institucional en staging` reparte seis shards entre seis runners. Cada shard prepara 2.500 identidades, 2.000 estudiantes, 500 secciones, 12.000 matrículas y 500 usuarios virtuales activos. Los identificadores son deterministas y no se solapan entre shards; las escrituras son idempotentes y se agrupan en lotes máximos de 400. Después del smoke, todos esperan una barrera común derivada del inicio del mismo run; un shard que llegue con más de 15 segundos de atraso falla cerrado. Cada runner sostiene 31 minutos para garantizar al menos 30 minutos de superposición aun con el desfase admitido.
 
-Cada sesión inicia con Firebase Auth y obtiene una sesión de aplicación real mediante `/api/auth/firebase`. Después mezcla:
+Cada sesión inicia con Firebase Auth y obtiene una sesión de aplicación real mediante `/api/auth/firebase`. El arnés exige exactamente 500 sesiones establecidas por shard. Los intentos iniciales fallidos se reintentan y se reportan como señal separada; sólo un 401/403 durante el trabajo posterior cuenta como error de autorización. Después mezcla:
 
 - apertura del portal y APIs paginadas de identidad, matrículas y cursos en Vercel/Turso;
 - consulta SQL directa y acotada a Turso para aislar su latencia;
@@ -50,9 +50,9 @@ Los prerequisitos del Environment `Staging` son:
 
 El consolidador suma conteos y sesiones, pero usa el peor p95/p99 de los seis shards. El resultado `PASS` exige:
 
-- seis shards `full`, 3.000 VU y superposición de meseta mínima de 1.800 segundos;
+- seis shards `full`, exactamente 3.000 sesiones autenticadas, 3.000 VU y superposición de meseta mínima de 1.800 segundos;
 - p95 HTTP <= 2.000 ms y p99 <= 4.000 ms;
-- HTTP 5xx < 0,1%, respuestas HTTP/transportes inesperadas < 0,1% y cero errores de autorización;
+- HTTP 5xx < 0,1%, respuestas HTTP/transportes inesperadas < 0,1% y cero errores de autorización durante el trabajo autenticado;
 - lecturas Firestore por apertura simulada <= 200;
 - métricas de lecturas y escrituras entregadas por Cloud Monitoring;
 - proyección anual <= CLP 1.000 por estudiante.

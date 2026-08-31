@@ -55,6 +55,8 @@ type CapacityEvidence = {
   finishedAt: string;
   executedShards: number;
   peakVirtualUsers: number;
+  authenticatedSessions: number;
+  authenticationAttemptFailures: number;
   steadyStateSeconds: number;
   httpP95Ms: number | null;
   httpP99Ms: number | null;
@@ -76,19 +78,19 @@ type CapacityEvidence = {
 2. El preparador converge usuarios Firebase/Turso, secciones, matrículas, avisos, notas, certámenes y borradores sintéticos de su rango.
 3. El preparador emite localmente credenciales Firebase de una hora para 500 estudiantes activos; no las publica como artefactos.
 4. Después del smoke, los seis runners esperan una barrera común calculada desde `created_at` del mismo run; llegar más de 15 segundos tarde aborta el shard.
-5. Cada VU intercambia su credencial, crea su cookie de sesión mediante `/api/auth/firebase` y ejecuta navegación, catálogo y datos Firestore con su propia identidad.
+5. Cada VU reintenta el establecimiento inicial si es necesario, crea una sola cookie de sesión mediante `/api/auth/firebase` y sólo entonces ejecuta navegación, catálogo y datos Firestore con su propia identidad; el reporte separa esos reintentos de cualquier denegación posterior.
 6. El 10% determinista de las iteraciones actualiza únicamente el borrador sintético del propio estudiante.
 7. Al terminar, el shard revoca su bypass Vercel y elimina el archivo local de credenciales; los datos sintéticos permanecen idempotentes para repetir la medición.
 
 ## Métricas y costo
 
-| Fuente       | Medición                                     | Estrategia                                                                                                     |
-| :----------- | :------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| k6           | p95, p99, 5xx, autorizaciones, VU y duración | JSON por shard; sumas para conteos y máximo conservador entre shards para percentiles                          |
-| Firestore    | lecturas y escrituras exitosas               | Cloud Monitoring `document/read_count` y `document/write_count`, esperando la ventana de ingestión             |
-| Turso        | peticiones y latencia directa/API            | tags k6 separados; la API oficial de usage agrega filas leídas/escritas sólo cuando existe token de plataforma |
-| Vercel/Turso | latencia de HTML/API y API Turso             | tags k6 separados para navegador, rutas Turso y Firestore                                                      |
-| Costo        | CLP por estudiante-año                       | precios versionados del baseline, contadores medidos y supuestos explícitos de ventanas académicas             |
+| Fuente       | Medición                                                      | Estrategia                                                                                                     |
+| :----------- | :------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------- |
+| k6           | p95, p99, 5xx, autenticaciones, autorizaciones, VU y duración | JSON por shard; sumas para conteos y máximo conservador entre shards para percentiles                          |
+| Firestore    | lecturas y escrituras exitosas                                | Cloud Monitoring `document/read_count` y `document/write_count`, esperando la ventana de ingestión             |
+| Turso        | peticiones y latencia directa/API                             | tags k6 separados; la API oficial de usage agrega filas leídas/escritas sólo cuando existe token de plataforma |
+| Vercel/Turso | latencia de HTML/API y API Turso                              | tags k6 separados para navegador, rutas Turso y Firestore                                                      |
+| Costo        | CLP por estudiante-año                                        | precios versionados del baseline, contadores medidos y supuestos explícitos de ventanas académicas             |
 
 ## Seguridad y presupuestos
 
@@ -97,7 +99,7 @@ type CapacityEvidence = {
 - Los tokens Firebase y Turso nunca se incluyen en logs, resúmenes ni artefactos.
 - La escritura se limita al 10% de iteraciones y al borrador propio; no se relajan reglas.
 - El arnés descarta cuerpos no necesarios y usa consultas limitadas para mantener memoria y costos acotados.
-- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, respuestas HTTP o de transporte inesperadas < 0,1%, cero autorizaciones incorrectas, 3.000 VU y al menos 1.800 segundos de meseta superpuesta. Cada shard sostiene 1.860 segundos para absorber hasta 60 segundos de desfase sin reducir la meta institucional.
+- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, respuestas HTTP o de transporte inesperadas < 0,1%, cero autorizaciones incorrectas durante el trabajo, exactamente 3.000 sesiones autenticadas, 3.000 VU y al menos 1.800 segundos de meseta superpuesta. Cada shard sostiene 1.860 segundos para absorber hasta 60 segundos de desfase sin reducir la meta institucional.
 
 ## Taxonomía de errores
 

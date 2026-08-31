@@ -105,6 +105,8 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
     shardIndex,
     profile: "full",
     peakVus: 500,
+    authenticatedSessions: 500,
+    authenticationAttemptFailures: shardIndex === 0 ? 1 : 0,
     steadyStateSeconds: 1_860,
     startedAt: `2026-08-31T00:00:${String(shardIndex).padStart(2, "0")}.000Z`,
     httpRequests: 10_000,
@@ -125,6 +127,8 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
   });
   assert.equal(evidence.executedShards, 6);
   assert.equal(evidence.peakVirtualUsers, 3_000);
+  assert.equal(evidence.authenticatedSessions, 3_000);
+  assert.equal(evidence.authenticationAttemptFailures, 1);
   assert.equal(evidence.steadyStateSeconds, 1_855);
   assert.equal(evidence.startSkewSeconds, 5);
   assert.equal(evidence.httpP95Ms, 1_005);
@@ -132,6 +136,18 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
   assert.equal(evidence.tursoRequests, 6_000);
   assert.equal(evidence.verdict, "PASS");
   assert.equal(evidence.unexpectedResponseRate, 0);
+  assert.equal(
+    aggregateCapacityEvidence({
+      runId: "missing-authenticated-session",
+      summaries: summaries.map((summary, shardIndex) => ({
+        ...summary,
+        authenticatedSessions: shardIndex === 0 ? 499 : 500,
+      })),
+      firestoreReads: 100,
+      firestoreWrites: 10,
+    }).verdict,
+    "FAIL"
+  );
   assert.equal(
     aggregateCapacityEvidence({
       runId: "missing-shard",
@@ -200,6 +216,8 @@ test("k6 scenario covers portal, Turso, Firestore grades and quiz drafts", async
   assert.match(source, /x-vercel-protection-bypass/);
   assert.match(source, /http_req_duration.*p\(95\)<2000/);
   assert.match(source, /http_5xx.*rate<0\.001/);
+  assert.match(source, /authenticated_sessions.*count==500/);
+  assert.match(source, /authentication_attempt_failures/);
   assert.match(source, /unexpected_response_rate.*rate<0\.001/);
   assert.match(source, /summaryTrendStats:.*p\(99\)/);
 });

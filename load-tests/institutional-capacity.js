@@ -28,6 +28,8 @@ const tursoHttpUrl = (runtimeEnvironment.TURSO_HTTP_URL || "").replace(/\/$/, ""
 const bypass = runtimeEnvironment.VERCEL_AUTOMATION_BYPASS_SECRET;
 const http5xx = new Rate("http_5xx");
 const http5xxTotal = new Counter("http_5xx_total");
+const authenticatedSessions = new Counter("authenticated_sessions");
+const authenticationAttemptFailures = new Counter("authentication_attempt_failures");
 const authorizationErrors = new Counter("authorization_errors");
 const unexpectedResponses = new Counter("unexpected_responses");
 const unexpectedResponseRate = new Rate("unexpected_response_rate");
@@ -65,6 +67,7 @@ export const options = {
   thresholds: {
     http_req_duration: ["p(95)<2000", "p(99)<4000"],
     http_5xx: ["rate<0.001"],
+    authenticated_sessions: [profile === "full" ? "count==500" : "count==1"],
     authorization_errors: ["count==0"],
     unexpected_response_rate: ["rate<0.001"],
   },
@@ -98,10 +101,10 @@ function authenticate() {
     }),
     jsonParameters("firebase_auth")
   );
-  observe(identity, "firebase_auth");
+  observe(identity, "firebase_auth", undefined, false);
   check(identity, { "Firebase Auth entrega ID token": (response) => response.status === 200 });
   if (identity.status !== 200) {
-    authorizationErrors.add(1);
+    authenticationAttemptFailures.add(1, { operation: "firebase_auth" });
     return false;
   }
   idToken = identity.json("idToken");
@@ -110,14 +113,15 @@ function authenticate() {
     JSON.stringify({ idToken }),
     jsonParameters("vercel_auth")
   );
-  observe(application, "vercel_auth", vercelDuration);
+  observe(application, "vercel_auth", vercelDuration, false);
   check(application, { "Vercel crea sesión Turso": (response) => response.status === 200 });
   const cookie = application.cookies.centro_estudio_session?.[0]?.value;
   if (application.status !== 200 || !cookie) {
-    authorizationErrors.add(1);
+    authenticationAttemptFailures.add(1, { operation: "vercel_auth" });
     return false;
   }
   sessionCookie = `centro_estudio_session=${cookie}`;
+  authenticatedSessions.add(1);
   return true;
 }
 
@@ -265,12 +269,14 @@ function bypassHeaders() {
   return { "x-vercel-protection-bypass": bypass };
 }
 
-function observe(response, operation, trend) {
+function observe(response, operation, trend, countAuthorization = true) {
   const serverFailure = response.status >= 500;
   const unexpected = response.status < 200 || response.status >= 300;
   http5xx.add(serverFailure, { operation });
   if (serverFailure) http5xxTotal.add(1, { operation });
-  if (response.status === 401 || response.status === 403) authorizationErrors.add(1, { operation });
+  if (countAuthorization && (response.status === 401 || response.status === 403)) {
+    authorizationErrors.add(1, { operation });
+  }
   unexpectedResponseRate.add(unexpected, { operation });
   if (unexpected) {
     unexpectedResponses.add(1, { operation, status: String(response.status) });
@@ -280,6 +286,8 @@ function observe(response, operation, trend) {
 
 export function handleSummary(data) {
   const peakVus = metric(data, "vus", "max");
+  const authenticatedSessionCount = metric(data, "authenticated_sessions", "count");
+  const expectedAuthenticatedSessions = profile === "full" ? 500 : 1;
   const durationMs = Number(data.state?.testRunDurationMs || 0);
   const thresholdFailed = Object.values(data.metrics).some((item) =>
     Object.values(item.thresholds || {}).some((threshold) => threshold.ok === false)
@@ -288,8 +296,13 @@ export function handleSummary(data) {
     requirements: CAPACITY_K6_REQUIREMENTS,
     shardIndex,
     profile,
-    status: thresholdFailed ? "FAIL" : "PASS",
+    status:
+      thresholdFailed || authenticatedSessionCount !== expectedAuthenticatedSessions
+        ? "FAIL"
+        : "PASS",
     peakVus,
+    authenticatedSessions: authenticatedSessionCount,
+    authenticationAttemptFailures: metric(data, "authentication_attempt_failures", "count"),
     steadyStateSeconds: profile === "full" && peakVus >= 500 && durationMs >= 2_460_000 ? 1_860 : 0,
     httpRequests: metric(data, "http_reqs", "count"),
     http5xx: metric(data, "http_5xx_total", "count"),
