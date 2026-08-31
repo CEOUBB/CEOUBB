@@ -48,11 +48,26 @@ test("six deterministic shards form the institutional population without overlap
   const shards = Array.from({ length: 6 }, (_, shardIndex) =>
     buildCapacityShardFixture(shardIndex)
   );
-  assert.equal(shards.reduce((total, shard) => total + shard.students.length, 0), 12_000);
-  assert.equal(shards.reduce((total, shard) => total + shard.identities.length, 0), 15_000);
-  assert.equal(shards.reduce((total, shard) => total + shard.sections.length, 0), 3_000);
-  assert.equal(shards.reduce((total, shard) => total + shard.enrollments.length, 0), 72_000);
-  assert.equal(shards.reduce((total, shard) => total + shard.activeStudents.length, 0), 3_000);
+  assert.equal(
+    shards.reduce((total, shard) => total + shard.students.length, 0),
+    12_000
+  );
+  assert.equal(
+    shards.reduce((total, shard) => total + shard.identities.length, 0),
+    15_000
+  );
+  assert.equal(
+    shards.reduce((total, shard) => total + shard.sections.length, 0),
+    3_000
+  );
+  assert.equal(
+    shards.reduce((total, shard) => total + shard.enrollments.length, 0),
+    72_000
+  );
+  assert.equal(
+    shards.reduce((total, shard) => total + shard.activeStudents.length, 0),
+    3_000
+  );
   const allIds = shards.flatMap((shard) => shard.identities.map((identity) => identity.uid));
   assert.equal(new Set(allIds).size, allIds.length);
   for (const shard of shards) {
