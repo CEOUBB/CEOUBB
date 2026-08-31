@@ -5,6 +5,18 @@
   "compatibility_date": "2024-12-30",
   "compatibility_flags": ["nodejs_compat"],
   "minify": true,
+  "vars": {
+    "NEXT_PUBLIC_CEOUBB_ENVIRONMENT": "production",
+    "FIREBASE_PROJECT_ID": "centro-de-estudio-ubb",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "centro-de-estudio-ubb",
+    "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyDpFz07hwK_6gV7CPxmyq_P3DfkjKaAFKU",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "centro-de-estudio-ubb.firebaseapp.com",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "centro-de-estudio-ubb.firebasestorage.app",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "411177916202",
+    "NEXT_PUBLIC_FIREBASE_APP_ID": "1:411177916202:web:57986cb2e14d676fe93053",
+    "TURSO_DATABASE_URL": "libsql://ceoubb-ceoubb.aws-us-east-1.turso.io",
+    "TURSO_HTTP_URL": "https://ceoubb-ceoubb.aws-us-east-1.turso.io",
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
