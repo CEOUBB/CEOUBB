@@ -45,10 +45,12 @@ export function hashDireccion(direccion: string): string {
 
 /**
  * Dirección del cliente según las cabeceras del proxy. Se toma el primer salto
- * de `x-forwarded-for`, que es el único que Vercel garantiza como el cliente
- * real; los siguientes los puede escribir cualquiera.
+ * de `cf-connecting-ip` o `x-forwarded-for`, que garantiza el cliente real;
+ * los siguientes los puede escribir cualquiera.
  */
 export function direccionDeSolicitud(request: Request): string {
+  const cfIp = request.headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
   const reenviada = request.headers.get("x-forwarded-for");
   if (reenviada) {
     const primera = reenviada.split(",")[0]?.trim();
@@ -62,7 +64,7 @@ type ConteoReciente = { porOrigen: number; global: number };
 /**
  * Implements: REQ-SUP-04, REQ-SUP-10
  * Cuenta los envíos de la última hora. Se resuelve contra la base de datos y no
- * contra memoria del proceso porque Vercel levanta muchas instancias aisladas,
+ * contra memoria del proceso porque Cloudflare Workers levanta instancias aisladas en el Edge,
  * y un contador por instancia sería un límite solo de nombre.
  */
 export async function contarSolicitudesRecientes(ipHash: string): Promise<ConteoReciente> {

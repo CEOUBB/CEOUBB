@@ -23,7 +23,7 @@ Se decide **reemplazar la WebView artesanal por el runtime oficial de Capacitor 
 
 1. **Carga Remota del Portal de Producción:**
    - La aplicación móvil carga directamente `https://ceoubb.com` mediante la directiva `server.url` en `capacitor.config.ts`.
-   - Todas las actualizaciones de frontend desplegadas en Vercel están disponibles de forma instantánea para los usuarios móviles instalados.
+   - Todas las actualizaciones de frontend desplegadas en Cloudflare Workers están disponibles de forma instantánea para los usuarios móviles instalados.
 
 2. **Puente Nativo Modular y Desacoplado (`lib/mobile-bridge.ts`):**
    - Se implementan wrappers TypeScript para plugins oficiales de Capacitor:
@@ -54,5 +54,5 @@ Se decide **reemplazar la WebView artesanal por el runtime oficial de Capacitor 
 
 - **Dependencia de Conectividad Inicial:** Si el usuario abre la aplicación por primera vez en un entorno sin conexión antes de que el Service Worker se instale, se presenta la pantalla de fallback local.
   - _Mitigación:_ `capacitor/www/index.html` proporciona un estado visual amigable con botón de reintento automático.
-- **Riesgo de Despliegues Rotos en Producción:** Un error fatal en `main` desplegado en Vercel impacta inmediatamente a la base instalada.
+- **Riesgo de Despliegues Rotos en Producción:** Un error fatal en `main` desplegado en Cloudflare impacta inmediatamente a la base instalada.
   - _Mitigación:_ Compuertas de CI exhaustivas (`pnpm test`, `react-doctor`, `bundle-analysis`) y suites de pruebas unitarias automáticas previas a cada merge.

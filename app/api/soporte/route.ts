@@ -81,8 +81,8 @@ export async function POST(request: Request) {
     return aceptacionDiferida();
   }
 
-  // 4. Límite de envíos. Se resuelve contra la base de datos porque Vercel
-  // levanta muchas instancias aisladas y un contador en memoria del proceso
+  // 4. Límite de envíos. Se resuelve contra la base de datos porque el Edge
+  // levanta múltiples instancias aisladas y un contador en memoria del proceso
   // sería un límite solo de nombre.
   const ipHash = hashDireccion(direccionDeSolicitud(request));
 

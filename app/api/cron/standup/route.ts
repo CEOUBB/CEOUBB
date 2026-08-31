@@ -8,7 +8,7 @@ import {
 import { getGeminiClient, generateContentWithFallback } from "../../../../lib/services/gemini.ts";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // 60s max para Vercel Serverless
+export const maxDuration = 60; // 60s max para Edge / Serverless
 
 // IDs
 const PIPE_DISCORD_ID = "1150176313974460457";
@@ -91,7 +91,7 @@ function credentialMatches(header: string | null): boolean {
 }
 
 export async function GET(req: NextRequest) {
-  // Verificación de seguridad de Vercel Cron con comparación constante en tiempo
+  // Verificación de seguridad de Cron con comparación constante en tiempo
   // Implements: REQ-SEC-03
   if (!credentialMatches(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -201,7 +201,7 @@ Devuelve estrictamente un JSON válido:
       title: "☀️ CEOUBB Daily Standup: Apertura de Jornada (12:00 PM)",
       description: `${summaryText}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**Lanzador de Tareas para Agentes IA:**\nPresiona cualquier botón para recibir el prompt o comando git listo para usar.`,
       color: 0x0055b8, // UBB Blue
-      footer: { text: `CEOUBB LMS • Vercel Cron • Gemini (${usedModel})` },
+      footer: { text: `CEOUBB LMS • Cloudflare Cron • Gemini (${usedModel})` },
       timestamp: new Date().toISOString(),
     };
 
@@ -262,7 +262,7 @@ ESTRUCTURA:
       title: "🌙 CEOUBB Daily Standup: Cierre de Jornada (00:00 AM)",
       description: text.trim(),
       color: 0x0f172a, // Dark Slate
-      footer: { text: `CEOUBB LMS • Vercel Cron • Gemini (${usedModel})` },
+      footer: { text: `CEOUBB LMS • Cloudflare Cron • Gemini (${usedModel})` },
       timestamp: new Date().toISOString(),
     };
 

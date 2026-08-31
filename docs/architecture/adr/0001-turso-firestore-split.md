@@ -14,7 +14,7 @@ The CEOUBB platform manages two fundamentally distinct categories of data with d
 1. **Canonical Academic Relational Model:** Strict hierarchy comprising faculties, departments, degree programs, subjects, academic periods, course sections, and official student enrollments. This demands strict relational referential integrity, foreign key cascades, ACID transactions, and reproducible SQL schema migrations.
 2. **Real-Time Interactive Classroom:** Dynamic classroom post feeds, large file attachments, read receipt tracking, instant push notifications, and fine-grained document-level access control.
 
-Attempting to model everything inside Cloud Firestore led to data duplication, expensive global queries, and lack of relational schema guarantees. Conversely, using a traditional SQL database for real-time post streams required complex, cost-heavy WebSocket infrastructure on Vercel serverless.
+Attempting to model everything inside Cloud Firestore led to data duplication, expensive global queries, and lack of relational schema guarantees. Conversely, using a traditional SQL database for real-time post streams required complex, cost-heavy WebSocket infrastructure on serverless edge runtimes.
 
 ---
 
