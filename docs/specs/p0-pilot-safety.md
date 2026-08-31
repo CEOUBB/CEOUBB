@@ -74,17 +74,19 @@ Context: the callable Function and Android invocation exist, but `/eliminar-cuen
 
 CEO-9 fija la línea base. El detalle, las fórmulas, exclusiones, fuentes y protocolo de prueba viven en [`capacity-cost-baseline.md`](../operations/capacity-cost-baseline.md); el contrato canónico es `operations/capacity-cost` en OpenSpec.
 
-| Target                                          |                               Value | Notes                                                                     |
-| :---------------------------------------------- | ----------------------------------: | :------------------------------------------------------------------------ |
-| Concurrent students at peak (exam week)         |                               3.000 | 25% de la población activa; rampa ≤ 10 min y meseta de 30 min             |
-| Active course-sections per period               |                               3.000 | 2.400 derivadas de matrículas más 25% de holgura                          |
-| Active student-section enrollments              |                              72.000 | 12.000 estudiantes × 6 secciones                                          |
-| Total active students                           |                              12.000 | Envolvente de 15.000 identidades al incluir docentes y personal           |
-| Firestore reads per initial student portal load |                               ≤ 200 | Estudiante con hasta 8 secciones; incluye lecturas dependientes de reglas |
-| Storage stored / downloaded per academic month  |               1.000 GiB / 2.000 GiB | “Mi Bodega” continúa excluida                                             |
-| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1.000 ceiling** | Costo recurrente cloud, no costo total institucional                      |
-| Product availability                            |                       99,9% mensual | Máximo 43 min 12 s de caída no planificada en 30 días                     |
-| RPO / RTO                                       |                           1 h / 4 h | Objetivo, pendiente de simulacro P0.8                                     |
+Estado verificado el 2026-08-31 (CEO-71): la [evidencia aprobada](../operations/evidence/ceo-71-2026-08-31.md) sostuvo 3.000 sesiones autenticadas durante 1.860 segundos superpuestos, con HTTP p95 472 ms, cero 5xx y una proyección de CLP 425 por estudiante-año. El resultado corresponde al Staging Vercel y al commit probado antes de la migración a Cloudflare; no demuestra el nuevo hosting, disponibilidad mensual, producción ni RPO/RTO.
+
+| Target                                          |                               Value | Notes                                                              |
+| :---------------------------------------------- | ----------------------------------: | :----------------------------------------------------------------- |
+| Concurrent students at peak (exam week)         |                               3.000 | PASS Staging: 3.000 autenticadas y meseta superpuesta de 1.860 s   |
+| Active course-sections per period               |                               3.000 | 2.400 derivadas de matrículas más 25% de holgura                   |
+| Active student-section enrollments              |                              72.000 | 12.000 estudiantes × 6 secciones                                   |
+| Total active students                           |                              12.000 | Envolvente de 15.000 identidades al incluir docentes y personal    |
+| Firestore reads per initial student portal load |                               ≤ 200 | PASS Staging: 22,41 lecturas por apertura simulada                 |
+| Storage stored / downloaded per academic month  |               1.000 GiB / 2.000 GiB | “Mi Bodega” continúa excluida                                      |
+| **Infrastructure cost per student per year**    | **CLP 450 base; CLP 1.000 ceiling** | PASS Staging: CLP 425 proyectados; no es costo total institucional |
+| Product availability                            |                       99,9% mensual | Máximo 43 min 12 s de caída no planificada en 30 días              |
+| RPO / RTO                                       |                           1 h / 4 h | Objetivo, pendiente de simulacro P0.8                              |
 
 Requisitos operativos:
 
@@ -108,7 +110,7 @@ Scenario: La restauración demuestra continuidad
   And el registro perdido más reciente no debe superar 1 hora
 ```
 
-Acceptance: la especificación y el modelo quedan definidos con CEO-9. La capacidad, el SLO y la recuperación sólo pasan de “objetivo” a “demostrados” cuando staging aprueba la carga y el simulacro con los mismos umbrales; no se permite rebajarlos para aprobar.
+Acceptance: la capacidad y el costo P0.7 están demostrados en Staging por CEO-71 sin rebajar umbrales. El SLO mensual y la recuperación permanecen como objetivos hasta que sus mediciones y el simulacro P0.8 aprueben con los mismos umbrales.
 
 ## P0.8 Backups and a drilled restore
 
@@ -146,7 +148,7 @@ Risk today: two maintainers with two different assistants can merge a rules chan
 ## P0.11 Staging environment
 
 - Second Firebase project for staging in `southamerica-west1`, own rules deploys, seeded emulator dataset.
-- Vercel preview environment pointed at a staging Turso database.
+- Cloudflare Preview y Staging apuntan a la base Turso aislada.
 - Production deploys only after the same change ran in staging.
 
 Acceptance: no rules or schema change reaches production without having run somewhere else first.

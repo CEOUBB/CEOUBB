@@ -2,6 +2,35 @@
 
 Moved out of `PLAN.md` on 2026-08-12 so the live plan stays small. Nothing here is active work. Verbatim as written; read only when you need the history of a decision.
 
+## 2026-08-31: CEO-71 — arnés y evidencia de carga institucional P0.7
+
+```text
+Date: 2026-08-31
+Human maintainer: Juako
+AI assistant: Codex
+Branch: elpapijuaco325/ceo-71-implementar-arnes-y-ejecutar-pruebas-de-carga-para-3000 / PR #104
+Goal: implementar un arnés distribuido y demostrar 3.000 sesiones concurrentes durante 30 minutos en Staging.
+Files changed: load-tests/institutional-capacity.js, scripts/capacity-*.mjs,
+  .github/workflows/capacity-load-test.yml, tests/capacity-load-test.test.ts,
+  docs/operations/capacity-load-test.md, docs/operations/evidence/ceo-71-2026-08-31.{md,json},
+  docs/specs/p0-pilot-safety.md, docs/institutional/moodle-adecca-comparison.md, openspec/.
+External services changed: Staging recibió 15.000 identidades sintéticas, 12.000 estudiantes,
+  3.000 secciones y 72.000 matrículas idempotentes; Email/Password se habilitó sólo durante el run
+  y volvió a quedar deshabilitado; los seis bypasses Vercel fueron revocados. Producción no se modificó.
+Checks passed: GitHub Actions #33399710498 con 6/6 shards y consolidación PASS; 3.000 sesiones
+  autenticadas, meseta sincronizada de 1.860 s, p95 HTTP 472 ms, p99 785 ms, cero 5xx,
+  cero errores de autorización y cero respuestas inesperadas; 4.247.686 lecturas y 60.705
+  escrituras Firestore; proyección CLP 425 por estudiante-año. verify:fast 463/463, lint y
+  pnpm test con build Next.js 16.3 + 488/488.
+Checks not run: simulacro de restauración P0.8 y validación equivalente en producción.
+Production deployed: no; la prueba se limitó por guardas a ceoubb-staging.vercel.app,
+  centro-de-estudio-ubb-staging y ceoubb-staging Turso.
+Known risks: la evidencia es específica del commit y de Staging, no un SLA; Turso Platform Usage
+  no estaba configurado, por lo que se midieron solicitudes/latencia pero no filas del proveedor;
+  RPO 1 h y RTO 4 h siguen pendientes de CEO-6/P0.8.
+Next recommended action: fusionar PR #104 y ejecutar el simulacro de restauración P0.8 sin rebajar umbrales.
+```
+
 ## 2026-08-29: CEO-79 — motor de cuestionarios rápidos e importador GIFT/CSV
 
 ```text

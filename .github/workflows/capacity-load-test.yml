@@ -1,0 +1,213 @@
+name: Capacidad institucional en staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Perfil de ejecución
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+      confirm_staging:
+        description: Escriba STAGING_ONLY para confirmar el destino aislado
+        required: true
+        type: string
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: capacidad-institucional-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  load:
+    name: Shard ${{ matrix.shard }}
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.confirm_staging == 'STAGING_ONLY') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'elpapijuaco325/ceo-71-implementar-arnes-y-ejecutar-pruebas-de-carga-para-3000')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    environment: Staging
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    env:
+      CONFIRM_STAGING: STAGING_ONLY
+      TARGET_URL: https://staging.ceoubb.com
+      FIREBASE_PROJECT_ID: centro-de-estudio-ubb-staging
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.STAGING_FIREBASE_API_KEY }}
+      TURSO_DATABASE_URL: libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
+      TURSO_HTTP_URL: https://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      CAPACITY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}
+      CAPACITY_SHARD_INDEX: ${{ matrix.shard }}
+      CAPACITY_SHARD_COUNT: "6"
+      CAPACITY_BARRIER_DELAY_SECONDS: "1200"
+      CAPACITY_BARRIER_MAX_LATENESS_SECONDS: "15"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Authenticate staging with short-lived OIDC credentials
+        id: google-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: centro-de-estudio-ubb-staging
+          workload_identity_provider: projects/500468423377/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: Wait for the staging alias
+        run: |
+          for attempt in $(seq 1 18); do
+            status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$TARGET_URL/")
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          exit 1
+
+      - name: Validate staging and prepare deterministic fixtures
+        env:
+          CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
+        run: |
+          pnpm run capacity:preflight
+          pnpm run capacity:prepare
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Execute shard smoke gate
+        if: env.CAPACITY_PROFILE == 'full'
+        env:
+          CAPACITY_PROFILE: smoke
+          CAPACITY_SMOKE_DURATION: 20s
+          CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
+          CAPACITY_SUMMARY_PATH: ${{ github.workspace }}/.capacity/smoke-summary-${{ matrix.shard }}.json
+        run: |
+          export CAPACITY_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          k6 run load-tests/institutional-capacity.js
+
+      - name: Synchronize full-load start
+        if: env.CAPACITY_PROFILE == 'full'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/capacity-wait-barrier.mjs
+
+      - name: Execute authenticated capacity shard
+        env:
+          CAPACITY_CREDENTIAL_PATH: ${{ github.workspace }}/.capacity/shard-${{ matrix.shard }}-credentials.json
+          CAPACITY_SUMMARY_PATH: ${{ github.workspace }}/.capacity/capacity-summary-${{ matrix.shard }}.json
+        run: |
+          export CAPACITY_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          k6 run load-tests/institutional-capacity.js
+
+      - name: Remove ephemeral credentials
+        if: always()
+        run: rm -f "${GITHUB_WORKSPACE}/.capacity/shard-${{ matrix.shard }}-credentials.json"
+
+      - name: Upload shard summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacity-shard-${{ matrix.shard }}
+          path: .capacity/capacity-summary-${{ matrix.shard }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  consolidate:
+    name: Consolidar evidencia y costo
+    needs: load
+    if: always() && needs.load.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Staging
+    env:
+      FIREBASE_PROJECT_ID: centro-de-estudio-ubb-staging
+      CAPACITY_RESULTS_DIRECTORY: .capacity/results
+      CAPACITY_TELEMETRY_PATH: .capacity/telemetry.json
+      CAPACITY_EVIDENCE_JSON: .capacity/evidence/capacity-evidence.json
+      CAPACITY_EVIDENCE_MARKDOWN: .capacity/evidence/capacity-evidence.md
+      CAPACITY_RUN_ID: github-${{ github.run_id }}-${{ github.run_attempt }}
+      CAPACITY_ALLOW_INCOMPLETE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'smoke' && '1' || '0' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download shard summaries
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: capacity-shard-*
+          path: .capacity/results
+          merge-multiple: true
+
+      - name: Authenticate telemetry collector
+        id: google-auth
+        if: always()
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: centro-de-estudio-ubb-staging
+          workload_identity_provider: projects/500468423377/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: github-staging-deployer@centro-de-estudio-ubb-staging.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: Collect delayed provider telemetry
+        continue-on-error: true
+        env:
+          FIREBASE_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
+          TURSO_PLATFORM_API_TOKEN: ${{ secrets.TURSO_PLATFORM_API_TOKEN }}
+          TURSO_ORGANIZATION: ${{ secrets.TURSO_ORGANIZATION }}
+        run: pnpm run capacity:telemetry
+
+      - name: Build decision report
+        run: pnpm run capacity:report
+
+      - name: Disable synthetic password provider
+        if: always()
+        run: pnpm run capacity:disable-auth
+
+      - name: Upload capacity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacity-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .capacity/evidence/
+            .capacity/telemetry.json
+            .capacity/results/
+          if-no-files-found: warn
+          retention-days: 30

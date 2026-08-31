@@ -19,6 +19,7 @@ Companion files:
 - [`docs/institutional/moodle-adecca-comparison.md`](docs/institutional/moodle-adecca-comparison.md): Moodle & Adecca institutional comparison and adoption dossier.
 - [`docs/legal/README.md`](docs/legal/README.md): Legal draft folder for UBB/CEOUBB data processing agreement, retention, data subject rights, residency/subprocessors, and service termination.
 - [`docs/operations/capacity-cost-baseline.md`](docs/operations/capacity-cost-baseline.md): Capacity envelope for 12,000 students, 3,000 sections, 3,000 concurrent sessions; CLP 450 base / CLP 1,000 ceiling per student-year; SLOs, RPO/RTO, and evidence protocol.
+- [`docs/operations/evidence/ceo-71-2026-08-31.md`](docs/operations/evidence/ceo-71-2026-08-31.md): Approved staging evidence for 3,000 authenticated sessions over a 31-minute synchronized plateau, provider telemetry, latency gates, and CLP 425 projected infrastructure cost per student-year.
 - [`docs/specs/p0-pilot-safety.md`](docs/specs/p0-pilot-safety.md): P0.1-P0.11 detail and acceptance criteria.
 - [`docs/specs/p0b-adoption.md`](docs/specs/p0b-adoption.md): P0B.1-P0B.7 institutional adoption dossier.
 - [`docs/specs/p0-react-doctor-remediation.md`](docs/specs/p0-react-doctor-remediation.md): React Doctor quality & frontend reliability remediation spec (SDD).
@@ -59,7 +60,6 @@ Companion files:
 - [NEXT] Deploy and conclude operational milestone P0.9: surface read-only grade history UI for teachers (CEO-69); run multi-role matrix. `app/views/classroom/`
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore exports, Turso backups, stated RPO/RTO (CEO-6). Critical repository priority. Firebase, Turso, `firebase/functions/`
 - [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as a mandatory merge gate (CEO-70). `tests/`, `firebase/`
-- [NEXT] Demonstrate P0.7 in staging: 3,000 concurrent sessions for 30 minutes, initial launch <= 200 Firestore reads, p95 <= 2s, 5xx < 0.1%, annualized cost <= CLP 1,000 per student, and simulated RPO 1h / RTO 4h drill (CEO-71). `docs/operations/capacity-cost-baseline.md`, staging, billing export
 - [NEXT] Execute production authentication, Storage, and push notification verification matrix on physical device (CEO-33). Web, Android, Firebase
 - [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Cloudflare, Android
 - [NEXT] **P1: Bandeja rápida de corrección docente con visor PDF integrado vía PDFSlick (CEO-78).** Felipe Arce. Visualización fluida de entregas de estudiantes con `@pdfslick/react` (SSR diferido), panel de nota y feedback privado en contexto. `app/views/classroom/`
@@ -93,7 +93,7 @@ Detailed context and specifications reside in `docs/specs/`.
 - **Grade audit trail deployment**: PR #70 implements transactional, immutable logging, but production continues overwriting `grades/{uid}` until Functions/portal/index/rules are fully deployed; read-only history UI remains pending (CEO-69). -> P0.9
 - **No automated backups, unverified restore**: no scheduled Firestore exports, no automated Turso database backups, no restore drill executed (CEO-6). -> P0.8
 - **Rules lack emulator test coverage**: staging deploys and seeds prior to production, but Firestore and Storage rules lack automated Emulator Suite tests in CI (CEO-70). -> P0.10
-- **Capacity targets unverified under load**: CEO-9 specifies 12,000 students, 3,000 sections, 3,000 concurrent sessions, CLP 450 base / CLP 1,000 ceiling, and RPO 1h / RTO 4h. Load test, measured paid costs, and staging restore drill remain to be demonstrated (CEO-71). -> P0.7, P0.8
+- **Capacity proof is staging-specific**: CEO-71 passed 3,000 authenticated sessions for 1,860 synchronized seconds with HTTP p95 472 ms, zero 5xx/authorization errors and CLP 425 projected infrastructure cost per student-year on the tested Vercel commit. This is not a production SLA; the later Cloudflare hosting migration needs separate latency evidence, Turso platform row counters were unavailable and the RPO 1 h / RTO 4 h restoration drill remains unverified (CEO-6). -> P0.8
 - **Governance and continuity**: personal accounts for Firebase/Cloudflare/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization (CEO-41). -> P0B.4, P0B.6
 - **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles, and native bridge differ. Single library copy in `public/biblioteca/` established as SSOT.
 - **Test coverage gaps**: no Firebase rule emulator tests (CEO-70), no Android unit/instrumentation tests (CEO-75), no multi-role end-to-end integration tests.
@@ -112,7 +112,7 @@ Detailed context and specifications reside in `docs/specs/`.
 3. Establish automated backups and execute a drilled restoration (CEO-6) before instructors input authentic grade records.
 4. Complete P0.5 prior to expanding beta cohort; P0.4 billing alerts are active.
 5. Deploy grade audit trail (CEO-7); execute multi-role matrix; expose read-only grade history UI (CEO-69).
-6. Execute P0.7 load test in staging against CEO-9 targets (CEO-71); complete P0.8 restoration drill.
+6. Preserve the approved P0.7 capacity evidence from CEO-71 and complete the P0.8 restoration drill.
 7. Complete Google Play testing and store submission pipeline (CEO-32).
 8. Formalize iOS architecture decisions and initiate native build track (CEO-77).
 
@@ -193,4 +193,4 @@ Next recommended action:
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
-In parallel, the owner starts P0B.7 item 1 (pilot authorization), provisions staging, and schedules the P0.7 load test plus the P0.8 restoration drill against published targets.
+In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.

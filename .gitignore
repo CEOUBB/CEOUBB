@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.capacity/
 
 # typescript
 *.tsbuildinfo
@@ -77,4 +78,4 @@ serviceAccountKey.json
 .cache/
 skills-lock.json
 capturas-mobile/
-strix_runs/
+strix_runs/
