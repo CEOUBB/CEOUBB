@@ -12,6 +12,10 @@
       "pattern": "ceoubb.com",
       "custom_domain": true,
     },
+    {
+      "pattern": "www.ceoubb.com",
+      "custom_domain": true,
+    },
   ],
   "observability": {
     "enabled": false,
