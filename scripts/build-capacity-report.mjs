@@ -68,7 +68,7 @@ ${claim}
 | HTTP p99 conservador | ${milliseconds(evidence.httpP99Ms)} | <= 4.000 ms |
 | HTTP 5xx | ${percentage(evidence.http5xxRate)} | < 0,1% |
 | Errores de autorización | ${format(evidence.authorizationErrors)} | 0 |
-| Respuestas HTTP inesperadas | ${format(evidence.unexpectedResponses)} | 0 |
+| Respuestas HTTP inesperadas | ${format(evidence.unexpectedResponses)} (${percentage(evidence.unexpectedResponseRate)}) | < 0,1% |
 | Lecturas Firestore | ${format(evidence.firestoreReads)} | observado |
 | Escrituras Firestore | ${format(evidence.firestoreWrites)} | observado |
 | Lecturas por apertura simulada | ${decimal(evidence.firestoreReadsPerPortalOpen)} | <= 200 |

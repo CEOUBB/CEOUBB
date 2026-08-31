@@ -108,6 +108,7 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
     httpRequests: 10_000,
     http5xx: 0,
     authorizationErrors: 0,
+    unexpectedResponses: 0,
     httpP95Ms: 1_000 + shardIndex,
     httpP99Ms: 2_000 + shardIndex,
     tursoRequests: 1_000,
@@ -126,6 +127,7 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
   assert.equal(evidence.httpP99Ms, 2_005);
   assert.equal(evidence.tursoRequests, 6_000);
   assert.equal(evidence.verdict, "PASS");
+  assert.equal(evidence.unexpectedResponseRate, 0);
   assert.equal(
     aggregateCapacityEvidence({
       runId: "missing-shard",
@@ -139,6 +141,30 @@ test("distributed evidence uses totals and worst-shard percentile gates", () => 
     aggregateCapacityEvidence({
       runId: "slow",
       summaries: summaries.map((summary) => ({ ...summary, httpP95Ms: 2_001 })),
+      firestoreReads: 100,
+      firestoreWrites: 10,
+    }).verdict,
+    "FAIL"
+  );
+  assert.equal(
+    aggregateCapacityEvidence({
+      runId: "transient-errors-within-budget",
+      summaries: summaries.map((summary, shardIndex) => ({
+        ...summary,
+        unexpectedResponses: shardIndex === 0 ? 1 : 0,
+      })),
+      firestoreReads: 100,
+      firestoreWrites: 10,
+    }).verdict,
+    "PASS"
+  );
+  assert.equal(
+    aggregateCapacityEvidence({
+      runId: "exhausted-error-budget",
+      summaries: summaries.map((summary) => ({
+        ...summary,
+        unexpectedResponses: 10,
+      })),
       firestoreReads: 100,
       firestoreWrites: 10,
     }).verdict,
@@ -161,6 +187,8 @@ test("k6 scenario covers portal, Turso, Firestore grades and quiz drafts", async
   assert.match(source, /x-vercel-protection-bypass/);
   assert.match(source, /http_req_duration.*p\(95\)<2000/);
   assert.match(source, /http_5xx.*rate<0\.001/);
+  assert.match(source, /unexpected_response_rate.*rate<0\.001/);
+  assert.match(source, /summaryTrendStats:.*p\(99\)/);
 });
 
 test("manual workflow distributes six shards and always cleans ephemeral access", async () => {

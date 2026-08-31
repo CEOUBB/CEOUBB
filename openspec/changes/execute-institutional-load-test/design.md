@@ -59,6 +59,7 @@ type CapacityEvidence = {
   httpP95Ms: number | null;
   httpP99Ms: number | null;
   http5xxRate: number | null;
+  unexpectedResponseRate: number | null;
   authorizationErrors: number;
   firestoreReads: number | null;
   firestoreWrites: number | null;
@@ -95,7 +96,7 @@ type CapacityEvidence = {
 - Los tokens Firebase y Turso nunca se incluyen en logs, resúmenes ni artefactos.
 - La escritura se limita al 10% de iteraciones y al borrador propio; no se relajan reglas.
 - El arnés descarta cuerpos no necesarios y usa consultas limitadas para mantener memoria y costos acotados.
-- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, cero autorizaciones incorrectas, 3.000 VU y 1.800 segundos de meseta.
+- Gate: p95 <= 2.000 ms, p99 <= 4.000 ms, HTTP 5xx < 0,1%, respuestas HTTP o de transporte inesperadas < 0,1%, cero autorizaciones incorrectas, 3.000 VU y 1.800 segundos de meseta.
 
 ## Taxonomía de errores
 

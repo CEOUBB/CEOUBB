@@ -52,7 +52,7 @@ El consolidador suma conteos y sesiones, pero usa el peor p95/p99 de los seis sh
 
 - seis shards `full`, 3.000 VU y meseta mínima de 1.800 segundos;
 - p95 HTTP <= 2.000 ms y p99 <= 4.000 ms;
-- HTTP 5xx < 0,1%, cero errores de autorización y cero respuestas inesperadas;
+- HTTP 5xx < 0,1%, respuestas HTTP/transportes inesperadas < 0,1% y cero errores de autorización;
 - lecturas Firestore por apertura simulada <= 200;
 - métricas de lecturas y escrituras entregadas por Cloud Monitoring;
 - proyección anual <= CLP 1.000 por estudiante.

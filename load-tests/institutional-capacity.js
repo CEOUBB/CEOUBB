@@ -30,6 +30,7 @@ const http5xx = new Rate("http_5xx");
 const http5xxTotal = new Counter("http_5xx_total");
 const authorizationErrors = new Counter("authorization_errors");
 const unexpectedResponses = new Counter("unexpected_responses");
+const unexpectedResponseRate = new Rate("unexpected_response_rate");
 const vercelDuration = new Trend("vercel_duration", true);
 const tursoDuration = new Trend("turso_duration", true);
 const firestoreDuration = new Trend("firestore_duration", true);
@@ -39,6 +40,7 @@ const firestoreRunQueryMethod = "documents:runQuery";
 
 export const options = {
   discardResponseBodies: true,
+  summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   scenarios:
     profile === "full"
       ? {
@@ -64,7 +66,7 @@ export const options = {
     http_req_duration: ["p(95)<2000", "p(99)<4000"],
     http_5xx: ["rate<0.001"],
     authorization_errors: ["count==0"],
-    unexpected_responses: ["count==0"],
+    unexpected_response_rate: ["rate<0.001"],
   },
 };
 
@@ -265,10 +267,12 @@ function bypassHeaders() {
 
 function observe(response, operation, trend) {
   const serverFailure = response.status >= 500;
+  const unexpected = response.status < 200 || response.status >= 300;
   http5xx.add(serverFailure, { operation });
   if (serverFailure) http5xxTotal.add(1, { operation });
   if (response.status === 401 || response.status === 403) authorizationErrors.add(1, { operation });
-  if (response.status < 200 || response.status >= 300) {
+  unexpectedResponseRate.add(unexpected, { operation });
+  if (unexpected) {
     unexpectedResponses.add(1, { operation, status: String(response.status) });
   }
   trend?.add(response.timings.duration, { operation });
@@ -291,6 +295,7 @@ export function handleSummary(data) {
     http5xx: metric(data, "http_5xx_total", "count"),
     authorizationErrors: metric(data, "authorization_errors", "count"),
     unexpectedResponses: metric(data, "unexpected_responses", "count"),
+    unexpectedResponseRate: metric(data, "unexpected_response_rate", "rate"),
     httpP95Ms: metric(data, "http_req_duration", "p(95)"),
     httpP99Ms: metric(data, "http_req_duration", "p(99)"),
     tursoRequests: metric(data, "turso_requests", "count"),

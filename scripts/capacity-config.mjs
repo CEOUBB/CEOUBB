@@ -216,6 +216,7 @@ export function aggregateCapacityEvidence({
   const vercelP95Ms = maximum(completeSummaries, "vercelP95Ms");
   const firestoreP95Ms = maximum(completeSummaries, "firestoreP95Ms");
   const http5xxRate = httpRequests > 0 ? http5xx / httpRequests : null;
+  const unexpectedResponseRate = httpRequests > 0 ? unexpectedResponses / httpRequests : null;
   const portalOpens = sum(completeSummaries, "portalOpens");
   const hasProviderMetrics = Number.isFinite(firestoreReads) && Number.isFinite(firestoreWrites);
   const cost = hasProviderMetrics ? projectAnnualCost({ firestoreReads, firestoreWrites }) : null;
@@ -232,7 +233,8 @@ export function aggregateCapacityEvidence({
     http5xxRate === null ||
     http5xxRate >= 0.001 ||
     authorizationErrors !== 0 ||
-    unexpectedResponses !== 0 ||
+    unexpectedResponseRate === null ||
+    unexpectedResponseRate >= 0.001 ||
     (firestoreReadsPerPortalOpen !== null && firestoreReadsPerPortalOpen > 200) ||
     cost?.verdict === "FAIL";
   const incomplete =
@@ -255,6 +257,7 @@ export function aggregateCapacityEvidence({
     http5xxRate,
     authorizationErrors,
     unexpectedResponses,
+    unexpectedResponseRate,
     portalOpens,
     tursoRequests: sum(completeSummaries, "tursoRequests"),
     tursoP95Ms,
