@@ -154,592 +154,35 @@ const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
   shell: "bash",
 };
 
-const KEYWORDS: Record<Exclude<CodeLanguage, "plain" | "html" | "css" | "json">, Set<string>> = {
-  matlab: new Set([
-    "break",
-    "case",
-    "catch",
-    "classdef",
-    "continue",
-    "else",
-    "elseif",
-    "end",
-    "for",
-    "function",
-    "global",
-    "if",
-    "otherwise",
-    "parfor",
-    "persistent",
-    "return",
-    "spmd",
-    "switch",
-    "try",
-    "while",
-  ]),
-  python: new Set([
-    "and",
-    "as",
-    "assert",
-    "async",
-    "await",
-    "break",
-    "case",
-    "class",
-    "continue",
-    "def",
-    "del",
-    "elif",
-    "else",
-    "except",
-    "finally",
-    "for",
-    "from",
-    "global",
-    "if",
-    "import",
-    "in",
-    "is",
-    "lambda",
-    "match",
-    "nonlocal",
-    "not",
-    "or",
-    "pass",
-    "raise",
-    "return",
-    "try",
-    "while",
-    "with",
-    "yield",
-  ]),
-  cpp: new Set([
-    "alignas",
-    "alignof",
-    "asm",
-    "auto",
-    "break",
-    "case",
-    "catch",
-    "class",
-    "concept",
-    "const",
-    "consteval",
-    "constexpr",
-    "constinit",
-    "continue",
-    "co_await",
-    "co_return",
-    "co_yield",
-    "decltype",
-    "default",
-    "delete",
-    "do",
-    "else",
-    "enum",
-    "explicit",
-    "export",
-    "extern",
-    "for",
-    "friend",
-    "goto",
-    "if",
-    "inline",
-    "namespace",
-    "new",
-    "noexcept",
-    "operator",
-    "private",
-    "protected",
-    "public",
-    "requires",
-    "return",
-    "sizeof",
-    "static",
-    "struct",
-    "switch",
-    "template",
-    "this",
-    "throw",
-    "try",
-    "typedef",
-    "typename",
-    "union",
-    "using",
-    "virtual",
-    "volatile",
-    "while",
-  ]),
-  c: new Set([
-    "auto",
-    "break",
-    "case",
-    "char",
-    "const",
-    "continue",
-    "default",
-    "do",
-    "double",
-    "else",
-    "enum",
-    "extern",
-    "float",
-    "for",
-    "goto",
-    "if",
-    "inline",
-    "int",
-    "long",
-    "register",
-    "restrict",
-    "return",
-    "short",
-    "signed",
-    "sizeof",
-    "static",
-    "struct",
-    "switch",
-    "typedef",
-    "union",
-    "unsigned",
-    "void",
-    "volatile",
-    "while",
-  ]),
-  java: new Set([
-    "abstract",
-    "assert",
-    "boolean",
-    "break",
-    "byte",
-    "case",
-    "catch",
-    "char",
-    "class",
-    "const",
-    "continue",
-    "default",
-    "do",
-    "double",
-    "else",
-    "enum",
-    "extends",
-    "final",
-    "finally",
-    "float",
-    "for",
-    "goto",
-    "if",
-    "implements",
-    "import",
-    "instanceof",
-    "int",
-    "interface",
-    "long",
-    "native",
-    "new",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "return",
-    "short",
-    "static",
-    "strictfp",
-    "super",
-    "switch",
-    "synchronized",
-    "this",
-    "throw",
-    "throws",
-    "transient",
-    "try",
-    "void",
-    "volatile",
-    "while",
-    "record",
-  ]),
-  sql: new Set([
-    "add",
-    "all",
-    "alter",
-    "and",
-    "as",
-    "asc",
-    "between",
-    "by",
-    "case",
-    "check",
-    "column",
-    "constraint",
-    "create",
-    "database",
-    "default",
-    "delete",
-    "desc",
-    "distinct",
-    "drop",
-    "else",
-    "end",
-    "exists",
-    "foreign",
-    "from",
-    "full",
-    "group",
-    "having",
-    "in",
-    "index",
-    "inner",
-    "insert",
-    "into",
-    "is",
-    "join",
-    "key",
-    "left",
-    "like",
-    "limit",
-    "not",
-    "null",
-    "on",
-    "or",
-    "order",
-    "outer",
-    "primary",
-    "references",
-    "right",
-    "select",
-    "set",
-    "table",
-    "then",
-    "union",
-    "unique",
-    "update",
-    "values",
-    "view",
-    "when",
-    "where",
-    "with",
-  ]),
-  javascript: new Set([
-    "async",
-    "await",
-    "break",
-    "case",
-    "catch",
-    "class",
-    "const",
-    "continue",
-    "debugger",
-    "default",
-    "delete",
-    "do",
-    "else",
-    "export",
-    "extends",
-    "finally",
-    "for",
-    "function",
-    "if",
-    "import",
-    "in",
-    "instanceof",
-    "let",
-    "new",
-    "of",
-    "return",
-    "super",
-    "switch",
-    "this",
-    "throw",
-    "try",
-    "typeof",
-    "var",
-    "void",
-    "while",
-    "with",
-    "yield",
-    "from",
-    "as",
-  ]),
-  typescript: new Set([
-    "abstract",
-    "any",
-    "as",
-    "async",
-    "await",
-    "boolean",
-    "break",
-    "case",
-    "catch",
-    "class",
-    "const",
-    "constructor",
-    "continue",
-    "debugger",
-    "declare",
-    "default",
-    "delete",
-    "do",
-    "else",
-    "enum",
-    "export",
-    "extends",
-    "finally",
-    "for",
-    "from",
-    "function",
-    "get",
-    "if",
-    "implements",
-    "import",
-    "in",
-    "infer",
-    "instanceof",
-    "interface",
-    "is",
-    "keyof",
-    "let",
-    "module",
-    "namespace",
-    "never",
-    "new",
-    "null",
-    "number",
-    "object",
-    "of",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "readonly",
-    "require",
-    "return",
-    "set",
-    "static",
-    "string",
-    "super",
-    "switch",
-    "symbol",
-    "this",
-    "throw",
-    "try",
-    "type",
-    "typeof",
-    "undefined",
-    "unique",
-    "unknown",
-    "var",
-    "void",
-    "while",
-    "with",
-    "yield",
-  ]),
-  bash: new Set([
-    "case",
-    "cat",
-    "cd",
-    "chmod",
-    "cp",
-    "do",
-    "done",
-    "echo",
-    "elif",
-    "else",
-    "esac",
-    "exit",
-    "export",
-    "fi",
-    "for",
-    "function",
-    "grep",
-    "if",
-    "in",
-    "ls",
-    "mkdir",
-    "mv",
-    "read",
-    "rm",
-    "select",
-    "set",
-    "sudo",
-    "then",
-    "time",
-    "until",
-    "while",
-  ]),
-};
+import { Prism } from "prism-react-renderer";
 
-const TYPES: Record<Exclude<CodeLanguage, "plain" | "html" | "css" | "json" | "bash">, Set<string>> = {
-  matlab: new Set([
-    "cell",
-    "char",
-    "double",
-    "int8",
-    "int16",
-    "int32",
-    "int64",
-    "logical",
-    "single",
-    "string",
-    "struct",
-    "table",
-    "uint8",
-    "uint16",
-    "uint32",
-    "uint64",
-  ]),
-  python: new Set([
-    "bool",
-    "bytes",
-    "dict",
-    "float",
-    "frozenset",
-    "int",
-    "list",
-    "None",
-    "set",
-    "str",
-    "tuple",
-    "True",
-    "False",
-  ]),
-  cpp: new Set([
-    "bool",
-    "char",
-    "char8_t",
-    "char16_t",
-    "char32_t",
-    "double",
-    "float",
-    "int",
-    "long",
-    "short",
-    "signed",
-    "size_t",
-    "string",
-    "unsigned",
-    "void",
-    "wchar_t",
-  ]),
-  c: new Set([
-    "bool",
-    "char",
-    "double",
-    "float",
-    "int",
-    "long",
-    "short",
-    "signed",
-    "size_t",
-    "unsigned",
-    "void",
-  ]),
-  java: new Set([
-    "boolean",
-    "byte",
-    "char",
-    "double",
-    "float",
-    "int",
-    "long",
-    "short",
-    "void",
-    "String",
-    "Object",
-    "List",
-    "Map",
-    "Set",
-    "Boolean",
-    "Integer",
-    "Double",
-    "True",
-    "False",
-    "null",
-  ]),
-  sql: new Set([
-    "bigint",
-    "binary",
-    "bit",
-    "blob",
-    "boolean",
-    "char",
-    "date",
-    "datetime",
-    "decimal",
-    "float",
-    "int",
-    "integer",
-    "json",
-    "numeric",
-    "real",
-    "text",
-    "time",
-    "timestamp",
-    "uuid",
-    "varchar",
-  ]),
-  javascript: new Set([
-    "true",
-    "false",
-    "null",
-    "undefined",
-    "NaN",
-    "Infinity",
-    "Array",
-    "Object",
-    "Function",
-    "Promise",
-    "Map",
-    "Set",
-    "Date",
-    "RegExp",
-    "Error",
-  ]),
-  typescript: new Set([
-    "true",
-    "false",
-    "null",
-    "undefined",
-    "NaN",
-    "Infinity",
-    "Array",
-    "Object",
-    "Function",
-    "Promise",
-    "Map",
-    "Set",
-    "Date",
-    "RegExp",
-    "Error",
-    "Record",
-    "Partial",
-    "Required",
-    "Readonly",
-    "Pick",
-    "Omit",
-    "Exclude",
-    "Extract",
-  ]),
-};
-
-const TOKEN_PATTERNS: Record<Exclude<CodeLanguage, "plain">, RegExp> = {
-  matlab:
-    /%\{[\s\S]*?%\}|%[^\n]*|"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
-  python:
-    /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
-  cpp: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#]+|./gi,
-  c: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#]+|./gi,
-  java: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}@]+|./gi,
-  sql: /\/\*[\s\S]*?\*\/|--[^\n]*|"(?:""|[^"])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
-  html: /<!--[\s\S]*?-->|<\/?[A-Za-z0-9:-]+|\/?>|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b[A-Za-z_][\w-]*\b|\s+|[=<>!/]+|./gi,
-  javascript:
-    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_$][\w$]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}?#]+|./gi,
-  typescript:
-    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_$][\w$]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}?#]+|./gi,
-  css: /\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s|ms|deg|fr)?\b|[A-Za-z_-][\w-]*|\s+|[+\-*/:;.,{}()[\]>~]+|./gi,
-  json: /"(?:\\.|[^"\\])*"|\b-?\d+(?:\.\d+)?(?:e[+-]?\d+)?\b|\b(?:true|false|null)\b|\s+|[:{},[\]]|./gi,
-  bash: /#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\$[A-Za-z_0-9]+|\b(?:0x[\da-f]+|\d+)\b|[A-Za-z_][\w-]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#\\]+|./gi,
-};
+if (typeof Prism !== "undefined" && Prism.languages) {
+  if (!Prism.languages.matlab) {
+    Prism.languages.matlab = {
+      comment: [/%\{[\s\S]*?%\}|%[^\n]*/],
+      string: { pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/, greedy: true },
+      number: /\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b/i,
+      keyword:
+        /\b(?:break|case|catch|classdef|continue|else|elseif|end|for|function|global|if|methods|otherwise|parfor|persistent|properties|return|spmd|switch|try|while)\b/,
+      function: /\b[a-z_]\w*(?=\s*\()/i,
+      operator: /[+\-*/%=<>!&|^~:.,;()[\]{}]+/,
+    };
+  }
+  if (!Prism.languages.bash) {
+    Prism.languages.bash = {
+      comment: { pattern: /(^|[^#])#.*/, lookbehind: true },
+      string: { pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/, greedy: true },
+      variable: /\$[a-zA-Z_0-9]+/,
+      number: /\b\d+\b/,
+      operator: /[|&;()<>$`\\=!]/,
+      keyword:
+        /\b(?:if|then|else|elif|fi|for|while|in|do|done|case|esac|function|return|echo)\b/,
+    };
+  }
+  if (!Prism.languages.java && Prism.languages.clike) {
+    Prism.languages.java = Prism.languages.clike;
+  }
+}
 
 export function normalizeCodeLanguage(value: string): CodeLanguage {
   const label = value.trim().toLowerCase().split(/\s+/, 1)[0] ?? "";
@@ -791,70 +234,114 @@ export function normalizeRichTextBody(value: string) {
   return body;
 }
 
-function tokenKind(
-  language: Exclude<CodeLanguage, "plain">,
-  value: string,
-  rest: string
-): SyntaxTokenKind {
-  if (language === "html") {
-    if (value.startsWith("<!--")) return "comment";
-    if (value.startsWith('"') || value.startsWith("'")) return "string";
-    if (value.startsWith("<") || value === ">" || value === "/>") return "tag";
-    if (rest.trimStart().startsWith("=")) return "attr";
-    return "plain";
+function mapPrismGrammar(language: CodeLanguage) {
+  if (!Prism?.languages) return null;
+  switch (language) {
+    case "c":
+      return Prism.languages.c ?? Prism.languages.clike;
+    case "cpp":
+      return Prism.languages.cpp ?? Prism.languages.clike;
+    case "java":
+      return Prism.languages.java ?? Prism.languages.clike;
+    case "python":
+      return Prism.languages.python;
+    case "sql":
+      return Prism.languages.sql;
+    case "html":
+      return Prism.languages.markup ?? Prism.languages.html;
+    case "javascript":
+      return Prism.languages.javascript ?? Prism.languages.js;
+    case "typescript":
+      return Prism.languages.typescript ?? Prism.languages.ts;
+    case "css":
+      return Prism.languages.css;
+    case "json":
+      return Prism.languages.json;
+    case "bash":
+      return Prism.languages.bash;
+    case "matlab":
+      return Prism.languages.matlab;
+    default:
+      return Prism.languages.plain;
   }
-  if (language === "css") {
-    if (value.startsWith("/*")) return "comment";
-    if (value.startsWith('"') || value.startsWith("'")) return "string";
-    if (/^#[0-9a-fA-F]+/i.test(value) || /^\d/.test(value)) return "number";
-    if (rest.trimStart().startsWith(":")) return "attr";
-    return "keyword";
-  }
-  if (language === "json") {
-    if (value.startsWith('"')) {
-      if (rest.trimStart().startsWith(":")) return "keyword";
-      return "string";
+}
+
+function flattenPrismTokens(
+  tokens: Array<string | { type: string; content: unknown }>
+): SyntaxToken[] {
+  const result: SyntaxToken[] = [];
+  for (const token of tokens) {
+    if (typeof token === "string") {
+      result.push({ kind: "plain", value: token });
+    } else if (Array.isArray(token.content)) {
+      result.push(
+        ...flattenPrismTokens(token.content as Array<string | { type: string; content: unknown }>)
+      );
+    } else if (
+      typeof token.content === "object" &&
+      token.content !== null &&
+      "type" in token.content
+    ) {
+      result.push(
+        ...flattenPrismTokens([token.content as { type: string; content: unknown }])
+      );
+    } else {
+      let kind: SyntaxTokenKind = "plain";
+      const type = token.type;
+      if (
+        type === "comment" ||
+        type === "prolog" ||
+        type === "doctype" ||
+        type === "cdata"
+      ) {
+        kind = "comment";
+      } else if (type === "string" || type === "char" || type === "attr-value") {
+        kind = "string";
+      } else if (type === "number" || type === "boolean") {
+        kind = "number";
+      } else if (
+        type === "keyword" ||
+        type === "builtin" ||
+        type === "important" ||
+        type === "atrule"
+      ) {
+        kind = "keyword";
+      } else if (type === "class-name" || type === "type") {
+        kind = "type";
+      } else if (type === "function") {
+        kind = "function";
+      } else if (type === "operator" || type === "punctuation") {
+        kind = "operator";
+      } else if (type === "tag") {
+        kind = "tag";
+      } else if (type === "attr-name" || type === "property" || type === "variable") {
+        kind = "attr";
+      }
+      result.push({ kind, value: String(token.content ?? "") });
     }
-    if (/^-?\d/.test(value)) return "number";
-    if (["true", "false", "null"].includes(value)) return "keyword";
-    return "plain";
   }
-  if (
-    (language === "matlab" && (value.startsWith("%") || value.startsWith("%{"))) ||
-    (language === "python" && value.startsWith("#")) ||
-    ((language === "cpp" || language === "c" || language === "java" || language === "javascript" || language === "typescript") &&
-      (value.startsWith("//") || value.startsWith("/*"))) ||
-    (language === "sql" && (value.startsWith("--") || value.startsWith("/*"))) ||
-    (language === "bash" && value.startsWith("#"))
-  )
-    return "comment";
-  if (/^(?:"|'|'''|"""|`)/.test(value)) return "string";
-  if (/^(?:0x[\da-f]+|\d)/i.test(value)) return "number";
-  if (value.startsWith("$") && language === "bash") return "attr";
-  if (/^[A-Za-z_$][\w$]*$/.test(value)) {
-    const comparable = language === "sql" ? value.toLowerCase() : value;
-    const keywordsSet = KEYWORDS[language as keyof typeof KEYWORDS];
-    if (keywordsSet?.has(comparable)) return "keyword";
-    const typesSet = TYPES[language as keyof typeof TYPES];
-    if (typesSet?.has(comparable)) return "type";
-    if (rest.trimStart().startsWith("(")) return "function";
-  }
-  if (/^[+\-*/%=<>!&|^~:.,;()[\]{}?#@\\]+$/.test(value)) return "operator";
-  return "plain";
+  return result;
 }
 
 export function highlightCode(value: string, language: CodeLanguage): SyntaxToken[] {
-  if (language === "plain") return value ? [{ kind: "plain", value }] : [];
-  const pattern = new RegExp(TOKEN_PATTERNS[language].source, TOKEN_PATTERNS[language].flags);
-  const tokens: SyntaxToken[] = [];
-  for (const match of value.matchAll(pattern)) {
-    const token = match[0];
-    const kind = tokenKind(language, token, value.slice((match.index ?? 0) + token.length));
-    const previous = tokens.at(-1);
-    if (previous?.kind === kind) previous.value += token;
-    else tokens.push({ kind, value: token });
+  if (!value) return [];
+  if (language === "plain") return [{ kind: "plain", value }];
+  const grammar = mapPrismGrammar(language);
+  if (!grammar) return [{ kind: "plain", value }];
+  const rawTokens = Prism.tokenize(value, grammar);
+  const flat = flattenPrismTokens(
+    rawTokens as Array<string | { type: string; content: unknown }>
+  );
+  const merged: SyntaxToken[] = [];
+  for (const token of flat) {
+    const previous = merged.at(-1);
+    if (previous && previous.kind === token.kind) {
+      previous.value += token.value;
+    } else {
+      merged.push({ kind: token.kind, value: token.value });
+    }
   }
-  return tokens;
+  return merged;
 }
 
 function appendText(nodes: RichInline[], value: string) {
