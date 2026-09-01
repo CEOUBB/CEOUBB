@@ -118,8 +118,15 @@ export function CalendarView({
     () => new Map(days.map((day) => [day, dayItems(visible, day)])),
     [days, visible]
   );
-  const dueCount = visible.filter((item) => !item.startTime).length;
-  const blockCount = visible.filter((item) => item.startTime).length;
+  const { dueCount, blockCount } = useMemo(() => {
+    let due = 0;
+    let block = 0;
+    for (const item of visible) {
+      if (item.startTime) block++;
+      else due++;
+    }
+    return { dueCount: due, blockCount: block };
+  }, [visible]);
 
   const toggleCourse = (courseId: string) =>
     setHidden((current) =>
