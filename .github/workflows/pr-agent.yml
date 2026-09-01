@@ -27,7 +27,7 @@ jobs:
        github.event.comment.author_association == 'COLLABORATOR')
     steps:
       - name: PR Agent Action
-        uses: qodo-ai/pr-agent@e73d3ea6973ba0815e985856fcb4f17da96df56a # v0.26.0
+        uses: qodo-ai/pr-agent@ab6ec54bfeb37933ddb74259338752e9272016c6 # v0.44.0
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

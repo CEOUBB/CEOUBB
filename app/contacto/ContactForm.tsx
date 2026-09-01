@@ -106,7 +106,7 @@ export default function ContactForm() {
   const [mensajeEstado, setMensajeEstado] = useState("");
   const [avisoDominio, setAvisoDominio] = useState(false);
   const [categoriaEnviada, setCategoriaEnviada] = useState<CategoriaSoporte | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileToken = useRef<string>("");
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
   const senuelo = useRef<HTMLInputElement>(null);
   const montadoEn = useRef<number>(0);
@@ -127,9 +127,15 @@ export default function ContactForm() {
         try {
           widgetId = window.turnstile.render(turnstileContainerRef.current, {
             sitekey: siteKey,
-            callback: (token: string) => setTurnstileToken(token),
-            "expired-callback": () => setTurnstileToken(""),
-            "error-callback": () => setTurnstileToken(""),
+            callback: (token: string) => {
+              turnstileToken.current = token;
+            },
+            "expired-callback": () => {
+              turnstileToken.current = "";
+            },
+            "error-callback": () => {
+              turnstileToken.current = "";
+            },
             theme: "auto",
           });
         } catch {
@@ -216,7 +222,7 @@ export default function ContactForm() {
           ...analisis.data,
           sitioWeb: senuelo.current?.value ?? "",
           duracionMs: Math.round(performance.now() - montadoEn.current),
-          turnstileToken: turnstileToken || undefined,
+          turnstileToken: turnstileToken.current || undefined,
         }),
       });
 
