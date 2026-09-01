@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  CaretDown,
   CheckCircle,
   DownloadSimple,
   Eye,
@@ -152,22 +153,22 @@ export function EnrollmentImport({
   };
 
   return (
-    <article className="enrollment-import" aria-labelledby={`${inputId}-title`}>
-      <div className="enrollment-import-head">
-        <div className="enrollment-import-title">
-          <span className="enrollment-import-icon" aria-hidden="true">
-            <FileCsv size={25} weight="duotone" />
-          </span>
-          <div>
-            <h2 id={`${inputId}-title`}>Carga masiva de matrículas</h2>
-            <p>{sectionLabel} · Previsualiza cada cambio antes de aplicarlo.</p>
-          </div>
-        </div>
-        <button className="enrollment-template" onClick={downloadTemplate} type="button">
-          <DownloadSimple size={17} aria-hidden="true" />
-          Descargar plantilla
-        </button>
-      </div>
+    /*
+      Matricular por CSV es una tarea puntual de inicio de semestre, no lo que
+      el docente viene a ver: plegada, la nómina queda arriba y el formulario
+      deja de competir con ella. Un `details` da el plegado sin estado propio.
+    */
+    <details className="enrollment-import" aria-labelledby={`${inputId}-title`}>
+      <summary>
+        <span className="enrollment-import-icon" aria-hidden="true">
+          <FileCsv size={22} weight="duotone" />
+        </span>
+        <span className="enrollment-import-title">
+          <strong id={`${inputId}-title`}>Carga masiva de matrículas</strong>
+          <small>{sectionLabel} · Previsualiza cada cambio antes de aplicarlo.</small>
+        </span>
+        <CaretDown aria-hidden="true" className="enrollment-import-caret" size={17} />
+      </summary>
 
       <div className="enrollment-file-field">
         <label htmlFor={inputId}>Archivo de estudiantes</label>
@@ -179,12 +180,20 @@ export function EnrollmentImport({
           onChange={(event) => selectFile(event.currentTarget.files?.[0] ?? null)}
           type="file"
         />
-        <span className="enrollment-file-name">
-          {file ? `${file.name} · ${formatBytes(file.size)}` : "Ningún archivo seleccionado"}
-        </span>
+        {/* El control nativo ya dice si hay archivo; repetirlo al lado sólo
+            producía dos mensajes que se contradecían al mirarlos rápido. */}
+        {file && (
+          <span className="enrollment-file-name num">
+            {file.name} · {formatBytes(file.size)}
+          </span>
+        )}
       </div>
 
       <div className="enrollment-import-actions">
+        <button className="enrollment-template" onClick={downloadTemplate} type="button">
+          <DownloadSimple size={17} aria-hidden="true" />
+          Descargar plantilla
+        </button>
         <button
           className="secondary-button"
           disabled={!file || busy !== null}
@@ -286,7 +295,7 @@ export function EnrollmentImport({
           </div>
         </div>
       )}
-    </article>
+    </details>
   );
 }
 

@@ -117,7 +117,7 @@ export function ClassroomView({
           </div>
         )}
         <header className="classroom-top">
-          <div>
+          <div className="classroom-heading">
             <span className="breadcrumb">
               <button onClick={goBack} type="button">
                 Mis cursos

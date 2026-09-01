@@ -2,6 +2,8 @@
 
 import {
   CodeBlock,
+  Eye,
+  EyeSlash,
   Function as FunctionIcon,
   LineVertical,
   LinkSimple,
@@ -409,10 +411,10 @@ function EditorTabs({
           onClick={() => onModeChange(editorMode)}
           role="tab"
           tabIndex={mode === editorMode ? 0 : -1}
+          title={modeLabels[editorMode].detail}
           type="button"
         >
-          <strong>{modeLabels[editorMode].label}</strong>
-          <span>{modeLabels[editorMode].detail}</span>
+          {modeLabels[editorMode].label}
         </button>
       ))}
     </div>
@@ -627,6 +629,13 @@ function useMultimodalEditorController({
   const [announcement, setAnnouncement] = useState("");
   const [activeTools, setActiveTools] = useState<Set<string>>(() => new Set());
   const [slash, setSlash] = useState<SlashMenuState | null>(null);
+  /*
+    El lienzo visual ya muestra el resultado, así que la vista previa sólo
+    ocupa la mitad del ancho sin añadir nada. En Markdown y HTML el docente
+    escribe fuente y sí necesita verla compuesta mientras escribe.
+  */
+  // Implements: REQ-EDITOR-07
+  const [showPreview, setShowPreview] = useState(initialMode !== "visual");
   const previewValue = useDeferredValue(value);
   const panelId = `${baseId}-panel`;
   const labelId = `${baseId}-label`;
@@ -720,6 +729,7 @@ function useMultimodalEditorController({
   const switchMode = (nextMode: EditorMode) => {
     if (nextMode === mode) return;
     setSlash(null);
+    setShowPreview(nextMode !== "visual");
     if (nextMode === "html") {
       if (mode === "visual") {
         const editorHtml = visualRef.current?.innerHTML ?? "";
@@ -974,7 +984,9 @@ function useMultimodalEditorController({
     required,
     runSlashCommand,
     setSlash,
+    showPreview,
     slash,
+    togglePreview: () => setShowPreview((current) => !current),
     switchMode,
     syncVisual,
     visualRef,
@@ -991,21 +1003,42 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
       className="rich-editor multimodal-editor"
       data-requirement="Implements: REQ-EDITOR-01 REQ-EDITOR-02 REQ-EDITOR-03 REQ-EDITOR-04 REQ-EDITOR-05"
     >
-      <div className="rich-editor-heading">
-        <span id={editor.labelId}>{editor.label}</span>
-        <span className="num">{editor.counter}</span>
-      </div>
+      <span className="sr-only" id={editor.labelId}>
+        {editor.label}
+      </span>
 
-      <EditorTabs
-        baseId={editor.baseId}
-        mode={editor.mode}
-        onModeChange={editor.switchMode}
-        panelId={editor.panelId}
-      />
+      {/* Una sola fila de chrome: modo, vista previa y contador. */}
+      <div className="rich-editor-heading">
+        <EditorTabs
+          baseId={editor.baseId}
+          mode={editor.mode}
+          onModeChange={editor.switchMode}
+          panelId={editor.panelId}
+        />
+        <span className="rich-editor-heading-end">
+          {/* En modo visual el lienzo ya es la vista previa; en Markdown y
+              HTML el docente escribe fuente y sí necesita verla compuesta. */}
+          <button
+            aria-pressed={editor.showPreview}
+            className="editor-preview-toggle"
+            onClick={editor.togglePreview}
+            type="button"
+          >
+            {editor.showPreview ? (
+              <Eye aria-hidden="true" size={16} weight="fill" />
+            ) : (
+              <EyeSlash aria-hidden="true" size={16} />
+            )}
+            Vista previa
+          </button>
+          <span className="num">{editor.counter}</span>
+        </span>
+      </div>
 
       <div
         aria-labelledby={`${editor.baseId}-${editor.mode}-tab`}
         className="multimodal-editor-workspace"
+        data-preview={editor.showPreview ? "on" : "off"}
         id={editor.panelId}
         role="tabpanel"
         tabIndex={0}
@@ -1031,7 +1064,7 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
           syncVisual={editor.syncVisual}
           visualRef={editor.visualRef}
         />
-        <EditorPreview value={editor.previewValue} />
+        {editor.showPreview && <EditorPreview value={editor.previewValue} />}
       </div>
 
       <textarea

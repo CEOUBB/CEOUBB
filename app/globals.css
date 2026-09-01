@@ -178,6 +178,13 @@
 html {
   background: var(--canvas-soft);
   scroll-behavior: smooth;
+  /*
+    Reserva la canaleta de la barra de desplazamiento siempre. Sin esto una
+    pestaña con scroll mide ~15px menos que una sin él y todo el aula salta de
+    lado al cambiar de pestaña. En móvil la barra es superpuesta y no reserva
+    nada, así que no se pierde ancho donde más escasea.
+  */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -356,7 +363,8 @@ img {
 .academic-prose :where(blockquote) {
   margin-inline: 0;
   padding: var(--space-sm) var(--space-lg);
-  border-inline-start: 3px solid var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--border-hairline));
+  border-radius: var(--radius-md);
   background: var(--color-primary-wash);
   color: var(--text-secondary);
 }
@@ -2964,10 +2972,11 @@ img {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   min-height: 34px;
 }
-.classroom-top > div {
+/* Sólo el bloque del título apila; las acciones son una fila. */
+.classroom-heading {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2981,10 +2990,10 @@ img {
 }
 .classroom-meta {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: var(--space-xs);
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .course-reference {
@@ -3047,14 +3056,6 @@ img {
   border: 1px solid color-mix(in srgb, var(--course-tone) 34%, var(--border-hairline));
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-1);
-}
-
-.live-class-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--course-tone);
 }
 
 .live-class-icon {
@@ -3480,9 +3481,9 @@ img {
 
 .rich-text blockquote {
   padding: 8px 12px;
-  border-left: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--border-hairline));
+  border: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-radius: var(--radius-md);
   color: var(--text-muted);
 }
 
@@ -3667,12 +3668,52 @@ img {
 
 .rich-editor-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
+  flex-wrap: wrap;
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
+}
+
+.rich-editor-heading-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.editor-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.editor-preview-toggle:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+.editor-preview-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--border-hairline));
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+
+.editor-preview-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .rich-editor-heading span {
@@ -3731,72 +3772,40 @@ img {
   font-size: 14px;
 }
 
+/* Conmutador de modo: tres cajas a lo ancho pesaban más que el documento. */
 .editor-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-width: 0;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-md);
   background: var(--canvas-soft);
-  overflow: hidden;
 }
 
 .editor-tabs button {
-  position: relative;
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  min-height: 52px;
-  padding: 8px 12px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 0;
-  border-right: 1px solid var(--border-hairline);
+  border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
-  text-align: left;
+  font-size: 13px;
+  font-weight: 550;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 
-.editor-tabs button:last-child {
-  border-right: 0;
-}
-
-.editor-tabs button::after {
-  position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: transparent;
-  content: "";
+.editor-tabs button:hover {
+  color: var(--text-body);
 }
 
 .editor-tabs button[aria-selected="true"] {
   background: var(--surface-card);
-  color: var(--text-body);
-}
-
-.editor-tabs button[aria-selected="true"]::after {
-  background: var(--color-primary);
-}
-
-.editor-tabs button strong {
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.editor-tabs button span {
-  overflow: hidden;
-  color: var(--text-faint);
-  font-size: 11px;
-  font-weight: 450;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--color-primary);
+  box-shadow: var(--shadow-1);
 }
 
 .editor-tabs button:focus-visible,
@@ -3814,10 +3823,13 @@ img {
   display: grid;
   min-width: 0;
   border: 1px solid var(--border-hairline);
-  border-top: 0;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   overflow: hidden;
+}
+
+.multimodal-editor-workspace[data-preview="off"] {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .editor-compose-pane {
@@ -3828,31 +3840,30 @@ img {
 .editor-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  min-height: 52px;
-  padding: 4px 7px;
+  gap: 1px;
+  min-height: 46px;
+  padding: 4px 6px;
   border-bottom: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-hairline) transparent;
+  flex-wrap: wrap;
+  row-gap: 2px;
 }
 
 /* Separa los grupos de la barra sin gastar una etiqueta en cada uno. */
 .editor-toolbar-rule {
   flex: 0 0 1px;
   align-self: stretch;
-  margin: 8px 5px;
+  margin: 7px 3px;
   background: var(--border-hairline);
 }
 
 .editor-toolbar button {
   display: inline-flex;
-  flex: 0 0 44px;
+  flex: 0 0 36px;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -3997,8 +4008,10 @@ img {
 }
 
 .editor-visual-canvas blockquote {
-  padding-left: 14px;
-  border-left: 3px solid var(--color-primary);
+  padding: 8px 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas-soft);
   color: var(--text-secondary);
 }
 
@@ -5003,14 +5016,70 @@ div.editor-latex-token {
 }
 
 .enrollment-import {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-lg);
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-1);
+  border-radius: var(--radius-lg);
+}
+
+.enrollment-import > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+
+.enrollment-import > summary::-webkit-details-marker {
+  display: none;
+}
+
+.enrollment-import > summary:hover {
+  background: var(--canvas-soft);
+}
+
+.enrollment-import > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.enrollment-import-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.enrollment-import-title strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.enrollment-import-title small {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.enrollment-import-caret {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--text-faint);
+  transition: transform var(--transition-fast);
+}
+
+.enrollment-import[open] > summary {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.enrollment-import[open] .enrollment-import-caret {
+  transform: rotate(180deg);
+}
+
+.enrollment-import > *:not(summary) {
+  margin: var(--space-md);
 }
 
 /* ── Aula · Listas grandes y paginación ──────────────────── */
@@ -5163,8 +5232,6 @@ div.editor-latex-token {
   color: var(--text-muted);
 }
 
-.enrollment-import-head,
-.enrollment-import-title,
 .enrollment-import-actions,
 .enrollment-pagination,
 .enrollment-notice {
@@ -5172,39 +5239,28 @@ div.editor-latex-token {
   align-items: center;
 }
 
-.enrollment-import-head {
-  justify-content: space-between;
-  gap: var(--space-lg);
+.enrollment-import-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-xs);
 }
 
-.enrollment-import-title {
-  align-items: flex-start;
-  gap: var(--space-sm);
-  min-width: 0;
+.enrollment-import-actions .enrollment-template {
+  margin-right: auto;
 }
 
 .enrollment-import-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   color: var(--text-secondary);
   background: var(--canvas-soft);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
 }
 
-.enrollment-import h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 21px;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
-
-.enrollment-import-title p,
 .enrollment-file-field p {
   margin: 4px 0 0;
   color: var(--text-muted);
@@ -5236,10 +5292,6 @@ div.editor-latex-token {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px var(--space-md);
-  padding: var(--space-md);
-  background: var(--canvas-soft);
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-lg);
 }
 
 .enrollment-file-field label {
@@ -5511,55 +5563,12 @@ div.editor-latex-token {
   font-size: 15px;
 }
 
+/* Ocupa el mismo ancho que Notas, Cuestionarios y Progreso: una nómina
+   centrada y más angosta hacía saltar la medida al cambiar de pestaña. */
 .participants-directory {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  width: min(100%, 980px);
-  margin-inline: auto;
-}
-
-.participants-overview {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--border-hairline);
-}
-
-.participants-overview h2 {
-  font-family: var(--font-display);
-  font-size: clamp(21px, 2.5vw, 26px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.participants-overview p {
-  max-width: 620px;
-  margin-top: 5px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.participant-total {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 7px 10px;
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-muted);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.participant-total strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 19px;
 }
 
 .participants-toolbar {
@@ -5953,13 +5962,9 @@ div.editor-latex-token {
   .participants-directory {
     gap: var(--space-md);
   }
-  .participants-overview,
   .participants-toolbar {
     align-items: stretch;
     flex-direction: column;
-  }
-  .participant-total {
-    align-self: flex-start;
   }
   .participant-search {
     width: 100%;
@@ -9577,7 +9582,8 @@ div.editor-latex-token {
 .academic-prose blockquote {
   margin-inline: 0;
   padding: var(--space-sm) var(--space-lg);
-  border-inline-start: 3px solid var(--border-hairline);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   background: var(--canvas-soft);
 }
@@ -9618,17 +9624,16 @@ div.editor-latex-token {
   margin-block: var(--space-lg);
   padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--border-hairline);
-  border-inline-start-width: 4px;
   border-radius: var(--radius-md);
 }
 
 .academic-prose .callout-notice {
-  border-inline-start-color: var(--shield-gold);
+  border-color: color-mix(in srgb, var(--shield-gold) 42%, var(--border-hairline));
   background: color-mix(in srgb, var(--shield-gold) 10%, var(--surface-card));
 }
 
 .academic-prose .callout-assessment {
-  border-inline-start-color: var(--shield-red);
+  border-color: color-mix(in srgb, var(--shield-red) 34%, var(--border-hairline));
   background: color-mix(in srgb, var(--shield-red) 7%, var(--surface-card));
 }
 
