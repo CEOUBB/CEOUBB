@@ -23,5 +23,5 @@
 
 - **Finding:** `worksheetXml` ejecutaba `Math.max(1, ...rows.map((row) => row.cells.length))` para cada hoja de cálculo Excel generada, creando un arreglo intermedio y desempacando argumentos variádicos en la pila de llamadas.
 - **Attempted / Identified Solution:** Reemplazo por un bucle iterativo `for` de pasada única que calcula `maxColumns` escalarmente.
-- **Outcome / Learning:** Se eliminó la asignación de memoria $O(N)$ por hoja y el riesgo de desbordamiento de pila (*call stack overflow*) en exportaciones con miles de registros de calificaciones.
+- **Outcome / Learning:** Se eliminó la asignación de memoria $O(N)$ por hoja y el riesgo de desbordamiento de pila (_call stack overflow_) en exportaciones con miles de registros de calificaciones.
 - **Future Rule:** Reemplazar `Math.max(...arr.map(...))` por bucles iterativos simples en utilidades de procesamiento de datos por lotes o generación de documentos.
