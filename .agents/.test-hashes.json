@@ -42,7 +42,7 @@
   "tests/quiz-engine.test.ts": "66389e5cf1305ac1274a24f8a595f8846af75503e9c9bd5f7e1a9673dfaf2b30",
   "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
   "tests/rendered-html.test.mjs": "4f8131a3377b7e8f4c62a7b7af6de8d7faf7330605980bcb463cae0a6ae66b47",
-  "tests/rich-text.test.ts": "e383d900907247d00a538d9d6f8af9384c13eefff7fe745f21f1255e7fc1093f",
+  "tests/rich-text.test.ts": "7109adccf50012a90b9e2b40877638eb74b8d0071ca750898a428da5ad5582b0",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "c437fbee9d50422d524ee2aa384a987898877118be4062fa6264e44043d5f340",
   "tests/staging-environment.test.ts": "c7abb539b106c6ddc40acdd3f99c033943a062718105f5eeece43da2bb86654f",

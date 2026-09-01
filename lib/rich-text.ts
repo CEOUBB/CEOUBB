@@ -175,8 +175,7 @@ if (typeof Prism !== "undefined" && Prism.languages) {
       variable: /\$[a-zA-Z_0-9]+/,
       number: /\b\d+\b/,
       operator: /[|&;()<>$`\\=!]/,
-      keyword:
-        /\b(?:if|then|else|elif|fi|for|while|in|do|done|case|esac|function|return|echo)\b/,
+      keyword: /\b(?:if|then|else|elif|fi|for|while|in|do|done|case|esac|function|return|echo)\b/,
     };
   }
   if (!Prism.languages.java && Prism.languages.clike) {
@@ -282,18 +281,11 @@ function flattenPrismTokens(
       token.content !== null &&
       "type" in token.content
     ) {
-      result.push(
-        ...flattenPrismTokens([token.content as { type: string; content: unknown }])
-      );
+      result.push(...flattenPrismTokens([token.content as { type: string; content: unknown }]));
     } else {
       let kind: SyntaxTokenKind = "plain";
       const type = token.type;
-      if (
-        type === "comment" ||
-        type === "prolog" ||
-        type === "doctype" ||
-        type === "cdata"
-      ) {
+      if (type === "comment" || type === "prolog" || type === "doctype" || type === "cdata") {
         kind = "comment";
       } else if (type === "string" || type === "char" || type === "attr-value") {
         kind = "string";
@@ -329,9 +321,7 @@ export function highlightCode(value: string, language: CodeLanguage): SyntaxToke
   const grammar = mapPrismGrammar(language);
   if (!grammar) return [{ kind: "plain", value }];
   const rawTokens = Prism.tokenize(value, grammar);
-  const flat = flattenPrismTokens(
-    rawTokens as Array<string | { type: string; content: unknown }>
-  );
+  const flat = flattenPrismTokens(rawTokens as Array<string | { type: string; content: unknown }>);
   const merged: SyntaxToken[] = [];
   for (const token of flat) {
     const previous = merged.at(-1);

@@ -3836,7 +3836,9 @@ img {
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .multimodal-editor-workspace:focus-within {

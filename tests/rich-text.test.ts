@@ -68,7 +68,7 @@ test("fenced code normalizes and highlights every required language", () => {
     ["java", "public class Main { public static void main(String[] args) {} }", "java"],
     ["sql", "SELECT id FROM alumnos WHERE activo = 1;", "sql"],
     ["html", '<div class="alert"><p>Texto</p></div>', "html"],
-    ["javascript", 'const total = items.reduce((a, b) => a + b, 0);', "javascript"],
+    ["javascript", "const total = items.reduce((a, b) => a + b, 0);", "javascript"],
     ["typescript", 'interface User { id: string; role: "student" | "teacher"; }', "typescript"],
     ["css", ".container { display: flex; color: #0f172a; }", "css"],
     ["json", '{\n  "version": 1,\n  "active": true\n}', "json"],

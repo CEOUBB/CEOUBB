@@ -244,7 +244,10 @@ function preserveHtml(
   parser que usan la vista previa y la publicación. La primera fila es el
   encabezado, que es lo que inserta la barra de herramientas.
 */
-// Implements: REQ-EDITOR-08
+function escapeTableCell(value: string) {
+  return value.replace(/\s+/g, " ").replace(/\\/g, "\\\\").replace(/\|/g, "\\|").trim();
+}
+
 function convertTables(value: string) {
   return value.replace(/<table\b[^>]*>([\s\S]*?)<\/table\s*>/gi, (whole, body) => {
     const rows = Array.from(String(body).matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr\s*>/gi));
@@ -252,7 +255,7 @@ function convertTables(value: string) {
     const grid = rows.map((row) =>
       Array.from(row[1].matchAll(/<(td|th)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)).map((cell) =>
         /* Una celda no puede contener saltos ni barras: romperían la fila. */
-        convertHtmlFragment(cell[2]).replace(/\s+/g, " ").replace(/\|/g, "\\|").trim()
+        escapeTableCell(convertHtmlFragment(cell[2]))
       )
     );
     const columns = Math.max(...grid.map((row) => row.length));
@@ -293,19 +296,15 @@ function convertHtmlFragment(value: string) {
     /<span\b([^>]*)data-latex\s*=\s*["']inline["']([^>]*)>([\s\S]*?)<\/span\s*>/gi,
     (_, _before, _after, expression) => `$${textFromHtml(expression).trim()}$`
   );
-  converted = converted.replace(
-    /<pre\b([^>]*)>([\s\S]*?)<\/pre\s*>/gi,
-    (_, attributes, body) => {
-      const codeMatch = /<code\b([^>]*)>([\s\S]*?)<\/code\s*>/i.exec(body);
-      const codeAttributes = codeMatch ? codeMatch[1] : "";
-      const codeContent = codeMatch ? codeMatch[2] : body;
-      const language = (
-        attributeValue(codeAttributes, "data-language") ||
-        attributeValue(attributes, "data-language")
-      ).replace(/[^a-z0-9_+-]/gi, "");
-      return `\n\n\`\`\`${language}\n${textFromHtml(codeContent).replace(/^\n+|\n+$/g, "")}\n\`\`\`\n\n`;
-    }
-  );
+  converted = converted.replace(/<pre\b([^>]*)>([\s\S]*?)<\/pre\s*>/gi, (_, attributes, body) => {
+    const codeMatch = /<code\b([^>]*)>([\s\S]*?)<\/code\s*>/i.exec(body);
+    const codeAttributes = codeMatch ? codeMatch[1] : "";
+    const codeContent = codeMatch ? codeMatch[2] : body;
+    const language = (
+      attributeValue(codeAttributes, "data-language") || attributeValue(attributes, "data-language")
+    ).replace(/[^a-z0-9_+-]/gi, "");
+    return `\n\n\`\`\`${language}\n${textFromHtml(codeContent).replace(/^\n+|\n+$/g, "")}\n\`\`\`\n\n`;
+  });
   converted = converted.replace(
     /<aside\b([^>]*)>([\s\S]*?)<\/aside\s*>/gi,
     (_, attributes, body) => {
