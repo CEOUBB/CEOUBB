@@ -673,6 +673,10 @@ function CodeModal({
   const [language, setLanguage] = useState<CodeLanguage>(initialLanguage);
   const [code, setCode] = useState(initialSource);
 
+  const handleSubmit = () => {
+    onSubmit(language, code);
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") onCancel();
@@ -705,13 +709,7 @@ function CodeModal({
             <X size={18} />
           </button>
         </div>
-        <form
-          className="editor-modal-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(language, code);
-          }}
-        >
+        <div className="editor-modal-form">
           <label className="editor-modal-field">
             <span>Lenguaje de programación</span>
             <select
@@ -730,6 +728,12 @@ function CodeModal({
             <span>Código</span>
             <textarea
               onChange={(event) => setCode(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
               placeholder="Escribe o pega aquí el código..."
               rows={6}
               value={code}
@@ -739,11 +743,11 @@ function CodeModal({
             <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
               Cancelar
             </button>
-            <button className="editor-modal-btn-submit" type="submit">
+            <button className="editor-modal-btn-submit" onClick={handleSubmit} type="button">
               Insertar código
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -762,6 +766,10 @@ function FormulaModal({
 }) {
   const [expression, setExpression] = useState(initialExpression);
   const [display, setDisplay] = useState(initialDisplay);
+
+  const handleSubmit = () => {
+    onSubmit(expression, display);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -795,18 +803,18 @@ function FormulaModal({
             <X size={18} />
           </button>
         </div>
-        <form
-          className="editor-modal-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(expression, display);
-          }}
-        >
+        <div className="editor-modal-form">
           <label className="editor-modal-field">
             <span>Expresión en LaTeX</span>
             <textarea
               autoFocus
               onChange={(event) => setExpression(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
               placeholder="Ej: \sum_{i=1}^n x_i = 0  o  f(x) = \frac{a}{b}"
               rows={3}
               value={expression}
@@ -822,7 +830,7 @@ function FormulaModal({
                   onChange={() => setDisplay(false)}
                   type="radio"
                 />
-                En línea ($...$)
+                <span>En línea ($...$)</span>
               </label>
               <label className="editor-modal-radio-label">
                 <input
@@ -831,7 +839,7 @@ function FormulaModal({
                   onChange={() => setDisplay(true)}
                   type="radio"
                 />
-                Bloque centrado ($$...$$)
+                <span>Bloque centrado ($$...$$)</span>
               </label>
             </div>
           </div>
@@ -839,11 +847,11 @@ function FormulaModal({
             <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
               Cancelar
             </button>
-            <button className="editor-modal-btn-submit" type="submit">
+            <button className="editor-modal-btn-submit" onClick={handleSubmit} type="button">
               Insertar fórmula
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -862,6 +870,10 @@ function LinkModal({
 }) {
   const [text, setText] = useState(initialText);
   const [href, setHref] = useState(initialHref);
+
+  const handleSubmit = () => {
+    onSubmit(text, href);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -895,17 +907,17 @@ function LinkModal({
             <X size={18} />
           </button>
         </div>
-        <form
-          className="editor-modal-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(text, href);
-          }}
-        >
+        <div className="editor-modal-form">
           <label className="editor-modal-field">
             <span>Texto a mostrar</span>
             <input
               onChange={(event) => setText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
               placeholder="Ej: Drive del ramo, apunte en PDF..."
               type="text"
               value={text}
@@ -916,6 +928,12 @@ function LinkModal({
             <input
               autoFocus
               onChange={(event) => setHref(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
               placeholder="https://..."
               type="url"
               value={href}
@@ -925,11 +943,11 @@ function LinkModal({
             <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
               Cancelar
             </button>
-            <button className="editor-modal-btn-submit" type="submit">
+            <button className="editor-modal-btn-submit" onClick={handleSubmit} type="button">
               Insertar enlace
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -944,6 +962,10 @@ function TableModal({
 }) {
   const [rows, setRows] = useState(2);
   const [cols, setCols] = useState(2);
+
+  const handleSubmit = () => {
+    onSubmit(rows, cols);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -977,13 +999,7 @@ function TableModal({
             <X size={18} />
           </button>
         </div>
-        <form
-          className="editor-modal-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(rows, cols);
-          }}
-        >
+        <div className="editor-modal-form">
           <div className="editor-modal-grid-2">
             <label className="editor-modal-field">
               <span>Filas</span>
@@ -992,6 +1008,12 @@ function TableModal({
                 max={20}
                 min={2}
                 onChange={(event) => setRows(Math.max(2, Math.min(20, Number(event.target.value))))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 type="number"
                 value={rows}
               />
@@ -1002,6 +1024,12 @@ function TableModal({
                 max={10}
                 min={1}
                 onChange={(event) => setCols(Math.max(1, Math.min(10, Number(event.target.value))))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 type="number"
                 value={cols}
               />
@@ -1011,11 +1039,11 @@ function TableModal({
             <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
               Cancelar
             </button>
-            <button className="editor-modal-btn-submit" type="submit">
+            <button className="editor-modal-btn-submit" onClick={handleSubmit} type="button">
               Insertar tabla
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
