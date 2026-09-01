@@ -12,8 +12,10 @@ export function Bar({
   total?: number;
   label?: string;
 }) {
-  const safeCompleted = typeof completed === "number" && !Number.isNaN(completed) ? Math.max(0, completed) : undefined;
-  const safeTotal = typeof total === "number" && !Number.isNaN(total) ? Math.max(0, total) : undefined;
+  const safeCompleted =
+    typeof completed === "number" && !Number.isNaN(completed) ? Math.max(0, completed) : undefined;
+  const safeTotal =
+    typeof total === "number" && !Number.isNaN(total) ? Math.max(0, total) : undefined;
 
   const calculatedRatio =
     safeTotal !== undefined && safeTotal > 0 && safeCompleted !== undefined

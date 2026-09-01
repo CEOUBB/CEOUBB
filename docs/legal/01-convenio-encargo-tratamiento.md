@@ -37,7 +37,7 @@ La individualización del Encargado es condición esencial. “CEOUBB” es hoy 
 - determinar nuevas finalidades, comunicar datos a terceros o ampliar titulares sin instrucción escrita de la UBB;
 - presentar calificaciones de trabajo como actas oficiales, salvo que exista una instrucción y una integración institucional expresa.
 
-2.4. La UBB determinará y documentará la base de licitud de cada finalidad. CEOUBB no sustituirá esa decisión mediante consentimientos genéricos.
+  2.4. La UBB determinará y documentará la base de licitud de cada finalidad. CEOUBB no sustituirá esa decisión mediante consentimientos genéricos.
 
 ## 3. Datos y categorías de titulares
 
@@ -57,7 +57,7 @@ La individualización del Encargado es condición esencial. “CEOUBB” es hoy 
 - comunicaciones: token de notificaciones, preferencias y solicitudes de soporte o ejercicio de derechos;
 - datos que aparezcan incidentalmente en documentos aportados por la UBB o los usuarios, sujetos a minimización y a las categorías que Jurídica autorice.
 
-3.3. La UBB no instruirá el tratamiento de datos personales sensibles ni de categorías no inventariadas sin una evaluación jurídica y técnica previa, una finalidad específica y medidas reforzadas.
+  3.3. La UBB no instruirá el tratamiento de datos personales sensibles ni de categorías no inventariadas sin una evaluación jurídica y técnica previa, una finalidad específica y medidas reforzadas.
 
 ## 4. Obligaciones de la UBB como Responsable
 
@@ -99,7 +99,7 @@ CEOUBB deberá:
 - borrado coordinado entre todos los almacenes y prueba integral con datos sintéticos;
 - procedimiento de vulnerabilidades, actualizaciones y notificación de incidentes.
 
-6.2. El estado actual no acredita todavía respaldos ni restauración ensayada, y los mecanismos de eliminación de cuenta son parciales. La UBB no deberá autorizar datos académicos reales hasta cerrar esas brechas mediante un acta de aceptación técnica.
+  6.2. El estado actual no acredita todavía respaldos ni restauración ensayada, y los mecanismos de eliminación de cuenta son parciales. La UBB no deberá autorizar datos académicos reales hasta cerrar esas brechas mediante un acta de aceptación técnica.
 
 ## 7. Subencargados y transferencias
 

@@ -69,7 +69,7 @@ Access to course data is granted **if and only if** an active enrollment project
 
 ---
 
-## 4. Modular Context Rules (.agents/rules/*.mdc)
+## 4. Modular Context Rules (.agents/rules/\*.mdc)
 
 To optimize semantic density and prevent context contamination, the following glob-scoped modular rules apply:
 

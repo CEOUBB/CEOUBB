@@ -39,14 +39,15 @@ test("REQ-A11Y-01: portal and library expose a visible bypass target", async () 
 });
 
 test("REQ-A11Y-02: dynamic portal and library state is programmatically exposed", async () => {
-  const [shell, library, libraryApp, notificationPanel, commCenter, progressBar] = await Promise.all([
-    source("app/portal-shell.tsx"),
-    source("public/biblioteca/index.html"),
-    source("public/biblioteca/assets/app.js"),
-    source("app/notification-panel.tsx"),
-    source("app/views/CommunicationsCenter.tsx"),
-    source("app/views/classroom/ProgressBar.tsx"),
-  ]);
+  const [shell, library, libraryApp, notificationPanel, commCenter, progressBar] =
+    await Promise.all([
+      source("app/portal-shell.tsx"),
+      source("public/biblioteca/index.html"),
+      source("public/biblioteca/assets/app.js"),
+      source("app/notification-panel.tsx"),
+      source("app/views/CommunicationsCenter.tsx"),
+      source("app/views/classroom/ProgressBar.tsx"),
+    ]);
   assert.match(shell, /aria-live="polite"/);
   assert.match(shell, /aria-labelledby="portal-view-title"/);
   assert.match(library, /role="progressbar"/);
@@ -62,14 +63,8 @@ test("REQ-A11Y-02: dynamic portal and library state is programmatically exposed"
     commCenter,
     /<span[^>]+aria-label="No leído"[^>]+className="conversation-unread"[^>]+role="img"/
   );
-  assert.match(
-    progressBar,
-    /role="progressbar"/
-  );
-  assert.match(
-    progressBar,
-    /aria-valuenow=\{ariaValueNow\}/
-  );
+  assert.match(progressBar, /role="progressbar"/);
+  assert.match(progressBar, /aria-valuenow=\{ariaValueNow\}/);
 });
 
 test("REQ-A11Y-03: portal and library text and controls meet contrast contracts", async () => {

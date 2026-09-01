@@ -12,7 +12,8 @@ import { iso } from "./mappers.ts";
 export const MAX_QUIZZES_PER_SECTION = 100;
 
 export type StartQuizOutcome =
-  { status: "active"; attempt: QuizAttempt } | { status: "submitted"; result: QuizResult };
+  | { status: "active"; attempt: QuizAttempt }
+  | { status: "submitted"; result: QuizResult };
 
 type PublishQuizInput = {
   courseId: string;

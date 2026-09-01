@@ -15,9 +15,7 @@
 
 -
 -
--
-
----
+- ***
 
 ## Checklist Técnico y Calidad de Código
 

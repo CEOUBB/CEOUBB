@@ -3,7 +3,7 @@
   "tests/academic-content.test.ts": "2681b5915732da18c808290cf6e3de0102041f2143eedf1390180f125d00cd6e",
   "tests/academic-model.test.ts": "233bbab5eeb9b2257a7df3bfabe2ae81cbbfd61b4fe0d3933af7bddd604aa3fc",
   "tests/access-policy.test.ts": "63d48f22736dbd3bea0412822529e94344f129aedacc2e0fcca2aa288d2511cc",
-  "tests/accessibility.test.ts": "b6d91436fa33cac8ab94298615ed1f343041f296c66c4bed8071763df6896d83",
+  "tests/accessibility.test.ts": "823bfbf048de5ec9f5e8755a354235d8ee273a545e6e2a414f6bd47d38631a39",
   "tests/admin-api.test.ts": "fe23223c575f438348d5e53037930fdd48beb0103642ee122d5c5e6e852ad62f",
   "tests/app-check.test.ts": "0ff79e2dee47a9da433d410531d192de2aadd877c3c7a33865c7eecd1a8ddf89",
   "tests/assistant-role.test.ts": "9f26bbde5a532f7a84c603102c9f909f2470b7d0bb589470c0593007502166df",

@@ -134,7 +134,9 @@ export async function executeGeminiToolCall(
 
   if (name === "github_list_prs") {
     const state = (typeof args.state === "string" ? args.state : "open") as
-      "open" | "closed" | "all";
+      | "open"
+      | "closed"
+      | "all";
     const prs = await listPullRequests(state, 5);
     return prs;
   }

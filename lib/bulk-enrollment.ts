@@ -43,7 +43,11 @@ export type ParsedEnrollmentRow = {
 };
 
 export type EnrollmentImportStatus =
-  "activate" | "reactivate" | "pending" | "unchanged" | "invalid";
+  | "activate"
+  | "reactivate"
+  | "pending"
+  | "unchanged"
+  | "invalid";
 
 export type ClassifiedEnrollmentRow = {
   row: number;

@@ -52,7 +52,12 @@ export type CourseManagementDependencies = {
 };
 
 export type CourseManagementErrorCode =
-  "INVALID_INPUT" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "PROJECTION_UNAVAILABLE" | "INTERNAL";
+  | "INVALID_INPUT"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "PROJECTION_UNAVAILABLE"
+  | "INTERNAL";
 
 export class CourseManagementError extends Error {
   readonly code: CourseManagementErrorCode;

@@ -21,7 +21,14 @@ export const CLASSROOM_COMPATIBILITY_REQUIREMENTS = [
 
 export type CodeLanguage = "matlab" | "python" | "cpp" | "sql" | "plain";
 export type SyntaxTokenKind =
-  "plain" | "comment" | "string" | "number" | "keyword" | "type" | "function" | "operator";
+  | "plain"
+  | "comment"
+  | "string"
+  | "number"
+  | "keyword"
+  | "type"
+  | "function"
+  | "operator";
 
 export type SyntaxToken = {
   kind: SyntaxTokenKind;
