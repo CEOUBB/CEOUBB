@@ -39,6 +39,15 @@ export function isDevOrPreviewAuthAllowed(
   nodeEnv = process.env.NODE_ENV,
   host?: string
 ): boolean {
+  // 1. Veto estricto e incondicional de producción institucional
+  if (environment === "production") {
+    return false;
+  }
+  if (nodeEnv === "production" && environment !== "preview" && environment !== "staging") {
+    return false;
+  }
+
+  // 2. Comprobación de host para entornos de pruebas / staging
   if (host) {
     const cleanHost = host.split(":")[0]?.toLowerCase();
     if (cleanHost === "ceoubb.com" || cleanHost === "www.ceoubb.com") {
@@ -48,6 +57,7 @@ export function isDevOrPreviewAuthAllowed(
       return true;
     }
   }
-  if (environment === "production") return false;
+
+  // 3. Fallback a desarrollo local o flags explícitos
   return nodeEnv === "development" || environment === "preview" || environment === "staging";
 }

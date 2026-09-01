@@ -78,7 +78,7 @@ jobs:
             echo "::error::CLOUDFLARE_API_TOKEN no está configurado."
             exit 1
           fi
-          pnpm exec wrangler deploy
+          pnpm exec wrangler deploy --minify --keep-vars
           echo "url=https://ceoubb.com" >> $GITHUB_OUTPUT
 
       - name: Deploy Preview Artifacts to Cloudflare Workers
@@ -89,7 +89,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            pnpm exec wrangler deploy --env preview
+            pnpm exec wrangler deploy --env preview --minify --keep-vars
           fi
           echo "deployment_url=https://ceoubb-preview.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT
           echo "preview_url=https://ceoubb-preview.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT

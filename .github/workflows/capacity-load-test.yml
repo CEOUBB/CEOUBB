@@ -15,8 +15,6 @@ on:
         description: Escriba STAGING_ONLY para confirmar el destino aislado
         required: true
         type: string
-  pull_request:
-    types: [opened, reopened]
 
 permissions:
   actions: read
@@ -24,15 +22,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: capacidad-institucional-${{ github.event.pull_request.number || github.ref }}
+  group: capacidad-institucional-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   load:
     name: Shard ${{ matrix.shard }}
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.confirm_staging == 'STAGING_ONLY') ||
-      (github.event_name == 'pull_request' && github.head_ref == 'elpapijuaco325/ceo-71-implementar-arnes-y-ejecutar-pruebas-de-carga-para-3000')
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_staging == 'STAGING_ONLY'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     environment: Staging
@@ -49,7 +45,7 @@ jobs:
       TURSO_DATABASE_URL: libsql://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
       TURSO_HTTP_URL: https://ceoubb-staging-ceoubb.aws-us-east-1.turso.io
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-      CAPACITY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}
+      CAPACITY_PROFILE: ${{ inputs.profile }}
       CAPACITY_SHARD_INDEX: ${{ matrix.shard }}
       CAPACITY_SHARD_COUNT: "6"
       CAPACITY_BARRIER_DELAY_SECONDS: "1200"
@@ -150,7 +146,7 @@ jobs:
       CAPACITY_EVIDENCE_JSON: .capacity/evidence/capacity-evidence.json
       CAPACITY_EVIDENCE_MARKDOWN: .capacity/evidence/capacity-evidence.md
       CAPACITY_RUN_ID: github-${{ github.run_id }}-${{ github.run_attempt }}
-      CAPACITY_ALLOW_INCOMPLETE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'smoke' && '1' || '0' }}
+      CAPACITY_ALLOW_INCOMPLETE: ${{ inputs.profile == 'smoke' && '1' || '0' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

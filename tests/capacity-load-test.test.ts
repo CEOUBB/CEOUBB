@@ -254,6 +254,16 @@ test("manual workflow distributes six shards and always cleans ephemeral credent
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /confirm_staging/);
   assert.match(workflow, /STAGING_ONLY/);
+  assert.doesNotMatch(
+    workflow,
+    /pull_request:/,
+    "capacity test workflow must not trigger on pull_request"
+  );
+  assert.doesNotMatch(
+    workflow,
+    /head_ref/,
+    "capacity test workflow must not filter on branch names"
+  );
   assert.match(workflow, /shard:\s*\[0, 1, 2, 3, 4, 5\]/);
   assert.match(workflow, /environment:\s*Staging/);
   assert.match(workflow, /google-github-actions\/auth@v3/);

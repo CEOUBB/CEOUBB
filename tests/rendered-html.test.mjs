@@ -170,6 +170,9 @@ test("serves hardening response headers", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  assert.match(response.headers.get("permissions-policy") ?? "", /camera=\(\)/);
+  assert.match(response.headers.get("permissions-policy") ?? "", /payment=\(\)/);
+  assert.match(response.headers.get("permissions-policy") ?? "", /usb=\(\)/);
 });
 
 // REQ-CAP-14 — el bridge de Capacitor vive en capacitor://localhost y https://localhost.
@@ -196,7 +199,8 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
   }
   const untouched = {
     "style-src": "style-src 'self' 'unsafe-inline'",
-    "img-src": "img-src 'self' data: blob: https:",
+    "img-src":
+      "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
     "font-src": "font-src 'self' data:",
     "worker-src": "worker-src 'self' blob:",
     "manifest-src": "manifest-src 'self'",
@@ -214,10 +218,12 @@ test("admits the Capacitor bridge origins without relaxing any other directive",
   }
   assert.equal(
     directives.get("frame-src"),
-    "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/"
+    "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com"
   );
+  assert.equal(directives.get("upgrade-insecure-requests"), "upgrade-insecure-requests");
   assert.match(directives.get("script-src") ?? "", /https:\/\/www\.google\.com\/recaptcha\//);
   assert.match(directives.get("script-src") ?? "", /https:\/\/www\.gstatic\.com\/recaptcha\//);
+  assert.match(directives.get("script-src") ?? "", /https:\/\/challenges\.cloudflare\.com/);
   assert.match(directives.get("connect-src") ?? "", /https:\/\/www\.google\.com\/recaptcha\//);
 });
 
