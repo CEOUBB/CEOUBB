@@ -300,7 +300,8 @@ export function usePortalCore(initialSession?: SessionState) {
     if (previousView.current === view) return;
     previousView.current = view;
     const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>("#contenido-principal")?.focus();
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.querySelector<HTMLElement>("#contenido-principal")?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
   }, [course?.id, screen, user]);
