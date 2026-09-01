@@ -405,8 +405,8 @@ test("REQ-MOODLE-07/11: route and teacher UI preserve server authorization and a
     new URL("../app/api/courses/[sectionId]/imports/moodle/route.ts", import.meta.url),
     "utf8"
   );
-  const materials = await readFile(
-    new URL("../app/views/classroom/MaterialsSection.tsx", import.meta.url),
+  const classroom = await readFile(
+    new URL("../app/views/classroom/ClassroomView.tsx", import.meta.url),
     "utf8"
   );
   const dialog = await readFile(
@@ -416,7 +416,9 @@ test("REQ-MOODLE-07/11: route and teacher UI preserve server authorization and a
   assert.match(route, /getSessionUser\(request\)/);
   assert.match(route, /authorizeMoodleImport/);
   assert.doesNotMatch(route, /payload\.role|body\.role/);
-  assert.match(materials, /canTeach\s*&&[\s\S]*MoodleImportDialog/);
+  /* El acceso a la importación se mudó al encabezado del ramo, tras el mismo
+     control de rol que lo protegía dentro de «Materiales». */
+  assert.match(classroom, /canTeach\s*&&\s*<MoodleImportDialog/);
   assert.match(dialog, /<dialog/);
   assert.match(dialog, /<progress/);
   assert.match(dialog, /aria-live="polite"/);

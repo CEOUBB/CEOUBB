@@ -1,4 +1,6 @@
 import {
+  calloutFromQuote,
+  inlineToPlainText,
   parseRichInline,
   parseRichText,
   safeLinkDestination,
@@ -8,6 +10,60 @@ import {
 
 export const EDITOR_MODES = ["visual", "markdown", "html"] as const;
 export type EditorMode = (typeof EDITOR_MODES)[number];
+
+/*
+  Menú de comandos rápidos del lienzo visual. Escribir `/` al empezar una línea
+  abre la misma lista de bloques que ofrece la barra, sin levantar la mano del
+  teclado. Vive aquí, y no en el componente, porque el emparejamiento es lógica
+  pura y se prueba sin montar un editor.
+*/
+// Implements: REQ-EDITOR-06
+export type SlashCommand = {
+  action: string;
+  label: string;
+  hint: string;
+};
+
+export const SLASH_COMMANDS: readonly SlashCommand[] = [
+  { action: "heading1", label: "Título principal", hint: "Encabezado de nivel 1" },
+  { action: "heading2", label: "Subtítulo", hint: "Encabezado de nivel 2" },
+  { action: "heading3", label: "Apartado", hint: "Encabezado de nivel 3" },
+  { action: "insertUnorderedList", label: "Lista con viñetas", hint: "Enumera sin orden" },
+  { action: "insertOrderedList", label: "Lista numerada", hint: "Pasos en orden" },
+  { action: "quote", label: "Cita", hint: "Texto citado de una fuente" },
+  { action: "callout", label: "Nota destacada", hint: "Aviso que no se debe pasar por alto" },
+  { action: "warning", label: "Aviso de evaluación", hint: "Fecha, sala o condición del certamen" },
+  { action: "divider", label: "Separador", hint: "Corta el documento en secciones" },
+  { action: "table", label: "Tabla", hint: "Pauta, ponderaciones o datos" },
+  { action: "formula", label: "Fórmula LaTeX", hint: "Expresión matemática" },
+  { action: "code", label: "Bloque de código", hint: "MATLAB, Python, C++ o SQL" },
+  { action: "link", label: "Enlace", hint: "Drive, video o recurso externo" },
+];
+
+function foldForSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+export function matchSlashCommands(query: string): SlashCommand[] {
+  const normalized = foldForSearch(query);
+  if (!normalized) return [...SLASH_COMMANDS];
+  return SLASH_COMMANDS.filter((command) => foldForSearch(command.label).includes(normalized));
+}
+
+/*
+  Detecta el disparador `/` justo antes del cursor. Sólo cuenta al principio de
+  la línea: una fecha `12/03` o una fracción no deben abrir el menú.
+*/
+// Implements: REQ-EDITOR-06
+export function slashQueryBefore(textBeforeCaret: string): string | null {
+  const line = textBeforeCaret.split("\n").at(-1) ?? "";
+  const match = line.match(/^\/([\p{L}\p{N} ]{0,24})$/u);
+  return match ? match[1] : null;
+}
 
 export const EDITOR_REQUIREMENTS = [
   "REQ-EDITOR-01",
@@ -23,7 +79,7 @@ type ProtectedSource = {
 };
 
 const blockHtmlPattern =
-  /<(table|script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<(?:img|hr)\b[^>]*\/?>/gi;
+  /<(table|script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<img\b[^>]*\/?>/gi;
 const alignedHtmlPattern = /<(p|div)\b(?=[^>]*(?:align\s*=|text-align))[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const inlineHtmlPattern = /<(u|sub|sup|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 
@@ -96,20 +152,15 @@ function renderInline(nodes: RichInline[]): string {
     .join("");
 }
 
-function inlineText(nodes: RichInline[]): string {
-  return nodes.map((node) => ("value" in node ? node.value : inlineText(node.content))).join("");
-}
-
 function renderBlock(block: RichBlock): string {
   if (block.type === "paragraph") return `<p>${renderInline(block.content)}</p>`;
   if (block.type === "heading")
     return `<h${block.level}>${renderInline(block.content)}</h${block.level}>`;
+  if (block.type === "divider") return "<hr>";
   if (block.type === "quote") {
-    const plain = inlineText(block.content);
-    const callout = plain.match(/^\[!(NOTE|ASSESSMENT)\]\s*\n?([\s\S]*)$/i);
+    const callout = calloutFromQuote(inlineToPlainText(block.content));
     if (callout) {
-      const tone = callout[1].toLowerCase() === "assessment" ? "assessment" : "notice";
-      return `<aside data-callout="${tone}"><p>${renderInline(parseRichInline(callout[2]))}</p></aside>`;
+      return `<aside data-callout="${callout.tone}"><p>${renderInline(parseRichInline(callout.body))}</p></aside>`;
     }
     return `<blockquote>${renderInline(block.content)}</blockquote>`;
   }
@@ -227,6 +278,7 @@ function convertHtmlFragment(value: string) {
     }
   );
 
+  converted = converted.replace(/<hr\b[^>]*\/?>/gi, "\n\n---\n\n");
   converted = convertLists(converted);
   converted = converted.replace(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1\s*>/gi, (_, level, body) => {
     return `\n\n${"#".repeat(Number(level))} ${convertHtmlFragment(body).trim()}\n\n`;

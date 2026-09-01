@@ -5,9 +5,13 @@ import test from "node:test";
 import {
   EDITOR_MODES,
   EDITOR_REQUIREMENTS,
+  SLASH_COMMANDS,
   htmlToAcademicMarkdown,
   markdownToEditorHtml,
+  matchSlashCommands,
+  slashQueryBefore,
 } from "../lib/multimodal-editor.ts";
+import { calloutFromQuote, isDividerLine, parseRichText } from "../lib/rich-text.ts";
 
 test("Markdown académico se convierte a HTML y vuelve sin perder estructuras", () => {
   const markdown = [
@@ -132,9 +136,90 @@ test("la barra visual incluye todas las herramientas académicas solicitadas", (
     "Insertar tabla",
     "Insertar fórmula LaTeX",
     "Insertar bloque de código",
-    "Insertar callout",
+    "Nota destacada",
+    "Aviso de evaluación",
     "Insertar enlace",
+    "Título principal",
+    "Subtítulo",
+    "Apartado",
+    "Lista con viñetas",
+    "Lista numerada",
+    "Cita",
+    "Separador",
   ]) {
     assert.ok(source.includes(label), `Falta la herramienta ${label}`);
   }
 });
+
+// Implements: REQ-RICH-07
+test("el separador temático sobrevive el viaje Markdown → HTML → Markdown", () => {
+  const markdown = "Antes del corte\n\n---\n\nDespués del corte";
+  const html = markdownToEditorHtml(markdown);
+  assert.match(html, /<hr>/);
+  assert.equal(htmlToAcademicMarkdown(html), markdown);
+
+  assert.deepEqual(parseRichText("***").at(0), { type: "divider" });
+  assert.deepEqual(parseRichText("___").at(0), { type: "divider" });
+  assert.equal(isDividerLine("   ---   "), true);
+  /* Una lista y un título no son separadores aunque empiecen por guion. */
+  assert.equal(isDividerLine("- elemento"), false);
+  assert.equal(isDividerLine("--"), false);
+
+  /* La fila de alineación de una tabla se sigue leyendo como tabla. */
+  const table = parseRichText("| a | b |\n| --- | --- |\n| 1 | 2 |");
+  assert.equal(table.length, 1);
+  assert.equal(table[0].type, "table");
+});
+
+// Implements: REQ-RICH-08
+test("el callout se reconoce una sola vez para el editor y la publicación", () => {
+  assert.deepEqual(calloutFromQuote("[!NOTE]\nRevisa la pauta"), {
+    tone: "notice",
+    body: "Revisa la pauta",
+  });
+  assert.deepEqual(calloutFromQuote("[!assessment]\nSala 204"), {
+    tone: "assessment",
+    body: "Sala 204",
+  });
+  assert.equal(calloutFromQuote("Una cita normal"), null);
+
+  const html = markdownToEditorHtml("> [!ASSESSMENT]\n> Certamen el lunes");
+  assert.match(html, /<aside data-callout="assessment">/);
+  assert.match(htmlToAcademicMarkdown(html), /> \[!ASSESSMENT\]/);
+});
+
+// Implements: REQ-EDITOR-06
+test("el menú de comandos rápidos sólo se abre al inicio de una línea", () => {
+  assert.equal(slashQueryBefore("/"), "");
+  assert.equal(slashQueryBefore("/tab"), "tab");
+  assert.equal(slashQueryBefore("Texto previo\n/lista"), "lista");
+  /* Una fecha o una fracción no deben abrir el menú. */
+  assert.equal(slashQueryBefore("12/03"), null);
+  assert.equal(slashQueryBefore("La guía dice x/y"), null);
+  assert.equal(
+    slashQueryBefore("/tabla con un texto larguísimo que ya no es un comando corto"),
+    null
+  );
+
+  assert.equal(matchSlashCommands("").length, SLASH_COMMANDS.length);
+  assert.deepEqual(
+    matchSlashCommands("tabla").map((command) => command.action),
+    ["table"]
+  );
+  /* El emparejamiento ignora tildes: «formula» encuentra «Fórmula LaTeX». */
+  assert.deepEqual(
+    matchSlashCommands("formula").map((command) => command.action),
+    ["formula"]
+  );
+  assert.deepEqual(matchSlashCommands("no-existe"), []);
+  for (const command of SLASH_COMMANDS) {
+    assert.ok(source().includes(`"${command.action}"`), `Falta la acción ${command.action}`);
+  }
+});
+
+function source() {
+  return fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
+    "utf8"
+  );
+}

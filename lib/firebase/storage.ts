@@ -1,5 +1,5 @@
 import { cloudStorage, firestore, currentUser, authorFields } from "./sdk.ts";
-import { folderName, iso } from "./mappers.ts";
+import { folderName, iso, type ClassroomAttachment } from "./mappers.ts";
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
@@ -33,6 +33,37 @@ export function submissionStoragePath(
   stamp: number
 ) {
   return `courses/${courseId}/submissions/${evalId}/${userId}/${stamp}_${safeFileName(fileName)}`;
+}
+
+/*
+  Sube el archivo y devuelve su descriptor sin escribir en Firestore: la
+  publicación que lo motiva es la que guarda el documento, de modo que el aviso
+  y su pauta se crean juntos o no se crea ninguno.
+*/
+// Implements: REQ-PUB-09
+export async function uploadPostAttachment(
+  courseId: string,
+  file: File,
+  onProgress: (percent: number) => void
+): Promise<ClassroomAttachment> {
+  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES)
+    throw new Error("El archivo debe pesar entre 1 byte y 50 MB.");
+  const user = await currentUser();
+  const contentType = file.type || "application/octet-stream";
+  const storagePath = `courses/${courseId}/${user.uid}/${Date.now()}_${safeFileName(file.name)}`;
+  const cloud = await cloudStorage();
+  const task = cloud.sdk.uploadBytesResumable(cloud.sdk.ref(cloud.storage, storagePath), file, {
+    contentType,
+  });
+  await new Promise<void>((resolve, reject) =>
+    task.on(
+      "state_changed",
+      (snapshot) => onProgress(Math.round((100 * snapshot.bytesTransferred) / snapshot.totalBytes)),
+      reject,
+      resolve
+    )
+  );
+  return { name: file.name, storagePath, contentType, size: file.size };
 }
 
 export async function uploadClassroomFile(

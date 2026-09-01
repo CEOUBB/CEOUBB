@@ -1,14 +1,16 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
-import { Check, CopySimple, Info, LockKey } from "@phosphor-icons/react";
-import { Course } from "../../../lib/courses";
+import { Check, CopySimple, Info, LockKey, Plus } from "@phosphor-icons/react";
+import { materialFolders, Course } from "../../../lib/courses";
 import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
+import { hapticTap } from "../../../lib/mobile-bridge";
 import { COURSE_TABS, studentCount, tabTitle } from "./classroom-utils";
 import { Bar } from "./ProgressBar";
 import { PostsSection } from "./PostsSection";
-import { MaterialsSection } from "./MaterialsSection";
 import { GradesSection } from "./GradesSection";
 import { ProgressSection } from "./ProgressSection";
 import { PeopleSection } from "./PeopleSection";
@@ -17,6 +19,21 @@ import { QuizzesSection } from "./QuizzesSection";
 import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 import type { SectionRole } from "../../../lib/section-roles";
+
+const MoodleImportDialog = dynamic(
+  () => import("./MoodleImportDialog").then((module) => module.MoodleImportDialog),
+  { ssr: false }
+);
+
+/*
+  El estudio de publicación carga sólo cuando un docente decide escribir: el
+  editor, su vista previa y KaTeX no deben pesar en el arranque del aula para
+  los miles de estudiantes que nunca publican.
+*/
+// Implements: REQ-PERF-01 REQ-PUB-01
+const PublishView = dynamic(() => import("./PublishView").then((module) => module.PublishView), {
+  ssr: false,
+});
 
 export function ClassroomView({
   course,
@@ -41,7 +58,6 @@ export function ClassroomView({
     readOnly,
     canManageContent,
     canTeach,
-    files,
     students,
     posts,
     units,
@@ -49,17 +65,40 @@ export function ClassroomView({
     courseReference,
     updateProgress,
     publish,
-    upload,
     editPost,
     deletePost,
-    openFile,
-    renameFile,
-    moveFile,
-    deleteFile,
+    openAttachment,
     copyCourseReference,
     saveLiveClass,
     clearLiveClass,
   } = useClassroomHandlers(course, user, sectionRole);
+
+  // Implements: REQ-PUB-01
+  const [composing, setComposing] = useState(false);
+  const folders = useMemo(() => materialFolders(course), [course]);
+
+  const startPublication = () => {
+    hapticTap();
+    setComposing(true);
+  };
+
+  if (composing) {
+    return (
+      <div
+        className="classroom-layout classroom-layout-studio"
+        style={{ "--course-tone": course.tone } as React.CSSProperties}
+      >
+        <RichTextAssets />
+        <PublishView
+          course={course}
+          folders={folders}
+          onClose={() => setComposing(false)}
+          publish={publish}
+          status={status}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -87,6 +126,8 @@ export function ClassroomView({
             </span>
             <h1>{tab === "home" ? course.name : tabTitle(tab)}</h1>
           </div>
+          {/* Implements: REQ-PUB-13 — las acciones docentes viven en el
+              encabezado del ramo, disponibles desde cualquier pestaña. */}
           <div className="classroom-meta">
             <button
               aria-label={
@@ -104,6 +145,15 @@ export function ClassroomView({
                 <CopySimple size={14} aria-hidden="true" />
               )}
             </button>
+            {canManageContent && (
+              <>
+                {canTeach && <MoodleImportDialog course={course} />}
+                <button className="publication-cta" onClick={startPublication} type="button">
+                  <Plus size={17} weight="bold" aria-hidden="true" />
+                  Nueva publicación
+                </button>
+              </>
+            )}
           </div>
         </header>
         <nav aria-label="Secciones del aula" className="course-tabs">
@@ -139,7 +189,8 @@ export function ClassroomView({
                     canManageContent={canManageContent}
                     editPost={editPost}
                     deletePost={deletePost}
-                    openMaterials={() => setTab("materials")}
+                    openAttachment={openAttachment}
+                    startPublication={startPublication}
                   />
                   <aside className="course-rail">
                     <div className="section-title compact-title">
@@ -176,25 +227,14 @@ export function ClassroomView({
                         </div>
                       </dl>
                     </div>
+                    {status.text && (
+                      <p className={`tool-status ${status.tone}`} role="status">
+                        {status.text}
+                      </p>
+                    )}
                   </aside>
                 </div>
               </>
-            )}
-            {tab === "materials" && (
-              <MaterialsSection
-                course={course}
-                files={files}
-                user={user}
-                canTeach={canTeach}
-                canManageContent={canManageContent}
-                publish={publish}
-                upload={upload}
-                openFile={openFile}
-                renameFile={renameFile}
-                moveFile={moveFile}
-                deleteFile={deleteFile}
-                status={status}
-              />
             )}
             {tab === "grades" && (
               <GradesSection

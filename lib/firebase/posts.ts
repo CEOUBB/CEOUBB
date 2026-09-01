@@ -1,6 +1,7 @@
 import { firestore, cloudStorage, currentUser, authorFields } from "./sdk.ts";
 import { syncProfile } from "./profile.ts";
 import {
+  type ClassroomAttachment,
   type ClassroomFile,
   type ClassroomPost,
   type ClassroomPostKind,
@@ -8,6 +9,7 @@ import {
   folderName,
   iso,
   postKind,
+  toAttachments,
   toFile,
   toGradebookState,
   toPost,
@@ -305,6 +307,7 @@ export async function publishClassroomPost(
     linkUrl: string;
     dueDate: string;
     notifyStudents: boolean;
+    attachments?: ClassroomAttachment[];
   }
 ) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
@@ -314,6 +317,8 @@ export async function publishClassroomPost(
     throw new Error("El enlace debe usar http:// o https://.");
   }
   const body = normalizeRichTextBody(input.body);
+  // Implements: REQ-PUB-09
+  const attachments = toAttachments(input.attachments ?? []);
   await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
     ...authorFields(user),
     courseId,
@@ -327,6 +332,7 @@ export async function publishClassroomPost(
     storagePath: "",
     contentType: "",
     fileSize: 0,
+    attachments,
     notifyStudents: input.notifyStudents,
     createdAt: sdk.serverTimestamp(),
   });

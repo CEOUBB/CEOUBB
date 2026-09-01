@@ -5,8 +5,11 @@ import Script from "next/script";
 import "../../../public/biblioteca/assets/vendor/katex/katex.min.css";
 import {
   CLASSROOM_COMPATIBILITY_REQUIREMENTS,
+  calloutFromQuote,
   codeLanguageLabel,
   highlightCode,
+  inlineToPlainText,
+  parseRichInline,
   parseRichText,
   type RichInline,
   type RichTableBlock,
@@ -216,8 +219,18 @@ export function RichText({ body, className = "" }: { body: string; className?: s
             </h4>
           );
         }
-        if (block.type === "quote")
+        if (block.type === "divider") return <hr className="rich-divider" key={key} />;
+        if (block.type === "quote") {
+          const callout = calloutFromQuote(inlineToPlainText(block.content));
+          if (callout) {
+            return (
+              <aside className="rich-callout" data-callout={callout.tone} key={key}>
+                <p>{renderInline(parseRichInline(callout.body))}</p>
+              </aside>
+            );
+          }
           return <blockquote key={key}>{renderInline(block.content)}</blockquote>;
+        }
         if (block.type === "code")
           return <CodeBlock key={key} language={block.language} value={block.value} />;
         if (block.type === "math") return <MathFormula display key={key} value={block.value} />;

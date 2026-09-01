@@ -109,12 +109,12 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
     path.join(process.cwd(), "app/views/classroom/PostsSection.tsx"),
     "utf8"
   );
-  const materialsSource = fs.readFileSync(
-    path.join(process.cwd(), "app/views/classroom/MaterialsSection.tsx"),
+  const classroomSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/ClassroomView.tsx"),
     "utf8"
   );
-  const publicationComposerSource = fs.readFileSync(
-    path.join(process.cwd(), "app/views/classroom/PublicationComposerDialog.tsx"),
+  const publishStudioSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/PublishView.tsx"),
     "utf8"
   );
   const capacitorSource = fs.readFileSync(path.join(process.cwd(), "capacitor.config.ts"), "utf8");
@@ -130,8 +130,8 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   assert.match(postsSource, /href=\{safePostLink\}/);
   assert.doesNotMatch(postsSource, /href=\{post\.linkUrl\}/);
   assert.match(postsSource, /<RichText body=\{post\.body\}/);
-  assert.match(materialsSource, /<PublicationLauncher/);
-  assert.match(publicationComposerSource, /<RichPostEditor[\s\S]*?name="body"/);
+  assert.match(classroomSource, /<PublishView/);
+  assert.match(publishStudioSource, /<RichPostEditor[\s\S]*?name="body"/);
   assert.match(capacitorSource, /https:\/\/ceoubb\.com/);
 });
 

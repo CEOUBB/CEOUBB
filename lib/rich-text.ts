@@ -52,7 +52,40 @@ export type RichBlock =
   | { type: "list"; ordered: boolean; items: RichInline[][] }
   | { type: "code"; language: CodeLanguage; value: string }
   | { type: "math"; display: true; value: string }
+  | { type: "divider" }
   | RichTableBlock;
+
+/*
+  Un aviso o una guía se leen en bloques: el separador temático marca dónde
+  termina una idea y empieza la siguiente sin gastar un encabezado en ello.
+*/
+// Implements: REQ-RICH-07
+export function isDividerLine(value: string) {
+  return /^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$/.test(value);
+}
+
+export function inlineToPlainText(nodes: RichInline[]): string {
+  return nodes
+    .map((node) => ("value" in node ? node.value : inlineToPlainText(node.content)))
+    .join("");
+}
+
+export type RichCallout = { tone: "notice" | "assessment"; body: string };
+
+/*
+  Los callouts viajan como citas con marcador `[!NOTE]` / `[!ASSESSMENT]`, la
+  misma convención que usa GitHub. Reconocerlos en un solo sitio evita que el
+  editor pinte un aviso y la publicación publicada muestre el marcador crudo.
+*/
+// Implements: REQ-RICH-08
+export function calloutFromQuote(plainText: string): RichCallout | null {
+  const match = plainText.match(/^\[!(NOTE|ASSESSMENT)\]\s*\n?([\s\S]*)$/i);
+  if (!match) return null;
+  return {
+    tone: match[1].toLowerCase() === "assessment" ? "assessment" : "notice",
+    body: match[2].trim(),
+  };
+}
 
 const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
   matlab: "matlab",
@@ -534,6 +567,7 @@ function startsBlock(line: string) {
     /^#{1,6}\s+/.test(trimmed) ||
     /^>\s?/.test(trimmed) ||
     /^(?:[-+*]|\d+\.)\s+/.test(trimmed) ||
+    isDividerLine(trimmed) ||
     trimmed === "$$" ||
     trimmed === "\\["
   );
@@ -642,6 +676,12 @@ export function parseRichText(value: string): RichBlock[] {
         header: tableHeader.header.map((cell) => parseRichInline(cell)),
         rows,
       });
+      continue;
+    }
+
+    if (isDividerLine(line)) {
+      blocks.push({ type: "divider" });
+      cursor += 1;
       continue;
     }
 

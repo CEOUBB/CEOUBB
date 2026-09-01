@@ -3,17 +3,27 @@
 import {
   CodeBlock,
   Function as FunctionIcon,
+  LineVertical,
   LinkSimple,
+  ListBullets,
+  ListNumbers,
+  Minus,
   Quotes,
   Table,
   TextAlignCenter,
   TextAlignLeft,
   TextAlignRight,
   TextB,
+  TextHOne,
+  TextHThree,
+  TextHTwo,
   TextItalic,
   TextUnderline,
+  Warning,
 } from "@phosphor-icons/react";
 import {
+  Fragment,
+  useCallback,
   useDeferredValue,
   useEffect,
   useId,
@@ -28,7 +38,10 @@ import {
   EDITOR_MODES,
   htmlToAcademicMarkdown,
   markdownToEditorHtml,
+  matchSlashCommands,
+  slashQueryBefore,
   type EditorMode,
+  type SlashCommand,
 } from "../../../lib/multimodal-editor";
 import { RICH_TEXT_MAX_LENGTH, safeLinkDestination } from "../../../lib/rich-text";
 import { RichText } from "./RichText";
@@ -39,6 +52,7 @@ type MultimodalEditorProps = {
   maxLength?: number;
   name: string;
   onChange: (value: string) => void;
+  onModeChange?: (mode: EditorMode) => void;
   required?: boolean;
   value: string;
 };
@@ -50,10 +64,18 @@ type ToolAction =
   | "justifyLeft"
   | "justifyCenter"
   | "justifyRight"
+  | "heading1"
+  | "heading2"
+  | "heading3"
+  | "insertUnorderedList"
+  | "insertOrderedList"
+  | "quote"
+  | "divider"
   | "table"
   | "formula"
   | "code"
   | "callout"
+  | "warning"
   | "link";
 
 const modeLabels: Record<EditorMode, { label: string; detail: string }> = {
@@ -62,19 +84,112 @@ const modeLabels: Record<EditorMode, { label: string; detail: string }> = {
   html: { label: "HTML", detail: "Código libre" },
 };
 
+/*
+  La barra se agrupa por lo que hace el docente, no por lo que sabe el motor:
+  dar énfasis, estructurar en títulos y listas, insertar un bloque académico y
+  alinear. Los separadores marcan el corte entre grupos sin gastar una etiqueta.
+*/
 const visualTools = [
-  { action: "bold", label: "Negrita", icon: TextB, pressed: true },
-  { action: "italic", label: "Cursiva", icon: TextItalic, pressed: true },
-  { action: "underline", label: "Subrayado", icon: TextUnderline, pressed: true },
-  { action: "justifyLeft", label: "Alinear a la izquierda", icon: TextAlignLeft, pressed: true },
-  { action: "justifyCenter", label: "Centrar", icon: TextAlignCenter, pressed: true },
-  { action: "justifyRight", label: "Alinear a la derecha", icon: TextAlignRight, pressed: true },
-  { action: "table", label: "Insertar tabla", icon: Table, pressed: false },
-  { action: "formula", label: "Insertar fórmula LaTeX", icon: FunctionIcon, pressed: false },
-  { action: "code", label: "Insertar bloque de código", icon: CodeBlock, pressed: false },
-  { action: "callout", label: "Insertar callout", icon: Quotes, pressed: false },
-  { action: "link", label: "Insertar enlace", icon: LinkSimple, pressed: false },
+  { action: "bold", label: "Negrita", icon: TextB, pressed: true, group: "emphasis" },
+  { action: "italic", label: "Cursiva", icon: TextItalic, pressed: true, group: "emphasis" },
+  {
+    action: "underline",
+    label: "Subrayado",
+    icon: TextUnderline,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "heading1",
+    label: "Título principal",
+    icon: TextHOne,
+    pressed: false,
+    group: "blocks",
+  },
+  { action: "heading2", label: "Subtítulo", icon: TextHTwo, pressed: false, group: "blocks" },
+  { action: "heading3", label: "Apartado", icon: TextHThree, pressed: false, group: "blocks" },
+  {
+    action: "insertUnorderedList",
+    label: "Lista con viñetas",
+    icon: ListBullets,
+    pressed: true,
+    group: "blocks",
+  },
+  {
+    action: "insertOrderedList",
+    label: "Lista numerada",
+    icon: ListNumbers,
+    pressed: true,
+    group: "blocks",
+  },
+  { action: "quote", label: "Cita", icon: Quotes, pressed: false, group: "insert" },
+  {
+    action: "callout",
+    label: "Nota destacada",
+    icon: LineVertical,
+    pressed: false,
+    group: "insert",
+  },
+  {
+    action: "warning",
+    label: "Aviso de evaluación",
+    icon: Warning,
+    pressed: false,
+    group: "insert",
+  },
+  { action: "divider", label: "Separador", icon: Minus, pressed: false, group: "insert" },
+  { action: "table", label: "Insertar tabla", icon: Table, pressed: false, group: "insert" },
+  {
+    action: "formula",
+    label: "Insertar fórmula LaTeX",
+    icon: FunctionIcon,
+    pressed: false,
+    group: "insert",
+  },
+  {
+    action: "code",
+    label: "Insertar bloque de código",
+    icon: CodeBlock,
+    pressed: false,
+    group: "insert",
+  },
+  { action: "link", label: "Insertar enlace", icon: LinkSimple, pressed: false, group: "insert" },
+  {
+    action: "justifyLeft",
+    label: "Alinear a la izquierda",
+    icon: TextAlignLeft,
+    pressed: true,
+    group: "align",
+  },
+  {
+    action: "justifyCenter",
+    label: "Centrar",
+    icon: TextAlignCenter,
+    pressed: true,
+    group: "align",
+  },
+  {
+    action: "justifyRight",
+    label: "Alinear a la derecha",
+    icon: TextAlignRight,
+    pressed: true,
+    group: "align",
+  },
 ] as const;
+
+type SlashMenuState = {
+  commands: SlashCommand[];
+  highlight: number;
+  top: number;
+  left: number;
+};
+
+const blockTagForAction: Partial<Record<ToolAction, string>> = {
+  heading1: "h1",
+  heading2: "h2",
+  heading3: "h3",
+  quote: "blockquote",
+};
 
 const allowedVisualTags = new Set([
   "a",
@@ -90,6 +205,7 @@ const allowedVisualTags = new Set([
   "h4",
   "h5",
   "h6",
+  "hr",
   "img",
   "li",
   "mark",
@@ -319,20 +435,23 @@ function EditorToolbar({
     >
       {visualTools.map((tool, index) => {
         const ToolIcon = tool.icon;
+        const startsGroup = index > 0 && visualTools[index - 1].group !== tool.group;
         return (
-          <button
-            aria-label={tool.label}
-            aria-pressed={tool.pressed ? activeTools.has(tool.action) : undefined}
-            data-editor-tool={tool.action}
-            key={tool.action}
-            onClick={() => onApply(tool.action)}
-            onMouseDown={(event) => event.preventDefault()}
-            tabIndex={index === 0 ? 0 : -1}
-            title={tool.label}
-            type="button"
-          >
-            <ToolIcon aria-hidden="true" size={19} weight="bold" />
-          </button>
+          <Fragment key={tool.action}>
+            {startsGroup && <span aria-hidden="true" className="editor-toolbar-rule" />}
+            <button
+              aria-label={tool.label}
+              aria-pressed={tool.pressed ? activeTools.has(tool.action) : undefined}
+              data-editor-tool={tool.action}
+              onClick={() => onApply(tool.action)}
+              onMouseDown={(event) => event.preventDefault()}
+              tabIndex={index === 0 ? 0 : -1}
+              title={tool.label}
+              type="button"
+            >
+              <ToolIcon aria-hidden="true" size={18} weight="bold" />
+            </button>
+          </Fragment>
         );
       })}
     </div>
@@ -354,7 +473,9 @@ function EditorComposePane({
   onApplyTool,
   onHtmlChange,
   onMarkdownChange,
+  onRunSlashCommand,
   required,
+  slash,
   syncVisual,
   visualRef,
 }: {
@@ -372,7 +493,9 @@ function EditorComposePane({
   onApplyTool: (action: ToolAction) => void;
   onHtmlChange: (value: string) => void;
   onMarkdownChange: (value: string) => void;
+  onRunSlashCommand: (command: SlashCommand) => void;
   required: boolean;
+  slash: SlashMenuState | null;
   syncVisual: () => void;
   visualRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -381,21 +504,25 @@ function EditorComposePane({
       {mode === "visual" ? (
         <>
           <EditorToolbar activeTools={activeTools} onApply={onApplyTool} />
-          <div
-            aria-labelledby={labelId}
-            aria-multiline="true"
-            aria-required={required}
-            className="editor-visual-canvas"
-            contentEditable
-            onInput={syncVisual}
-            onKeyDown={handleVisualKeyDown}
-            onPaste={handlePaste}
-            ref={visualRef}
-            role="textbox"
-            spellCheck
-            suppressContentEditableWarning
-            tabIndex={0}
-          />
+          <div className="editor-visual-frame">
+            <div
+              aria-labelledby={labelId}
+              aria-multiline="true"
+              aria-required={required}
+              className="editor-visual-canvas"
+              contentEditable
+              data-placeholder="Escribe, pega desde Word o pulsa / para insertar un bloque"
+              onInput={syncVisual}
+              onKeyDown={handleVisualKeyDown}
+              onPaste={handlePaste}
+              ref={visualRef}
+              role="textbox"
+              spellCheck
+              suppressContentEditableWarning
+              tabIndex={0}
+            />
+            {slash && <SlashMenu onRun={onRunSlashCommand} state={slash} />}
+          </div>
         </>
       ) : mode === "markdown" ? (
         <textarea
@@ -428,6 +555,40 @@ function EditorComposePane({
   );
 }
 
+// Implements: REQ-EDITOR-06
+function SlashMenu({
+  onRun,
+  state,
+}: {
+  onRun: (command: SlashCommand) => void;
+  state: SlashMenuState;
+}) {
+  return (
+    <div
+      aria-label="Insertar bloque"
+      className="editor-slash-menu"
+      role="listbox"
+      style={{ top: `${state.top}px`, left: `${state.left}px` }}
+    >
+      <p>Insertar</p>
+      {state.commands.map((command, index) => (
+        <button
+          aria-selected={index === state.highlight}
+          className={index === state.highlight ? "is-highlighted" : ""}
+          key={command.action}
+          onClick={() => onRun(command)}
+          onMouseDown={(event) => event.preventDefault()}
+          role="option"
+          type="button"
+        >
+          <strong>{command.label}</strong>
+          <small>{command.hint}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function EditorPreview({ value }: { value: string }) {
   return (
     <div aria-label="Vista previa de la publicación" className="rich-editor-preview">
@@ -450,6 +611,7 @@ function useMultimodalEditorController({
   maxLength = RICH_TEXT_MAX_LENGTH,
   name,
   onChange,
+  onModeChange,
   required = false,
   value,
 }: MultimodalEditorProps) {
@@ -464,6 +626,7 @@ function useMultimodalEditorController({
   const visualDirtyRef = useRef(false);
   const [announcement, setAnnouncement] = useState("");
   const [activeTools, setActiveTools] = useState<Set<string>>(() => new Set());
+  const [slash, setSlash] = useState<SlashMenuState | null>(null);
   const previewValue = useDeferredValue(value);
   const panelId = `${baseId}-panel`;
   const labelId = `${baseId}-label`;
@@ -512,6 +675,34 @@ function useMultimodalEditorController({
     return () => document.removeEventListener("selectionchange", refresh);
   }, [mode]);
 
+  /*
+    El menú se ancla al cursor, no al lienzo: en un documento largo el docente
+    ve las opciones donde está escribiendo y no al principio de la página.
+  */
+  // Implements: REQ-EDITOR-06
+  const refreshSlashMenu = useCallback(() => {
+    const editor = visualRef.current;
+    if (!editor) return setSlash(null);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return setSlash(null);
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) return setSlash(null);
+    const probe = range.cloneRange();
+    probe.setStart(editor, 0);
+    const query = slashQueryBefore(probe.toString());
+    if (query === null) return setSlash(null);
+    const commands = matchSlashCommands(query);
+    if (commands.length === 0) return setSlash(null);
+    const caret = range.getBoundingClientRect();
+    const anchor = editor.getBoundingClientRect();
+    setSlash({
+      commands,
+      highlight: 0,
+      top: (caret.bottom || anchor.top) - anchor.top + 6,
+      left: Math.max(0, (caret.left || anchor.left) - anchor.left),
+    });
+  }, []);
+
   const syncVisual = () => {
     const editor = visualRef.current;
     if (!editor) return;
@@ -523,10 +714,12 @@ function useMultimodalEditorController({
     }
     visualDirtyRef.current = true;
     emit(next);
+    refreshSlashMenu();
   };
 
   const switchMode = (nextMode: EditorMode) => {
     if (nextMode === mode) return;
+    setSlash(null);
     if (nextMode === "html") {
       if (mode === "visual") {
         const editorHtml = visualRef.current?.innerHTML ?? "";
@@ -542,6 +735,7 @@ function useMultimodalEditorController({
       visualDirtyRef.current = false;
     }
     setMode(nextMode);
+    onModeChange?.(nextMode);
     setAnnouncement(`Modo ${modeLabels[nextMode].label} activo.`);
   };
 
@@ -582,15 +776,26 @@ function useMultimodalEditorController({
     insertVisualNode(editor, pre);
   };
 
-  const insertCallout = () => {
+  const insertCallout = (tone: "notice" | "assessment") => {
     const editor = visualRef.current!;
     const range = selectionInside(editor);
     const aside = document.createElement("aside");
-    aside.dataset.callout = "notice";
+    aside.dataset.callout = tone;
     const paragraph = document.createElement("p");
-    paragraph.textContent = range?.toString() || "Escribe una nota importante";
+    paragraph.textContent =
+      range?.toString() ||
+      (tone === "assessment" ? "Fecha, sala y condiciones" : "Escribe una nota importante");
     aside.appendChild(paragraph);
     insertVisualNode(editor, aside);
+  };
+
+  const insertDivider = () => {
+    const editor = visualRef.current!;
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(document.createElement("hr"));
+    /* Sin un párrafo detrás, el separador deja al cursor sin dónde seguir. */
+    fragment.appendChild(document.createElement("p")).appendChild(document.createElement("br"));
+    insertVisualNode(editor, fragment);
   };
 
   const insertLink = () => {
@@ -623,16 +828,43 @@ function useMultimodalEditorController({
     const editor = visualRef.current;
     if (!editor) return;
     editor.focus();
-    if (action === "table") insertTable();
+    const blockTag = blockTagForAction[action];
+    if (blockTag) document.execCommand("formatBlock", false, blockTag);
+    else if (action === "table") insertTable();
     else if (action === "formula") insertFormula();
     else if (action === "code") insertCode();
-    else if (action === "callout") insertCallout();
+    else if (action === "callout") insertCallout("notice");
+    else if (action === "warning") insertCallout("assessment");
+    else if (action === "divider") insertDivider();
     else if (action === "link") insertLink();
     else document.execCommand(action, false);
     syncVisual();
   };
 
   const handleVisualKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (slash) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        return setSlash((current) =>
+          current
+            ? {
+                ...current,
+                highlight:
+                  (current.highlight + step + current.commands.length) % current.commands.length,
+              }
+            : current
+        );
+      }
+      if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        return runSlashCommand(slash.commands[slash.highlight]);
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        return setSlash(null);
+      }
+    }
     if (!(event.ctrlKey || event.metaKey)) return;
     if (event.key.toLowerCase() === "b") {
       event.preventDefault();
@@ -686,6 +918,25 @@ function useMultimodalEditorController({
     syncVisual();
   };
 
+  // Implements: REQ-EDITOR-06
+  const runSlashCommand = (command: SlashCommand) => {
+    const editor = visualRef.current;
+    setSlash(null);
+    if (!editor) return;
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      /* Borra el `/consulta` que abrió el menú antes de insertar el bloque. */
+      const probe = selection.getRangeAt(0).cloneRange();
+      probe.setStart(editor, 0);
+      const typed = slashQueryBefore(probe.toString());
+      if (typed !== null) {
+        for (let step = 0; step < typed.length + 1; step += 1)
+          document.execCommand("delete", false);
+      }
+    }
+    applyTool(command.action as ToolAction);
+  };
+
   const counter = `${value.length.toLocaleString("es-CL")} / ${maxLength.toLocaleString("es-CL")}`;
 
   const handleHtmlChange = (nextHtml: string) => {
@@ -721,6 +972,9 @@ function useMultimodalEditorController({
     panelId,
     previewValue,
     required,
+    runSlashCommand,
+    setSlash,
+    slash,
     switchMode,
     syncVisual,
     visualRef,
@@ -771,7 +1025,9 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
           onApplyTool={editor.applyTool}
           onHtmlChange={editor.handleHtmlChange}
           onMarkdownChange={editor.emit}
+          onRunSlashCommand={editor.runSlashCommand}
           required={editor.required}
+          slash={editor.slash}
           syncVisual={editor.syncVisual}
           visualRef={editor.visualRef}
         />
