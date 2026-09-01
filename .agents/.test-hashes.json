@@ -21,7 +21,7 @@
   "tests/fast-boot-session.test.ts": "387dd50fef12458f057ceb7bac028f44f7403fd500b0af24d4b74b4f9a1c1940",
   "tests/final-grade-records.test.ts": "4fbbd7b05aef53e8445ba8dbcbd5d30719d88f01aac6ca7718887c70022fd213",
   "tests/firebase-mappers.test.ts": "5cbc80506cd06854792a7172fa583427672b93c0a3df51b67b6978467b1ad6d4",
-  "tests/firebase-rules-config.test.ts": "593cc993229a4080b55a8ab4473a37ea487beb0158945548867f3a6d63876aa5",
+  "tests/firebase-rules-config.test.ts": "8d01ca3b0f47e5d9883dff81be6bde2382398fb0b6b03785de7321fbec544113",
   "tests/firebase-rules.test.ts": "0eb6de0f30acb062fe7f2bf03bfb08ffcf75c95805fc512ac000bada07c898cc",
   "tests/github-webhook.test.ts": "99afb3c4814aae88c88bb691fd79d1f7b2817cf0b4c2ac53ec3d9417b777f1e3",
   "tests/grade-audit.test.ts": "823d495d9501e3e7a248dfa3ae475b5e4c63c8add3fca5162906875262f68373",
