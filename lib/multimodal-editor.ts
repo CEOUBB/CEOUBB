@@ -32,7 +32,7 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { action: "insertOrderedList", label: "Lista numerada", hint: "Pasos en orden" },
   { action: "quote", label: "Cita", hint: "Texto citado de una fuente" },
   { action: "callout", label: "Nota destacada", hint: "Aviso que no se debe pasar por alto" },
-  { action: "warning", label: "Aviso de evaluación", hint: "Fecha, sala o condición del certamen" },
+  { action: "warning", label: "Aviso", hint: "Fecha, sala o condición del certamen" },
   { action: "divider", label: "Separador", hint: "Corta el documento en secciones" },
   { action: "table", label: "Tabla", hint: "Pauta, ponderaciones o datos" },
   { action: "formula", label: "Fórmula LaTeX", hint: "Expresión matemática" },
@@ -78,8 +78,15 @@ type ProtectedSource = {
   tokens: Array<{ token: string; value: string; block: boolean }>;
 };
 
+/*
+  `table` no viaja aquí. Protegerla como HTML crudo la devolvía intacta al
+  lienzo, pero el modelo de contenido no la reconocía: la vista previa y la
+  publicación ya publicada mostraban las etiquetas en bruto al estudiante.
+  Se convierte a tabla Markdown, que `parseRichText` sí entiende.
+*/
+// Implements: REQ-EDITOR-08
 const blockHtmlPattern =
-  /<(table|script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<img\b[^>]*\/?>/gi;
+  /<(script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<img\b[^>]*\/?>/gi;
 const alignedHtmlPattern = /<(p|div)\b(?=[^>]*(?:align\s*=|text-align))[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const inlineHtmlPattern = /<(u|sub|sup|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 
@@ -145,6 +152,7 @@ function renderInline(nodes: RichInline[]): string {
       if (node.type === "math") return `<span data-latex="inline">${escapeHtml(node.value)}</span>`;
       if (node.type === "strong") return `<strong>${renderInline(node.content)}</strong>`;
       if (node.type === "emphasis") return `<em>${renderInline(node.content)}</em>`;
+      if (node.type === "underline") return `<u>${renderInline(node.content)}</u>`;
       const href = node.href ? safeLinkDestination(node.href) : null;
       if (!href) return renderInline(node.content);
       return `<a href="${escapeHtml(href)}">${renderInline(node.content)}</a>`;
@@ -230,6 +238,32 @@ function preserveHtml(
   });
 }
 
+/*
+  Una tabla del lienzo se escribe como tabla Markdown para que la lea el mismo
+  parser que usan la vista previa y la publicación. La primera fila es el
+  encabezado, que es lo que inserta la barra de herramientas.
+*/
+// Implements: REQ-EDITOR-08
+function convertTables(value: string) {
+  return value.replace(/<table\b[^>]*>([\s\S]*?)<\/table\s*>/gi, (whole, body) => {
+    const rows = Array.from(String(body).matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr\s*>/gi));
+    if (rows.length === 0) return "";
+    const grid = rows.map((row) =>
+      Array.from(row[1].matchAll(/<(td|th)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)).map((cell) =>
+        /* Una celda no puede contener saltos ni barras: romperían la fila. */
+        convertHtmlFragment(cell[2]).replace(/\s+/g, " ").replace(/\|/g, "\\|").trim()
+      )
+    );
+    const columns = Math.max(...grid.map((row) => row.length));
+    if (columns === 0) return "";
+    const pad = (row: string[]) =>
+      `| ${Array.from({ length: columns }, (_, index) => row[index] ?? "").join(" | ")} |`;
+    const [header, ...rest] = grid;
+    const divider = `| ${Array.from({ length: columns }, () => "---").join(" | ")} |`;
+    return `\n\n${[pad(header), divider, ...rest.map(pad)].join("\n")}\n\n`;
+  });
+}
+
 function convertLists(value: string) {
   let converted = value;
   for (let pass = 0; pass < 3; pass += 1) {
@@ -278,6 +312,7 @@ function convertHtmlFragment(value: string) {
     }
   );
 
+  converted = convertTables(converted);
   converted = converted.replace(/<hr\b[^>]*\/?>/gi, "\n\n---\n\n");
   converted = convertLists(converted);
   converted = converted.replace(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1\s*>/gi, (_, level, body) => {

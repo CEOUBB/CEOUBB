@@ -134,7 +134,7 @@ const visualTools = [
   },
   {
     action: "warning",
-    label: "Aviso de evaluación",
+    label: "Aviso",
     icon: Warning,
     pressed: false,
     group: "insert",
@@ -463,6 +463,7 @@ function EditorToolbar({
 function EditorComposePane({
   activeTools,
   draft,
+  handleCodeKeyDown,
   handleMarkdownKeyDown,
   handlePaste,
   handleVisualKeyDown,
@@ -483,6 +484,7 @@ function EditorComposePane({
 }: {
   activeTools: Set<string>;
   draft: string;
+  handleCodeKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   handleMarkdownKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   handlePaste: (event: ClipboardEvent<HTMLDivElement>) => void;
   handleVisualKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
@@ -527,31 +529,45 @@ function EditorComposePane({
           </div>
         </>
       ) : mode === "markdown" ? (
-        <textarea
-          aria-label={`${label}: Markdown con LaTeX`}
-          className="editor-source editor-source-markdown"
-          maxLength={maxLength}
-          onChange={(event) => onMarkdownChange(event.target.value)}
-          onKeyDown={handleMarkdownKeyDown}
-          placeholder={"Escribe Markdown. Usa $...$ para fórmulas y ```python para código."}
-          ref={markdownRef}
-          rows={13}
-          spellCheck
-          value={draft}
-        />
+        /* Implements: REQ-EDITOR-09 */
+        <div className="editor-code-pane">
+          <div className="editor-code-bar">
+            <span>Markdown + LaTeX</span>
+            <small className="num">{draft.split("\n").length} líneas</small>
+          </div>
+          <textarea
+            aria-label={`${label}: Markdown con LaTeX`}
+            className="editor-source editor-source-markdown"
+            maxLength={maxLength}
+            onChange={(event) => onMarkdownChange(event.target.value)}
+            onKeyDown={handleMarkdownKeyDown}
+            placeholder={"Escribe Markdown. Usa $...$ para fórmulas y ```python para código."}
+            ref={markdownRef}
+            rows={18}
+            spellCheck
+            value={draft}
+          />
+        </div>
       ) : (
-        <textarea
-          aria-label={`${label}: código HTML libre`}
-          className="editor-source editor-source-html"
-          maxLength={maxLength}
-          onChange={(event) => onHtmlChange(event.target.value)}
-          placeholder={
-            "<section>\n  <h2>Contenido académico</h2>\n  <p>Escribe tu HTML…</p>\n</section>"
-          }
-          rows={13}
-          spellCheck={false}
-          value={htmlDraft}
-        />
+        <div className="editor-code-pane">
+          <div className="editor-code-bar">
+            <span>HTML</span>
+            <small className="num">{htmlDraft.split("\n").length} líneas</small>
+          </div>
+          <textarea
+            aria-label={`${label}: código HTML libre`}
+            className="editor-source editor-source-html"
+            maxLength={maxLength}
+            onChange={(event) => onHtmlChange(event.target.value)}
+            onKeyDown={handleCodeKeyDown}
+            placeholder={
+              "<section>\n  <h2>Contenido académico</h2>\n  <p>Escribe tu HTML…</p>\n</section>"
+            }
+            rows={18}
+            spellCheck={false}
+            value={htmlDraft}
+          />
+        </div>
       )}
     </div>
   );
@@ -917,6 +933,37 @@ function useMultimodalEditorController({
     }
   };
 
+  /*
+    Tabular dentro del panel de codigo indenta en vez de saltar al siguiente
+    control, que es lo que espera cualquiera que haya escrito HTML.
+    Escape devuelve el tabulador a su papel de navegacion para no atrapar al
+    teclado dentro del campo.
+  */
+  // Implements: REQ-EDITOR-09 REQ-A11Y-01
+  const escapeTabRef = useRef(false);
+  const handleCodeKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Escape") {
+      escapeTabRef.current = true;
+      return;
+    }
+    if (event.key !== "Tab" || event.ctrlKey || event.metaKey || event.altKey) {
+      escapeTabRef.current = false;
+      return;
+    }
+    if (escapeTabRef.current) {
+      escapeTabRef.current = false;
+      return;
+    }
+    event.preventDefault();
+    const field = event.currentTarget;
+    const { selectionStart: start, selectionEnd: end, value: current } = field;
+    const next = `${current.slice(0, start)}  ${current.slice(end)}`;
+    handleHtmlChange(next);
+    requestAnimationFrame(() => {
+      field.selectionStart = field.selectionEnd = start + 2;
+    });
+  };
+
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     const editor = visualRef.current;
@@ -969,6 +1016,7 @@ function useMultimodalEditorController({
     draft: value,
     handleHtmlChange,
     handleInvalid,
+    handleCodeKeyDown,
     handleMarkdownKeyDown,
     handlePaste,
     handleVisualKeyDown,
@@ -1046,6 +1094,7 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
         <EditorComposePane
           activeTools={editor.activeTools}
           draft={editor.draft}
+          handleCodeKeyDown={editor.handleCodeKeyDown}
           handleMarkdownKeyDown={editor.handleMarkdownKeyDown}
           handlePaste={editor.handlePaste}
           handleVisualKeyDown={editor.handleVisualKeyDown}

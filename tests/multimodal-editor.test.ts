@@ -11,7 +11,12 @@ import {
   matchSlashCommands,
   slashQueryBefore,
 } from "../lib/multimodal-editor.ts";
-import { calloutFromQuote, isDividerLine, parseRichText } from "../lib/rich-text.ts";
+import {
+  calloutFromQuote,
+  inlineToPlainText,
+  isDividerLine,
+  parseRichText,
+} from "../lib/rich-text.ts";
 
 test("Markdown académico se convierte a HTML y vuelve sin perder estructuras", () => {
   const markdown = [
@@ -48,12 +53,16 @@ test("HTML libre no representable permanece inerte y recuperable", () => {
   ].join("\n");
 
   const markdown = htmlToAcademicMarkdown(html);
-  assert.match(markdown, /<table data-course="estatica">/);
+  /* La tabla sí es representable: viaja como tabla Markdown para que la vista
+     previa y la publicación la rindan en vez de mostrar sus etiquetas. */
+  assert.match(markdown, /^\| Semana 1 \|$/m);
+  assert.doesNotMatch(markdown, /<table/);
+  /* Lo que el modelo no puede representar sigue inerte y recuperable. */
   assert.match(markdown, /<script>window\.__editorExecuted = true<\/script>/);
   assert.match(markdown, /<section data-layout="custom">/);
 
   const restored = markdownToEditorHtml(markdown);
-  assert.match(restored, /<table data-course="estatica">/);
+  assert.match(restored, /<table>/);
   assert.match(restored, /<script>window\.__editorExecuted = true<\/script>/);
   assert.match(restored, /<u>Contenido propio<\/u>/);
 });
@@ -69,7 +78,9 @@ test("tablas, alineación, subrayado y callouts conservan su intención", () => 
   assert.match(markdown, /text-align: center/);
   assert.match(markdown, /<u>Resultado central<\/u>/);
   assert.match(markdown, /> \[!NOTE\]/);
-  assert.match(markdown, /<table>/);
+  /* La tabla se guarda como tabla Markdown, no como etiquetas crudas. */
+  assert.match(markdown, /^\| Magnitud \| Valor \|$/m);
+  assert.doesNotMatch(markdown, /<table/);
 
   const restored = markdownToEditorHtml(markdown);
   assert.match(restored, /text-align: center/);
@@ -137,7 +148,7 @@ test("la barra visual incluye todas las herramientas académicas solicitadas", (
     "Insertar fórmula LaTeX",
     "Insertar bloque de código",
     "Nota destacada",
-    "Aviso de evaluación",
+    "Aviso",
     "Insertar enlace",
     "Título principal",
     "Subtítulo",
@@ -186,6 +197,58 @@ test("el callout se reconoce una sola vez para el editor y la publicación", () 
   const html = markdownToEditorHtml("> [!ASSESSMENT]\n> Certamen el lunes");
   assert.match(html, /<aside data-callout="assessment">/);
   assert.match(htmlToAcademicMarkdown(html), /> \[!ASSESSMENT\]/);
+});
+
+// Implements: REQ-EDITOR-08
+test("una tabla del lienzo llega a la vista previa como tabla, no como etiquetas", () => {
+  const canvas =
+    "<table><tbody><tr><td>Ítem</td><td>Puntaje</td></tr>" +
+    "<tr><td>Desarrollo</td><td>20</td></tr></tbody></table>";
+  const markdown = htmlToAcademicMarkdown(canvas);
+
+  /* Protegerla como HTML crudo la dejaba como texto plano para el estudiante. */
+  assert.match(markdown, /^\| Ítem \| Puntaje \|$/m);
+  assert.match(markdown, /^\| --- \| --- \|$/m);
+  assert.doesNotMatch(markdown, /<table|<td/);
+
+  const blocks = parseRichText(markdown);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, "table");
+  assert.match(markdownToEditorHtml(markdown), /<table>/);
+});
+
+// Implements: REQ-EDITOR-08
+test("una celda con barras o saltos no rompe la fila de la tabla", () => {
+  const markdown = htmlToAcademicMarkdown(
+    "<table><tbody><tr><td>a | b</td><td>linea1\nlinea2</td></tr></tbody></table>"
+  );
+  const rows = markdown.split("\n").filter((line) => line.startsWith("|"));
+  assert.equal(rows.length, 2);
+  for (const row of rows) assert.equal(row.split(/(?<!\\)\|/).length, 4);
+});
+
+// Implements: REQ-RICH-09
+test("el subrayado se rinde como texto subrayado y no como etiqueta visible", () => {
+  const blocks = parseRichText("## <u>Título</u>");
+  assert.equal(blocks[0].type, "heading");
+  const [node] = blocks[0].type === "heading" ? blocks[0].content : [];
+  assert.equal(node?.type, "underline");
+  assert.equal(inlineToPlainText(blocks[0].type === "heading" ? blocks[0].content : []), "Título");
+  assert.match(markdownToEditorHtml("## <u>Título</u>"), /<h2><u>Título<\/u><\/h2>/);
+});
+
+// Implements: REQ-RICH-08
+test("el marcador de callout nunca llega al estudiante como texto", () => {
+  /* Si el docente rompe la estructura editando, el marcador queda suelto. */
+  assert.deepEqual(calloutFromQuote("> [!ASSESSMENT]\nFecha y sala"), {
+    tone: "assessment",
+    body: "Fecha y sala",
+  });
+  assert.deepEqual(calloutFromQuote("  [!NOTE]\nRevisa la pauta"), {
+    tone: "notice",
+    body: "Revisa la pauta",
+  });
+  assert.equal(calloutFromQuote("Una cita cualquiera"), null);
 });
 
 // Implements: REQ-EDITOR-06

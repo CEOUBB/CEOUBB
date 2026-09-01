@@ -34,6 +34,7 @@ export type RichInline =
   | { type: "math"; value: string }
   | { type: "strong"; content: RichInline[] }
   | { type: "emphasis"; content: RichInline[] }
+  | { type: "underline"; content: RichInline[] }
   | { type: "link"; href: string | null; content: RichInline[] };
 
 export type TableAlignment = "left" | "center" | "right" | null;
@@ -79,7 +80,14 @@ export type RichCallout = { tone: "notice" | "assessment"; body: string };
 */
 // Implements: REQ-RICH-08
 export function calloutFromQuote(plainText: string): RichCallout | null {
-  const match = plainText.match(/^\[!(NOTE|ASSESSMENT)\]\s*\n?([\s\S]*)$/i);
+  /*
+    El `>` inicial se tolera a propósito. Si el docente rompe la estructura del
+    callout mientras edita —basta aplicar un título dentro—, el marcador queda
+    como texto suelto; reconocerlo igual evita que el estudiante lea
+    «> [!ASSESSMENT]» en la publicación.
+  */
+  // Implements: REQ-RICH-08
+  const match = plainText.trim().match(/^>?\s*\[!(NOTE|ASSESSMENT)\]\s*\n?([\s\S]*)$/i);
   if (!match) return null;
   return {
     tone: match[1].toLowerCase() === "assessment" ? "assessment" : "notice",
@@ -468,6 +476,23 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
   let cursor = 0;
 
   while (cursor < value.length) {
+    /*
+      El subrayado no existe en Markdown y viajaba como `<u>` crudo, que la
+      vista previa escapaba: el estudiante veía la etiqueta en vez del texto.
+    */
+    // Implements: REQ-RICH-09
+    if (value.startsWith("<u", cursor)) {
+      const underline = /^<u\b[^>]*>([\s\S]*?)<\/u\s*>/i.exec(value.slice(cursor));
+      if (underline) {
+        nodes.push({
+          type: "underline",
+          content: parseRichInline(underline[1], depth + 1),
+        });
+        cursor += underline[0].length;
+        continue;
+      }
+    }
+
     if (value.startsWith("\\(", cursor)) {
       const close = closingDelimiter(value, "\\)", cursor + 2);
       if (close > cursor + 2) {
@@ -581,7 +606,7 @@ function isEscapedAt(value: string, index: number) {
   return slashes % 2 === 1;
 }
 
-function splitTableRow(line: string) {
+function splitTableRow(line: string, minCells = 2) {
   let value = line.trim();
   if (!value.includes("|")) return null;
   if (value.startsWith("|")) value = value.slice(1);
@@ -616,13 +641,13 @@ function splitTableRow(line: string) {
   }
 
   cells.push(cell.trim());
-  return cells.length > 1 ? cells : null;
+  return cells.length >= minCells ? cells : null;
 }
 
 function tableHeaderAt(lines: string[], cursor: number) {
   if (cursor + 1 >= lines.length) return null;
-  const header = splitTableRow(lines[cursor]);
-  const separator = splitTableRow(lines[cursor + 1]);
+  const header = splitTableRow(lines[cursor], 1);
+  const separator = splitTableRow(lines[cursor + 1], 1);
   if (!header || !separator || header.length !== separator.length) return null;
   if (!separator.every((cell) => /^:?-{3,}:?$/.test(cell))) return null;
 
@@ -665,7 +690,7 @@ export function parseRichText(value: string): RichBlock[] {
       const rows: RichInline[][][] = [];
       cursor += 2;
       while (cursor < lines.length) {
-        const cells = splitTableRow(lines[cursor]);
+        const cells = splitTableRow(lines[cursor], 1);
         if (!cells || cells.length !== tableHeader.header.length) break;
         rows.push(cells.map((cell) => parseRichInline(cell)));
         cursor += 1;

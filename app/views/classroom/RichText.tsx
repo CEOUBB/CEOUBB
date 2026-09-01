@@ -124,6 +124,7 @@ function renderInline(nodes: RichInline[]): ReactNode[] {
     if (node.type === "math") return <MathFormula display={false} key={key} value={node.value} />;
     if (node.type === "strong") return <strong key={key}>{renderInline(node.content)}</strong>;
     if (node.type === "emphasis") return <em key={key}>{renderInline(node.content)}</em>;
+    if (node.type === "underline") return <u key={key}>{renderInline(node.content)}</u>;
     if (!node.href) return <span key={key}>{renderInline(node.content)}</span>;
     return (
       <a href={node.href} key={key} rel="noopener noreferrer" target="_blank">
@@ -207,6 +208,21 @@ export function RichText({ body, className = "" }: { body: string; className?: s
       data-requirement={`Implements: REQ-RICH-01 REQ-RICH-02 REQ-RICH-03 REQ-RICH-05 REQ-RICH-06 ${CLASSROOM_COMPATIBILITY_REQUIREMENTS.join(" ")}`}
     >
       {keyedItems(blocks, "block").map(({ item: block, key }) => {
+        /*
+          Un callout cuya estructura se rompió al editar deja el marcador como
+          párrafo o título sueltos. Se reconoce igual para que el estudiante
+          nunca lea «[!ASSESSMENT]» en la publicación.
+        */
+        if (block.type === "paragraph" || block.type === "heading") {
+          const stray = calloutFromQuote(inlineToPlainText(block.content));
+          if (stray) {
+            return (
+              <aside className="rich-callout" data-callout={stray.tone} key={key}>
+                <p>{renderInline(parseRichInline(stray.body))}</p>
+              </aside>
+            );
+          }
+        }
         if (block.type === "paragraph") return <p key={key}>{renderInline(block.content)}</p>;
         if (block.type === "heading") {
           return (

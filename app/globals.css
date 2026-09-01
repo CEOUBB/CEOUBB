@@ -3736,7 +3736,9 @@ img {
   line-height: 1.55;
 }
 
-.rich-editor textarea {
+/* El panel de código tiene su propia altura; esta regla es para los demás
+   campos del editor y no debe ganarle por especificidad. */
+.rich-editor textarea:not(.editor-source) {
   min-height: 180px;
   resize: vertical;
   font-family: var(--font-mono);
@@ -3891,7 +3893,7 @@ img {
 .editor-visual-canvas,
 .editor-source {
   width: 100%;
-  min-height: 270px;
+  min-height: clamp(340px, 54vh, 640px);
   margin: 0;
   padding: 18px;
   border: 0;
@@ -4018,7 +4020,7 @@ img {
 .editor-visual-canvas pre {
   padding: 14px;
   border-radius: var(--radius-md);
-  background: var(--brand-navy);
+  background: var(--ubb-midnight-navy);
   color: #f8fafc;
   font-family: var(--font-mono);
   overflow-x: auto;
@@ -4084,7 +4086,7 @@ img {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xs);
   background: var(--canvas-soft);
-  color: var(--brand-navy);
+  color: var(--ubb-midnight-navy);
   font-family: var(--font-mono);
   font-size: 0.9em;
   white-space: pre-wrap;
@@ -4109,15 +4111,56 @@ div.editor-latex-token {
 
 .editor-source {
   display: block;
+  padding: 16px 18px;
+  background: var(--canvas-soft);
+  border-top: 1px solid var(--border-hairline);
+  color: var(--text-body);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
   tab-size: 2;
-  white-space: pre-wrap;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  resize: none;
+}
+
+/* Implements: REQ-EDITOR-09 */
+.editor-code-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.editor-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 7px 14px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.editor-code-bar span {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.editor-code-bar small {
+  color: var(--text-faint);
+}
+
+.editor-source::selection {
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 .editor-source-html {
-  background: color-mix(in srgb, var(--canvas-soft) 58%, white);
-  color: var(--brand-navy);
+  color: var(--academic-purple-deep);
 }
 
 .editor-source::placeholder {
@@ -4560,13 +4603,15 @@ div.editor-latex-token {
 
 .publish-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 336px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: var(--space-xl);
   align-items: start;
   width: 100%;
-  max-width: var(--container-max);
+  /* Redactar pide mas ancho que leer: el estudio no se acota al contenedor
+     del portal, se estira hasta donde la medida del texto sigue comoda. */
+  max-width: 1680px;
   margin: 0 auto;
-  padding: var(--space-lg) var(--container-pad) var(--space-4xl);
+  padding: var(--space-lg) var(--space-xxl) var(--space-4xl);
 }
 
 .publish-canvas {
