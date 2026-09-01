@@ -315,13 +315,22 @@ test("el editor visual usa el icono Info para nota destacada y etiqueta Markdown
   assert.doesNotMatch(compSource, /LineVertical/);
 });
 
-test("insertCode solicita y normaliza el lenguaje de programación", () => {
+test("el editor usa modales estilizados y no invoca window.prompt", () => {
   const compSource = fs.readFileSync(
     path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
     "utf8"
   );
-  assert.match(compSource, /normalizeCodeLanguage/);
-  assert.match(compSource, /code\.dataset\.language = language/);
+  assert.match(compSource, /<CodeModal/);
+  assert.match(compSource, /<FormulaModal/);
+  assert.match(compSource, /<LinkModal/);
+  assert.match(compSource, /<TableModal/);
+  assert.doesNotMatch(compSource, /window\.prompt/);
+});
+
+test("etiquetas de bloque HTML aisladas y etiquetas de cierre conservan su estructura sin perder caracteres", () => {
+  const rawHtml = "<section>\n</section>";
+  const markdown = htmlToAcademicMarkdown(rawHtml);
+  assert.equal(markdown, "<section>\n</section>");
 });
 
 function source() {

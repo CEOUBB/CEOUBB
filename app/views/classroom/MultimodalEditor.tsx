@@ -22,6 +22,7 @@ import {
   TextItalic,
   TextUnderline,
   Warning,
+  X,
 } from "@phosphor-icons/react";
 import {
   Fragment,
@@ -49,6 +50,7 @@ import {
   normalizeCodeLanguage,
   RICH_TEXT_MAX_LENGTH,
   safeLinkDestination,
+  type CodeLanguage,
 } from "../../../lib/rich-text";
 import { RichText } from "./RichText";
 
@@ -627,6 +629,398 @@ function EditorPreview({ value }: { value: string }) {
   );
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+const AVAILABLE_CODE_LANGUAGES: Array<{ value: CodeLanguage; label: string }> = [
+  { value: "python", label: "Python" },
+  { value: "matlab", label: "MATLAB / Octave" },
+  { value: "cpp", label: "C++" },
+  { value: "c", label: "C" },
+  { value: "java", label: "Java" },
+  { value: "sql", label: "SQL" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "html", label: "HTML / XML" },
+  { value: "css", label: "CSS" },
+  { value: "json", label: "JSON" },
+  { value: "bash", label: "Bash / Shell" },
+  { value: "plain", label: "Texto plano" },
+];
+
+type ActiveModal =
+  | { type: "code"; initialSource: string; initialLanguage: CodeLanguage }
+  | { type: "formula"; initialExpression: string; display: boolean }
+  | { type: "link"; initialText: string; initialHref: string }
+  | { type: "table"; rows: number; cols: number };
+
+function CodeModal({
+  initialLanguage,
+  initialSource,
+  onCancel,
+  onSubmit,
+}: {
+  initialLanguage: CodeLanguage;
+  initialSource: string;
+  onCancel: () => void;
+  onSubmit: (language: CodeLanguage, code: string) => void;
+}) {
+  const [language, setLanguage] = useState<CodeLanguage>(initialLanguage);
+  const [code, setCode] = useState(initialSource);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="editor-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        aria-labelledby="code-modal-title"
+        aria-modal="true"
+        className="editor-modal-card"
+        role="dialog"
+      >
+        <div className="editor-modal-head">
+          <h3 id="code-modal-title">Insertar bloque de código</h3>
+          <button
+            aria-label="Cerrar modal"
+            className="editor-modal-close"
+            onClick={onCancel}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <form
+          className="editor-modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(language, code);
+          }}
+        >
+          <label className="editor-modal-field">
+            <span>Lenguaje de programación</span>
+            <select
+              autoFocus
+              onChange={(event) => setLanguage(event.target.value as CodeLanguage)}
+              value={language}
+            >
+              {AVAILABLE_CODE_LANGUAGES.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="editor-modal-field">
+            <span>Código</span>
+            <textarea
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Escribe o pega aquí el código..."
+              rows={6}
+              value={code}
+            />
+          </label>
+          <div className="editor-modal-actions">
+            <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
+              Cancelar
+            </button>
+            <button className="editor-modal-btn-submit" type="submit">
+              Insertar código
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function FormulaModal({
+  display: initialDisplay,
+  initialExpression,
+  onCancel,
+  onSubmit,
+}: {
+  display: boolean;
+  initialExpression: string;
+  onCancel: () => void;
+  onSubmit: (expression: string, display: boolean) => void;
+}) {
+  const [expression, setExpression] = useState(initialExpression);
+  const [display, setDisplay] = useState(initialDisplay);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="editor-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        aria-labelledby="formula-modal-title"
+        aria-modal="true"
+        className="editor-modal-card"
+        role="dialog"
+      >
+        <div className="editor-modal-head">
+          <h3 id="formula-modal-title">Insertar fórmula matemática</h3>
+          <button
+            aria-label="Cerrar modal"
+            className="editor-modal-close"
+            onClick={onCancel}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <form
+          className="editor-modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(expression, display);
+          }}
+        >
+          <label className="editor-modal-field">
+            <span>Expresión en LaTeX</span>
+            <textarea
+              autoFocus
+              onChange={(event) => setExpression(event.target.value)}
+              placeholder="Ej: \sum_{i=1}^n x_i = 0  o  f(x) = \frac{a}{b}"
+              rows={3}
+              value={expression}
+            />
+          </label>
+          <div className="editor-modal-field">
+            <span>Disposición</span>
+            <div className="editor-modal-radio-group">
+              <label className="editor-modal-radio-label">
+                <input
+                  checked={!display}
+                  name="latex-display"
+                  onChange={() => setDisplay(false)}
+                  type="radio"
+                />
+                En línea ($...$)
+              </label>
+              <label className="editor-modal-radio-label">
+                <input
+                  checked={display}
+                  name="latex-display"
+                  onChange={() => setDisplay(true)}
+                  type="radio"
+                />
+                Bloque centrado ($$...$$)
+              </label>
+            </div>
+          </div>
+          <div className="editor-modal-actions">
+            <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
+              Cancelar
+            </button>
+            <button className="editor-modal-btn-submit" type="submit">
+              Insertar fórmula
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function LinkModal({
+  initialHref,
+  initialText,
+  onCancel,
+  onSubmit,
+}: {
+  initialHref: string;
+  initialText: string;
+  onCancel: () => void;
+  onSubmit: (text: string, href: string) => void;
+}) {
+  const [text, setText] = useState(initialText);
+  const [href, setHref] = useState(initialHref);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="editor-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        aria-labelledby="link-modal-title"
+        aria-modal="true"
+        className="editor-modal-card"
+        role="dialog"
+      >
+        <div className="editor-modal-head">
+          <h3 id="link-modal-title">Insertar enlace</h3>
+          <button
+            aria-label="Cerrar modal"
+            className="editor-modal-close"
+            onClick={onCancel}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <form
+          className="editor-modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(text, href);
+          }}
+        >
+          <label className="editor-modal-field">
+            <span>Texto a mostrar</span>
+            <input
+              onChange={(event) => setText(event.target.value)}
+              placeholder="Ej: Drive del ramo, apunte en PDF..."
+              type="text"
+              value={text}
+            />
+          </label>
+          <label className="editor-modal-field">
+            <span>Dirección URL</span>
+            <input
+              autoFocus
+              onChange={(event) => setHref(event.target.value)}
+              placeholder="https://..."
+              type="url"
+              value={href}
+            />
+          </label>
+          <div className="editor-modal-actions">
+            <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
+              Cancelar
+            </button>
+            <button className="editor-modal-btn-submit" type="submit">
+              Insertar enlace
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TableModal({
+  onCancel,
+  onSubmit,
+}: {
+  onCancel: () => void;
+  onSubmit: (rows: number, cols: number) => void;
+}) {
+  const [rows, setRows] = useState(2);
+  const [cols, setCols] = useState(2);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="editor-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        aria-labelledby="table-modal-title"
+        aria-modal="true"
+        className="editor-modal-card"
+        role="dialog"
+      >
+        <div className="editor-modal-head">
+          <h3 id="table-modal-title">Insertar tabla</h3>
+          <button
+            aria-label="Cerrar modal"
+            className="editor-modal-close"
+            onClick={onCancel}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <form
+          className="editor-modal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(rows, cols);
+          }}
+        >
+          <div className="editor-modal-grid-2">
+            <label className="editor-modal-field">
+              <span>Filas</span>
+              <input
+                autoFocus
+                max={20}
+                min={2}
+                onChange={(event) => setRows(Math.max(2, Math.min(20, Number(event.target.value))))}
+                type="number"
+                value={rows}
+              />
+            </label>
+            <label className="editor-modal-field">
+              <span>Columnas</span>
+              <input
+                max={10}
+                min={1}
+                onChange={(event) => setCols(Math.max(1, Math.min(10, Number(event.target.value))))}
+                type="number"
+                value={cols}
+              />
+            </label>
+          </div>
+          <div className="editor-modal-actions">
+            <button className="editor-modal-btn-cancel" onClick={onCancel} type="button">
+              Cancelar
+            </button>
+            <button className="editor-modal-btn-submit" type="submit">
+              Insertar tabla
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function useMultimodalEditorController({
   initialMode = "visual",
   label = "Mensaje",
@@ -649,6 +1043,7 @@ function useMultimodalEditorController({
   const [announcement, setAnnouncement] = useState("");
   const [activeTools, setActiveTools] = useState<Set<string>>(() => new Set());
   const [slash, setSlash] = useState<SlashMenuState | null>(null);
+  const [activeModal, setActiveModal] = useState<ActiveModal | null>(null);
   /*
     El lienzo visual ya muestra el resultado, así que la vista previa sólo
     ocupa la mitad del ancho sin añadir nada. En Markdown y HTML el docente
@@ -769,54 +1164,200 @@ function useMultimodalEditorController({
     setAnnouncement(`Modo ${modeLabels[nextMode].label} activo.`);
   };
 
-  const insertTable = () => {
-    const table = document.createElement("table");
-    const thead = table.createTHead();
-    const headRow = thead.insertRow();
-    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
-      const th = document.createElement("th");
-      th.textContent = `Encabezado ${columnIndex + 1}`;
-      headRow.appendChild(th);
+  const openCodeModal = () => {
+    let selectedText = "";
+    if (mode === "visual" && visualRef.current) {
+      selectedText = selectionInside(visualRef.current)?.toString() || "";
+    } else if (mode === "markdown" && markdownRef.current) {
+      const textarea = markdownRef.current;
+      selectedText = value.slice(textarea.selectionStart, textarea.selectionEnd);
     }
-    const body = table.createTBody();
-    const row = body.insertRow();
-    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
-      const cell = row.insertCell();
-      cell.textContent = "Contenido";
-    }
-    insertVisualNode(visualRef.current!, table);
+    setActiveModal({
+      type: "code",
+      initialSource: selectedText || 'print("Hola mundo")',
+      initialLanguage: "python",
+    });
   };
 
-  const insertFormula = () => {
-    const expression = window.prompt("Escribe la fórmula LaTeX", "\\sum F_x = 0")?.trim();
-    if (!expression) return;
-    const formula = document.createElement("span");
-    formula.dataset.latex = "inline";
-    formula.dataset.source = expression;
-    formula.className = "editor-latex-token";
-    formula.contentEditable = "false";
-    formula.textContent = expression;
-    insertVisualNode(visualRef.current!, formula);
+  const submitCodeModal = (language: CodeLanguage, codeContent: string) => {
+    setActiveModal(null);
+    if (mode === "visual") {
+      const editor = visualRef.current;
+      if (!editor) return;
+      editor.focus();
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.dataset.language = language;
+      code.textContent = codeContent;
+      pre.appendChild(code);
+      insertVisualNode(editor, pre);
+      syncVisual();
+    } else if (mode === "markdown") {
+      const textarea = markdownRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const snippet = `\n\`\`\`${language}\n${codeContent}\n\`\`\`\n`;
+      const next = `${value.slice(0, start)}${snippet}${value.slice(end)}`;
+      emit(next);
+      requestAnimationFrame(() => textarea.focus());
+    } else {
+      const snippet = `\n<pre><code data-language="${language}">${escapeHtml(codeContent)}</code></pre>\n`;
+      handleHtmlChange(`${htmlDraft}${snippet}`);
+    }
   };
 
-  const insertCode = () => {
-    const editor = visualRef.current!;
-    const range = selectionInside(editor);
-    const source = range?.toString() || "Escribe tu código";
-    const rawLang =
-      window
-        .prompt(
-          "Lenguaje del código (python, matlab, cpp, c, java, sql, javascript, typescript, html, css, json, bash)",
-          "python"
-        )
-        ?.trim() || "plain";
-    const language = normalizeCodeLanguage(rawLang);
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
-    code.dataset.language = language;
-    code.textContent = source;
-    pre.appendChild(code);
-    insertVisualNode(editor, pre);
+  const openFormulaModal = () => {
+    let selectedText = "";
+    if (mode === "visual" && visualRef.current) {
+      selectedText = selectionInside(visualRef.current)?.toString() || "";
+    } else if (mode === "markdown" && markdownRef.current) {
+      const textarea = markdownRef.current;
+      selectedText = value.slice(textarea.selectionStart, textarea.selectionEnd);
+    }
+    setActiveModal({
+      type: "formula",
+      initialExpression: selectedText || "\\sum_{i=1}^n x_i = 0",
+      display: false,
+    });
+  };
+
+  const submitFormulaModal = (expression: string, display: boolean) => {
+    setActiveModal(null);
+    const clean = expression.trim();
+    if (!clean) return;
+    if (mode === "visual") {
+      const editor = visualRef.current;
+      if (!editor) return;
+      editor.focus();
+      if (display) {
+        const div = document.createElement("div");
+        div.dataset.latex = "display";
+        div.dataset.source = clean;
+        div.className = "editor-latex-token-display";
+        div.contentEditable = "false";
+        div.textContent = clean;
+        insertVisualNode(editor, div);
+      } else {
+        const span = document.createElement("span");
+        span.dataset.latex = "inline";
+        span.dataset.source = clean;
+        span.className = "editor-latex-token";
+        span.contentEditable = "false";
+        span.textContent = clean;
+        insertVisualNode(editor, span);
+      }
+      syncVisual();
+    } else if (mode === "markdown") {
+      const textarea = markdownRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const snippet = display ? `\n$$\n${clean}\n$$\n` : `$${clean}$`;
+      const next = `${value.slice(0, start)}${snippet}${value.slice(end)}`;
+      emit(next);
+      requestAnimationFrame(() => textarea.focus());
+    } else {
+      const snippet = display
+        ? `\n<div data-latex="display">${clean}</div>\n`
+        : `<span data-latex="inline">${clean}</span>`;
+      handleHtmlChange(`${htmlDraft}${snippet}`);
+    }
+  };
+
+  const openLinkModal = () => {
+    let selectedText = "";
+    if (mode === "visual" && visualRef.current) {
+      selectedText = selectionInside(visualRef.current)?.toString() || "";
+    } else if (mode === "markdown" && markdownRef.current) {
+      const textarea = markdownRef.current;
+      selectedText = value.slice(textarea.selectionStart, textarea.selectionEnd);
+    }
+    setActiveModal({
+      type: "link",
+      initialText: selectedText || "",
+      initialHref: "https://",
+    });
+  };
+
+  const submitLinkModal = (text: string, href: string) => {
+    setActiveModal(null);
+    const validHref = safeLinkDestination(href.trim());
+    if (!validHref) {
+      setAnnouncement("El enlace debe usar http, https o mailto.");
+      return;
+    }
+    const label = text.trim() || validHref;
+    if (mode === "visual") {
+      const editor = visualRef.current;
+      if (!editor) return;
+      editor.focus();
+      const anchor = document.createElement("a");
+      anchor.href = validHref;
+      anchor.rel = "noopener noreferrer";
+      anchor.textContent = label;
+      insertVisualNode(editor, anchor);
+      syncVisual();
+    } else if (mode === "markdown") {
+      const textarea = markdownRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const snippet = `[${label}](${validHref})`;
+      const next = `${value.slice(0, start)}${snippet}${value.slice(end)}`;
+      emit(next);
+      requestAnimationFrame(() => textarea.focus());
+    } else {
+      const snippet = `<a href="${validHref}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
+      handleHtmlChange(`${htmlDraft}${snippet}`);
+    }
+  };
+
+  const openTableModal = () => {
+    setActiveModal({
+      type: "table",
+      rows: 2,
+      cols: 2,
+    });
+  };
+
+  const submitTableModal = (rows: number, cols: number) => {
+    setActiveModal(null);
+    if (mode === "visual") {
+      const editor = visualRef.current;
+      if (!editor) return;
+      editor.focus();
+      const table = document.createElement("table");
+      const thead = table.createTHead();
+      const headRow = thead.insertRow();
+      for (let columnIndex = 0; columnIndex < cols; columnIndex += 1) {
+        const th = document.createElement("th");
+        th.textContent = `Encabezado ${columnIndex + 1}`;
+        headRow.appendChild(th);
+      }
+      const tbody = table.createTBody();
+      for (let r = 0; r < Math.max(1, rows - 1); r += 1) {
+        const row = tbody.insertRow();
+        for (let columnIndex = 0; columnIndex < cols; columnIndex += 1) {
+          const cell = row.insertCell();
+          cell.textContent = `Dato ${r + 1}-${columnIndex + 1}`;
+        }
+      }
+      insertVisualNode(editor, table);
+      syncVisual();
+    } else if (mode === "markdown") {
+      const textarea = markdownRef.current;
+      if (!textarea) return;
+      const headers = Array.from({ length: cols }, (_, i) => `Columna ${i + 1}`);
+      const dividers = Array.from({ length: cols }, () => "---");
+      const row = Array.from({ length: cols }, () => "Dato");
+      const mdTable = `\n| ${headers.join(" | ")} |\n| ${dividers.join(" | ")} |\n| ${row.join(" | ")} |\n`;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const next = `${value.slice(0, start)}${mdTable}${value.slice(end)}`;
+      emit(next);
+      requestAnimationFrame(() => textarea.focus());
+    }
   };
 
   const insertCallout = (tone: "notice" | "assessment") => {
@@ -841,45 +1382,31 @@ function useMultimodalEditorController({
     insertVisualNode(editor, fragment);
   };
 
-  const insertLink = () => {
-    const editor = visualRef.current!;
-    const selectedRange = selectionInside(editor)?.cloneRange() ?? null;
-    const destination = window.prompt("Dirección del enlace", "https://")?.trim();
-    const href = destination ? safeLinkDestination(destination) : null;
-    if (!href) {
-      if (destination) setAnnouncement("El enlace debe usar http, https o mailto.");
+  const applyTool = (action: ToolAction) => {
+    if (action === "table") {
+      openTableModal();
       return;
     }
-    const selection = window.getSelection();
-    if (selectedRange && selection) {
-      selection.removeAllRanges();
-      selection.addRange(selectedRange);
+    if (action === "formula") {
+      openFormulaModal();
+      return;
     }
-    const range = selectionInside(editor);
-    if (range && !range.collapsed) {
-      document.execCommand("createLink", false, href);
-    } else {
-      const anchor = document.createElement("a");
-      anchor.href = href;
-      anchor.rel = "noopener noreferrer";
-      anchor.textContent = href;
-      insertVisualNode(editor, anchor);
+    if (action === "code") {
+      openCodeModal();
+      return;
     }
-  };
-
-  const applyTool = (action: ToolAction) => {
+    if (action === "link") {
+      openLinkModal();
+      return;
+    }
     const editor = visualRef.current;
     if (!editor) return;
     editor.focus();
     const blockTag = blockTagForAction[action];
     if (blockTag) document.execCommand("formatBlock", false, blockTag);
-    else if (action === "table") insertTable();
-    else if (action === "formula") insertFormula();
-    else if (action === "code") insertCode();
     else if (action === "callout") insertCallout("notice");
     else if (action === "warning") insertCallout("assessment");
     else if (action === "divider") insertDivider();
-    else if (action === "link") insertLink();
     else document.execCommand(action, false);
     syncVisual();
   };
@@ -980,7 +1507,7 @@ function useMultimodalEditorController({
       applyTool("italic");
     } else if (event.key.toLowerCase() === "k") {
       event.preventDefault();
-      applyTool("link");
+      openLinkModal();
     }
   };
 
@@ -1008,8 +1535,7 @@ function useMultimodalEditorController({
       wrapMarkdownSelection("*", "*", "énfasis");
     } else if (event.key.toLowerCase() === "k") {
       event.preventDefault();
-      const href = window.prompt("Dirección del enlace", "https://")?.trim();
-      if (href && safeLinkDestination(href)) wrapMarkdownSelection("[", `](${href})`, "enlace");
+      openLinkModal();
     }
   };
 
@@ -1090,6 +1616,12 @@ function useMultimodalEditorController({
 
   return {
     activeTools,
+    activeModal,
+    cancelModal: () => setActiveModal(null),
+    submitCodeModal,
+    submitFormulaModal,
+    submitLinkModal,
+    submitTableModal,
     announcement,
     baseId,
     counter,
@@ -1209,6 +1741,34 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {editor.announcement}
       </p>
+
+      {editor.activeModal?.type === "code" && (
+        <CodeModal
+          initialLanguage={editor.activeModal.initialLanguage}
+          initialSource={editor.activeModal.initialSource}
+          onCancel={editor.cancelModal}
+          onSubmit={editor.submitCodeModal}
+        />
+      )}
+      {editor.activeModal?.type === "formula" && (
+        <FormulaModal
+          display={editor.activeModal.display}
+          initialExpression={editor.activeModal.initialExpression}
+          onCancel={editor.cancelModal}
+          onSubmit={editor.submitFormulaModal}
+        />
+      )}
+      {editor.activeModal?.type === "link" && (
+        <LinkModal
+          initialHref={editor.activeModal.initialHref}
+          initialText={editor.activeModal.initialText}
+          onCancel={editor.cancelModal}
+          onSubmit={editor.submitLinkModal}
+        />
+      )}
+      {editor.activeModal?.type === "table" && (
+        <TableModal onCancel={editor.cancelModal} onSubmit={editor.submitTableModal} />
+      )}
     </div>
   );
 }

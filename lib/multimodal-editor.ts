@@ -86,7 +86,7 @@ type ProtectedSource = {
 */
 // Implements: REQ-EDITOR-08
 const blockHtmlPattern =
-  /<(script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<img\b[^>]*\/?>/gi;
+  /<(script|style|iframe|svg|form|section|details|summary|figure|header|footer|nav|main|article)\b[\s\S]*?(?:<\/\1\s*>|\/?>)|<\/?(?:script|style|iframe|svg|form|section|details|summary|figure|header|footer|nav|main|article)\b[^>]*\/?>|<img\b[^>]*\/?>/gi;
 const alignedHtmlPattern =
   /<(p|div)\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify)|text-align\s*:\s*(?:center|right|justify)))[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const inlineHtmlPattern = /<(u|sub|sup|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
@@ -357,7 +357,7 @@ function convertHtmlFragment(value: string) {
 function decodeOutsideTags(value: string) {
   return value
     .split(/(<[^>]+>)/g)
-    .map((part) => (part.startsWith("<") ? part : decodeHtml(part)))
+    .map((part) => (part.startsWith("<") && part.endsWith(">") ? part : decodeHtml(part)))
     .join("");
 }
 
