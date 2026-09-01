@@ -24,7 +24,7 @@ import {
   getSantiagoMinutes,
   weekdayOf,
 } from "../../../lib/portal-utils";
-import { MINUTE_SPAN, SLOT_HOURS } from "./calendar-constants";
+import { SLOT_HOURS } from "./calendar-constants";
 import type { BlockDraft } from "./calendar-constants";
 import { BlockDialog } from "./BlockDialog";
 import { CalendarDayBar, CalendarFilters, CalendarHeader } from "./CalendarHeader";
@@ -77,15 +77,10 @@ export function CalendarView({
   );
   const weekLoaded = loadedWeek === days[0];
 
-  const openGrid = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (!node) return;
-      const target = days.includes(today) ? getSantiagoMinutes() - 60 : DAY_START_MINUTES;
-      const ratio = (Math.max(target, DAY_START_MINUTES) - DAY_START_MINUTES) / MINUTE_SPAN;
-      node.scrollTop = node.scrollHeight * ratio;
-    },
-    [days, today]
-  );
+  const openGrid = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    node.scrollTop = 0;
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMinutes(getSantiagoMinutes()), 60000);
