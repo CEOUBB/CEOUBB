@@ -5,7 +5,7 @@ import {
   Eye,
   EyeSlash,
   Function as FunctionIcon,
-  LineVertical,
+  Info,
   LinkSimple,
   ListBullets,
   ListNumbers,
@@ -45,7 +45,11 @@ import {
   type EditorMode,
   type SlashCommand,
 } from "../../../lib/multimodal-editor";
-import { RICH_TEXT_MAX_LENGTH, safeLinkDestination } from "../../../lib/rich-text";
+import {
+  normalizeCodeLanguage,
+  RICH_TEXT_MAX_LENGTH,
+  safeLinkDestination,
+} from "../../../lib/rich-text";
 import { RichText } from "./RichText";
 
 type MultimodalEditorProps = {
@@ -82,7 +86,7 @@ type ToolAction =
 
 const modeLabels: Record<EditorMode, { label: string; detail: string }> = {
   visual: { label: "Visual", detail: "Edición tipo documento" },
-  markdown: { label: "Markdown + LaTeX", detail: "Sintaxis técnica" },
+  markdown: { label: "Markdown", detail: "Sintaxis técnica" },
   html: { label: "HTML", detail: "Código libre" },
 };
 
@@ -128,7 +132,7 @@ const visualTools = [
   {
     action: "callout",
     label: "Nota destacada",
-    icon: LineVertical,
+    icon: Info,
     pressed: false,
     group: "insert",
   },
@@ -532,11 +536,11 @@ function EditorComposePane({
         /* Implements: REQ-EDITOR-09 */
         <div className="editor-code-pane">
           <div className="editor-code-bar">
-            <span>Markdown + LaTeX</span>
+            <span>Markdown</span>
             <small className="num">{draft.split("\n").length} líneas</small>
           </div>
           <textarea
-            aria-label={`${label}: Markdown con LaTeX`}
+            aria-label={`${label}: Markdown`}
             className="editor-source editor-source-markdown"
             maxLength={maxLength}
             onChange={(event) => onMarkdownChange(event.target.value)}
@@ -799,9 +803,17 @@ function useMultimodalEditorController({
     const editor = visualRef.current!;
     const range = selectionInside(editor);
     const source = range?.toString() || "Escribe tu código";
+    const rawLang =
+      window
+        .prompt(
+          "Lenguaje del código (python, matlab, cpp, c, java, sql, javascript, typescript, html, css, json, bash)",
+          "python"
+        )
+        ?.trim() || "plain";
+    const language = normalizeCodeLanguage(rawLang);
     const pre = document.createElement("pre");
     const code = document.createElement("code");
-    code.dataset.language = "plain";
+    code.dataset.language = language;
     code.textContent = source;
     pre.appendChild(code);
     insertVisualNode(editor, pre);
@@ -896,6 +908,69 @@ function useMultimodalEditorController({
         return setSlash(null);
       }
     }
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const editor = visualRef.current;
+        let current: Node | null = range.startContainer;
+        let containerBlock: HTMLElement | null = null;
+        while (current && current !== editor) {
+          if (
+            current instanceof HTMLElement &&
+            (current.tagName === "BLOCKQUOTE" || current.tagName === "ASIDE")
+          ) {
+            containerBlock = current;
+            break;
+          }
+          current = current.parentNode;
+        }
+
+        if (containerBlock && editor) {
+          let currentChild: Node | null = range.startContainer;
+          while (currentChild && currentChild.parentNode !== containerBlock) {
+            currentChild = currentChild.parentNode;
+          }
+          const childText = currentChild?.textContent?.trim() ?? "";
+          if (childText === "" && (containerBlock.textContent?.trim() ?? "") !== "") {
+            // Doble Enter en línea vacía: salir del bloque y continuar en párrafo estándar
+            event.preventDefault();
+            if (currentChild && currentChild.parentNode === containerBlock) {
+              containerBlock.removeChild(currentChild);
+            }
+            const nextP = document.createElement("p");
+            nextP.appendChild(document.createElement("br"));
+            containerBlock.parentNode?.insertBefore(nextP, containerBlock.nextSibling);
+            const nextRange = document.createRange();
+            nextRange.setStart(nextP, 0);
+            nextRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(nextRange);
+            syncVisual();
+            return;
+          } else {
+            // Enter normal dentro de cita o aviso: insertar un párrafo interno sin duplicar el contenedor
+            event.preventDefault();
+            const newP = document.createElement("p");
+            newP.appendChild(document.createElement("br"));
+            if (currentChild && currentChild.nextSibling) {
+              containerBlock.insertBefore(newP, currentChild.nextSibling);
+            } else {
+              containerBlock.appendChild(newP);
+            }
+            const nextRange = document.createRange();
+            nextRange.setStart(newP, 0);
+            nextRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(nextRange);
+            syncVisual();
+            return;
+          }
+        }
+      }
+    }
+
     if (!(event.ctrlKey || event.metaKey)) return;
     if (event.key.toLowerCase() === "b") {
       event.preventDefault();

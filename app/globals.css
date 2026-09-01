@@ -3443,9 +3443,7 @@ img {
 }
 .rich-text p,
 .rich-text blockquote,
-.rich-text figure,
-.rich-text ul,
-.rich-text ol {
+.rich-text figure {
   margin: 0;
 }
 .rich-text p,
@@ -3453,30 +3451,49 @@ img {
 .rich-text li {
   white-space: pre-wrap;
 }
-.rich-text ul,
+.rich-text ul {
+  display: block;
+  margin: 0 0 12px;
+  padding-inline-start: 1.5rem;
+  list-style-type: disc;
+}
 .rich-text ol {
-  display: grid;
-  gap: 5px;
-  padding-left: 22px;
+  display: block;
+  margin: 0 0 12px;
+  padding-inline-start: 1.5rem;
+  list-style-type: decimal;
+}
+.rich-text li {
+  display: list-item;
+  margin-block: 0.25em;
+  white-space: normal;
 }
 .rich-text li::marker {
   color: var(--text-muted);
 }
 
 .rich-heading {
-  margin: 4px 0 0;
+  margin: 16px 0 6px;
   color: var(--text-body);
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
 }
 
 .rich-heading-1 {
-  font-size: 19px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-top: 20px;
 }
 .rich-heading-2 {
-  font-size: 17px;
+  font-size: 1.22rem;
+  font-weight: 650;
+  margin-top: 18px;
+}
+.rich-heading-3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 16px;
 }
 
 .rich-text blockquote {
@@ -3625,7 +3642,6 @@ img {
 
 .rich-table-scroll table {
   width: 100%;
-  min-width: max-content;
   border-collapse: collapse;
   color: var(--text-secondary);
   font-size: 14px;
@@ -3634,7 +3650,6 @@ img {
 
 .rich-table-scroll th,
 .rich-table-scroll td {
-  min-width: 9rem;
   padding: 9px 12px;
   border-right: 1px solid var(--border-hairline);
   border-bottom: 1px solid var(--border-hairline);
@@ -3655,7 +3670,8 @@ img {
 .rich-table-scroll th {
   background: var(--canvas-soft);
   color: var(--text-body);
-  font-weight: 600;
+  font-weight: 650;
+  text-transform: none;
 }
 
 .rich-table-align-center {
@@ -4050,10 +4066,38 @@ img {
 .editor-visual-canvas h4,
 .editor-visual-canvas h5,
 .editor-visual-canvas h6 {
-  margin: 20px 0 10px;
   color: var(--text-body);
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.editor-visual-canvas h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 20px 0 10px;
+}
+
+.editor-visual-canvas h2 {
+  font-size: 1.22rem;
+  font-weight: 650;
+  letter-spacing: -0.018em;
+  margin: 18px 0 8px;
+}
+
+.editor-visual-canvas h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 16px 0 6px;
+}
+
+.editor-visual-canvas h4,
+.editor-visual-canvas h5,
+.editor-visual-canvas h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 14px 0 6px;
 }
 
 .editor-visual-canvas blockquote {
@@ -4083,8 +4127,7 @@ img {
 }
 
 .editor-visual-canvas table {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
@@ -4093,10 +4136,10 @@ img {
 
 .editor-visual-canvas td,
 .editor-visual-canvas th {
-  min-width: 112px;
   padding: 9px 12px;
   border: 1px solid var(--border-hairline);
   text-align: left;
+  vertical-align: top;
 }
 
 .editor-visual-canvas thead th,

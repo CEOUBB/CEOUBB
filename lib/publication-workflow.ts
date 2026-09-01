@@ -11,7 +11,7 @@ export const EDITOR_MODES = [
   },
   {
     value: "markdown",
-    label: "Markdown + LaTeX",
+    label: "Markdown",
     description: "Para apuntes técnicos, fórmulas y código con vista previa.",
   },
   {

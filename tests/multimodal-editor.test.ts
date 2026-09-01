@@ -305,6 +305,25 @@ test("insertTable en el editor visual inserta thead y th semánticos", () => {
   assert.match(compSource, /createElement\("th"\)/);
 });
 
+test("el editor visual usa el icono Info para nota destacada y etiqueta Markdown sin LaTeX redundante", () => {
+  const compSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
+    "utf8"
+  );
+  assert.match(compSource, /action:\s*"callout",\s*label:\s*"Nota destacada",\s*icon:\s*Info/);
+  assert.match(compSource, /markdown:\s*\{\s*label:\s*"Markdown"/);
+  assert.doesNotMatch(compSource, /LineVertical/);
+});
+
+test("insertCode solicita y normaliza el lenguaje de programación", () => {
+  const compSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
+    "utf8"
+  );
+  assert.match(compSource, /normalizeCodeLanguage/);
+  assert.match(compSource, /code\.dataset\.language = language/);
+});
+
 function source() {
   return fs.readFileSync(
     path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),

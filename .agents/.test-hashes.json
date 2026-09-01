@@ -32,7 +32,7 @@
   "tests/mobile-bridge.test.ts": "6110fa0598cc9afebaee327df61811bbbf21c518036143997457207402cf2e23",
   "tests/mobile-performance-budget.test.ts": "03826a466cf92d05d9f279f29bee3655e74f109e1d86c4b71cd9a46ed6d6e274",
   "tests/moodle-import.test.ts": "87187ae0bb908aa3e8cfa867aa5ac7fe9c160d719fa82b3dc57e7f190b7ecacd",
-  "tests/multimodal-editor.test.ts": "7ba9d3e7c4232ace652b348b5f5e4148e17deede34024b37fd15de998349b05e",
+  "tests/multimodal-editor.test.ts": "00db5584d85404d58179fa702043077be43e0f513c9dd043f3004505ed6a7d42",
   "tests/native-services.test.ts": "4fdf7689c9d438346fc12ddef9b561ac9415d90a6730cdc9da730505428c947e",
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
