@@ -95,6 +95,17 @@ test("REQ-AUTH-06: Aislamiento estricto de producción en autenticación de test
   assert.equal(isDevOrPreviewAuthAllowed("production", "production"), false);
   assert.equal(isDevOrPreviewAuthAllowed("production", undefined), false);
 
+  // Mitigación Host spoofing (Plan 035 / CWE-290): veto estricto independientemente del header Host
+  assert.equal(isDevOrPreviewAuthAllowed("production", "production", "staging.ceoubb.com"), false);
+  assert.equal(
+    isDevOrPreviewAuthAllowed("production", "production", "malicious.workers.dev"),
+    false
+  );
+  assert.equal(isDevOrPreviewAuthAllowed("production", "development", "staging.ceoubb.com"), false);
+  assert.equal(isDevOrPreviewAuthAllowed("staging", "production", "staging.ceoubb.com"), true);
+  assert.equal(isDevOrPreviewAuthAllowed("staging", "production", "ceoubb.com"), false);
+  assert.equal(isDevOrPreviewAuthAllowed("staging", "production", "www.ceoubb.com"), false);
+
   // En preview de Vercel y desarrollo local sí está permitido
   assert.equal(isDevOrPreviewAuthAllowed("preview", "production"), true);
   assert.equal(isDevOrPreviewAuthAllowed("preview", "development"), true);

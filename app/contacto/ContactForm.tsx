@@ -12,6 +12,24 @@ import {
   solicitudSoporteSchema,
 } from "../../lib/support-request.ts";
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        params: {
+          sitekey: string;
+          callback?: (token: string) => void;
+          "error-callback"?: () => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
+
 const CORREO_INSTITUCIONAL = "contacto@ceoubb.com";
 
 // Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01
@@ -88,13 +106,63 @@ export default function ContactForm() {
   const [mensajeEstado, setMensajeEstado] = useState("");
   const [avisoDominio, setAvisoDominio] = useState(false);
   const [categoriaEnviada, setCategoriaEnviada] = useState<CategoriaSoporte | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
   const senuelo = useRef<HTMLInputElement>(null);
   const montadoEn = useRef<number>(0);
   const enviandoAhora = useRef(false);
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     montadoEn.current = performance.now();
   }, []);
+
+  useEffect(() => {
+    if (!siteKey || !turnstileContainerRef.current) return;
+
+    let widgetId: string | undefined;
+
+    const renderWidget = () => {
+      if (window.turnstile && turnstileContainerRef.current) {
+        try {
+          widgetId = window.turnstile.render(turnstileContainerRef.current, {
+            sitekey: siteKey,
+            callback: (token: string) => setTurnstileToken(token),
+            "expired-callback": () => setTurnstileToken(""),
+            "error-callback": () => setTurnstileToken(""),
+            theme: "auto",
+          });
+        } catch {
+          // No-op si ya está renderizado
+        }
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      const scriptId = "cf-turnstile-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.defer = true;
+        script.onload = renderWidget;
+        document.head.appendChild(script);
+      }
+    }
+
+    return () => {
+      if (widgetId && window.turnstile) {
+        try {
+          window.turnstile.reset(widgetId);
+        } catch {
+          // Ignorar al desmontar
+        }
+      }
+    };
+  }, [siteKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -148,6 +216,7 @@ export default function ContactForm() {
           ...analisis.data,
           sitioWeb: senuelo.current?.value ?? "",
           duracionMs: Math.round(performance.now() - montadoEn.current),
+          turnstileToken: turnstileToken || undefined,
         }),
       });
 
@@ -348,6 +417,12 @@ export default function ContactForm() {
         tabIndex={-1}
         type="text"
       />
+
+      {siteKey ? (
+        <div className="policy-field">
+          <div ref={turnstileContainerRef} />
+        </div>
+      ) : null}
 
       <div className="policy-form-actions">
         <button className="policy-submit" disabled={enviando} type="submit">

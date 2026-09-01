@@ -431,3 +431,58 @@ test("REQ-ENT-08: Architectural Decision Records (ADRs) exist and follow formal 
   assert.match(adr3, /@ubiobio\.cl/);
   assert.match(adr3, /@alumnos\.ubiobio\.cl/);
 });
+
+test("REQ-SEC-01, REQ-SEC-02: Hardening de cadena de suministro y fijación inmutable en workflows de CI/CD", async () => {
+  // 1. Inmutabilidad de pr-agent (SHA 40 caracteres y prohibición de @main)
+  const prAgentContent = await readText(".github/workflows/pr-agent.yml");
+  assert.match(
+    prAgentContent,
+    /qodo-ai\/pr-agent@[a-f0-9]{40}/,
+    "pr-agent.yml debe usar un commit SHA inmutable de 40 caracteres"
+  );
+  assert.ok(
+    !prAgentContent.includes("qodo-ai/pr-agent@main"),
+    "pr-agent.yml no debe usar la rama mutable @main"
+  );
+
+  // 2. Fijación determinista de firebase-tools (prohibición de @latest)
+  const firebaseReleaseContent = await readText(".github/workflows/firebase-release.yml");
+  assert.match(
+    firebaseReleaseContent,
+    /firebase-tools@13\.\d+\.\d+/,
+    "firebase-release.yml debe anclar una versión exacta de firebase-tools"
+  );
+  assert.ok(
+    !firebaseReleaseContent.includes("firebase-tools@latest"),
+    "firebase-release.yml no debe usar la versión mutable @latest"
+  );
+
+  // 3. Protección de variables de entorno en despliegues de Cloudflare Workers
+  const deployContent = await readText(".github/workflows/deploy.yml");
+  assert.ok(
+    deployContent.includes("wrangler deploy --minify --keep-vars"),
+    "deploy.yml debe incluir la bandera --keep-vars en wrangler deploy"
+  );
+});
+
+test("REQ-SEC-06: Aislamiento estricto de workflows de pruebas de carga masiva en CI/CD", async () => {
+  const capacityWorkflow = await readText(".github/workflows/capacity-load-test.yml");
+  assert.match(
+    capacityWorkflow,
+    /workflow_dispatch:/,
+    "capacity-load-test.yml debe declarar disparador manual workflow_dispatch"
+  );
+  assert.ok(
+    !capacityWorkflow.includes("pull_request:"),
+    "capacity-load-test.yml no debe dispararse automáticamente ante pull_request"
+  );
+  assert.ok(
+    !capacityWorkflow.includes("head_ref"),
+    "capacity-load-test.yml no debe condicionar ejecuciones destructivas por nombre de rama"
+  );
+  assert.match(
+    capacityWorkflow,
+    /confirm_staging:/,
+    "capacity-load-test.yml debe exigir parámetro de confirmación explícito"
+  );
+});

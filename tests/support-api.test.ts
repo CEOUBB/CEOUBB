@@ -59,6 +59,7 @@ before(async () => {
 beforeEach(async () => {
   await getDb().delete(solicitudesSoporte);
   delete process.env.SOPORTE_MAIL_DRIVER;
+  delete process.env.TURNSTILE_SECRET_KEY;
 });
 
 test("REQ-SUP-02: rechaza un tipo de contenido que no es JSON", async () => {
@@ -251,4 +252,45 @@ test("REQ-SUP-10: la tabla declara los dos índices que sostienen las consultas"
   const nombres = getTableConfig(solicitudesSoporte).indexes.map((i) => i.config.name);
   assert.ok(nombres.includes("idx_soporte_ip_created"));
   assert.ok(nombres.includes("idx_soporte_estado_created"));
+});
+
+test("SEC-04, SEC-07: con TURNSTILE_SECRET_KEY configurada, rechaza petición sin token con 400 y no escribe en BD", async () => {
+  process.env.TURNSTILE_SECRET_KEY = "dummy-turnstile-secret";
+  const respuesta = await POST(peticion(CUERPO_VALIDO));
+  assert.equal(respuesta.status, 400);
+  const datos = (await respuesta.json()) as { error?: string };
+  assert.match(datos.error ?? "", /seguridad/i);
+  assert.equal((await filas()).length, 0);
+});
+
+test("SEC-04, SEC-07: con TURNSTILE_SECRET_KEY configurada y token inválido rechaza con 400 y no escribe en BD", async () => {
+  process.env.TURNSTILE_SECRET_KEY = "dummy-turnstile-secret";
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ success: false }), { status: 200 })) as unknown as typeof fetch;
+
+  try {
+    const respuesta = await POST(peticion({ ...CUERPO_VALIDO, turnstileToken: "token-invalido" }));
+    assert.equal(respuesta.status, 400);
+    const datos = (await respuesta.json()) as { error?: string };
+    assert.match(datos.error ?? "", /seguridad/i);
+    assert.equal((await filas()).length, 0);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+  }
+});
+
+test("SEC-04, SEC-07: con TURNSTILE_SECRET_KEY configurada y token válido se acepta y guarda en BD", async () => {
+  process.env.TURNSTILE_SECRET_KEY = "dummy-turnstile-secret";
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ success: true }), { status: 200 })) as unknown as typeof fetch;
+
+  try {
+    const respuesta = await POST(peticion({ ...CUERPO_VALIDO, turnstileToken: "token-valido" }));
+    assert.equal(respuesta.status, 202);
+    assert.equal((await filas()).length, 1);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+  }
 });

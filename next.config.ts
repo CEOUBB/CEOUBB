@@ -20,18 +20,19 @@ const connectSrc =
 
 const contentSecurityPolicy = [
   `default-src 'self' ${capacitorBridgeOrigins}`,
-  `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
+  `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
   "font-src 'self' data:",
   `connect-src ${connectSrc} https://www.google.com/recaptcha/`,
-  "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
+  "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
 ].join("; ");
 
 const nextConfig: NextConfig = {
@@ -60,7 +61,8 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+            value:
+              "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), display-capture=()",
           },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],

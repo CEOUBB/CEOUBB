@@ -68,6 +68,8 @@ export const solicitudSoporteSchema = z.object({
 export const envioSoporteSchema = solicitudSoporteSchema.extend({
   sitioWeb: z.string().max(200).optional(),
   duracionMs: z.number().int().nonnegative().optional(),
+  turnstileToken: z.string().max(2048).optional(),
+  cfTurnstileResponse: z.string().max(2048).optional(),
 });
 
 export type SolicitudSoporte = z.infer<typeof solicitudSoporteSchema>;

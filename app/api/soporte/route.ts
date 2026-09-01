@@ -10,6 +10,7 @@ import {
   registrarSolicitud,
   superaLimite,
 } from "../../../lib/services/support-requests.ts";
+import { verifyTurnstileToken } from "../../../lib/services/turnstile.ts";
 import {
   DURACION_MINIMA_MS,
   TAMANO_MAXIMO_BYTES,
@@ -19,17 +20,18 @@ import {
 
 /*
   Implements: REQ-SUP-01, REQ-SUP-02, REQ-SUP-03, REQ-SUP-04, REQ-SUP-05,
-              REQ-SUP-06, REQ-SUP-07, REQ-SUP-08, REQ-SUP-09
+              REQ-SUP-06, REQ-SUP-07, REQ-SUP-08, REQ-SUP-09, SEC-04, SEC-07
 
   Este endpoint es público a propósito: quien no puede autenticarse es
-  justamente quien más necesita escribir. A cambio lleva cuatro controles
+  justamente quien más necesita escribir. A cambio lleva cinco controles
   independientes, ordenados del más barato al más caro, y cada uno corta la
   ejecución antes de tocar la base de datos.
 
     1. Tipo de contenido y tamaño del cuerpo (ninguna E/S).
     2. Validación del esquema compartido (ninguna E/S).
     3. Señuelo y permanencia mínima (ninguna E/S).
-    4. Límite de envíos por hora (una consulta indexada y acotada).
+    4. Verificación Cloudflare Turnstile (antibot sin tocar BD).
+    5. Límite de envíos por hora (una consulta indexada y acotada).
 
   Los rechazos del paso 3 devuelven exactamente lo mismo que una aceptación
   diferida. Un cliente automatizado no aprende nada de la diferencia.
@@ -81,10 +83,21 @@ export async function POST(request: Request) {
     return aceptacionDiferida();
   }
 
-  // 4. Límite de envíos. Se resuelve contra la base de datos porque el Edge
+  // 4. Verificación Cloudflare Turnstile contra ataques distribuidos (ninguna E/S de base de datos).
+  const clientIp = direccionDeSolicitud(request);
+  const turnstileToken = envio.turnstileToken || envio.cfTurnstileResponse;
+  const esHumano = await verifyTurnstileToken(turnstileToken, clientIp);
+  if (!esHumano) {
+    return Response.json(
+      { error: "Verificación de seguridad fallida. Por favor, intenta nuevamente." },
+      { status: 400 }
+    );
+  }
+
+  // 5. Límite de envíos. Se resuelve contra la base de datos porque el Edge
   // levanta múltiples instancias aisladas y un contador en memoria del proceso
   // sería un límite solo de nombre.
-  const ipHash = hashDireccion(direccionDeSolicitud(request));
+  const ipHash = hashDireccion(clientIp);
 
   try {
     const conteo = await contarSolicitudesRecientes(ipHash);

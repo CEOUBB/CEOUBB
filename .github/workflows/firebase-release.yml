@@ -97,7 +97,7 @@ jobs:
 
       - name: "Implements: REQ-STG-05 deploy Firebase staging"
         working-directory: firebase
-        run: pnpm dlx firebase-tools@latest deploy --project staging --only firestore,storage,functions --non-interactive
+        run: pnpm dlx firebase-tools@13.31.0 deploy --project staging --only firestore,storage,functions --non-interactive
 
       - name: "Implements: REQ-STG-02 seed synthetic data"
         env:
@@ -134,4 +134,4 @@ jobs:
 
       - name: "Implements: REQ-STG-03 promote the same commit"
         working-directory: firebase
-        run: pnpm dlx firebase-tools@latest deploy --project production --only firestore,storage,functions --non-interactive
+        run: pnpm dlx firebase-tools@13.31.0 deploy --project production --only firestore,storage,functions --non-interactive
