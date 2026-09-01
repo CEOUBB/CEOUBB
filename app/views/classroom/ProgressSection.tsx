@@ -75,7 +75,7 @@ export function ProgressSection({
                 : "Tu avance se guarda en tu cuenta y aparece en todos tus dispositivos."}
             </p>
             <div className="big-progress">
-              <Bar ratio={total > 0 ? completed / total : 0} />
+              <Bar completed={completed} total={total} />
             </div>
           </div>
         </div>

@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / ProgressBar
+
+- **Finding:** The visual progress bar element `Bar` rendered a generic `motion.span` without `role="progressbar"` or ARIA value attributes (`aria-valuenow`, `aria-valuemin`, `aria-valuemax`), rendering course learning progress unannounced to screen reader users (WCAG 2.2 SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Updated `Bar` to accept `completed` and `total` props, adding `role="progressbar"`, `aria-valuenow`, `aria-valuemin={0}`, `aria-valuemax`, and `aria-label`.
+- **Design System Constraint:** Maintained backwards compatibility with `ratio` while preserving smooth `motion` scale animation and visual CSS classes.
+- **Future Rule:** Ensure all progress indicators declare `role="progressbar"` with explicit ARIA numeric ranges (`aria-valuenow`, `aria-valuemin`, `aria-valuemax`).
+
 ## [2026-03-31] - Classroom / QuizzesSection
 
 - **Finding:** SVG icon status badges (`CheckCircle` and `XCircle`) using `aria-label` lacked explicit `role="img"`, while quiz attempt progress containers lacked `role="progressbar"` and numeric range attributes (`aria-valuenow`, `aria-valuemin`, `aria-valuemax`), limiting screen reader accessibility (WCAG 2.2 SC 4.1.2 Name, Role, Value).

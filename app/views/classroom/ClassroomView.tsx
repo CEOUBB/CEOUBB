@@ -169,7 +169,7 @@ export function ClassroomView({
                             </b>
                             {!canTeach && units.length > 0 && (
                               <span className="mini-progress">
-                                <Bar ratio={units.length ? completed / units.length : 0} />
+                                <Bar completed={completed} total={units.length} />
                               </span>
                             )}
                           </dd>
