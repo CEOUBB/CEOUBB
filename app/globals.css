@@ -3532,16 +3532,20 @@ img {
   scrollbar-gutter: stable;
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
+  background: transparent;
   color: #e2e8f0;
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.65;
   tab-size: 2;
+  border: 0;
+  border-radius: 0;
 }
 
 .rich-code code {
   font: inherit;
   white-space: pre;
+  background: transparent;
 }
 .syntax-comment {
   color: #94a3b8;
@@ -3565,6 +3569,13 @@ img {
 }
 .syntax-operator {
   color: #e2e8f0;
+}
+.syntax-tag {
+  color: #f472b6;
+  font-weight: 600;
+}
+.syntax-attr {
+  color: #38bdf8;
 }
 
 .rich-math {
@@ -3811,14 +3822,11 @@ img {
 }
 
 .editor-tabs button:focus-visible,
-.editor-toolbar button:focus-visible,
-.editor-visual-canvas:focus-visible,
-.editor-source:focus-visible,
-.multimodal-editor-workspace:focus-visible {
+.editor-toolbar button:focus-visible {
   position: relative;
   z-index: 1;
-  outline: 3px solid var(--color-primary);
-  outline-offset: -3px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .multimodal-editor-workspace {
@@ -3828,6 +3836,12 @@ img {
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.multimodal-editor-workspace:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .multimodal-editor-workspace[data-preview="off"] {
@@ -3835,20 +3849,29 @@ img {
 }
 
 .editor-compose-pane {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  height: 100%;
   background: var(--surface-card);
 }
 
 .editor-toolbar {
   display: flex;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   min-height: 46px;
   padding: 4px 6px;
   border-bottom: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
-  flex-wrap: wrap;
-  row-gap: 2px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editor-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Separa los grupos de la barra sin gastar una etiqueta en cada uno. */
@@ -3894,6 +3917,7 @@ img {
 .editor-source {
   width: 100%;
   min-height: clamp(340px, 54vh, 640px);
+  flex: 1 1 auto;
   margin: 0;
   padding: 18px;
   border: 0;
@@ -3903,7 +3927,8 @@ img {
   font-size: 15px;
   line-height: 1.65;
   caret-color: var(--color-primary);
-  resize: vertical;
+  resize: none;
+  outline: none;
   scroll-margin-block: 72px;
 }
 
@@ -3923,6 +3948,10 @@ img {
 .editor-visual-frame {
   position: relative;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
 }
 
 .editor-slash-menu {
@@ -3997,6 +4026,22 @@ img {
   margin: 0 0 14px;
 }
 
+.editor-visual-canvas ul {
+  margin: 0 0 14px;
+  padding-inline-start: 1.5em;
+  list-style-type: disc;
+}
+
+.editor-visual-canvas ol {
+  margin: 0 0 14px;
+  padding-inline-start: 1.5em;
+  list-style-type: decimal;
+}
+
+.editor-visual-canvas li {
+  margin-block: 0.3em;
+}
+
 .editor-visual-canvas h1,
 .editor-visual-canvas h2,
 .editor-visual-canvas h3,
@@ -4020,29 +4065,43 @@ img {
 .editor-visual-canvas pre {
   padding: 14px;
   border-radius: var(--radius-md);
-  background: var(--ubb-midnight-navy);
+  background: #0f172a;
   color: #f8fafc;
   font-family: var(--font-mono);
   overflow-x: auto;
   white-space: pre;
 }
 
+.editor-visual-canvas pre code {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  border: 0;
+}
+
 .editor-visual-canvas table {
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .editor-visual-canvas td,
 .editor-visual-canvas th {
   min-width: 112px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border: 1px solid var(--border-hairline);
+  text-align: left;
 }
 
+.editor-visual-canvas thead th,
 .editor-visual-canvas tr:first-child td,
 .editor-visual-canvas th {
   background: var(--canvas-soft);
+  color: var(--text-body);
   font-weight: 650;
 }
 

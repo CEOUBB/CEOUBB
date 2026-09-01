@@ -19,9 +19,32 @@ export const CLASSROOM_COMPATIBILITY_REQUIREMENTS = [
   "Implements: REQ-CEO61-06",
 ] as const;
 
-export type CodeLanguage = "matlab" | "python" | "cpp" | "sql" | "plain";
+export type CodeLanguage =
+  | "matlab"
+  | "python"
+  | "cpp"
+  | "c"
+  | "java"
+  | "sql"
+  | "html"
+  | "javascript"
+  | "typescript"
+  | "css"
+  | "json"
+  | "bash"
+  | "plain";
+
 export type SyntaxTokenKind =
-  "plain" | "comment" | "string" | "number" | "keyword" | "type" | "function" | "operator";
+  | "plain"
+  | "comment"
+  | "string"
+  | "number"
+  | "keyword"
+  | "type"
+  | "function"
+  | "operator"
+  | "tag"
+  | "attr";
 
 export type SyntaxToken = {
   kind: SyntaxTokenKind;
@@ -103,10 +126,35 @@ const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
   cpp: "cpp",
   "c++": "cpp",
   cxx: "cpp",
+  c: "c",
+  java: "java",
   sql: "sql",
+  html: "html",
+  htm: "html",
+  xml: "html",
+  svg: "html",
+  markup: "html",
+  javascript: "javascript",
+  js: "javascript",
+  jsx: "javascript",
+  mjs: "javascript",
+  cjs: "javascript",
+  typescript: "typescript",
+  ts: "typescript",
+  tsx: "typescript",
+  css: "css",
+  scss: "css",
+  sass: "css",
+  less: "css",
+  json: "json",
+  jsonc: "json",
+  bash: "bash",
+  sh: "bash",
+  zsh: "bash",
+  shell: "bash",
 };
 
-const KEYWORDS: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
+const KEYWORDS: Record<Exclude<CodeLanguage, "plain" | "html" | "css" | "json">, Set<string>> = {
   matlab: new Set([
     "break",
     "case",
@@ -222,6 +270,95 @@ const KEYWORDS: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
     "volatile",
     "while",
   ]),
+  c: new Set([
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+  ]),
+  java: new Set([
+    "abstract",
+    "assert",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extends",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "implements",
+    "import",
+    "instanceof",
+    "int",
+    "interface",
+    "long",
+    "native",
+    "new",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "strictfp",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "try",
+    "void",
+    "volatile",
+    "while",
+    "record",
+  ]),
   sql: new Set([
     "add",
     "all",
@@ -283,9 +420,156 @@ const KEYWORDS: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
     "where",
     "with",
   ]),
+  javascript: new Set([
+    "async",
+    "await",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "import",
+    "in",
+    "instanceof",
+    "let",
+    "new",
+    "of",
+    "return",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+    "from",
+    "as",
+  ]),
+  typescript: new Set([
+    "abstract",
+    "any",
+    "as",
+    "async",
+    "await",
+    "boolean",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "constructor",
+    "continue",
+    "debugger",
+    "declare",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "from",
+    "function",
+    "get",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "infer",
+    "instanceof",
+    "interface",
+    "is",
+    "keyof",
+    "let",
+    "module",
+    "namespace",
+    "never",
+    "new",
+    "null",
+    "number",
+    "object",
+    "of",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "require",
+    "return",
+    "set",
+    "static",
+    "string",
+    "super",
+    "switch",
+    "symbol",
+    "this",
+    "throw",
+    "try",
+    "type",
+    "typeof",
+    "undefined",
+    "unique",
+    "unknown",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+  ]),
+  bash: new Set([
+    "case",
+    "cat",
+    "cd",
+    "chmod",
+    "cp",
+    "do",
+    "done",
+    "echo",
+    "elif",
+    "else",
+    "esac",
+    "exit",
+    "export",
+    "fi",
+    "for",
+    "function",
+    "grep",
+    "if",
+    "in",
+    "ls",
+    "mkdir",
+    "mv",
+    "read",
+    "rm",
+    "select",
+    "set",
+    "sudo",
+    "then",
+    "time",
+    "until",
+    "while",
+  ]),
 };
 
-const TYPES: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
+const TYPES: Record<Exclude<CodeLanguage, "plain" | "html" | "css" | "json" | "bash">, Set<string>> = {
   matlab: new Set([
     "cell",
     "char",
@@ -337,6 +621,41 @@ const TYPES: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
     "void",
     "wchar_t",
   ]),
+  c: new Set([
+    "bool",
+    "char",
+    "double",
+    "float",
+    "int",
+    "long",
+    "short",
+    "signed",
+    "size_t",
+    "unsigned",
+    "void",
+  ]),
+  java: new Set([
+    "boolean",
+    "byte",
+    "char",
+    "double",
+    "float",
+    "int",
+    "long",
+    "short",
+    "void",
+    "String",
+    "Object",
+    "List",
+    "Map",
+    "Set",
+    "Boolean",
+    "Integer",
+    "Double",
+    "True",
+    "False",
+    "null",
+  ]),
   sql: new Set([
     "bigint",
     "binary",
@@ -359,6 +678,48 @@ const TYPES: Record<Exclude<CodeLanguage, "plain">, Set<string>> = {
     "uuid",
     "varchar",
   ]),
+  javascript: new Set([
+    "true",
+    "false",
+    "null",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "Array",
+    "Object",
+    "Function",
+    "Promise",
+    "Map",
+    "Set",
+    "Date",
+    "RegExp",
+    "Error",
+  ]),
+  typescript: new Set([
+    "true",
+    "false",
+    "null",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "Array",
+    "Object",
+    "Function",
+    "Promise",
+    "Map",
+    "Set",
+    "Date",
+    "RegExp",
+    "Error",
+    "Record",
+    "Partial",
+    "Required",
+    "Readonly",
+    "Pick",
+    "Omit",
+    "Exclude",
+    "Extract",
+  ]),
 };
 
 const TOKEN_PATTERNS: Record<Exclude<CodeLanguage, "plain">, RegExp> = {
@@ -367,7 +728,17 @@ const TOKEN_PATTERNS: Record<Exclude<CodeLanguage, "plain">, RegExp> = {
   python:
     /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
   cpp: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#]+|./gi,
+  c: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#]+|./gi,
+  java: /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}@]+|./gi,
   sql: /\/\*[\s\S]*?\*\/|--[^\n]*|"(?:""|[^"])*"|'(?:''|[^'])*'|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_]\w*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}]+|./gi,
+  html: /<!--[\s\S]*?-->|<\/?[A-Za-z0-9:-]+|\/?>|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b[A-Za-z_][\w-]*\b|\s+|[=<>!/]+|./gi,
+  javascript:
+    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_$][\w$]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}?#]+|./gi,
+  typescript:
+    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b|[A-Za-z_$][\w$]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}?#]+|./gi,
+  css: /\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s|ms|deg|fr)?\b|[A-Za-z_-][\w-]*|\s+|[+\-*/:;.,{}()[\]>~]+|./gi,
+  json: /"(?:\\.|[^"\\])*"|\b-?\d+(?:\.\d+)?(?:e[+-]?\d+)?\b|\b(?:true|false|null)\b|\s+|[:{},[\]]|./gi,
+  bash: /#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\$[A-Za-z_0-9]+|\b(?:0x[\da-f]+|\d+)\b|[A-Za-z_][\w-]*|\s+|[+\-*/%=<>!&|^~:.,;()[\]{}#\\]+|./gi,
 };
 
 export function normalizeCodeLanguage(value: string): CodeLanguage {
@@ -377,9 +748,17 @@ export function normalizeCodeLanguage(value: string): CodeLanguage {
 
 export function codeLanguageLabel(language: CodeLanguage) {
   if (language === "cpp") return "C++";
+  if (language === "c") return "C";
+  if (language === "java") return "Java";
   if (language === "sql") return "SQL";
   if (language === "matlab") return "MATLAB";
   if (language === "python") return "Python";
+  if (language === "html") return "HTML";
+  if (language === "javascript") return "JavaScript";
+  if (language === "typescript") return "TypeScript";
+  if (language === "css") return "CSS";
+  if (language === "json") return "JSON";
+  if (language === "bash") return "Bash";
   return "Código";
 }
 
@@ -417,22 +796,50 @@ function tokenKind(
   value: string,
   rest: string
 ): SyntaxTokenKind {
+  if (language === "html") {
+    if (value.startsWith("<!--")) return "comment";
+    if (value.startsWith('"') || value.startsWith("'")) return "string";
+    if (value.startsWith("<") || value === ">" || value === "/>") return "tag";
+    if (rest.trimStart().startsWith("=")) return "attr";
+    return "plain";
+  }
+  if (language === "css") {
+    if (value.startsWith("/*")) return "comment";
+    if (value.startsWith('"') || value.startsWith("'")) return "string";
+    if (/^#[0-9a-fA-F]+/i.test(value) || /^\d/.test(value)) return "number";
+    if (rest.trimStart().startsWith(":")) return "attr";
+    return "keyword";
+  }
+  if (language === "json") {
+    if (value.startsWith('"')) {
+      if (rest.trimStart().startsWith(":")) return "keyword";
+      return "string";
+    }
+    if (/^-?\d/.test(value)) return "number";
+    if (["true", "false", "null"].includes(value)) return "keyword";
+    return "plain";
+  }
   if (
     (language === "matlab" && (value.startsWith("%") || value.startsWith("%{"))) ||
     (language === "python" && value.startsWith("#")) ||
-    (language === "cpp" && (value.startsWith("//") || value.startsWith("/*"))) ||
-    (language === "sql" && (value.startsWith("--") || value.startsWith("/*")))
+    ((language === "cpp" || language === "c" || language === "java" || language === "javascript" || language === "typescript") &&
+      (value.startsWith("//") || value.startsWith("/*"))) ||
+    (language === "sql" && (value.startsWith("--") || value.startsWith("/*"))) ||
+    (language === "bash" && value.startsWith("#"))
   )
     return "comment";
-  if (/^(?:"|'|'''|""")/.test(value)) return "string";
+  if (/^(?:"|'|'''|"""|`)/.test(value)) return "string";
   if (/^(?:0x[\da-f]+|\d)/i.test(value)) return "number";
-  if (/^[A-Za-z_]\w*$/.test(value)) {
+  if (value.startsWith("$") && language === "bash") return "attr";
+  if (/^[A-Za-z_$][\w$]*$/.test(value)) {
     const comparable = language === "sql" ? value.toLowerCase() : value;
-    if (KEYWORDS[language].has(comparable)) return "keyword";
-    if (TYPES[language].has(comparable)) return "type";
+    const keywordsSet = KEYWORDS[language as keyof typeof KEYWORDS];
+    if (keywordsSet?.has(comparable)) return "keyword";
+    const typesSet = TYPES[language as keyof typeof TYPES];
+    if (typesSet?.has(comparable)) return "type";
     if (rest.trimStart().startsWith("(")) return "function";
   }
-  if (/^[+\-*/%=<>!&|^~:.,;()[\]{}#]+$/.test(value)) return "operator";
+  if (/^[+\-*/%=<>!&|^~:.,;()[\]{}?#@\\]+$/.test(value)) return "operator";
   return "plain";
 }
 

@@ -280,6 +280,31 @@ test("el menú de comandos rápidos sólo se abre al inicio de una línea", () =
   }
 });
 
+test("un bloque de código sin etiqueta code interna sobrevive el viaje a Markdown y de vuelta", () => {
+  const canvasHtml = "<pre>al cambiar se rompe</pre>";
+  const markdown = htmlToAcademicMarkdown(canvasHtml);
+  assert.match(markdown, /```\nal cambiar se rompe\n```/);
+  const editorHtml = markdownToEditorHtml(markdown);
+  assert.match(editorHtml, /<pre><code/);
+  assert.doesNotMatch(editorHtml, /&lt;pre&gt;/);
+});
+
+test("los divs y párrafos estándar no introducen etiquetas visibles en Markdown ni vista previa", () => {
+  const canvasHtml = "<div>Primera línea</div><div>Segunda línea</div>";
+  const markdown = htmlToAcademicMarkdown(canvasHtml);
+  assert.doesNotMatch(markdown, /<div/i);
+  assert.match(markdown, /Primera línea\n\nSegunda línea/);
+});
+
+test("insertTable en el editor visual inserta thead y th semánticos", () => {
+  const compSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
+    "utf8"
+  );
+  assert.match(compSource, /createTHead\(\)/);
+  assert.match(compSource, /createElement\("th"\)/);
+});
+
 function source() {
   return fs.readFileSync(
     path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),

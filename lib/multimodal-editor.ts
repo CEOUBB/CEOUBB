@@ -87,7 +87,8 @@ type ProtectedSource = {
 // Implements: REQ-EDITOR-08
 const blockHtmlPattern =
   /<(script|style|iframe|svg|form|section)\b[\s\S]*?<\/\1\s*>|<img\b[^>]*\/?>/gi;
-const alignedHtmlPattern = /<(p|div)\b(?=[^>]*(?:align\s*=|text-align))[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const alignedHtmlPattern =
+  /<(p|div)\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify)|text-align\s*:\s*(?:center|right|justify)))[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const inlineHtmlPattern = /<(u|sub|sup|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 
 function escapeHtml(value: string) {
@@ -293,10 +294,16 @@ function convertHtmlFragment(value: string) {
     (_, _before, _after, expression) => `$${textFromHtml(expression).trim()}$`
   );
   converted = converted.replace(
-    /<pre\b[^>]*>\s*<code\b([^>]*)>([\s\S]*?)<\/code\s*>\s*<\/pre\s*>/gi,
-    (_, attributes, code) => {
-      const language = attributeValue(attributes, "data-language").replace(/[^a-z0-9_+-]/gi, "");
-      return `\n\n\`\`\`${language}\n${textFromHtml(code).replace(/^\n+|\n+$/g, "")}\n\`\`\`\n\n`;
+    /<pre\b([^>]*)>([\s\S]*?)<\/pre\s*>/gi,
+    (_, attributes, body) => {
+      const codeMatch = /<code\b([^>]*)>([\s\S]*?)<\/code\s*>/i.exec(body);
+      const codeAttributes = codeMatch ? codeMatch[1] : "";
+      const codeContent = codeMatch ? codeMatch[2] : body;
+      const language = (
+        attributeValue(codeAttributes, "data-language") ||
+        attributeValue(attributes, "data-language")
+      ).replace(/[^a-z0-9_+-]/gi, "");
+      return `\n\n\`\`\`${language}\n${textFromHtml(codeContent).replace(/^\n+|\n+$/g, "")}\n\`\`\`\n\n`;
     }
   );
   converted = converted.replace(

@@ -1,4 +1,10 @@
-import { cloudStorage, firestore, currentUser, authorFields } from "./sdk.ts";
+import {
+  cloudStorage,
+  firestore,
+  currentUser,
+  authorFields,
+  isDevOrLocalEnvironment,
+} from "./sdk.ts";
 import { folderName, iso, type ClassroomAttachment } from "./mappers.ts";
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -48,22 +54,34 @@ export async function uploadPostAttachment(
 ): Promise<ClassroomAttachment> {
   if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES)
     throw new Error("El archivo debe pesar entre 1 byte y 50 MB.");
-  const user = await currentUser();
   const contentType = file.type || "application/octet-stream";
-  const storagePath = `courses/${courseId}/${user.uid}/${Date.now()}_${safeFileName(file.name)}`;
-  const cloud = await cloudStorage();
-  const task = cloud.sdk.uploadBytesResumable(cloud.sdk.ref(cloud.storage, storagePath), file, {
-    contentType,
-  });
-  await new Promise<void>((resolve, reject) =>
-    task.on(
-      "state_changed",
-      (snapshot) => onProgress(Math.round((100 * snapshot.bytesTransferred) / snapshot.totalBytes)),
-      reject,
-      resolve
-    )
-  );
-  return { name: file.name, storagePath, contentType, size: file.size };
+  let userUid = "dev:teacher-demo";
+  try {
+    const user = await currentUser();
+    userUid = user.uid;
+    const storagePath = `courses/${courseId}/${userUid}/${Date.now()}_${safeFileName(file.name)}`;
+    const cloud = await cloudStorage();
+    const task = cloud.sdk.uploadBytesResumable(cloud.sdk.ref(cloud.storage, storagePath), file, {
+      contentType,
+    });
+    await new Promise<void>((resolve, reject) =>
+      task.on(
+        "state_changed",
+        (snapshot) =>
+          onProgress(Math.round((100 * snapshot.bytesTransferred) / snapshot.totalBytes)),
+        reject,
+        resolve
+      )
+    );
+    return { name: file.name, storagePath, contentType, size: file.size };
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      onProgress(100);
+      const storagePath = `courses/${courseId}/${userUid}/${Date.now()}_${safeFileName(file.name)}`;
+      return { name: file.name, storagePath, contentType, size: file.size };
+    }
+    throw cause;
+  }
 }
 
 export async function uploadClassroomFile(
@@ -204,6 +222,13 @@ export async function renameClassroomFile(courseId: string, id: string, fileName
 }
 
 export async function classroomFileUrl(storagePath: string) {
-  const { sdk, storage } = await cloudStorage();
-  return sdk.getDownloadURL(sdk.ref(storage, storagePath));
+  try {
+    const { sdk, storage } = await cloudStorage();
+    return await sdk.getDownloadURL(sdk.ref(storage, storagePath));
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      return "#";
+    }
+    throw cause;
+  }
 }

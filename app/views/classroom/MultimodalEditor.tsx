@@ -767,13 +767,18 @@ function useMultimodalEditorController({
 
   const insertTable = () => {
     const table = document.createElement("table");
+    const thead = table.createTHead();
+    const headRow = thead.insertRow();
+    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
+      const th = document.createElement("th");
+      th.textContent = `Encabezado ${columnIndex + 1}`;
+      headRow.appendChild(th);
+    }
     const body = table.createTBody();
-    for (let rowIndex = 0; rowIndex < 2; rowIndex += 1) {
-      const row = body.insertRow();
-      for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
-        const cell = row.insertCell();
-        cell.textContent = rowIndex === 0 ? `Encabezado ${columnIndex + 1}` : "Contenido";
-      }
+    const row = body.insertRow();
+    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
+      const cell = row.insertCell();
+      cell.textContent = "Contenido";
     }
     insertVisualNode(visualRef.current!, table);
   };

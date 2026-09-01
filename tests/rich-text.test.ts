@@ -64,7 +64,15 @@ test("fenced code normalizes and highlights every required language", () => {
     ["matlab", "for i = 1:10\n% suma", "matlab"],
     ["python", "for item in values:\n    print(item)", "python"],
     ["c++", "int main() { return 0; }", "cpp"],
+    ["c", "int add(int a, int b) { return a + b; }", "c"],
+    ["java", "public class Main { public static void main(String[] args) {} }", "java"],
     ["sql", "SELECT id FROM alumnos WHERE activo = 1;", "sql"],
+    ["html", '<div class="alert"><p>Texto</p></div>', "html"],
+    ["javascript", 'const total = items.reduce((a, b) => a + b, 0);', "javascript"],
+    ["typescript", 'interface User { id: string; role: "student" | "teacher"; }', "typescript"],
+    ["css", ".container { display: flex; color: #0f172a; }", "css"],
+    ["json", '{\n  "version": 1,\n  "active": true\n}', "json"],
+    ["bash", "#!/bin/bash\necho $HOME", "bash"],
   ] as const;
 
   for (const [label, source, expected] of cases) {
@@ -80,6 +88,9 @@ test("fenced code normalizes and highlights every required language", () => {
 
   assert.equal(normalizeCodeLanguage("cpp linenums"), "cpp");
   assert.equal(normalizeCodeLanguage("desconocido"), "plain");
+  assert.equal(normalizeCodeLanguage("html"), "html");
+  assert.equal(normalizeCodeLanguage("ts"), "typescript");
+  assert.equal(normalizeCodeLanguage("sh"), "bash");
 });
 
 test("hostile HTML stays inert and unsafe link destinations are removed", () => {
