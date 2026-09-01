@@ -4,6 +4,7 @@ import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
 import { checkBundleSize, formatKb, getFileSize } from "../scripts/check-bundle-size.mjs";
+import "./firebase-rules-config.test.ts";
 
 const REQUIRED_WORKFLOWS = [
   ".github/workflows/ci.yml",

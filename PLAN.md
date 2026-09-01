@@ -1,6 +1,6 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-Last verified 2026-08-29 · baseline `af37446` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
+Last verified 2026-09-01 · baseline `2131d97` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
 **Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment, and verification.
 
@@ -42,6 +42,7 @@ Companion files:
 - [`docs/specs/p17-immutable-grade-audit-trail.md`](docs/specs/p17-immutable-grade-audit-trail.md): Transactional and immutable audit history for grades and gradebook configuration.
 - [`docs/specs/p18-firebase-app-check-rollout.md`](docs/specs/p18-firebase-app-check-rollout.md): Web and Android attestation, pre-enforcement observation, and phased rollout for Firebase App Check.
 - [`docs/specs/p19-quiz-engine-gift-import.md`](docs/specs/p19-quiz-engine-gift-import.md): Verified contract for bounded GIFT/CSV import, timed quiz attempts, per-question auto-save, immediate correction, and auditable gradebook integration.
+- [`docs/specs/p20-firebase-rules-emulator-suite.md`](docs/specs/p20-firebase-rules-emulator-suite.md): Verified Firestore and Storage Emulator Suite authorization matrix and mandatory merge gate.
 - [`docs/specs/p17-bulk-enrollment-import.md`](docs/specs/p17-bulk-enrollment-import.md): CSV enrollment import per section with preview, claimable pending enrollments on first login, and strict idempotency.
 - [`docs/specs/p17-moodle-course-import.md`](docs/specs/p17-moodle-course-import.md): Secure and idempotent import of Moodle TGZ/ZIP backups and CSV rosters, with compatible materials, pending enrollments, and audit trails.
 - [`openspec/specs/classroom/rich-posts/spec.md`](openspec/specs/classroom/rich-posts/spec.md): Living specification of secure technical posts with Markdown, code highlighting, KaTeX math, and shared Web/Android previews.
@@ -52,6 +53,7 @@ Companion files:
 
 ## Active work
 
+- [ACTIVE] **CEO-70: Firebase Emulator Suite rule tests as mandatory merge gate.** Implemented and locally verified on branch `elpapijuaco325/ceo-70-configurar-suite-de-pruebas-automatizadas-para-reglas-de`: Firestore/Storage matrix 4/4, unit suite 470/470, full build suite 495/495, lint/typecheck/format/Functions/OpenSpec green. The active GitHub ruleset for `main` now requires `Firebase Rules Emulator`; production rules and data were not deployed. Awaiting merge. `tests/firebase-rules.test.ts`, `firebase/firebase.json`, `package.json`, `.github/workflows/ci.yml`, `docs/specs/p20-firebase-rules-emulator-suite.md`.
 - [NEXT] **P6: declared debt: Android bottom inset is a constant, not a measurement (CEO-67).** `--safe-bottom` uses `max(env(...), 24px)` below 768px because the WebView does not expose the true gesture bar height. On a three-button device or gesture-less phone, 24px is unrequested padding. The correct solution is reading the inset from the native container and publishing it as a CSS variable on boot. `app/globals.css`, `lib/mobile-bridge.ts`
 - [NEXT] **Declared debt from P5 §0.3: no kill switch (CEO-68).** With `server.url` remote the installed app always renders deployed `main`: a broken deploy breaks the app with no store rollback. Acceptable in a pilot; at university scale this requires a minimum-version / kill-switch endpoint checked by the shell on launch. `app/api/`, `capacitor.config.ts`
 - [NEXT] **P5 conditional debt: DOM virtualization stays out until measured.** REQ-CAP-08 sets the budget (under 1,500 active nodes, p95 interaction under 200ms, long tasks under 50ms during scroll) and `content-visibility: auto` is the current solution. `@tanstack/react-virtual` may only be introduced against physical measurements on low-end hardware exceeding those thresholds. `app/globals.css`, `app/Classroom.tsx`
@@ -59,7 +61,6 @@ Companion files:
 - [NEXT] Run classroom, gradebook, and calendar manual test matrix across owner, teacher, and student accounts. Security rules deployed 2026-08-14; verification pending. Firebase
 - [NEXT] Deploy and conclude operational milestone P0.9: surface read-only grade history UI for teachers (CEO-69); run multi-role matrix. `app/views/classroom/`
 - [NEXT] Backups and a **drilled** restore: scheduled Firestore exports, Turso backups, stated RPO/RTO (CEO-6). Critical repository priority. Firebase, Turso, `firebase/functions/`
-- [NEXT] Firebase Emulator Suite rule tests for Firestore and Storage as a mandatory merge gate (CEO-70). `tests/`, `firebase/`
 - [NEXT] Execute production authentication, Storage, and push notification verification matrix on physical device (CEO-33). Web, Android, Firebase
 - [NEXT] Deploy App Check observation phase (CEO-47), validate Web/physical Android matrix for 24 hours with >= 99% valid tokens, and enable enforcement per product surface only after passing gate. Firebase, Cloudflare, Android
 - [NEXT] **P1: Bandeja rápida de corrección docente con visor PDF integrado vía PDFSlick (CEO-78).** Felipe Arce. Visualización fluida de entregas de estudiantes con `@pdfslick/react` (SSR diferido), panel de nota y feedback privado en contexto. `app/views/classroom/`
@@ -82,8 +83,8 @@ Everything not listed here is implemented and verified; the full historical inve
 - Web: app store badges remain non-clickable placeholders; local portal/library redesign uncommitted/undeployed.
 - Android: release AAB installation, Google Sign-In, upload/download, role behavior, account deletion, and FCM delivery **not verified** on a clean physical device (CEO-33). Bundled offline library remains on legacy maroon theme.
 - iOS: unbuilt scaffold: no Xcode project configuration, bundle ID, APNs certificates, or iOS Firebase app (CEO-77). Badge remains non-clickable.
-- Firebase/GCP: App Check Web/Android registered with Firestore, Storage, and Auth remaining in observation (`UNENFORCED`); pending client deployment, 24-hour representative traffic, physical Android validation, and gradual enforcement. No web push VAPID key configured; no rules emulator suite tests (CEO-70). Cloud Billing alerts configured, but account remains in Free Trial and must be converted to paid prior to expiration.
-- GitHub: branch protection rules and required review status not documented as active.
+- Firebase/GCP: App Check Web/Android registered with Firestore, Storage, and Auth remaining in observation (`UNENFORCED`); pending client deployment, 24-hour representative traffic, physical Android validation, and gradual enforcement. Firestore and Storage now have a verified emulator matrix; no web push VAPID key is configured. Cloud Billing alerts are configured, but the account remains in Free Trial and must be converted to paid prior to expiration.
+- GitHub: the active `main` ruleset requires `Lint, Typecheck & Test`, `Firebase Rules Emulator`, and semantic PR titles; required review status remains undocumented.
 
 ## Architectural risks and technical debt
 
@@ -92,11 +93,10 @@ Detailed context and specifications reside in `docs/specs/`.
 - **Static catalogue, no enrollment model**: blocking architectural debt. `courseId` lacks section and period dimensions, causing successive semesters and sections to collide; roles are global and email-derived; no automated bulk enrollment. -> [`p1-academic-model.md`](docs/specs/p1-academic-model.md)
 - **Grade audit trail deployment**: PR #70 implements transactional, immutable logging, but production continues overwriting `grades/{uid}` until Functions/portal/index/rules are fully deployed; read-only history UI remains pending (CEO-69). -> P0.9
 - **No automated backups, unverified restore**: no scheduled Firestore exports, no automated Turso database backups, no restore drill executed (CEO-6). -> P0.8
-- **Rules lack emulator test coverage**: staging deploys and seeds prior to production, but Firestore and Storage rules lack automated Emulator Suite tests in CI (CEO-70). -> P0.10
 - **Capacity proof is staging-specific**: CEO-71 passed 3,000 authenticated sessions for 1,860 synchronized seconds with HTTP p95 472 ms, zero 5xx/authorization errors and CLP 425 projected infrastructure cost per student-year on the tested Vercel commit. This is not a production SLA; the later Cloudflare hosting migration needs separate latency evidence, Turso platform row counters were unavailable and the RPO 1 h / RTO 4 h restoration drill remains unverified (CEO-6). -> P0.8
 - **Governance and continuity**: personal accounts for Firebase/Cloudflare/Turso hosting; data-processing agreement in draft stage without legal sign-off; missing public accessibility statement; no external pentest; bus factor of two. MIT license active, but tenancy transfer and exit procedures require formalization (CEO-41). -> P0B.4, P0B.6
 - **Web/Android library divergence**: `assets/data.js` matches; HTML, JS, styles, and native bridge differ. Single library copy in `public/biblioteca/` established as SSOT.
-- **Test coverage gaps**: no Firebase rule emulator tests (CEO-70), no Android unit/instrumentation tests (CEO-75), no multi-role end-to-end integration tests.
+- **Test coverage gaps**: no Android unit/instrumentation tests (CEO-75) and no browser/device multi-role end-to-end integration tests. Firebase role and enrollment boundaries are covered by the Emulator Suite gate from CEO-70.
 - **Store distribution**: Play Console review, internal/closed testing tracks, listing assets, policy declarations, and final AAB verification remain (CEO-32); iOS application unbuilt (CEO-77).
 - **D1 legacy leftovers**: `posts`, `files`, `progress` tables remain in imported Turso database copy, unreferenced. Drop only after verifying data is obsolete.
 
@@ -108,7 +108,7 @@ Detailed context and specifications reside in `docs/specs/`.
 ### Track A: pilot safety, in order
 
 1. Deploy wildcard course security rules; execute P0.1-P0.3 on physical devices with real accounts; resolve defects (CEO-33).
-2. Add rules emulator tests (CEO-70); ensure staging (P0.11) deploys and seeds prior to production.
+2. Rules emulator tests and required merge gate completed (CEO-70); keep staging (P0.11) deploys and seeds ahead of production.
 3. Establish automated backups and execute a drilled restoration (CEO-6) before instructors input authentic grade records.
 4. Complete P0.5 prior to expanding beta cohort; P0.4 billing alerts are active.
 5. Deploy grade audit trail (CEO-7); execute multi-role matrix; expose read-only grade history UI (CEO-69).
