@@ -225,13 +225,11 @@ function AttachmentField({
 // Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
 export function PublishView({
   course,
-  folders = [],
   onClose,
   publish,
   status,
 }: {
   course: Course;
-  folders?: string[];
   onClose: () => void;
   publish: (
     event: FormEvent<HTMLFormElement>,
@@ -426,80 +424,84 @@ export function PublishView({
       )}
 
       <div className="publish-body">
-        <div className="publish-canvas">
-          <label className="publish-title-field">
-            <span className="sr-only">Título de la publicación</span>
-            <input
-              autoComplete="off"
-              maxLength={140}
-              name="title"
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Título de la publicación"
-              ref={titleRef}
-              required
-              value={title}
-            />
-          </label>
-          <RichPostEditor
-            editorMode={editorMode}
-            label="Cuerpo de la publicación"
-            name="body"
-            onChange={setBody}
-            onEditorModeChange={changeEditorMode}
+        <label className="publish-title-field">
+          <span className="sr-only">Título de la publicación</span>
+          <input
+            autoComplete="off"
+            maxLength={140}
+            name="title"
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Título de la publicación"
+            ref={titleRef}
             required
-            value={body}
+            value={title}
           />
-          <p className="publish-reading num" role="status">
-            {stats.words.toLocaleString("es-CL")} palabras · cerca de {stats.minutes} min de lectura
-          </p>
-        </div>
+        </label>
 
-        <aside aria-label="Detalles de la publicación" className="publish-inspector">
-          <section className="publish-inspector-action">
-            <button className="publish-submit-inspector" disabled={saving} type="submit">
-              {saving ? "Publicando en el aula…" : "Publicar en el aula"}
-            </button>
-          </section>
-
-          <AttachmentField
-            attachments={attachments}
-            error={attachmentError}
-            fileRef={fileRef}
-            onAttach={(files) => void attachFiles(files)}
-            onRemove={removeAttachment}
-            uploading={uploading}
-          />
-
-          <fieldset className="publish-alerts">
-            <legend>Alertas al curso</legend>
-            {NOTIFICATION_MODES.map((option) => (
-              <label key={option.value}>
-                <input
-                  checked={notificationMode === option.value}
-                  name="notificationMode"
-                  onChange={() => setNotificationMode(option.value)}
-                  type="radio"
-                  value={option.value}
-                />
-                {option.value === "push" ? (
-                  <BellRinging aria-hidden="true" size={17} />
-                ) : (
-                  <BellSlash aria-hidden="true" size={17} />
-                )}
-                <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-
-          {status.text && (
-            <p className={`tool-status ${status.tone}`} role="status">
-              {status.text}
+        <div className="publish-grid">
+          <div className="publish-canvas">
+            <RichPostEditor
+              editorMode={editorMode}
+              label="Cuerpo de la publicación"
+              name="body"
+              onChange={setBody}
+              onEditorModeChange={changeEditorMode}
+              required
+              value={body}
+            />
+            <p className="publish-reading num" role="status">
+              {stats.words.toLocaleString("es-CL")} palabras · cerca de {stats.minutes} min de
+              lectura
             </p>
-          )}
-        </aside>
+          </div>
+
+          <aside aria-label="Detalles de la publicación" className="publish-inspector">
+            <section className="publish-inspector-action">
+              <button className="publish-submit-inspector" disabled={saving} type="submit">
+                {saving ? "Publicando en el aula…" : "Publicar en el aula"}
+              </button>
+            </section>
+
+            <AttachmentField
+              attachments={attachments}
+              error={attachmentError}
+              fileRef={fileRef}
+              onAttach={(files) => void attachFiles(files)}
+              onRemove={removeAttachment}
+              uploading={uploading}
+            />
+
+            <fieldset className="publish-alerts">
+              <legend>Alertas al curso</legend>
+              {NOTIFICATION_MODES.map((option) => (
+                <label key={option.value}>
+                  <input
+                    checked={notificationMode === option.value}
+                    name="notificationMode"
+                    onChange={() => setNotificationMode(option.value)}
+                    type="radio"
+                    value={option.value}
+                  />
+                  {option.value === "push" ? (
+                    <BellRinging aria-hidden="true" size={17} />
+                  ) : (
+                    <BellSlash aria-hidden="true" size={17} />
+                  )}
+                  <span>
+                    <strong>{option.label}</strong>
+                    <small>{option.description}</small>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
+            {status.text && (
+              <p className={`tool-status ${status.tone}`} role="status">
+                {status.text}
+              </p>
+            )}
+          </aside>
+        </div>
       </div>
     </form>
   );

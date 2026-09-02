@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
 import { Check, CopySimple, Info, LockKey, Plus } from "@phosphor-icons/react";
-import { materialFolders, Course } from "../../../lib/courses";
+import type { Course } from "../../../lib/courses";
 import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
 import { hapticTap } from "../../../lib/mobile-bridge";
@@ -75,7 +75,6 @@ export function ClassroomView({
 
   // Implements: REQ-PUB-01
   const [composing, setComposing] = useState(false);
-  const folders = useMemo(() => materialFolders(course), [course]);
 
   const startPublication = () => {
     hapticTap();
@@ -91,7 +90,6 @@ export function ClassroomView({
         <RichTextAssets />
         <PublishView
           course={course}
-          folders={folders}
           onClose={() => setComposing(false)}
           publish={publish}
           status={status}
