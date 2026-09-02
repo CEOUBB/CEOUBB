@@ -212,3 +212,17 @@ test("new editor limit and traceability contract stay explicit", () => {
     )
   );
 });
+
+test("parseRichText reconoce etiquetas semánticas y Markdown (del, mark, sub, sup, strikethrough)", () => {
+  const source = "Texto ~~tachado~~ y <del>borrado</del> con <mark>resaltado</mark>, H<sub>2</sub>O y x<sup>2</sup>.";
+  const blocks = parseRichText(source);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, "paragraph");
+  if (blocks[0].type !== "paragraph") return;
+
+  const types = blocks[0].content.map((n) => n.type);
+  assert.ok(types.includes("strikethrough"), "Debe reconocer tachado");
+  assert.ok(types.includes("mark"), "Debe reconocer resaltado");
+  assert.ok(types.includes("subscript"), "Debe reconocer subíndice");
+  assert.ok(types.includes("superscript"), "Debe reconocer superíndice");
+});

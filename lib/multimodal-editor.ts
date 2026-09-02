@@ -154,6 +154,10 @@ function renderInline(nodes: RichInline[]): string {
       if (node.type === "strong") return `<strong>${renderInline(node.content)}</strong>`;
       if (node.type === "emphasis") return `<em>${renderInline(node.content)}</em>`;
       if (node.type === "underline") return `<u>${renderInline(node.content)}</u>`;
+      if (node.type === "strikethrough") return `<del>${renderInline(node.content)}</del>`;
+      if (node.type === "mark") return `<mark>${renderInline(node.content)}</mark>`;
+      if (node.type === "subscript") return `<sub>${renderInline(node.content)}</sub>`;
+      if (node.type === "superscript") return `<sup>${renderInline(node.content)}</sup>`;
       const href = node.href ? safeLinkDestination(node.href) : null;
       if (!href) return renderInline(node.content);
       return `<a href="${escapeHtml(href)}">${renderInline(node.content)}</a>`;
@@ -333,6 +337,10 @@ function convertHtmlFragment(value: string) {
   });
   converted = converted.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "**$2**");
   converted = converted.replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "*$2*");
+  converted = converted.replace(/<(del|s|strike)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "~~$2~~");
+  converted = converted.replace(/<mark\b[^>]*>([\s\S]*?)<\/mark\s*>/gi, "<mark>$1</mark>");
+  converted = converted.replace(/<sub\b[^>]*>([\s\S]*?)<\/sub\s*>/gi, "<sub>$1</sub>");
+  converted = converted.replace(/<sup\b[^>]*>([\s\S]*?)<\/sup\s*>/gi, "<sup>$1</sup>");
   converted = converted.replace(/<code\b[^>]*>([\s\S]*?)<\/code\s*>/gi, (_, code) => {
     const source = textFromHtml(code);
     const fence = source.includes("`") ? "``" : "`";

@@ -333,6 +333,30 @@ test("etiquetas de bloque HTML aisladas y etiquetas de cierre conservan su estru
   assert.equal(markdown, "<section>\n</section>");
 });
 
+test("etiquetas HTML semánticas seguras (del, s, mark, sub, sup) sobreviven el viaje a Markdown y de vuelta", () => {
+  const html = "<p><del>antiguo</del> <mark>destacado</mark> H<sub>2</sub>O x<sup>2</sup></p>";
+  const markdown = htmlToAcademicMarkdown(html);
+  assert.match(markdown, /~~antiguo~~/);
+  assert.match(markdown, /<mark>destacado<\/mark>/);
+  assert.match(markdown, /<sub>2<\/sub>/);
+  assert.match(markdown, /<sup>2<\/sup>/);
+
+  const restored = markdownToEditorHtml(markdown);
+  assert.match(restored, /<del>antiguo<\/del>/);
+  assert.match(restored, /<mark>destacado<\/mark>/);
+  assert.match(restored, /<sub>2<\/sub>/);
+  assert.match(restored, /<sup>2<\/sup>/);
+});
+
+test("el componente expone la pestaña como Marcado HTML con descripción honesta", () => {
+  const compSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),
+    "utf8"
+  );
+  assert.match(compSource, /html:\s*\{\s*label:\s*"Marcado HTML"/);
+  assert.match(compSource, /aria-label=\{`\$\{label\}: marcado HTML`\}/);
+});
+
 function source() {
   return fs.readFileSync(
     path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),

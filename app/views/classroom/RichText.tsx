@@ -125,6 +125,10 @@ function renderInline(nodes: RichInline[]): ReactNode[] {
     if (node.type === "strong") return <strong key={key}>{renderInline(node.content)}</strong>;
     if (node.type === "emphasis") return <em key={key}>{renderInline(node.content)}</em>;
     if (node.type === "underline") return <u key={key}>{renderInline(node.content)}</u>;
+    if (node.type === "strikethrough") return <del key={key}>{renderInline(node.content)}</del>;
+    if (node.type === "mark") return <mark key={key}>{renderInline(node.content)}</mark>;
+    if (node.type === "subscript") return <sub key={key}>{renderInline(node.content)}</sub>;
+    if (node.type === "superscript") return <sup key={key}>{renderInline(node.content)}</sup>;
     if (!node.href) return <span key={key}>{renderInline(node.content)}</span>;
     return (
       <a href={node.href} key={key} rel="noopener noreferrer" target="_blank">

@@ -58,6 +58,10 @@ export type RichInline =
   | { type: "strong"; content: RichInline[] }
   | { type: "emphasis"; content: RichInline[] }
   | { type: "underline"; content: RichInline[] }
+  | { type: "strikethrough"; content: RichInline[] }
+  | { type: "mark"; content: RichInline[] }
+  | { type: "subscript"; content: RichInline[] }
+  | { type: "superscript"; content: RichInline[] }
   | { type: "link"; href: string | null; content: RichInline[] };
 
 export type TableAlignment = "left" | "center" | "right" | null;
@@ -361,8 +365,8 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
 
   while (cursor < value.length) {
     /*
-      El subrayado no existe en Markdown y viajaba como `<u>` crudo, que la
-      vista previa escapaba: el estudiante veía la etiqueta en vez del texto.
+      El subrayado, tachado, resaltado y sub/superíndices viajan como etiquetas
+      semánticas seguras reconocidas por el modelo y el lienzo.
     */
     // Implements: REQ-RICH-09
     if (value.startsWith("<u", cursor)) {
@@ -373,6 +377,72 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
           content: parseRichInline(underline[1], depth + 1),
         });
         cursor += underline[0].length;
+        continue;
+      }
+    }
+
+    if (
+      value.startsWith("<del", cursor) ||
+      value.startsWith("<s", cursor) ||
+      value.startsWith("<strike", cursor)
+    ) {
+      const strikethrough = /^<(del|s|strike)\b[^>]*>([\s\S]*?)<\/\1\s*>/i.exec(
+        value.slice(cursor)
+      );
+      if (strikethrough) {
+        nodes.push({
+          type: "strikethrough",
+          content: parseRichInline(strikethrough[2], depth + 1),
+        });
+        cursor += strikethrough[0].length;
+        continue;
+      }
+    }
+
+    if (value.startsWith("<mark", cursor)) {
+      const mark = /^<mark\b[^>]*>([\s\S]*?)<\/mark\s*>/i.exec(value.slice(cursor));
+      if (mark) {
+        nodes.push({
+          type: "mark",
+          content: parseRichInline(mark[1], depth + 1),
+        });
+        cursor += mark[0].length;
+        continue;
+      }
+    }
+
+    if (value.startsWith("<sub", cursor)) {
+      const sub = /^<sub\b[^>]*>([\s\S]*?)<\/sub\s*>/i.exec(value.slice(cursor));
+      if (sub) {
+        nodes.push({
+          type: "subscript",
+          content: parseRichInline(sub[1], depth + 1),
+        });
+        cursor += sub[0].length;
+        continue;
+      }
+    }
+
+    if (value.startsWith("<sup", cursor)) {
+      const sup = /^<sup\b[^>]*>([\s\S]*?)<\/sup\s*>/i.exec(value.slice(cursor));
+      if (sup) {
+        nodes.push({
+          type: "superscript",
+          content: parseRichInline(sup[1], depth + 1),
+        });
+        cursor += sup[0].length;
+        continue;
+      }
+    }
+
+    if (value.startsWith("~~", cursor)) {
+      const close = closingDelimiter(value, "~~", cursor + 2);
+      if (close > cursor + 2) {
+        nodes.push({
+          type: "strikethrough",
+          content: parseRichInline(value.slice(cursor + 2, close), depth + 1),
+        });
+        cursor = close + 2;
         continue;
       }
     }
@@ -460,7 +530,7 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
       continue;
     }
 
-    const next = value.slice(cursor + 1).search(/[\\`$[*_]/);
+    const next = value.slice(cursor + 1).search(/[\\`$[*_~<]/);
     const end = next < 0 ? value.length : cursor + 1 + next;
     appendText(nodes, value.slice(cursor, end));
     cursor = end;

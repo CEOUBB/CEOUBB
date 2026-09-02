@@ -88,7 +88,7 @@ type ToolAction =
 const modeLabels: Record<EditorMode, { label: string; detail: string }> = {
   visual: { label: "Visual", detail: "Edición tipo documento" },
   markdown: { label: "Markdown", detail: "Sintaxis técnica" },
-  html: { label: "HTML", detail: "Código libre" },
+  html: { label: "Marcado HTML", detail: "Etiquetas HTML reconocidas" },
 };
 
 /*
@@ -563,7 +563,7 @@ function EditorComposePane({
             <small className="num">{htmlDraft.split("\n").length} líneas</small>
           </div>
           <textarea
-            aria-label={`${label}: código HTML libre`}
+            aria-label={`${label}: marcado HTML`}
             className="editor-source editor-source-html"
             maxLength={maxLength}
             onChange={(event) => onHtmlChange(event.target.value)}

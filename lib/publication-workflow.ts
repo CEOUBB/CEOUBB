@@ -16,8 +16,8 @@ export const EDITOR_MODES = [
   },
   {
     value: "html",
-    label: "Código HTML libre",
-    description: "Para trabajar directamente con marcado académico.",
+    label: "Marcado HTML",
+    description: "Para editar o pegar etiquetas HTML estándar reconocidas por el aula.",
   },
 ] as const;
 
