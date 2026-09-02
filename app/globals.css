@@ -4230,7 +4230,9 @@ div.editor-latex-token {
   font-family: var(--font-mono);
   font-size: 13.5px;
   font-variant-ligatures: none;
-  font-feature-settings: "liga" 0, "calt" 0;
+  font-feature-settings:
+    "liga" 0,
+    "calt" 0;
   line-height: 1.7;
   tab-size: 2;
   white-space: pre;
