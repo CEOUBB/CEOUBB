@@ -1,6 +1,13 @@
-import { firestore, cloudStorage, currentUser, authorFields } from "./sdk.ts";
+import {
+  firestore,
+  cloudStorage,
+  currentUser,
+  authorFields,
+  isDevOrLocalEnvironment,
+} from "./sdk.ts";
 import { syncProfile } from "./profile.ts";
 import {
+  type ClassroomAttachment,
   type ClassroomFile,
   type ClassroomPost,
   type ClassroomPostKind,
@@ -8,6 +15,7 @@ import {
   folderName,
   iso,
   postKind,
+  toAttachments,
   toFile,
   toGradebookState,
   toPost,
@@ -24,7 +32,89 @@ import {
 import { normalizeRichTextBody, safeLinkDestination } from "../rich-text.ts";
 import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 
+import { roleForEmail } from "../access-policy.ts";
+
 const ACTIVITY_LIMIT = 120;
+
+const DEV_POSTS_PREFIX = "ceoubb_dev_posts:";
+const DEV_POSTS_EVENT = "ceoubb_dev_posts_change";
+
+function devStorageKey(courseId: string): string {
+  return `${DEV_POSTS_PREFIX}${courseId}`;
+}
+
+export function readDevPosts(courseId: string): ClassroomPost[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(devStorageKey(courseId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveDevPost(courseId: string, post: ClassroomPost): void {
+  if (typeof window === "undefined") return;
+  try {
+    const current = readDevPosts(courseId);
+    const updated = [post, ...current.filter((p) => p.id !== post.id)];
+    window.localStorage.setItem(devStorageKey(courseId), JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent(DEV_POSTS_EVENT, { detail: { courseId } }));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function updateDevPost(
+  courseId: string,
+  postId: string,
+  updater: (p: ClassroomPost) => ClassroomPost
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const current = readDevPosts(courseId);
+    const updated = current.map((p) => (p.id === postId ? updater(p) : p));
+    window.localStorage.setItem(devStorageKey(courseId), JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent(DEV_POSTS_EVENT, { detail: { courseId } }));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function deleteDevPost(courseId: string, postId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const current = readDevPosts(courseId);
+    const updated = current.filter((p) => p.id !== postId);
+    window.localStorage.setItem(devStorageKey(courseId), JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent(DEV_POSTS_EVENT, { detail: { courseId } }));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function onDevPostsChanged(courseId: string, callback: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const handler = (event: Event) => {
+    const custom = event as CustomEvent<{ courseId: string }>;
+    if (!custom.detail || custom.detail.courseId === courseId) {
+      callback();
+    }
+  };
+  const storageHandler = (event: StorageEvent) => {
+    if (!event.key || event.key === devStorageKey(courseId)) {
+      callback();
+    }
+  };
+  window.addEventListener(DEV_POSTS_EVENT, handler);
+  window.addEventListener("storage", storageHandler);
+  return () => {
+    window.removeEventListener(DEV_POSTS_EVENT, handler);
+    window.removeEventListener("storage", storageHandler);
+  };
+}
 
 /*
   Techo por sección: 20 publicaciones bastan para el ribbon de novedades y
@@ -74,6 +164,19 @@ export function watchClassroom(
   let active = true;
   const stops: (() => void)[] = [];
 
+  const syncDevPosts = () => {
+    if (!active) return;
+    const devPosts = readDevPosts(courseId);
+    if (devPosts.length > 0) {
+      onChange({ posts: devPosts });
+    }
+  };
+
+  if (isDevOrLocalEnvironment()) {
+    syncDevPosts();
+    stops.push(onDevPostsChanged(courseId, syncDevPosts));
+  }
+
   firestore()
     .then(async ({ sdk, db }) => {
       const user = await syncProfile();
@@ -94,9 +197,22 @@ export function watchClassroom(
                 files.push(toFile(post, document.data()));
               }
             }
-            onChange({ posts, files });
+            if (isDevOrLocalEnvironment()) {
+              const devPosts = readDevPosts(courseId);
+              const merged = [...devPosts];
+              for (const p of posts) {
+                if (!merged.some((m) => m.id === p.id)) merged.push(p);
+              }
+              onChange({ posts: merged.length > 0 ? merged : posts, files });
+            } else {
+              onChange({ posts, files });
+            }
           },
-          () => onError("No se pudieron sincronizar las publicaciones de Firebase.")
+          () => {
+            if (!isDevOrLocalEnvironment()) {
+              onError("No se pudieron sincronizar las publicaciones de Firebase.");
+            }
+          }
         )
       );
       stops.push(
@@ -184,8 +300,13 @@ export function watchClassroom(
         );
       }
     })
-    .catch((cause) =>
-      onError(cause instanceof Error ? cause.message : "No se pudo conectar Firebase.")
+    /*
+      El mensaje crudo del SDK llega en inglés y en jerga de reglas
+      («Missing or insufficient permissions»). Al aula sólo debe salir una
+      frase en español que diga qué pasó y qué hacer.
+    */
+    .catch(() =>
+      onError("No se pudo cargar el contenido del ramo. Revisa tu conexión y vuelve a intentarlo.")
     );
 
   return () => {
@@ -252,6 +373,34 @@ export function watchCourseActivity(
   const sections = watchableSections(enrolledSectionIds);
   const bySection = new Map<string, CourseActivity[]>();
 
+  const syncDevActivities = () => {
+    if (!active || typeof window === "undefined") return;
+    for (const courseId of sections) {
+      const devPosts = readDevPosts(courseId);
+      if (devPosts.length > 0) {
+        bySection.set(
+          courseId,
+          devPosts.map((post) => ({
+            id: post.id,
+            courseId,
+            title: post.title,
+            kind: post.kind,
+            dueDate: post.dueDate,
+            createdAt: post.createdAt,
+          }))
+        );
+      }
+    }
+    onChange(mergeActivity(bySection));
+  };
+
+  if (isDevOrLocalEnvironment()) {
+    syncDevActivities();
+    for (const courseId of sections) {
+      stops.push(onDevPostsChanged(courseId, syncDevActivities));
+    }
+  }
+
   if (sections.length === 0) {
     onChange([]);
     return () => undefined;
@@ -269,25 +418,38 @@ export function watchCourseActivity(
               sdk.limit(ACTIVITY_LIMIT_PER_SECTION)
             ),
             (snapshot) => {
-              bySection.set(
+              const remote = snapshot.docs.map((document) => ({
+                id: document.id,
                 courseId,
-                snapshot.docs.map((document) => ({
-                  id: document.id,
-                  courseId,
-                  title: String(document.data().title ?? "Publicación"),
-                  kind: postKind(String(document.data().kind ?? "notice")),
-                  dueDate: normalizeDueDate(document.data().dueDate),
-                  createdAt: iso(document.data().createdAt),
-                }))
-              );
+                title: String(document.data().title ?? "Publicación"),
+                kind: postKind(String(document.data().kind ?? "notice")),
+                dueDate: normalizeDueDate(document.data().dueDate),
+                createdAt: iso(document.data().createdAt),
+              }));
+              if (isDevOrLocalEnvironment()) {
+                const dev = (bySection.get(courseId) ?? []).filter((item) =>
+                  item.id.startsWith("dev-post-")
+                );
+                bySection.set(courseId, [...dev, ...remote]);
+              } else {
+                bySection.set(courseId, remote);
+              }
               onChange(mergeActivity(bySection));
             },
-            () => onError("No se pudo sincronizar la actividad de los cursos.")
+            () => {
+              if (!isDevOrLocalEnvironment()) {
+                onError("No se pudo sincronizar la actividad de los cursos.");
+              }
+            }
           )
         );
       }
     })
-    .catch(() => onError("No se pudo conectar Firebase."));
+    .catch(() => {
+      if (!isDevOrLocalEnvironment()) {
+        onError("No se pudo conectar Firebase.");
+      }
+    });
 
   return () => {
     active = false;
@@ -305,17 +467,35 @@ export async function publishClassroomPost(
     linkUrl: string;
     dueDate: string;
     notifyStudents: boolean;
+    attachments?: ClassroomAttachment[];
   }
 ) {
-  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   const rawLinkUrl = input.linkUrl.trim();
   const linkUrl = rawLinkUrl ? safeLinkDestination(rawLinkUrl) : "";
   if (rawLinkUrl && (!linkUrl || !/^https?:\/\//i.test(linkUrl))) {
     throw new Error("El enlace debe usar http:// o https://.");
   }
   const body = normalizeRichTextBody(input.body);
-  await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
-    ...authorFields(user),
+  // Implements: REQ-PUB-09
+  const attachments = toAttachments(input.attachments ?? []);
+
+  let user: { uid: string; displayName?: string | null; email?: string | null };
+  try {
+    user = await currentUser();
+  } catch (err) {
+    if (isDevOrLocalEnvironment()) {
+      user = {
+        uid: "dev:teacher-demo",
+        displayName: "Docente Demo",
+        email: "docente.demo@ubiobio.cl",
+      };
+    } else {
+      throw err;
+    }
+  }
+
+  const postFields = {
+    ...authorFields(user as unknown as import("firebase/auth").User),
     courseId,
     title: input.title.trim(),
     body,
@@ -327,9 +507,39 @@ export async function publishClassroomPost(
     storagePath: "",
     contentType: "",
     fileSize: 0,
+    attachments,
     notifyStudents: input.notifyStudents,
-    createdAt: sdk.serverTimestamp(),
-  });
+  };
+
+  try {
+    const { sdk, db } = await firestore();
+    await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
+      ...postFields,
+      createdAt: sdk.serverTimestamp(),
+    });
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      const devPost: ClassroomPost = {
+        id: `dev-post-${Date.now()}`,
+        authorId: user?.uid ?? "dev:teacher-demo",
+        authorName: user?.displayName ?? "Docente Demo",
+        authorEmail: (user?.email ?? "docente.demo@ubiobio.cl").toLowerCase(),
+        authorRole: roleForEmail(user?.email ?? "docente.demo@ubiobio.cl") ?? "teacher",
+        title: postFields.title,
+        body: postFields.body,
+        kind: postFields.kind,
+        folder: postFields.folder,
+        dueDate: postFields.dueDate,
+        linkUrl: postFields.fileUrl || null,
+        storagePath: "",
+        attachments: postFields.attachments,
+        createdAt: new Date().toISOString(),
+      };
+      saveDevPost(courseId, devPost);
+      return;
+    }
+    throw cause;
+  }
 }
 
 export async function editClassroomPost(
@@ -337,25 +547,77 @@ export async function editClassroomPost(
   id: string,
   values: { title: string; body: string }
 ) {
-  const { sdk, db } = await firestore();
-  await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
-    title: values.title.trim(),
-    body: normalizeRichTextBody(values.body),
-  });
+  if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
+    updateDevPost(courseId, id, (p) => ({
+      ...p,
+      title: values.title.trim(),
+      body: normalizeRichTextBody(values.body),
+    }));
+    return;
+  }
+  try {
+    const { sdk, db } = await firestore();
+    await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
+      title: values.title.trim(),
+      body: normalizeRichTextBody(values.body),
+    });
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      updateDevPost(courseId, id, (p) => ({
+        ...p,
+        title: values.title.trim(),
+        body: normalizeRichTextBody(values.body),
+      }));
+      return;
+    }
+    throw cause;
+  }
 }
 
 export async function moveClassroomPost(courseId: string, id: string, folder: string) {
-  const { sdk, db } = await firestore();
-  await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
-    folder: folderName(folder),
-  });
+  if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
+    updateDevPost(courseId, id, (p) => ({
+      ...p,
+      folder: folderName(folder),
+    }));
+    return;
+  }
+  try {
+    const { sdk, db } = await firestore();
+    await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
+      folder: folderName(folder),
+    });
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      updateDevPost(courseId, id, (p) => ({
+        ...p,
+        folder: folderName(folder),
+      }));
+      return;
+    }
+    throw cause;
+  }
 }
 
 export async function deleteClassroomPost(courseId: string, id: string, storagePath = "") {
-  if (storagePath) {
-    const cloud = await cloudStorage();
-    await cloud.sdk.deleteObject(cloud.sdk.ref(cloud.storage, storagePath)).catch(() => undefined);
+  if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
+    deleteDevPost(courseId, id);
+    return;
   }
-  const { sdk, db } = await firestore();
-  await sdk.deleteDoc(sdk.doc(db, "courses", courseId, "posts", id));
+  try {
+    if (storagePath) {
+      const cloud = await cloudStorage();
+      await cloud.sdk
+        .deleteObject(cloud.sdk.ref(cloud.storage, storagePath))
+        .catch(() => undefined);
+    }
+    const { sdk, db } = await firestore();
+    await sdk.deleteDoc(sdk.doc(db, "courses", courseId, "posts", id));
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      deleteDevPost(courseId, id);
+      return;
+    }
+    throw cause;
+  }
 }

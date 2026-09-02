@@ -9,6 +9,7 @@ export function RichPostEditor({
   label = "Mensaje",
   name,
   onChange,
+  onEditorModeChange,
   required = false,
   value,
 }: {
@@ -16,6 +17,7 @@ export function RichPostEditor({
   label?: string;
   name: string;
   onChange: (value: string) => void;
+  onEditorModeChange?: (mode: EditorMode) => void;
   required?: boolean;
   value: string;
 }) {
@@ -26,6 +28,7 @@ export function RichPostEditor({
       maxLength={RICH_TEXT_MAX_LENGTH}
       name={name}
       onChange={onChange}
+      onModeChange={onEditorModeChange}
       required={required}
       value={value}
     />

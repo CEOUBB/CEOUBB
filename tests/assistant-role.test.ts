@@ -106,8 +106,8 @@ test("the classroom UI separates content controls from teacher data listeners", 
     new URL("../app/views/classroom/ClassroomView.tsx", import.meta.url),
     "utf8"
   );
-  const materials = await readFile(
-    new URL("../app/views/classroom/MaterialsSection.tsx", import.meta.url),
+  const posts = await readFile(
+    new URL("../app/views/classroom/PostsSection.tsx", import.meta.url),
     "utf8"
   );
 
@@ -116,6 +116,8 @@ test("the classroom UI separates content controls from teacher data listeners", 
   assert.match(handler, /canTeachSection/);
   assert.match(view, /canManageContent=\{canManageContent\}/);
   assert.match(view, /canTeach=\{canTeach\}/);
-  assert.match(materials, /canManageContent/);
+  assert.match(posts, /canManageContent/);
+  /* La acción de publicar sólo se dibuja para quien administra contenido. */
+  assert.match(view, /\{canManageContent && \(\s*<>/);
   assert.match(view, /sectionRole=\{sectionRole\}/);
 });

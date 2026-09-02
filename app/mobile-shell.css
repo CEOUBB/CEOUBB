@@ -818,16 +818,6 @@
   font-size: 15px;
 }
 
-/* El panel docente pierde su geometría de columna dentro de la hoja. */
-.sheet-tools {
-  position: static;
-  width: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-}
-
 .sheet-facts {
   display: flex;
   flex-direction: column;

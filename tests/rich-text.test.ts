@@ -15,7 +15,14 @@ import {
 } from "../lib/rich-text.ts";
 
 function inlineText(nodes: RichInline[]): string {
-  return nodes.map((node) => ("value" in node ? node.value : inlineText(node.content))).join("");
+  return nodes
+    .map((node) => {
+      if ("value" in node) return node.value;
+      if ("content" in node) return inlineText(node.content);
+      if ("identifier" in node) return `[${node.identifier}]`;
+      return "";
+    })
+    .join("");
 }
 
 test("plain-text legacy posts preserve content and line breaks", () => {
@@ -64,7 +71,15 @@ test("fenced code normalizes and highlights every required language", () => {
     ["matlab", "for i = 1:10\n% suma", "matlab"],
     ["python", "for item in values:\n    print(item)", "python"],
     ["c++", "int main() { return 0; }", "cpp"],
+    ["c", "int add(int a, int b) { return a + b; }", "c"],
+    ["java", "public class Main { public static void main(String[] args) {} }", "java"],
     ["sql", "SELECT id FROM alumnos WHERE activo = 1;", "sql"],
+    ["html", '<div class="alert"><p>Texto</p></div>', "html"],
+    ["javascript", "const total = items.reduce((a, b) => a + b, 0);", "javascript"],
+    ["typescript", 'interface User { id: string; role: "student" | "teacher"; }', "typescript"],
+    ["css", ".container { display: flex; color: #0f172a; }", "css"],
+    ["json", '{\n  "version": 1,\n  "active": true\n}', "json"],
+    ["bash", "#!/bin/bash\necho $HOME", "bash"],
   ] as const;
 
   for (const [label, source, expected] of cases) {
@@ -80,6 +95,9 @@ test("fenced code normalizes and highlights every required language", () => {
 
   assert.equal(normalizeCodeLanguage("cpp linenums"), "cpp");
   assert.equal(normalizeCodeLanguage("desconocido"), "plain");
+  assert.equal(normalizeCodeLanguage("html"), "html");
+  assert.equal(normalizeCodeLanguage("ts"), "typescript");
+  assert.equal(normalizeCodeLanguage("sh"), "bash");
 });
 
 test("hostile HTML stays inert and unsafe link destinations are removed", () => {
@@ -109,12 +127,12 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
     path.join(process.cwd(), "app/views/classroom/PostsSection.tsx"),
     "utf8"
   );
-  const materialsSource = fs.readFileSync(
-    path.join(process.cwd(), "app/views/classroom/MaterialsSection.tsx"),
+  const classroomSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/ClassroomView.tsx"),
     "utf8"
   );
-  const publicationComposerSource = fs.readFileSync(
-    path.join(process.cwd(), "app/views/classroom/PublicationComposerDialog.tsx"),
+  const publishStudioSource = fs.readFileSync(
+    path.join(process.cwd(), "app/views/classroom/PublishView.tsx"),
     "utf8"
   );
   const capacitorSource = fs.readFileSync(path.join(process.cwd(), "capacitor.config.ts"), "utf8");
@@ -130,8 +148,8 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   assert.match(postsSource, /href=\{safePostLink\}/);
   assert.doesNotMatch(postsSource, /href=\{post\.linkUrl\}/);
   assert.match(postsSource, /<RichText body=\{post\.body\}/);
-  assert.match(materialsSource, /<PublicationLauncher/);
-  assert.match(publicationComposerSource, /<RichPostEditor[\s\S]*?name="body"/);
+  assert.match(classroomSource, /<PublishView/);
+  assert.match(publishStudioSource, /<RichPostEditor[\s\S]*?name="body"/);
   assert.match(capacitorSource, /https:\/\/ceoubb\.com/);
 });
 
@@ -200,4 +218,40 @@ test("new editor limit and traceability contract stay explicit", () => {
       requirement.startsWith("Implements: REQ-CEO61-")
     )
   );
+});
+
+test("parseRichText reconoce etiquetas semánticas y Markdown (del, mark, sub, sup, strikethrough)", () => {
+  const source =
+    "Texto ~~tachado~~ y <del>borrado</del> con <mark>resaltado</mark>, H<sub>2</sub>O y x<sup>2</sup>.";
+  const blocks = parseRichText(source);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, "paragraph");
+  if (blocks[0].type !== "paragraph") return;
+
+  const types = blocks[0].content.map((n) => n.type);
+  assert.ok(types.includes("strikethrough"), "Debe reconocer tachado");
+  assert.ok(types.includes("mark"), "Debe reconocer resaltado");
+  assert.ok(types.includes("subscript"), "Debe reconocer subíndice");
+  assert.ok(types.includes("superscript"), "Debe reconocer superíndice");
+});
+
+test("parseRichText reconoce listas de verificación y notas al pie", () => {
+  const source =
+    "- [ ] Tarea pendiente\n- [x] Tarea completada\n\nTexto con nota[^1].\n\n[^1]: Detalle de la nota.";
+  const blocks = parseRichText(source);
+  assert.equal(blocks.length, 3);
+  assert.equal(blocks[0].type, "checklist");
+  if (blocks[0].type === "checklist") {
+    assert.equal(blocks[0].items.length, 2);
+    assert.equal(blocks[0].items[0].checked, false);
+    assert.equal(blocks[0].items[1].checked, true);
+  }
+  assert.equal(blocks[1].type, "paragraph");
+  if (blocks[1].type === "paragraph") {
+    assert.ok(blocks[1].content.some((n) => n.type === "footnoteRef" && n.identifier === "1"));
+  }
+  assert.equal(blocks[2].type, "footnoteDef");
+  if (blocks[2].type === "footnoteDef") {
+    assert.equal(blocks[2].identifier, "1");
+  }
 });

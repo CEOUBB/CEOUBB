@@ -3,6 +3,7 @@ export type {
   ClassroomPost,
   ClassroomFile,
   ClassroomStudent,
+  ClassroomAttachment,
 } from "./firebase/mappers.ts";
 
 export {
@@ -15,6 +16,8 @@ export {
   postKind,
   folderName,
   iso,
+  toAttachments,
+  MAX_POST_ATTACHMENTS,
 } from "./firebase/mappers.ts";
 
 export {
@@ -48,6 +51,7 @@ export type { StudentSubmission } from "./firebase/storage.ts";
 
 export {
   uploadClassroomFile,
+  uploadPostAttachment,
   renameClassroomFile,
   uploadStudentSubmission,
   watchOwnSubmissions,
