@@ -357,6 +357,75 @@ test("el componente expone la pestaña como Marcado HTML con descripción honest
   assert.match(compSource, /aria-label=\{`\$\{label\}: marcado HTML`\}/);
 });
 
+test("la barra visual y editor soportan las 11 nuevas funciones requeridas", () => {
+  const s = source();
+  const requiredTools = [
+    "Tachado",
+    "Resaltado",
+    "Superíndice",
+    "Subíndice",
+    "Código en línea",
+    "Limpiar formato",
+    "Justificar",
+    "Aumentar sangría",
+    "Reducir sangría",
+    "Lista de verificación",
+    "Deshacer",
+    "Rehacer",
+    "Buscar y reemplazar",
+    "Nota al pie",
+  ];
+  for (const label of requiredTools) {
+    assert.ok(s.includes(label), `Falta la herramienta ${label}`);
+  }
+  assert.match(s, /<FindReplaceBar/);
+  assert.match(s, /strikeThrough/);
+  assert.match(s, /checklist/);
+  assert.match(s, /footnote/);
+});
+
+test("las listas de verificación y notas al pie se convierten fielmente entre Markdown y HTML", () => {
+  const checkMd = "- [ ] Pendiente\n- [x] Hecho";
+  const checkHtml = markdownToEditorHtml(checkMd);
+  assert.match(checkHtml, /data-checklist="true"/);
+  assert.match(checkHtml, /type="checkbox"/);
+  assert.equal(htmlToAcademicMarkdown(checkHtml), checkMd);
+
+  const fnMd = "Afirmación[^1]\n\n[^1]: Referencia bibliográfica";
+  const fnHtml = markdownToEditorHtml(fnMd);
+  assert.match(fnHtml, /data-footnote="1"/);
+  assert.equal(htmlToAcademicMarkdown(fnHtml), fnMd);
+});
+
+test("las citas anidadas (blockquote) se convierten a markdown multinivel sin fugar HTML crudo", () => {
+  const nestedHtml = "<blockquote><blockquote>test</blockquote></blockquote>";
+  const md = htmlToAcademicMarkdown(nestedHtml);
+  assert.match(md, /> > test/);
+  assert.doesNotMatch(md, /<blockquote/);
+});
+
+test("la sangría de párrafo o de Chromium no genera marcadores de cita >", () => {
+  const indentedP = '<p style="margin-left: 32px;">sas</p>';
+  const mdP = htmlToAcademicMarkdown(indentedP);
+  assert.doesNotMatch(mdP, /(?:^|\n)\s*>/);
+  assert.match(mdP, /margin-left:\s*32px/);
+
+  const chromiumIndent =
+    '<blockquote style="margin: 0 0 0 40px; border: none; padding: 0px;"><p>sas</p></blockquote>';
+  const mdChromium = htmlToAcademicMarkdown(chromiumIndent);
+  assert.doesNotMatch(mdChromium, /(?:^|\n)\s*>/);
+  assert.match(mdChromium, /margin-left:\s*40px/);
+});
+
+test("los bloques alineados con fórmulas matemáticas y spans se convierten limpiamente sin fugar HTML crudo", () => {
+  const html =
+    '<div style="text-align: center;"><span style="text-wrap-mode: initial;">Explica con fórmula </span><span data-latex="inline">\\sum F_x = 0</span> cuando ayuden.</div>';
+  const md = htmlToAcademicMarkdown(html);
+  assert.match(md, /<p style="text-align: center">Explica con fórmula \$\\sum F_x = 0\$ cuando ayuden\.<\/p>/);
+  assert.doesNotMatch(md, /text-wrap-mode/);
+  assert.doesNotMatch(md, /data-latex/);
+});
+
 function source() {
   return fs.readFileSync(
     path.join(process.cwd(), "app/views/classroom/MultimodalEditor.tsx"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import Script from "next/script";
 import "../../../public/biblioteca/assets/vendor/katex/katex.min.css";
 import {
@@ -129,6 +129,15 @@ function renderInline(nodes: RichInline[]): ReactNode[] {
     if (node.type === "mark") return <mark key={key}>{renderInline(node.content)}</mark>;
     if (node.type === "subscript") return <sub key={key}>{renderInline(node.content)}</sub>;
     if (node.type === "superscript") return <sup key={key}>{renderInline(node.content)}</sup>;
+    if (node.type === "footnoteRef") {
+      return (
+        <sup className="rich-footnote-ref" key={key}>
+          <a href={`#fn-${node.identifier}`} id={`fnref-${node.identifier}`}>
+            [{node.identifier}]
+          </a>
+        </sup>
+      );
+    }
     if (!node.href) return <span key={key}>{renderInline(node.content)}</span>;
     return (
       <a href={node.href} key={key} rel="noopener noreferrer" target="_blank">
@@ -228,18 +237,26 @@ export function RichText({ body, className = "" }: { body: string; className?: s
           }
         }
         if (block.type === "paragraph") {
+          const style: CSSProperties = {
+            ...(block.align ? { textAlign: block.align } : {}),
+            ...(block.indent ? { paddingLeft: `${block.indent * 2}rem` } : {}),
+          };
           return (
-            <p key={key} style={block.align ? { textAlign: block.align } : undefined}>
+            <p key={key} style={Object.keys(style).length > 0 ? style : undefined}>
               {renderInline(block.content)}
             </p>
           );
         }
         if (block.type === "heading") {
+          const style: CSSProperties = {
+            ...(block.align ? { textAlign: block.align } : {}),
+            ...(block.indent ? { paddingLeft: `${block.indent * 2}rem` } : {}),
+          };
           return (
             <h4
               aria-level={Math.min(block.level + 3, 6)}
               className={`rich-heading rich-heading-${block.level}`}
-              style={block.align ? { textAlign: block.align } : undefined}
+              style={Object.keys(style).length > 0 ? style : undefined}
               key={key}
             >
               {renderInline(block.content)}
@@ -262,6 +279,43 @@ export function RichText({ body, className = "" }: { body: string; className?: s
           return <CodeBlock key={key} language={block.language} value={block.value} />;
         if (block.type === "math") return <MathFormula display key={key} value={block.value} />;
         if (block.type === "table") return <RichTable key={key} {...block} />;
+        if (block.type === "checklist") {
+          return (
+            <ul className="rich-checklist" key={key}>
+              {keyedItems(block.items, "check-item").map(({ item, key: itemKey }) => (
+                <li
+                  className={`rich-checklist-item ${item.checked ? "is-checked" : ""}`}
+                  key={itemKey}
+                >
+                  <input
+                    aria-label={item.checked ? "Completado" : "Pendiente"}
+                    checked={item.checked}
+                    className="rich-checkbox"
+                    disabled
+                    readOnly
+                    type="checkbox"
+                  />
+                  <span className="rich-checklist-text">{renderInline(item.content)}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (block.type === "footnoteDef") {
+          return (
+            <div className="rich-footnote-item" id={`fn-${block.identifier}`} key={key}>
+              <small className="num">[{block.identifier}]</small>
+              <span className="rich-footnote-text">{renderInline(block.content)}</span>
+              <a
+                aria-label={`Volver a la referencia ${block.identifier}`}
+                className="rich-footnote-backlink"
+                href={`#fnref-${block.identifier}`}
+              >
+                ↩
+              </a>
+            </div>
+          );
+        }
         const List = block.ordered ? "ol" : "ul";
         return (
           <List key={key}>

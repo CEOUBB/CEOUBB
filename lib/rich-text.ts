@@ -62,6 +62,7 @@ export type RichInline =
   | { type: "mark"; content: RichInline[] }
   | { type: "subscript"; content: RichInline[] }
   | { type: "superscript"; content: RichInline[] }
+  | { type: "footnoteRef"; identifier: string }
   | { type: "link"; href: string | null; content: RichInline[] };
 
 export type TableAlignment = "left" | "center" | "right" | null;
@@ -74,11 +75,29 @@ export type RichTableBlock = {
   rows: RichInline[][][];
 };
 
+export type RichChecklistItem = {
+  checked: boolean;
+  content: RichInline[];
+};
+
+export type RichChecklistBlock = {
+  type: "checklist";
+  items: RichChecklistItem[];
+};
+
+export type RichFootnoteDefBlock = {
+  type: "footnoteDef";
+  identifier: string;
+  content: RichInline[];
+};
+
 export type RichBlock =
-  | { type: "paragraph"; content: RichInline[]; align?: TextAlignment }
+  | { type: "paragraph"; content: RichInline[]; align?: TextAlignment; indent?: number }
   | { type: "quote"; content: RichInline[] }
-  | { type: "heading"; level: number; content: RichInline[]; align?: TextAlignment }
+  | { type: "heading"; level: number; content: RichInline[]; align?: TextAlignment; indent?: number }
   | { type: "list"; ordered: boolean; items: RichInline[][] }
+  | RichChecklistBlock
+  | RichFootnoteDefBlock
   | { type: "code"; language: CodeLanguage; value: string }
   | { type: "math"; display: true; value: string }
   | { type: "divider" }
@@ -95,7 +114,10 @@ export function isDividerLine(value: string) {
 
 export function inlineToPlainText(nodes: RichInline[]): string {
   return nodes
-    .map((node) => ("value" in node ? node.value : inlineToPlainText(node.content)))
+    .map((node) => {
+      if (node.type === "footnoteRef") return `[${node.identifier}]`;
+      return "value" in node ? node.value : inlineToPlainText(node.content);
+    })
     .join("");
 }
 
@@ -425,6 +447,17 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
     }
 
     if (value.startsWith("<sup", cursor)) {
+      const supFootnote = /^<sup\b(?=[^>]*data-footnote=["']([^"']*)["'])[^>]*>([\s\S]*?)<\/sup\s*>/i.exec(
+        value.slice(cursor)
+      );
+      if (supFootnote) {
+        nodes.push({
+          type: "footnoteRef",
+          identifier: supFootnote[1],
+        });
+        cursor += supFootnote[0].length;
+        continue;
+      }
       const sup = /^<sup\b[^>]*>([\s\S]*?)<\/sup\s*>/i.exec(value.slice(cursor));
       if (sup) {
         nodes.push({
@@ -432,6 +465,18 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
           content: parseRichInline(sup[1], depth + 1),
         });
         cursor += sup[0].length;
+        continue;
+      }
+    }
+
+    if (value.startsWith("[^", cursor)) {
+      const fnRef = /^\[\^([\w-]+)\](?!:)/.exec(value.slice(cursor));
+      if (fnRef) {
+        nodes.push({
+          type: "footnoteRef",
+          identifier: fnRef[1],
+        });
+        cursor += fnRef[0].length;
         continue;
       }
     }
@@ -543,7 +588,7 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
 function isAlignedTag(line: string) {
   const trimmed = line.trim();
   if (/^<center\b/i.test(trimmed)) return true;
-  return /^<(?:p|div|h[1-6])\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify|left)|text-align\s*:\s*(?:center|right|justify|left)))/i.test(
+  return /^<(?:p|div|h[1-6])\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify|left)|text-align\s*:\s*(?:center|right|justify|left)|margin-left\s*:|padding-left\s*:))/i.test(
     trimmed
   );
 }
@@ -558,7 +603,8 @@ function startsBlock(line: string) {
     isDividerLine(trimmed) ||
     trimmed === "$$" ||
     trimmed === "\\[" ||
-    isAlignedTag(trimmed)
+    isAlignedTag(trimmed) ||
+    /^\[\^([\w-]+)\]:\s*/.test(trimmed)
   );
 }
 
@@ -659,7 +705,18 @@ function parseAlignedBlock(
     else if (alignMatch) alignment = alignMatch[1].toLowerCase() as TextAlignment;
   }
 
-  if (!alignment) return null;
+  let indent: number | undefined = undefined;
+  const marginMatch = attributes.match(/(?:margin-left|padding-left)\s*:\s*(\d+)(px|rem|em)?/i);
+  if (marginMatch) {
+    const val = parseInt(marginMatch[1], 10);
+    const unit = (marginMatch[2] || "px").toLowerCase();
+    indent =
+      unit.includes("rem") || unit.includes("em")
+        ? Math.max(1, Math.min(5, val))
+        : Math.max(1, Math.min(5, Math.round(val / 32)));
+  }
+
+  if (!alignment && !indent) return null;
 
   const closePattern = new RegExp(`</${tag}\\s*>`, "i");
   const closeMatch = restOfLine.match(closePattern);
@@ -674,8 +731,19 @@ function parseAlignedBlock(
       .trim();
     const content = parseRichInline(cleaned);
     const block: RichBlock = tag.startsWith("h")
-      ? { type: "heading", level: parseInt(tag[1], 10) || 1, align: alignment, content }
-      : { type: "paragraph", align: alignment, content };
+      ? {
+          type: "heading",
+          level: parseInt(tag[1], 10) || 1,
+          ...(alignment ? { align: alignment } : {}),
+          ...(indent ? { indent } : {}),
+          content,
+        }
+      : {
+          type: "paragraph",
+          ...(alignment ? { align: alignment } : {}),
+          ...(indent ? { indent } : {}),
+          content,
+        };
     return { block, nextCursor: cursor + 1 };
   }
 
@@ -702,8 +770,19 @@ function parseAlignedBlock(
     .trim();
   const content = parseRichInline(inner);
   const block: RichBlock = tag.startsWith("h")
-    ? { type: "heading", level: parseInt(tag[1], 10) || 1, align: alignment, content }
-    : { type: "paragraph", align: alignment, content };
+    ? {
+        type: "heading",
+        level: parseInt(tag[1], 10) || 1,
+        ...(alignment ? { align: alignment } : {}),
+        ...(indent ? { indent } : {}),
+        content,
+      }
+    : {
+        type: "paragraph",
+        ...(alignment ? { align: alignment } : {}),
+        ...(indent ? { indent } : {}),
+        content,
+      };
   return { block, nextCursor: next };
 }
 
@@ -798,10 +877,41 @@ export function parseRichText(value: string): RichBlock[] {
     if (/^>\s?/.test(trimmed)) {
       const quote: string[] = [];
       while (cursor < lines.length && /^>\s?/.test(lines[cursor].trim())) {
-        quote.push(lines[cursor].trim().replace(/^>\s?/, ""));
+        quote.push(lines[cursor].trim().replace(/^(?:>\s*)+/, ""));
         cursor += 1;
       }
       blocks.push({ type: "quote", content: parseRichInline(quote.join("\n")) });
+      continue;
+    }
+
+    const footnoteDef = trimmed.match(/^\[\^([\w-]+)\]:\s*(.*)$/);
+    if (footnoteDef) {
+      const identifier = footnoteDef[1];
+      const contentLines = [footnoteDef[2]];
+      cursor += 1;
+      while (cursor < lines.length && /^(?: {2,4}|\t)/.test(lines[cursor])) {
+        contentLines.push(lines[cursor].trim());
+        cursor += 1;
+      }
+      blocks.push({
+        type: "footnoteDef",
+        identifier,
+        content: parseRichInline(contentLines.join(" ")),
+      });
+      continue;
+    }
+
+    const checklistMatch = trimmed.match(/^[-+*]\s+\[([ xX])\]\s*(.*)$/);
+    if (checklistMatch) {
+      const items: RichChecklistItem[] = [];
+      while (cursor < lines.length) {
+        const match = lines[cursor].trim().match(/^[-+*]\s+\[([ xX])\]\s*(.*)$/);
+        if (!match) break;
+        const checked = match[1].toLowerCase() === "x";
+        items.push({ checked, content: parseRichInline(match[2]) });
+        cursor += 1;
+      }
+      blocks.push({ type: "checklist", items });
       continue;
     }
 

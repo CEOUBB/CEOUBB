@@ -30,6 +30,7 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { action: "heading3", label: "Apartado", hint: "Encabezado de nivel 3" },
   { action: "insertUnorderedList", label: "Lista con viñetas", hint: "Enumera sin orden" },
   { action: "insertOrderedList", label: "Lista numerada", hint: "Pasos en orden" },
+  { action: "checklist", label: "Lista de tareas", hint: "Lista de verificación con casillas" },
   { action: "quote", label: "Cita", hint: "Texto citado de una fuente" },
   { action: "callout", label: "Nota destacada", hint: "Aviso que no se debe pasar por alto" },
   { action: "warning", label: "Aviso", hint: "Fecha, sala o condición del certamen" },
@@ -37,6 +38,7 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
   { action: "table", label: "Tabla", hint: "Pauta, ponderaciones o datos" },
   { action: "formula", label: "Fórmula LaTeX", hint: "Expresión matemática" },
   { action: "code", label: "Bloque de código", hint: "MATLAB, Python, C++ o SQL" },
+  { action: "footnote", label: "Nota al pie", hint: "Referencia o aclaración al pie" },
   { action: "link", label: "Enlace", hint: "Drive, video o recurso externo" },
 ];
 
@@ -89,7 +91,8 @@ const blockHtmlPattern =
   /<(script|style|iframe|svg|form|section|details|summary|figure|header|footer|nav|main|article)\b[\s\S]*?(?:<\/\1\s*>|\/?>)|<\/?(?:script|style|iframe|svg|form|section|details|summary|figure|header|footer|nav|main|article)\b[^>]*\/?>|<img\b[^>]*\/?>/gi;
 const alignedHtmlPattern =
   /<(p|div)\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify)|text-align\s*:\s*(?:center|right|justify)))[^>]*>[\s\S]*?<\/\1\s*>/gi;
-const inlineHtmlPattern = /<(u|sub|sup|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const inlineHtmlPattern =
+  /<(u|sub|mark|kbd)\b[^>]*>[\s\S]*?<\/\1\s*>|<sup\b(?![^>]*data-footnote)[^>]*>[\s\S]*?<\/sup\s*>/gi;
 
 function escapeHtml(value: string) {
   return value
@@ -158,6 +161,8 @@ function renderInline(nodes: RichInline[]): string {
       if (node.type === "mark") return `<mark>${renderInline(node.content)}</mark>`;
       if (node.type === "subscript") return `<sub>${renderInline(node.content)}</sub>`;
       if (node.type === "superscript") return `<sup>${renderInline(node.content)}</sup>`;
+      if (node.type === "footnoteRef")
+        return `<sup class="editor-footnote-ref" data-footnote="${escapeHtml(node.identifier)}">[${escapeHtml(node.identifier)}]</sup>`;
       const href = node.href ? safeLinkDestination(node.href) : null;
       if (!href) return renderInline(node.content);
       return `<a href="${escapeHtml(href)}">${renderInline(node.content)}</a>`;
@@ -167,12 +172,18 @@ function renderInline(nodes: RichInline[]): string {
 
 function renderBlock(block: RichBlock): string {
   if (block.type === "paragraph") {
-    const alignAttr = block.align ? ` style="text-align: ${block.align};"` : "";
-    return `<p${alignAttr}>${renderInline(block.content)}</p>`;
+    const styles: string[] = [];
+    if (block.align) styles.push(`text-align: ${block.align};`);
+    if (block.indent) styles.push(`margin-left: ${block.indent * 32}px;`);
+    const styleAttr = styles.length > 0 ? ` style="${styles.join(" ")}"` : "";
+    return `<p${styleAttr}>${renderInline(block.content)}</p>`;
   }
   if (block.type === "heading") {
-    const alignAttr = block.align ? ` style="text-align: ${block.align};"` : "";
-    return `<h${block.level}${alignAttr}>${renderInline(block.content)}</h${block.level}>`;
+    const styles: string[] = [];
+    if (block.align) styles.push(`text-align: ${block.align};`);
+    if (block.indent) styles.push(`margin-left: ${block.indent * 32}px;`);
+    const styleAttr = styles.length > 0 ? ` style="${styles.join(" ")}"` : "";
+    return `<h${block.level}${styleAttr}>${renderInline(block.content)}</h${block.level}>`;
   }
   if (block.type === "divider") return "<hr>";
   if (block.type === "quote") {
@@ -206,6 +217,17 @@ function renderBlock(block: RichBlock): string {
       })
       .join("");
     return `<table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  }
+  if (block.type === "checklist") {
+    return `<ul data-checklist="true">${block.items
+      .map(
+        (item) =>
+          `<li data-checked="${item.checked}"><input type="checkbox" disabled${item.checked ? ' checked=""' : ""}> ${renderInline(item.content)}</li>`
+      )
+      .join("")}</ul>`;
+  }
+  if (block.type === "footnoteDef") {
+    return `<div class="editor-footnote-def" data-footnote="${escapeHtml(block.identifier)}"><span class="footnote-id">[${escapeHtml(block.identifier)}]</span> ${renderInline(block.content)}</div>`;
   }
   const tag = block.ordered ? "ol" : "ul";
   return `<${tag}>${block.items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
@@ -280,22 +302,59 @@ function convertTables(value: string) {
 function convertLists(value: string) {
   let converted = value;
   for (let pass = 0; pass < 3; pass += 1) {
-    converted = converted.replace(/<(ul|ol)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, (_, tag, body) => {
-      const items = Array.from(String(body).matchAll(/<li\b[^>]*>([\s\S]*?)<\/li\s*>/gi));
-      if (items.length === 0) return body;
-      return `${items
-        .map((item, index) => {
-          const content = convertHtmlFragment(item[1]).trim().replace(/\n+/g, " ");
-          return tag.toLowerCase() === "ol" ? `${index + 1}. ${content}` : `- ${content}`;
-        })
-        .join("\n")}\n\n`;
-    });
+    converted = converted.replace(
+      /<(ul|ol)\b([^>]*)>([\s\S]*?)<\/\1\s*>/gi,
+      (_, tag, attributes, body) => {
+        const isChecklist = /data-checklist/i.test(attributes);
+        const items = Array.from(String(body).matchAll(/<li\b([^>]*)>([\s\S]*?)<\/li\s*>/gi));
+        if (items.length === 0) return body;
+        return `${items
+          .map((item, index) => {
+            const liAttrs = item[1] || "";
+            const liBody = item[2];
+            const checkboxMatch = /<input\b[^>]*type=["']checkbox["'][^>]*>/i.exec(liBody);
+            const isChecked =
+              /checked/i.test(checkboxMatch ? checkboxMatch[0] : "") ||
+              /data-checked=["']true["']/i.test(liAttrs);
+            const hasCheckbox =
+              isChecklist || Boolean(checkboxMatch) || /data-checked/i.test(liAttrs);
+            const cleanBody = liBody.replace(/<input\b[^>]*type=["']checkbox["'][^>]*\/?>/gi, "");
+            const content = convertHtmlFragment(cleanBody).trim().replace(/\n+/g, " ");
+            if (hasCheckbox) {
+              const mark = isChecked ? "[x]" : "[ ]";
+              return `- ${mark} ${content}`;
+            }
+            return tag.toLowerCase() === "ol" ? `${index + 1}. ${content}` : `- ${content}`;
+          })
+          .join("\n")}\n\n`;
+      }
+    );
   }
   return converted;
 }
 
 function convertHtmlFragment(value: string) {
   let converted = value;
+
+  converted = converted.replace(
+    /<div\b([^>]*)>([\s\S]*?)<\/div\s*>/gi,
+    (whole, attributes, body) => {
+      const footnote = attributeValue(attributes, "data-footnote");
+      if (footnote) {
+        const cleanBody = body.replace(/<span\b[^>]*class=["']footnote-id["'][^>]*>.*?<\/span>/gi, "");
+        return `\n\n[^${footnote}]: ${convertHtmlFragment(cleanBody).trim()}\n\n`;
+      }
+      return whole;
+    }
+  );
+  converted = converted.replace(
+    /<sup\b([^>]*)>([\s\S]*?)<\/sup\s*>/gi,
+    (whole, attributes) => {
+      const footnote = attributeValue(attributes, "data-footnote");
+      if (footnote) return `[^${footnote}]`;
+      return whole;
+    }
+  );
 
   converted = converted.replace(
     /<div\b([^>]*)data-latex\s*=\s*["']display["']([^>]*)>([\s\S]*?)<\/div\s*>/gi,
@@ -333,13 +392,29 @@ function convertHtmlFragment(value: string) {
   converted = converted.replace(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1\s*>/gi, (_, level, body) => {
     return `\n\n${"#".repeat(Number(level))} ${convertHtmlFragment(body).trim()}\n\n`;
   });
-  converted = converted.replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote\s*>/gi, (_, body) => {
-    const content = convertHtmlFragment(body).trim();
-    return `\n\n${content
-      .split("\n")
-      .map((line) => `> ${line}`)
-      .join("\n")}\n\n`;
-  });
+  let previousBlockquote = "";
+  while (converted !== previousBlockquote) {
+    previousBlockquote = converted;
+    converted = converted.replace(
+      /<blockquote\b([^>]*)>((?:(?!<blockquote\b)[\s\S])*?)<\/blockquote\s*>/gi,
+      (_, attributes, body) => {
+        const isIndentBlockquote =
+          /border\s*:\s*none/i.test(attributes) ||
+          /margin\s*:\s*0(?:px)?\s+0(?:px)?\s+0(?:px)?\s+(\d+)px/i.test(attributes);
+        if (isIndentBlockquote) {
+          const match = attributes.match(/margin\s*:\s*0(?:px)?\s+0(?:px)?\s+0(?:px)?\s+(\d+)px/i);
+          const px = match ? match[1] : "32";
+          const content = convertHtmlFragment(body).trim();
+          return `\n\n<p style="margin-left: ${px}px">${content}</p>\n\n`;
+        }
+        const content = convertHtmlFragment(body).trim();
+        return `\n\n${content
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n")}\n\n`;
+      }
+    );
+  }
   converted = converted.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "**$2**");
   converted = converted.replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "*$2*");
   converted = converted.replace(/<(del|s|strike)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, "~~$2~~");
@@ -357,12 +432,28 @@ function convertHtmlFragment(value: string) {
     return href ? `[${label}](${href})` : label;
   });
   converted = converted.replace(/<br\s*\/?>/gi, "\n");
-  converted = converted.replace(/<p\b[^>]*>([\s\S]*?)<\/p\s*>/gi, (_, body) => {
-    return `\n\n${convertHtmlFragment(body).trim()}\n\n`;
-  });
-  converted = converted.replace(/<div\b[^>]*>([\s\S]*?)<\/div\s*>/gi, (_, body) => {
-    return `\n\n${convertHtmlFragment(body).trim()}\n\n`;
-  });
+  converted = converted.replace(
+    /<(p|div)\b([^>]*)>([\s\S]*?)<\/\1\s*>/gi,
+    (_, tag, attributes, body) => {
+      const styleMatch = attributes.match(/text-align\s*:\s*(center|right|justify|left)/i);
+      const alignMatch = attributes.match(/align\s*=\s*["']?(center|right|justify|left)["']?/i);
+      const align = styleMatch
+        ? styleMatch[1].toLowerCase()
+        : alignMatch
+        ? alignMatch[1].toLowerCase()
+        : null;
+      const marginMatch = attributes.match(/(?:margin-left|padding-left)\s*:\s*(\d+(?:px|rem|em))/i);
+      const content = convertHtmlFragment(body).trim();
+      if (!content) return "";
+      const styles: string[] = [];
+      if (align && align !== "left") styles.push(`text-align: ${align}`);
+      if (marginMatch) styles.push(`margin-left: ${marginMatch[1]}`);
+      if (styles.length > 0) {
+        return `\n\n<p style="${styles.join("; ")}">${content}</p>\n\n`;
+      }
+      return `\n\n${content}\n\n`;
+    }
+  );
   converted = converted.replace(/<span\b[^>]*>([\s\S]*?)<\/span\s*>/gi, "$1");
   return converted;
 }
@@ -379,7 +470,6 @@ export function htmlToAcademicMarkdown(value: string): string {
   const tokens: Array<{ token: string; value: string; block: boolean }> = [];
   let protectedHtml = value.replace(/\r\n?/g, "\n");
   protectedHtml = preserveHtml(protectedHtml, blockHtmlPattern, tokens);
-  protectedHtml = preserveHtml(protectedHtml, alignedHtmlPattern, tokens);
   protectedHtml = preserveHtml(protectedHtml, inlineHtmlPattern, tokens, false);
 
   let markdown = decodeOutsideTags(convertHtmlFragment(protectedHtml))

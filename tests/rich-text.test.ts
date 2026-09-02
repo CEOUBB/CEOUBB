@@ -15,7 +15,14 @@ import {
 } from "../lib/rich-text.ts";
 
 function inlineText(nodes: RichInline[]): string {
-  return nodes.map((node) => ("value" in node ? node.value : inlineText(node.content))).join("");
+  return nodes
+    .map((node) => {
+      if ("value" in node) return node.value;
+      if ("content" in node) return inlineText(node.content);
+      if ("identifier" in node) return `[${node.identifier}]`;
+      return "";
+    })
+    .join("");
 }
 
 test("plain-text legacy posts preserve content and line breaks", () => {
@@ -226,4 +233,25 @@ test("parseRichText reconoce etiquetas semánticas y Markdown (del, mark, sub, s
   assert.ok(types.includes("mark"), "Debe reconocer resaltado");
   assert.ok(types.includes("subscript"), "Debe reconocer subíndice");
   assert.ok(types.includes("superscript"), "Debe reconocer superíndice");
+});
+
+test("parseRichText reconoce listas de verificación y notas al pie", () => {
+  const source =
+    "- [ ] Tarea pendiente\n- [x] Tarea completada\n\nTexto con nota[^1].\n\n[^1]: Detalle de la nota.";
+  const blocks = parseRichText(source);
+  assert.equal(blocks.length, 3);
+  assert.equal(blocks[0].type, "checklist");
+  if (blocks[0].type === "checklist") {
+    assert.equal(blocks[0].items.length, 2);
+    assert.equal(blocks[0].items[0].checked, false);
+    assert.equal(blocks[0].items[1].checked, true);
+  }
+  assert.equal(blocks[1].type, "paragraph");
+  if (blocks[1].type === "paragraph") {
+    assert.ok(blocks[1].content.some((n) => n.type === "footnoteRef" && n.identifier === "1"));
+  }
+  assert.equal(blocks[2].type, "footnoteDef");
+  if (blocks[2].type === "footnoteDef") {
+    assert.equal(blocks[2].identifier, "1");
+  }
 });

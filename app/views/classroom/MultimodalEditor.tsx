@@ -1,25 +1,41 @@
 "use client";
 
 import {
+  ArrowUUpLeft,
+  ArrowUUpRight,
+  CaretDown,
+  CaretUp,
+  Code,
   CodeBlock,
+  Eraser,
   Eye,
   EyeSlash,
   Function as FunctionIcon,
+  Highlighter,
   Info,
   LinkSimple,
   ListBullets,
+  ListChecks,
   ListNumbers,
+  MagnifyingGlass,
   Minus,
+  Note,
   Quotes,
   Table,
   TextAlignCenter,
+  TextAlignJustify,
   TextAlignLeft,
   TextAlignRight,
   TextB,
   TextHOne,
   TextHThree,
   TextHTwo,
+  TextIndent,
   TextItalic,
+  TextOutdent,
+  TextStrikethrough,
+  TextSubscript,
+  TextSuperscript,
   TextUnderline,
   Warning,
   X,
@@ -30,6 +46,7 @@ import {
   useDeferredValue,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ClipboardEvent,
@@ -68,14 +85,24 @@ type ToolAction =
   | "bold"
   | "italic"
   | "underline"
+  | "strikeThrough"
+  | "highlight"
+  | "superscript"
+  | "subscript"
+  | "inlineCode"
+  | "removeFormat"
   | "justifyLeft"
   | "justifyCenter"
   | "justifyRight"
+  | "justifyFull"
+  | "indent"
+  | "outdent"
   | "heading1"
   | "heading2"
   | "heading3"
   | "insertUnorderedList"
   | "insertOrderedList"
+  | "checklist"
   | "quote"
   | "divider"
   | "table"
@@ -83,7 +110,11 @@ type ToolAction =
   | "code"
   | "callout"
   | "warning"
-  | "link";
+  | "footnote"
+  | "link"
+  | "undo"
+  | "redo"
+  | "findReplace";
 
 const modeLabels: Record<EditorMode, { label: string; detail: string }> = {
   visual: { label: "Visual", detail: "Edición tipo documento" },
@@ -107,6 +138,48 @@ const visualTools = [
     group: "emphasis",
   },
   {
+    action: "strikeThrough",
+    label: "Tachado",
+    icon: TextStrikethrough,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "highlight",
+    label: "Resaltado",
+    icon: Highlighter,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "superscript",
+    label: "Superíndice",
+    icon: TextSuperscript,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "subscript",
+    label: "Subíndice",
+    icon: TextSubscript,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "inlineCode",
+    label: "Código en línea",
+    icon: Code,
+    pressed: true,
+    group: "emphasis",
+  },
+  {
+    action: "removeFormat",
+    label: "Limpiar formato",
+    icon: Eraser,
+    pressed: false,
+    group: "emphasis",
+  },
+  {
     action: "heading1",
     label: "Título principal",
     icon: TextHOne,
@@ -126,6 +199,13 @@ const visualTools = [
     action: "insertOrderedList",
     label: "Lista numerada",
     icon: ListNumbers,
+    pressed: true,
+    group: "blocks",
+  },
+  {
+    action: "checklist",
+    label: "Lista de verificación",
+    icon: ListChecks,
     pressed: true,
     group: "blocks",
   },
@@ -161,6 +241,7 @@ const visualTools = [
     group: "insert",
   },
   { action: "link", label: "Insertar enlace", icon: LinkSimple, pressed: false, group: "insert" },
+  { action: "footnote", label: "Nota al pie", icon: Note, pressed: false, group: "insert" },
   {
     action: "justifyLeft",
     label: "Alinear a la izquierda",
@@ -181,6 +262,48 @@ const visualTools = [
     icon: TextAlignRight,
     pressed: true,
     group: "align",
+  },
+  {
+    action: "justifyFull",
+    label: "Justificar",
+    icon: TextAlignJustify,
+    pressed: true,
+    group: "align",
+  },
+  {
+    action: "outdent",
+    label: "Reducir sangría",
+    icon: TextOutdent,
+    pressed: false,
+    group: "align",
+  },
+  {
+    action: "indent",
+    label: "Aumentar sangría",
+    icon: TextIndent,
+    pressed: false,
+    group: "align",
+  },
+  {
+    action: "undo",
+    label: "Deshacer",
+    icon: ArrowUUpLeft,
+    pressed: false,
+    group: "history",
+  },
+  {
+    action: "redo",
+    label: "Rehacer",
+    icon: ArrowUUpRight,
+    pressed: false,
+    group: "history",
+  },
+  {
+    action: "findReplace",
+    label: "Buscar y reemplazar",
+    icon: MagnifyingGlass,
+    pressed: false,
+    group: "history",
   },
 ] as const;
 
@@ -204,6 +327,7 @@ const allowedVisualTags = new Set([
   "blockquote",
   "br",
   "code",
+  "del",
   "div",
   "em",
   "h1",
@@ -214,12 +338,15 @@ const allowedVisualTags = new Set([
   "h6",
   "hr",
   "img",
+  "input",
   "li",
   "mark",
   "ol",
   "p",
   "pre",
+  "s",
   "span",
+  "strike",
   "strong",
   "sub",
   "sup",
@@ -240,7 +367,6 @@ const blockedVisualTags = new Set([
   "embed",
   "form",
   "iframe",
-  "input",
   "link",
   "meta",
   "object",
@@ -271,6 +397,19 @@ function cloneSafeNode(source: globalThis.Node, owner: Document): globalThis.Nod
     const fragment = owner.createDocumentFragment();
     appendSafeChildren(element, fragment, owner);
     return fragment;
+  }
+
+  if (tag === "input") {
+    if (element.getAttribute("type") === "checkbox") {
+      const checkbox = owner.createElement("input");
+      checkbox.setAttribute("type", "checkbox");
+      checkbox.setAttribute("disabled", "true");
+      if (element.hasAttribute("checked") || (element as HTMLInputElement).checked) {
+        checkbox.setAttribute("checked", "true");
+      }
+      return checkbox;
+    }
+    return null;
   }
 
   const safeElement = owner.createElement(tag);
@@ -308,8 +447,20 @@ function cloneSafeNode(source: globalThis.Node, owner: Document): globalThis.Nod
   if (tag === "p" || tag === "div") {
     const inlineAlignment = (element as HTMLElement).style.textAlign;
     const alignment = inlineAlignment || element.getAttribute("align") || "";
-    if (["left", "center", "right"].includes(alignment))
+    if (["left", "center", "right", "justify"].includes(alignment))
       (safeElement as HTMLElement).style.textAlign = alignment;
+  }
+  if (tag === "ul" && element.hasAttribute("data-checklist")) {
+    safeElement.setAttribute("data-checklist", "true");
+  }
+  if (tag === "li" && element.hasAttribute("data-checked")) {
+    safeElement.setAttribute(
+      "data-checked",
+      element.getAttribute("data-checked") === "true" ? "true" : "false"
+    );
+  }
+  if ((tag === "sup" || tag === "div") && element.hasAttribute("data-footnote")) {
+    safeElement.setAttribute("data-footnote", element.getAttribute("data-footnote") ?? "");
   }
   if (["td", "th"].includes(tag)) {
     for (const attribute of ["colspan", "rowspan"]) {
@@ -334,6 +485,35 @@ function selectionInside(editor: HTMLElement) {
   if (!selection || selection.rangeCount === 0) return null;
   const range = selection.getRangeAt(0);
   return editor.contains(range.commonAncestorContainer) ? range : null;
+}
+
+function getLineTextBeforeCaret(editor: HTMLElement, range: Range): string {
+  let text = "";
+  const container = range.startContainer;
+  const offset = range.startOffset;
+
+  if (container.nodeType === Node.TEXT_NODE) {
+    text = container.textContent?.slice(0, offset) ?? "";
+  }
+
+  let curr: Node | null = container;
+  while (curr) {
+    let prev: Node | null = curr.previousSibling;
+    while (prev) {
+      if (prev.nodeName === "BR") return text;
+      text = (prev.textContent ?? "") + text;
+      prev = prev.previousSibling;
+    }
+    curr = curr.parentNode;
+    if (
+      !curr ||
+      curr === editor ||
+      /^(P|DIV|LI|H[1-6]|BLOCKQUOTE|ASIDE|SECTION)$/i.test(curr.nodeName)
+    ) {
+      break;
+    }
+  }
+  return text;
 }
 
 function placeCaretAfter(node: globalThis.Node) {
@@ -462,7 +642,7 @@ function EditorToolbar({
               title={tool.label}
               type="button"
             >
-              <ToolIcon aria-hidden="true" size={18} weight="bold" />
+              <ToolIcon aria-hidden="true" size={17} weight="bold" />
             </button>
           </Fragment>
         );
@@ -471,23 +651,170 @@ function EditorToolbar({
   );
 }
 
+function FindReplaceBar({
+  findTerm,
+  matchCount,
+  onClose,
+  onFindNext,
+  onFindPrev,
+  onFindTermChange,
+  onReplace,
+  onReplaceAll,
+  onReplaceTermChange,
+  replaceTerm,
+}: {
+  findTerm: string;
+  matchCount: number;
+  onClose: () => void;
+  onFindNext: () => void;
+  onFindPrev: () => void;
+  onFindTermChange: (term: string) => void;
+  onReplace: () => void;
+  onReplaceAll: () => void;
+  onReplaceTermChange: (term: string) => void;
+  replaceTerm: string;
+}) {
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    findInputRef.current?.focus();
+    findInputRef.current?.select();
+  }, []);
+
+  return (
+    <div aria-label="Buscar y reemplazar texto" className="editor-find-replace-bar" role="search">
+      <div className="editor-find-row">
+        <div className="editor-find-input-wrap">
+          <MagnifyingGlass aria-hidden="true" className="editor-find-icon" size={16} />
+          <input
+            aria-label="Texto a buscar"
+            className="editor-find-input"
+            onChange={(e) => onFindTermChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (e.shiftKey) onFindPrev();
+                else onFindNext();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+            placeholder="Buscar..."
+            ref={findInputRef}
+            type="search"
+            value={findTerm}
+          />
+          {findTerm ? (
+            <span aria-live="polite" className="editor-find-badge num">
+              {matchCount === 1 ? "1 coincidencia" : `${matchCount} coincidencias`}
+            </span>
+          ) : null}
+        </div>
+        <div className="editor-find-actions">
+          <button
+            aria-label="Buscar anterior (Shift+Enter)"
+            className="editor-find-btn"
+            disabled={!findTerm || matchCount === 0}
+            onClick={onFindPrev}
+            title="Anterior (Shift+Enter)"
+            type="button"
+          >
+            <CaretUp aria-hidden="true" size={16} weight="bold" />
+          </button>
+          <button
+            aria-label="Buscar siguiente (Enter)"
+            className="editor-find-btn"
+            disabled={!findTerm || matchCount === 0}
+            onClick={onFindNext}
+            title="Siguiente (Enter)"
+            type="button"
+          >
+            <CaretDown aria-hidden="true" size={16} weight="bold" />
+          </button>
+          <button
+            aria-label="Cerrar buscar y reemplazar (Escape)"
+            className="editor-find-close"
+            onClick={onClose}
+            title="Cerrar (Esc)"
+            type="button"
+          >
+            <X aria-hidden="true" size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="editor-replace-row">
+        <input
+          aria-label="Texto de reemplazo"
+          className="editor-replace-input"
+          onChange={(e) => onReplaceTermChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onReplace();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              onClose();
+            }
+          }}
+          placeholder="Reemplazar con..."
+          type="text"
+          value={replaceTerm}
+        />
+        <div className="editor-replace-actions">
+          <button
+            aria-label="Reemplazar coincidencia actual"
+            className="editor-replace-btn"
+            disabled={!findTerm || matchCount === 0}
+            onClick={onReplace}
+            type="button"
+          >
+            Reemplazar
+          </button>
+          <button
+            aria-label="Reemplazar todas las coincidencias"
+            className="editor-replace-btn"
+            disabled={!findTerm || matchCount === 0}
+            onClick={onReplaceAll}
+            type="button"
+          >
+            Todo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditorComposePane({
   activeTools,
   draft,
+  findMatchCount,
+  findReplaceOpen,
+  findTerm,
   handleCodeKeyDown,
   handleMarkdownKeyDown,
   handlePaste,
   handleVisualKeyDown,
   htmlDraft,
+  htmlRef,
   label,
   labelId,
   markdownRef,
   maxLength,
   mode,
   onApplyTool,
+  onCloseFindReplace,
+  onFindNext,
+  onFindPrev,
+  onFindTermChange,
   onHtmlChange,
   onMarkdownChange,
+  onReplace,
+  onReplaceAll,
+  onReplaceTermChange,
   onRunSlashCommand,
+  replaceTerm,
   required,
   slash,
   syncVisual,
@@ -495,20 +822,32 @@ function EditorComposePane({
 }: {
   activeTools: Set<string>;
   draft: string;
+  findMatchCount: number;
+  findReplaceOpen: boolean;
+  findTerm: string;
   handleCodeKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   handleMarkdownKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   handlePaste: (event: ClipboardEvent<HTMLDivElement>) => void;
   handleVisualKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
   htmlDraft: string;
+  htmlRef: RefObject<HTMLTextAreaElement | null>;
   label: string;
   labelId: string;
   markdownRef: RefObject<HTMLTextAreaElement | null>;
   maxLength: number;
   mode: EditorMode;
   onApplyTool: (action: ToolAction) => void;
+  onCloseFindReplace: () => void;
+  onFindNext: () => void;
+  onFindPrev: () => void;
+  onFindTermChange: (term: string) => void;
   onHtmlChange: (value: string) => void;
   onMarkdownChange: (value: string) => void;
+  onReplace: () => void;
+  onReplaceAll: () => void;
+  onReplaceTermChange: (term: string) => void;
   onRunSlashCommand: (command: SlashCommand) => void;
+  replaceTerm: string;
   required: boolean;
   slash: SlashMenuState | null;
   syncVisual: () => void;
@@ -516,6 +855,20 @@ function EditorComposePane({
 }) {
   return (
     <div className="editor-compose-pane">
+      {findReplaceOpen && (
+        <FindReplaceBar
+          findTerm={findTerm}
+          matchCount={findMatchCount}
+          onClose={onCloseFindReplace}
+          onFindNext={onFindNext}
+          onFindPrev={onFindPrev}
+          onFindTermChange={onFindTermChange}
+          onReplace={onReplace}
+          onReplaceAll={onReplaceAll}
+          onReplaceTermChange={onReplaceTermChange}
+          replaceTerm={replaceTerm}
+        />
+      )}
       {mode === "visual" ? (
         <>
           <EditorToolbar activeTools={activeTools} onApply={onApplyTool} />
@@ -578,6 +931,7 @@ function EditorComposePane({
             placeholder={
               "<section>\n  <h2>Contenido académico</h2>\n  <p>Escribe tu HTML…</p>\n</section>"
             }
+            ref={htmlRef}
             rows={18}
             spellCheck={false}
             value={htmlDraft}
@@ -1120,6 +1474,7 @@ function useMultimodalEditorController({
   const baseId = useId();
   const visualRef = useRef<HTMLDivElement>(null);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
+  const htmlRef = useRef<HTMLTextAreaElement>(null);
   const lastEmittedRef = useRef(value);
   const [mode, setMode] = useState<EditorMode>(initialMode);
   const [htmlDraft, setHtmlDraft] = useState(() => markdownToEditorHtml(value));
@@ -1128,6 +1483,9 @@ function useMultimodalEditorController({
   const visualDirtyRef = useRef(false);
   const savedSelectionRef = useRef<Range | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [findReplaceOpen, setFindReplaceOpen] = useState(false);
+  const [findTerm, setFindTerm] = useState("");
+  const [replaceTerm, setReplaceTerm] = useState("");
   /*
     Un aviso que sólo vive en la región `aria-live` deja al docente vidente sin
     respuesta: pulsa Publicar, no pasa nada y vuelve a pulsar. Este estado pinta
@@ -1149,11 +1507,141 @@ function useMultimodalEditorController({
   const panelId = `${baseId}-panel`;
   const labelId = `${baseId}-label`;
 
-  const emit = (next: string) => {
-    lastEmittedRef.current = next;
-    setNotice(null);
-    onChange(next);
-  };
+  const emit = useCallback(
+    (next: string) => {
+      lastEmittedRef.current = next;
+      setNotice(null);
+      onChange(next);
+    },
+    [onChange]
+  );
+
+  const currentContentText = mode === "html" ? htmlDraft : value;
+  const findMatchCount = useMemo(() => {
+    if (!findTerm.trim()) return 0;
+    try {
+      const escaped = findTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const matches = currentContentText.match(new RegExp(escaped, "gi"));
+      return matches ? matches.length : 0;
+    } catch {
+      return 0;
+    }
+  }, [currentContentText, findTerm]);
+
+  const handleFindNext = useCallback(() => {
+    if (!findTerm) return;
+    if (mode === "visual") {
+      if (typeof window !== "undefined" && typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find === "function") {
+        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(findTerm, false, false, true, false, true, false);
+      }
+    } else {
+      const textarea = mode === "markdown" ? markdownRef.current : htmlRef.current;
+      if (!textarea) return;
+      const text = textarea.value;
+      const fromIndex = textarea.selectionEnd;
+      let index = text.toLowerCase().indexOf(findTerm.toLowerCase(), fromIndex);
+      if (index === -1) {
+        index = text.toLowerCase().indexOf(findTerm.toLowerCase(), 0);
+      }
+      if (index !== -1) {
+        textarea.focus();
+        textarea.setSelectionRange(index, index + findTerm.length);
+      }
+    }
+  }, [findTerm, mode]);
+
+  const handleFindPrev = useCallback(() => {
+    if (!findTerm) return;
+    if (mode === "visual") {
+      if (typeof window !== "undefined" && typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find === "function") {
+        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(findTerm, false, true, true, false, true, false);
+      }
+    } else {
+      const textarea = mode === "markdown" ? markdownRef.current : htmlRef.current;
+      if (!textarea) return;
+      const text = textarea.value;
+      const fromIndex = textarea.selectionStart - 1;
+      let index =
+        fromIndex >= 0 ? text.toLowerCase().lastIndexOf(findTerm.toLowerCase(), fromIndex) : -1;
+      if (index === -1) {
+        index = text.toLowerCase().lastIndexOf(findTerm.toLowerCase());
+      }
+      if (index !== -1) {
+        textarea.focus();
+        textarea.setSelectionRange(index, index + findTerm.length);
+      }
+    }
+  }, [findTerm, mode]);
+
+  const handleHtmlChange = useCallback(
+    (nextHtml: string) => {
+      setHtmlDraft(nextHtml);
+      emit(htmlToAcademicMarkdown(nextHtml));
+    },
+    [emit]
+  );
+
+  const handleReplace = useCallback(() => {
+    if (!findTerm) return;
+    if (mode === "visual") {
+      const selection = window.getSelection();
+      if (selection && selection.toString().toLowerCase() === findTerm.toLowerCase()) {
+        document.execCommand("insertText", false, replaceTerm);
+        const editor = visualRef.current;
+        if (editor) {
+          const next = htmlToAcademicMarkdown(editor.innerHTML);
+          emit(next);
+        }
+        handleFindNext();
+      } else {
+        handleFindNext();
+      }
+    } else if (mode === "markdown") {
+      const textarea = markdownRef.current;
+      if (!textarea) return;
+      const { selectionStart: start, selectionEnd: end } = textarea;
+      const selected = value.slice(start, end);
+      if (selected.toLowerCase() === findTerm.toLowerCase()) {
+        const next = `${value.slice(0, start)}${replaceTerm}${value.slice(end)}`;
+        emit(next);
+        requestAnimationFrame(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + replaceTerm.length, start + replaceTerm.length);
+          handleFindNext();
+        });
+      } else {
+        handleFindNext();
+      }
+    } else {
+      const text = htmlDraft;
+      const index = text.toLowerCase().indexOf(findTerm.toLowerCase());
+      if (index !== -1) {
+        const next = `${text.slice(0, index)}${replaceTerm}${text.slice(index + findTerm.length)}`;
+        handleHtmlChange(next);
+      }
+    }
+  }, [emit, findTerm, handleFindNext, handleHtmlChange, htmlDraft, mode, replaceTerm, value]);
+
+  const handleReplaceAll = useCallback(() => {
+    if (!findTerm) return;
+    const escaped = findTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escaped, "gi");
+    if (mode === "visual") {
+      const editor = visualRef.current;
+      if (!editor) return;
+      const nextMarkdown = value.replace(regex, replaceTerm);
+      editor.replaceChildren(safeVisualFragment(markdownToEditorHtml(nextMarkdown), editor.ownerDocument));
+      visualOriginHtmlRef.current = markdownToEditorHtml(nextMarkdown);
+      visualDirtyRef.current = false;
+      emit(nextMarkdown);
+    } else if (mode === "markdown") {
+      const next = value.replace(regex, replaceTerm);
+      emit(next);
+    } else {
+      const next = htmlDraft.replace(regex, replaceTerm);
+      handleHtmlChange(next);
+    }
+  }, [emit, findTerm, handleHtmlChange, htmlDraft, mode, replaceTerm, value]);
 
   const renderVisual = (html: string) => {
     const editor = visualRef.current;
@@ -1185,9 +1673,13 @@ function useMultimodalEditorController({
       "bold",
       "italic",
       "underline",
+      "strikeThrough",
+      "superscript",
+      "subscript",
       "justifyLeft",
       "justifyCenter",
       "justifyRight",
+      "justifyFull",
       "insertUnorderedList",
       "insertOrderedList",
     ];
@@ -1213,8 +1705,26 @@ function useMultimodalEditorController({
       let node: globalThis.Node | null = selection.getRangeAt(0).startContainer;
       while (node && node !== editor) {
         if (node instanceof HTMLElement) {
-          if (node.tagName === "BLOCKQUOTE") active.add("quote");
-          if (node.tagName === "ASIDE") {
+          const tag = node.tagName;
+          if (tag === "BLOCKQUOTE") active.add("quote");
+          if (tag === "DEL" || tag === "S" || tag === "STRIKE") active.add("strikeThrough");
+          if (tag === "MARK") active.add("highlight");
+          if (tag === "SUP" && !node.hasAttribute("data-footnote")) active.add("superscript");
+          if (tag === "SUB") active.add("subscript");
+          if (tag === "CODE" && node.parentElement?.tagName !== "PRE") active.add("inlineCode");
+          if (
+            tag === "UL" &&
+            (node.hasAttribute("data-checklist") || node.classList.contains("rich-checklist"))
+          ) {
+            active.add("checklist");
+          }
+          if (
+            node.style.textAlign === "justify" ||
+            node.getAttribute("align")?.toLowerCase() === "justify"
+          ) {
+            active.add("justifyFull");
+          }
+          if (tag === "ASIDE") {
             const callout = node.getAttribute("data-callout");
             if (callout === "assessment") active.add("warning");
             else active.add("callout");
@@ -1226,19 +1736,6 @@ function useMultimodalEditorController({
 
     return active;
   }, []);
-
-  useEffect(() => {
-    if (mode !== "visual") return;
-    const refresh = () => {
-      const editor = visualRef.current;
-      if (!editor) return setActiveTools(new Set());
-      const range = selectionInside(editor);
-      if (range) savedSelectionRef.current = range.cloneRange();
-      setActiveTools(checkActiveTools());
-    };
-    document.addEventListener("selectionchange", refresh);
-    return () => document.removeEventListener("selectionchange", refresh);
-  }, [checkActiveTools, mode]);
 
   /*
     El menú se ancla al cursor, no al lienzo: en un documento largo el docente
@@ -1252,13 +1749,27 @@ function useMultimodalEditorController({
     if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return setSlash(null);
     const range = selection.getRangeAt(0);
     if (!editor.contains(range.commonAncestorContainer)) return setSlash(null);
-    const probe = range.cloneRange();
-    probe.setStart(editor, 0);
-    const query = slashQueryBefore(probe.toString());
+    const textBefore = getLineTextBeforeCaret(editor, range);
+    const query = slashQueryBefore(textBefore);
     if (query === null) return setSlash(null);
     const commands = matchSlashCommands(query);
     if (commands.length === 0) return setSlash(null);
-    const caret = range.getBoundingClientRect();
+    let caret = range.getBoundingClientRect();
+    if (
+      !caret ||
+      (caret.width === 0 && caret.height === 0 && caret.top === 0 && caret.bottom === 0)
+    ) {
+      const rects = range.getClientRects();
+      if (rects.length > 0) {
+        caret = rects[0];
+      } else {
+        const el =
+          range.startContainer instanceof HTMLElement
+            ? range.startContainer
+            : range.startContainer.parentElement;
+        if (el) caret = el.getBoundingClientRect();
+      }
+    }
     const anchor = editor.getBoundingClientRect();
     setSlash({
       commands,
@@ -1267,6 +1778,20 @@ function useMultimodalEditorController({
       left: Math.max(0, (caret.left || anchor.left) - anchor.left),
     });
   }, []);
+
+  useEffect(() => {
+    if (mode !== "visual") return;
+    const refresh = () => {
+      const editor = visualRef.current;
+      if (!editor) return setActiveTools(new Set());
+      const range = selectionInside(editor);
+      if (range) savedSelectionRef.current = range.cloneRange();
+      setActiveTools(checkActiveTools());
+      refreshSlashMenu();
+    };
+    document.addEventListener("selectionchange", refresh);
+    return () => document.removeEventListener("selectionchange", refresh);
+  }, [checkActiveTools, mode, refreshSlashMenu]);
 
   const syncVisual = () => {
     const editor = visualRef.current;
@@ -1556,6 +2081,11 @@ function useMultimodalEditorController({
       openLinkModal();
       return;
     }
+    if (action === "findReplace") {
+      setFindReplaceOpen((prev) => !prev);
+      return;
+    }
+
     const editor = visualRef.current;
     if (!editor) return;
     editor.focus();
@@ -1570,11 +2100,200 @@ function useMultimodalEditorController({
     }
 
     const blockTag = blockTagForAction[action];
-    if (blockTag) document.execCommand("formatBlock", false, blockTag);
-    else if (action === "callout") insertCallout("notice");
-    else if (action === "warning") insertCallout("assessment");
-    else if (action === "divider") insertDivider();
-    else document.execCommand(action, false);
+    if (blockTag) {
+      document.execCommand("formatBlock", false, blockTag);
+    } else if (action === "callout") {
+      insertCallout("notice");
+    } else if (action === "warning") {
+      insertCallout("assessment");
+    } else if (action === "divider") {
+      insertDivider();
+    } else if (action === "checklist") {
+      const range = selectionInside(editor);
+      const ul = document.createElement("ul");
+      ul.setAttribute("data-checklist", "true");
+      ul.className = "rich-checklist";
+      const li = document.createElement("li");
+      li.setAttribute("data-checked", "false");
+      li.className = "rich-checklist-item";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.disabled = true;
+      input.className = "rich-checkbox";
+      li.appendChild(input);
+      const selectedText = range && !range.collapsed ? range.toString().trim() : "Nueva tarea";
+      li.appendChild(document.createTextNode(` ${selectedText}`));
+      ul.appendChild(li);
+      insertVisualNode(editor, ul);
+    } else if (action === "footnote") {
+      const currentHtml = editor.innerHTML;
+      const matches = currentHtml.match(/data-footnote=["'](\d+)["']/g);
+      const nextNum = (matches ? matches.length : 0) + 1;
+      const sup = document.createElement("sup");
+      sup.className = "editor-footnote-ref";
+      sup.setAttribute("data-footnote", String(nextNum));
+      sup.textContent = `[${nextNum}]`;
+      insertVisualNode(editor, sup);
+
+      const def = document.createElement("div");
+      def.className = "editor-footnote-def";
+      def.setAttribute("data-footnote", String(nextNum));
+      const spanId = document.createElement("span");
+      spanId.className = "footnote-id";
+      spanId.textContent = `[${nextNum}] `;
+      def.appendChild(spanId);
+      def.appendChild(document.createTextNode(`Nota al pie ${nextNum}`));
+      editor.appendChild(def);
+    } else if (action === "highlight") {
+      const range = selectionInside(editor);
+      if (range) {
+        let markNode: HTMLElement | null = null;
+        let cur: Node | null = range.commonAncestorContainer;
+        while (cur && cur !== editor) {
+          if (cur instanceof HTMLElement && cur.tagName === "MARK") {
+            markNode = cur;
+            break;
+          }
+          cur = cur.parentNode;
+        }
+        if (markNode) {
+          const parent = markNode.parentNode;
+          while (markNode.firstChild) parent?.insertBefore(markNode.firstChild, markNode);
+          parent?.removeChild(markNode);
+        } else if (!range.collapsed) {
+          const mark = document.createElement("mark");
+          mark.appendChild(range.extractContents());
+          range.insertNode(mark);
+          placeCaretAfter(mark);
+        }
+      }
+    } else if (action === "inlineCode") {
+      const range = selectionInside(editor);
+      if (range) {
+        let codeNode: HTMLElement | null = null;
+        let cur: Node | null = range.commonAncestorContainer;
+        while (cur && cur !== editor) {
+          if (
+            cur instanceof HTMLElement &&
+            cur.tagName === "CODE" &&
+            cur.parentElement?.tagName !== "PRE"
+          ) {
+            codeNode = cur;
+            break;
+          }
+          cur = cur.parentNode;
+        }
+        if (codeNode) {
+          const parent = codeNode.parentNode;
+          while (codeNode.firstChild) parent?.insertBefore(codeNode.firstChild, codeNode);
+          parent?.removeChild(codeNode);
+        } else if (!range.collapsed) {
+          const code = document.createElement("code");
+          code.appendChild(range.extractContents());
+          range.insertNode(code);
+          placeCaretAfter(code);
+        }
+      }
+    } else if (action === "removeFormat") {
+      document.execCommand("removeFormat", false);
+      const range = selectionInside(editor);
+      if (range && !range.collapsed) {
+        const fragment = range.extractContents();
+        const inlineTags = ["U", "DEL", "S", "STRIKE", "MARK", "SUP", "SUB", "CODE"];
+        for (const tag of inlineTags) {
+          fragment.querySelectorAll(tag).forEach((el) => {
+            const parent = el.parentNode;
+            while (el.firstChild) parent?.insertBefore(el.firstChild, el);
+            parent?.removeChild(el);
+          });
+        }
+        range.insertNode(fragment);
+      }
+    } else if (action === "strikeThrough") {
+      document.execCommand("strikeThrough", false);
+    } else if (action === "superscript") {
+      document.execCommand("superscript", false);
+    } else if (action === "subscript") {
+      document.execCommand("subscript", false);
+    } else if (action === "justifyFull") {
+      document.execCommand("justifyFull", false);
+    } else if (action === "indent" || action === "outdent") {
+      const isOutdent = action === "outdent";
+      const selection = window.getSelection();
+      let handled = false;
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        let node: Node | null = range.startContainer;
+        let isInsideList = false;
+        while (node && node !== editor) {
+          if (node instanceof HTMLElement && node.tagName.toLowerCase() === "li") {
+            isInsideList = true;
+            break;
+          }
+          node = node.parentNode;
+        }
+        if (isInsideList) {
+          document.execCommand(isOutdent ? "outdent" : "indent", false);
+          handled = true;
+        } else {
+          let block: HTMLElement | null = null;
+          node = range.startContainer;
+          while (node && node !== editor) {
+            if (
+              node instanceof HTMLElement &&
+              /^(p|div|h[1-6]|blockquote)$/i.test(node.tagName)
+            ) {
+              block = node;
+              break;
+            }
+            node = node.parentNode;
+          }
+          if (!block || block === editor) {
+            document.execCommand("formatBlock", false, "p");
+            const freshSel = window.getSelection();
+            if (freshSel && freshSel.rangeCount > 0) {
+              let n: Node | null = freshSel.getRangeAt(0).startContainer;
+              while (n && n !== editor) {
+                if (n instanceof HTMLElement && /^(p|div|h[1-6])$/i.test(n.tagName)) {
+                  block = n;
+                  break;
+                }
+                n = n.parentNode;
+              }
+            }
+          }
+          if (block && block !== editor) {
+            const currentMargin = parseInt(block.style.marginLeft || "0", 10) || 0;
+            const step = 32;
+            const nextMargin = isOutdent
+              ? Math.max(0, currentMargin - step)
+              : Math.min(160, currentMargin + step);
+            if (block.tagName.toLowerCase() === "blockquote") {
+              const p = document.createElement("p");
+              if (nextMargin > 0) p.style.marginLeft = `${nextMargin}px`;
+              while (block.firstChild) p.appendChild(block.firstChild);
+              block.parentNode?.replaceChild(p, block);
+            } else {
+              if (nextMargin > 0) {
+                block.style.marginLeft = `${nextMargin}px`;
+              } else {
+                block.style.marginLeft = "";
+              }
+            }
+            handled = true;
+          }
+        }
+      }
+      if (!handled) {
+        document.execCommand(isOutdent ? "outdent" : "indent", false);
+      }
+    } else if (action === "undo") {
+      document.execCommand("undo", false);
+    } else if (action === "redo") {
+      document.execCommand("redo", false);
+    } else {
+      document.execCommand(action, false);
+    }
     syncVisual();
     setActiveTools(checkActiveTools());
   };
@@ -1673,9 +2392,30 @@ function useMultimodalEditorController({
     } else if (event.key.toLowerCase() === "i") {
       event.preventDefault();
       applyTool("italic");
+    } else if (event.key.toLowerCase() === "u") {
+      event.preventDefault();
+      applyTool("underline");
     } else if (event.key.toLowerCase() === "k") {
       event.preventDefault();
       openLinkModal();
+    } else if (event.shiftKey && event.key.toLowerCase() === "x") {
+      event.preventDefault();
+      applyTool("strikeThrough");
+    } else if (event.shiftKey && event.key.toLowerCase() === "h") {
+      event.preventDefault();
+      applyTool("highlight");
+    } else if (event.key.toLowerCase() === "f" || event.key.toLowerCase() === "h") {
+      event.preventDefault();
+      setFindReplaceOpen(true);
+    } else if (event.key.toLowerCase() === "e" || event.key === "`") {
+      event.preventDefault();
+      applyTool("inlineCode");
+    } else if (event.key === ".") {
+      event.preventDefault();
+      applyTool("superscript");
+    } else if (event.key === ",") {
+      event.preventDefault();
+      applyTool("subscript");
     }
   };
 
@@ -1701,9 +2441,30 @@ function useMultimodalEditorController({
     } else if (event.key.toLowerCase() === "i") {
       event.preventDefault();
       wrapMarkdownSelection("*", "*", "énfasis");
+    } else if (event.key.toLowerCase() === "u") {
+      event.preventDefault();
+      wrapMarkdownSelection("<u>", "</u>", "texto subrayado");
     } else if (event.key.toLowerCase() === "k") {
       event.preventDefault();
       openLinkModal();
+    } else if (event.shiftKey && event.key.toLowerCase() === "x") {
+      event.preventDefault();
+      wrapMarkdownSelection("~~", "~~", "texto tachado");
+    } else if (event.shiftKey && event.key.toLowerCase() === "h") {
+      event.preventDefault();
+      wrapMarkdownSelection("<mark>", "</mark>", "texto resaltado");
+    } else if (event.key.toLowerCase() === "f" || event.key.toLowerCase() === "h") {
+      event.preventDefault();
+      setFindReplaceOpen(true);
+    } else if (event.key.toLowerCase() === "e" || event.key === "`") {
+      event.preventDefault();
+      wrapMarkdownSelection("`", "`", "código");
+    } else if (event.key === ".") {
+      event.preventDefault();
+      wrapMarkdownSelection("<sup>", "</sup>", "superíndice");
+    } else if (event.key === ",") {
+      event.preventDefault();
+      wrapMarkdownSelection("<sub>", "</sub>", "subíndice");
     }
   };
 
@@ -1716,6 +2477,11 @@ function useMultimodalEditorController({
   // Implements: REQ-EDITOR-09 REQ-A11Y-01
   const escapeTabRef = useRef(false);
   const handleCodeKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "f" || event.key.toLowerCase() === "h")) {
+      event.preventDefault();
+      setFindReplaceOpen(true);
+      return;
+    }
     if (event.key === "Escape") {
       escapeTabRef.current = true;
       return;
@@ -1757,9 +2523,7 @@ function useMultimodalEditorController({
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       /* Borra el `/consulta` que abrió el menú antes de insertar el bloque. */
-      const probe = selection.getRangeAt(0).cloneRange();
-      probe.setStart(editor, 0);
-      const typed = slashQueryBefore(probe.toString());
+      const typed = slashQueryBefore(getLineTextBeforeCaret(editor, selection.getRangeAt(0)));
       if (typed !== null) {
         for (let step = 0; step < typed.length + 1; step += 1)
           document.execCommand("delete", false);
@@ -1769,11 +2533,6 @@ function useMultimodalEditorController({
   };
 
   const counter = `${value.length.toLocaleString("es-CL")} / ${maxLength.toLocaleString("es-CL")}`;
-
-  const handleHtmlChange = (nextHtml: string) => {
-    setHtmlDraft(nextHtml);
-    emit(htmlToAcademicMarkdown(nextHtml));
-  };
 
   // Implements: REQ-EDITOR-10
   const handleInvalid = (event: InvalidEvent<HTMLTextAreaElement>) => {
@@ -1797,6 +2556,9 @@ function useMultimodalEditorController({
     baseId,
     counter,
     draft: value,
+    findMatchCount,
+    findReplaceOpen,
+    findTerm,
     handleHtmlChange,
     handleInvalid,
     handleCodeKeyDown,
@@ -1804,6 +2566,7 @@ function useMultimodalEditorController({
     handlePaste,
     handleVisualKeyDown,
     htmlDraft,
+    htmlRef,
     label,
     labelId,
     markdownRef,
@@ -1811,8 +2574,16 @@ function useMultimodalEditorController({
     mode,
     name,
     notice,
+    onCloseFindReplace: () => setFindReplaceOpen(false),
+    onFindNext: handleFindNext,
+    onFindPrev: handleFindPrev,
+    onFindTermChange: setFindTerm,
+    onReplace: handleReplace,
+    onReplaceAll: handleReplaceAll,
+    onReplaceTermChange: setReplaceTerm,
     panelId,
     previewValue,
+    replaceTerm,
     required,
     runSlashCommand,
     setSlash,
@@ -1882,20 +2653,32 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
         <EditorComposePane
           activeTools={editor.activeTools}
           draft={editor.draft}
+          findMatchCount={editor.findMatchCount}
+          findReplaceOpen={editor.findReplaceOpen}
+          findTerm={editor.findTerm}
           handleCodeKeyDown={editor.handleCodeKeyDown}
           handleMarkdownKeyDown={editor.handleMarkdownKeyDown}
           handlePaste={editor.handlePaste}
           handleVisualKeyDown={editor.handleVisualKeyDown}
           htmlDraft={editor.htmlDraft}
+          htmlRef={editor.htmlRef}
           label={editor.label}
           labelId={editor.labelId}
           markdownRef={editor.markdownRef}
           maxLength={editor.maxLength}
           mode={editor.mode}
           onApplyTool={editor.applyTool}
+          onCloseFindReplace={editor.onCloseFindReplace}
+          onFindNext={editor.onFindNext}
+          onFindPrev={editor.onFindPrev}
+          onFindTermChange={editor.onFindTermChange}
           onHtmlChange={editor.handleHtmlChange}
           onMarkdownChange={editor.emit}
+          onReplace={editor.onReplace}
+          onReplaceAll={editor.onReplaceAll}
+          onReplaceTermChange={editor.onReplaceTermChange}
           onRunSlashCommand={editor.runSlashCommand}
+          replaceTerm={editor.replaceTerm}
           required={editor.required}
           slash={editor.slash}
           syncVisual={editor.syncVisual}

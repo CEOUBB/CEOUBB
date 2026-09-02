@@ -3923,9 +3923,11 @@ img {
 .editor-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px 2px;
-  min-height: 44px;
-  padding: 4px 6px;
+  align-content: flex-start;
+  flex: 0 0 auto;
+  gap: 5px 3px;
+  min-height: 46px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
   flex-wrap: wrap;
@@ -3935,17 +3937,17 @@ img {
 .editor-toolbar-rule {
   flex: 0 0 1px;
   align-self: stretch;
-  margin: 4px 3px;
+  margin: 3px 2px;
   background: var(--border-hairline);
 }
 
 .editor-toolbar button {
   display: inline-flex;
-  flex: 0 0 34px;
+  flex: 0 0 32px;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -3970,6 +3972,11 @@ img {
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--border-hairline));
   background: color-mix(in srgb, var(--color-primary) 9%, white);
   color: var(--color-primary);
+}
+
+.editor-toolbar button[aria-pressed="true"]:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--border-hairline));
+  background: color-mix(in srgb, var(--color-primary) 14%, white);
 }
 
 .editor-toolbar button:active,
@@ -4018,7 +4025,7 @@ img {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  height: 100%;
+  min-height: 0;
 }
 
 .editor-slash-menu {
@@ -4284,6 +4291,8 @@ div.editor-latex-token {
 
 .editor-source {
   display: block;
+  flex: 1 1 auto;
+  height: 100%;
   padding: 16px 18px;
   background: var(--canvas-soft);
   border-top: 1px solid var(--border-hairline);
@@ -4306,11 +4315,14 @@ div.editor-latex-token {
 .editor-code-pane {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-width: 0;
+  height: 100%;
 }
 
 .editor-code-bar {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
@@ -4672,6 +4684,255 @@ div.editor-latex-token {
   .editor-toolbar button[aria-pressed="true"] {
     border: 2px solid Highlight;
   }
+}
+
+/* Barra de Buscar y Reemplazar */
+.editor-find-replace-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-hairline);
+  animation: findReplaceSlideDown 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes findReplaceSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.editor-find-row,
+.editor-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-find-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-find-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.editor-find-input,
+.editor-replace-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  color: var(--text-body);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.editor-find-input {
+  padding-left: 32px;
+  padding-right: 90px;
+}
+
+.editor-find-input:focus,
+.editor-replace-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.editor-find-badge {
+  position: absolute;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.editor-find-actions,
+.editor-replace-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.editor-find-btn,
+.editor-find-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.editor-find-btn:hover:not(:disabled),
+.editor-find-close:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+.editor-find-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.editor-replace-btn {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 550;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas-soft);
+  color: var(--text-body);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.editor-replace-btn:hover:not(:disabled) {
+  background: var(--surface-card);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.editor-replace-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Listas de verificación / Checklists */
+.rich-checklist,
+.editor-visual-canvas ul[data-checklist="true"] {
+  list-style: none !important;
+  padding-inline-start: 4px !important;
+  margin: 10px 0 14px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rich-checklist-item,
+.editor-visual-canvas ul[data-checklist="true"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 !important;
+  line-height: 1.5;
+}
+
+.rich-checkbox,
+.editor-visual-canvas ul[data-checklist="true"] input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  margin: 3px 0 0;
+  border: 1.5px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas-soft);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.rich-checkbox:checked,
+.editor-visual-canvas ul[data-checklist="true"] input[type="checkbox"]:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.rich-checkbox:checked::before,
+.editor-visual-canvas ul[data-checklist="true"] input[type="checkbox"]:checked::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+/* Notas al pie de página / Footnotes */
+.editor-footnote-ref,
+.rich-footnote-ref {
+  font-size: 0.8em;
+  line-height: 0;
+  vertical-align: super;
+  padding: 0 2px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.editor-footnote-def,
+.rich-footnote-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9em;
+  color: var(--text-muted);
+  padding: 4px 0;
+  border-top: 1px dashed var(--border-hairline);
+  margin-top: 6px;
+}
+
+.footnote-id {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+}
+
+.rich-footnote-back {
+  font-size: 0.95em;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.rich-footnote-back:hover {
+  text-decoration: underline;
+}
+
+/* Resaltador / Marcador de texto */
+mark,
+.editor-visual-canvas mark,
+.academic-prose mark,
+.rich-text mark {
+  background-color: color-mix(in srgb, #fde047 70%, transparent);
+  color: inherit;
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
 }
 
 .post-edit-form {
