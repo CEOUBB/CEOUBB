@@ -47,7 +47,6 @@ import {
   type SlashCommand,
 } from "../../../lib/multimodal-editor";
 import {
-  normalizeCodeLanguage,
   RICH_TEXT_MAX_LENGTH,
   safeLinkDestination,
   type CodeLanguage,
@@ -672,10 +671,15 @@ function CodeModal({
 }) {
   const [language, setLanguage] = useState<CodeLanguage>(initialLanguage);
   const [code, setCode] = useState(initialSource);
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   const handleSubmit = () => {
     onSubmit(language, code);
   };
+
+  useEffect(() => {
+    selectRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -686,12 +690,14 @@ function CodeModal({
   }, [onCancel]);
 
   return (
-    <div
-      className="editor-modal-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
-    >
+    <div className="editor-modal-backdrop">
+      <button
+        aria-label="Cerrar modal"
+        className="editor-modal-overlay"
+        onClick={onCancel}
+        tabIndex={-1}
+        type="button"
+      />
       <div
         aria-labelledby="code-modal-title"
         aria-modal="true"
@@ -713,8 +719,8 @@ function CodeModal({
           <label className="editor-modal-field">
             <span>Lenguaje de programación</span>
             <select
-              autoFocus
               onChange={(event) => setLanguage(event.target.value as CodeLanguage)}
+              ref={selectRef}
               value={language}
             >
               {AVAILABLE_CODE_LANGUAGES.map((lang) => (
@@ -766,10 +772,15 @@ function FormulaModal({
 }) {
   const [expression, setExpression] = useState(initialExpression);
   const [display, setDisplay] = useState(initialDisplay);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = () => {
     onSubmit(expression, display);
   };
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -780,12 +791,14 @@ function FormulaModal({
   }, [onCancel]);
 
   return (
-    <div
-      className="editor-modal-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
-    >
+    <div className="editor-modal-backdrop">
+      <button
+        aria-label="Cerrar modal"
+        className="editor-modal-overlay"
+        onClick={onCancel}
+        tabIndex={-1}
+        type="button"
+      />
       <div
         aria-labelledby="formula-modal-title"
         aria-modal="true"
@@ -807,7 +820,6 @@ function FormulaModal({
           <label className="editor-modal-field">
             <span>Expresión en LaTeX</span>
             <textarea
-              autoFocus
               onChange={(event) => setExpression(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
@@ -816,6 +828,7 @@ function FormulaModal({
                 }
               }}
               placeholder="Ej: \sum_{i=1}^n x_i = 0  o  f(x) = \frac{a}{b}"
+              ref={textareaRef}
               rows={3}
               value={expression}
             />
@@ -870,10 +883,20 @@ function LinkModal({
 }) {
   const [text, setText] = useState(initialText);
   const [href, setHref] = useState(initialHref);
+  const textRef = useRef<HTMLInputElement>(null);
+  const hrefRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
     onSubmit(text, href);
   };
+
+  useEffect(() => {
+    if (initialText) {
+      hrefRef.current?.focus();
+    } else {
+      textRef.current?.focus();
+    }
+  }, [initialText]);
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -884,12 +907,14 @@ function LinkModal({
   }, [onCancel]);
 
   return (
-    <div
-      className="editor-modal-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
-    >
+    <div className="editor-modal-backdrop">
+      <button
+        aria-label="Cerrar modal"
+        className="editor-modal-overlay"
+        onClick={onCancel}
+        tabIndex={-1}
+        type="button"
+      />
       <div
         aria-labelledby="link-modal-title"
         aria-modal="true"
@@ -919,6 +944,7 @@ function LinkModal({
                 }
               }}
               placeholder="Ej: Drive del ramo, apunte en PDF..."
+              ref={textRef}
               type="text"
               value={text}
             />
@@ -926,7 +952,6 @@ function LinkModal({
           <label className="editor-modal-field">
             <span>Dirección URL</span>
             <input
-              autoFocus
               onChange={(event) => setHref(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -935,6 +960,7 @@ function LinkModal({
                 }
               }}
               placeholder="https://..."
+              ref={hrefRef}
               type="url"
               value={href}
             />
@@ -962,10 +988,15 @@ function TableModal({
 }) {
   const [rows, setRows] = useState(2);
   const [cols, setCols] = useState(2);
+  const rowsRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
     onSubmit(rows, cols);
   };
+
+  useEffect(() => {
+    rowsRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -976,12 +1007,14 @@ function TableModal({
   }, [onCancel]);
 
   return (
-    <div
-      className="editor-modal-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
-    >
+    <div className="editor-modal-backdrop">
+      <button
+        aria-label="Cerrar modal"
+        className="editor-modal-overlay"
+        onClick={onCancel}
+        tabIndex={-1}
+        type="button"
+      />
       <div
         aria-labelledby="table-modal-title"
         aria-modal="true"
@@ -1004,16 +1037,21 @@ function TableModal({
             <label className="editor-modal-field">
               <span>Filas</span>
               <input
-                autoFocus
                 max={20}
                 min={2}
-                onChange={(event) => setRows(Math.max(2, Math.min(20, Number(event.target.value))))}
+                onChange={(event) => {
+                  const val = Number.parseInt(event.target.value, 10);
+                  if (!Number.isNaN(val)) {
+                    setRows(Math.max(2, Math.min(20, val)));
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
                     handleSubmit();
                   }
                 }}
+                ref={rowsRef}
                 type="number"
                 value={rows}
               />
@@ -1023,7 +1061,12 @@ function TableModal({
               <input
                 max={10}
                 min={1}
-                onChange={(event) => setCols(Math.max(1, Math.min(10, Number(event.target.value))))}
+                onChange={(event) => {
+                  const val = Number.parseInt(event.target.value, 10);
+                  if (!Number.isNaN(val)) {
+                    setCols(Math.max(1, Math.min(10, val)));
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
