@@ -476,6 +476,7 @@ export function PublishView({
               {NOTIFICATION_MODES.map((option) => (
                 <label key={option.value}>
                   <input
+                    aria-describedby={`notification-${option.value}-hint`}
                     checked={notificationMode === option.value}
                     name="notificationMode"
                     onChange={() => setNotificationMode(option.value)}
@@ -489,7 +490,7 @@ export function PublishView({
                   )}
                   <span>
                     <strong>{option.label}</strong>
-                    <small>{option.description}</small>
+                    <small id={`notification-${option.value}-hint`}>{option.description}</small>
                   </span>
                 </label>
               ))}

@@ -30,6 +30,7 @@
   --color-shield-red: oklch(0.55 0.22 25);
   --color-shield-red-deep: oklch(0.42 0.2 25);
   --color-academic-emerald: oklch(0.7 0.17 155);
+  --color-academic-emerald-deep: oklch(0.5 0.12 160);
   --color-academic-teal: oklch(0.58 0.12 185);
   --color-academic-purple: oklch(0.62 0.22 300);
   --color-academic-purple-deep: oklch(0.35 0.2 300);
@@ -84,6 +85,7 @@
   --shield-red: var(--color-shield-red, oklch(0.55 0.22 25));
   --shield-red-deep: var(--color-shield-red-deep, oklch(0.42 0.2 25));
   --academic-emerald: var(--color-academic-emerald, oklch(0.7 0.17 155));
+  --academic-emerald-deep: var(--color-academic-emerald-deep, oklch(0.5 0.12 160));
   --academic-teal: var(--color-academic-teal, oklch(0.58 0.12 185));
   --academic-purple: var(--color-academic-purple, oklch(0.62 0.22 300));
   --academic-purple-deep: var(--color-academic-purple-deep, oklch(0.35 0.2 300));
@@ -3833,7 +3835,7 @@ img {
   min-height: 32px;
   padding: 0 12px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-size: 13px;
@@ -4124,8 +4126,8 @@ img {
 .editor-visual-canvas pre {
   padding: 14px;
   border-radius: var(--radius-md);
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--ink-900);
+  color: var(--white);
   font-family: var(--font-mono);
   overflow-x: auto;
   white-space: pre;
@@ -4581,6 +4583,7 @@ div.editor-latex-token {
   .editor-toolbar button {
     flex-basis: 44px;
     width: 44px;
+    height: 44px;
   }
 
   .editor-visual-canvas,
@@ -4654,7 +4657,7 @@ div.editor-latex-token {
   color: var(--text-muted);
 }
 .tool-status.ok {
-  color: #047857;
+  color: var(--academic-emerald-deep);
 }
 .tool-status.bad {
   color: var(--shield-red-deep);

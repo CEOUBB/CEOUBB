@@ -379,6 +379,11 @@ function focusByArrow(
         : event.key === "ArrowRight"
           ? (current + 1) % items.length
           : (current - 1 + items.length) % items.length;
+  // La tabulación debe seguir al foco: sin mover el tabIndex, Tab siempre
+  // devolvería al primer control del grupo en vez de al que el docente usa.
+  items.forEach((item, index) => {
+    item.tabIndex = index === nextIndex ? 0 : -1;
+  });
   items[nextIndex].focus();
   activate?.(items[nextIndex]);
 }
@@ -515,6 +520,8 @@ function EditorComposePane({
           <EditorToolbar activeTools={activeTools} onApply={onApplyTool} />
           <div className="editor-visual-frame">
             <div
+              aria-activedescendant={slash ? `${labelId}-slash-${slash.highlight}` : undefined}
+              aria-controls={slash ? `${labelId}-slash` : undefined}
               aria-labelledby={labelId}
               aria-multiline="true"
               aria-required={required}
@@ -530,7 +537,9 @@ function EditorComposePane({
               suppressContentEditableWarning
               tabIndex={0}
             />
-            {slash && <SlashMenu onRun={onRunSlashCommand} state={slash} />}
+            {slash && (
+              <SlashMenu menuId={`${labelId}-slash`} onRun={onRunSlashCommand} state={slash} />
+            )}
           </div>
         </>
       ) : mode === "markdown" ? (
@@ -580,9 +589,11 @@ function EditorComposePane({
 
 // Implements: REQ-EDITOR-06
 function SlashMenu({
+  menuId,
   onRun,
   state,
 }: {
+  menuId: string;
   onRun: (command: SlashCommand) => void;
   state: SlashMenuState;
 }) {
@@ -590,14 +601,17 @@ function SlashMenu({
     <div
       aria-label="Insertar bloque"
       className="editor-slash-menu"
+      id={menuId}
       role="listbox"
       style={{ top: `${state.top}px`, left: `${state.left}px` }}
     >
-      <p>Insertar</p>
+      {/* Rótulo decorativo: un listbox solo admite opciones como hijos. */}
+      <p aria-hidden="true">Insertar</p>
       {state.commands.map((command, index) => (
         <button
           aria-selected={index === state.highlight}
           className={index === state.highlight ? "is-highlighted" : ""}
+          id={`${menuId}-${index}`}
           key={command.action}
           onClick={() => onRun(command)}
           onMouseDown={(event) => event.preventDefault()}
