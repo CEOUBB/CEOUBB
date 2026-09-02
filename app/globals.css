@@ -5068,8 +5068,7 @@ div.editor-latex-token {
   gap: var(--space-xs);
 }
 
-.publish-inspector section + section,
-.publish-inspector .publish-alerts {
+.publish-inspector > * + * {
   padding-top: var(--space-md);
   border-top: 1px solid var(--border-hairline);
 }
@@ -5105,7 +5104,7 @@ div.editor-latex-token {
   color: var(--text-secondary);
 }
 
-.publish-inspector input,
+.publish-inspector input:not([type="radio"]):not([type="checkbox"]),
 .publish-inspector select {
   width: 100%;
   min-height: 40px;
@@ -5117,11 +5116,11 @@ div.editor-latex-token {
   font-size: 15px;
 }
 
-.publish-inspector input::placeholder {
+.publish-inspector input:not([type="radio"]):not([type="checkbox"])::placeholder {
   color: var(--text-faint);
 }
 
-.publish-inspector input:focus,
+.publish-inspector input:not([type="radio"]):not([type="checkbox"]):focus,
 .publish-inspector select:focus {
   outline: 0;
   border-color: var(--color-primary);
@@ -5287,8 +5286,21 @@ div.editor-latex-token {
 .publish-alerts input {
   width: 18px;
   height: 18px;
+  min-height: 0;
   margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
   accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.publish-alerts input:focus,
+.publish-alerts input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .publish-alerts svg {
