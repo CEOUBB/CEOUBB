@@ -7,12 +7,15 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "prepare": "simple-git-hooks",
     "dev": "next dev",
     "build": "next build",
     "test": "next build && node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/final-grade-records.test.ts tests/grade-record-exports.test.ts tests/quizzes.test.ts tests/quiz-engine.test.ts tests/grade-audit.test.ts tests/grade-feedback.test.ts tests/courses.test.ts tests/academic-model.test.ts tests/teacher-course-management.test.ts tests/bulk-enrollment.test.ts tests/moodle-import.test.ts tests/semester-archival.test.ts tests/planner.test.ts tests/portal-utils.test.ts tests/communications.test.ts tests/user-settings.test.ts tests/assistant-role.test.ts tests/participants.test.ts tests/teacher-workspace-preview.test.ts tests/live-class.test.ts tests/rich-text.test.ts tests/publication-workflow.test.ts tests/multimodal-editor.test.ts tests/academic-content.test.ts tests/academic-content-renderer.test.ts tests/linear-webhook.test.ts tests/github-webhook.test.ts tests/discord-interactions.test.ts tests/capacitor-config.test.ts tests/mobile-bridge.test.ts tests/mobile-performance-budget.test.ts tests/native-services.test.ts tests/firebase-mappers.test.ts tests/admin-api.test.ts tests/services.test.ts tests/ci-workflows.test.ts tests/backend-remediation.test.ts tests/deep-security-remediation.test.ts tests/privacy-terms.test.ts tests/app-check.test.ts tests/accessibility.test.ts tests/support-request.test.ts tests/support-mail.test.ts tests/support-api.test.ts tests/support-pages.test.ts tests/staging-environment.test.ts tests/fast-boot-session.test.ts tests/dev-auth.test.ts tests/classroom-pagination.test.ts tests/grades-batch.test.ts tests/capacity-load-test.test.ts tests/rendered-html.test.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/final-grade-records.test.ts tests/grade-record-exports.test.ts tests/quizzes.test.ts tests/quiz-engine.test.ts tests/grade-audit.test.ts tests/grade-feedback.test.ts tests/courses.test.ts tests/academic-model.test.ts tests/teacher-course-management.test.ts tests/bulk-enrollment.test.ts tests/moodle-import.test.ts tests/semester-archival.test.ts tests/planner.test.ts tests/portal-utils.test.ts tests/communications.test.ts tests/user-settings.test.ts tests/assistant-role.test.ts tests/participants.test.ts tests/teacher-workspace-preview.test.ts tests/live-class.test.ts tests/rich-text.test.ts tests/publication-workflow.test.ts tests/multimodal-editor.test.ts tests/academic-content.test.ts tests/academic-content-renderer.test.ts tests/linear-webhook.test.ts tests/github-webhook.test.ts tests/discord-interactions.test.ts tests/capacitor-config.test.ts tests/mobile-bridge.test.ts tests/mobile-performance-budget.test.ts tests/native-services.test.ts tests/firebase-mappers.test.ts tests/admin-api.test.ts tests/services.test.ts tests/ci-workflows.test.ts tests/backend-remediation.test.ts tests/deep-security-remediation.test.ts tests/privacy-terms.test.ts tests/app-check.test.ts tests/accessibility.test.ts tests/support-request.test.ts tests/support-mail.test.ts tests/support-api.test.ts tests/support-pages.test.ts tests/staging-environment.test.ts tests/fast-boot-session.test.ts tests/dev-auth.test.ts tests/classroom-pagination.test.ts tests/grades-batch.test.ts tests/capacity-load-test.test.ts",
+    "test:unit": "node scripts/run-unit-tests.mjs",
     "test:a11y": "node --experimental-strip-types --test tests/accessibility.test.ts",
-    "verify:fast": "tsc --noEmit && node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/final-grade-records.test.ts tests/grade-record-exports.test.ts tests/quizzes.test.ts tests/quiz-engine.test.ts tests/grade-audit.test.ts tests/grade-feedback.test.ts tests/courses.test.ts tests/academic-model.test.ts tests/teacher-course-management.test.ts tests/bulk-enrollment.test.ts tests/moodle-import.test.ts tests/semester-archival.test.ts tests/planner.test.ts tests/portal-utils.test.ts tests/communications.test.ts tests/user-settings.test.ts tests/assistant-role.test.ts tests/participants.test.ts tests/teacher-workspace-preview.test.ts tests/live-class.test.ts tests/rich-text.test.ts tests/publication-workflow.test.ts tests/multimodal-editor.test.ts tests/academic-content.test.ts tests/academic-content-renderer.test.ts tests/linear-webhook.test.ts tests/github-webhook.test.ts tests/discord-interactions.test.ts tests/capacitor-config.test.ts tests/mobile-bridge.test.ts tests/mobile-performance-budget.test.ts tests/native-services.test.ts tests/firebase-mappers.test.ts tests/admin-api.test.ts tests/services.test.ts tests/ci-workflows.test.ts tests/backend-remediation.test.ts tests/deep-security-remediation.test.ts tests/privacy-terms.test.ts tests/app-check.test.ts tests/accessibility.test.ts tests/support-request.test.ts tests/support-mail.test.ts tests/support-api.test.ts tests/support-pages.test.ts tests/staging-environment.test.ts tests/fast-boot-session.test.ts tests/dev-auth.test.ts tests/classroom-pagination.test.ts tests/grades-batch.test.ts tests/capacity-load-test.test.ts && node scripts/verify-test-hashes.mjs --check && openspec validate --specs",
+    "test:e2e": "playwright test",
+    "test:rules": "firebase emulators:exec --config firebase/firebase.json \"node --test tests/integration/firebase-rules.test.ts\"",
+    "verify:fast": "tsc --noEmit && node scripts/run-unit-tests.mjs && node scripts/verify-test-hashes.mjs --check && openspec validate --specs",
     "verify:invariants": "node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/academic-model.test.ts && pnpm run check:rules",
     "typecheck": "tsc --noEmit",
     "check:functions": "node --check firebase/functions/index.js && node --check firebase/functions/grade-audit.js && node --check firebase/functions/quiz-engine.js && node --check firebase/functions/generated/grades.js",
@@ -84,12 +87,15 @@
     "zod": "^4.5.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "@eslint/js": "10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@fission-ai/openspec": "^1.11.0",
     "@next/eslint-plugin-next": "16.3.3",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/hast": "^3.0.5",
     "@types/node": "26.4.0",
@@ -105,6 +111,7 @@
     "globals": "17.11.0",
     "prettier": "^3.9.6",
     "react-doctor": "^0.9.12",
+    "simple-git-hooks": "^2.14.0",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.68.0",
@@ -115,5 +122,10 @@
     "patchedDependencies": {
       "@opennextjs/cloudflare": "patches/@opennextjs__cloudflare.patch"
     }
+  },
+  "simple-git-hooks": {
+    "pre-commit": "node scripts/scan-staged-secrets.mjs && node scripts/verify-test-hashes.mjs --check && pnpm run verify:invariants",
+    "commit-msg": "node scripts/verify-commit-msg.mjs $1",
+    "pre-push": "pnpm run verify:fast"
   }
 }

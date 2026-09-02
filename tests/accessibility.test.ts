@@ -164,3 +164,45 @@ test("REQ-A11Y-08: public statement contains the complete WCAG 2.2 AA claim", as
   assert.match(library, /href="\/accesibilidad"/);
   assert.match(sitemap, /\/accesibilidad/);
 });
+
+function oklchToLuminance(l: number, c: number, h: number): number {
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+
+  const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = l - 0.0894841775 * a - 1.291485548 * b;
+
+  const lLinear = l_ ** 3;
+  const mLinear = m_ ** 3;
+  const sLinear = s_ ** 3;
+
+  const rLinear = +4.0767433362 * lLinear - 3.3077115913 * mLinear + 0.2309699292 * sLinear;
+  const gLinear = -1.2684380046 * lLinear + 2.6097574011 * mLinear - 0.3413193965 * sLinear;
+  const bLinear = -0.0041960863 * lLinear - 0.7034186147 * mLinear + 1.707614701 * sLinear;
+
+  const toGamma = (x: number) => {
+    const clamped = Math.max(0, Math.min(1, x));
+    return clamped <= 0.04045 ? clamped / 12.92 : ((clamped + 0.055) / 1.055) ** 2.4;
+  };
+
+  return 0.2126 * toGamma(rLinear) + 0.7152 * toGamma(gLinear) + 0.0722 * toGamma(bLinear);
+}
+
+function contrastRatio(l1: number, l2: number): number {
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+test("REQ-A11Y-04: Tokens OKLCH cumplen ratios WCAG 2.2 AA (>= 4.5:1 texto, >= 3:1 componentes)", () => {
+  const surfaceBaseLum = oklchToLuminance(0.975, 0.005, 240);
+  const textPrimaryLum = oklchToLuminance(0.2, 0.03, 260);
+  const textSecondaryLum = oklchToLuminance(0.36, 0.03, 255);
+  const brandBlueLum = oklchToLuminance(0.48, 0.18, 255);
+
+  assert.ok(contrastRatio(surfaceBaseLum, textPrimaryLum) >= 4.5, "Texto primario debe ser >= 4.5:1");
+  assert.ok(contrastRatio(surfaceBaseLum, textSecondaryLum) >= 4.5, "Texto secundario debe ser >= 4.5:1");
+  assert.ok(contrastRatio(surfaceBaseLum, brandBlueLum) >= 3.0, "Brand blue en superficie debe ser >= 3.0:1");
+});
