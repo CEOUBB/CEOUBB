@@ -227,12 +227,19 @@ export function RichText({ body, className = "" }: { body: string; className?: s
             );
           }
         }
-        if (block.type === "paragraph") return <p key={key}>{renderInline(block.content)}</p>;
+        if (block.type === "paragraph") {
+          return (
+            <p key={key} style={block.align ? { textAlign: block.align } : undefined}>
+              {renderInline(block.content)}
+            </p>
+          );
+        }
         if (block.type === "heading") {
           return (
             <h4
               aria-level={Math.min(block.level + 3, 6)}
               className={`rich-heading rich-heading-${block.level}`}
+              style={block.align ? { textAlign: block.align } : undefined}
               key={key}
             >
               {renderInline(block.content)}

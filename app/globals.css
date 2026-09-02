@@ -3742,9 +3742,15 @@ img {
   font-size: 13px;
   font-weight: 500;
   transition:
-    background var(--transition-fast),
+    background-color var(--transition-fast),
     border-color var(--transition-fast),
-    color var(--transition-fast);
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.editor-preview-toggle svg {
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .editor-preview-toggle:hover {
@@ -3752,10 +3758,18 @@ img {
   color: var(--text-body);
 }
 
+.editor-preview-toggle:active {
+  transform: scale(0.97);
+}
+
 .editor-preview-toggle[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--color-primary) 30%, var(--border-hairline));
   background: var(--color-primary-wash);
   color: var(--color-primary);
+}
+
+.editor-preview-toggle[aria-pressed="true"] svg {
+  transform: scale(1.06);
 }
 
 .editor-preview-toggle:focus-visible {
@@ -3843,12 +3857,18 @@ img {
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
+    background-color 140ms cubic-bezier(0.2, 0, 0, 1),
+    color 140ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 140ms cubic-bezier(0.2, 0, 0, 1),
+    transform 100ms ease;
 }
 
 .editor-tabs button:hover {
   color: var(--text-body);
+}
+
+.editor-tabs button:active {
+  transform: scale(0.97);
 }
 
 .editor-tabs button[aria-selected="true"] {
@@ -3952,6 +3972,14 @@ img {
   color: var(--color-primary);
 }
 
+.editor-toolbar button:active,
+.editor-toolbar button.is-pressing {
+  transform: scale(0.92);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--border-hairline));
+  transition: none;
+}
+
 .editor-visual-canvas,
 .editor-source {
   width: 100%;
@@ -4009,6 +4037,19 @@ img {
   box-shadow: var(--shadow-2);
   scrollbar-width: thin;
   scrollbar-color: var(--border-hairline) transparent;
+  transform-origin: top left;
+  animation: slashMenuPopIn 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slashMenuPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .editor-slash-menu > p {
@@ -4027,7 +4068,14 @@ img {
   padding: 7px 10px;
   text-align: left;
   border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform 100ms ease;
+}
+
+.editor-slash-menu button:active {
+  transform: scale(0.985);
 }
 
 .editor-slash-menu button:hover,
@@ -4305,6 +4353,18 @@ div.editor-latex-token {
   border-top: 1px solid var(--border-hairline);
   border-radius: 0;
   background: var(--canvas-soft);
+  animation: previewPaneEnter 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes previewPaneEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .editor-preview-heading {
@@ -4361,7 +4421,7 @@ div.editor-latex-token {
   justify-content: center;
   padding: 16px;
   background: rgba(15, 23, 42, 0.75);
-  animation: editorModalFadeIn 150ms ease-out;
+  animation: editorModalFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (min-width: 768px) {
@@ -4374,11 +4434,11 @@ div.editor-latex-token {
 @keyframes editorModalFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.98);
+    transform: translateY(4px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -4815,16 +4875,33 @@ div.editor-latex-token {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
+  animation: presetCardIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transition:
     border-color var(--transition-fast),
-    background var(--transition-fast),
-    transform var(--transition-fast);
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes presetCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .publish-preset:hover {
   border-color: color-mix(in srgb, var(--color-primary) 42%, var(--border-hairline));
   transform: translateY(-1px);
   box-shadow: var(--shadow-1);
+}
+
+.publish-preset:active {
+  transform: scale(0.985);
 }
 
 .publish-preset:focus-visible {
@@ -4841,6 +4918,14 @@ div.editor-latex-token {
   border-radius: var(--radius-md);
   background: var(--color-primary-wash);
   color: var(--color-primary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.publish-preset:hover .publish-preset-icon {
+  transform: scale(1.04);
 }
 
 .publish-preset strong {
@@ -4866,8 +4951,9 @@ div.editor-latex-token {
   font-size: 14px;
   font-weight: 500;
   transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform 100ms ease;
 }
 
 .publish-back:hover {
@@ -4875,10 +4961,26 @@ div.editor-latex-token {
   color: var(--color-primary);
 }
 
+.publish-back:active {
+  transform: scale(0.97);
+}
+
 .publish-studio {
   display: flex;
   flex-direction: column;
   min-height: calc(100dvh - var(--header-offset));
+  animation: publishStudioFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes publishStudioFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* La barra sigue al docente por el documento: publicar y volver no pueden
@@ -4929,6 +5031,41 @@ div.editor-latex-token {
 
 .publish-autosave svg {
   color: var(--academic-teal);
+  transition:
+    transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--transition-fast);
+}
+
+.publish-autosave[data-draft-state="saving"] svg {
+  animation: autosavePulse 1.2s ease-in-out infinite;
+}
+
+.publish-autosave[data-draft-state="saved"] svg {
+  animation: autosaveSettle 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes autosavePulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes autosaveSettle {
+  0% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .publish-submit {
@@ -4939,11 +5076,18 @@ div.editor-latex-token {
   border-radius: var(--radius-full);
   font-size: 14px;
   font-weight: 600;
-  transition: background var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1),
+    opacity var(--transition-fast);
 }
 
 .publish-submit:hover:not(:disabled) {
   background: var(--color-primary-active);
+}
+
+.publish-submit:active:not(:disabled) {
+  transform: scale(0.975);
 }
 
 .publish-submit:disabled {
@@ -4966,6 +5110,18 @@ div.editor-latex-token {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-size: 14px;
+  animation: restoredBannerIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes restoredBannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .publish-restored > svg {
@@ -4980,11 +5136,19 @@ div.editor-latex-token {
   margin-left: auto;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  transition: color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform 100ms ease;
 }
 
 .publish-restored button:hover {
+  background: color-mix(in srgb, var(--academic-teal) 14%, transparent);
   color: var(--text-body);
+}
+
+.publish-restored button:active {
+  transform: scale(0.92);
 }
 
 .publish-body {
@@ -5020,18 +5184,19 @@ div.editor-latex-token {
   padding: 6px 0;
   background: none;
   border: 0;
-  border-bottom: 1px solid transparent;
+  border-bottom: 2px solid transparent;
   color: var(--text-body);
   font-family: var(--font-display);
   font-size: clamp(26px, 3vw, 34px);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  transition: border-color var(--transition-fast);
+  transition: border-bottom-color 150ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .publish-title-field input::placeholder {
   color: var(--text-faint);
+  transition: color var(--transition-fast);
 }
 
 .publish-title-field input:focus {
@@ -5140,12 +5305,16 @@ div.editor-latex-token {
   border-radius: var(--radius-md);
   transition:
     border-color var(--transition-fast),
-    background var(--transition-fast);
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .publish-dropzone.is-dragging {
   border-color: var(--color-primary);
   background: var(--color-primary-wash);
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .publish-dropzone p {
@@ -5168,11 +5337,21 @@ div.editor-latex-token {
   color: var(--text-body);
   font-size: 14px;
   font-weight: 500;
-  transition: background var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .publish-attach-btn:hover:not(:disabled) {
   background: var(--canvas-soft);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--border-hairline));
+  box-shadow: var(--shadow-1);
+}
+
+.publish-attach-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .publish-attach-btn:disabled {
@@ -5198,6 +5377,21 @@ div.editor-latex-token {
   background: var(--canvas-soft);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
+  animation: attachmentItemIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+@keyframes attachmentItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .publish-attachments li > svg {
@@ -5231,13 +5425,21 @@ div.editor-latex-token {
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform 100ms ease;
 }
 
-.publish-attachments li > button:hover {
-  background: color-mix(in srgb, var(--shield-red) 12%, transparent);
-  color: var(--shield-red-deep);
+@media (hover: hover) and (pointer: fine) {
+  .publish-attachments li > button:hover {
+    background: color-mix(in srgb, var(--shield-red) 12%, transparent);
+    color: var(--shield-red-deep);
+    transform: scale(1.06);
+  }
+}
+
+.publish-attachments li > button:active {
+  transform: scale(0.92);
 }
 
 .publish-alerts {
@@ -5270,12 +5472,32 @@ div.editor-latex-token {
   cursor: pointer;
   transition:
     border-color var(--transition-fast),
-    background var(--transition-fast);
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.publish-alerts > label:has(input:checked) {
+@media (hover: hover) and (pointer: fine) {
+  .publish-alerts > label:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 32%, var(--border-hairline));
+    transform: translateY(-0.5px);
+  }
+}
+
+.publish-alerts > label:active {
+  transform: scale(0.988);
+}
+
+.publish-alerts > label:has(input:checked),
+.publish-alerts > label[data-checked="true"] {
   border-color: var(--color-primary);
   background: var(--color-primary-wash);
+}
+
+.publish-alerts > label:has(input:checked) svg,
+.publish-alerts > label[data-checked="true"] svg {
+  color: var(--color-primary);
+  transform: scale(1.05);
 }
 
 .publish-alerts > label:has(input:focus-visible) {
@@ -5306,6 +5528,9 @@ div.editor-latex-token {
 .publish-alerts svg {
   margin-top: 1px;
   color: var(--text-muted);
+  transition:
+    color var(--transition-fast),
+    transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .publish-alerts span {
@@ -13162,7 +13387,27 @@ div.editor-latex-token {
   .quiz-builder input,
   .quiz-builder textarea,
   .quiz-builder select,
-  .quiz-text-answer input {
-    transition: none;
+  .quiz-text-answer input,
+  .publish-preset,
+  .publish-back,
+  .publish-studio,
+  .publish-submit,
+  .publish-restored,
+  .publish-restored button,
+  .publish-dropzone,
+  .publish-attach-btn,
+  .publish-attachments li,
+  .publish-attachments li > button,
+  .publish-alerts > label,
+  .editor-tabs button,
+  .editor-preview-toggle,
+  .editor-slash-menu,
+  .editor-slash-menu button,
+  .multimodal-editor .rich-editor-preview,
+  .editor-modal-backdrop,
+  .publish-autosave svg {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

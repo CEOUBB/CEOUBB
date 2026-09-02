@@ -127,13 +127,14 @@ function PresetStage({
         dentro.
       </p>
       <div className="publish-preset-grid">
-        {CONTENT_TYPES.map((option) => {
+        {CONTENT_TYPES.map((option, index) => {
           const OptionIcon = CONTENT_ICONS[option.value];
           return (
             <button
               className="publish-preset"
               key={option.value}
               onClick={() => onChoose(option.value)}
+              style={{ animationDelay: `${index * 35}ms` }}
               type="button"
             >
               <span className="publish-preset-icon">
@@ -163,7 +164,10 @@ function AlertField({
     <fieldset className="publish-alerts">
       <legend>Alertas al curso</legend>
       {NOTIFICATION_MODES.map((option) => (
-        <label key={option.value}>
+        <label
+          data-checked={notificationMode === option.value ? "true" : "false"}
+          key={option.value}
+        >
           <input
             aria-describedby={`notification-${option.value}-hint`}
             checked={notificationMode === option.value}
@@ -541,6 +545,7 @@ export function PublishView({
           aria-label="Estado del borrador"
           aria-live="polite"
           className="publish-autosave"
+          data-draft-state={draftState}
           role="status"
         >
           {draftState === "saved" && savedLabel ? (

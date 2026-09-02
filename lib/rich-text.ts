@@ -65,6 +65,7 @@ export type RichInline =
   | { type: "link"; href: string | null; content: RichInline[] };
 
 export type TableAlignment = "left" | "center" | "right" | null;
+export type TextAlignment = "left" | "center" | "right" | "justify";
 
 export type RichTableBlock = {
   type: "table";
@@ -74,9 +75,9 @@ export type RichTableBlock = {
 };
 
 export type RichBlock =
-  | { type: "paragraph"; content: RichInline[] }
+  | { type: "paragraph"; content: RichInline[]; align?: TextAlignment }
   | { type: "quote"; content: RichInline[] }
-  | { type: "heading"; level: number; content: RichInline[] }
+  | { type: "heading"; level: number; content: RichInline[]; align?: TextAlignment }
   | { type: "list"; ordered: boolean; items: RichInline[][] }
   | { type: "code"; language: CodeLanguage; value: string }
   | { type: "math"; display: true; value: string }
@@ -539,6 +540,14 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
   return nodes;
 }
 
+function isAlignedTag(line: string) {
+  const trimmed = line.trim();
+  if (/^<center\b/i.test(trimmed)) return true;
+  return /^<(?:p|div|h[1-6])\b(?=[^>]*(?:align\s*=\s*["']?(?:center|right|justify|left)|text-align\s*:\s*(?:center|right|justify|left)))/i.test(
+    trimmed
+  );
+}
+
 function startsBlock(line: string) {
   const trimmed = line.trim();
   return (
@@ -548,7 +557,8 @@ function startsBlock(line: string) {
     /^(?:[-+*]|\d+\.)\s+/.test(trimmed) ||
     isDividerLine(trimmed) ||
     trimmed === "$$" ||
-    trimmed === "\\["
+    trimmed === "\\[" ||
+    isAlignedTag(trimmed)
   );
 }
 
@@ -624,6 +634,77 @@ function sameLineDisplayMath(line: string) {
   if (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length > 4)
     return trimmed.slice(2, -2).trim();
   return null;
+}
+
+function parseAlignedBlock(
+  lines: string[],
+  cursor: number
+): { block: RichBlock; nextCursor: number } | null {
+  const line = lines[cursor];
+  const trimmed = line.trim();
+  const openMatch = trimmed.match(/^<(p|div|h[1-6]|center)\b([^>]*)>([\s\S]*)$/i);
+  if (!openMatch) return null;
+
+  const tag = openMatch[1].toLowerCase();
+  const attributes = openMatch[2];
+  const restOfLine = openMatch[3];
+
+  let alignment: TextAlignment | null = null;
+  if (tag === "center") {
+    alignment = "center";
+  } else {
+    const styleMatch = attributes.match(/text-align\s*:\s*(center|right|justify|left)/i);
+    const alignMatch = attributes.match(/align\s*=\s*["']?(center|right|justify|left)["']?/i);
+    if (styleMatch) alignment = styleMatch[1].toLowerCase() as TextAlignment;
+    else if (alignMatch) alignment = alignMatch[1].toLowerCase() as TextAlignment;
+  }
+
+  if (!alignment) return null;
+
+  const closePattern = new RegExp(`</${tag}\\s*>`, "i");
+  const closeMatch = restOfLine.match(closePattern);
+
+  if (closeMatch && closeMatch.index !== undefined) {
+    const inner = restOfLine.slice(0, closeMatch.index);
+    const cleaned = inner
+      .replaceAll(/&nbsp;/gi, " ")
+      .replace(/^<p\b[^>]*>/i, "")
+      .replace(/<\/p\s*>$/i, "")
+      .replaceAll(/<br\s*\/?>/gi, "\n")
+      .trim();
+    const content = parseRichInline(cleaned);
+    const block: RichBlock = tag.startsWith("h")
+      ? { type: "heading", level: parseInt(tag[1], 10) || 1, align: alignment, content }
+      : { type: "paragraph", align: alignment, content };
+    return { block, nextCursor: cursor + 1 };
+  }
+
+  const collected: string[] = [restOfLine];
+  let next = cursor + 1;
+  while (next < lines.length) {
+    const currentLine = lines[next];
+    const match = currentLine.match(closePattern);
+    if (match && match.index !== undefined) {
+      collected.push(currentLine.slice(0, match.index));
+      next += 1;
+      break;
+    }
+    collected.push(currentLine);
+    next += 1;
+  }
+
+  const inner = collected
+    .join("\n")
+    .replaceAll(/&nbsp;/gi, " ")
+    .replace(/^<p\b[^>]*>/i, "")
+    .replace(/<\/p\s*>$/i, "")
+    .replaceAll(/<br\s*\/?>/gi, "\n")
+    .trim();
+  const content = parseRichInline(inner);
+  const block: RichBlock = tag.startsWith("h")
+    ? { type: "heading", level: parseInt(tag[1], 10) || 1, align: alignment, content }
+    : { type: "paragraph", align: alignment, content };
+  return { block, nextCursor: next };
 }
 
 export function parseRichText(value: string): RichBlock[] {
@@ -735,6 +816,13 @@ export function parseRichText(value: string): RichBlock[] {
         cursor += 1;
       }
       blocks.push({ type: "list", ordered, items });
+      continue;
+    }
+
+    const aligned = parseAlignedBlock(lines, cursor);
+    if (aligned) {
+      blocks.push(aligned.block);
+      cursor = aligned.nextCursor;
       continue;
     }
 

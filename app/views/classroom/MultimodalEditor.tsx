@@ -432,6 +432,8 @@ function EditorToolbar({
   activeTools: Set<string>;
   onApply: (action: ToolAction) => void;
 }) {
+  const [pressingTool, setPressingTool] = useState<string | null>(null);
+
   return (
     <div
       aria-label="Formato de texto"
@@ -442,15 +444,20 @@ function EditorToolbar({
       {visualTools.map((tool, index) => {
         const ToolIcon = tool.icon;
         const startsGroup = index > 0 && visualTools[index - 1].group !== tool.group;
+        const isSelected = tool.pressed ? activeTools.has(tool.action) : false;
         return (
           <Fragment key={tool.action}>
             {startsGroup && <span aria-hidden="true" className="editor-toolbar-rule" />}
             <button
               aria-label={tool.label}
-              aria-pressed={tool.pressed ? activeTools.has(tool.action) : undefined}
+              aria-pressed={tool.pressed ? isSelected : undefined}
+              className={pressingTool === tool.action ? "is-pressing" : undefined}
               data-editor-tool={tool.action}
               onClick={() => onApply(tool.action)}
               onMouseDown={(event) => event.preventDefault()}
+              onPointerDown={() => setPressingTool(tool.action)}
+              onPointerLeave={() => setPressingTool(null)}
+              onPointerUp={() => setPressingTool(null)}
               tabIndex={index === 0 ? 0 : -1}
               title={tool.label}
               type="button"
@@ -1119,6 +1126,7 @@ function useMultimodalEditorController({
   const pendingVisualHtmlRef = useRef(htmlDraft);
   const visualOriginHtmlRef = useRef(htmlDraft);
   const visualDirtyRef = useRef(false);
+  const savedSelectionRef = useRef<Range | null>(null);
   const [announcement, setAnnouncement] = useState("");
   /*
     Un aviso que sólo vive en la región `aria-live` deja al docente vidente sin
@@ -1169,22 +1177,68 @@ function useMultimodalEditorController({
     renderVisual(pendingVisualHtmlRef.current);
   }, [mode]);
 
+  const checkActiveTools = useCallback(() => {
+    const editor = visualRef.current;
+    if (!editor || !selectionInside(editor)) return new Set<string>();
+    const active = new Set<string>();
+    const commands = [
+      "bold",
+      "italic",
+      "underline",
+      "justifyLeft",
+      "justifyCenter",
+      "justifyRight",
+      "insertUnorderedList",
+      "insertOrderedList",
+    ];
+    for (const command of commands) {
+      try {
+        if (document.queryCommandState(command)) active.add(command);
+      } catch {
+        // Ignorar si el comando no es soportado por el navegador en la selección actual
+      }
+    }
+    try {
+      const block = String(document.queryCommandValue("formatBlock") ?? "").toLowerCase();
+      if (block === "h1") active.add("heading1");
+      else if (block === "h2") active.add("heading2");
+      else if (block === "h3") active.add("heading3");
+      else if (block === "blockquote") active.add("quote");
+    } catch {
+      // Ignorar si formatBlock no está soportado o no es consultable en este contexto
+    }
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      let node: globalThis.Node | null = selection.getRangeAt(0).startContainer;
+      while (node && node !== editor) {
+        if (node instanceof HTMLElement) {
+          if (node.tagName === "BLOCKQUOTE") active.add("quote");
+          if (node.tagName === "ASIDE") {
+            const callout = node.getAttribute("data-callout");
+            if (callout === "assessment") active.add("warning");
+            else active.add("callout");
+          }
+        }
+        node = node.parentNode;
+      }
+    }
+
+    return active;
+  }, []);
+
   useEffect(() => {
     if (mode !== "visual") return;
     const refresh = () => {
       const editor = visualRef.current;
-      if (!editor || !selectionInside(editor)) return setActiveTools(new Set());
-      setActiveTools(
-        new Set(
-          ["bold", "italic", "underline", "justifyLeft", "justifyCenter", "justifyRight"].filter(
-            (command) => document.queryCommandState(command)
-          )
-        )
-      );
+      if (!editor) return setActiveTools(new Set());
+      const range = selectionInside(editor);
+      if (range) savedSelectionRef.current = range.cloneRange();
+      setActiveTools(checkActiveTools());
     };
     document.addEventListener("selectionchange", refresh);
     return () => document.removeEventListener("selectionchange", refresh);
-  }, [mode]);
+  }, [checkActiveTools, mode]);
 
   /*
     El menú se ancla al cursor, no al lienzo: en un documento largo el docente
@@ -1505,6 +1559,16 @@ function useMultimodalEditorController({
     const editor = visualRef.current;
     if (!editor) return;
     editor.focus();
+
+    const selection = window.getSelection();
+    if (
+      savedSelectionRef.current &&
+      (!selection || selection.rangeCount === 0 || !editor.contains(selection.anchorNode))
+    ) {
+      selection?.removeAllRanges();
+      selection?.addRange(savedSelectionRef.current);
+    }
+
     const blockTag = blockTagForAction[action];
     if (blockTag) document.execCommand("formatBlock", false, blockTag);
     else if (action === "callout") insertCallout("notice");
@@ -1512,6 +1576,7 @@ function useMultimodalEditorController({
     else if (action === "divider") insertDivider();
     else document.execCommand(action, false);
     syncVisual();
+    setActiveTools(checkActiveTools());
   };
 
   const handleVisualKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

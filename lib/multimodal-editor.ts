@@ -166,9 +166,14 @@ function renderInline(nodes: RichInline[]): string {
 }
 
 function renderBlock(block: RichBlock): string {
-  if (block.type === "paragraph") return `<p>${renderInline(block.content)}</p>`;
-  if (block.type === "heading")
-    return `<h${block.level}>${renderInline(block.content)}</h${block.level}>`;
+  if (block.type === "paragraph") {
+    const alignAttr = block.align ? ` style="text-align: ${block.align};"` : "";
+    return `<p${alignAttr}>${renderInline(block.content)}</p>`;
+  }
+  if (block.type === "heading") {
+    const alignAttr = block.align ? ` style="text-align: ${block.align};"` : "";
+    return `<h${block.level}${alignAttr}>${renderInline(block.content)}</h${block.level}>`;
+  }
   if (block.type === "divider") return "<hr>";
   if (block.type === "quote") {
     const callout = calloutFromQuote(inlineToPlainText(block.content));
@@ -382,6 +387,9 @@ export function htmlToAcademicMarkdown(value: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  for (const { token, value: raw } of tokens) markdown = markdown.replaceAll(token, raw);
+  for (const { token, value: raw } of tokens) {
+    const cleanRaw = raw.replaceAll(/&nbsp;/gi, " ");
+    markdown = markdown.replaceAll(token, cleanRaw);
+  }
   return markdown;
 }
