@@ -698,11 +698,11 @@ function CodeModal({
         tabIndex={-1}
         type="button"
       />
-      <div
+      <dialog
         aria-labelledby="code-modal-title"
         aria-modal="true"
         className="editor-modal-card"
-        role="dialog"
+        open
       >
         <div className="editor-modal-head">
           <h3 id="code-modal-title">Insertar bloque de código</h3>
@@ -754,7 +754,7 @@ function CodeModal({
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
@@ -799,11 +799,11 @@ function FormulaModal({
         tabIndex={-1}
         type="button"
       />
-      <div
+      <dialog
         aria-labelledby="formula-modal-title"
         aria-modal="true"
         className="editor-modal-card"
-        role="dialog"
+        open
       >
         <div className="editor-modal-head">
           <h3 id="formula-modal-title">Insertar fórmula matemática</h3>
@@ -865,7 +865,7 @@ function FormulaModal({
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
@@ -915,11 +915,11 @@ function LinkModal({
         tabIndex={-1}
         type="button"
       />
-      <div
+      <dialog
         aria-labelledby="link-modal-title"
         aria-modal="true"
         className="editor-modal-card"
-        role="dialog"
+        open
       >
         <div className="editor-modal-head">
           <h3 id="link-modal-title">Insertar enlace</h3>
@@ -974,7 +974,7 @@ function LinkModal({
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
@@ -1015,11 +1015,11 @@ function TableModal({
         tabIndex={-1}
         type="button"
       />
-      <div
+      <dialog
         aria-labelledby="table-modal-title"
         aria-modal="true"
         className="editor-modal-card"
-        role="dialog"
+        open
       >
         <div className="editor-modal-head">
           <h3 id="table-modal-title">Insertar tabla</h3>
@@ -1087,7 +1087,7 @@ function TableModal({
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
