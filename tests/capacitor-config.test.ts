@@ -146,3 +146,13 @@ test("the iOS target exists as a versioned scaffold", async () => {
     "the Podfile must be versioned even though pods are never installed on Windows"
   );
 });
+
+// REQ-CAP-13
+test("REQ-CAP-13: Invariante de biblioteca única: android/app/src/main/assets/www no debe existir", async () => {
+  assert.equal(
+    await exists("../android/app/src/main/assets/www"),
+    false,
+    "El directorio duplicado android/app/src/main/assets/www no debe existir. La biblioteca reside únicamente en public/biblioteca/."
+  );
+});
+
