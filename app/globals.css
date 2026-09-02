@@ -5012,6 +5012,7 @@ div.editor-latex-token {
 .publish-inspector {
   position: sticky;
   top: calc(var(--header-offset) + 20px);
+  margin-top: 48px;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -5305,6 +5306,7 @@ div.editor-latex-token {
 
   .publish-inspector {
     position: static;
+    margin-top: 0;
   }
 }
 
