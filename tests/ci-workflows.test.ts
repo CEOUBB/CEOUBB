@@ -505,15 +505,15 @@ test("REQ-CICD-10: Workflows with concurrency do not cancel in progress on main 
     ".github/workflows/android-ci.yml",
     ".github/workflows/bundle-analysis.yml",
     ".github/workflows/semgrep.yml",
-    ".github/workflows/react-doctor.yml"
+    ".github/workflows/react-doctor.yml",
   ];
 
   for (const workflowPath of workflowsWithConcurrency) {
     const content = await readText(workflowPath);
     assert.ok(
-      !content.includes("cancel-in-progress: true\n") && !content.includes("cancel-in-progress: true\r\n"),
+      !content.includes("cancel-in-progress: true\n") &&
+        !content.includes("cancel-in-progress: true\r\n"),
       `${workflowPath} no debe declarar cancel-in-progress: true incondicional (cancela runs legítimos en main)`
     );
   }
 });
-

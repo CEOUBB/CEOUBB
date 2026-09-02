@@ -41,7 +41,9 @@ async function main() {
 
   if (isCheck) {
     if (!existsSync(SNAPSHOT_FILE)) {
-      console.error("[Test-Locking] ERROR: El archivo de sellado .agents/.test-hashes.json no existe. Se requiere autorización para regenerarlo.");
+      console.error(
+        "[Test-Locking] ERROR: El archivo de sellado .agents/.test-hashes.json no existe. Se requiere autorización para regenerarlo."
+      );
       process.exit(1);
     }
 
@@ -75,13 +77,17 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`[Test-Locking] Verificacion de integridad superada (${Object.keys(currentHashes).length} archivos validados con hash SHA-256).`);
+    console.log(
+      `[Test-Locking] Verificacion de integridad superada (${Object.keys(currentHashes).length} archivos validados con hash SHA-256).`
+    );
     return;
   }
 
   if (isGenerate) {
     await writeFile(SNAPSHOT_FILE, JSON.stringify(currentHashes, null, 2) + "\n", "utf8");
-    console.log(`[Test-Locking] Sellado SHA-256 generado para ${Object.keys(currentHashes).length} archivos en .agents/.test-hashes.json`);
+    console.log(
+      `[Test-Locking] Sellado SHA-256 generado para ${Object.keys(currentHashes).length} archivos en .agents/.test-hashes.json`
+    );
   }
 }
 

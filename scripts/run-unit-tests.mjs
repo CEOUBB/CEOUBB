@@ -9,9 +9,7 @@ async function discoverTestFiles() {
   return entries
     .filter(
       (entry) =>
-        entry.isFile() &&
-        entry.name.endsWith(".test.ts") &&
-        entry.name !== "rendered-html.test.mjs"
+        entry.isFile() && entry.name.endsWith(".test.ts") && entry.name !== "rendered-html.test.mjs"
     )
     .map((entry) => join("tests", entry.name).replaceAll("\\", "/"))
     .sort();
@@ -19,12 +17,7 @@ async function discoverTestFiles() {
 
 async function run() {
   const files = await discoverTestFiles();
-  const args = [
-    "--experimental-strip-types",
-    "--test",
-    "--test-concurrency=4",
-    ...files,
-  ];
+  const args = ["--experimental-strip-types", "--test", "--test-concurrency=4", ...files];
 
   const child = spawn("node", args, {
     stdio: "inherit",

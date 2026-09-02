@@ -3,7 +3,7 @@
 > **AUDIT RUNNER:** Antigravity Principal Platform Engineer & Lead Quality Architect  
 > **DISCIPLINE:** `/improve` (Read-only on source code) & `/unlazy tree 3`  
 > **TARGET REPO:** `CEOUBB` (`cl.ubb.centroestudio` / `centro-de-estudio-ubb`)  
-> **STATUS:** AUDIT COMPLETE — REMEDIATION PLANS 040–045 UPDATED & VERIFIED  
+> **STATUS:** AUDIT COMPLETE — REMEDIATION PLANS 040–045 UPDATED & VERIFIED
 
 ---
 

@@ -17,7 +17,8 @@ if (firstLine.startsWith("Merge ") || firstLine.startsWith("Revert ")) {
   process.exit(0);
 }
 
-const CONVENTIONAL_REGEX = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9-_./]+\))?!?: .+/;
+const CONVENTIONAL_REGEX =
+  /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9-_./]+\))?!?: .+/;
 
 if (!CONVENTIONAL_REGEX.test(firstLine)) {
   console.error("\n[Commit-Msg] ERROR: El mensaje de commit debe seguir Conventional Commits:");

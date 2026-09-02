@@ -66,7 +66,14 @@ const settle = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
 
 function BrandMark({ brand }: { brand: Brand }) {
   const IconComponent = BRAND_ICONS[brand] || Sparkle;
-  return <IconComponent aria-hidden="true" className="brand-mark text-brand-blue" size={24} weight="duotone" />;
+  return (
+    <IconComponent
+      aria-hidden="true"
+      className="brand-mark text-brand-blue"
+      size={24}
+      weight="duotone"
+    />
+  );
 }
 
 /* Marca de la fila: vector propio, imagen de la marca o el escudo UBB para los

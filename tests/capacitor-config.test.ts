@@ -155,4 +155,3 @@ test("REQ-CAP-13: Invariante de biblioteca única: android/app/src/main/assets/w
     "El directorio duplicado android/app/src/main/assets/www no debe existir. La biblioteca reside únicamente en public/biblioteca/."
   );
 });
-

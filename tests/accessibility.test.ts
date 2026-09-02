@@ -202,7 +202,16 @@ test("REQ-A11Y-04: Tokens OKLCH cumplen ratios WCAG 2.2 AA (>= 4.5:1 texto, >= 3
   const textSecondaryLum = oklchToLuminance(0.36, 0.03, 255);
   const brandBlueLum = oklchToLuminance(0.48, 0.18, 255);
 
-  assert.ok(contrastRatio(surfaceBaseLum, textPrimaryLum) >= 4.5, "Texto primario debe ser >= 4.5:1");
-  assert.ok(contrastRatio(surfaceBaseLum, textSecondaryLum) >= 4.5, "Texto secundario debe ser >= 4.5:1");
-  assert.ok(contrastRatio(surfaceBaseLum, brandBlueLum) >= 3.0, "Brand blue en superficie debe ser >= 3.0:1");
+  assert.ok(
+    contrastRatio(surfaceBaseLum, textPrimaryLum) >= 4.5,
+    "Texto primario debe ser >= 4.5:1"
+  );
+  assert.ok(
+    contrastRatio(surfaceBaseLum, textSecondaryLum) >= 4.5,
+    "Texto secundario debe ser >= 4.5:1"
+  );
+  assert.ok(
+    contrastRatio(surfaceBaseLum, brandBlueLum) >= 3.0,
+    "Brand blue en superficie debe ser >= 3.0:1"
+  );
 });

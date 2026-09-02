@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GoogleGenAI, Type, type FunctionDeclaration, type Content, type Part } from "@google/genai";
+import {
+  GoogleGenAI,
+  Type,
+  type FunctionDeclaration,
+  type Content,
+  type Part,
+} from "@google/genai";
 import { fetchDiscordChannelHistory } from "./messages.ts";
 import { fetchLatestCIDiagnostics } from "./diagnostics.ts";
 import { getGeminiApiKey, MODEL_FALLBACK_LIST } from "../services/gemini.ts";
