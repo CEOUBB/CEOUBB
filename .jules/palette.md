@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / ProgressBar
+
+- **Finding:** The reusable `Bar` component in `app/views/classroom/ProgressBar.tsx` rendered a visual progress bar element without programmatic ARIA roles or range values, leaving screen reader users without feedback on course completion percentage (WCAG 2.2 SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added `role="progressbar"`, `aria-label="Progreso de avance"`, `aria-valuenow={percentage}`, `aria-valuemin={0}`, and `aria-valuemax={100}` attributes to the `<m.span>` element.
+- **Design System Constraint:** Utilized existing Framer Motion animation properties and `safeRatio` calculation without changing CSS or component interface.
+- **Future Rule:** Ensure reusable visual progress elements always include `role="progressbar"` with calculated `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` attributes for screen readers.
+
 ## [2026-03-31] - Classroom / QuizzesSection
 
 - **Finding:** SVG icon status badges (`CheckCircle` and `XCircle`) using `aria-label` lacked explicit `role="img"`, while quiz attempt progress containers lacked `role="progressbar"` and numeric range attributes (`aria-valuenow`, `aria-valuemin`, `aria-valuemax`), limiting screen reader accessibility (WCAG 2.2 SC 4.1.2 Name, Role, Value).
