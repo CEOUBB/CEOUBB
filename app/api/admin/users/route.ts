@@ -31,6 +31,11 @@ const consultaUsuariosSchema = z.object({
     .transform((valor) => (valor ?? "").trim().slice(0, 100)),
 });
 
+const actualizarUsuarioSchema = z.object({
+  userId: z.string().trim().min(1, "Datos inválidos.").max(255, "Datos inválidos."),
+  role: z.enum(["teacher", "student"]),
+});
+
 // Implements: REQ-PERF-03, REQ-PERF-04, REQ-SEC-06, REQ-API-02
 export async function GET(request: Request) {
   const actor = await getSessionUser(request);
@@ -103,20 +108,19 @@ export async function PATCH(request: Request) {
     } catch {
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
     }
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      typeof payload.userId !== "string" ||
-      !payload.userId.trim() ||
-      typeof payload.role !== "string" ||
-      !["teacher", "student"].includes(payload.role)
-    )
+
+    if (!payload || typeof payload !== "object" || typeof payload.userId !== "string") {
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
+    }
 
-    const userId = payload.userId.trim();
-    const role = payload.role as "teacher" | "student";
+    const parsed = actualizarUsuarioSchema.safeParse(payload);
+    if (!parsed.success) {
+      return Response.json({ error: "Datos inválidos." }, { status: 400 });
+    }
 
-    if (userId === actor.id || payload.userId === actor.id)
+    const { userId, role } = parsed.data;
+
+    if (userId === actor.id)
       return Response.json(
         { error: "La cuenta propietaria no puede degradarse." },
         { status: 400 }

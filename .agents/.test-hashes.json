@@ -4,7 +4,7 @@
   "tests/academic-model.test.ts": "233bbab5eeb9b2257a7df3bfabe2ae81cbbfd61b4fe0d3933af7bddd604aa3fc",
   "tests/access-policy.test.ts": "63d48f22736dbd3bea0412822529e94344f129aedacc2e0fcca2aa288d2511cc",
   "tests/accessibility.test.ts": "780342d58a010284c5492b8c04ce08f3c320efa7ebe85e85e64a32c2d058a478",
-  "tests/admin-api.test.ts": "fe23223c575f438348d5e53037930fdd48beb0103642ee122d5c5e6e852ad62f",
+  "tests/admin-api.test.ts": "5f100ba487e4b6d3d0ae53269dce71dd245b1f71854959dfdc186d87ce9b5ab9",
   "tests/app-check.test.ts": "0ff79e2dee47a9da433d410531d192de2aadd877c3c7a33865c7eecd1a8ddf89",
   "tests/assistant-role.test.ts": "9f26bbde5a532f7a84c603102c9f909f2470b7d0bb589470c0593007502166df",
   "tests/backend-remediation.test.ts": "0724547abd4343a79700850aff557f525d78b87916cda07151eeb234022aa4ac",
