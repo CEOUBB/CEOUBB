@@ -15,7 +15,6 @@ import {
   BellRinging,
   BellSlash,
   BookOpen,
-  CalendarBlank,
   CheckCircle,
   ClipboardText,
   FileDoc,
@@ -38,7 +37,7 @@ import {
   uploadPostAttachment,
   type ClassroomAttachment,
 } from "../../../lib/firebase-classroom-client";
-import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses";
+import type { Course } from "../../../lib/courses";
 import { formatBytes } from "../../../lib/portal-utils";
 import { hapticTap } from "../../../lib/mobile-bridge";
 import {
@@ -146,75 +145,6 @@ function PresetStage({
           );
         })}
       </div>
-    </section>
-  );
-}
-
-/*
-  Destino y plazos de la publicación. Sin estos campos la portada ordena todo
-  en la carpeta por omisión y un certamen se publica sin fecha de entrega.
-*/
-// Implements: REQ-PUB-03
-function MetadataField({
-  dueDate,
-  folder,
-  folders,
-  linkUrl,
-  onDueDateChange,
-  onFolderChange,
-  onLinkUrlChange,
-}: {
-  dueDate: string;
-  folder: string;
-  folders: string[];
-  linkUrl: string;
-  onDueDateChange: (value: string) => void;
-  onFolderChange: (value: string) => void;
-  onLinkUrlChange: (value: string) => void;
-}) {
-  return (
-    <section>
-      <h2>
-        <CalendarBlank aria-hidden="true" size={17} />
-        Destino y fechas
-      </h2>
-      <label>
-        Carpeta del ramo
-        <select
-          name="folder"
-          onChange={(event) => onFolderChange(event.target.value)}
-          value={folder}
-        >
-          {folders.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Fecha de entrega
-        <input
-          name="dueDate"
-          onChange={(event) => onDueDateChange(event.target.value)}
-          type="date"
-          value={dueDate}
-        />
-      </label>
-      <label>
-        Enlace externo
-        <input
-          inputMode="url"
-          name="linkUrl"
-          onChange={(event) => onLinkUrlChange(event.target.value)}
-          placeholder="https://…"
-          type="url"
-          value={linkUrl}
-        />
-      </label>
-      <small className="publish-field-hint">
-        La carpeta ordena la publicación en la portada. La fecha y el enlace son opcionales.
-      </small>
     </section>
   );
 }
@@ -360,7 +290,7 @@ function AttachmentField({
   );
 }
 
-// Implements: REQ-PUB-01 REQ-PUB-03 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
+// Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
 export function PublishView({
   course,
   onClose,
@@ -392,9 +322,6 @@ export function PublishView({
   );
   const [title, setTitle] = useState(restoredDraft?.title ?? "");
   const [body, setBody] = useState(restoredDraft?.body ?? "");
-  const [folder, setFolder] = useState(restoredDraft?.folder || DEFAULT_FOLDER);
-  const [dueDate, setDueDate] = useState(restoredDraft?.dueDate ?? "");
-  const [linkUrl, setLinkUrl] = useState(restoredDraft?.linkUrl ?? "");
   const [notificationMode, setNotificationMode] = useState<NotificationMode>(
     restoredDraft?.notificationMode ?? "push"
   );
@@ -412,8 +339,6 @@ export function PublishView({
   const formRef = useRef<HTMLFormElement>(null);
   /* El primer pase del efecto es el montaje: no hay cambios que anunciar. */
   const settledRef = useRef(false);
-
-  const folders = useMemo(() => materialFolders(course), [course]);
 
   useEffect(() => {
     if (contentType !== null) titleRef.current?.focus();
@@ -448,9 +373,9 @@ export function PublishView({
         notificationMode,
         title,
         body,
-        folder,
-        dueDate,
-        linkUrl,
+        folder: "",
+        dueDate: "",
+        linkUrl: "",
         savedAt: stamp,
       });
       if (stored && hasContent) {
@@ -462,7 +387,7 @@ export function PublishView({
       }
     }, AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [body, contentType, course.id, dueDate, editorMode, folder, linkUrl, notificationMode, title]);
+  }, [body, contentType, course.id, editorMode, notificationMode, title]);
 
   const stats = useMemo(() => readingStats(body), [body]);
 
@@ -572,7 +497,7 @@ export function PublishView({
   return (
     <form
       className="publish-studio"
-      data-requirement="Implements: REQ-PUB-01 REQ-PUB-03 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11"
+      data-requirement="Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11"
       onSubmit={submit}
       ref={formRef}
     >
@@ -583,12 +508,18 @@ export function PublishView({
           createPublicationDraft({
             contentType,
             editorMode,
-            folder,
+            folder: "",
             notificationMode,
           }).kind
         }
       />
       <input name="editorMode" type="hidden" value={editorMode} />
+      {/* Carpeta, fecha de entrega y enlace externo no se exponen en el
+          inspector por decisión de producto: viajan vacíos para conservar el
+          contrato del formulario que lee `publish`. */}
+      <input name="folder" type="hidden" value="" />
+      <input name="dueDate" type="hidden" value="" />
+      <input name="linkUrl" type="hidden" value="" />
 
       <header className="publish-bar">
         <button
@@ -690,16 +621,6 @@ export function PublishView({
 
           <aside aria-label="Ajustes de la publicación" className="publish-inspector">
             <AlertField notificationMode={notificationMode} onChange={setNotificationMode} />
-
-            <MetadataField
-              dueDate={dueDate}
-              folder={folder}
-              folders={folders}
-              linkUrl={linkUrl}
-              onDueDateChange={setDueDate}
-              onFolderChange={setFolder}
-              onLinkUrlChange={setLinkUrl}
-            />
 
             <AttachmentField
               attachments={attachments}

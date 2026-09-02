@@ -3908,11 +3908,7 @@ img {
   padding: 4px 6px;
   border-bottom: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
-  /* Sin reflujo: la posicion de cada boton es memoria motriz del docente. Si
-     el panel se angosta la barra se desplaza, no se parte en dos filas. */
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
 }
 
 /* Separa los grupos de la barra sin gastar una etiqueta en cada uno. */
@@ -5048,9 +5044,15 @@ div.editor-latex-token {
   font-size: 13px;
 }
 
+/* La fila de modo del editor mide 40 px (pestanas de 32 px con 3 px de relleno
+   y 1 px de borde) y `.rich-editor` la separa del lienzo con 8 px. El inspector
+   baja ese mismo tramo para alinearse con la zona de edicion y no con las
+   pestanas. */
 .publish-inspector {
+  --publish-inspector-offset: 48px;
   position: sticky;
   top: calc(var(--header-offset) + 20px);
+  margin-top: var(--publish-inspector-offset);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -5093,12 +5095,6 @@ div.editor-latex-token {
   color: var(--text-faint);
   font-weight: 600;
   text-transform: none;
-}
-
-.publish-field-hint {
-  color: var(--text-faint);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 .publish-inspector label {
@@ -5325,6 +5321,7 @@ div.editor-latex-token {
 
   .publish-inspector {
     position: static;
+    margin-top: 0;
   }
 
   /* Bajo 1024px el estudio se opera con el pulgar: cada control llega a los
