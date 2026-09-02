@@ -214,7 +214,8 @@ test("new editor limit and traceability contract stay explicit", () => {
 });
 
 test("parseRichText reconoce etiquetas semánticas y Markdown (del, mark, sub, sup, strikethrough)", () => {
-  const source = "Texto ~~tachado~~ y <del>borrado</del> con <mark>resaltado</mark>, H<sub>2</sub>O y x<sup>2</sup>.";
+  const source =
+    "Texto ~~tachado~~ y <del>borrado</del> con <mark>resaltado</mark>, H<sub>2</sub>O y x<sup>2</sup>.";
   const blocks = parseRichText(source);
   assert.equal(blocks.length, 1);
   assert.equal(blocks[0].type, "paragraph");

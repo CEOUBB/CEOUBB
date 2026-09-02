@@ -74,10 +74,7 @@ test("REQ-PUB-03/06 maps the wizard choices to a bounded publication draft", () 
     EDITOR_MODES.map(({ value }) => value),
     ["visual", "markdown", "html"]
   );
-  assert.equal(
-    EDITOR_MODES.find((mode) => mode.value === "html")?.label,
-    "Marcado HTML"
-  );
+  assert.equal(EDITOR_MODES.find((mode) => mode.value === "html")?.label, "Marcado HTML");
   assert.deepEqual(
     CONTENT_TYPES.map(({ value }) => value),
     ["notice", "assessment", "guide", "blank"]
