@@ -19,8 +19,6 @@ import {
   ClipboardText,
   CloudCheck,
   File as FileIcon,
-  FolderOpen,
-  LinkSimple,
   Megaphone,
   Paperclip,
   PencilSimpleLine,
@@ -227,13 +225,13 @@ function AttachmentField({
 // Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
 export function PublishView({
   course,
-  folders,
+  folders = [],
   onClose,
   publish,
   status,
 }: {
   course: Course;
-  folders: string[];
+  folders?: string[];
   onClose: () => void;
   publish: (
     event: FormEvent<HTMLFormElement>,
@@ -241,8 +239,6 @@ export function PublishView({
   ) => Promise<boolean>;
   status: Note;
 }) {
-  const defaultFolder = folders[0] ?? "";
-
   /*
     Un borrador a medio escribir vale más que la elección de plantilla: si el
     docente vuelve, retomamos su texto y saltamos directo al lienzo. La lectura
@@ -258,9 +254,6 @@ export function PublishView({
   );
   const [title, setTitle] = useState(restoredDraft?.title ?? "");
   const [body, setBody] = useState(restoredDraft?.body ?? "");
-  const [folder, setFolder] = useState(restoredDraft?.folder || defaultFolder);
-  const [dueDate, setDueDate] = useState(restoredDraft?.dueDate ?? "");
-  const [linkUrl, setLinkUrl] = useState(restoredDraft?.linkUrl ?? "");
   const [notificationMode, setNotificationMode] = useState<NotificationMode>(
     restoredDraft?.notificationMode ?? "push"
   );
@@ -287,15 +280,15 @@ export function PublishView({
         notificationMode,
         title,
         body,
-        folder,
-        dueDate,
-        linkUrl,
+        folder: "",
+        dueDate: "",
+        linkUrl: "",
         savedAt: stamp,
       });
       if (stored && (title.trim() || body.trim())) setSavedLabel(savedTimeLabel(stamp));
     }, AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [body, contentType, course.id, dueDate, editorMode, folder, linkUrl, notificationMode, title]);
+  }, [body, contentType, course.id, editorMode, notificationMode, title]);
 
   const stats = useMemo(() => readingStats(body), [body]);
 
@@ -383,12 +376,15 @@ export function PublishView({
           createPublicationDraft({
             contentType,
             editorMode,
-            folder,
+            folder: "",
             notificationMode,
           }).kind
         }
       />
       <input name="editorMode" type="hidden" value={editorMode} />
+      <input name="folder" type="hidden" value="" />
+      <input name="dueDate" type="hidden" value="" />
+      <input name="linkUrl" type="hidden" value="" />
 
       <header className="publish-bar">
         <button
@@ -459,52 +455,10 @@ export function PublishView({
         </div>
 
         <aside aria-label="Detalles de la publicación" className="publish-inspector">
-          <section>
-            <h2>
-              <FolderOpen aria-hidden="true" size={17} />
-              Destino
-            </h2>
-            <label>
-              Carpeta del ramo
-              <select
-                name="folder"
-                onChange={(event) => setFolder(event.target.value)}
-                value={folder}
-              >
-                {folders.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Fecha de entrega opcional
-              <input
-                className="num"
-                name="dueDate"
-                onChange={(event) => setDueDate(event.target.value)}
-                type="datetime-local"
-                value={dueDate}
-              />
-            </label>
-          </section>
-
-          <section>
-            <h2>
-              <LinkSimple aria-hidden="true" size={17} />
-              Enlace externo
-            </h2>
-            <label>
-              Drive, video o sitio del recurso
-              <input
-                name="linkUrl"
-                onChange={(event) => setLinkUrl(event.target.value)}
-                placeholder="https://…"
-                type="url"
-                value={linkUrl}
-              />
-            </label>
+          <section className="publish-inspector-action">
+            <button className="publish-submit-inspector" disabled={saving} type="submit">
+              {saving ? "Publicando en el aula…" : "Publicar en el aula"}
+            </button>
           </section>
 
           <AttachmentField

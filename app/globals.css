@@ -187,10 +187,15 @@ html {
   scrollbar-gutter: stable;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   min-width: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--canvas-soft);
   color: var(--text-body);
   font-family: var(--font-core);
@@ -4747,6 +4752,9 @@ div.editor-latex-token {
 .classroom-layout-studio {
   max-width: none;
   padding: 0;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .publish-preset-stage {
@@ -4946,15 +4954,15 @@ div.editor-latex-token {
 
 .publish-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: var(--space-xl);
   align-items: start;
   width: 100%;
-  /* Redactar pide mas ancho que leer: el estudio no se acota al contenedor
-     del portal, se estira hasta donde la medida del texto sigue comoda. */
-  max-width: 1680px;
+  min-width: 0;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: var(--space-lg) var(--space-xxl) var(--space-4xl);
+  padding: var(--space-lg) var(--container-pad) var(--space-4xl);
+  box-sizing: border-box;
 }
 
 .publish-canvas {
@@ -5003,6 +5011,43 @@ div.editor-latex-token {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xl);
+}
+
+.publish-inspector-action {
+  display: flex;
+  flex-direction: column;
+}
+
+.publish-submit-inspector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary, white);
+  font-family: var(--font-core);
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition:
+    background-color 140ms ease,
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.publish-submit-inspector:hover:not(:disabled) {
+  background: var(--color-primary-active);
+  transform: translateY(-1px);
+}
+
+.publish-submit-inspector:disabled {
+  opacity: 0.62;
+  cursor: progress;
 }
 
 .publish-inspector section {
@@ -5245,7 +5290,7 @@ div.editor-latex-token {
   line-height: 1.4;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .publish-body {
     grid-template-columns: minmax(0, 1fr);
   }
