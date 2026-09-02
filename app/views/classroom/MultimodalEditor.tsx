@@ -358,11 +358,7 @@ function insertVisualNode(editor: HTMLElement, node: globalThis.Node) {
   if (lastInserted) placeCaretAfter(lastInserted);
 }
 
-function focusByArrow(
-  event: KeyboardEvent<HTMLElement>,
-  selector: string,
-  activate?: (element: HTMLElement) => void
-) {
+function focusByArrow(event: KeyboardEvent<HTMLElement>, selector: string) {
   if (!new Set(["ArrowLeft", "ArrowRight", "Home", "End"]).has(event.key)) return;
   const container = event.currentTarget;
   const items = Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
@@ -385,7 +381,6 @@ function focusByArrow(
     item.tabIndex = index === nextIndex ? 0 : -1;
   });
   items[nextIndex].focus();
-  activate?.(items[nextIndex]);
 }
 
 function EditorTabs({
@@ -400,14 +395,13 @@ function EditorTabs({
   panelId: string;
 }) {
   return (
+    /* Activación manual a propósito: recorrer las pestañas con las flechas sólo
+       mueve el foco. Cambiar de modo reescribe el documento y queda guardado
+       como preferencia, así que exige una elección explícita con Enter o clic. */
     <div
       aria-label="Modo de edición"
       className="editor-tabs"
-      onKeyDown={(event) =>
-        focusByArrow(event, '[role="tab"]', (element) =>
-          onModeChange(element.dataset.mode as EditorMode)
-        )
-      }
+      onKeyDown={(event) => focusByArrow(event, '[role="tab"]')}
       role="tablist"
       tabIndex={-1}
     >
@@ -1126,6 +1120,13 @@ function useMultimodalEditorController({
   const visualOriginHtmlRef = useRef(htmlDraft);
   const visualDirtyRef = useRef(false);
   const [announcement, setAnnouncement] = useState("");
+  /*
+    Un aviso que sólo vive en la región `aria-live` deja al docente vidente sin
+    respuesta: pulsa Publicar, no pasa nada y vuelve a pulsar. Este estado pinta
+    el mismo mensaje donde se ve.
+  */
+  // Implements: REQ-EDITOR-10
+  const [notice, setNotice] = useState<{ text: string; tone: "bad" | "info" } | null>(null);
   const [activeTools, setActiveTools] = useState<Set<string>>(() => new Set());
   const [slash, setSlash] = useState<SlashMenuState | null>(null);
   const [activeModal, setActiveModal] = useState<ActiveModal | null>(null);
@@ -1142,6 +1143,7 @@ function useMultimodalEditorController({
 
   const emit = (next: string) => {
     lastEmittedRef.current = next;
+    setNotice(null);
     onChange(next);
   };
 
@@ -1218,7 +1220,9 @@ function useMultimodalEditorController({
     const next = htmlToAcademicMarkdown(editor.innerHTML);
     if (next.length > maxLength) {
       renderVisual(markdownToEditorHtml(value));
-      setAnnouncement(`Se alcanzó el máximo de ${maxLength.toLocaleString("es-CL")} caracteres.`);
+      const reached = `Se alcanzó el máximo de ${maxLength.toLocaleString("es-CL")} caracteres.`;
+      setAnnouncement(reached);
+      setNotice({ text: reached, tone: "bad" });
       return;
     }
     visualDirtyRef.current = true;
@@ -1243,6 +1247,20 @@ function useMultimodalEditorController({
       pendingVisualHtmlRef.current = nextHtml;
       visualOriginHtmlRef.current = nextHtml;
       visualDirtyRef.current = false;
+    }
+    /*
+      El documento se guarda en un solo formato. Salir de HTML no conserva el
+      marcado tal cual se escribió, así que se dice antes de que el docente lo
+      descubra por su cuenta al volver.
+    */
+    // Implements: REQ-EDITOR-10
+    if (mode === "html" && htmlDraft.trim()) {
+      setNotice({
+        text: "Tu HTML se guarda en el formato del portal. El marcado que el portal no reconoce no se conserva.",
+        tone: "info",
+      });
+    } else {
+      setNotice(null);
     }
     setMode(nextMode);
     onModeChange?.(nextMode);
@@ -1692,9 +1710,12 @@ function useMultimodalEditorController({
     emit(htmlToAcademicMarkdown(nextHtml));
   };
 
+  // Implements: REQ-EDITOR-10
   const handleInvalid = (event: InvalidEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
-    setAnnouncement(`Completa el campo ${label}.`);
+    const missing = `Escribe el contenido de la publicación antes de publicar.`;
+    setAnnouncement(missing);
+    setNotice({ text: missing, tone: "bad" });
     if (mode === "visual") visualRef.current?.focus();
     else event.currentTarget.parentElement?.querySelector<HTMLElement>(".editor-source")?.focus();
   };
@@ -1724,6 +1745,7 @@ function useMultimodalEditorController({
     maxLength,
     mode,
     name,
+    notice,
     panelId,
     previewValue,
     required,
@@ -1780,13 +1802,17 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
         </span>
       </div>
 
+      {/* El panel no lleva `tabIndex`: ya contiene el lienzo o el área de
+          código, así que una parada muda antes de la superficie de escritura
+          sólo alarga el recorrido con teclado. */}
       <div
+        aria-invalid={editor.notice?.tone === "bad" ? true : undefined}
         aria-labelledby={`${editor.baseId}-${editor.mode}-tab`}
         className="multimodal-editor-workspace"
-        data-preview={editor.showPreview ? "on" : "off"}
+        data-invalid={editor.notice?.tone === "bad" ? "true" : undefined}
+        data-preview={editor.showPreview ? (editor.previewValue.trim() ? "on" : "empty") : "off"}
         id={editor.panelId}
         role="tabpanel"
-        tabIndex={0}
       >
         <EditorComposePane
           activeTools={editor.activeTools}
@@ -1823,6 +1849,11 @@ export function MultimodalEditor(props: MultimodalEditorProps) {
         tabIndex={-1}
         value={editor.draft}
       />
+      {editor.notice && (
+        <p className={`tool-status ${editor.notice.tone}`} role="alert">
+          {editor.notice.text}
+        </p>
+      )}
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {editor.announcement}
       </p>

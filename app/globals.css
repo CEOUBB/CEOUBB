@@ -3882,8 +3882,14 @@ img {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
-.multimodal-editor-workspace[data-preview="off"] {
+.multimodal-editor-workspace[data-preview="off"],
+.multimodal-editor-workspace[data-preview="empty"] {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.multimodal-editor-workspace[data-invalid="true"] {
+  border-color: var(--shield-red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shield-red) 22%, transparent);
 }
 
 .editor-compose-pane {
@@ -3902,7 +3908,11 @@ img {
   padding: 4px 6px;
   border-bottom: 1px solid var(--border-hairline);
   background: var(--canvas-soft);
-  flex-wrap: wrap;
+  /* Sin reflujo: la posicion de cada boton es memoria motriz del docente. Si
+     el panel se angosta la barra se desplaza, no se parte en dos filas. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 /* Separa los grupos de la barra sin gastar una etiqueta en cada uno. */
@@ -4328,14 +4338,21 @@ div.editor-latex-token {
 }
 
 @container (min-width: 720px) {
-  .multimodal-editor-workspace {
+  .multimodal-editor-workspace[data-preview="on"] {
     grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
   }
 
-  .multimodal-editor .rich-editor-preview {
+  .multimodal-editor-workspace[data-preview="on"] .rich-editor-preview {
     border-top: 0;
     border-left: 1px solid var(--border-hairline);
   }
+}
+
+/* Mientras no hay contenido la vista previa es una franja al pie, no una
+   columna con una sola frase dentro. */
+.multimodal-editor-workspace[data-preview="empty"] .rich-editor-preview {
+  min-height: 0;
+  padding: 12px 18px 14px;
 }
 
 /* Modales estilizados del editor multimodal */
@@ -4938,6 +4955,10 @@ div.editor-latex-token {
   cursor: progress;
 }
 
+.publish-status {
+  margin: var(--space-md) var(--container-pad) 0;
+}
+
 .publish-restored {
   display: flex;
   align-items: center;
@@ -4951,8 +4972,23 @@ div.editor-latex-token {
   font-size: 14px;
 }
 
-.publish-restored svg {
+.publish-restored > svg {
   color: var(--academic-teal);
+}
+
+.publish-restored button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.publish-restored button:hover {
+  color: var(--text-body);
 }
 
 .publish-body {
@@ -5015,7 +5051,6 @@ div.editor-latex-token {
 .publish-inspector {
   position: sticky;
   top: calc(var(--header-offset) + 20px);
-  margin-top: 48px;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -5023,43 +5058,6 @@ div.editor-latex-token {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xl);
-}
-
-.publish-inspector-action {
-  display: flex;
-  flex-direction: column;
-}
-
-.publish-submit-inspector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 18px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: var(--color-on-primary, white);
-  font-family: var(--font-core);
-  font-size: 15px;
-  font-weight: 650;
-  cursor: pointer;
-  box-shadow: var(--shadow-1);
-  transition:
-    background-color 140ms ease,
-    opacity 140ms ease,
-    transform 140ms ease;
-}
-
-.publish-submit-inspector:hover:not(:disabled) {
-  background: var(--color-primary-active);
-  transform: translateY(-1px);
-}
-
-.publish-submit-inspector:disabled {
-  opacity: 0.62;
-  cursor: progress;
 }
 
 .publish-inspector section {
@@ -5088,6 +5086,19 @@ div.editor-latex-token {
 
 .publish-inspector h2 svg {
   color: var(--text-faint);
+}
+
+.publish-inspector h2 small {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.publish-field-hint {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .publish-inspector label {
@@ -5165,8 +5176,13 @@ div.editor-latex-token {
   transition: background var(--transition-fast);
 }
 
-.publish-attach-btn:hover {
+.publish-attach-btn:hover:not(:disabled) {
   background: var(--canvas-soft);
+}
+
+.publish-attach-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .publish-attachments {
@@ -5309,7 +5325,23 @@ div.editor-latex-token {
 
   .publish-inspector {
     position: static;
-    margin-top: 0;
+  }
+
+  /* Bajo 1024px el estudio se opera con el pulgar: cada control llega a los
+     44 px que exige REQ-PUB-08, no solo los de la barra. */
+  .editor-toolbar button,
+  .publish-attachments li > button,
+  .publish-restored button {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .editor-tabs button,
+  .editor-preview-toggle,
+  .publish-back,
+  .publish-attach-btn {
+    min-height: 44px;
   }
 }
 

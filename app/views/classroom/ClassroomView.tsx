@@ -93,6 +93,7 @@ export function ClassroomView({
           onClose={() => setComposing(false)}
           publish={publish}
           status={status}
+          studentTotal={students.length}
         />
       </div>
     );
