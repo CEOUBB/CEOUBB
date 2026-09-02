@@ -341,20 +341,20 @@ function convertHtmlFragment(value: string) {
     (whole, attributes, body) => {
       const footnote = attributeValue(attributes, "data-footnote");
       if (footnote) {
-        const cleanBody = body.replace(/<span\b[^>]*class=["']footnote-id["'][^>]*>.*?<\/span>/gi, "");
+        const cleanBody = body.replace(
+          /<span\b[^>]*class=["']footnote-id["'][^>]*>.*?<\/span>/gi,
+          ""
+        );
         return `\n\n[^${footnote}]: ${convertHtmlFragment(cleanBody).trim()}\n\n`;
       }
       return whole;
     }
   );
-  converted = converted.replace(
-    /<sup\b([^>]*)>([\s\S]*?)<\/sup\s*>/gi,
-    (whole, attributes) => {
-      const footnote = attributeValue(attributes, "data-footnote");
-      if (footnote) return `[^${footnote}]`;
-      return whole;
-    }
-  );
+  converted = converted.replace(/<sup\b([^>]*)>([\s\S]*?)<\/sup\s*>/gi, (whole, attributes) => {
+    const footnote = attributeValue(attributes, "data-footnote");
+    if (footnote) return `[^${footnote}]`;
+    return whole;
+  });
 
   converted = converted.replace(
     /<div\b([^>]*)data-latex\s*=\s*["']display["']([^>]*)>([\s\S]*?)<\/div\s*>/gi,
@@ -440,9 +440,11 @@ function convertHtmlFragment(value: string) {
       const align = styleMatch
         ? styleMatch[1].toLowerCase()
         : alignMatch
-        ? alignMatch[1].toLowerCase()
-        : null;
-      const marginMatch = attributes.match(/(?:margin-left|padding-left)\s*:\s*(\d+(?:px|rem|em))/i);
+          ? alignMatch[1].toLowerCase()
+          : null;
+      const marginMatch = attributes.match(
+        /(?:margin-left|padding-left)\s*:\s*(\d+(?:px|rem|em))/i
+      );
       const content = convertHtmlFragment(body).trim();
       if (!content) return "";
       const styles: string[] = [];

@@ -294,6 +294,87 @@ function AttachmentField({
   );
 }
 
+function PublishBar({
+  courseName,
+  contentType,
+  draftState,
+  savedLabel,
+  saving,
+  submitLabel,
+  onDiscard,
+}: {
+  courseName: string;
+  contentType: PublicationContentType;
+  draftState: "new" | "saving" | "saved";
+  savedLabel: string;
+  saving: boolean;
+  submitLabel: string;
+  onDiscard: () => void;
+}) {
+  return (
+    <header className="publish-bar">
+      <button
+        className="publish-back"
+        data-hardware-back="publish"
+        onClick={onDiscard}
+        type="button"
+      >
+        <ArrowLeft aria-hidden="true" size={16} weight="bold" />
+        Volver al ramo
+      </button>
+      <p className="publish-bar-context">
+        <span>{courseName}</span>
+        <small>{CONTENT_TYPES.find((option) => option.value === contentType)?.label}</small>
+      </p>
+      {/* El borrador vive en este equipo, no en la nube: el icono y el texto
+          lo dicen para que nadie lo busque desde el teléfono. */}
+      <p
+        aria-label="Estado del borrador"
+        aria-live="polite"
+        className="publish-autosave"
+        data-draft-state={draftState}
+        role="status"
+      >
+        {draftState === "saved" && savedLabel ? (
+          <>
+            <FloppyDisk aria-hidden="true" size={16} weight="fill" />
+            Guardado en este equipo <span className="num">{savedLabel}</span>
+          </>
+        ) : draftState === "saving" ? (
+          <>
+            <FloppyDisk aria-hidden="true" size={16} />
+            Guardando…
+          </>
+        ) : (
+          <>
+            <PencilSimpleLine aria-hidden="true" size={16} />
+            Borrador nuevo
+          </>
+        )}
+      </p>
+      <button className="publish-submit" disabled={saving} type="submit">
+        {submitLabel}
+      </button>
+    </header>
+  );
+}
+
+function PublishRestoredNotice({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <p className="publish-restored" role="status">
+      <CheckCircle aria-hidden="true" size={16} weight="fill" />
+      Recuperamos el borrador que dejaste sin publicar en este ramo.
+      <button
+        aria-label="Ocultar el aviso del borrador recuperado"
+        onClick={onDismiss}
+        type="button"
+      >
+        <XCircle aria-hidden="true" size={17} />
+      </button>
+    </p>
+  );
+}
+
 // Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
 export function PublishView({
   course,
@@ -422,10 +503,11 @@ export function PublishView({
       );
     }
     /* Secuencial a propósito: en el wifi de una sala seis subidas en paralelo
-       se pelean el ancho de banda y el docente pierde de vista cuál va. Si
-       alguna vez importa la latencia, el salto es `Promise.all` con una barra
-       de progreso por archivo. */
-    for (const file of chosen.slice(0, room)) {
+       se pelean el ancho de banda y el docente pierde de vista cuál va. */
+    const toUpload = chosen.slice(0, room);
+    const uploadNext = async (index: number): Promise<void> => {
+      if (index >= toUpload.length) return;
+      const file = toUpload[index];
       setUploading(`Subiendo ${file.name}…`);
       try {
         const attachment = await uploadPostAttachment(course.id, file, (percent) =>
@@ -439,7 +521,9 @@ export function PublishView({
           `No fue posible subir ${file.name}. Revisa el tamaño y vuelve a intentarlo.`
         );
       }
-    }
+      await uploadNext(index + 1);
+    };
+    await uploadNext(0);
     setUploading("");
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -525,50 +609,15 @@ export function PublishView({
       <input name="dueDate" type="hidden" value="" />
       <input name="linkUrl" type="hidden" value="" />
 
-      <header className="publish-bar">
-        <button
-          className="publish-back"
-          data-hardware-back="publish"
-          onClick={discard}
-          type="button"
-        >
-          <ArrowLeft aria-hidden="true" size={16} weight="bold" />
-          Volver al ramo
-        </button>
-        <p className="publish-bar-context">
-          <span>{course.name}</span>
-          <small>{CONTENT_TYPES.find((option) => option.value === contentType)?.label}</small>
-        </p>
-        {/* El borrador vive en este equipo, no en la nube: el icono y el texto
-            lo dicen para que nadie lo busque desde el teléfono. */}
-        <p
-          aria-label="Estado del borrador"
-          aria-live="polite"
-          className="publish-autosave"
-          data-draft-state={draftState}
-          role="status"
-        >
-          {draftState === "saved" && savedLabel ? (
-            <>
-              <FloppyDisk aria-hidden="true" size={16} weight="fill" />
-              Guardado en este equipo <span className="num">{savedLabel}</span>
-            </>
-          ) : draftState === "saving" ? (
-            <>
-              <FloppyDisk aria-hidden="true" size={16} />
-              Guardando…
-            </>
-          ) : (
-            <>
-              <PencilSimpleLine aria-hidden="true" size={16} />
-              Borrador nuevo
-            </>
-          )}
-        </p>
-        <button className="publish-submit" disabled={saving} type="submit">
-          {submitLabel}
-        </button>
-      </header>
+      <PublishBar
+        contentType={contentType}
+        courseName={course.name}
+        draftState={draftState}
+        onDiscard={discard}
+        savedLabel={savedLabel}
+        saving={saving}
+        submitLabel={submitLabel}
+      />
 
       {/* El resultado de publicar se lee junto al botón que lo dispara, no al
           final de una columna que en el teléfono queda a una pantalla de scroll. */}
@@ -578,19 +627,7 @@ export function PublishView({
         </p>
       )}
 
-      {restoredVisible && (
-        <p className="publish-restored" role="status">
-          <CheckCircle aria-hidden="true" size={16} weight="fill" />
-          Recuperamos el borrador que dejaste sin publicar en este ramo.
-          <button
-            aria-label="Ocultar el aviso del borrador recuperado"
-            onClick={() => setRestoredVisible(false)}
-            type="button"
-          >
-            <XCircle aria-hidden="true" size={17} />
-          </button>
-        </p>
-      )}
+      {restoredVisible && <PublishRestoredNotice onDismiss={() => setRestoredVisible(false)} />}
 
       <div className="publish-body">
         <label className="publish-title-field">

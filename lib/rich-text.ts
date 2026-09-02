@@ -94,7 +94,13 @@ export type RichFootnoteDefBlock = {
 export type RichBlock =
   | { type: "paragraph"; content: RichInline[]; align?: TextAlignment; indent?: number }
   | { type: "quote"; content: RichInline[] }
-  | { type: "heading"; level: number; content: RichInline[]; align?: TextAlignment; indent?: number }
+  | {
+      type: "heading";
+      level: number;
+      content: RichInline[];
+      align?: TextAlignment;
+      indent?: number;
+    }
   | { type: "list"; ordered: boolean; items: RichInline[][] }
   | RichChecklistBlock
   | RichFootnoteDefBlock
@@ -447,9 +453,10 @@ export function parseRichInline(value: string, depth = 0): RichInline[] {
     }
 
     if (value.startsWith("<sup", cursor)) {
-      const supFootnote = /^<sup\b(?=[^>]*data-footnote=["']([^"']*)["'])[^>]*>([\s\S]*?)<\/sup\s*>/i.exec(
-        value.slice(cursor)
-      );
+      const supFootnote =
+        /^<sup\b(?=[^>]*data-footnote=["']([^"']*)["'])[^>]*>([\s\S]*?)<\/sup\s*>/i.exec(
+          value.slice(cursor)
+        );
       if (supFootnote) {
         nodes.push({
           type: "footnoteRef",

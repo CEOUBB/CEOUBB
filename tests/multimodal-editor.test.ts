@@ -421,7 +421,10 @@ test("los bloques alineados con fórmulas matemáticas y spans se convierten lim
   const html =
     '<div style="text-align: center;"><span style="text-wrap-mode: initial;">Explica con fórmula </span><span data-latex="inline">\\sum F_x = 0</span> cuando ayuden.</div>';
   const md = htmlToAcademicMarkdown(html);
-  assert.match(md, /<p style="text-align: center">Explica con fórmula \$\\sum F_x = 0\$ cuando ayuden\.<\/p>/);
+  assert.match(
+    md,
+    /<p style="text-align: center">Explica con fórmula \$\\sum F_x = 0\$ cuando ayuden\.<\/p>/
+  );
   assert.doesNotMatch(md, /text-wrap-mode/);
   assert.doesNotMatch(md, /data-latex/);
 });

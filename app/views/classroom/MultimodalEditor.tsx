@@ -682,7 +682,7 @@ function FindReplaceBar({
   }, []);
 
   return (
-    <div aria-label="Buscar y reemplazar texto" className="editor-find-replace-bar" role="search">
+    <search aria-label="Buscar y reemplazar texto" className="editor-find-replace-bar">
       <div className="editor-find-row">
         <div className="editor-find-input-wrap">
           <MagnifyingGlass aria-hidden="true" className="editor-find-icon" size={16} />
@@ -782,7 +782,7 @@ function FindReplaceBar({
           </button>
         </div>
       </div>
-    </div>
+    </search>
   );
 }
 
@@ -1531,8 +1531,20 @@ function useMultimodalEditorController({
   const handleFindNext = useCallback(() => {
     if (!findTerm) return;
     if (mode === "visual") {
-      if (typeof window !== "undefined" && typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find === "function") {
-        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(findTerm, false, false, true, false, true, false);
+      if (
+        typeof window !== "undefined" &&
+        typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find ===
+          "function"
+      ) {
+        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(
+          findTerm,
+          false,
+          false,
+          true,
+          false,
+          true,
+          false
+        );
       }
     } else {
       const textarea = mode === "markdown" ? markdownRef.current : htmlRef.current;
@@ -1553,8 +1565,20 @@ function useMultimodalEditorController({
   const handleFindPrev = useCallback(() => {
     if (!findTerm) return;
     if (mode === "visual") {
-      if (typeof window !== "undefined" && typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find === "function") {
-        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(findTerm, false, true, true, false, true, false);
+      if (
+        typeof window !== "undefined" &&
+        typeof (window as unknown as { find?: (t: string, ...args: unknown[]) => boolean }).find ===
+          "function"
+      ) {
+        (window as unknown as { find: (t: string, ...args: unknown[]) => boolean }).find(
+          findTerm,
+          false,
+          true,
+          true,
+          false,
+          true,
+          false
+        );
       }
     } else {
       const textarea = mode === "markdown" ? markdownRef.current : htmlRef.current;
@@ -1630,7 +1654,9 @@ function useMultimodalEditorController({
       const editor = visualRef.current;
       if (!editor) return;
       const nextMarkdown = value.replace(regex, replaceTerm);
-      editor.replaceChildren(safeVisualFragment(markdownToEditorHtml(nextMarkdown), editor.ownerDocument));
+      editor.replaceChildren(
+        safeVisualFragment(markdownToEditorHtml(nextMarkdown), editor.ownerDocument)
+      );
       visualOriginHtmlRef.current = markdownToEditorHtml(nextMarkdown);
       visualDirtyRef.current = false;
       emit(nextMarkdown);
@@ -2239,10 +2265,7 @@ function useMultimodalEditorController({
           let block: HTMLElement | null = null;
           node = range.startContainer;
           while (node && node !== editor) {
-            if (
-              node instanceof HTMLElement &&
-              /^(p|div|h[1-6]|blockquote)$/i.test(node.tagName)
-            ) {
+            if (node instanceof HTMLElement && /^(p|div|h[1-6]|blockquote)$/i.test(node.tagName)) {
               block = node;
               break;
             }
@@ -2477,7 +2500,10 @@ function useMultimodalEditorController({
   // Implements: REQ-EDITOR-09 REQ-A11Y-01
   const escapeTabRef = useRef(false);
   const handleCodeKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "f" || event.key.toLowerCase() === "h")) {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key.toLowerCase() === "f" || event.key.toLowerCase() === "h")
+    ) {
       event.preventDefault();
       setFindReplaceOpen(true);
       return;
