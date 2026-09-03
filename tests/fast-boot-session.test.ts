@@ -13,6 +13,7 @@ const { SESSION_COOKIE, createSession, getServerSessionState, getSessionUserFrom
 
 before(async () => {
   const db = getDb();
+  await db.run(sql`PRAGMA foreign_keys = ON;`);
   await db.run(
     sql`CREATE TABLE IF NOT EXISTS users (
       id text PRIMARY KEY NOT NULL,

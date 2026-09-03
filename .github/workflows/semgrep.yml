@@ -17,12 +17,13 @@ permissions:
 
 concurrency:
   group: semgrep-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   semgrep:
     name: Semgrep Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container:
       image: semgrep/semgrep
     if: (github.actor != 'dependabot[bot]')

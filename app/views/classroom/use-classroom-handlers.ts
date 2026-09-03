@@ -2,21 +2,18 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  ClassroomFile,
+  ClassroomAttachment,
   ClassroomPost,
   ClassroomState,
   classroomFileUrl,
   deleteClassroomPost,
   editClassroomPost,
-  moveClassroomPost,
   publishClassroomPost,
-  renameClassroomFile,
   saveClassroomProgress,
   saveLiveClassLink,
-  uploadClassroomFile,
   watchClassroom,
 } from "../../../lib/firebase-classroom-client";
-import { Course, materialFolders } from "../../../lib/courses";
+import { Course } from "../../../lib/courses";
 import { isNativeShell } from "../../../lib/mobile-bridge";
 import { openDocumentNatively } from "../../../lib/native-files";
 import type { User } from "../../../lib/portal-utils";
@@ -41,7 +38,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const readOnly = course.readOnly === true;
   const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
   const canTeach = canTeachSection(user.role, sectionRole);
-  const { files, students, posts } = classroom;
+  const { students, posts } = classroom;
   const units = course.units;
   const completed =
     typeof classroom.ownProgress === "number" && !Number.isNaN(classroom.ownProgress)
@@ -78,7 +75,11 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     );
   };
 
-  const publish = async (event: FormEvent<HTMLFormElement>) => {
+  // Implements: REQ-PUB-09
+  const publish = async (
+    event: FormEvent<HTMLFormElement>,
+    attachments: ClassroomAttachment[] = []
+  ) => {
     event.preventDefault();
     if (rejectReadOnly()) return false;
     note("Publicando…");
@@ -94,6 +95,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
         linkUrl: String(form.get("linkUrl") ?? ""),
         dueDate: String(form.get("dueDate") ?? ""),
         notifyStudents,
+        attachments,
       });
       formElement.reset();
       note(
@@ -106,25 +108,6 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     } catch (cause) {
       note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");
       return false;
-    }
-  };
-
-  const upload = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (rejectReadOnly()) return;
-    note("Subiendo archivo…");
-    const formElement = event.currentTarget;
-    const form = new FormData(formElement);
-    const file = form.get("file");
-    if (!(file instanceof File)) return note("Selecciona un archivo.", "bad");
-    try {
-      await uploadClassroomFile(course.id, file, String(form.get("folder") ?? ""), (percent) =>
-        note(`Subiendo archivo… ${percent}%`)
-      );
-      formElement.reset();
-      note("Archivo disponible y notificado al curso.", "ok");
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible subir el archivo.", "bad");
     }
   };
 
@@ -151,7 +134,12 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     }
   };
 
-  const openFile = async (file: ClassroomFile) => {
+  /*
+    Sirve tanto al archivo que se publicó solo como al adjunto que viaja dentro
+    de un aviso: ambos se identifican por su ruta en Cloud Storage.
+  */
+  // Implements: REQ-PUB-09
+  const openAttachment = async (file: { name: string; storagePath: string; url?: string }) => {
     if (isNativeShell()) {
       note("Descargando archivo…");
       try {
@@ -174,44 +162,6 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     } catch (cause) {
       tab?.close();
       note(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.", "bad");
-    }
-  };
-
-  const renameFile = async (file: ClassroomFile) => {
-    if (rejectReadOnly()) return;
-    const name = window.prompt("Nombre del archivo", file.name);
-    if (name === null) return;
-    try {
-      await renameClassroomFile(course.id, file.id, name);
-      note("Archivo renombrado.", "ok");
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible modificarlo.", "bad");
-    }
-  };
-
-  const moveFile = async (file: ClassroomFile) => {
-    if (rejectReadOnly()) return;
-    const folder = window.prompt(
-      `Carpeta del archivo (${materialFolders(course).join(", ")})`,
-      file.folder
-    );
-    if (folder === null) return;
-    try {
-      await moveClassroomPost(course.id, file.id, folder);
-      note("Archivo movido de carpeta.", "ok");
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible moverlo.", "bad");
-    }
-  };
-
-  const deleteFile = async (file: ClassroomFile) => {
-    if (rejectReadOnly()) return;
-    if (!window.confirm(`¿Eliminar “${file.name}”?`)) return;
-    try {
-      await deleteClassroomPost(course.id, file.id, file.storagePath);
-      note("Archivo eliminado.", "ok");
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible eliminarlo.", "bad");
     }
   };
 
@@ -280,7 +230,6 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     readOnly,
     canManageContent,
     canTeach,
-    files,
     students,
     posts,
     units,
@@ -288,13 +237,9 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     courseReference,
     updateProgress,
     publish,
-    upload,
     editPost,
     deletePost,
-    openFile,
-    renameFile,
-    moveFile,
-    deleteFile,
+    openAttachment,
     copyCourseReference,
     saveLiveClass,
     clearLiveClass,

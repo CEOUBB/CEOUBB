@@ -20,6 +20,7 @@ export const PRODUCTION_FIREBASE_CONFIG: FirebaseClientConfig = Object.freeze({
 
 type FirebaseEnvironment = {
   CEOUBB_ENVIRONMENT?: string;
+  NEXT_PUBLIC_CEOUBB_ENVIRONMENT?: string;
   NEXT_PUBLIC_FIREBASE_API_KEY?: string;
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?: string;
   NEXT_PUBLIC_FIREBASE_PROJECT_ID?: string;
@@ -37,7 +38,13 @@ export function resolveFirebaseConfig(environment: FirebaseEnvironment): Firebas
     messagingSenderId: environment.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() ?? "",
     appId: environment.NEXT_PUBLIC_FIREBASE_APP_ID?.trim() ?? "",
   };
-  const environmentName = environment.CEOUBB_ENVIRONMENT?.trim().toLowerCase() ?? "";
+  const environmentName = (
+    environment.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ||
+    environment.CEOUBB_ENVIRONMENT ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
   const configuredValues = Object.values(selected).filter(Boolean).length;
 
   if (
@@ -54,8 +61,14 @@ export function resolveFirebaseConfig(environment: FirebaseEnvironment): Firebas
       "PRODUCTION_TARGET_REJECTED: NEXT_PUBLIC_FIREBASE_PROJECT_ID no identifica staging."
     );
   }
-  if (selected.projectId === "centro-de-estudio-ubb-staging" && environmentName !== "staging") {
-    throw new Error("STAGING_ENV_REQUIRED: NEXT_PUBLIC_CEOUBB_ENVIRONMENT debe ser staging.");
+  if (
+    selected.projectId === "centro-de-estudio-ubb-staging" &&
+    environmentName !== "staging" &&
+    environmentName !== "preview"
+  ) {
+    throw new Error(
+      "STAGING_ENV_REQUIRED: NEXT_PUBLIC_CEOUBB_ENVIRONMENT debe ser staging o preview."
+    );
   }
   if (environmentName === "production" && selected.projectId !== "centro-de-estudio-ubb") {
     throw new Error(

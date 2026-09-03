@@ -204,28 +204,31 @@ function readBoolean(value: FirestoreReadValue | undefined, fallback: boolean): 
 */
 // Implements: REQ-CFG-04
 export async function readPreferencesFromFirestore(userId: string): Promise<UserPreferences> {
+  const defaults = defaultPreferences();
   const uid = firebaseUid(userId);
   if (!isValidPathSegment(uid)) throw new Error("Identificador de usuario inválido.");
-  const token = await googleAccessToken();
-  const response = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}/settings/preferences`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  const defaults = defaultPreferences();
-  if (response.status === 404) return defaults;
-  if (!response.ok) throw new Error("No se pudieron leer las preferencias.");
-  const document = (await response.json()) as { fields?: Record<string, FirestoreReadValue> };
-  const channelFields = document.fields?.channels?.mapValue?.fields ?? {};
-  const channels = {} as Record<NotificationChannel, ChannelPreference>;
-  for (const channel of NOTIFICATION_CHANNELS) {
-    const stored = channelFields[channel]?.mapValue?.fields;
-    channels[channel] = {
-      web: readBoolean(stored?.web, true),
-      push: readBoolean(stored?.push, true),
+  try {
+    const token = await googleAccessToken();
+    const response = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}/settings/preferences`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (response.status === 404 || !response.ok) return defaults;
+    const document = (await response.json()) as { fields?: Record<string, FirestoreReadValue> };
+    const channelFields = document.fields?.channels?.mapValue?.fields ?? {};
+    const channels = {} as Record<NotificationChannel, ChannelPreference>;
+    for (const channel of NOTIFICATION_CHANNELS) {
+      const stored = channelFields[channel]?.mapValue?.fields;
+      channels[channel] = {
+        web: readBoolean(stored?.web, true),
+        push: readBoolean(stored?.push, true),
+      };
+    }
+    return {
+      channels,
+      reducedMotion: readBoolean(document.fields?.reducedMotion, false),
     };
+  } catch {
+    return defaults;
   }
-  return {
-    channels,
-    reducedMotion: readBoolean(document.fields?.reducedMotion, false),
-  };
 }

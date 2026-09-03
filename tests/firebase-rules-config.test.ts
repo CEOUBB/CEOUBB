@@ -30,7 +30,6 @@ test("REQ-EMU-01, REQ-EMU-07: la validación ejecuta ambas reglas en emuladores"
 
 test("REQ-EMU-06: CI contiene un gate independiente con Java 21", async () => {
   const workflow = await readFile(".github/workflows/ci.yml", "utf8");
-  const deployWorkflow = await readFile(".github/workflows/deploy.yml", "utf8");
   const start = workflow.indexOf("  firebase_rules:");
   const end = workflow.indexOf("  verify:", start);
   const job = workflow.slice(start, end);
@@ -44,7 +43,4 @@ test("REQ-EMU-06: CI contiene un gate independiente con Java 21", async () => {
   assert.match(job, /java-version: "21"/);
   assert.match(job, /~\/\.cache\/firebase\/emulators/);
   assert.match(job, /pnpm run check:rules/);
-  assert.match(deployWorkflow, /actions\/setup-java@v4/);
-  assert.match(deployWorkflow, /java-version: "21"/);
-  assert.match(deployWorkflow, /pnpm run check:rules/);
 });

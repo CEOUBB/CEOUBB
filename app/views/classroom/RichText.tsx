@@ -1,12 +1,15 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import Script from "next/script";
 import "../../../public/biblioteca/assets/vendor/katex/katex.min.css";
 import {
   CLASSROOM_COMPATIBILITY_REQUIREMENTS,
+  calloutFromQuote,
   codeLanguageLabel,
   highlightCode,
+  inlineToPlainText,
+  parseRichInline,
   parseRichText,
   type RichInline,
   type RichTableBlock,
@@ -121,6 +124,20 @@ function renderInline(nodes: RichInline[]): ReactNode[] {
     if (node.type === "math") return <MathFormula display={false} key={key} value={node.value} />;
     if (node.type === "strong") return <strong key={key}>{renderInline(node.content)}</strong>;
     if (node.type === "emphasis") return <em key={key}>{renderInline(node.content)}</em>;
+    if (node.type === "underline") return <u key={key}>{renderInline(node.content)}</u>;
+    if (node.type === "strikethrough") return <del key={key}>{renderInline(node.content)}</del>;
+    if (node.type === "mark") return <mark key={key}>{renderInline(node.content)}</mark>;
+    if (node.type === "subscript") return <sub key={key}>{renderInline(node.content)}</sub>;
+    if (node.type === "superscript") return <sup key={key}>{renderInline(node.content)}</sup>;
+    if (node.type === "footnoteRef") {
+      return (
+        <sup className="rich-footnote-ref" key={key}>
+          <a href={`#fn-${node.identifier}`} id={`fnref-${node.identifier}`}>
+            [{node.identifier}]
+          </a>
+        </sup>
+      );
+    }
     if (!node.href) return <span key={key}>{renderInline(node.content)}</span>;
     return (
       <a href={node.href} key={key} rel="noopener noreferrer" target="_blank">
@@ -204,24 +221,101 @@ export function RichText({ body, className = "" }: { body: string; className?: s
       data-requirement={`Implements: REQ-RICH-01 REQ-RICH-02 REQ-RICH-03 REQ-RICH-05 REQ-RICH-06 ${CLASSROOM_COMPATIBILITY_REQUIREMENTS.join(" ")}`}
     >
       {keyedItems(blocks, "block").map(({ item: block, key }) => {
-        if (block.type === "paragraph") return <p key={key}>{renderInline(block.content)}</p>;
+        /*
+          Un callout cuya estructura se rompió al editar deja el marcador como
+          párrafo o título sueltos. Se reconoce igual para que el estudiante
+          nunca lea «[!ASSESSMENT]» en la publicación.
+        */
+        if (block.type === "paragraph" || block.type === "heading") {
+          const stray = calloutFromQuote(inlineToPlainText(block.content));
+          if (stray) {
+            return (
+              <aside className="rich-callout" data-callout={stray.tone} key={key}>
+                <p>{renderInline(parseRichInline(stray.body))}</p>
+              </aside>
+            );
+          }
+        }
+        if (block.type === "paragraph") {
+          const style: CSSProperties = {
+            ...(block.align ? { textAlign: block.align } : {}),
+            ...(block.indent ? { paddingLeft: `${block.indent * 2}rem` } : {}),
+          };
+          return (
+            <p key={key} style={Object.keys(style).length > 0 ? style : undefined}>
+              {renderInline(block.content)}
+            </p>
+          );
+        }
         if (block.type === "heading") {
+          const style: CSSProperties = {
+            ...(block.align ? { textAlign: block.align } : {}),
+            ...(block.indent ? { paddingLeft: `${block.indent * 2}rem` } : {}),
+          };
           return (
             <h4
               aria-level={Math.min(block.level + 3, 6)}
               className={`rich-heading rich-heading-${block.level}`}
+              style={Object.keys(style).length > 0 ? style : undefined}
               key={key}
             >
               {renderInline(block.content)}
             </h4>
           );
         }
-        if (block.type === "quote")
+        if (block.type === "divider") return <hr className="rich-divider" key={key} />;
+        if (block.type === "quote") {
+          const callout = calloutFromQuote(inlineToPlainText(block.content));
+          if (callout) {
+            return (
+              <aside className="rich-callout" data-callout={callout.tone} key={key}>
+                <p>{renderInline(parseRichInline(callout.body))}</p>
+              </aside>
+            );
+          }
           return <blockquote key={key}>{renderInline(block.content)}</blockquote>;
+        }
         if (block.type === "code")
           return <CodeBlock key={key} language={block.language} value={block.value} />;
         if (block.type === "math") return <MathFormula display key={key} value={block.value} />;
         if (block.type === "table") return <RichTable key={key} {...block} />;
+        if (block.type === "checklist") {
+          return (
+            <ul className="rich-checklist" key={key}>
+              {keyedItems(block.items, "check-item").map(({ item, key: itemKey }) => (
+                <li
+                  className={`rich-checklist-item ${item.checked ? "is-checked" : ""}`}
+                  key={itemKey}
+                >
+                  <input
+                    aria-label={item.checked ? "Completado" : "Pendiente"}
+                    checked={item.checked}
+                    className="rich-checkbox"
+                    disabled
+                    readOnly
+                    type="checkbox"
+                  />
+                  <span className="rich-checklist-text">{renderInline(item.content)}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (block.type === "footnoteDef") {
+          return (
+            <div className="rich-footnote-item" id={`fn-${block.identifier}`} key={key}>
+              <small className="num">[{block.identifier}]</small>
+              <span className="rich-footnote-text">{renderInline(block.content)}</span>
+              <a
+                aria-label={`Volver a la referencia ${block.identifier}`}
+                className="rich-footnote-backlink"
+                href={`#fnref-${block.identifier}`}
+              >
+                ↩
+              </a>
+            </div>
+          );
+        }
         const List = block.ordered ? "ol" : "ul";
         return (
           <List key={key}>

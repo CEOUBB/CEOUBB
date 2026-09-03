@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GoogleGenAI, Type, type FunctionDeclaration } from "@google/genai";
+import {
+  GoogleGenAI,
+  Type,
+  type FunctionDeclaration,
+  type Content,
+  type Part,
+} from "@google/genai";
 import { fetchDiscordChannelHistory } from "./messages.ts";
 import { fetchLatestCIDiagnostics } from "./diagnostics.ts";
 import { getGeminiApiKey, MODEL_FALLBACK_LIST } from "../services/gemini.ts";
@@ -226,11 +232,10 @@ export async function processGeminiQueryWithTools(
           })
         );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const followUpContents: any[] = [
+        const followUpContents: Content[] = [
           { role: "user", parts: [{ text: fullUserPrompt }] },
           firstCandidateContent,
-          { role: "user", parts: toolResponseParts },
+          { role: "user", parts: toolResponseParts as Part[] },
         ];
 
         const followUpRes = await ai.models.generateContent({

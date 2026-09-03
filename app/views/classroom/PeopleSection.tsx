@@ -286,16 +286,12 @@ export function PeopleSection({
       aria-labelledby="participants-title"
       className="participants-directory"
     >
-      <header className="participants-overview">
-        <div>
-          <h2 id="participants-title">Personas del ramo</h2>
-          <p>Busca por nombre o correo y filtra la nómina por función académica.</p>
-        </div>
-        <span className="participant-total num">
-          <strong>{filteredTotal}</strong>
-          {filteredTotal === 1 ? " participante" : " participantes"}
-        </span>
-      </header>
+      {/* El encabezado del ramo ya dice «Participantes» y los filtros ya
+          llevan el total: un segundo título y un contador aparte repetían
+          lo mismo tres veces. */}
+      <h2 className="sr-only" id="participants-title">
+        Personas del ramo
+      </h2>
 
       {canTeach && (
         <EnrollmentImport
