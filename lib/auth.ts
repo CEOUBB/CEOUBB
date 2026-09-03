@@ -1,4 +1,4 @@
-import { and, eq, gt, lte } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import { getDb } from "../db/index.ts";
 import { sessions, users } from "../db/schema.ts";
 import type { AccountRole } from "./access-policy.ts";
@@ -15,6 +15,7 @@ export type PublicUser = {
 };
 
 export const SESSION_COOKIE = "centro_estudio_session";
+export const MAX_ACTIVE_SESSIONS_PER_USER = 10;
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const SESSION_SECURE = process.env.NODE_ENV === "production" ? "; Secure" : "";
 
@@ -26,18 +27,46 @@ export async function pruneExpiredSessions(): Promise<number> {
   return Number(result.rowsAffected ?? 0);
 }
 
+// Implements: REQ-AUTH-01, REQ-PERF-01, REQ-PERF-02, REQ-SEC-14
 export async function createSession(userId: string) {
   const rawToken = randomToken();
   const tokenHash = await sha256(rawToken);
   const now = new Date();
   const expires = new Date(now.getTime() + SESSION_SECONDS * 1000);
   const db = getDb();
+
+  // 1. Limitar concurrencia de sesiones activas por usuario
+  const activeUserSessions = await db
+    .select({ tokenHash: sessions.tokenHash, createdAt: sessions.createdAt })
+    .from(sessions)
+    .where(and(eq(sessions.userId, userId), gt(sessions.expiresAt, now.toISOString())))
+    .orderBy(desc(sessions.createdAt));
+
+  if (activeUserSessions.length >= MAX_ACTIVE_SESSIONS_PER_USER) {
+    const sessionsToEvict = activeUserSessions
+      .slice(MAX_ACTIVE_SESSIONS_PER_USER - 1)
+      .map((s) => s.tokenHash);
+
+    if (sessionsToEvict.length > 0) {
+      await db.delete(sessions).where(inArray(sessions.tokenHash, sessionsToEvict));
+    }
+  }
+
+  // 2. Insertar nueva sesión
   await db.insert(sessions).values({
     tokenHash,
     userId,
     createdAt: now.toISOString(),
     expiresAt: expires.toISOString(),
   });
+
+  // 3. Poda probabilística (1 de cada 50 inicios de sesión purga sesiones caducadas en background)
+  if (Math.random() < 0.02) {
+    pruneExpiredSessions().catch((err) =>
+      console.warn("[createSession] Background pruning error:", err)
+    );
+  }
+
   return `${SESSION_COOKIE}=${rawToken}; HttpOnly${SESSION_SECURE}; SameSite=Lax; Path=/; Max-Age=${SESSION_SECONDS}`;
 }
 

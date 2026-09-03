@@ -221,14 +221,10 @@ service cloud.firestore {
       // Bloques del calendario semanal. Estrictamente privados: ni el owner
       // ni un docente pueden leer la agenda personal de otra cuenta.
       match /calendar_events/{eventId} {
-        allow read: if signedIn() && request.auth.uid == userId;
-        allow create: if signedIn() && request.auth.uid == userId && validCalendarEventShape();
-        allow update: if signedIn() && request.auth.uid == userId
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        allow read, write: if signedIn() && request.auth.uid == userId
+          && (request.resource == null || (validCalendarEventShape() && (resource == null || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 'courseId', 'kind', 'completed', 'updatedAt'
-          ])
-          && validCalendarEventShape();
-        allow delete: if signedIn() && request.auth.uid == userId;
+          ]))));
       }
 
       match /notificationReads/{cursorId} {

@@ -31,13 +31,14 @@ export const DEV_TEST_USERS: Record<"student" | "teacher", DevTestUser> = {
   },
 };
 
-// Implements: REQ-AUTH-04, REQ-AUTH-06
+// Implements: REQ-AUTH-04, REQ-AUTH-06, REQ-SEC-14
 export function isDevOrPreviewAuthAllowed(
   environment = process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT ||
     process.env.CEOUBB_ENVIRONMENT ||
     process.env.VERCEL_ENV,
   nodeEnv = process.env.NODE_ENV,
-  host?: string
+  host?: string,
+  devAuthHeader?: string | null
 ): boolean {
   // 1. Veto estricto e incondicional de producción institucional
   if (environment === "production") {
@@ -47,7 +48,15 @@ export function isDevOrPreviewAuthAllowed(
     return false;
   }
 
-  // 2. Comprobación de host para entornos de pruebas / staging
+  // 2. En staging o previews públicas, dev-login requiere clave secreta si está configurada
+  const requiredDevSecret = process.env.DEV_AUTH_SECRET;
+  if (requiredDevSecret) {
+    if (!devAuthHeader || devAuthHeader !== requiredDevSecret) {
+      return false;
+    }
+  }
+
+  // 3. Comprobación de host para entornos de pruebas / staging
   if (host) {
     const cleanHost = host.split(":")[0]?.toLowerCase();
     if (cleanHost === "ceoubb.com" || cleanHost === "www.ceoubb.com") {
@@ -58,6 +67,6 @@ export function isDevOrPreviewAuthAllowed(
     }
   }
 
-  // 3. Fallback a desarrollo local o flags explícitos
+  // 4. Fallback a desarrollo local o flags explícitos
   return nodeEnv === "development" || environment === "preview" || environment === "staging";
 }

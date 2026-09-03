@@ -93,10 +93,10 @@
 - **OWNS:** `lib/auth.ts`, `app/api/cron/audit-retention/route.ts`, `app/api/cron/standup/route.ts`
 - **CHECK:** Auditar control de concurrencia de sesiones de usuario, acumulación de sesiones huérfanas en Turso, periodicidad de ejecución de `pruneExpiredSessions()` y autenticación de endpoints cron (`CRON_SECRET`).
 - **EXPECT:** Límite máximo de sesiones concurrentes por usuario (evitar saturación de la tabla `sessions`); poda periódica automatizada de sesiones caducadas; comparación en tiempo constante (`timingSafeEqual`) en crons.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Inexistencia de límite de concurrencia de sesiones en `lib/auth.ts:29-42` y código muerto de limpieza (`pruneExpiredSessions()` nunca se ejecuta en runtime, solo en tests). Permite agotamiento de recursos y bloat en Turso. Ver [Plan 059](plans/059-sec-session-concurrency-dependency-audit.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Límite de 10 sesiones concurrentes activas por usuario (`MAX_ACTIVE_SESSIONS_PER_USER`) con desalojo de las más antiguas implementado en `lib/auth.ts`, junto con poda probabilística de sesiones caducadas en segundo plano y protección de staging mediante `DEV_AUTH_SECRET`. Resuelto en Plan 059.
 
 ### 6.2 `leaf-sec-supply-chain-dependencies`
 - **OWNS:** `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `.github/workflows/semgrep.yml`
 - **CHECK:** Auditar vulnerabilidades conocidas en dependencias directas y transitivas (`pnpm audit`), pinning de dependencias en lockfile, integridad de scripts post-install y escaneos SAST continuos.
 - **EXPECT:** Cero vulnerabilidades críticas o de alto impacto en dependencias de producción; verificación de hashes en lockfile; pipeline SAST activo bloqueando merges inseguros.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Avisos de dependencias obsoletas y advertencias de configuración en pnpm (bloque `pnpm.patchedDependencies` ignorado por versiones modernas). Requiere auditoría de cadena de suministro y actualización controlada en [Plan 059](plans/059-sec-session-concurrency-dependency-audit.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Configuración de parches centralizada en `pnpm-workspace.yaml`, eliminación de bloques obsoletos redundantes en `package.json` suprimiendo advertencias del gestor de paquetes y asegurando parches auditados en la cadena de suministro. Resuelto en Plan 059.
