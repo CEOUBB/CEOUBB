@@ -8,7 +8,21 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { usePDFSlick } from "@pdfslick/react";
+import { GlobalWorkerOptions } from "pdfjs-dist";
 import "@pdfslick/react/dist/pdf_viewer.css";
+
+/*
+  El paquete del visor apunta a un worker congelado en la versión de PDF.js con
+  la que se publicó, mientras la API que resuelve el proyecto avanza por su
+  cuenta. Cuando las dos versiones dejan de coincidir PDF.js aborta cada
+  documento con un error de versión, así que el worker se toma del mismo
+  paquete que provee la API para que ambas viajen siempre juntas.
+*/
+// Implements: REQ-REV-01
+GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 /*
   Envoltura del visor de PDF. Vive en su propio archivo y se importa de forma

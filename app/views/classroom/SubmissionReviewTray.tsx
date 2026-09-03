@@ -311,7 +311,9 @@ export function SubmissionReviewTray({
                       <span className="review-queue-name">
                         <b>{row.name}</b>
                         <small>
-                          {row.submittedAt ? formatDateTime(row.submittedAt) : "Sin entrega"}
+                          {row.submittedAt
+                            ? formatDateTime(row.submittedAt)
+                            : "Nada recibido todavía"}
                         </small>
                       </span>
                       <span className="review-state" data-state={row.state}>
@@ -621,7 +623,7 @@ function GradingPanel({
               setGrade(event.target.value);
               if (gradeError) setGradeError("");
             }}
-            placeholder="5,8"
+            placeholder="Sin nota"
             value={grade}
           />
         </label>

@@ -14443,8 +14443,9 @@ mark,
   }
 
   .review-bar {
-    grid-template-columns: auto minmax(0, 1fr);
-    row-gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    row-gap: 4px;
   }
 
   .review-evaluation {

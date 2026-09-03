@@ -289,6 +289,30 @@ test("REQ-REV-01 carga el visor de PDF sólo en el cliente", async () => {
   assert.match(pane, /usePDFSlick/);
 });
 
+/*
+  El paquete del visor trae un worker congelado en la versión de PDF.js con la
+  que se publicó. Si la API que resuelve el proyecto avanza, PDF.js aborta cada
+  documento con un error de versión y el visor queda inservible, así que el
+  worker debe venir del mismo paquete que provee la API.
+*/
+// Implements: REQ-REV-01
+test("REQ-REV-01 sirve el worker de PDF.js desde la misma versión que la API", async () => {
+  const pane = await readFile("app/views/classroom/PDFViewerPane.tsx", "utf8");
+  assert.match(pane, /GlobalWorkerOptions[\s\S]{0,80}from "pdfjs-dist"/);
+  assert.match(
+    pane,
+    /GlobalWorkerOptions\.workerSrc = new URL\(\s*"pdfjs-dist\/build\/pdf\.worker\.min\.mjs",\s*import\.meta\.url\s*\)/
+  );
+
+  const manifest = JSON.parse(await readFile("package.json", "utf8")) as {
+    dependencies: Record<string, string>;
+  };
+  assert.ok(
+    manifest.dependencies["pdfjs-dist"],
+    "pdfjs-dist debe declararse como dependencia directa para fijar la versión del worker"
+  );
+});
+
 // Implements: REQ-REV-04
 test("REQ-REV-04 acota la escucha de entregas de la sección", async () => {
   const storage = await readFile("lib/firebase/storage.ts", "utf8");

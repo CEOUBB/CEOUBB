@@ -53,7 +53,7 @@
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "b700e6ac6388b305151d601728df186db748bd88a57608eb646aeac0bb8520d6",
   "tests/staging-environment.test.ts": "e9bf2c2fd4d90602cf776c553498e084b6c8cfef6f8cd27f1124c4a443e9e5aa",
-  "tests/submission-review.test.ts": "6fdb895e89cd3d37320fde60942d4d6461bdba2e4c0e77fc14247c33f3cc8f32",
+  "tests/submission-review.test.ts": "ab15ccbd1dcc0fff1629ba9cb2eef2319ead43803cc86cb5a5fd5bb6c3963c79",
   "tests/support-api.test.ts": "3d06ffdb3a15f2b7a5fbe0ff3850f9160eecd57b1d95850f30ce8844de759aa5",
   "tests/support-mail.test.ts": "acddc7fd1f6cc1a2f654853ab30c39167f410555bb868c20f305a2492b0ec78e",
   "tests/support-pages.test.ts": "df3fa52e4b2543731888a23645fc25f243f435cbfd306bd34d7898bd4c6008a7",
