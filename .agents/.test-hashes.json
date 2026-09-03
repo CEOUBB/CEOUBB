@@ -57,5 +57,6 @@
   "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
   "tests/teacher-course-management.test.ts": "fd0b1b5f8495764586344565da6593fec398581954f3ae31991ee39b141723fe",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
-  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25"
+  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25",
+  "tests/cloudflare-bundle.test.ts": "873565922aa29f98105674a1e274a22dcc7ed0f1e7c6f4f0cce455c52393d937"
 }

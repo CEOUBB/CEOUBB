@@ -12,6 +12,31 @@ diff --git a/dist/cli/build/open-next/bundle-node-middleware.js b/dist/cli/build
          external: ["node:*", "./open-next.config.mjs"],
          define: {
              // The base of the middleware compiled by Next.js is runtime agnostic. "edge" selects its
+diff --git a/dist/cli/build/patches/plugins/turbopack.js b/dist/cli/build/patches/plugins/turbopack.js
+--- a/dist/cli/build/patches/plugins/turbopack.js
++++ b/dist/cli/build/patches/plugins/turbopack.js
+@@ -171,8 +171,11 @@ function buildExternalImportRule(mappings, tracedFiles, runtimeCode) {
+             cases.push(`case "${moduleName}":\n  $RAW = await import("${importPath}");\n  break;`);
+         }
+     }
+-    // Always include the @vercel/og rewrite
+-    addCase("next/dist/compiled/@vercel/og/index.node.js", "next/dist/compiled/@vercel/og/index.edge.js");
++    const bareImports = discoverBareExternalImports(tracedFiles, runtimeCode);
++    if (bareImports.has("next/dist/compiled/@vercel/og/index.node.js")) {
++        // Always include the @vercel/og rewrite
++        addCase("next/dist/compiled/@vercel/og/index.node.js", "next/dist/compiled/@vercel/og/index.edge.js");
++    }
+     // Add case for each discovered external module mapping (bare import)
+     for (const [hashedName, realName] of mappings) {
+         addCase(hashedName, realName);
+@@ -185,7 +188,6 @@ function buildExternalImportRule(mappings, tracedFiles, runtimeCode) {
+     }
+     // Discover bare external imports from chunk files (e.g. externalImport("shiki")).
+     // These need explicit switch cases so the bundler can statically resolve them.
+-    const bareImports = discoverBareExternalImports(tracedFiles, runtimeCode);
+     for (const [moduleName, realName] of bareImports) {
+         addCase(moduleName, realName);
+     }
 diff --git a/dist/cli/build/patches/plugins/instrumentation.js b/dist/cli/build/patches/plugins/instrumentation.js
 index 5848543b789719b91df85130caa0a571c9a0544f..77e32e777e3235f62b66635711cef546162af85f 100644
 --- a/dist/cli/build/patches/plugins/instrumentation.js
