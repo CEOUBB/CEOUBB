@@ -1,4 +1,4 @@
-import { ChartBar, Exam, Files, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
+import { ChartBar, Exam, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
 import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
 import type {
   ClassroomFile,
@@ -6,11 +6,16 @@ import type {
   ClassroomState,
 } from "../../../lib/firebase-classroom-client.ts";
 
-export type Tab = "home" | "materials" | "grades" | "quizzes" | "progress" | "people";
+/*
+  La Portada centraliza las publicaciones del docente y los archivos que las
+  acompañan. Una pestaña «Materiales» aparte duplicaba el mismo contenido en dos
+  lugares y obligaba al estudiante a adivinar dónde había quedado una guía.
+*/
+// Implements: REQ-PUB-13
+export type Tab = "home" | "grades" | "quizzes" | "progress" | "people";
 
 export const COURSE_TABS: { key: Tab; label: string; Icon: typeof House }[] = [
   { key: "home", label: "Portada", Icon: House },
-  { key: "materials", label: "Materiales", Icon: Files },
   { key: "grades", label: "Notas", Icon: GraduationCap },
   { key: "quizzes", label: "Cuestionarios", Icon: Exam },
   { key: "progress", label: "Progreso", Icon: ChartBar },
@@ -56,17 +61,15 @@ export function kindLabel(kind: ClassroomPost["kind"]) {
 }
 
 export function tabTitle(tab: Tab) {
-  return tab === "materials"
-    ? "Materiales del curso"
-    : tab === "grades"
-      ? "Notas y ponderaciones"
-      : tab === "quizzes"
-        ? "Cuestionarios y controles"
-        : tab === "progress"
-          ? "Progreso y monitoreo"
-          : tab === "people"
-            ? "Participantes"
-            : "Portada del curso";
+  return tab === "grades"
+    ? "Notas y ponderaciones"
+    : tab === "quizzes"
+      ? "Cuestionarios y controles"
+      : tab === "progress"
+        ? "Progreso y monitoreo"
+        : tab === "people"
+          ? "Participantes"
+          : "Portada del curso";
 }
 
 export function studentCount(total: number) {
@@ -148,6 +151,24 @@ export function filterRoster<T extends { name: string; email: string }>(
     const emailMatch = normalizeSearchText(student.email).includes(normalizedQuery);
     return nameMatch || emailMatch;
   });
+}
+
+/*
+  La Portada absorbió el buscador que vivía en «Materiales». A escala
+  institucional una sección acumula cientos de avisos y guías, y sin filtro el
+  estudiante depende del scroll para encontrar la pauta del certamen.
+*/
+// Implements: REQ-PAG-06
+export function filterPostsByQuery<
+  T extends { title: string; body: string; authorName: string; folder: string },
+>(posts: readonly T[], query: string): T[] {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return [...posts];
+  return posts.filter((post) =>
+    [post.title, post.body, post.authorName, post.folder].some((field) =>
+      normalizeSearchText(field).includes(normalizedQuery)
+    )
+  );
 }
 
 // Implements: REQ-PAG-05

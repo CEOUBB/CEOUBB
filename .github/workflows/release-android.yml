@@ -17,6 +17,7 @@ jobs:
   build-and-upload-apk:
     name: Build & Upload Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,6 +75,11 @@ jobs:
             ./gradlew assembleDebug --no-daemon --stacktrace
             cp app/build/outputs/apk/debug/app-debug.apk ../ceoubb-debug.apk
           fi
+
+      - name: Clean Keystore Artifacts
+        if: always()
+        run: |
+          rm -f android/keystore.jks android/keystore.properties
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2

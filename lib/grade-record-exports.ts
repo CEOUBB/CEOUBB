@@ -65,7 +65,10 @@ function worksheetXml(
   widths: readonly number[],
   options: { freezeRows?: number; autoFilter?: string; merges?: readonly string[] } = {}
 ): string {
-  const maxColumns = Math.max(1, ...rows.map((row) => row.cells.length));
+  let maxColumns = 1;
+  for (const row of rows) {
+    if (row.cells.length > maxColumns) maxColumns = row.cells.length;
+  }
   const rowXml = rows
     .map(
       (row, rowIndex) =>

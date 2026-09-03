@@ -281,7 +281,7 @@ test("REQ-PERF-02: pruneExpiredSessions removes expired sessions and preserves a
     const prunedCount = await pruneExpiredSessions();
     assert.equal(prunedCount, 2, "must report 2 expired sessions deleted");
 
-    const remainingSessions = await db.select().from(sessions);
+    const remainingSessions = await db.select().from(sessions).limit(100);
     assert.equal(remainingSessions.length, 1, "only active session should remain");
     assert.equal(remainingSessions[0]?.tokenHash, "active-1");
   } finally {

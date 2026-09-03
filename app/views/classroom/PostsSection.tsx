@@ -1,12 +1,20 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, CalendarCheck } from "@phosphor-icons/react";
-import { ClassroomPost } from "../../../lib/firebase-classroom-client";
-import { formatDate, formatDueDate, type User } from "../../../lib/portal-utils";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarCheck,
+  DownloadSimple,
+  MagnifyingGlass,
+  Paperclip,
+  X,
+} from "@phosphor-icons/react";
+import type { ClassroomAttachment, ClassroomPost } from "../../../lib/firebase-classroom-client";
+import { formatBytes, formatDate, formatDueDate, type User } from "../../../lib/portal-utils";
 import { safeLinkDestination } from "../../../lib/rich-text";
-import { kindLabel } from "./classroom-utils";
+import { filterPostsByQuery, kindLabel } from "./classroom-utils";
 import { RichPostEditor } from "./RichPostEditor";
 import { RichText } from "./RichText";
 
@@ -74,29 +82,63 @@ export function PostsSection({
   canManageContent,
   editPost,
   deletePost,
-  openMaterials,
+  openAttachment,
+  startPublication,
 }: {
   posts: ClassroomPost[];
   user: User;
   canManageContent: boolean;
   editPost: (post: ClassroomPost, values: { title: string; body: string }) => Promise<boolean>;
   deletePost: (post: ClassroomPost) => void;
-  openMaterials: () => void;
+  openAttachment: (attachment: { name: string; storagePath: string }) => void;
+  startPublication: () => void;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query.trim());
+  // Implements: REQ-PAG-06
+  const visiblePosts = useMemo(
+    () => filterPostsByQuery(posts, deferredQuery),
+    [posts, deferredQuery]
+  );
 
   return (
     <section className="posts-section">
       <div className="section-title compact-title">
-        <h2>Avisos del curso</h2>
+        <h2>Publicaciones del ramo</h2>
       </div>
+
+      {posts.length > 2 && (
+        <search className="classroom-search-box">
+          <MagnifyingGlass aria-hidden="true" size={16} />
+          <input
+            aria-label="Buscar publicaciones y archivos del ramo"
+            id="posts-search"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar por título, contenido o carpeta…"
+            type="search"
+            value={query}
+          />
+          {query && (
+            <button
+              aria-label="Limpiar búsqueda"
+              className="search-clear-btn"
+              onClick={() => setQuery("")}
+              type="button"
+            >
+              <X aria-hidden="true" size={14} />
+            </button>
+          )}
+        </search>
+      )}
+
       {posts.length === 0 && (
         <div className="empty-state">
-          <strong>Todavía no hay avisos publicados.</strong>
-          <p>Cuando el docente publique un aviso, una guía o un dictamen aparecerá aquí.</p>
+          <strong>Todavía no hay publicaciones.</strong>
+          <p>Cuando el docente publique un aviso, una guía o un certamen aparecerá aquí.</p>
           {canManageContent ? (
-            <button className="empty-state-action" onClick={openMaterials} type="button">
-              Publicar primer aviso <ArrowRight size={15} />
+            <button className="empty-state-action" onClick={startPublication} type="button">
+              Crear la primera publicación <ArrowRight size={15} />
             </button>
           ) : (
             <Link className="empty-state-action" href="/biblioteca/index.html" prefetch={false}>
@@ -105,13 +147,34 @@ export function PostsSection({
           )}
         </div>
       )}
+
+      {posts.length > 0 && visiblePosts.length === 0 && (
+        <p className="empty-row" role="status">
+          No se encontraron publicaciones que coincidan con “{deferredQuery}”.
+        </p>
+      )}
+
       <div className="post-list">
-        {posts.map((post) => {
+        {visiblePosts.map((post) => {
           const canManage =
             canManageContent &&
             Boolean(post.authorId) &&
             (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase());
           const safePostLink = post.linkUrl ? safeLinkDestination(post.linkUrl) : null;
+          /* Un archivo subido es una publicación con ruta de almacenamiento:
+             se ofrece como adjunto propio para que la Portada lo muestre igual
+             que a los que viajan dentro de un aviso. */
+          const attachments: ClassroomAttachment[] = post.storagePath
+            ? [
+                {
+                  name: post.title,
+                  storagePath: post.storagePath,
+                  contentType: "application/octet-stream",
+                  size: 0,
+                },
+                ...post.attachments,
+              ]
+            : post.attachments;
           return (
             <article key={post.id}>
               <span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span>
@@ -122,9 +185,31 @@ export function PostsSection({
                 ) : (
                   <>
                     <RichText body={post.body} />
+                    {/* Implements: REQ-PUB-09 */}
+                    {attachments.length > 0 && (
+                      <ul className="post-attachments">
+                        {attachments.map((attachment) => (
+                          <li key={attachment.storagePath}>
+                            <button
+                              onClick={() => openAttachment(attachment)}
+                              title={`Descargar ${attachment.name}`}
+                              type="button"
+                            >
+                              <Paperclip aria-hidden="true" size={14} />
+                              <span>{attachment.name}</span>
+                              {attachment.size > 0 && (
+                                <small className="num">{formatBytes(attachment.size)}</small>
+                              )}
+                              <DownloadSimple aria-hidden="true" size={14} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     <footer>
                       <span>{post.authorName}</span>
                       <time>{formatDate(post.createdAt)}</time>
+                      <span className="post-folder">{post.folder}</span>
                       {post.dueDate && (
                         <span className="post-due">
                           <CalendarCheck size={13} weight="fill" aria-hidden="true" />
