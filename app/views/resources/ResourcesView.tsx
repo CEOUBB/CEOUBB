@@ -51,6 +51,7 @@ const settle = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
 
 function BrandMark({ brand }: { brand: Brand }) {
   const logoSrc = BRAND_LOGOS[brand];
+  if (!logoSrc) return null;
   return (
     <Image
       alt=""
