@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { ArrowSquareOut, DownloadSimple, Package, Plus, X } from "@phosphor-icons/react";
 import { z } from "zod";
 import {
@@ -42,7 +50,7 @@ export function InteropSection({
   const [toolCursor, setToolCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, startTransition] = useTransition();
   const [selectedTool, setSelectedTool] = useState("");
   const [player, setPlayer] = useState<{ url: string; title: string } | null>(null);
   const noteRef = useRef(note);
@@ -84,18 +92,17 @@ export function InteropSection({
     return () => controller.abort();
   }, [refresh]);
 
-  const act = async (operation: () => Promise<void>) => {
-    setBusy(true);
-    try {
-      await operation();
-    } catch (cause) {
-      noteRef.current(
-        cause instanceof Error ? cause.message : "No se pudo completar la operación.",
-        "bad"
-      );
-    } finally {
-      setBusy(false);
-    }
+  const performAction = (operation: () => Promise<void>) => {
+    startTransition(async () => {
+      try {
+        await operation();
+      } catch (cause) {
+        noteRef.current(
+          cause instanceof Error ? cause.message : "No se pudo completar la operación.",
+          "bad"
+        );
+      }
+    });
   };
   const upload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -103,7 +110,7 @@ export function InteropSection({
     if (!file) return;
     if (file.size > MAX_PACKAGE_BYTES || !file.name.toLowerCase().endsWith(".zip"))
       return note("Selecciona un ZIP de hasta 50 MiB.", "bad");
-    void act(async () => {
+    performAction(async () => {
       note("Validando y guardando el paquete…");
       await interopRequest(base, z.object({ id: z.string() }), {
         method: "POST",
@@ -118,7 +125,7 @@ export function InteropSection({
     event.preventDefault();
     const form = event.currentTarget;
     const values = new FormData(form);
-    void act(async () => {
+    performAction(async () => {
       await interopRequest(base, z.object({ id: z.string() }), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,7 +142,7 @@ export function InteropSection({
     });
   };
   const open = (resource: InteropResource) =>
-    void act(async () => {
+    performAction(async () => {
       const result = await interopRequest(base + "/" + resource.id, launchSchema, {
         method: "POST",
       });
@@ -158,7 +165,7 @@ export function InteropSection({
         </p>
         <iframe
           referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-forms allow-popups"
           src={player.url}
           title={player.title}
         />
@@ -219,13 +226,15 @@ export function InteropSection({
                   onChange={(e) => setSelectedTool(e.target.value)}
                 >
                   <option value="">Seleccionar herramienta…</option>
-                  {tools
-                    .filter((tool) => tool.enabled)
-                    .map((tool) => (
+                  {tools.flatMap((tool) =>
+                    tool.enabled ? (
                       <option value={tool.id} key={tool.id}>
                         {tool.name}
                       </option>
-                    ))}
+                    ) : (
+                      []
+                    )
+                  )}
                 </select>
               </label>
               <label>
@@ -246,7 +255,7 @@ export function InteropSection({
                   className="secondary-button"
                   disabled={busy}
                   onClick={() =>
-                    void act(async () => {
+                    void performAction(async () => {
                       const page = await interopRequest(
                         "/api/interop/tools?cursor=" + encodeURIComponent(toolCursor),
                         toolPageSchema
@@ -302,7 +311,7 @@ export function InteropSection({
                     aria-label={"Descargar " + resource.title}
                     disabled={busy}
                     onClick={() =>
-                      void act(() =>
+                      void performAction(() =>
                         downloadInteropFile(base + "/" + resource.id, resource.title + ".zip")
                       )
                     }
@@ -331,7 +340,7 @@ export function InteropSection({
           className="secondary-button"
           disabled={busy}
           onClick={() =>
-            void act(async () => {
+            void performAction(async () => {
               const page = await interopRequest(
                 base + "?cursor=" + encodeURIComponent(cursor),
                 resourcePageSchema

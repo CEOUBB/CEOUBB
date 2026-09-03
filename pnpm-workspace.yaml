@@ -2,6 +2,8 @@ minimumReleaseAge: 0
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 1
 blockExoticSubdeps: true
+patchedDependencies:
+  "@opennextjs/cloudflare": "patches/@opennextjs__cloudflare.patch"
 allowBuilds:
   "@firebase/util": true
   "@fission-ai/openspec": true
