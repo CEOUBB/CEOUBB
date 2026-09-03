@@ -1,3 +1,17 @@
+diff --git a/dist/cli/build/open-next/bundle-node-middleware.js b/dist/cli/build/open-next/bundle-node-middleware.js
+--- a/dist/cli/build/open-next/bundle-node-middleware.js
++++ b/dist/cli/build/open-next/bundle-node-middleware.js
+@@ -178,8 +178,8 @@ export async function bundleNodeMiddleware(options) {
+         sourcemap: options.debug ? "inline" : false,
+         sourcesContent: false,
+         treeShaking: true,
+-        conditions: ["module"],
+-        mainFields: ["module", "main"],
++        conditions: ["node"],
++        mainFields: ["main", "module"],
+         external: ["node:*", "./open-next.config.mjs"],
+         define: {
+             // The base of the middleware compiled by Next.js is runtime agnostic. "edge" selects its
 diff --git a/dist/cli/build/patches/plugins/instrumentation.js b/dist/cli/build/patches/plugins/instrumentation.js
 index 5848543b789719b91df85130caa0a571c9a0544f..77e32e777e3235f62b66635711cef546162af85f 100644
 --- a/dist/cli/build/patches/plugins/instrumentation.js
