@@ -220,6 +220,7 @@ function rehypeRawHtmlMath() {
 }
 
 function normalizeDisplayMath(content: string): string {
+  if (!content.includes("$$")) return content;
   let openFence: "`" | "~" | null = null;
   return content
     .split("\n")
@@ -260,11 +261,13 @@ function createAcademicProcessor() {
     .use(rehypeStringify, { characterReferences: { useNamedReferences: true } });
 }
 
+const academicProcessor = createAcademicProcessor();
+
 const academicProcessors: Readonly<
   Record<AcademicContentFormat, ReturnType<typeof createAcademicProcessor>>
 > = {
-  html: createAcademicProcessor(),
-  markdown: createAcademicProcessor(),
+  html: academicProcessor,
+  markdown: academicProcessor,
 };
 
 export function renderAcademicContentToHtml(

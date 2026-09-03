@@ -26,6 +26,7 @@
   "tests/github-webhook.test.ts": "99afb3c4814aae88c88bb691fd79d1f7b2817cf0b4c2ac53ec3d9417b777f1e3",
   "tests/grade-audit.test.ts": "823d495d9501e3e7a248dfa3ae475b5e4c63c8add3fca5162906875262f68373",
   "tests/grade-feedback.test.ts": "743d56612a00cbbbb7d7fc6e9b731dcb77d94759212c48c4e3e49656b2a0fa89",
+  "tests/grade-history.test.ts": "db9e917c93ed48a2d288e7c129ee63b066e6313909f7c929bbf0fac194b0df62",
   "tests/grade-record-exports.test.ts": "df36860503dac32733a1bf931375ab527976eb9f4d4e935537900b1f9f5f30ee",
   "tests/grades-batch.test.ts": "8cf7b2afc039d9cdee7aae00632c67144d4f9e25f3ba35ba5dce876f8b46356e",
   "tests/grades.test.ts": "be7c0cc1b80172e91a2201b86d059e0b9b2704ebc8d6f823371e1ae8b23ae6d2",

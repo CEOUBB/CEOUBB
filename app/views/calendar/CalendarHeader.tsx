@@ -51,7 +51,7 @@ export function CalendarHeader({
             onClick={() => goWeek(shiftDate(days[0], -7))}
             type="button"
           >
-            <CaretLeft size={16} weight="bold" />
+            <CaretLeft aria-hidden="true" size={16} weight="bold" />
           </button>
           <button
             className="planner-now-button"
@@ -68,7 +68,7 @@ export function CalendarHeader({
             onClick={() => goWeek(shiftDate(days[0], 7))}
             type="button"
           >
-            <CaretRight size={16} weight="bold" />
+            <CaretRight aria-hidden="true" size={16} weight="bold" />
           </button>
         </div>
         <label className="planner-jump">
@@ -84,7 +84,7 @@ export function CalendarHeader({
           onClick={() => newBlock(focusDay, firstFreeHour)}
           type="button"
         >
-          <Plus size={15} weight="bold" /> Nuevo bloque
+          <Plus aria-hidden="true" size={15} weight="bold" /> Nuevo bloque
         </button>
       </div>
     </header>

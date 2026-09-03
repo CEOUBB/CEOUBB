@@ -8974,6 +8974,35 @@ mark,
   opacity: 0.65;
 }
 
+.grade-history-action {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.grade-history-action:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+.grade-history-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (hover: none) {
+  .grade-history-action {
+    min-height: 44px;
+  }
+}
+
 .grade-feedback-context {
   display: flex;
   flex-direction: column;
