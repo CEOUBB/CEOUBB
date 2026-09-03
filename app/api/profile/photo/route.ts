@@ -9,6 +9,7 @@ import {
   avatarPublicUrl,
   avatarStoragePath,
   deleteAvatarObject,
+  detectImageMagicBytes,
   firebaseUid,
   projectUserPhotoToFirestore,
   uploadAvatarObject,
@@ -54,10 +55,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const fileBuffer = await file.arrayBuffer();
+  const detectedType = detectImageMagicBytes(fileBuffer);
+  if (!detectedType || detectedType !== parsed.data.contentType) {
+    return Response.json(
+      { error: "El contenido del archivo no coincide con una imagen PNG, JPEG o WebP válida." },
+      { status: 422 }
+    );
+  }
+
   try {
     const uid = firebaseUid(actor.id);
-    const storagePath = avatarStoragePath(uid, parsed.data.contentType);
-    await uploadAvatarObject(storagePath, await file.arrayBuffer(), parsed.data.contentType);
+    const storagePath = avatarStoragePath(uid, detectedType);
+    await uploadAvatarObject(storagePath, fileBuffer, detectedType);
     const photoUrl = avatarPublicUrl(storagePath);
     const db = getDb();
     await db.update(users).set({ photoUrl }).where(eq(users.id, actor.id));

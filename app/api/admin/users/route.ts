@@ -95,7 +95,7 @@ export async function GET(request: Request) {
   }
 }
 
-// Implements: REQ-SEC-01, REQ-API-01, REQ-API-02, REQ-SEC-15
+// Implements: REQ-SEC-01, REQ-API-01, REQ-API-02, REQ-SEC-10, REQ-SEC-15
 export async function PATCH(request: Request) {
   const actor = await getSessionUser(request);
   if (!actor || actor.role !== "owner")
@@ -129,7 +129,8 @@ export async function PATCH(request: Request) {
       La protección ya no mira el correo: mira el rango administrativo guardado en
       Turso. Ninguna cuenta personal está codificada en el servidor.
     */
-    const target = await getDb()
+    const db = getDb();
+    const target = await db
       .select({ role: users.role })
       .from(users)
       .where(eq(users.id, userId))
@@ -140,10 +141,33 @@ export async function PATCH(request: Request) {
         { error: "Las cuentas propietarias no pueden cambiar de rango." },
         { status: 400 }
       );
-    await getDb().update(users).set({ role }).where(eq(users.id, userId));
 
-    // Implements: REQ-SEC-10
-    await projectUserRoleToFirestore(userId, role);
+    const previousRole = target[0].role;
+    if (previousRole === role) {
+      return Response.json({ ok: true });
+    }
+
+    // 1. Mutar Turso (Sistema de Registro)
+    await db.update(users).set({ role }).where(eq(users.id, userId));
+
+    // 2. Proyectar a Firestore con compensación transaccional
+    try {
+      // Implements: REQ-SEC-10
+      await projectUserRoleToFirestore(userId, role);
+    } catch (projectionError) {
+      console.error(
+        `[PATCH /api/admin/users] Falló proyección a Firestore para ${userId}. Reversando Turso a ${previousRole}:`,
+        projectionError
+      );
+      // Transacción compensatoria: restaurar el estado original en Turso
+      await db.update(users).set({ role: previousRole }).where(eq(users.id, userId));
+      return Response.json(
+        {
+          error: "No fue posible sincronizar el rol con Firestore. Los cambios fueron revertidos.",
+        },
+        { status: 502 }
+      );
+    }
 
     return Response.json({ ok: true });
   } catch {

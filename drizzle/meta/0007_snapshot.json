@@ -2,7 +2,7 @@
   "version": "6",
   "dialect": "sqlite",
   "id": "c63b8886-053f-4daa-a7a3-abc099707031",
-  "prevId": "402d5093-6a3c-4e69-9e82-b465c729d94f",
+  "prevId": "fa20bf93-0f46-4782-8e73-9dd83433fb37",
   "tables": {
     "asignaturas": {
       "name": "asignaturas",

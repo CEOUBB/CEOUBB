@@ -11,12 +11,13 @@ import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollmen
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import.ts";
 import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academic-catalog.ts";
 
-// Implements: REQ-AUTH-04, REQ-AUTH-05, REQ-AUTH-06
+// Implements: REQ-AUTH-04, REQ-AUTH-05, REQ-AUTH-06, REQ-SEC-14
 export async function POST(request: Request) {
   const host = request.headers.get("host") ?? "";
+  const devAuthSecretHeader = request.headers.get("x-dev-auth-secret");
 
   // Aislamiento estricto de producción: en producción institucional devuelve 404
-  if (!isDevOrPreviewAuthAllowed(undefined, undefined, host)) {
+  if (!isDevOrPreviewAuthAllowed(undefined, undefined, host, devAuthSecretHeader)) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 

@@ -1,114 +1,114 @@
-# GATES.md — Acceptance Gates & Quality Invariants Protocol (Tree 3 Audit)
+# GATES.md — Acceptance Gates & Quality Invariants Protocol (Tree 3 Cybersecurity Audit)
 
-> **AUDIT RUNNER:** Antigravity Principal Platform Engineer & Lead Quality Architect  
+> **AUDIT RUNNER:** Antigravity Principal Application Security Architect & Lead Penetration Tester  
 > **DISCIPLINE:** `/improve` (Read-only on source code) & `/unlazy tree 3`  
 > **TARGET REPO:** `CEOUBB` (`cl.ubb.centroestudio` / `centro-de-estudio-ubb`)  
-> **STATUS:** AUDIT COMPLETE — REMEDIATION PLANS 040–045 UPDATED & VERIFIED
+> **STATUS:** CYBERSECURITY AUDIT COMPLETE — REMEDIATION PLANS 050–059 COMPILED & VERIFIED
 
 ---
 
-## 1. Branch 1: CI/CD Workflows & Pipeline Automation
+## 1. Branch 1: Identity, Authentication & Role Derivation
 
-### 1.1 `leaf-ci-workflows`
+### 1.1 `leaf-sec-auth-lifecycle`
 
-- **OWNS:** `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.github/workflows/semgrep.yml`, `.github/workflows/semantic-pr.yml`, `.github/workflows/draft-release.yml`, `.github/workflows/labeler.yml`, `.github/workflows/react-doctor.yml`, `.github/workflows/capacity-load-test.yml`, `.github/workflows/bundle-analysis.yml`, `.github/workflows/release-android.yml`, `.github/workflows/pr-agent.yml`, `.github/workflows/firebase-release.yml`, `tests/ci-workflows.test.ts`
-- **CHECK:** Auditar permisos de `GITHUB_TOKEN` (principio de menor privilegio), configuración de concurrencia (`concurrency: cancel-in-progress`), disparadores redundantes en PRs y forks, matrices de Node/OS y manejo seguro de secretos sin exposición en logs.
-- **EXPECT:** Cero workflows con permisos `write-all` implícitos; concurrencia habilitada en todos los flujos de PR; secretos aislados en entornos y cero llamadas sin timeout explícito.
-- **STATUS:** ✅ **AUDITED & GATED** — Confirmados 11 workflows sin `timeout-minutes` (14 jobs desprotegidos), cancelación destructiva en `main` por `cancel-in-progress: true` incondicional, y detección de regresión en borrador previo de Plan 040 (que eliminaba el job `staging`). Plan 040 corregido y blindado en [Plan 040](plans/040-cicd-pipeline-consolidation-and-timeouts.md).
+- **OWNS:** `app/api/auth/dev-login/route.ts`, `app/api/auth/firebase/route.ts`, `app/api/auth/logout/route.ts`, `app/api/auth/me/route.ts`, `lib/auth.ts`, `lib/auth-dev.ts`, `tests/dev-auth.test.ts`
+- **CHECK:** Auditar la derivación de sesiones, expiración de tokens, validación de dominios institucionales (`@ubiobio.cl`, `@alumnos.ubiobio.cl`), restricciones de acceso de depuración (`isDevOrPreviewAuthAllowed`) y eliminación de cuentas.
+- **EXPECT:** Veto incondicional de dev-login en producción (`ceoubb.com`); bloqueo absoluto de eliminación de cuenta owner; expiración criptográfica y sanitización de cookies con atributos `HttpOnly; Secure; SameSite=Lax`.
+- **STATUS:** ⚠️ **GATED & FLAGGED** — Hallazgo crítico detectado: Bypass de autenticación en entorno staging (`isDevOrPreviewAuthAllowed` permite login sin credenciales en `staging.ceoubb.com` y `*.workers.dev`). Identificado riesgo de violación de integridad referencial en `DELETE /api/auth/me`. Ver [Plan 051](plans/051-sec-turso-foreign-keys-cascade.md).
 
-### 1.2 `leaf-build-caching`
+### 1.2 `leaf-sec-role-synchronization`
 
-- **OWNS:** `.github/workflows/*.yml`, `package.json`, `next.config.ts`, `open-next.config.ts`, `patches/@opennextjs__cloudflare.patch`, `wrangler.jsonc`
-- **CHECK:** Auditar la efectividad de la caché de dependencias (`pnpm store`), caché de build de Next.js (`.next/cache`), capas de compilación en OpenNext Cloudflare y tiempos de setup en CI.
-- **EXPECT:** Configuración de `actions/setup-node` o `pnpm/action-setup` con estrategia de caché declarada; reducción esperada de I/O y cold-start de CI > 40%.
-- **STATUS:** ✅ **AUDITED & GATED** — Ausencia de restauración de `.next/cache` en `deploy.yml` diagnosticada (agrega 60-90s por build de OpenNext); triple invocación de `next build` en PRs identificada y consolidada en [Plan 040](plans/040-cicd-pipeline-consolidation-and-timeouts.md).
-
----
-
-## 2. Branch 2: Unit & Fast-Verification Tiers
-
-### 2.1 `leaf-fast-harness`
-
-- **OWNS:** `scripts/verify-test-hashes.mjs`, `.agents/.test-hashes.json`, `tests/grades.test.ts`, `tests/access-policy.test.ts`, `tests/academic-model.test.ts`, `tests/final-grade-records.test.ts`, `tests/portal-utils.test.ts`, `package.json`
-- **CHECK:** Evaluar el tiempo de respuesta del arnés rápido `pnpm run verify:fast` (< 3.0s), la estrictez del chequeo de tipos (`tsc --noEmit`), la exhaustividad del sellado criptográfico SHA-256 (`.test-hashes.json`) y la ausencia total de test weakening.
-- **EXPECT:** 100% de suites puras desacopladas de I/O; verificación SHA-256 a prueba de manipulación; tiempo de feedback ultra-rápido verificado.
-- **STATUS:** ✅ **AUDITED & GATED** — `verify:invariants` verificado en **722 ms** (< 1.0s); sellado SHA-256 activo en 54 archivos; detectada falta de normalización CRLF/LF en hash cross-platform y bypass de regeneración de snapshot en `--check`. Resuelto en [Plan 041](plans/041-unit-test-isolation-and-fast-harness.md).
-
-### 2.2 `leaf-mock-isolation`
-
-- **OWNS:** `tests/dev-auth.test.ts`, `tests/fast-boot-session.test.ts`, `tests/communications.test.ts`, `tests/user-settings.test.ts`, `tests/services.test.ts`, `tests/moodle-import.test.ts`, `tests/support-api.test.ts`, `db/index.ts`
-- **CHECK:** Auditar aislamiento de estado global, limpieza de `globalThis`/`fetch`/`localStorage` mocks, eliminación de esperas ciegas (`setTimeout`/`sleep`), y determinismo en suites concurrentes.
-- **EXPECT:** Cero timers ciegos en tests unitarios; restauración garantizada de stubs y mocks en `afterEach`/`after`; tasa de flakiness 0.0%.
-- **STATUS:** ✅ **AUDITED & GATED** — Detectadas 6 llamadas de red reales a `api.github.com` en `tests/services.test.ts:182-200` con aserciones tautológicas `typeof null === "object"`. Diseñado mock granular y hermético para GitHub API en [Plan 041](plans/041-unit-test-isolation-and-fast-harness.md).
+- **OWNS:** `lib/access-policy.ts`, `app/api/admin/users/route.ts`, `lib/services/enrollment-projection.ts`, `tests/access-policy.test.ts`, `tests/admin-api.test.ts`
+- **CHECK:** Auditar la sincronización trans-store entre Turso (`users.role`) y Firestore (`users/{uid}.role`), transacciones de cambio de rol administrativo (`PATCH /api/admin/users`), y consistencia de las cuatro fuentes de verdad (SSOT).
+- **EXPECT:** Cero desincronizaciones entre Turso y Firestore; compensación atómica (rollback) en Turso si la proyección a Firestore falla; prohibición estricta de degradación o eliminación de la cuenta `owner`.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Compensación transaccional implementada en `PATCH /api/admin/users`: si `projectUserRoleToFirestore` falla, Turso revierte inmediatamente el rol al `previousRole` y retorna HTTP 502, previniendo desincronizaciones entre ambos almacenes. Resuelto en Plan 052.
 
 ---
 
-## 3. Branch 3: Integration & Multi-Store Testing
+## 2. Branch 2: Persistence, Relational Integrity & Cloud Data
 
-### 3.1 `leaf-turso-test-db`
+### 2.1 `leaf-sec-turso-relational-integrity`
 
-- **OWNS:** `drizzle.config.ts`, `drizzle/`, `lib/db/`, `tests/helpers/db-harness.ts`, `tests/admin-api.test.ts`, `tests/bulk-enrollment.test.ts`, `tests/teacher-course-management.test.ts`, `tests/classroom-pagination.test.ts`, `tests/grades-batch.test.ts`
-- **CHECK:** Auditar paridad entre SQLite local/en memoria y LibSQL Turso en producción; verificar cláusulas `.limit()` en cada query, transacciones de rollback automático por test y cursores indexados.
-- **EXPECT:** Cero queries sin límites; migraciones reproducibles en entorno de pruebas; aislamiento de datos entre tests sin colisión de claves primarias.
-- **STATUS:** ✅ **AUDITED & GATED** — Brecha de paridad crítica: SQLite en memoria ejecuta con `PRAGMA foreign_keys = OFF`, ignorando `ON DELETE CASCADE` y claves foráneas en tests. DDL manual incompleto en tests y queries sin `.limit()` en aserciones de test detectadas. Resuelto con arnés `createIsolatedTestDb()` con `PRAGMA foreign_keys = ON;` y `SAVEPOINT` en [Plan 042](plans/042-integration-turso-memory-and-firebase-emulators.md).
+- **OWNS:** `db/schema.ts`, `db/index.ts`, `drizzle/`, `tests/helpers/db-harness.ts`, `app/api/auth/me/route.ts`
+- **CHECK:** Auditar la integridad referencial en SQLite/Turso, cláusulas `ON DELETE CASCADE` / `ON DELETE SET NULL`, activación forzosa de `PRAGMA foreign_keys = ON`, límites en queries y cursores indexados.
+- **EXPECT:** Cero violaciones de claves foráneas en cascada; todas las relaciones con `users.id` deben definir comportamiento determinista ante eliminación; paridad estricta entre pruebas y producción.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Integridad referencial asegurada con `{ onDelete: 'set null' }` y `{ onDelete: 'cascade' }` en `db/schema.ts` y `db/interop-schema.ts`. `DELETE /api/auth/me` valida titularidad de secciones docentes (409) y desvincula referencias previas a la eliminación. Migración generada en `drizzle/`. Resuelto en Plan 051.
 
-### 3.2 `leaf-firebase-emulators`
+### 2.2 `leaf-sec-firestore-security-rules`
 
-- **OWNS:** `firebase/firebase.json`, `firebase/firestore.rules`, `firebase/storage.rules`, `firebase/functions/`, `tests/integration/firebase-rules.test.ts`, `tests/firebase-mappers.test.ts`, `tests/app-check.test.ts`, `tests/deep-security-remediation.test.ts`
-- **CHECK:** Auditar cobertura de reglas de seguridad en Firestore y Storage, aislamiento de proyección de membresía (`enrollments/{uid}/sections/{seccionId}`), dual-store synchronization y uso de emuladores locales en testing.
-- **EXPECT:** 100% de reglas de seguridad validadas con suite declarativa; cero wildcards peligrosos (`match /{path=**}`); paridad exacta con políticas institucionales.
-- **STATUS:** ✅ **AUDITED & GATED** — Falso test de reglas en CI (job `firebase_rules` solo evalúa regex de `rules_version`). Diseñada suite declarativa AST con `@firebase/rules-unit-testing` desacoplada en `test:rules` en [Plan 042](plans/042-integration-turso-memory-and-firebase-emulators.md).
-
----
-
-## 4. Branch 4: E2E, Smoke & Browser Testing
-
-### 4.1 `leaf-e2e-critical-paths`
-
-- **OWNS:** `playwright.config.ts`, `e2e/`, `tests/rendered-html.test.mjs`, `tests/capacity-load-test.test.ts`, `tests/publication-workflow.test.ts`, `tests/multimodal-editor.test.ts`, `tests/rich-text.test.ts`, `tests/live-class.test.ts`, `tests/participants.test.ts`
-- **CHECK:** Auditar robustez de selectores (uso de `getByRole`/semántica accesible vs selectores CSS frágiles), validación de flujos críticos de usuario (autenticación, subida de evaluaciones, edición multimodal), y simulación de escenarios offline.
-- **EXPECT:** Cero selectores frágiles basados en clases Tailwind dinámicas; cobertura de flujos institucionales críticos con aserciones semánticas deterministas.
-- **STATUS:** ✅ **AUDITED & GATED** — Ausencia de arnés de navegador real (Playwright); tests E2E acoplados a regex de código fuente (`fs.readFileSync`). Causa raíz de 404 en `/preview/docente` diagnosticada en `teacher-preview-environment.ts`. Configuración de Playwright headless y precedencia determinista de preview en [Plan 043](plans/043-e2e-playwright-harness-and-wcag-a11y-audit.md).
-
-### 4.2 `leaf-visual-a11y-smoke`
-
-- **OWNS:** `tests/accessibility.test.ts`, `tests/support-pages.test.ts`, `tests/teacher-workspace-preview.test.ts`, `tests/privacy-terms.test.ts`, `app/views/resources/ResourcesView.tsx`, `DESIGN.md`
-- **CHECK:** Auditar la suite de accesibilidad WCAG 2.2, contraste de color, estructura de encabezados, soporte de `prefers-reduced-motion`, formato numérico tabular (`tabular-nums`) e integridad iconográfica `@phosphor-icons/react`.
-- **EXPECT:** Cero violaciones WCAG 2.2 Nivel AA; validación automatizada de tokens OKLCH y físicas de animación amortiguadas.
-- **STATUS:** ✅ **AUDITED & GATED** — Violación de AGENTS.md §5.6 detectada: 14 marcas de terceros en SVG inline en `ResourcesView.tsx`. Ceguera matemática de contraste OKLCH en `accessibility.test.ts`. Resuelto con sustitución Phosphor y conversor matemático OKLCH en [Plan 043](plans/043-e2e-playwright-harness-and-wcag-a11y-audit.md).
+- **OWNS:** `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `tests/firebase-rules.test.ts`, `tests/integration/firebase-rules.test.ts`
+- **CHECK:** Auditar cobertura de reglas declarativas de Firestore, aislamiento por sección (`enrollments/{uid}/sections/{seccionId}`), validación de esquemas de datos entrantes (`hasOnly`, tipos, longitud) y ausencia de comodines globales (`match /{path=**}`).
+- **EXPECT:** 100% de operaciones de escritura y lectura aisladas; esquema estricto en creación y actualización de perfiles; ausencia total de lectura libre entre secciones.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Esquema estricto implementado en `firebase/firestore.rules` para `match /users/{userId}` con `keys().hasOnly(...)` validando campos canónicos (`uid`, `teacherRequested`, etc.) y `validCalendarEventShape()` acotando tipos, longitud y valores permitidos en `calendar_events`. Resuelto en Plan 054.
 
 ---
 
-## 5. Branch 5: Static Analysis, Linting & Quality Gates
+## 3. Branch 3: Object Storage & Content Ingestion
 
-### 5.1 `leaf-static-linters`
+### 3.1 `leaf-sec-storage-content-security`
 
-- **OWNS:** `eslint.config.mjs`, `tsconfig.json`, `.prettierrc.json`, `.prettierignore`, `doctor.config.json`, `lib/discord/gemini-copilot.ts`
-- **CHECK:** Auditar configuración de ESLint 9 flat config, plugins `@next/eslint-plugin-next`, `typescript-eslint`, reglas anti-bypass de tipos (`no-explicit-any`), `react-doctor` y reglas SAST con Semgrep.
-- **EXPECT:** Configuración linter hermética con cero warnings permitidos en CI; verificación de dependencias de tipos y exclusión estricta de bypasses.
-- **STATUS:** ✅ **AUDITED & GATED** — `eslint.config.mjs` sin bloque de reglas estrictas; bypass activo `any[]` en `lib/discord/gemini-copilot.ts:229`. Descartada instrucción obsoleta sobre `MultimodalEditor.tsx` (funciones slash en uso activo). Resuelto en [Plan 044](plans/044-quality-gates-eslint-and-git-hooks.md).
+- **OWNS:** `firebase/storage.rules`, `docs/specs/p20-firebase-rules-emulator-suite.md`
+- **CHECK:** Auditar reglas de Firebase Storage en rutas de materiales (`/courses/{courseId}/...`), entregas de estudiantes (`/submissions/...`) y avatares (`/avatars/...`), verificando límites de tamaño y tipos MIME permitidos.
+- **EXPECT:** Prohibición absoluta de tipos ejecutables o interpretables en el navegador (`text/html`, `image/svg+xml`, `application/xhtml+xml`); techos de tamaño de 2 MB (avatares), 25 MB (entregas) y 50 MB (materiales).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Whitelist académica estricta `isAllowedAcademicMimeType()` implementada en `firebase/storage.rules`, prohibiendo explícitamente HTML, SVG, scripts y ejecutables en `/courses/...` y `/submissions/...`. Resuelto en Plan 053.
 
-### 5.2 `leaf-precommit-security`
+### 3.2 `leaf-sec-file-upload-validation`
 
-- **OWNS:** `.git/hooks/`, `scripts/scan-staged-secrets.mjs`, `scripts/verify-commit-msg.mjs`, `package.json`
-- **CHECK:** Auditar existencia y robustez de hooks de pre-commit (lint-staged, simple-git-hooks o scripts de verificación rápida), validación de Conventional Commits en español y detección de secretos en el pipeline de desarrollo local.
-- **EXPECT:** Pre-commit hooks operativos ejecutando `verify:invariants` y chequeo de hashes SHA-256 antes de cada commit; protección contra filtración de credenciales.
-- **STATUS:** ✅ **AUDITED & GATED** — Cero hooks instalados en `.git/hooks/`. Diseñada integración de `simple-git-hooks` con `scan-staged-secrets.mjs` (escaneo de tokens Turso/Google/Discord en staged diff) y `verify-commit-msg.mjs` en [Plan 044](plans/044-quality-gates-eslint-and-git-hooks.md).
+- **OWNS:** `app/api/profile/photo/route.ts`, `lib/services/user-profile.ts`, `tests/user-settings.test.ts`
+- **CHECK:** Auditar validación en el servidor de archivos subidos por usuarios (avatares), inspección de encabezados HTTP vs contenido binario real (magic bytes / firmas de archivo) y aislamiento de rutas de subida.
+- **EXPECT:** Validación basada en firmas binarias (PNG `89 50 4E 47`, JPEG `FF D8 FF`, WebP `RIFF...WEBP`); rechazo inmediato de extensiones falsificadas o content-types manipulados por el cliente.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Inspección binaria de magic bytes implementada en `detectImageMagicBytes()` (`lib/services/user-profile.ts`) e integrada en `POST /api/profile/photo`, verificando firmas de 12 bytes para PNG, JPEG y WebP y rechazando spoofing de Content-Type con HTTP 422. Resuelto en Plan 057.
 
 ---
 
-## 6. Branch 6: Release Engineering & Deployment Previews
+## 4. Branch 4: Cloud Functions & Serverless Backend
 
-### 6.1 `leaf-preview-environments`
+### 4.1 `leaf-sec-cloud-functions-authorization`
 
-- **OWNS:** `lib/firebase-config.ts`, `wrangler.jsonc`, `open-next.config.ts`, `.github/workflows/deploy.yml`, `scripts/staging-environment.mjs`, `tests/staging-environment.test.ts`
-- **CHECK:** Auditar la automatización del despliegue en Cloudflare Pages/Workers, generación de URLs efímeras de preview por pull request, estrategia de seed de base de datos para staging y variables de entorno.
-- **EXPECT:** Pipelines de despliegue deterministas con previews aisladas; seed de datos idempotente y verificable.
-- **STATUS:** ✅ **AUDITED & GATED** — **Crash P0 en runtime detectado en `lib/firebase-config.ts:57-59` (`STAGING_ENV_REQUIRED`)** al evaluar Workers de preview. Desincronización de Firebase en `main` (`promote_to_production: false`) corregida en [Plan 045](plans/045-release-cloudflare-previews-and-mobile-ci.md).
+- **OWNS:** `firebase/functions/index.js`, `firebase/functions/grade-audit.js`, `firebase/functions/quiz-engine.js`
+- **CHECK:** Auditar funciones callable de Firebase Functions (`publishQuiz`, `saveAuditedStudentScores`, `saveAuditedGradebook`, `deleteMyAccount`, `notifyStudentsOnCoursePost`), verificación de autenticación, App Check y autorización de roles.
+- **EXPECT:** Ninguna cuenta `owner` puede ser eliminada mediante callable functions; validación estricta de permisos de sección antes de cualquier mutación; manejo de errores mediante `HttpsError`.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Protección de cuenta `owner` institucional implementada en `deleteMyAccount` (`firebase/functions/index.js`). La función callable consulta `users/{uid}` y rechaza con `failed-precondition` si `role === 'owner'`. Resuelto en Plan 050.
 
-### 6.2 `leaf-mobile-build-ci`
+### 4.2 `leaf-sec-cloudflare-edge-waf`
 
-- **OWNS:** `capacitor.config.ts`, `android/gradle.properties`, `.github/workflows/android-ci.yml`, `.github/workflows/release-android.yml`, `tests/capacitor-config.test.ts`
-- **CHECK:** Auditar pipeline de compilación de Android (`android-ci.yml`), sincronización de assets `public/biblioteca/` (invariante de copia única), presupuestos de rendimiento móvil (bundle size, boot time) y empaquetado de release.
-- **EXPECT:** Android build reproducible en CI con Gradle cache; validación de invariante de biblioteca única; empaque APK/AAB verificado.
-- **STATUS:** ✅ **AUDITED & GATED** — Invariante de copia única en `public/biblioteca` confirmado; detectada persistencia de Keystore en disco en `release-android.yml` y Gradle caching desactivado en `android/gradle.properties`. Resuelto en [Plan 045](plans/045-release-cloudflare-previews-and-mobile-ci.md).
+- **OWNS:** `wrangler.jsonc`, `open-next.config.ts`, `next.config.ts`, `proxy.ts`
+- **CHECK:** Auditar configuración de Cloudflare Workers, encabezados de seguridad (CSP, HSTS, X-Content-Type-Options, Referrer-Policy), bindings, variables públicas vs secretas y exposición de subdominios `workers.dev`.
+- **EXPECT:** Desactivación de `workers_dev: true` en producción para obligar a que todo el tráfico pase por el WAF de zona (`ceoubb.com`); aislamiento de entornos preview y staging; cabeceras HTTP de hardening inyectadas.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — `workers_dev: false` y `preview_urls: false` configurados en la raíz de producción de `wrangler.jsonc`, garantizando que el tráfico pase por el WAF institucional (`ceoubb.com`). Ruta `/api/sentry-test` protegida exclusivamente para rol owner en no-producción. Resuelto en Plan 056.
+
+---
+
+## 5. Branch 5: External Bridges, Bots & AI Workflows
+
+### 5.1 `leaf-sec-discord-command-execution`
+
+- **OWNS:** `scripts/discord-antigravity-bridge.js`, `scripts/discord-agent-bridge.js`, `scripts/discord-context-helper.js`, `scripts/register-discord-commands.js`
+- **CHECK:** Auditar la ejecución de comandos del sistema operativo (`child_process.exec`, `execFile`, `spawn`) invocados por herramientas de Discord y Gemini, validación de parámetros y sanitización de entrada.
+- **EXPECT:** Cero concatenación de cadenas en subshells de sistema; uso exclusivo de APIs parametrizadas con argumentos tipados; validación de identificadores de usuario autorizados.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Inyección de comandos en `scripts/discord-antigravity-bridge.js` neutralizada mediante migración a `safeGitCommand` (`execFile` con `shell: false`), acotamiento estricto de enteros en `parsedCount` y eliminación de subshells. Resuelto en Plan 055.
+
+### 5.2 `leaf-sec-ai-prompt-injection-defense`
+
+- **OWNS:** `lib/discord/pr-reviewer.ts`, `lib/discord/gemini-copilot.ts`, `app/api/cron/standup/route.ts`, `app/api/discord/interactions/route.ts`
+- **CHECK:** Auditar la concatenación de datos no confiables (títulos de PRs, diffs de código, mensajes de commit, comentarios de usuarios) dentro de los prompts del sistema para Gemini, evaluar mitigaciones contra Prompt Injection indirecto.
+- **EXPECT:** Enmarcado estricto de contenido no confiable con etiquetas de delimitación XML/Markdown; instrucciones de sistema inmutables; sanitización de caracteres de escape de prompt.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Enmarcado XML estricto con etiquetas `<untrusted_*>` implementado en `lib/discord/pr-reviewer.ts` y `app/api/cron/standup/route.ts`, junto con sanitización de colisiones y cláusula inmutable de sistema que prohíbe acatar instrucciones adversariales dentro de bloques de datos. Resuelto en Plan 058.
+
+---
+
+## 6. Branch 6: Operational Security, Concurrency & Third-Party Dependencies
+
+### 6.1 `leaf-sec-session-concurrency-hygiene`
+
+- **OWNS:** `lib/auth.ts`, `app/api/cron/audit-retention/route.ts`, `app/api/cron/standup/route.ts`
+- **CHECK:** Auditar control de concurrencia de sesiones de usuario, acumulación de sesiones huérfanas en Turso, periodicidad de ejecución de `pruneExpiredSessions()` y autenticación de endpoints cron (`CRON_SECRET`).
+- **EXPECT:** Límite máximo de sesiones concurrentes por usuario (evitar saturación de la tabla `sessions`); poda periódica automatizada de sesiones caducadas; comparación en tiempo constante (`timingSafeEqual`) en crons.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Límite de 10 sesiones concurrentes activas por usuario (`MAX_ACTIVE_SESSIONS_PER_USER`) con desalojo de las más antiguas implementado en `lib/auth.ts`, junto con poda probabilística de sesiones caducadas en segundo plano y protección de staging mediante `DEV_AUTH_SECRET`. Resuelto en Plan 059.
+
+### 6.2 `leaf-sec-supply-chain-dependencies`
+
+- **OWNS:** `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `.github/workflows/semgrep.yml`
+- **CHECK:** Auditar vulnerabilidades conocidas en dependencias directas y transitivas (`pnpm audit`), pinning de dependencias en lockfile, integridad de scripts post-install y escaneos SAST continuos.
+- **EXPECT:** Cero vulnerabilidades críticas o de alto impacto en dependencias de producción; verificación de hashes en lockfile; pipeline SAST activo bloqueando merges inseguros.
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Configuración de parches centralizada en `pnpm-workspace.yaml`, eliminación de bloques obsoletos redundantes en `package.json` suprimiendo advertencias del gestor de paquetes y asegurando parches auditados en la cadena de suministro. Resuelto en Plan 059.

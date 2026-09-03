@@ -182,9 +182,36 @@ service cloud.firestore {
       return teachesSection(seccionId) || assistsSection(seccionId);
     }
 
+    function validCalendarEventShape() {
+      return request.resource.data.keys().hasOnly([
+          'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 
+          'courseId', 'kind', 'completed', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.detail is string
+        && request.resource.data.detail.size() <= 400
+        && request.resource.data.date is string
+        && request.resource.data.startTime is string
+        && request.resource.data.endTime is string
+        && (request.resource.data.courseId == null || request.resource.data.courseId is string)
+        && request.resource.data.kind in ['clase', 'estudio', 'evaluacion', 'reunion', 'otro']
+        && request.resource.data.completed is bool;
+    }
+
     match /users/{userId} {
       allow read: if isOwner() || signedIn() && request.auth.uid == userId;
-      allow create: if signedIn() && request.auth.uid == userId && (isStudent() || isTeacherEmail()) && request.resource.data.role == expectedRole();
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && (isStudent() || isTeacherEmail())
+        && request.resource.data.role == expectedRole()
+        && request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'photoUrl', 'domain', 'role', 
+          'createdAt', 'lastSeen', 'teacherRequested', 'fcmToken'
+        ])
+        && request.resource.data.email == email();
       // Implements: REQ-CAP-18 — 'fcmToken' es la única ampliación de la app
       // nativa: el propio dueño escribe su token FCM y nada más. El rol sigue
       // congelado y `hasOnly` mantiene el resto del documento fuera de alcance.
@@ -194,7 +221,10 @@ service cloud.firestore {
       // Bloques del calendario semanal. Estrictamente privados: ni el owner
       // ni un docente pueden leer la agenda personal de otra cuenta.
       match /calendar_events/{eventId} {
-        allow read, write: if signedIn() && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId
+          && (request.resource == null || (validCalendarEventShape() && (resource == null || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 'courseId', 'kind', 'completed', 'updatedAt'
+          ]))));
       }
 
       match /notificationReads/{cursorId} {
