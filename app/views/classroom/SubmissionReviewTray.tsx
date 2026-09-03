@@ -485,6 +485,13 @@ function GradingPanel({
   row: ReviewRow;
   scores: GradeScores;
 }) {
+  /*
+    La nota y el comentario son borradores editables sembrados con lo guardado.
+    El panel se monta con la clave `evaluación:estudiante`, de modo que cambiar
+    de alumno los reinicia sin efectos y sin pisar lo que el docente escribe
+    mientras llega una actualización en tiempo real.
+  */
+  // Implements: REQ-REV-02
   const [grade, setGrade] = useState(row.grade === null ? "" : formatGrade(row.grade));
   const [gradeError, setGradeError] = useState("");
   const [feedback, setFeedback] = useState(row.feedback);
@@ -509,7 +516,8 @@ function GradingPanel({
   );
 
   const saver = useRef<ReturnType<typeof createDeferredSave> | null>(null);
-  saver.current ??= createDeferredSave((value) => void persistFeedback(value));
+  const deferredSave = () =>
+    (saver.current ??= createDeferredSave((value) => void persistFeedback(value)));
 
   /*
     Al cambiar de alumno el panel se desmonta: lo que quedó escrito y sin
@@ -525,7 +533,7 @@ function GradingPanel({
     setFeedback(value);
     if (readOnly) return;
     setState("saving");
-    saver.current?.schedule(value);
+    deferredSave().schedule(value);
   };
 
   const commitGrade = async () => {
@@ -689,7 +697,19 @@ function GuidePanel({
   openAttachment: (storagePath: string) => Promise<string>;
 }) {
   const [index, setIndex] = useState(0);
+  const [fileError, setFileError] = useState("");
   const guide = guides[index];
+
+  const openGuideFile = async (storagePath: string) => {
+    setFileError("");
+    try {
+      const url = await openAttachment(storagePath);
+      if (url && url !== "#") window.open(url, "_blank", "noopener");
+      else setFileError("El archivo de la pauta no está disponible en este entorno.");
+    } catch {
+      setFileError("No fue posible abrir el archivo de la pauta.");
+    }
+  };
 
   return (
     <aside aria-labelledby="review-guide-title" className="review-guide">
@@ -726,11 +746,7 @@ function GuidePanel({
                   {guide.attachments.map((attachment) => (
                     <li key={attachment.storagePath}>
                       <button
-                        onClick={() =>
-                          void openAttachment(attachment.storagePath).then((url) => {
-                            if (url && url !== "#") window.open(url, "_blank", "noopener");
-                          })
-                        }
+                        onClick={() => void openGuideFile(attachment.storagePath)}
                         type="button"
                       >
                         <FileText aria-hidden="true" size={16} />
@@ -740,6 +756,12 @@ function GuidePanel({
                     </li>
                   ))}
                 </ul>
+              )}
+              {fileError && (
+                <p className="review-field-error" role="alert">
+                  <Warning aria-hidden="true" size={15} weight="fill" />
+                  {fileError}
+                </p>
               )}
             </div>
           )}
