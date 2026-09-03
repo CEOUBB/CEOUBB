@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Calendar / CalendarHeader & BlockDialog
+
+- **Finding:** Decorative Phosphor SVG icons embedded in calendar action buttons (`<CaretLeft>`, `<CaretRight>`, `<Plus>`, `<X>`, `<TrashSimple>`) lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within button triggers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor SVG icons inside interactive buttons with `aria-label` or visible text labels.
+- **Design System Constraint:** Preserved existing Phosphor icon props (`size`, `weight`) and button layout without modifying CSS styles or element geometry.
+- **Future Rule:** Ensure decorative SVG icons inside action buttons with visible or programmatic text labels explicitly set `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / ProgressBar
 
 - **Finding:** The reusable `Bar` component in `app/views/classroom/ProgressBar.tsx` rendered a visual progress bar element without programmatic ARIA roles or range values, leaving screen reader users without feedback on course completion percentage (WCAG 2.2 SC 4.1.2 Name, Role, Value).

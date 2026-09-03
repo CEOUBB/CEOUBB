@@ -73,7 +73,7 @@ export function BlockDialog({
         <header>
           <h2 id="planner-dialog-title">{values.id ? "Editar bloque" : "Nuevo bloque"}</h2>
           <button aria-label="Cerrar" onClick={onClose} type="button">
-            <X size={16} weight="bold" />
+            <X aria-hidden="true" size={16} weight="bold" />
           </button>
         </header>
         <label>
@@ -164,7 +164,7 @@ export function BlockDialog({
         <footer>
           {values.id && (
             <button className="planner-dialog-delete" onClick={remove} type="button">
-              <TrashSimple size={15} /> Eliminar
+              <TrashSimple aria-hidden="true" size={15} /> Eliminar
             </button>
           )}
           <button className="planner-dialog-cancel" onClick={onClose} type="button">
