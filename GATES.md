@@ -35,7 +35,7 @@
 - **OWNS:** `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `tests/firebase-rules.test.ts`, `tests/integration/firebase-rules.test.ts`
 - **CHECK:** Auditar cobertura de reglas declarativas de Firestore, aislamiento por sección (`enrollments/{uid}/sections/{seccionId}`), validación de esquemas de datos entrantes (`hasOnly`, tipos, longitud) y ausencia de comodines globales (`match /{path=**}`).
 - **EXPECT:** 100% de operaciones de escritura y lectura aisladas; esquema estricto en creación y actualización de perfiles; ausencia total de lectura libre entre secciones.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Regla de creación de perfiles `match /users/{userId}` desprotegida contra inyección de atributos arbitrarios (línea 187 carece de `keys().hasOnly(...)`, a diferencia de update en línea 191). `calendar_events` carece de restricción de tamaño y formato. Ver [Plan 054](plans/054-sec-firestore-profile-creation-schema.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Esquema estricto implementado en `firebase/firestore.rules` para `match /users/{userId}` con `keys().hasOnly(...)` validando campos canónicos (`uid`, `teacherRequested`, etc.) y `validCalendarEventShape()` acotando tipos, longitud y valores permitidos en `calendar_events`. Resuelto en Plan 054.
 
 ---
 
