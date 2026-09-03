@@ -51,7 +51,7 @@
 - **OWNS:** `app/api/profile/photo/route.ts`, `lib/services/user-profile.ts`, `tests/user-settings.test.ts`
 - **CHECK:** Auditar validación en el servidor de archivos subidos por usuarios (avatares), inspección de encabezados HTTP vs contenido binario real (magic bytes / firmas de archivo) y aislamiento de rutas de subida.
 - **EXPECT:** Validación basada en firmas binarias (PNG `89 50 4E 47`, JPEG `FF D8 FF`, WebP `RIFF...WEBP`); rechazo inmediato de extensiones falsificadas o content-types manipulados por el cliente.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Subida insegura de archivos por spoofing de Content-Type: `POST /api/profile/photo` confía ciegamente en `file.type` enviado por el navegador sin inspeccionar los primeros bytes del buffer. Ver [Plan 057](plans/057-sec-avatar-magic-bytes-validation.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Inspección binaria de magic bytes implementada en `detectImageMagicBytes()` (`lib/services/user-profile.ts`) e integrada en `POST /api/profile/photo`, verificando firmas de 12 bytes para PNG, JPEG y WebP y rechazando spoofing de Content-Type con HTTP 422. Resuelto en Plan 057.
 
 ---
 
