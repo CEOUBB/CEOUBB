@@ -25,3 +25,10 @@
 - **Attempted / Identified Solution:** Reemplazo por un bucle iterativo `for` de pasada única que calcula `maxColumns` escalarmente.
 - **Outcome / Learning:** Se eliminó la asignación de memoria $O(N)$ por hoja y el riesgo de desbordamiento de pila (_call stack overflow_) en exportaciones con miles de registros de calificaciones.
 - **Future Rule:** Reemplazar `Math.max(...arr.map(...))` por bucles iterativos simples en utilidades de procesamiento de datos por lotes o generación de documentos.
+
+## 2026-09-03 - Optimización de renderizado académico en `renderAcademicContentToHtml` (`lib/academic-content.ts`)
+
+- **Finding:** `normalizeDisplayMath` dividía y procesaba por líneas cualquier texto académico mediante `split("\n")` y múltiples expresiones regulares en cada renderizado, aun cuando el texto no contenía bloques de ecuaciones `$$`. Adicionalmente, el objeto `academicProcessors` instanciaba dos canalizaciones idénticas de Unified.
+- **Attempted / Identified Solution:** Cortocircuito escalar $O(1)$ `if (!content.includes("$$")) return content;` al inicio de `normalizeDisplayMath` y reutilización de una única instancia `academicProcessor` entre formatos.
+- **Outcome / Learning:** Se eliminó la división de cadenas y asignaciones de arreglos $O(N)$ por renderizado para contenido de prosa general, además de reducir el consumo de memoria al cargar el módulo.
+- **Future Rule:** Cortocircuitar transformaciones de texto basadas en arreglos o expresiones regulares usando comprobaciones escalares simples (`includes`, `indexOf`) antes de efectuar operaciones de segmentación.
