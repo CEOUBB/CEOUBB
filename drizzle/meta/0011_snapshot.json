@@ -47,16 +47,12 @@
       "indexes": {
         "idx_asignaturas_codigo": {
           "name": "idx_asignaturas_codigo",
-          "columns": [
-            "codigo"
-          ],
+          "columns": ["codigo"],
           "isUnique": true
         },
         "idx_asignaturas_departamento": {
           "name": "idx_asignaturas_departamento",
-          "columns": [
-            "departamento_id"
-          ],
+          "columns": ["departamento_id"],
           "isUnique": false
         }
       },
@@ -65,12 +61,8 @@
           "name": "asignaturas_departamento_id_departamentos_id_fk",
           "tableFrom": "asignaturas",
           "tableTo": "departamentos",
-          "columnsFrom": [
-            "departamento_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["departamento_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -135,17 +127,12 @@
       "indexes": {
         "idx_assistant_section_user": {
           "name": "idx_assistant_section_user",
-          "columns": [
-            "section_id",
-            "user_id"
-          ],
+          "columns": ["section_id", "user_id"],
           "isUnique": true
         },
         "idx_assistant_section": {
           "name": "idx_assistant_section",
-          "columns": [
-            "section_id"
-          ],
+          "columns": ["section_id"],
           "isUnique": false
         }
       },
@@ -154,12 +141,8 @@
           "name": "assistant_assignments_section_id_secciones_id_fk",
           "tableFrom": "assistant_assignments",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -167,12 +150,8 @@
           "name": "assistant_assignments_user_id_users_id_fk",
           "tableFrom": "assistant_assignments",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -180,12 +159,8 @@
           "name": "assistant_assignments_created_by_users_id_fk",
           "tableFrom": "assistant_assignments",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -229,16 +204,12 @@
       "indexes": {
         "idx_carreras_codigo": {
           "name": "idx_carreras_codigo",
-          "columns": [
-            "codigo"
-          ],
+          "columns": ["codigo"],
           "isUnique": true
         },
         "idx_carreras_departamento": {
           "name": "idx_carreras_departamento",
-          "columns": [
-            "departamento_id"
-          ],
+          "columns": ["departamento_id"],
           "isUnique": false
         }
       },
@@ -247,12 +218,8 @@
           "name": "carreras_departamento_id_departamentos_id_fk",
           "tableFrom": "carreras",
           "tableTo": "departamentos",
-          "columnsFrom": [
-            "departamento_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["departamento_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -289,9 +256,7 @@
       "indexes": {
         "idx_departamentos_facultad": {
           "name": "idx_departamentos_facultad",
-          "columns": [
-            "facultad_id"
-          ],
+          "columns": ["facultad_id"],
           "isUnique": false
         }
       },
@@ -300,12 +265,8 @@
           "name": "departamentos_facultad_id_facultades_id_fk",
           "tableFrom": "departamentos",
           "tableTo": "facultades",
-          "columnsFrom": [
-            "facultad_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["facultad_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -415,17 +376,12 @@
       "indexes": {
         "idx_grade_audit_seccion_student": {
           "name": "idx_grade_audit_seccion_student",
-          "columns": [
-            "seccion_id",
-            "student_id"
-          ],
+          "columns": ["seccion_id", "student_id"],
           "isUnique": false
         },
         "idx_grade_audit_timestamp": {
           "name": "idx_grade_audit_timestamp",
-          "columns": [
-            "timestamp"
-          ],
+          "columns": ["timestamp"],
           "isUnique": false
         }
       },
@@ -434,12 +390,8 @@
           "name": "grade_audit_logs_seccion_id_secciones_id_fk",
           "tableFrom": "grade_audit_logs",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "seccion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seccion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -447,12 +399,8 @@
           "name": "grade_audit_logs_student_id_users_id_fk",
           "tableFrom": "grade_audit_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "student_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["student_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -460,12 +408,8 @@
           "name": "grade_audit_logs_actor_id_users_id_fk",
           "tableFrom": "grade_audit_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -524,33 +468,22 @@
       "indexes": {
         "idx_matriculas_seccion_usuario": {
           "name": "idx_matriculas_seccion_usuario",
-          "columns": [
-            "seccion_id",
-            "usuario_id"
-          ],
+          "columns": ["seccion_id", "usuario_id"],
           "isUnique": true
         },
         "idx_matriculas_usuario": {
           "name": "idx_matriculas_usuario",
-          "columns": [
-            "usuario_id"
-          ],
+          "columns": ["usuario_id"],
           "isUnique": false
         },
         "idx_matriculas_usuario_estado": {
           "name": "idx_matriculas_usuario_estado",
-          "columns": [
-            "usuario_id",
-            "estado"
-          ],
+          "columns": ["usuario_id", "estado"],
           "isUnique": false
         },
         "idx_matriculas_seccion_estado": {
           "name": "idx_matriculas_seccion_estado",
-          "columns": [
-            "seccion_id",
-            "estado"
-          ],
+          "columns": ["seccion_id", "estado"],
           "isUnique": false
         }
       },
@@ -559,12 +492,8 @@
           "name": "matriculas_seccion_id_secciones_id_fk",
           "tableFrom": "matriculas",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "seccion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seccion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -572,12 +501,8 @@
           "name": "matriculas_usuario_id_users_id_fk",
           "tableFrom": "matriculas",
           "tableTo": "users",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -635,17 +560,12 @@
       "indexes": {
         "idx_matriculas_pendientes_seccion_email": {
           "name": "idx_matriculas_pendientes_seccion_email",
-          "columns": [
-            "seccion_id",
-            "email"
-          ],
+          "columns": ["seccion_id", "email"],
           "isUnique": true
         },
         "idx_matriculas_pendientes_email": {
           "name": "idx_matriculas_pendientes_email",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": false
         }
       },
@@ -654,12 +574,8 @@
           "name": "matriculas_pendientes_seccion_id_secciones_id_fk",
           "tableFrom": "matriculas_pendientes",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "seccion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seccion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -667,12 +583,8 @@
           "name": "matriculas_pendientes_imported_by_users_id_fk",
           "tableFrom": "matriculas_pendientes",
           "tableTo": "users",
-          "columnsFrom": [
-            "imported_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["imported_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -809,18 +721,12 @@
       "indexes": {
         "idx_moodle_imports_section_fingerprint": {
           "name": "idx_moodle_imports_section_fingerprint",
-          "columns": [
-            "seccion_id",
-            "fingerprint"
-          ],
+          "columns": ["seccion_id", "fingerprint"],
           "isUnique": true
         },
         "idx_moodle_imports_section_updated": {
           "name": "idx_moodle_imports_section_updated",
-          "columns": [
-            "seccion_id",
-            "updated_at"
-          ],
+          "columns": ["seccion_id", "updated_at"],
           "isUnique": false
         }
       },
@@ -829,12 +735,8 @@
           "name": "moodle_imports_seccion_id_secciones_id_fk",
           "tableFrom": "moodle_imports",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "seccion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seccion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -842,12 +744,8 @@
           "name": "moodle_imports_actor_id_users_id_fk",
           "tableFrom": "moodle_imports",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -920,24 +818,17 @@
       "indexes": {
         "idx_pending_matriculas_section_email": {
           "name": "idx_pending_matriculas_section_email",
-          "columns": [
-            "seccion_id",
-            "email"
-          ],
+          "columns": ["seccion_id", "email"],
           "isUnique": true
         },
         "idx_pending_matriculas_email": {
           "name": "idx_pending_matriculas_email",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": false
         },
         "idx_pending_matriculas_expiry": {
           "name": "idx_pending_matriculas_expiry",
-          "columns": [
-            "expires_at"
-          ],
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -946,12 +837,8 @@
           "name": "pending_matriculas_seccion_id_secciones_id_fk",
           "tableFrom": "pending_matriculas",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "seccion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seccion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -959,12 +846,8 @@
           "name": "pending_matriculas_source_import_id_moodle_imports_id_fk",
           "tableFrom": "pending_matriculas",
           "tableTo": "moodle_imports",
-          "columnsFrom": [
-            "source_import_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_import_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1069,25 +952,17 @@
       "indexes": {
         "idx_seccion_asignatura_periodo_num": {
           "name": "idx_seccion_asignatura_periodo_num",
-          "columns": [
-            "asignatura_id",
-            "periodo_id",
-            "numero_seccion"
-          ],
+          "columns": ["asignatura_id", "periodo_id", "numero_seccion"],
           "isUnique": true
         },
         "idx_secciones_periodo": {
           "name": "idx_secciones_periodo",
-          "columns": [
-            "periodo_id"
-          ],
+          "columns": ["periodo_id"],
           "isUnique": false
         },
         "idx_secciones_docente": {
           "name": "idx_secciones_docente",
-          "columns": [
-            "docente_id"
-          ],
+          "columns": ["docente_id"],
           "isUnique": false
         }
       },
@@ -1096,12 +971,8 @@
           "name": "secciones_asignatura_id_asignaturas_id_fk",
           "tableFrom": "secciones",
           "tableTo": "asignaturas",
-          "columnsFrom": [
-            "asignatura_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asignatura_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1109,12 +980,8 @@
           "name": "secciones_periodo_id_periodos_id_fk",
           "tableFrom": "secciones",
           "tableTo": "periodos",
-          "columnsFrom": [
-            "periodo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["periodo_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1122,12 +989,8 @@
           "name": "secciones_docente_id_users_id_fk",
           "tableFrom": "secciones",
           "tableTo": "users",
-          "columnsFrom": [
-            "docente_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["docente_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1199,12 +1062,8 @@
           "name": "section_profiles_section_id_secciones_id_fk",
           "tableFrom": "section_profiles",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1248,9 +1107,7 @@
       "indexes": {
         "idx_sessions_user_id": {
           "name": "idx_sessions_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -1259,12 +1116,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1371,18 +1224,12 @@
       "indexes": {
         "idx_soporte_ip_created": {
           "name": "idx_soporte_ip_created",
-          "columns": [
-            "ip_hash",
-            "created_at"
-          ],
+          "columns": ["ip_hash", "created_at"],
           "isUnique": false
         },
         "idx_soporte_estado_created": {
           "name": "idx_soporte_estado_created",
-          "columns": [
-            "estado",
-            "created_at"
-          ],
+          "columns": ["estado", "created_at"],
           "isUnique": false
         }
       },
@@ -1391,12 +1238,8 @@
           "name": "solicitudes_soporte_user_id_users_id_fk",
           "tableFrom": "solicitudes_soporte",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1454,9 +1297,7 @@
       "indexes": {
         "idx_users_email": {
           "name": "idx_users_email",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -1536,24 +1377,17 @@
       "indexes": {
         "interop_grants_registration_unique": {
           "name": "interop_grants_registration_unique",
-          "columns": [
-            "registration"
-          ],
+          "columns": ["registration"],
           "isUnique": true
         },
         "idx_interop_grants_user": {
           "name": "idx_interop_grants_user",
-          "columns": [
-            "user_id",
-            "expires_at"
-          ],
+          "columns": ["user_id", "expires_at"],
           "isUnique": false
         },
         "idx_interop_grants_expiry": {
           "name": "idx_interop_grants_expiry",
-          "columns": [
-            "expires_at"
-          ],
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -1562,12 +1396,8 @@
           "name": "interop_grants_user_id_users_id_fk",
           "tableFrom": "interop_grants",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1575,12 +1405,8 @@
           "name": "interop_grants_resource_id_interop_resources_id_fk",
           "tableFrom": "interop_grants",
           "tableTo": "interop_resources",
-          "columnsFrom": [
-            "resource_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resource_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1640,10 +1466,7 @@
       "indexes": {
         "idx_interop_progress_resource_user": {
           "name": "idx_interop_progress_resource_user",
-          "columns": [
-            "resource_id",
-            "user_id"
-          ],
+          "columns": ["resource_id", "user_id"],
           "isUnique": true
         }
       },
@@ -1652,12 +1475,8 @@
           "name": "interop_progress_user_id_users_id_fk",
           "tableFrom": "interop_progress",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1665,12 +1484,8 @@
           "name": "interop_progress_resource_id_interop_resources_id_fk",
           "tableFrom": "interop_progress",
           "tableTo": "interop_resources",
-          "columnsFrom": [
-            "resource_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resource_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1766,18 +1581,12 @@
       "indexes": {
         "idx_interop_resources_section": {
           "name": "idx_interop_resources_section",
-          "columns": [
-            "section_id",
-            "id"
-          ],
+          "columns": ["section_id", "id"],
           "isUnique": false
         },
         "idx_interop_resources_fingerprint": {
           "name": "idx_interop_resources_fingerprint",
-          "columns": [
-            "section_id",
-            "fingerprint"
-          ],
+          "columns": ["section_id", "fingerprint"],
           "isUnique": true
         }
       },
@@ -1786,12 +1595,8 @@
           "name": "interop_resources_section_id_secciones_id_fk",
           "tableFrom": "interop_resources",
           "tableTo": "secciones",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1799,12 +1604,8 @@
           "name": "interop_resources_tool_id_interop_tools_id_fk",
           "tableFrom": "interop_resources",
           "tableTo": "interop_tools",
-          "columnsFrom": [
-            "tool_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tool_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1812,12 +1613,8 @@
           "name": "interop_resources_created_by_users_id_fk",
           "tableFrom": "interop_resources",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1882,11 +1679,7 @@
       "indexes": {
         "idx_interop_statements_resource_user": {
           "name": "idx_interop_statements_resource_user",
-          "columns": [
-            "resource_id",
-            "user_id",
-            "stored_at"
-          ],
+          "columns": ["resource_id", "user_id", "stored_at"],
           "isUnique": false
         }
       },
@@ -1895,12 +1688,8 @@
           "name": "interop_statements_user_id_users_id_fk",
           "tableFrom": "interop_statements",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1908,12 +1697,8 @@
           "name": "interop_statements_resource_id_interop_resources_id_fk",
           "tableFrom": "interop_statements",
           "tableTo": "interop_resources",
-          "columnsFrom": [
-            "resource_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resource_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2000,16 +1785,12 @@
       "indexes": {
         "interop_tools_client_id_unique": {
           "name": "interop_tools_client_id_unique",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": true
         },
         "interop_tools_deployment_id_unique": {
           "name": "interop_tools_deployment_id_unique",
-          "columns": [
-            "deployment_id"
-          ],
+          "columns": ["deployment_id"],
           "isUnique": true
         }
       },
@@ -2018,12 +1799,8 @@
           "name": "interop_tools_created_by_users_id_fk",
           "tableFrom": "interop_tools",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }

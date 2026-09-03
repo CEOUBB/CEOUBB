@@ -746,10 +746,7 @@ exports.deleteMyAccount = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) 
   // Bloqueo incondicional de eliminación de la cuenta propietaria institucional
   const userProfile = await db.collection("users").doc(uid).get();
   if (userProfile.exists && userProfile.get("role") === "owner") {
-    throw new HttpsError(
-      "failed-precondition",
-      "La cuenta propietaria no puede eliminarse."
-    );
+    throw new HttpsError("failed-precondition", "La cuenta propietaria no puede eliminarse.");
   }
 
   const bucket = getStorage().bucket();

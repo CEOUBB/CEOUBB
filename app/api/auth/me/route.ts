@@ -82,37 +82,22 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    await db
-      .update(solicitudesSoporte)
-      .set({ userId: null })
-      .where(eq(solicitudesSoporte.userId, user.id));
-
-    await db
-      .update(assistantAssignments)
-      .set({ createdBy: null })
-      .where(eq(assistantAssignments.createdBy, user.id));
-
-    await db
-      .update(moodleImports)
-      .set({ actorId: null })
-      .where(eq(moodleImports.actorId, user.id));
-
-    await db
-      .update(interopTools)
-      .set({ createdBy: null })
-      .where(eq(interopTools.createdBy, user.id));
-
-    await db
-      .update(interopResources)
-      .set({ createdBy: null })
-      .where(eq(interopResources.createdBy, user.id));
-
-    await db
-      .update(gradeAuditLogs)
-      .set({ actorId: null })
-      .where(eq(gradeAuditLogs.actorId, user.id));
-
     await db.batch([
+      db
+        .update(solicitudesSoporte)
+        .set({ userId: null })
+        .where(eq(solicitudesSoporte.userId, user.id)),
+      db
+        .update(assistantAssignments)
+        .set({ createdBy: null })
+        .where(eq(assistantAssignments.createdBy, user.id)),
+      db.update(moodleImports).set({ actorId: null }).where(eq(moodleImports.actorId, user.id)),
+      db.update(interopTools).set({ createdBy: null }).where(eq(interopTools.createdBy, user.id)),
+      db
+        .update(interopResources)
+        .set({ createdBy: null })
+        .where(eq(interopResources.createdBy, user.id)),
+      db.update(gradeAuditLogs).set({ actorId: null }).where(eq(gradeAuditLogs.actorId, user.id)),
       db.delete(sessions).where(eq(sessions.userId, user.id)),
       db.delete(users).where(eq(users.id, user.id)),
     ]);

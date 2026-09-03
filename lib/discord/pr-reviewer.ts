@@ -45,11 +45,9 @@ export async function reviewPullRequest(
         .slice(0, 3000);
     }
 
-function sanitizePromptData(input: string): string {
-  return input
-    .replace(/<\/?untrusted_[a-z_]+>/gi, "")
-    .replace(/```/g, "'''");
-}
+    function sanitizePromptData(input: string): string {
+      return input.replace(/<\/?untrusted_[a-z_]+>/gi, "").replace(/```/g, "'''");
+    }
 
     const safeTitle = sanitizePromptData(prData.title || "");
     const safeDiff = sanitizePromptData(truncatedDiff);

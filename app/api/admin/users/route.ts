@@ -162,7 +162,9 @@ export async function PATCH(request: Request) {
       // Transacción compensatoria: restaurar el estado original en Turso
       await db.update(users).set({ role: previousRole }).where(eq(users.id, userId));
       return Response.json(
-        { error: "No fue posible sincronizar el rol con Firestore. Los cambios fueron revertidos." },
+        {
+          error: "No fue posible sincronizar el rol con Firestore. Los cambios fueron revertidos.",
+        },
         { status: 502 }
       );
     }

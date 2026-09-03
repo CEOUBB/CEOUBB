@@ -40,7 +40,8 @@ export async function createSession(userId: string) {
     .select({ tokenHash: sessions.tokenHash, createdAt: sessions.createdAt })
     .from(sessions)
     .where(and(eq(sessions.userId, userId), gt(sessions.expiresAt, now.toISOString())))
-    .orderBy(desc(sessions.createdAt));
+    .orderBy(desc(sessions.createdAt))
+    .limit(MAX_ACTIVE_SESSIONS_PER_USER + 5);
 
   if (activeUserSessions.length >= MAX_ACTIVE_SESSIONS_PER_USER) {
     const sessionsToEvict = activeUserSessions
