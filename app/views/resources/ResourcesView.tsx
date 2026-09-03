@@ -4,27 +4,12 @@ import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import {
-  AppleLogo,
   ArrowRight,
   ArrowUpRight,
   Books,
-  Brain,
   Check,
-  Cpu,
-  Cube,
   DeviceMobile,
   DownloadSimple,
-  GithubLogo,
-  GraduationCap,
-  MagnifyingGlass,
-  MicrosoftTeamsLogo,
-  NotionLogo,
-  Robot,
-  Sparkle,
-  SpotifyLogo,
-  Terminal,
-  YoutubeLogo,
-  type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import {
   APK_URL,
@@ -36,22 +21,22 @@ import {
 import { RESOURCE_GROUPS } from "./resources-data";
 import type { Brand, ResourceItem } from "./resources-data";
 
-const BRAND_ICONS: Record<string, PhosphorIcon> = {
-  chatgpt: Robot,
-  claude: Brain,
-  gemini: Sparkle,
-  deepseek: Cpu,
-  kimi: Sparkle,
-  qwen: Terminal,
-  github: GithubLogo,
-  notion: NotionLogo,
-  microsoft: MicrosoftTeamsLogo,
-  autodesk: Cube,
-  spotify: SpotifyLogo,
-  applemusic: AppleLogo,
-  moodle: GraduationCap,
-  youtubemusic: YoutubeLogo,
-  perplexity: MagnifyingGlass,
+const BRAND_LOGOS: Record<Brand, string> = {
+  chatgpt: "/brand/chatgpt.svg",
+  claude: "/brand/claude.svg",
+  gemini: "/brand/gemini.svg",
+  deepseek: "/brand/deepseek.svg",
+  kimi: "/brand/kimi.svg",
+  qwen: "/brand/qwen.svg",
+  github: "/brand/github.svg",
+  notion: "/brand/notion.svg",
+  microsoft: "/brand/microsoft.svg",
+  autodesk: "/brand/autodesk.svg",
+  spotify: "/brand/spotify.svg",
+  applemusic: "/brand/applemusic.svg",
+  moodle: "/brand/moodle.svg",
+  youtubemusic: "/brand/youtubemusic.svg",
+  perplexity: "/brand/perplexity.svg",
 };
 
 const LIBRARY_POINTS = [
@@ -65,13 +50,16 @@ const LIBRARY_POINTS = [
 const settle = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
 
 function BrandMark({ brand }: { brand: Brand }) {
-  const IconComponent = BRAND_ICONS[brand] || Sparkle;
+  const logoSrc = BRAND_LOGOS[brand];
   return (
-    <IconComponent
+    <Image
+      alt=""
       aria-hidden="true"
-      className="brand-mark text-brand-blue"
-      size={24}
-      weight="duotone"
+      className="brand-mark"
+      height={24}
+      src={logoSrc}
+      unoptimized
+      width={24}
     />
   );
 }
