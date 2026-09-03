@@ -1,4 +1,11 @@
-import { ChartBar, Exam, GraduationCap, House, UsersThree } from "@phosphor-icons/react";
+import {
+  ChartBar,
+  Exam,
+  GraduationCap,
+  House,
+  PlugsConnected,
+  UsersThree,
+} from "@phosphor-icons/react";
 import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
 import type {
   ClassroomFile,
@@ -12,12 +19,13 @@ import type {
   lugares y obligaba al estudiante a adivinar dónde había quedado una guía.
 */
 // Implements: REQ-PUB-13
-export type Tab = "home" | "grades" | "quizzes" | "progress" | "people";
+export type Tab = "home" | "grades" | "quizzes" | "interop" | "progress" | "people";
 
 export const COURSE_TABS: { key: Tab; label: string; Icon: typeof House }[] = [
   { key: "home", label: "Portada", Icon: House },
   { key: "grades", label: "Notas", Icon: GraduationCap },
   { key: "quizzes", label: "Cuestionarios", Icon: Exam },
+  { key: "interop", label: "Recursos externos", Icon: PlugsConnected },
   { key: "progress", label: "Progreso", Icon: ChartBar },
   { key: "people", label: "Participantes", Icon: UsersThree },
 ];
@@ -61,6 +69,7 @@ export function kindLabel(kind: ClassroomPost["kind"]) {
 }
 
 export function tabTitle(tab: Tab) {
+  if (tab === "interop") return "Recursos externos";
   return tab === "grades"
     ? "Notas y ponderaciones"
     : tab === "quizzes"

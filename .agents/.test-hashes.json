@@ -30,6 +30,8 @@
   "tests/grades-batch.test.ts": "8cf7b2afc039d9cdee7aae00632c67144d4f9e25f3ba35ba5dce876f8b46356e",
   "tests/grades.test.ts": "be7c0cc1b80172e91a2201b86d059e0b9b2704ebc8d6f823371e1ae8b23ae6d2",
   "tests/integration/firebase-rules.test.ts": "8bf5b0b77f759302f4ef06ffb0e19ba385aaba8b1adadb9dd1848a426f9ddd1b",
+  "tests/interop-formats.test.ts": "d458333c817ed99832caec4f8868a024e5e4a4bc3f72bb32aa83079606161fbc",
+  "tests/interop-services.test.ts": "f9e853cb06b8e47a77dc47d2d0dc3eb24b4859b8b55460ce17642a65cccf403b",
   "tests/linear-webhook.test.ts": "1908e23b0b79bd38a8328ef16b9e8595a72e6b7577a5fe9caa7b0fb32f369d28",
   "tests/live-class.test.ts": "1a3ec0b615b26fb992f86c7f9803dbf25dc94c04f04199c32466cc52d8e41f3c",
   "tests/mobile-bridge.test.ts": "6110fa0598cc9afebaee327df61811bbbf21c518036143997457207402cf2e23",

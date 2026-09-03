@@ -1,0 +1,162 @@
+.interop-workspace {
+  display: grid;
+  gap: 24px;
+}
+.interop-workspace header p,
+.interop-help,
+.interop-player > p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.interop-workspace h2,
+.interop-player h2 {
+  margin: 0 0 8px;
+}
+.interop-authoring {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--surface-card);
+}
+.interop-authoring summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 28px;
+}
+.interop-authoring summary svg {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.interop-authoring-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  padding-top: 16px;
+}
+.interop-workspace form {
+  display: grid;
+  gap: 14px;
+}
+.interop-workspace label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.interop-workspace input,
+.interop-workspace select,
+.interop-workspace textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  color: var(--text-body);
+  background: var(--surface-card);
+  font: inherit;
+}
+.interop-workspace .interop-upload {
+  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.interop-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.interop-upload:focus-within {
+  outline: 2px solid var(--ubb-royal-blue);
+  outline-offset: 3px;
+}
+.interop-resource-list,
+.interop-tool-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.interop-resource-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.interop-resource-list h3 {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.interop-resource-list span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.interop-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.interop-empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--hairline);
+  border-radius: 12px;
+  text-align: center;
+}
+.interop-registration {
+  margin: 20px 0;
+  max-width: 640px;
+}
+.interop-tool-list li {
+  padding: 16px 0;
+  border-top: 1px solid var(--hairline);
+}
+.interop-tool-list dl {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.interop-tool-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.interop-player header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+.interop-player iframe {
+  width: 100%;
+  height: 72vh;
+  min-height: 400px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface-card);
+}
+@media (max-width: 700px) {
+  .interop-authoring-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .interop-resource-list li,
+  .interop-player header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .interop-actions {
+    width: 100%;
+  }
+  .interop-actions button {
+    flex: 1;
+  }
+  .interop-workspace input,
+  .interop-workspace select,
+  .interop-workspace textarea {
+    font-size: 16px;
+  }
+}

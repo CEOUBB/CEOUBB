@@ -1,4 +1,13 @@
 import type { NextConfig } from "next";
+import { contentOrigin } from "./lib/interop/config";
+
+const learningContentOrigin = (() => {
+  try {
+    return contentOrigin();
+  } catch {
+    return "";
+  }
+})();
 
 /*
   La WebView de Capacitor sirve el bridge desde `capacitor://localhost` (Android) y
@@ -25,7 +34,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
   "font-src 'self' data:",
   `connect-src ${connectSrc} https://www.google.com/recaptcha/ https://cloudflareinsights.com`,
-  "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com",
+  `frame-src ${learningContentOrigin ? learningContentOrigin + " " : ""}https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -55,9 +64,7 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
@@ -65,6 +72,13 @@ const nextConfig: NextConfig = {
               "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), display-capture=()",
           },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        ],
+      },
+      {
+        source: "/:path((?!api/interop/content/|api/interop/lti/authorize).*)",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+          { key: "X-Frame-Options", value: "DENY" },
         ],
       },
       {

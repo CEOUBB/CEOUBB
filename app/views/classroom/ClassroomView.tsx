@@ -25,6 +25,11 @@ const MoodleImportDialog = dynamic(
   { ssr: false }
 );
 
+const InteropSection = dynamic(
+  () => import("./InteropSection").then((module) => module.InteropSection),
+  { ssr: false }
+);
+
 /*
   El estudio de publicación carga sólo cuando un docente decide escribir: el
   editor, su vista previa y KaTeX no deben pesar en el arranque del aula para
@@ -252,6 +257,16 @@ export function ClassroomView({
                 canTeach={canTeach}
                 note={note}
                 readOnly={readOnly}
+              />
+            )}
+            {tab === "interop" && (
+              <InteropSection
+                key={course.id}
+                sectionId={course.id}
+                canTeach={canTeach}
+                isOwner={user.role === "owner"}
+                readOnly={readOnly}
+                note={note}
               />
             )}
             {tab === "progress" && (
