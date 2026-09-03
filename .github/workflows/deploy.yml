@@ -23,7 +23,7 @@ jobs:
     if: github.event_name == 'push'
     uses: ./.github/workflows/firebase-release.yml
     with:
-      promote_to_production: false
+      promote_to_production: true
     secrets: inherit
 
   deploy:
