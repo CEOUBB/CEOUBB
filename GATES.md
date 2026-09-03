@@ -83,7 +83,7 @@
 - **OWNS:** `lib/discord/pr-reviewer.ts`, `lib/discord/gemini-copilot.ts`, `app/api/cron/standup/route.ts`, `app/api/discord/interactions/route.ts`
 - **CHECK:** Auditar la concatenación de datos no confiables (títulos de PRs, diffs de código, mensajes de commit, comentarios de usuarios) dentro de los prompts del sistema para Gemini, evaluar mitigaciones contra Prompt Injection indirecto.
 - **EXPECT:** Enmarcado estricto de contenido no confiable con etiquetas de delimitación XML/Markdown; instrucciones de sistema inmutables; sanitización de caracteres de escape de prompt.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Prompt Injection indirecto en `lib/discord/pr-reviewer.ts` (líneas 48-70) y `app/api/cron/standup/route.ts` (líneas 115-120). Datos externos no confiables (diffs y títulos de PRs) se inyectan sin delimitadores ni neutralización de instrucciones adversariales. Ver [Plan 058](plans/058-sec-discord-pr-prompt-injection.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Enmarcado XML estricto con etiquetas `<untrusted_*>` implementado en `lib/discord/pr-reviewer.ts` y `app/api/cron/standup/route.ts`, junto con sanitización de colisiones y cláusula inmutable de sistema que prohíbe acatar instrucciones adversariales dentro de bloques de datos. Resuelto en Plan 058.
 
 ---
 

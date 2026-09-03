@@ -87,5 +87,5 @@ Remediations MUST be executed in topological order to prevent regressions or cir
 - [X] [Plan 055: Discord Antigravity Bridge Command Injection (RCE) Neutralization](055-sec-discord-bridge-command-injection.md) - COMPLETED
 - [X] [Plan 056: Cloudflare Production WAF Enforcement & workers_dev Elimination](056-sec-cloudflare-workers-dev-waf.md) - COMPLETED
 - [X] [Plan 057: Avatar Ingestion Magic Bytes Binary Validation](057-sec-avatar-magic-bytes-validation.md) - COMPLETED
-- [Plan 058: Indirect Prompt Injection Defense & Data Framing](058-sec-discord-pr-prompt-injection.md)
+- [X] [Plan 058: Indirect Prompt Injection Defense & Data Framing](058-sec-discord-pr-prompt-injection.md) - COMPLETED
 - [Plan 059: Session Concurrency Limits, Automated Pruning & Staging Hardening](059-sec-session-concurrency-dependency-audit.md)
