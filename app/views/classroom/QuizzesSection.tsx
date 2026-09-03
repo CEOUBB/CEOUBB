@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle,
   ClockCountdown,
+  DownloadSimple,
   Exam,
   FileCsv,
   FileText,
@@ -47,6 +48,7 @@ import {
 } from "../../../lib/quizzes.ts";
 import { formatBytes, formatDay } from "../../../lib/portal-utils.ts";
 import type { Note } from "./classroom-utils.ts";
+import { downloadInteropBytes, downloadInteropFile } from "../../../lib/interop/client.ts";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type QuizAnswer = string | number;
@@ -146,12 +148,17 @@ function TeacherQuizzes({
       return;
     }
     const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !["txt", "gift", "csv"].includes(extension)) {
-      note("Selecciona un archivo .txt, .gift o .csv.", "bad");
+    if (!extension || !["txt", "gift", "csv", "xml", "zip"].includes(extension)) {
+      note("Selecciona un banco GIFT, CSV o QTI (.xml o .zip).", "bad");
       return;
     }
     try {
-      const parsed = parseQuestionBank(await file.text(), extension === "csv" ? "csv" : "gift");
+      const parsed =
+        extension === "xml" || extension === "zip"
+          ? await (
+              await import("../../../lib/interop/qti.ts")
+            ).importQtiBank(new Uint8Array(await file.arrayBuffer()))
+          : parseQuestionBank(await file.text(), extension === "csv" ? "csv" : "gift");
       setFileName(file.name);
       setQuestions(parsed.questions);
       setWarnings(parsed.warnings);
@@ -273,15 +280,22 @@ function TeacherQuizzes({
               <FileText size={28} weight="duotone" aria-hidden="true" />
             )}
             <span>
-              <strong>{fileName || "Seleccionar banco GIFT o CSV"}</strong>
-              <small>.txt, .gift o .csv · hasta {formatBytes(MAX_QUIZ_FILE_BYTES)}</small>
+              <strong>{fileName || "Seleccionar banco GIFT, CSV o QTI"}</strong>
+              <small>
+                .txt, .gift, .csv, .xml o .zip · hasta {formatBytes(MAX_QUIZ_FILE_BYTES)}
+              </small>
             </span>
-            <input accept=".txt,.gift,.csv,text/plain,text/csv" onChange={importFile} type="file" />
+            <input
+              accept=".txt,.gift,.csv,.xml,.zip,text/plain,text/csv,application/xml,application/zip"
+              onChange={importFile}
+              type="file"
+            />
           </label>
           <p className="quiz-format-note">
             CSV: columnas <code>tipo</code>, <code>pregunta</code>, <code>respuesta_correcta</code>{" "}
             y <code>opcion_1…10</code>. GIFT admite alternativa única, V/F, respuesta corta y
-            numérica.
+            numérica. QTI 2.1 admite ítems de alternativa única, texto sin distinción de mayúsculas
+            y respuesta numérica; las funciones no compatibles aparecen como advertencias.
           </p>
           {warnings.length > 0 && (
             <details className="quiz-import-warnings">
@@ -291,7 +305,7 @@ function TeacherQuizzes({
               <ul>
                 {warnings.slice(0, 20).map((warning) => (
                   <li key={`${warning.sourceLine}-${warning.message}`}>
-                    Línea {warning.sourceLine}: {warning.message}
+                    Entrada {warning.sourceLine}: {warning.message}
                   </li>
                 ))}
               </ul>
@@ -299,6 +313,24 @@ function TeacherQuizzes({
           )}
           {questions.length > 0 && (
             <div className="quiz-import-preview">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { exportQtiBank } = await import("../../../lib/interop/qti.ts");
+                    downloadInteropBytes(exportQtiBank(questions), "banco-qti.zip");
+                  } catch (cause) {
+                    note(
+                      cause instanceof Error ? cause.message : "No se pudo exportar QTI.",
+                      "bad"
+                    );
+                  }
+                }}
+              >
+                <DownloadSimple size={18} aria-hidden="true" />
+                Exportar banco QTI
+              </button>
               <div>
                 <strong>
                   {questions.length} pregunta{questions.length === 1 ? "" : "s"} lista
@@ -372,6 +404,30 @@ function TeacherQuizzes({
                     </span>
                     <h3>{quiz.title}</h3>
                     <p>{quiz.description || "Sin instrucciones adicionales."}</p>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await downloadInteropFile(
+                            "/api/courses/" +
+                              encodeURIComponent(course.id) +
+                              "/quizzes/" +
+                              encodeURIComponent(quiz.id) +
+                              "/qti",
+                            "banco-qti-" + quiz.id + ".zip"
+                          );
+                        } catch (cause) {
+                          note(
+                            cause instanceof Error ? cause.message : "No se pudo exportar QTI.",
+                            "bad"
+                          );
+                        }
+                      }}
+                    >
+                      <DownloadSimple size={18} aria-hidden="true" />
+                      Exportar QTI
+                    </button>
                     <dl>
                       <div>
                         <dt>Preguntas</dt>

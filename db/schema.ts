@@ -1,5 +1,15 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const interopSchemaRequirements = [
+  "REQ-IO-01",
+  "REQ-IO-02",
+  "REQ-IO-03",
+  "REQ-IO-07",
+  "REQ-IO-08",
+  "REQ-IO-11",
+] as const;
+export * from "./interop-schema.ts";
+
 export const users = sqliteTable(
   "users",
   {
