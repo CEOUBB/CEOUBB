@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { GoogleGenAI } from "@google/genai";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import util from "node:util";
 import fs from "node:fs";
 import path from "node:path";
@@ -11,7 +11,17 @@ import {
   PersistentSessionStore,
 } from "./discord-context-helper.js";
 
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
+
+// Implements: REQ-SEC-01 (Safe Parameterized Command Spawning)
+async function safeGitCommand(args) {
+  return await execFilePromise("git", args, {
+    cwd: process.cwd(),
+    timeout: 5000,
+    maxBuffer: 1024 * 512,
+    shell: false,
+  });
+}
 
 try {
   process.loadEnvFile(".env.local");
@@ -173,12 +183,14 @@ async function executeToolCall(toolCall) {
     }
 
     try {
-      const { stdout } = await execPromise(`git log -5 --oneline && git status --short`);
+      const logRes = await safeGitCommand(["log", "-5", "--oneline"]);
+      const statusRes = await safeGitCommand(["status", "--short"]);
       return {
         repository: "CEOUBB/CEOUBB",
         branch: "main",
         status: "Información obtenida desde Git local.",
-        recentCommits: stdout.trim(),
+        recentCommits: logRes.stdout.trim(),
+        workingTree: statusRes.stdout.trim(),
       };
     } catch (err) {
       return { error: err.message };
@@ -186,8 +198,9 @@ async function executeToolCall(toolCall) {
   }
 
   if (name === "github_recent_commits") {
+    const parsedCount = Math.max(1, Math.min(25, parseInt(String(args?.count ?? 5), 10) || 5));
+
     try {
-      const count = args.count || 5;
       const headers = {
         Accept: "application/vnd.github.v3+json",
         "User-Agent": "CEOUBB-Discord-Bridge",
@@ -197,7 +210,7 @@ async function executeToolCall(toolCall) {
       }
 
       const res = await fetch(
-        `https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${count}`,
+        `https://api.github.com/repos/CEOUBB/CEOUBB/commits?per_page=${parsedCount}`,
         {
           headers,
           signal: AbortSignal.timeout(5000),
@@ -220,8 +233,7 @@ async function executeToolCall(toolCall) {
     }
 
     try {
-      const count = args.count || 5;
-      const { stdout } = await execPromise(`git log -${count} --oneline`);
+      const { stdout } = await safeGitCommand(["log", `-${parsedCount}`, "--oneline"]);
       return { commits: stdout.trim() };
     } catch (err) {
       return { error: err.message };
@@ -230,8 +242,11 @@ async function executeToolCall(toolCall) {
 
   if (name === "github_repo_status") {
     try {
-      const { stdout } = await execPromise(`git status --short && git branch --show-current`);
-      return { status: stdout.trim() };
+      const statusRes = await safeGitCommand(["status", "--short"]);
+      const branchRes = await safeGitCommand(["branch", "--show-current"]);
+      return {
+        status: `${statusRes.stdout.trim()}\nBranch: ${branchRes.stdout.trim()}`.trim(),
+      };
     } catch (err) {
       return { error: err.message };
     }
