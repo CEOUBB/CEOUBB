@@ -80,7 +80,7 @@ Remediations MUST be executed in topological order to prevent regressions or cir
 ## 5. Remediation Plan Specifications Catalog
 
 - [X] [Plan 050: Owner Account Deletion Bypass Prevention](050-sec-owner-account-deletion.md) - COMPLETED
-- [Plan 051: Turso Foreign Key Cascades & Account Deletion Integrity](051-sec-turso-foreign-keys-cascade.md)
+- [X] [Plan 051: Turso Foreign Key Cascades & Account Deletion Integrity](051-sec-turso-foreign-keys-cascade.md) - COMPLETED
 - [Plan 052: Trans-Store Role Synchronization & Rollback Safety](052-sec-trans-store-role-sync.md)
 - [X] [Plan 053: Firebase Storage MIME Whitelist & Stored XSS Prevention](053-sec-storage-mime-stored-xss.md) - COMPLETED
 - [X] [Plan 054: Firestore User Profile & Calendar Schema Hardening](054-sec-firestore-profile-creation-schema.md) - COMPLETED

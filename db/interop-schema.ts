@@ -10,9 +10,7 @@ export const interopTools = sqliteTable("interop_tools", {
   redirectUrisJson: text("redirect_uris_json").notNull(),
   targetUrisJson: text("target_uris_json").notNull(),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => users.id),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
 });
 
@@ -30,9 +28,7 @@ export const interopResources = sqliteTable(
     manifestJson: text("manifest_json").notNull().default("{}"),
     storagePrefix: text("storage_prefix").notNull().default(""),
     fingerprint: text("fingerprint").notNull(),
-    createdBy: text("created_by")
-      .notNull()
-      .references(() => users.id),
+    createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: text("created_at").notNull(),
   },
   (t) => [

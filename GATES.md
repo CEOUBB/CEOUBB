@@ -29,7 +29,7 @@
 - **OWNS:** `db/schema.ts`, `db/index.ts`, `drizzle/`, `tests/helpers/db-harness.ts`, `app/api/auth/me/route.ts`
 - **CHECK:** Auditar la integridad referencial en SQLite/Turso, cláusulas `ON DELETE CASCADE` / `ON DELETE SET NULL`, activación forzosa de `PRAGMA foreign_keys = ON`, límites en queries y cursores indexados.
 - **EXPECT:** Cero violaciones de claves foráneas en cascada; todas las relaciones con `users.id` deben definir comportamiento determinista ante eliminación; paridad estricta entre pruebas y producción.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Defecto crítico de integridad referencial: `solicitudesSoporte.userId`, `assistantAssignments.createdBy`, `moodleImports.actorId`, `secciones.docenteId` y `gradeAuditLogs` carecen de `onDelete` o manejo en `DELETE /api/auth/me`. Con `PRAGMA foreign_keys = ON`, la eliminación de usuario aborta con error 500. Ver [Plan 051](plans/051-sec-turso-foreign-keys-cascade.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Integridad referencial asegurada con `{ onDelete: 'set null' }` y `{ onDelete: 'cascade' }` en `db/schema.ts` y `db/interop-schema.ts`. `DELETE /api/auth/me` valida titularidad de secciones docentes (409) y desvincula referencias previas a la eliminación. Migración generada en `drizzle/`. Resuelto en Plan 051.
 
 ### 2.2 `leaf-sec-firestore-security-rules`
 - **OWNS:** `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `tests/firebase-rules.test.ts`, `tests/integration/firebase-rules.test.ts`

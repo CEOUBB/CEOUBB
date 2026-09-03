@@ -55,7 +55,7 @@ export type GradeAuditEntry = {
   seccionId: string;
   evaluacionId: string;
   studentId: string;
-  actorId: string;
+  actorId: string | null;
   prevScore: number | null;
   newScore: number;
   timestamp: string;

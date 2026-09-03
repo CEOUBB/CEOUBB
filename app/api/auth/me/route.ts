@@ -1,6 +1,15 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { sessions, users } from "../../../../db/schema";
+import {
+  assistantAssignments,
+  gradeAuditLogs,
+  moodleImports,
+  secciones,
+  sessions,
+  solicitudesSoporte,
+  users,
+} from "../../../../db/schema";
+import { interopResources, interopTools } from "../../../../db/interop-schema";
 import { destroySession, getSessionUser } from "../../../../lib/auth";
 import {
   MAX_PAGE_SIZE,
@@ -53,17 +62,67 @@ export async function DELETE(request: Request) {
   if (user.role === "owner") {
     return Response.json({ error: "La cuenta propietaria no puede eliminarse." }, { status: 400 });
   }
+
+  const db = getDb();
+
+  const activeSections = await db
+    .select({ id: secciones.id })
+    .from(secciones)
+    .where(eq(secciones.docenteId, user.id))
+    .limit(1);
+
+  if (activeSections.length > 0) {
+    return Response.json(
+      {
+        error:
+          "No es posible eliminar la cuenta porque figura como docente a cargo de secciones académicas. Reasigne las secciones antes de proceder.",
+      },
+      { status: 409 }
+    );
+  }
+
   try {
-    const db = getDb();
+    await db
+      .update(solicitudesSoporte)
+      .set({ userId: null })
+      .where(eq(solicitudesSoporte.userId, user.id));
+
+    await db
+      .update(assistantAssignments)
+      .set({ createdBy: null })
+      .where(eq(assistantAssignments.createdBy, user.id));
+
+    await db
+      .update(moodleImports)
+      .set({ actorId: null })
+      .where(eq(moodleImports.actorId, user.id));
+
+    await db
+      .update(interopTools)
+      .set({ createdBy: null })
+      .where(eq(interopTools.createdBy, user.id));
+
+    await db
+      .update(interopResources)
+      .set({ createdBy: null })
+      .where(eq(interopResources.createdBy, user.id));
+
+    await db
+      .update(gradeAuditLogs)
+      .set({ actorId: null })
+      .where(eq(gradeAuditLogs.actorId, user.id));
+
     await db.batch([
       db.delete(sessions).where(eq(sessions.userId, user.id)),
       db.delete(users).where(eq(users.id, user.id)),
     ]);
+
     return Response.json(
       { deleted: true },
       { headers: { "Set-Cookie": await destroySession(request) } }
     );
-  } catch {
+  } catch (error) {
+    console.error("[DELETE /api/auth/me] Error deleting user:", error);
     return Response.json({ error: "No fue posible eliminar la cuenta." }, { status: 500 });
   }
 }

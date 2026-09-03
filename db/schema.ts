@@ -201,9 +201,7 @@ export const assistantAssignments = sqliteTable(
     previousStatus: text("previous_status", {
       enum: ["activa", "retirada", "congelada"],
     }),
-    createdBy: text("created_by")
-      .notNull()
-      .references(() => users.id),
+    createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
@@ -239,9 +237,7 @@ export const moodleImports = sqliteTable(
       .notNull()
       .references(() => secciones.id, { onDelete: "cascade" }),
     fingerprint: text("fingerprint").notNull(),
-    actorId: text("actor_id")
-      .notNull()
-      .references(() => users.id),
+    actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
     status: text("status", { enum: ["running", "completed", "partial"] })
       .notNull()
       .default("running"),
@@ -304,10 +300,8 @@ export const gradeAuditLogs = sqliteTable(
     evaluacionId: text("evaluacion_id").notNull(),
     studentId: text("student_id")
       .notNull()
-      .references(() => users.id),
-    actorId: text("actor_id")
-      .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: "cascade" }),
+    actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
     prevScore: real("prev_score"),
     newScore: real("new_score").notNull(),
     timestamp: text("timestamp").notNull(),
@@ -348,7 +342,7 @@ export const solicitudesSoporte = sqliteTable(
     estado: text("estado", { enum: ["pendiente", "enviado", "fallido"] }).notNull(),
     errorEntrega: text("error_entrega"),
     ipHash: text("ip_hash").notNull(),
-    userId: text("user_id").references(() => users.id),
+    userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: text("created_at").notNull(),
     enviadoEn: text("enviado_en"),
   },
