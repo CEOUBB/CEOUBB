@@ -19,7 +19,7 @@
 - **OWNS:** `lib/access-policy.ts`, `app/api/admin/users/route.ts`, `lib/services/enrollment-projection.ts`, `tests/access-policy.test.ts`, `tests/admin-api.test.ts`
 - **CHECK:** Auditar la sincronización trans-store entre Turso (`users.role`) y Firestore (`users/{uid}.role`), transacciones de cambio de rol administrativo (`PATCH /api/admin/users`), y consistencia de las cuatro fuentes de verdad (SSOT).
 - **EXPECT:** Cero desincronizaciones entre Turso y Firestore; compensación atómica (rollback) en Turso si la proyección a Firestore falla; prohibición estricta de degradación o eliminación de la cuenta `owner`.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Desincronización trans-store identificada en `PATCH /api/admin/users` (líneas 143-151): si `projectUserRoleToFirestore` falla tras mutar Turso, Turso retiene el rol actualizado mientras Firestore conserva el antiguo sin mecanismo de rollback. Ver [Plan 052](plans/052-sec-trans-store-role-sync.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Compensación transaccional implementada en `PATCH /api/admin/users`: si `projectUserRoleToFirestore` falla, Turso revierte inmediatamente el rol al `previousRole` y retorna HTTP 502, previniendo desincronizaciones entre ambos almacenes. Resuelto en Plan 052.
 
 ---
 
