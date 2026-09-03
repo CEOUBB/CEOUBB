@@ -74,3 +74,7 @@ export function sectionRoleLabel(role: SectionRole): string {
   if (role === "coordinator") return "Coordinación";
   return "Estudiante";
 }
+
+export function canReadGradeHistory(accountRole: AccountRole, sectionRole: SectionRole | null) {
+  return canTeachSection(accountRole, sectionRole) || sectionRole === "assistant";
+}
