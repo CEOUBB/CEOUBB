@@ -79,6 +79,11 @@ service firebase.storage {
       return teachesSection(seccionId) || assistsSection(seccionId);
     }
 
+    // Whitelist segura para archivos académicos: prohíbe explícitamente HTML, SVG, scripts y ejecutables
+    function isAllowedAcademicMimeType() {
+      return request.resource.contentType.matches('^(application/pdf|application/zip|application/x-zip-compressed|application/vnd\\.openxmlformats-officedocument\\.[a-z0-9.-]+|application/msword|application/vnd\\.ms-excel|application/vnd\\.ms-powerpoint|image/(png|jpeg|webp)|text/plain|text/csv)$');
+    }
+
     /*
       Foto de perfil. Cada cuenta escribe únicamente bajo su propio prefijo, con
       tipo de imagen admitido y 2 MB de techo: es un avatar, no un adjunto. La
@@ -99,7 +104,7 @@ service firebase.storage {
     // Material del curso publicado por el equipo docente.
     match /courses/{courseId}/{userId}/{fileName} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow create, update: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size <= 50 * 1024 * 1024;
+      allow create, update: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024 && isAllowedAcademicMimeType();
       allow delete: if (isOwner() || managesSectionContent(courseId) && request.auth.uid == userId) && sectionIsWritable(courseId);
     }
 
@@ -111,7 +116,7 @@ service firebase.storage {
     // Implements: REQ-EVAL-01
     match /courses/{courseId}/submissions/{evalId}/{userId}/{fileName} {
       allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024;
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024 && isAllowedAcademicMimeType();
       allow delete: if (isOwner() || signedIn() && request.auth.uid == userId) && sectionIsWritable(courseId);
     }
   }

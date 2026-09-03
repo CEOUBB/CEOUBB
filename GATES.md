@@ -45,7 +45,7 @@
 - **OWNS:** `firebase/storage.rules`, `docs/specs/p20-firebase-rules-emulator-suite.md`
 - **CHECK:** Auditar reglas de Firebase Storage en rutas de materiales (`/courses/{courseId}/...`), entregas de estudiantes (`/submissions/...`) y avatares (`/avatars/...`), verificando límites de tamaño y tipos MIME permitidos.
 - **EXPECT:** Prohibición absoluta de tipos ejecutables o interpretables en el navegador (`text/html`, `image/svg+xml`, `application/xhtml+xml`); techos de tamaño de 2 MB (avatares), 25 MB (entregas) y 50 MB (materiales).
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Vulnerabilidad de Stored XSS crítica: Las colecciones `/courses/{courseId}/...` y `/submissions/...` validan tamaño pero NO validan `contentType`. Un atacante puede subir archivos `.html` o `.svg` con payloads maliciosos que se ejecutan en el navegador de la víctima. Ver [Plan 053](plans/053-sec-storage-mime-stored-xss.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Whitelist académica estricta `isAllowedAcademicMimeType()` implementada en `firebase/storage.rules`, prohibiendo explícitamente HTML, SVG, scripts y ejecutables en `/courses/...` y `/submissions/...`. Resuelto en Plan 053.
 
 ### 3.2 `leaf-sec-file-upload-validation`
 - **OWNS:** `app/api/profile/photo/route.ts`, `lib/services/user-profile.ts`, `tests/user-settings.test.ts`
