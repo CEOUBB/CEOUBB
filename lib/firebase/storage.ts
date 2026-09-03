@@ -169,6 +169,19 @@ export async function uploadStudentSubmission(
   return storagePath;
 }
 
+function toStudentSubmission(id: string, value: Record<string, unknown>): StudentSubmission {
+  return {
+    id,
+    evalId: String(value.evalId ?? ""),
+    uid: String(value.uid ?? ""),
+    fileName: String(value.fileName ?? "Entrega"),
+    storagePath: String(value.storagePath ?? ""),
+    contentType: String(value.contentType ?? "application/octet-stream"),
+    size: Number(value.size ?? 0),
+    createdAt: iso(value.createdAt),
+  };
+}
+
 /** Comprobantes de entrega del propio estudiante en una sección. */
 // Implements: REQ-EVAL-01
 // Implements: REQ-EVAL-01, REQ-SEC-08, REQ-QMD-02
@@ -191,21 +204,58 @@ export function watchOwnSubmissions(
         ),
         (snapshot) =>
           onChange(
-            snapshot.docs.map((document) => {
-              const value = document.data();
-              return {
-                id: document.id,
-                evalId: String(value.evalId ?? ""),
-                uid: String(value.uid ?? ""),
-                fileName: String(value.fileName ?? "Entrega"),
-                storagePath: String(value.storagePath ?? ""),
-                contentType: String(value.contentType ?? "application/octet-stream"),
-                size: Number(value.size ?? 0),
-                createdAt: iso(value.createdAt),
-              };
-            })
+            snapshot.docs.map((document) => toStudentSubmission(document.id, document.data()))
           ),
         () => onError("No se pudieron cargar tus entregas.")
+      );
+    })
+    .catch(() => onError("No se pudo conectar Firebase."));
+
+  return () => {
+    active = false;
+    stop();
+  };
+}
+
+/*
+  Techo de una escucha de corrección: una sección de la universidad no supera
+  este número de matriculados, y el límite evita que un error de datos abra una
+  consulta sin fondo sobre la colección de entregas.
+*/
+// Implements: REQ-REV-04
+export const MAX_SECTION_SUBMISSIONS = 500;
+
+/*
+  Cola de entregas de una evaluación para el docente de la sección. La lectura
+  completa la autorizan las reglas vigentes (`teachesSection`); aquí sólo se
+  acota el tamaño de la escucha, porque el orden de la cola lo decide la
+  bandeja al cruzar los comprobantes con la nómina del curso.
+*/
+// Implements: REQ-REV-04
+// Authorization is strictly enforced in firestore.rules (teachesSection(courseId))
+export function watchSectionSubmissions(
+  courseId: string,
+  evalId: string,
+  onChange: (items: StudentSubmission[]) => void,
+  onError: (message: string) => void
+) {
+  let active = true;
+  let stop: () => void = () => undefined;
+
+  firestore()
+    .then(({ sdk, db }) => {
+      if (!active) return;
+      stop = sdk.onSnapshot(
+        sdk.query(
+          sdk.collection(db, "courses", courseId, "submissions"),
+          sdk.where("evalId", "==", evalId),
+          sdk.limit(MAX_SECTION_SUBMISSIONS)
+        ),
+        (snapshot) =>
+          onChange(
+            snapshot.docs.map((document) => toStudentSubmission(document.id, document.data()))
+          ),
+        () => onError("No se pudieron cargar las entregas de la evaluación.")
       );
     })
     .catch(() => onError("No se pudo conectar Firebase."));

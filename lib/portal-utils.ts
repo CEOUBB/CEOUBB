@@ -228,6 +228,13 @@ export function formatDay(value: string): string {
   return dateFormat.format(new Date(`${value}T12:00:00`));
 }
 
+/** Fecha y hora de Santiago de una marca ISO completa, como la de una entrega. */
+export function formatDateTime(value: string): string {
+  const moment = new Date(value);
+  if (Number.isNaN(moment.getTime())) return "";
+  return `${dateFormat.format(moment)} · ${clockFormat.format(moment)}`;
+}
+
 export function formatBytes(value: number): string {
   if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
   return `${(value / 1024 / 1024).toFixed(1)} MB`;

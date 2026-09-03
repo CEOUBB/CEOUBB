@@ -3,7 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
-import { Check, CopySimple, Info, LockKey, Plus } from "@phosphor-icons/react";
+import { Check, CopySimple, Info, LockKey, Plus, Tray } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
@@ -40,6 +40,16 @@ const InteropSection = dynamic(
 const PublishView = dynamic(() => import("./PublishView").then((module) => module.PublishView), {
   ssr: false,
 });
+
+/*
+  La bandeja de corrección sólo existe para quien enseña la sección: su visor de
+  PDF y la cola de entregas no deben viajar en el paquete que abre el aula.
+*/
+// Implements: REQ-REV-01 REQ-PERF-01
+const SubmissionReviewTray = dynamic(
+  () => import("./SubmissionReviewTray").then((module) => module.SubmissionReviewTray),
+  { ssr: false }
+);
 
 export function ClassroomView({
   course,
@@ -81,11 +91,40 @@ export function ClassroomView({
 
   // Implements: REQ-PUB-01
   const [composing, setComposing] = useState(false);
+  // Implements: REQ-REV-04
+  const [reviewing, setReviewing] = useState(false);
 
   const startPublication = () => {
     hapticTap();
     setComposing(true);
   };
+
+  const startReview = () => {
+    hapticTap();
+    setReviewing(true);
+  };
+
+  /*
+    Corregir ocupa la pantalla completa igual que publicar: leer el trabajo de
+    un estudiante y ponerle nota no admite competir con las pestañas del aula.
+  */
+  // Implements: REQ-REV-04
+  if (reviewing && canTeach) {
+    return (
+      <div
+        className="classroom-layout classroom-layout-studio"
+        style={{ "--course-tone": course.tone } as React.CSSProperties}
+      >
+        <RichTextAssets />
+        <SubmissionReviewTray
+          classroom={classroom}
+          course={course}
+          onClose={() => setReviewing(false)}
+          readOnly={readOnly}
+        />
+      </div>
+    );
+  }
 
   if (composing) {
     return (
@@ -150,6 +189,13 @@ export function ClassroomView({
                 <CopySimple size={14} aria-hidden="true" />
               )}
             </button>
+            {canTeach && (
+              /* Implements: REQ-REV-04 */
+              <button className="review-cta" onClick={startReview} type="button">
+                <Tray size={16} aria-hidden="true" />
+                Corregir entregas
+              </button>
+            )}
             {canManageContent && (
               <>
                 {canTeach && <MoodleImportDialog course={course} />}

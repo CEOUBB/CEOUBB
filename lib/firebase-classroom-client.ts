@@ -55,8 +55,10 @@ export {
   renameClassroomFile,
   uploadStudentSubmission,
   watchOwnSubmissions,
+  watchSectionSubmissions,
   submissionStoragePath,
   safeFileName,
+  MAX_SECTION_SUBMISSIONS,
   MAX_SUBMISSION_BYTES,
 } from "./firebase/storage.ts";
 
