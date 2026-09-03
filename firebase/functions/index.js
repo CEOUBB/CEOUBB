@@ -735,12 +735,23 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
   }
 );
 
-// Implements: REQ-PERF-09
+// Implements: REQ-PERF-09, REQ-SEC-01, REQ-SEC-13
 exports.deleteMyAccount = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid)
     throw new HttpsError("unauthenticated", "Debes iniciar sesión para eliminar tu cuenta.");
+
   const db = getFirestore();
+
+  // Bloqueo incondicional de eliminación de la cuenta propietaria institucional
+  const userProfile = await db.collection("users").doc(uid).get();
+  if (userProfile.exists && userProfile.get("role") === "owner") {
+    throw new HttpsError(
+      "failed-precondition",
+      "La cuenta propietaria no puede eliminarse."
+    );
+  }
+
   const bucket = getStorage().bucket();
   const [posts, progress] = await Promise.all([
     db.collectionGroup("posts").where("authorId", "==", uid).get(),

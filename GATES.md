@@ -61,7 +61,7 @@
 - **OWNS:** `firebase/functions/index.js`, `firebase/functions/grade-audit.js`, `firebase/functions/quiz-engine.js`
 - **CHECK:** Auditar funciones callable de Firebase Functions (`publishQuiz`, `saveAuditedStudentScores`, `saveAuditedGradebook`, `deleteMyAccount`, `notifyStudentsOnCoursePost`), verificación de autenticación, App Check y autorización de roles.
 - **EXPECT:** Ninguna cuenta `owner` puede ser eliminada mediante callable functions; validación estricta de permisos de sección antes de cualquier mutación; manejo de errores mediante `HttpsError`.
-- **STATUS:** 🚨 **CRITICAL VULNERABILITY DETECTED** — Bypass de cuenta Owner en `deleteMyAccount` (líneas 739-779): la función callable no valida si `users/{uid}.role === 'owner'`. Un token comprometido de superusuario permite borrar permanentemente la cuenta raíz de la institución y sus colecciones. Ver [Plan 050](plans/050-sec-owner-account-deletion.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — Protección de cuenta `owner` institucional implementada en `deleteMyAccount` (`firebase/functions/index.js`). La función callable consulta `users/{uid}` y rechaza con `failed-precondition` si `role === 'owner'`. Resuelto en Plan 050.
 
 ### 4.2 `leaf-sec-cloudflare-edge-waf`
 - **OWNS:** `wrangler.jsonc`, `open-next.config.ts`, `next.config.ts`, `proxy.ts`
