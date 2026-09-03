@@ -19,6 +19,7 @@ import { QuizzesSection } from "./QuizzesSection";
 import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 import type { SectionRole } from "../../../lib/section-roles";
+import { canReadGradeHistory } from "../../../lib/section-roles";
 
 const MoodleImportDialog = dynamic(
   () => import("./MoodleImportDialog").then((module) => module.MoodleImportDialog),
@@ -240,6 +241,7 @@ export function ClassroomView({
                 course={course}
                 classroom={classroom}
                 canTeach={canTeach}
+                canReadHistory={canReadGradeHistory(user.role, sectionRole)}
                 note={note}
                 status={status}
                 readOnly={readOnly}

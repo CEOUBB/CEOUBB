@@ -1,6 +1,16 @@
 {
   "indexes": [
     {
+      "collectionGroup": "gradeAudit",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetType", "order": "ASCENDING" },
+        { "fieldPath": "studentId", "order": "ASCENDING" },
+        { "fieldPath": "gradeItemId", "order": "ASCENDING" },
+        { "fieldPath": "changedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sections",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

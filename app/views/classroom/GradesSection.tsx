@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
 import {
   CaretLeft,
   CaretRight,
   ChatCenteredText,
   CheckCircle,
+  ClockCounterClockwise,
   MagnifyingGlass,
   Paperclip,
   X,
@@ -43,6 +45,16 @@ import { MobileSheet } from "../../mobile-shell";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
+import type { GradeHistorySelection } from "./GradeHistoryDialog";
+
+const GradeHistoryDialog = dynamic(
+  () => import("./GradeHistoryDialog").then((module) => module.GradeHistoryDialog),
+  { ssr: false }
+);
+const GradeHistoryLookup = dynamic(
+  () => import("./GradeHistoryLookup").then((module) => module.GradeHistoryLookup),
+  { ssr: false }
+);
 
 const EMPTY_SCORES: GradeScores = {};
 const EMPTY_FEEDBACK: GradeFeedback = {};
@@ -57,6 +69,7 @@ export function GradesSection({
   course,
   classroom,
   canTeach,
+  canReadHistory = false,
   readOnly,
   note,
   status,
@@ -64,6 +77,7 @@ export function GradesSection({
   course: Course;
   classroom: ClassroomState;
   canTeach: boolean;
+  canReadHistory?: boolean;
   readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
   status: Note;
@@ -72,6 +86,7 @@ export function GradesSection({
   if (canTeach)
     return (
       <TeacherGrades
+        key={course.id}
         course={course}
         classroom={classroom}
         note={note}
@@ -79,6 +94,8 @@ export function GradesSection({
         status={status}
       />
     );
+  if (canReadHistory)
+    return <GradeHistoryLookup key={course.id} sectionId={course.id} gradebook={gradebook} />;
   return (
     <StudentGrades
       course={course}
@@ -576,6 +593,7 @@ function TeacherGrades({
 }) {
   const { gradebook, exemption, students, classScores, classFeedback } = classroom;
   const [feedbackEditor, setFeedbackEditor] = useState<FeedbackEditor | null>(null);
+  const [history, setHistory] = useState<GradeHistorySelection | null>(null);
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const [query, setQuery] = useState("");
@@ -626,6 +644,16 @@ function TeacherGrades({
     },
     []
   );
+
+  const openHistory = useCallback((student: ClassroomStudent, item: GradeItem) => {
+    setHistory({
+      studentId: student.userId,
+      studentName: student.name,
+      studentEmail: student.email,
+      gradeItemId: item.id,
+      gradeItemName: item.name,
+    });
+  }, []);
 
   const persistFeedback = async (value: string) => {
     if (!feedbackEditor) return;
@@ -736,6 +764,7 @@ function TeacherGrades({
                 feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
                 key={student.userId}
                 onEditFeedback={openFeedback}
+                onViewHistory={openHistory}
                 onSetScore={handleSetScore}
                 scores={classScores[student.userId] ?? EMPTY_SCORES}
                 student={student}
@@ -797,6 +826,14 @@ function TeacherGrades({
           onSave={persistFeedback}
         />
       )}
+      {history && (
+        <GradeHistoryDialog
+          key={`${course.id}:${history.studentId}:${history.gradeItemId}`}
+          sectionId={course.id}
+          selection={history}
+          onClose={() => setHistory(null)}
+        />
+      )}
       {status.text && (
         <p className={`tool-status ${status.tone}`} role="status">
           {status.text}
@@ -812,6 +849,7 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
   gradebook,
   feedback,
   onEditFeedback,
+  onViewHistory,
   scores,
   onSetScore,
   readOnly,
@@ -821,6 +859,7 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
   feedback: GradeFeedback;
   scores: GradeScores;
   onEditFeedback: (student: ClassroomStudent, item: GradeItem, feedback: string) => void;
+  onViewHistory: (student: ClassroomStudent, item: GradeItem) => void;
   onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
   readOnly: boolean;
 }) {
@@ -863,6 +902,15 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
               size={16}
               weight={feedback[item.id] ? "fill" : "regular"}
             />
+          </button>
+          <button
+            className="grade-history-action"
+            type="button"
+            aria-label={`Ver historial de ${item.name} para ${student.name}`}
+            onClick={() => onViewHistory(student, item)}
+          >
+            <ClockCounterClockwise aria-hidden="true" size={15} />
+            Historial
           </button>
         </span>
       ))}
