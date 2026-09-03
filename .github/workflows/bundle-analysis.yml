@@ -13,12 +13,13 @@ permissions:
 
 concurrency:
   group: bundle-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze-bundle:
     name: Check Next.js Bundle Performance Budget
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

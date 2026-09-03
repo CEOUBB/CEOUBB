@@ -4,12 +4,27 @@ import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import {
+  AppleLogo,
   ArrowRight,
   ArrowUpRight,
   Books,
+  Brain,
   Check,
+  Cpu,
+  Cube,
   DeviceMobile,
   DownloadSimple,
+  GithubLogo,
+  GraduationCap,
+  MagnifyingGlass,
+  MicrosoftTeamsLogo,
+  NotionLogo,
+  Robot,
+  Sparkle,
+  SpotifyLogo,
+  Terminal,
+  YoutubeLogo,
+  type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import {
   APK_URL,
@@ -18,8 +33,26 @@ import {
   springDefault,
   stagger,
 } from "../../../lib/portal-utils";
-import { BRAND, RESOURCE_GROUPS } from "./resources-data";
+import { RESOURCE_GROUPS } from "./resources-data";
 import type { Brand, ResourceItem } from "./resources-data";
+
+const BRAND_ICONS: Record<string, PhosphorIcon> = {
+  chatgpt: Robot,
+  claude: Brain,
+  gemini: Sparkle,
+  deepseek: Cpu,
+  kimi: Sparkle,
+  qwen: Terminal,
+  github: GithubLogo,
+  notion: NotionLogo,
+  microsoft: MicrosoftTeamsLogo,
+  autodesk: Cube,
+  spotify: SpotifyLogo,
+  applemusic: AppleLogo,
+  moodle: GraduationCap,
+  youtubemusic: YoutubeLogo,
+  perplexity: MagnifyingGlass,
+};
 
 const LIBRARY_POINTS = [
   "Accede a evaluaciones y documentos de años anteriores cuando lo necesites.",
@@ -32,12 +65,14 @@ const LIBRARY_POINTS = [
 const settle = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
 
 function BrandMark({ brand }: { brand: Brand }) {
+  const IconComponent = BRAND_ICONS[brand] || Sparkle;
   return (
-    <svg aria-hidden="true" className="brand-mark" focusable="false" viewBox="0 0 24 24">
-      {BRAND[brand].map((path) => (
-        <path d={path.d} fill={path.fill} key={path.d} />
-      ))}
-    </svg>
+    <IconComponent
+      aria-hidden="true"
+      className="brand-mark text-brand-blue"
+      size={24}
+      weight="duotone"
+    />
   );
 }
 

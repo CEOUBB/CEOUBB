@@ -88,7 +88,14 @@ before(async () => {
     {
       cwd: new URL("..", import.meta.url),
       stdio: "ignore",
-      env: { ...process.env, TURSO_DATABASE_URL: url },
+      env: {
+        ...process.env,
+        TURSO_DATABASE_URL: url,
+        CEOUBB_ENVIRONMENT: "preview",
+        NEXT_PUBLIC_CEOUBB_ENVIRONMENT: "preview",
+        FIREBASE_SERVICE_ACCOUNT_EMAIL: "",
+        FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
+      },
     }
   );
   for (let attempt = 0; attempt < 120; attempt += 1) {

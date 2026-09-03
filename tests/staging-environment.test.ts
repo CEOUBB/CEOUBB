@@ -110,6 +110,21 @@ test("REQ-STG-04: Firebase config is complete per build and never mixes staging 
   assert.notEqual(staging.apiKey, PRODUCTION_FIREBASE_CONFIG.apiKey);
 });
 
+test("REQ-SEC-09: resolveFirebaseConfig acepta 'preview' con proyecto staging sin lanzar STAGING_ENV_REQUIRED", () => {
+  const config = resolveFirebaseConfig({
+    NEXT_PUBLIC_CEOUBB_ENVIRONMENT: "preview",
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: "centro-de-estudio-ubb-staging",
+    NEXT_PUBLIC_FIREBASE_API_KEY: "dummy-key-preview",
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "centro-de-estudio-ubb-staging.firebaseapp.com",
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "centro-de-estudio-ubb-staging.firebasestorage.app",
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "411177916202",
+    NEXT_PUBLIC_FIREBASE_APP_ID: "1:411177916202:web:preview123",
+  });
+
+  assert.equal(config.projectId, "centro-de-estudio-ubb-staging");
+  assert.equal(config.apiKey, "dummy-key-preview");
+});
+
 test("REQ-STG-03, REQ-STG-05: release workflow gates production on same-run staging", async () => {
   const release = await readFile(".github/workflows/firebase-release.yml", "utf8");
   const webDeploy = await readFile(".github/workflows/deploy.yml", "utf8");

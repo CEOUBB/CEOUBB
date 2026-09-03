@@ -28,6 +28,7 @@ jobs:
   verify:
     name: Verify release candidate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,6 +55,7 @@ jobs:
     name: Deploy and seed staging
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: Staging
     env:
       CEOUBB_ENVIRONMENT: staging
@@ -109,6 +111,7 @@ jobs:
     needs: deploy_staging
     if: inputs.promote_to_production == true
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: Production
     steps:
       - name: Checkout repository

@@ -20,11 +20,11 @@ const connectSrc =
 
 const contentSecurityPolicy = [
   `default-src 'self' ${capacitorBridgeOrigins}`,
-  `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://challenges.cloudflare.com`,
+  `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://challenges.cloudflare.com https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
   "font-src 'self' data:",
-  `connect-src ${connectSrc} https://www.google.com/recaptcha/`,
+  `connect-src ${connectSrc} https://www.google.com/recaptcha/ https://cloudflareinsights.com`,
   "frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

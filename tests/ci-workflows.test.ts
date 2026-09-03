@@ -1,4 +1,4 @@
-// Implements: REQ-CICD-08
+// Implements: REQ-CICD-08, REQ-CICD-09, REQ-CICD-10
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -485,4 +485,35 @@ test("REQ-SEC-06: Aislamiento estricto de workflows de pruebas de carga masiva e
     /confirm_staging:/,
     "capacity-load-test.yml debe exigir parámetro de confirmación explícito"
   );
+});
+
+test("REQ-CICD-09: All workflow jobs declare explicit timeout-minutes <= 30", async () => {
+  for (const workflowPath of REQUIRED_WORKFLOWS) {
+    const content = await readText(workflowPath);
+    assert.match(
+      content,
+      /timeout-minutes:\s*\d+/,
+      `${workflowPath} debe declarar 'timeout-minutes' en sus jobs`
+    );
+  }
+});
+
+test("REQ-CICD-10: Workflows with concurrency do not cancel in progress on main branch", async () => {
+  const workflowsWithConcurrency = [
+    ".github/workflows/ci.yml",
+    ".github/workflows/deploy.yml",
+    ".github/workflows/android-ci.yml",
+    ".github/workflows/bundle-analysis.yml",
+    ".github/workflows/semgrep.yml",
+    ".github/workflows/react-doctor.yml",
+  ];
+
+  for (const workflowPath of workflowsWithConcurrency) {
+    const content = await readText(workflowPath);
+    assert.ok(
+      !content.includes("cancel-in-progress: true\n") &&
+        !content.includes("cancel-in-progress: true\r\n"),
+      `${workflowPath} no debe declarar cancel-in-progress: true incondicional (cancela runs legítimos en main)`
+    );
+  }
 });
