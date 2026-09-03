@@ -180,23 +180,134 @@ test("services/linear: listCompletedLinearIssues retorna array vacío sin clave 
 });
 
 test("services/github: helpers manejan errores de red o llamadas sin fallar ruidosamente", async () => {
-  const commits = await getRecentCommits(5);
-  assert.ok(Array.isArray(commits));
+  const originalFetch = globalThis.fetch;
 
-  const prs = await listPullRequests("open", 5);
-  assert.ok(Array.isArray(prs));
+  try {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const headers = (init?.headers || {}) as Record<string, string>;
 
-  const pr = await getPullRequest(999999);
-  assert.equal(typeof pr === "object", true);
+      if (url.includes("/commits")) {
+        return new Response(
+          JSON.stringify([
+            {
+              sha: "abcdef1234567890",
+              commit: {
+                message: "feat: commit institucional de prueba",
+                author: { name: "Docente UBB", date: "2026-09-01T12:00:00Z" },
+              },
+              author: { login: "docente-ubb" },
+              html_url: "https://github.com/CEOUBB/CEOUBB/commit/abcdef",
+            },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
 
-  const diff = await getPullRequestDiff(999999);
-  assert.equal(typeof diff, "string");
+      if (url.includes("/pulls/999999")) {
+        if (headers.Accept?.includes("vnd.github.v3.diff")) {
+          return new Response(
+            "diff --git a/test.ts b/test.ts\n--- a/test.ts\n+++ b/test.ts\n@@ -1 +1 @@\n-old\n+new\n",
+            { status: 200, headers: { "Content-Type": "text/plain" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            number: 999999,
+            title: "feat: pull request de prueba",
+            state: "open",
+            user: { login: "docente-ubb" },
+            created_at: "2026-09-01T12:00:00Z",
+            html_url: "https://github.com/CEOUBB/CEOUBB/pull/999999",
+            draft: false,
+            mergeable: true,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
 
-  const comments = await getPullRequestComments(999999);
-  assert.ok(Array.isArray(comments));
+      if (url.includes("/pulls")) {
+        return new Response(
+          JSON.stringify([
+            {
+              number: 1,
+              title: "feat: primer pull request",
+              state: "open",
+              user: { login: "docente-ubb" },
+              created_at: "2026-09-01T12:00:00Z",
+              html_url: "https://github.com/CEOUBB/CEOUBB/pull/1",
+              draft: false,
+            },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
 
-  const latestRun = await getLatestWorkflowRun("main");
-  assert.equal(typeof latestRun === "object", true);
+      if (url.includes("/comments")) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: 101,
+              user: { login: "docente-ubb" },
+              body: "Comentario de revisión",
+              created_at: "2026-09-01T12:00:00Z",
+            },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url.includes("/actions/runs")) {
+        return new Response(
+          JSON.stringify({
+            total_count: 1,
+            workflow_runs: [
+              {
+                id: 555,
+                status: "completed",
+                conclusion: "success",
+                head_commit: { message: "feat: workflow run" },
+                actor: { login: "github-actions[bot]" },
+                html_url: "https://github.com/CEOUBB/CEOUBB/actions/runs/555",
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    const commits = await getRecentCommits(5);
+    assert.ok(Array.isArray(commits));
+    assert.equal(commits.length, 1);
+
+    const prs = await listPullRequests("open", 5);
+    assert.ok(Array.isArray(prs));
+    assert.equal(prs.length, 1);
+
+    const pr = await getPullRequest(999999);
+    assert.ok(pr !== null, "El PR no debe ser nulo");
+    assert.equal(pr.number, 999999);
+
+    const diff = await getPullRequestDiff(999999);
+    assert.equal(typeof diff, "string");
+    assert.ok(diff.includes("diff --git"));
+
+    const comments = await getPullRequestComments(999999);
+    assert.ok(Array.isArray(comments));
+    assert.equal(comments.length, 1);
+
+    const latestRun = await getLatestWorkflowRun("main");
+    assert.ok(latestRun !== null, "Latest workflow run no debe ser nulo");
+    assert.equal(latestRun.id, 555);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 /*

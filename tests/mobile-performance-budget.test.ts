@@ -115,7 +115,9 @@ test("REQ-CAP-09: el velo de .app-header conserva su @supports dentro del media 
 
 // REQ-CAP-08: las filas del feed se saltan layout y paint fuera de pantalla.
 test("REQ-CAP-08: las filas del feed declaran content-visibility y su alto estimado", () => {
-  for (const selector of [".post-list article", ".material-row"]) {
+  /* `.material-row` desapareció con la pestaña «Materiales»: la Portada es hoy
+     la única lista sin techo, y absorbió las filas de archivos (REQ-PUB-13). */
+  for (const selector of [".post-list article"]) {
     const bodies = ruleBodiesFor(css, selector);
     assert.ok(bodies.length > 0, `No se encontró la regla base de \`${selector}\`.`);
 

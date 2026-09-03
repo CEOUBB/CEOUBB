@@ -7,6 +7,40 @@ import type { PersonalEvent, PersonalEventKind } from "../planner.ts";
 
 export type ClassroomPostKind = "notice" | "guide" | "assessment" | "resource";
 
+/*
+  Un certamen se publica con su pauta y su formulario: el adjunto pertenece al
+  aviso, no a un listado paralelo. La cota de seis evita que un documento de
+  Firestore crezca sin techo con una carga masiva.
+*/
+// Implements: REQ-PUB-09
+export const MAX_POST_ATTACHMENTS = 6;
+
+export type ClassroomAttachment = {
+  name: string;
+  storagePath: string;
+  contentType: string;
+  size: number;
+};
+
+export function toAttachments(value: unknown): ClassroomAttachment[] {
+  if (!Array.isArray(value)) return [];
+  const attachments: ClassroomAttachment[] = [];
+  for (const entry of value.slice(0, MAX_POST_ATTACHMENTS)) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const candidate = entry as Record<string, unknown>;
+    const storagePath = String(candidate.storagePath ?? "");
+    if (!storagePath) continue;
+    const size = Number(candidate.size);
+    attachments.push({
+      name: String(candidate.name || "Archivo adjunto"),
+      storagePath,
+      contentType: String(candidate.contentType || "application/octet-stream"),
+      size: Number.isFinite(size) && size > 0 ? size : 0,
+    });
+  }
+  return attachments;
+}
+
 export type ClassroomPost = {
   id: string;
   authorId: string;
@@ -19,6 +53,7 @@ export type ClassroomPost = {
   folder: string;
   linkUrl: string | null;
   storagePath: string;
+  attachments: ClassroomAttachment[];
   dueDate: string;
   createdAt: string;
 };
@@ -76,6 +111,7 @@ export function toPost(document: QueryDocumentSnapshot<DocumentData>): Classroom
     folder: String(value.folder || DEFAULT_FOLDER),
     linkUrl,
     storagePath: String(value.storagePath ?? ""),
+    attachments: toAttachments(value.attachments),
     dueDate: normalizeDueDate(value.dueDate),
     createdAt: iso(value.createdAt),
   };

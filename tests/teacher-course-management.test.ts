@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
 import { eq } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
-import * as schema from "../db/schema.ts";
 import {
   assistantAssignments,
   matriculas,
@@ -13,6 +10,7 @@ import {
   secciones,
   users,
 } from "../db/schema.ts";
+import { createIsolatedTestDb } from "./helpers/db-harness.ts";
 import {
   COURSE_TONES,
   gradeSchemeError,
@@ -51,24 +49,13 @@ const STUDENT = {
 };
 
 async function memoryDatabase() {
-  const client = createClient({ url: "file::memory:" });
-  const files = (await readdir(new URL("../drizzle/", import.meta.url)))
-    .filter((name) => name.endsWith(".sql"))
-    .sort();
-  for (const file of files) {
-    const sql = await readFile(new URL(`../drizzle/${file}`, import.meta.url), "utf8");
-    for (const statement of sql.split("--> statement-breakpoint")) {
-      const trimmed = statement.trim().replace(/;$/, "");
-      if (trimmed) await client.execute(trimmed);
-    }
-  }
-  const db = drizzle(client, { schema });
+  const { client, db, cleanup, beginTransaction } = await createIsolatedTestDb();
   await db.insert(users).values([
     { ...TEACHER, createdAt: "2026-08-23T10:00:00.000Z" },
     { ...OTHER_TEACHER, createdAt: "2026-08-23T10:00:00.000Z" },
     { ...STUDENT, createdAt: "2026-08-23T10:00:00.000Z" },
   ]);
-  return { client, db };
+  return { client, db, cleanup, beginTransaction };
 }
 
 const validCourse = {
@@ -197,9 +184,9 @@ test("CEO-27 creates a complete section, projects the teacher and lists only act
         status: "activa",
       },
     ]);
-    assert.equal((await db.select().from(secciones)).length, 1);
-    assert.equal((await db.select().from(sectionProfiles)).length, 1);
-    assert.equal((await db.select().from(matriculas)).length, 1);
+    assert.equal((await db.select().from(secciones).limit(50)).length, 1);
+    assert.equal((await db.select().from(sectionProfiles).limit(50)).length, 1);
+    assert.equal((await db.select().from(matriculas).limit(50)).length, 1);
     assert.deepEqual(
       (await listManagedCourses(TEACHER, { db })).items.map((row) => row.id),
       [created.id]
@@ -233,9 +220,9 @@ test("CEO-27 compensates a new section when its Firestore projection fails", asy
         cause.code === "PROJECTION_UNAVAILABLE" &&
         cause.status === 503
     );
-    assert.equal((await db.select().from(secciones)).length, 0);
-    assert.equal((await db.select().from(sectionProfiles)).length, 0);
-    assert.equal((await db.select().from(matriculas)).length, 0);
+    assert.equal((await db.select().from(secciones).limit(50)).length, 0);
+    assert.equal((await db.select().from(sectionProfiles).limit(50)).length, 0);
+    assert.equal((await db.select().from(matriculas).limit(50)).length, 0);
   } finally {
     client.close();
   }
@@ -314,7 +301,7 @@ test("CEO-27 designates and removes an assistant without losing the previous enr
       )[0]?.role,
       "assistant"
     );
-    assert.equal((await db.select().from(assistantAssignments)).length, 1);
+    assert.equal((await db.select().from(assistantAssignments).limit(50)).length, 1);
     await removeCourseAssistant(TEACHER, created.id, STUDENT.id, {
       db,
       projectEnrollment,
@@ -329,7 +316,7 @@ test("CEO-27 designates and removes an assistant without losing the previous enr
       )[0],
       { role: "student", status: "activa" }
     );
-    assert.equal((await db.select().from(assistantAssignments)).length, 0);
+    assert.equal((await db.select().from(assistantAssignments).limit(50)).length, 0);
     assert.ok(projected.some((value) => value.endsWith(":assistant:activa")));
     assert.ok(projected.some((value) => value.endsWith(":student:activa")));
   } finally {

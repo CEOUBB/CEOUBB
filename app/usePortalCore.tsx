@@ -104,6 +104,18 @@ export function usePortalCore(initialSession?: SessionState) {
       dialog.close();
       return true;
     }
+    /*
+      Una vista a pantalla completa dentro de una pantalla del portal —hoy el
+      estudio de publicación— publica su propio botón de salida. El gesto atrás
+      lo activa antes de abandonar la pantalla que la contiene, para que el
+      docente no pierda lo que estaba escribiendo.
+    */
+    // Implements: REQ-CAP-15 REQ-PUB-01
+    const nested = document.querySelector<HTMLElement>("[data-hardware-back]");
+    if (nested) {
+      nested.click();
+      return true;
+    }
     if (coursesSheet) {
       setCoursesSheet(false);
       return true;

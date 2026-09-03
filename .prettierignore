@@ -1,5 +1,7 @@
 # Artefactos y compilados
 .next
+.open-next/
+cloudflare-env.d.ts
 dist
 build
 coverage

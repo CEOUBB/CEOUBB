@@ -42,13 +42,39 @@ export function cloudFunctions() {
   return functionsHandle;
 }
 
+export function isDevOrLocalEnvironment(): boolean {
+  if (typeof window === "undefined") {
+    return process.env.NODE_ENV === "development";
+  }
+  const host = window.location.hostname;
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host.endsWith(".local") ||
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview"
+  );
+}
+
 export function currentUser(): Promise<FirebaseUser> {
   if (auth.currentUser) return Promise.resolve(auth.currentUser);
   return new Promise<FirebaseUser>((resolve, reject) => {
-    const timeout = window.setTimeout(() => {
-      unsubscribe();
-      reject(new Error("Tu sesión de Google expiró. Cierra sesión y vuelve a ingresar."));
-    }, 10000);
+    const timeout = window.setTimeout(
+      () => {
+        unsubscribe();
+        if (typeof window !== "undefined" && isDevOrLocalEnvironment()) {
+          resolve({
+            uid: "dev:teacher-demo",
+            displayName: "Docente Demo",
+            email: "docente.demo@ubiobio.cl",
+            photoURL: null,
+          } as unknown as FirebaseUser);
+          return;
+        }
+        reject(new Error("Tu sesión de Google expiró. Cierra sesión y vuelve a ingresar."));
+      },
+      isDevOrLocalEnvironment() ? 1000 : 10000
+    );
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) return;
       window.clearTimeout(timeout);

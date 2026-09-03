@@ -21,6 +21,11 @@ const eslintConfig = defineConfig([
     "firebase/**",
     ".claude/**",
     ".agents/**",
+    "node_modules/**",
+    "scripts/**",
+    "*.config.js",
+    "*.config.mjs",
+    "*.config.ts",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -31,16 +36,45 @@ const eslintConfig = defineConfig([
   next.configs["core-web-vitals"],
   {
     languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
       globals: {
         ...globals.browser,
         ...globals.node,
         ...globals.serviceworker,
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
     settings: {
       react: {
         version: "detect",
       },
+    },
+    rules: {
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        {
+          "ts-ignore": true,
+          "ts-nocheck": true,
+          "ts-check": false,
+          "ts-expect-error": "allow-with-description",
+        },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ]);
