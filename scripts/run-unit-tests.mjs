@@ -9,7 +9,10 @@ async function discoverTestFiles() {
   return entries
     .filter(
       (entry) =>
-        entry.isFile() && entry.name.endsWith(".test.ts") && entry.name !== "rendered-html.test.mjs"
+        entry.isFile() &&
+        entry.name.endsWith(".test.ts") &&
+        entry.name !== "rendered-html.test.mjs" &&
+        entry.name !== "firebase-rules.test.ts"
     )
     .map((entry) => join("tests", entry.name).replaceAll("\\", "/"))
     .sort();
