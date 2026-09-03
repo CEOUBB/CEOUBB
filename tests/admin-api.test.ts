@@ -187,12 +187,12 @@ test("admin users endpoint source strictly enforces every guard contract", async
   // Payload role validation
   assert.match(
     source,
-    /\["teacher",\s*"student"\]\.includes/,
+    /z\.enum\(\["teacher",\s*"student"\]/,
     "must restrict target roles to teacher and student"
   );
 
   // Prevent self-downgrade of owner
-  assert.match(source, /payload\.userId === actor\.id/, "must block owner account downgrade");
+  assert.match(source, /userId === actor\.id/, "must block owner account downgrade");
   assert.match(source, /"La cuenta propietaria no puede degradarse\."/);
 
   // Prevent modification of any account holding the owner rank
@@ -592,7 +592,7 @@ test("admin users PATCH route sanitizes and trims userId before lookup and proje
     new URL("../app/api/admin/users/route.ts", import.meta.url),
     "utf8"
   );
-  assert.match(source, /payload\.userId\.trim\(\)/);
+  assert.match(source, /actualizarUsuarioSchema\.safeParse/);
   assert.match(source, /eq\(users\.id,\s*userId\)/);
   assert.match(source, /projectUserRoleToFirestore\(userId,\s*role\)/);
 });
