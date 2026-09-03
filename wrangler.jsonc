@@ -4,8 +4,9 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-02-15",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "preview_urls": true,
+  // Hardening: Desactivar workers.dev en producción para obligar paso por el WAF de ceoubb.com
+  "workers_dev": false,
+  "preview_urls": false,
   "minify": true,
   "routes": [
     {

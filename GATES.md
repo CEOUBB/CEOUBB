@@ -67,7 +67,7 @@
 - **OWNS:** `wrangler.jsonc`, `open-next.config.ts`, `next.config.ts`, `proxy.ts`
 - **CHECK:** Auditar configuración de Cloudflare Workers, encabezados de seguridad (CSP, HSTS, X-Content-Type-Options, Referrer-Policy), bindings, variables públicas vs secretas y exposición de subdominios `workers.dev`.
 - **EXPECT:** Desactivación de `workers_dev: true` en producción para obligar a que todo el tráfico pase por el WAF de zona (`ceoubb.com`); aislamiento de entornos preview y staging; cabeceras HTTP de hardening inyectadas.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — `workers_dev: true` activo en el entorno de producción de `wrangler.jsonc` (línea 7). El subdominio directo `ceoubb.*.workers.dev` elude el WAF de zona, rate limiting y reglas de mitigación de DDoS de `ceoubb.com`. Ver [Plan 056](plans/056-sec-cloudflare-workers-dev-waf.md).
+- **STATUS:** ✅ **SUPERADA & MITIGADA** — `workers_dev: false` y `preview_urls: false` configurados en la raíz de producción de `wrangler.jsonc`, garantizando que el tráfico pase por el WAF institucional (`ceoubb.com`). Ruta `/api/sentry-test` protegida exclusivamente para rol owner en no-producción. Resuelto en Plan 056.
 
 ---
 
