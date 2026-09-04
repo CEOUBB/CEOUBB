@@ -53,7 +53,7 @@ export function calculateFinalGrade(
   items: readonly GradeItem[],
   scores: GradeScores
 ): FinalGradeCalculation {
-  const partial = summarize([...items], scores);
+  const partial = summarize(items as GradeItem[], scores);
   if (!partial.complete || partial.average === null) {
     return {
       partialAverage: null,
@@ -166,7 +166,7 @@ function canonicalFinalGradeRecords(
   records: readonly FinalGradeRecord[]
 ): string {
   const normalizedRecords = [...records]
-    .sort((left, right) => left.userId.localeCompare(right.userId))
+    .sort((left, right) => (left.userId < right.userId ? -1 : left.userId > right.userId ? 1 : 0))
     .map((record) => ({
       userId: record.userId,
       institutionalId: record.institutionalId,

@@ -23,13 +23,19 @@ const firebaseConfig = firebaseConfigFromEnvironment();
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-if (typeof window !== "undefined") {
+let appCheckInitialized = false;
+
+export function ensureAppCheck() {
+  if (typeof window === "undefined" || appCheckInitialized) return;
+  appCheckInitialized = true;
+
   if (
     process.env.NODE_ENV === "development" &&
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
   ) {
     window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
+
   initializeAppCheck(firebaseApp, {
     provider: new ReCaptchaEnterpriseProvider("6Lc_K5UtAAAAAAke6LXqyn3gVV4L3DxDGXfUoZMb"),
     isTokenAutoRefreshEnabled: true,
@@ -77,6 +83,7 @@ async function isRegisteredOwner(uid: string): Promise<boolean> {
 
 // Implements: REQ-CAP-12, REQ-CAP-12b
 export async function signInWithInstitutionalGoogle() {
+  ensureAppCheck();
   const result = Capacitor.isNativePlatform()
     ? await nativeCredentialSignIn()
     : await signInWithPopup(getAuth(firebaseApp), institutionalProvider());

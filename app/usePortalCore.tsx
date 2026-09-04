@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
+  useAppVisibility,
   useExternalLinks,
   useHardwareBack,
   useIsMobileApp,
@@ -230,8 +231,12 @@ export function usePortalCore(initialSession?: SessionState) {
     };
   }, [user, memberships.length]);
 
+  const isAppVisible = useAppVisibility();
+  const needsGradebooks = isAppVisible && (screen === "calendar" || course !== null);
+
+  // Implements: REQ-PERF-08
   useEffect(() => {
-    if (!user || sectionIds.length === 0) return;
+    if (!user || sectionIds.length === 0 || !isAppVisible) return;
     let alive = true;
     let unsub: (() => void) | undefined;
     import("../lib/firebase-classroom-client").then(({ watchCourseActivity }) => {
@@ -246,10 +251,11 @@ export function usePortalCore(initialSession?: SessionState) {
       alive = false;
       unsub?.();
     };
-  }, [user, sectionIds]);
+  }, [user, sectionIds, isAppVisible]);
 
+  // Implements: REQ-PERF-08
   useEffect(() => {
-    if (!user || memberships.length === 0) return;
+    if (!user || memberships.length === 0 || !isAppVisible) return;
     let alive = true;
     let unsub: (() => void) | undefined;
     import("../lib/firebase-classroom-client").then(({ watchCommunications }) => {
@@ -272,10 +278,11 @@ export function usePortalCore(initialSession?: SessionState) {
       alive = false;
       unsub?.();
     };
-  }, [user, memberships]);
+  }, [user, memberships, isAppVisible]);
 
+  // Implements: REQ-PERF-08
   useEffect(() => {
-    if (!user || sectionIds.length === 0) return;
+    if (!user || sectionIds.length === 0 || !needsGradebooks) return;
     let alive = true;
     let unsub: (() => void) | undefined;
     import("../lib/firebase-classroom-client").then(({ watchGradebooks }) => {
@@ -290,7 +297,7 @@ export function usePortalCore(initialSession?: SessionState) {
       alive = false;
       unsub?.();
     };
-  }, [user, sectionIds]);
+  }, [user, sectionIds, needsGradebooks]);
 
   useEffect(() => {
     if (!user) return;
@@ -532,51 +539,101 @@ export function usePortalCore(initialSession?: SessionState) {
 
   const entries = useMemo(() => calendarEntries(courses, gradebooks), [courses, gradebooks]);
 
-  return {
-    user,
-    checking,
-    courses,
-    archivedCourses,
-    archivedNextCursor,
-    archivedLoading,
-    loadMoreArchived,
-    refreshCourses,
-    activity,
-    gradebooks,
-    memberships,
-    communications,
-    communicationError,
-    screen,
-    course,
-    preview,
-    coursesSheet,
-    focusThread,
-    setScreen,
-    setCoursesSheet,
-    setPreview,
-    sidebarOpen,
-    setSidebarOpen,
-    searchOpen,
-    setSearchOpen,
-    seen,
-    mobile,
-    prefersReducedMotion,
-    notifications,
-    notificationsLoading,
-    unreadCommunications,
-    enterCourse,
-    openCourse,
-    openNotification,
-    markAllNotifications,
-    logout,
-    finishSignedIn,
-    finishSignedInWithSession,
-    onPhotoChange,
-    openedCourse,
-    openedSectionRole,
-    context,
-    paletteItems,
-    mobileTabs,
-    entries,
-  };
+  // Implements: REQ-PERF-06
+  return useMemo(
+    () => ({
+      user,
+      checking,
+      courses,
+      archivedCourses,
+      archivedNextCursor,
+      archivedLoading,
+      loadMoreArchived,
+      refreshCourses,
+      activity,
+      gradebooks,
+      memberships,
+      communications,
+      communicationError,
+      screen,
+      course,
+      preview,
+      coursesSheet,
+      focusThread,
+      setScreen,
+      setCoursesSheet,
+      setPreview,
+      sidebarOpen,
+      setSidebarOpen,
+      searchOpen,
+      setSearchOpen,
+      seen,
+      mobile,
+      prefersReducedMotion,
+      notifications,
+      notificationsLoading,
+      unreadCommunications,
+      enterCourse,
+      openCourse,
+      openNotification,
+      markAllNotifications,
+      logout,
+      finishSignedIn,
+      finishSignedInWithSession,
+      onPhotoChange,
+      openedCourse,
+      openedSectionRole,
+      context,
+      paletteItems,
+      mobileTabs,
+      entries,
+    }),
+    [
+      user,
+      checking,
+      courses,
+      archivedCourses,
+      archivedNextCursor,
+      archivedLoading,
+      loadMoreArchived,
+      refreshCourses,
+      activity,
+      gradebooks,
+      memberships,
+      communications,
+      communicationError,
+      screen,
+      course,
+      preview,
+      coursesSheet,
+      focusThread,
+      setScreen,
+      setCoursesSheet,
+      setPreview,
+      sidebarOpen,
+      setSidebarOpen,
+      searchOpen,
+      setSearchOpen,
+      seen,
+      mobile,
+      prefersReducedMotion,
+      notifications,
+      notificationsLoading,
+      unreadCommunications,
+      enterCourse,
+      openCourse,
+      openNotification,
+      markAllNotifications,
+      logout,
+      finishSignedIn,
+      finishSignedInWithSession,
+      onPhotoChange,
+      openedCourse,
+      openedSectionRole,
+      context,
+      paletteItems,
+      mobileTabs,
+      entries,
+    ]
+  );
 }

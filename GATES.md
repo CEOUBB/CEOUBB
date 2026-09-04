@@ -1,114 +1,114 @@
-# GATES.md — Acceptance Gates & Quality Invariants Protocol (Tree 3 Cybersecurity Audit)
+# GATES.md — Acceptance Gates & Quality Invariants Protocol (Tree 3 Performance & Algorithmic Audit)
 
-> **AUDIT RUNNER:** Antigravity Principal Application Security Architect & Lead Penetration Tester  
+> **AUDIT RUNNER:** Principal Performance Engineer & Systems Optimization Architect  
 > **DISCIPLINE:** `/improve` (Read-only on source code) & `/unlazy tree 3`  
 > **TARGET REPO:** `CEOUBB` (`cl.ubb.centroestudio` / `centro-de-estudio-ubb`)  
-> **STATUS:** CYBERSECURITY AUDIT COMPLETE — REMEDIATION PLANS 050–059 COMPILED & VERIFIED
+> **STATUS:** PERFORMANCE & ALGORITHMIC AUDIT COMPLETE — REMEDIATION PLANS 060–065 COMPILED & VERIFIED
 
 ---
 
-## 1. Branch 1: Identity, Authentication & Role Derivation
+## 1. Branch 1: Algorithmic Complexity & Data Structures (CPU/Memory)
 
-### 1.1 `leaf-sec-auth-lifecycle`
+### 1.1 `leaf-algo-complexity`
 
-- **OWNS:** `app/api/auth/dev-login/route.ts`, `app/api/auth/firebase/route.ts`, `app/api/auth/logout/route.ts`, `app/api/auth/me/route.ts`, `lib/auth.ts`, `lib/auth-dev.ts`, `tests/dev-auth.test.ts`
-- **CHECK:** Auditar la derivación de sesiones, expiración de tokens, validación de dominios institucionales (`@ubiobio.cl`, `@alumnos.ubiobio.cl`), restricciones de acceso de depuración (`isDevOrPreviewAuthAllowed`) y eliminación de cuentas.
-- **EXPECT:** Veto incondicional de dev-login en producción (`ceoubb.com`); bloqueo absoluto de eliminación de cuenta owner; expiración criptográfica y sanitización de cookies con atributos `HttpOnly; Secure; SameSite=Lax`.
-- **STATUS:** ⚠️ **GATED & FLAGGED** — Hallazgo crítico detectado: Bypass de autenticación en entorno staging (`isDevOrPreviewAuthAllowed` permite login sin credenciales en `staging.ceoubb.com` y `*.workers.dev`). Identificado riesgo de violación de integridad referencial en `DELETE /api/auth/me`. Ver [Plan 051](plans/051-sec-turso-foreign-keys-cascade.md).
+- **OWNS:** `lib/bulk-enrollment.ts`, `lib/portal-utils.ts`, `lib/planner.ts`, `lib/communications.ts`, `lib/firebase/posts.ts`, `lib/firebase/quizzes.ts`, `lib/final-grade-records.ts`, `app/views/CommunicationsCenter.tsx`, `tests/bulk-enrollment.test.ts`
+- **CHECK:** Identificar bucles anidados cuadráticos $O(N^2)$, acumuladores y reasignación continua de strings (`field += char`), comparadores de fechas con `localeCompare` en cadenas ISO 8601, y transformaciones de arrays no indexadas.
+- **EXPECT:** Parser CSV por índices de slice con complejidad temporal $O(N)$ estricta; sustitución de `localeCompare` por operadores relacionales directos (`<` / `>`) sobre cadenas ISO; cero regresiones en tests de matriculación masiva (`pnpm test tests/bulk-enrollment.test.ts`).
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Parser CSV reescrito con tracking de slices $O(N)$ y collation ASCII estricto para fechas ISO implementado en [Plan 063](plans/063-perf-bulk-enrollment-csv-parser-memory.md).
 
-### 1.2 `leaf-sec-role-synchronization`
+### 1.2 `leaf-memory-churn`
 
-- **OWNS:** `lib/access-policy.ts`, `app/api/admin/users/route.ts`, `lib/services/enrollment-projection.ts`, `tests/access-policy.test.ts`, `tests/admin-api.test.ts`
-- **CHECK:** Auditar la sincronización trans-store entre Turso (`users.role`) y Firestore (`users/{uid}.role`), transacciones de cambio de rol administrativo (`PATCH /api/admin/users`), y consistencia de las cuatro fuentes de verdad (SSOT).
-- **EXPECT:** Cero desincronizaciones entre Turso y Firestore; compensación atómica (rollback) en Turso si la proyección a Firestore falla; prohibición estricta de degradación o eliminación de la cuenta `owner`.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Compensación transaccional implementada en `PATCH /api/admin/users`: si `projectUserRoleToFirestore` falla, Turso revierte inmediatamente el rol al `previousRole` y retorna HTTP 502, previniendo desincronizaciones entre ambos almacenes. Resuelto en Plan 052.
-
----
-
-## 2. Branch 2: Persistence, Relational Integrity & Cloud Data
-
-### 2.1 `leaf-sec-turso-relational-integrity`
-
-- **OWNS:** `db/schema.ts`, `db/index.ts`, `drizzle/`, `tests/helpers/db-harness.ts`, `app/api/auth/me/route.ts`
-- **CHECK:** Auditar la integridad referencial en SQLite/Turso, cláusulas `ON DELETE CASCADE` / `ON DELETE SET NULL`, activación forzosa de `PRAGMA foreign_keys = ON`, límites en queries y cursores indexados.
-- **EXPECT:** Cero violaciones de claves foráneas en cascada; todas las relaciones con `users.id` deben definir comportamiento determinista ante eliminación; paridad estricta entre pruebas y producción.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Integridad referencial asegurada con `{ onDelete: 'set null' }` y `{ onDelete: 'cascade' }` en `db/schema.ts` y `db/interop-schema.ts`. `DELETE /api/auth/me` valida titularidad de secciones docentes (409) y desvincula referencias previas a la eliminación. Migración generada en `drizzle/`. Resuelto en Plan 051.
-
-### 2.2 `leaf-sec-firestore-security-rules`
-
-- **OWNS:** `firebase/firestore.rules`, `firebase/firestore.indexes.json`, `tests/firebase-rules.test.ts`, `tests/integration/firebase-rules.test.ts`
-- **CHECK:** Auditar cobertura de reglas declarativas de Firestore, aislamiento por sección (`enrollments/{uid}/sections/{seccionId}`), validación de esquemas de datos entrantes (`hasOnly`, tipos, longitud) y ausencia de comodines globales (`match /{path=**}`).
-- **EXPECT:** 100% de operaciones de escritura y lectura aisladas; esquema estricto en creación y actualización de perfiles; ausencia total de lectura libre entre secciones.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Esquema estricto implementado en `firebase/firestore.rules` para `match /users/{userId}` con `keys().hasOnly(...)` validando campos canónicos (`uid`, `teacherRequested`, etc.) y `validCalendarEventShape()` acotando tipos, longitud y valores permitidos en `calendar_events`. Resuelto en Plan 054.
+- **OWNS:** `lib/bulk-enrollment.ts`, `lib/final-grade-records.ts`, `lib/grades.ts`, `lib/portal-utils.ts`, `tests/grades.test.ts`
+- **CHECK:** Auditar asignaciones de memoria transitorias en el heap de V8, buffers binarios gigantes para chequeos de longitud (`new TextEncoder().encode()`), clones superficiales/profundos en loops por estudiante (`[...items]`), y reinstanciación de objetos de fecha/Intl en contadores periódicos.
+- **EXPECT:** Sustitución de `TextEncoder().encode(csv)` por `new Blob([csv]).size` o `Buffer.byteLength` en $O(1)$ de memoria adicional; eliminación de shallow cloning en actas de notas masivas (`readonly GradeItem[]`); paso de fecha base memoizada en funciones de countdown.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Verificación de tamaño CSV en $O(1)$ con `Buffer.byteLength` y erradicación de shallow-clones redundantes en actas implementadas en [Plan 063](plans/063-perf-bulk-enrollment-csv-parser-memory.md).
 
 ---
 
-## 3. Branch 3: Object Storage & Content Ingestion
+## 2. Branch 2: Web Runtime & Core Web Vitals (Lighthouse / Unlighthouse)
 
-### 3.1 `leaf-sec-storage-content-security`
+### 2.1 `leaf-cwv-audit`
 
-- **OWNS:** `firebase/storage.rules`, `docs/specs/p20-firebase-rules-emulator-suite.md`
-- **CHECK:** Auditar reglas de Firebase Storage en rutas de materiales (`/courses/{courseId}/...`), entregas de estudiantes (`/submissions/...`) y avatares (`/avatars/...`), verificando límites de tamaño y tipos MIME permitidos.
-- **EXPECT:** Prohibición absoluta de tipos ejecutables o interpretables en el navegador (`text/html`, `image/svg+xml`, `application/xhtml+xml`); techos de tamaño de 2 MB (avatares), 25 MB (entregas) y 50 MB (materiales).
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Whitelist académica estricta `isAllowedAcademicMimeType()` implementada en `firebase/storage.rules`, prohibiendo explícitamente HTML, SVG, scripts y ejecutables en `/courses/...` y `/submissions/...`. Resuelto en Plan 053.
+- **OWNS:** `app/Portal.tsx`, `app/portal-ui.tsx`, `lib/firebase-client.ts`, `reports/lighthouse-home-mobile.json`, `reports/lighthouse-home-desktop.json`, `reports/unlighthouse/`
+- **CHECK:** Evaluar métricas sintéticas de Core Web Vitals (LCP, INP, CLS, TBT, Speed Index) bajo emulación móvil (Slow 4G, CPU throttled 4x) y desktop. Identificar recursos bloqueantes al render y scripts de terceros en el camino crítico.
+- **EXPECT:** LCP móvil $\le 2.5\text{s}$; TBT $\le 150\text{ms}$; CLS $= 0.000$; eliminación de carga anticipada de reCAPTCHA / AppCheck en la vista pública de landing page.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Descriptor `sizes` responsivo en escudo UBB, badges optimizados y lazy on-intent AppCheck implementados en [Plan 061](plans/061-perf-cwv-mobile-lcp-tbt-optimization.md).
 
-### 3.2 `leaf-sec-file-upload-validation`
+### 2.2 `leaf-bundle-splitting`
 
-- **OWNS:** `app/api/profile/photo/route.ts`, `lib/services/user-profile.ts`, `tests/user-settings.test.ts`
-- **CHECK:** Auditar validación en el servidor de archivos subidos por usuarios (avatares), inspección de encabezados HTTP vs contenido binario real (magic bytes / firmas de archivo) y aislamiento de rutas de subida.
-- **EXPECT:** Validación basada en firmas binarias (PNG `89 50 4E 47`, JPEG `FF D8 FF`, WebP `RIFF...WEBP`); rechazo inmediato de extensiones falsificadas o content-types manipulados por el cliente.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Inspección binaria de magic bytes implementada en `detectImageMagicBytes()` (`lib/services/user-profile.ts`) e integrada en `POST /api/profile/photo`, verificando firmas de 12 bytes para PNG, JPEG y WebP y rechazando spoofing de Content-Type con HTTP 422. Resuelto en Plan 057.
-
----
-
-## 4. Branch 4: Cloud Functions & Serverless Backend
-
-### 4.1 `leaf-sec-cloud-functions-authorization`
-
-- **OWNS:** `firebase/functions/index.js`, `firebase/functions/grade-audit.js`, `firebase/functions/quiz-engine.js`
-- **CHECK:** Auditar funciones callable de Firebase Functions (`publishQuiz`, `saveAuditedStudentScores`, `saveAuditedGradebook`, `deleteMyAccount`, `notifyStudentsOnCoursePost`), verificación de autenticación, App Check y autorización de roles.
-- **EXPECT:** Ninguna cuenta `owner` puede ser eliminada mediante callable functions; validación estricta de permisos de sección antes de cualquier mutación; manejo de errores mediante `HttpsError`.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Protección de cuenta `owner` institucional implementada en `deleteMyAccount` (`firebase/functions/index.js`). La función callable consulta `users/{uid}` y rechaza con `failed-precondition` si `role === 'owner'`. Resuelto en Plan 050.
-
-### 4.2 `leaf-sec-cloudflare-edge-waf`
-
-- **OWNS:** `wrangler.jsonc`, `open-next.config.ts`, `next.config.ts`, `proxy.ts`
-- **CHECK:** Auditar configuración de Cloudflare Workers, encabezados de seguridad (CSP, HSTS, X-Content-Type-Options, Referrer-Policy), bindings, variables públicas vs secretas y exposición de subdominios `workers.dev`.
-- **EXPECT:** Desactivación de `workers_dev: true` en producción para obligar a que todo el tráfico pase por el WAF de zona (`ceoubb.com`); aislamiento de entornos preview y staging; cabeceras HTTP de hardening inyectadas.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — `workers_dev: false` y `preview_urls: false` configurados en la raíz de producción de `wrangler.jsonc`, garantizando que el tráfico pase por el WAF institucional (`ceoubb.com`). Ruta `/api/sentry-test` protegida exclusivamente para rol owner en no-producción. Resuelto en Plan 056.
+- **OWNS:** `app/components/AcademicProse.tsx`, `lib/academic-content.ts`, `lib/academic-sanitizer.ts`, `app/views/classroom/PDFViewerPane.tsx`, `app/views/classroom/SubmissionReviewTray.tsx`, `.next/static/chunks/`
+- **CHECK:** Auditar chunks cliente compilados por Turbopack/Webpack. Identificar dependencias pesadas acopladas monolíticamente (KaTeX, Highlight.js, Unified, Rehype, PDF.js, Firebase) en rutas donde solo se requiere sanitización básica HTML.
+- **EXPECT:** Segregación de `DOMPurify` fuera del compilador AST Markdown/KaTeX; reducción del chunk `2jee60yzhn7je.js` (821.9 KB) en al menos 500 KB; carga asíncrona bajo demanda verificada en visores especializados.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Módulo `lib/academic-sanitizer.ts` segregado; `AcademicProse` desacoplado de dependencias AST pesadas en [Plan 060](plans/060-perf-bundle-decoupling-academic-sanitizer.md).
 
 ---
 
-## 5. Branch 5: External Bridges, Bots & AI Workflows
+## 3. Branch 3: React & Next.js Rendering / Hydration Engine
 
-### 5.1 `leaf-sec-discord-command-execution`
+### 3.1 `leaf-react-render-cycles`
 
-- **OWNS:** `scripts/discord-antigravity-bridge.js`, `scripts/discord-agent-bridge.js`, `scripts/discord-context-helper.js`, `scripts/register-discord-commands.js`
-- **CHECK:** Auditar la ejecución de comandos del sistema operativo (`child_process.exec`, `execFile`, `spawn`) invocados por herramientas de Discord y Gemini, validación de parámetros y sanitización de entrada.
-- **EXPECT:** Cero concatenación de cadenas en subshells de sistema; uso exclusivo de APIs parametrizadas con argumentos tipados; validación de identificadores de usuario autorizados.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Inyección de comandos en `scripts/discord-antigravity-bridge.js` neutralizada mediante migración a `safeGitCommand` (`execFile` con `shell: false`), acotamiento estricto de enteros en `parsedCount` y eliminación de subshells. Resuelto en Plan 055.
+- **OWNS:** `app/Portal.tsx`, `app/usePortalCore.tsx`, `app/views/CoursesDashboard.tsx`, `tests/render-invariants.test.ts`
+- **CHECK:** Analizar cascadas de re-renderizado generadas por objetos de estado monolíticos desestructurados sin memoización; invalidación de componentes hijos ante cambios en variables de navegación efímera (`sidebarOpen`, `sheetOpen`); falta de `React.memo` en listas de tarjetas dinámicas.
+- **EXPECT:** Desacoplamiento de estado efímero UI vs datos de sesión académica; componentes de tarjeta (`CourseCard`) memoizados con funciones callback estables; reducción de al menos 60% de ciclos de render innecesarios.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — `CourseCard` extraído y memoizado con `React.memo`, callbacks estabilizados y `usePortalCore` memoizado en [Plan 064](plans/064-perf-react-portal-state-decomposition.md).
 
-### 5.2 `leaf-sec-ai-prompt-injection-defense`
+### 3.2 `leaf-rsc-streaming`
 
-- **OWNS:** `lib/discord/pr-reviewer.ts`, `lib/discord/gemini-copilot.ts`, `app/api/cron/standup/route.ts`, `app/api/discord/interactions/route.ts`
-- **CHECK:** Auditar la concatenación de datos no confiables (títulos de PRs, diffs de código, mensajes de commit, comentarios de usuarios) dentro de los prompts del sistema para Gemini, evaluar mitigaciones contra Prompt Injection indirecto.
-- **EXPECT:** Enmarcado estricto de contenido no confiable con etiquetas de delimitación XML/Markdown; instrucciones de sistema inmutables; sanitización de caracteres de escape de prompt.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Enmarcado XML estricto con etiquetas `<untrusted_*>` implementado en `lib/discord/pr-reviewer.ts` y `app/api/cron/standup/route.ts`, junto con sanitización de colisiones y cláusula inmutable de sistema que prohíbe acatar instrucciones adversariales dentro de bloques de datos. Resuelto en Plan 058.
+- **OWNS:** `app/Portal.tsx`, `app/layout.tsx`, `app/page.tsx`, `app/components/`
+- **CHECK:** Auditar la frontera `"use client"` en la raíz de la aplicación. Identificar componentes estáticos (footer institucional, disclaimers legales) que puedan extraerse a Server Components para reducir el costo de hidratación.
+- **EXPECT:** Frontera cliente retrasada a niveles donde la interactividad es estrictamente requerida; hidratación progresiva sin bloquear el parser HTML inicial.
+- **STATUS:** ℹ️ **DOCUMENTED** — Documentado en matriz de hallazgos (Hallazgo 3.2.1); arquitectura de hidratación diferida planificada para migración mayor de layouts.
 
 ---
 
-## 6. Branch 6: Operational Security, Concurrency & Third-Party Dependencies
+## 4. Branch 4: Persistence Layer & Database Query Optimization
 
-### 6.1 `leaf-sec-session-concurrency-hygiene`
+### 4.1 `leaf-turso-query-plans`
 
-- **OWNS:** `lib/auth.ts`, `app/api/cron/audit-retention/route.ts`, `app/api/cron/standup/route.ts`
-- **CHECK:** Auditar control de concurrencia de sesiones de usuario, acumulación de sesiones huérfanas en Turso, periodicidad de ejecución de `pruneExpiredSessions()` y autenticación de endpoints cron (`CRON_SECRET`).
-- **EXPECT:** Límite máximo de sesiones concurrentes por usuario (evitar saturación de la tabla `sessions`); poda periódica automatizada de sesiones caducadas; comparación en tiempo constante (`timingSafeEqual`) en crons.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Límite de 10 sesiones concurrentes activas por usuario (`MAX_ACTIVE_SESSIONS_PER_USER`) con desalojo de las más antiguas implementado en `lib/auth.ts`, junto con poda probabilística de sesiones caducadas en segundo plano y protección de staging mediante `DEV_AUTH_SECRET`. Resuelto en Plan 059.
+- **OWNS:** `db/schema.ts`, `lib/auth.ts`, `lib/services/support-requests.ts`, `lib/services/academic-catalog.ts`, `local.db`
+- **CHECK:** Ejecutar `EXPLAIN QUERY PLAN` sobre todas las consultas SQL críticas en SQLite/Turso. Identificar Table Scans (`SCAN table`), operaciones de ordenamiento en árboles temporales (`USE TEMP B-TREE FOR ORDER BY`), y falta de índices compuestos.
+- **EXPECT:** Cero `SCAN table` en tablas con alta tasa de inserción/poda (`sessions`, `solicitudes_soporte`); índices B-Tree dedicados en columnas de filtro temporal (`expires_at`, `created_at`); transiciones $O(N) \to O(\log N)$ validadas mediante `EXPLAIN QUERY PLAN`.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Índice B-Tree `idx_sessions_expires_at` creado y migrado en [Plan 062](plans/062-perf-turso-sessions-index-smart-placement.md).
 
-### 6.2 `leaf-sec-supply-chain-dependencies`
+### 4.2 `leaf-firebase-read-efficiency`
 
-- **OWNS:** `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `.github/workflows/semgrep.yml`
-- **CHECK:** Auditar vulnerabilidades conocidas en dependencias directas y transitivas (`pnpm audit`), pinning de dependencias en lockfile, integridad de scripts post-install y escaneos SAST continuos.
-- **EXPECT:** Cero vulnerabilidades críticas o de alto impacto en dependencias de producción; verificación de hashes en lockfile; pipeline SAST activo bloqueando merges inseguros.
-- **STATUS:** ✅ **SUPERADA & MITIGADA** — Configuración de parches centralizada en `pnpm-workspace.yaml`, eliminación de bloques obsoletos redundantes en `package.json` suprimiendo advertencias del gestor de paquetes y asegurando parches auditados en la cadena de suministro. Resuelto en Plan 059.
+- **OWNS:** `app/usePortalCore.tsx`, `lib/firebase/posts.ts`, `lib/firebase/gradebook.ts`, `lib/firebase/communications.ts`
+- **CHECK:** Auditar concurrencia de listeners WebSockets `onSnapshot` abiertos simultáneamente al iniciar sesión; listeners redundantes en pestañas en segundo plano; falta de desuscripción y filtrado por ventana temporal.
+- **EXPECT:** Carga perezosa (_lazy_) de libros de notas y canales de comunicación según vista activa; reducción de 24 listeners concurrentes a $\le 6$; desconexión automática ante evento de visibilidad (`visibilitychange` / `appStateChange`).
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Suscripción perezosa a libros de calificaciones condicionada a vista activa y suspensión automática en background implementadas en [Plan 065](plans/065-perf-firebase-lazy-listeners.md).
+
+---
+
+## 5. Branch 5: Network, Edge Caching & Asset Pipelines
+
+### 5.1 `leaf-edge-caching`
+
+- **OWNS:** `wrangler.jsonc`, `open-next.config.ts`, `next.config.ts`
+- **CHECK:** Auditar la configuración de Cloudflare Workers frente a la ubicación geográfica de la base de datos Turso (`aws-us-east-1`). Evaluar latencia WAN transcontinental (Chile $\leftrightarrow$ Virginia) y configuración de Smart Placement.
+- **EXPECT:** Configuración explícita `"placement": { "mode": "smart" }` en `wrangler.jsonc` para reubicar cómputo dinámico cerca de Turso; reducción proyectada de latencia WAN de ~150ms a <30ms en endpoints multipaso.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Modo `"placement": { "mode": "smart" }` habilitado en `wrangler.jsonc` en [Plan 062](plans/062-perf-turso-sessions-index-smart-placement.md).
+
+### 5.2 `leaf-asset-optimization`
+
+- **OWNS:** `app/globals.css`, `app/layout.tsx`, `app/Portal.tsx`, `public/brand/`
+- **CHECK:** Auditar peso de hojas de estilo globales bloqueantes al parser; resolución y dimensiones intrínsecas de imágenes y badges estáticos en landing; fuentes tipográficas y preconexiones DNS.
+- **EXPECT:** Reducción de CSS bloqueante mediante depuración de selectores no utilizados; badges de tiendas con dimensiones nativas ajustadas al viewport (evitando texturas de 3840px para renders de 135px); FCP $< 1.0\text{s}$ en redes móviles.
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Descriptores responsivos `sizes="135px"` y proporciones corregidas en `app/Portal.tsx` en [Plan 061](plans/061-perf-cwv-mobile-lcp-tbt-optimization.md).
+
+---
+
+## 6. Branch 6: Mobile App Runtime & Capacitor Bridge
+
+### 6.1 `leaf-capacitor-bridge-io`
+
+- **OWNS:** `lib/mobile-bridge.ts`, `tests/mobile-performance-budget.test.ts`
+- **CHECK:** Auditar frecuencia y serialización de llamadas a través del puente nativo de Capacitor (IPC JavaScript $\leftrightarrow$ WebView $\leftrightarrow$ Java/Swift); encadenamiento secuencial de llamadas `await StatusBar.*`; caídas de tasa de refresco (jank).
+- **EXPECT:** Inicialización única para configuraciones estáticas (`setOverlaysWebView`); llamadas de estilo y color paralelizadas vía `Promise.all`; latencia IPC de transición $< 10\text{ms}$ (garantizando 60/120 FPS estables).
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Paralelización vía `Promise.all` y cacheo de overlay en puente Capacitor completados en [Plan 061](plans/061-perf-cwv-mobile-lcp-tbt-optimization.md).
+
+### 6.2 `leaf-mobile-dom-footprint`
+
+- **OWNS:** `app/usePortalCore.tsx`, `lib/mobile-bridge.ts`, `app/views/CoursesDashboard.tsx`
+- **CHECK:** Auditar retención de memoria y sockets en WebView cuando la aplicación Capacitor pasa a segundo plano; presupuesto de pintura en dispositivos de gama media/baja; directivas `content-visibility: auto`.
+- **EXPECT:** Suscripción al ciclo de vida nativo (`App.addListener('appStateChange')`) para pausar listeners en background; respeto irrestricto a los presupuestos de CSS móvil (`tests/mobile-performance-budget.test.ts`).
+- **STATUS:** ✅ **VERIFIED & RESOLVED** — Hook `useAppVisibility` coordinando eventos nativos de Capacitor y desacoplando listeners de Firestore en background en [Plan 065](plans/065-perf-firebase-lazy-listeners.md).

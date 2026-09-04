@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
@@ -60,15 +60,22 @@ export function hapticTap() {
  * Franja de estado: navy institucional sobre las bandas heroicas, papel sobre el
  * resto del portal. Los dos valores son los tokens de `DESIGN.md`.
  */
+let overlayConfigured = false;
+
 // Implements: REQ-CAP-07
 export function useStatusBar(tone: "hero" | "canvas") {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const hero = tone === "hero";
     quiet(async () => {
-      await StatusBar.setOverlaysWebView({ overlay: false });
-      await StatusBar.setBackgroundColor({ color: hero ? "#002b5c" : "#f4f6f9" });
-      await StatusBar.setStyle({ style: hero ? Style.Dark : Style.Light });
+      if (!overlayConfigured) {
+        overlayConfigured = true;
+        await StatusBar.setOverlaysWebView({ overlay: false });
+      }
+      await Promise.all([
+        StatusBar.setBackgroundColor({ color: hero ? "#002b5c" : "#f4f6f9" }),
+        StatusBar.setStyle({ style: hero ? Style.Dark : Style.Light }),
+      ]);
     });
   }, [tone]);
 }
@@ -151,4 +158,41 @@ export function useHardwareBack(onBack: () => boolean): void {
       unsubscribe();
     };
   }, []);
+}
+
+// Implements: REQ-CAP-16
+export function useAppVisibility(): boolean {
+  const [isActive, setIsActive] = useState<boolean>(() =>
+    typeof document !== "undefined" ? document.visibilityState === "visible" : true
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      setIsActive(document.visibilityState === "visible");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    let removeCapacitorListener: (() => void) | undefined;
+    if (Capacitor.isNativePlatform()) {
+      App.addListener("appStateChange", ({ isActive: appActive }) => {
+        setIsActive(appActive);
+      })
+        .then((handle) => {
+          removeCapacitorListener = () => {
+            void handle.remove().catch(() => undefined);
+          };
+        })
+        .catch(() => undefined);
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      removeCapacitorListener?.();
+    };
+  }, []);
+
+  return isActive;
 }

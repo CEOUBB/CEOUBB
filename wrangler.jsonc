@@ -45,6 +45,9 @@
     "TURSO_DATABASE_URL": "libsql://ceoubb-ceoubb.aws-us-east-1.turso.io",
     "TURSO_HTTP_URL": "https://ceoubb-ceoubb.aws-us-east-1.turso.io",
   },
+  "placement": {
+    "mode": "smart",
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
