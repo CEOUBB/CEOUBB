@@ -133,11 +133,12 @@ export function CoursesDashboard({
             </time>
             {nextCourse && (
               <button
+                aria-label={`Ir al ramo ${nextCourse.name}`}
                 className="next-strip-action"
                 onClick={() => openCourse(nextCourse)}
                 type="button"
               >
-                Ir al ramo <ArrowRight size={15} />
+                Ir al ramo <ArrowRight aria-hidden="true" size={15} />
               </button>
             )}
           </div>
@@ -210,7 +211,11 @@ export function CoursesDashboard({
                     <span className="num">{course.section}</span>
                   </small>
                 </div>
-                <button onClick={() => openCourse(course)} type="button">
+                <button
+                  aria-label={`Abrir en solo lectura el ramo ${course.name}`}
+                  onClick={() => openCourse(course)}
+                  type="button"
+                >
                   Abrir en solo lectura <ArrowRight aria-hidden="true" size={15} />
                 </button>
               </article>
