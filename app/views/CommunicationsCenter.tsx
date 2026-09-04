@@ -15,6 +15,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import type { Course } from "../../lib/courses.ts";
+import { ConversationSkeleton } from "./ViewSkeletons";
 import {
   announcementCursorKey,
   canListStudentThreads,
@@ -356,7 +357,7 @@ function CommunicationsPanels({
 
             <div aria-busy={loadingMessages} aria-live="polite" className="message-history">
               {loadingMessages ? (
-                <p className="message-loading">Cargando conversación…</p>
+                <ConversationSkeleton />
               ) : messages.length === 0 ? (
                 <div className="message-empty">
                   <ChatCircleText aria-hidden="true" size={28} weight="duotone" />

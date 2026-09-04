@@ -54,6 +54,15 @@ Companion files:
 
 ## Active work
 
+- [DONE] **CEO-83: Rediseño integral de los esqueletos de carga (2026-09-04).** Felipe Arce / Claude Code, rama `claude/skeleton-design-improvements-d8d29d`. Los esqueletos ahora replican el contenido real de cada pantalla en vez de aproximarlo:
+  - **Barrido más calmo:** `.sk::after` baja la cresta de `rgba(255,255,255,0.92)` a `0.5` y ensancha el degradado (1.9 s); nuevo hueso `.sk-quiet` para lo que en la pantalla real es texto secundario, de modo que la silueta conserva jerarquía.
+  - **Copia fija escrita de verdad:** los títulos, bajadas, pestañas y rótulos que no dependen de datos (`Calendario`, `Avisos y mensajes`, `Configuración`, `Administración de cuentas`, `Recursos de estudio`, `Administrar ramos`) se renderizan como texto y ya no parpadean al resolver el módulo.
+  - **Calendario:** la grilla usa la semana real desde `getSantiagoDateISO()`, marca hoy y el fin de semana, coloca las 13 horas con su `top` porcentual (antes se apilaban todas en `08:00`) y añade la tira de días del ancho móvil.
+  - **Esqueletos nuevos:** `CommunicationsSkeleton` y `TeacherCoursesSkeleton` reemplazan los préstamos de `ResourcesSkeleton` y `AdminSkeleton` en `app/portal-shell.tsx`; `AdminSkeleton` suma períodos académicos y paginación.
+  - **Interiores del aula:** `QuizListSkeleton`, `InteropListSkeleton`, `ConversationSkeleton`, `GradeHistorySkeleton`, `DocumentPaneSkeleton` y `TeacherCoursesBodySkeleton` sustituyen los textos «Cargando…» de cuestionarios, recursos externos, conversaciones, historial de notas, visor de entregas y espacio docente.
+  - **Arranque:** `LoadingScreen` dibuja la ruta activa, la campana y la identidad en la barra, la navegación como icono más rótulo, los ramos con nombre y código, la tira de próxima evaluación como tarjeta y las fichas con código, docente, regla, metadatos y acción. `app/mobile-shell.css` oculta ruta, campana y nombre en teléfono y apila la tira.
+  - Verificación: `format:check`, `typecheck`, `lint`, `verify:fast` (29/29) y `verify:invariants` en verde; detector de Impeccable sin hallazgos en el código nuevo.
+
 - [DONE] **CEO-82: Protocolo de Confiabilidad, Concurrencia y Persistencia Multitienda — Planes 070 al 080 (2026-09-04).** Felipe Arce / Antigravity, rama `full_reliability_audit_protocol`. Se implementaron de forma secuencial y bajo la filosofía `/ponytail full` los 11 planes de confiabilidad auditados en `plans/`:
   - **Onda 1 (Crashes, Outages e Integridad Numérica):**
     - Plan 070: Normalización determinista de timestamps en `lib/firebase/mappers.ts:iso()` protegiendo strings ISO históricos, marcas numéricas y Dates sin sobrescritura con reloj local.

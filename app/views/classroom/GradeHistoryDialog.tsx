@@ -9,6 +9,7 @@ import {
   type GradeHistoryPage,
 } from "../../../lib/grade-history";
 import styles from "./grade-history.module.css";
+import { GradeHistorySkeleton } from "../ViewSkeletons";
 
 export type GradeHistorySelection = {
   studentId: string;
@@ -130,11 +131,7 @@ function HistoryPage({
   return (
     <>
       <div className={styles.body} aria-busy={!page && !error}>
-        {!page && !error && (
-          <p className={styles.state} role="status">
-            Cargando historial…
-          </p>
-        )}
+        {!page && !error && <GradeHistorySkeleton />}
         {error && (
           <div className={styles.state}>
             <p role="alert">{error}</p>

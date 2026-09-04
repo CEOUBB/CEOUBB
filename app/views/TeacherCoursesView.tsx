@@ -32,6 +32,7 @@ import {
   updateManagedCourse,
 } from "../../lib/teacher-course-client";
 import { GradebookSettingsEditor } from "./classroom/GradebookSettingsEditor";
+import { TeacherCoursesBodySkeleton } from "./ViewSkeletons";
 
 type ManagerTab = "data" | "evaluations" | "assistants";
 
@@ -224,9 +225,7 @@ export function TeacherCoursesView({
       </p>
 
       {loading ? (
-        <div aria-busy="true" className="teacher-manager-loading">
-          Cargando espacio docente…
-        </div>
+        <TeacherCoursesBodySkeleton />
       ) : courses.length === 0 ? (
         <div className="teacher-manager-empty">
           <BookOpenText aria-hidden="true" size={36} />
