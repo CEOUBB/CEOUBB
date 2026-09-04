@@ -5,6 +5,7 @@ import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { Archive, ArrowRight, ChalkboardTeacher } from "@phosphor-icons/react";
 import { CourseCard } from "./CourseCard";
+import { EmptyState } from "./classroom/EmptyState";
 import { Course, PERIOD } from "../../lib/courses";
 import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
@@ -147,32 +148,36 @@ export function CoursesDashboard({
       <div className="section-title">
         <h2>Mis cursos</h2>
       </div>
-      {courses.length === 0 && (
-        <div className="empty-state course-empty-state">
-          <strong>No tienes ramos vigentes en este período.</strong>
-          <p>Las nuevas secciones aparecerán aquí cuando tu matrícula quede activa.</p>
-        </div>
-      )}
       <m.section
         animate="show"
         className="course-grid"
         initial={shouldReduceMotion ? "show" : "hidden"}
         variants={shouldReduceMotion ? undefined : stagger}
       >
+        {/* Un solo estado vacío: antes el portal apilaba dos cajas que decían
+            lo mismo, una encima de la otra. */}
         {courses.length === 0 && (
           <div className="course-empty-state">
-            <ChalkboardTeacher aria-hidden="true" size={30} />
-            <strong>No hay ramos activos en tu portal</strong>
-            <p>
-              {manageCourses
-                ? "Crea una sección para comenzar a preparar el aula."
-                : "Tus ramos aparecerán aquí cuando tu matrícula esté activa."}
-            </p>
-            {manageCourses && (
-              <button className="primary-button" onClick={manageCourses} type="button">
-                Administrar ramos
-              </button>
-            )}
+            <EmptyState
+              icon={ChalkboardTeacher}
+              title={
+                manageCourses
+                  ? "Todavía no administras ningún ramo"
+                  : "No tienes ramos vigentes en este período"
+              }
+              description={
+                manageCourses
+                  ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
+                  : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
+              }
+              action={
+                manageCourses ? (
+                  <button className="empty-state-action" onClick={manageCourses} type="button">
+                    Administrar ramos <ArrowRight size={15} />
+                  </button>
+                ) : undefined
+              }
+            />
           </div>
         )}
         {courses.map((course) => (

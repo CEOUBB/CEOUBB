@@ -98,7 +98,14 @@ export function InteropAuthoringPanel({
               </label>
               <label>
                 Destino
-                <select name="targetUrl" required key={selectedTool}>
+                {/* Sin herramienta elegida el destino no tiene opciones que
+                    ofrecer: se mantiene inerte en vez de abrir un menú vacío. */}
+                <select
+                  name="targetUrl"
+                  required
+                  key={selectedTool}
+                  disabled={busy || !selectedTool}
+                >
                   <option value="">Seleccionar destino…</option>
                   {tools
                     .find((tool) => tool.id === selectedTool)

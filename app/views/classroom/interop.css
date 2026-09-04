@@ -193,6 +193,15 @@
     box-shadow var(--transition-fast);
 }
 
+.interop-workspace input:disabled,
+.interop-workspace select:disabled,
+.interop-workspace textarea:disabled {
+  background: var(--canvas-soft);
+  border-color: var(--border-hairline);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
 .interop-workspace input:focus-visible,
 .interop-workspace select:focus-visible,
 .interop-workspace textarea:focus-visible {

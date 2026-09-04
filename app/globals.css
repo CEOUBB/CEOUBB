@@ -10185,7 +10185,16 @@ mark,
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  max-width: 62ch;
   padding-top: 3px;
+}
+
+/* Sin glifo la caja sigue siendo una sola columna: el uso directo del markup
+   (esqueletos, filtros sin resultados) no debe partirse en dos columnas. */
+.empty-state > strong,
+.empty-state > p,
+.empty-state > span:not(.empty-state-glyph) {
+  grid-column: 1 / -1;
 }
 
 .empty-state strong {
@@ -10197,7 +10206,6 @@ mark,
   text-wrap: balance;
 }
 .empty-state p {
-  max-width: 62ch;
   font-size: 14px;
   line-height: 1.55;
   color: var(--text-muted);
@@ -11460,32 +11468,10 @@ mark,
   color: var(--shield-red-deep);
 }
 
+/* El estado vacío del portal es el mismo componente que usa el aula: sólo
+   necesita ocupar el ancho completo de la grilla de ramos. */
 .course-empty-state {
-  display: grid;
   grid-column: 1 / -1;
-  min-height: 230px;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-xl);
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-xl);
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.course-empty-state svg {
-  color: var(--ubb-royal-blue);
-}
-
-.course-empty-state strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 18px;
-}
-
-.course-empty-state p {
-  margin: 0;
 }
 
 @media (max-width: 900px) {
