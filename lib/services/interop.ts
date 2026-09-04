@@ -329,30 +329,28 @@ export async function authorizeLti(actor: PublicUser, sessionHash: string, input
   )
     fail("Los parámetros del lanzamiento no corresponden a la herramienta.", 400);
   // Implements: REQ-QMD-06
-  const [token, consumed] = await Promise.all([
-    signLtiLaunch({
-      clientId: tool.clientId,
-      deploymentId: tool.deploymentId,
-      userId: actor.id,
-      resourceId: resource.id,
-      sectionId: resource.sectionId,
-      title: resource.title,
-      role: access.role,
-      targetUrl: resource.targetUrl,
-      nonce: parsed.nonce,
-    }),
-    getDb()
-      .update(interopGrants)
-      .set({ consumedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(interopGrants.tokenHash, tokenHash),
-          isNull(interopGrants.consumedAt),
-          gt(interopGrants.expiresAt, new Date().toISOString())
-        )
+  const token = await signLtiLaunch({
+    clientId: tool.clientId,
+    deploymentId: tool.deploymentId,
+    userId: actor.id,
+    resourceId: resource.id,
+    sectionId: resource.sectionId,
+    title: resource.title,
+    role: access.role,
+    targetUrl: resource.targetUrl,
+    nonce: parsed.nonce,
+  });
+  const consumed = await getDb()
+    .update(interopGrants)
+    .set({ consumedAt: new Date().toISOString() })
+    .where(
+      and(
+        eq(interopGrants.tokenHash, tokenHash),
+        isNull(interopGrants.consumedAt),
+        gt(interopGrants.expiresAt, new Date().toISOString())
       )
-      .returning({ id: interopGrants.tokenHash }),
-  ]);
+    )
+    .returning({ id: interopGrants.tokenHash });
   if (!consumed.length) fail("Este lanzamiento LTI ya se utilizó.", 409);
   return { redirect: parsed.redirect_uri, token, state: parsed.state };
 }
@@ -500,7 +498,9 @@ export async function saveXapiStatements(
   });
   return getDb().transaction(async (tx) => {
     // Implements: REQ-QMD-06
-    const ids = parsed.map((s) => s.id);
+    const ids = parsed
+      .map((s) => s.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
     const existingRows = ids.length
       ? await tx.select().from(interopStatements).where(inArray(interopStatements.id, ids))
       : [];

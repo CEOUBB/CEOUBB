@@ -15,7 +15,7 @@ async function handleAuthorization(request: Request, params: URLSearchParams) {
 
   const values: Record<string, string> = {};
   for (const [key, value] of params) {
-    if (key in values) fail("El retorno OIDC repite un parámetro.");
+    if (Object.hasOwn(values, key)) fail("El retorno OIDC repite un parámetro.");
     values[key] = value;
   }
   const launch = await authorizeLti(actor, hash, values);
