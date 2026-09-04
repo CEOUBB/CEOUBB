@@ -66,7 +66,8 @@ export async function GET(request: Request) {
       db
         .select({ count: sql<number>`count(*)` })
         .from(users)
-        .where(whereClause),
+        .where(whereClause)
+        .limit(1),
       db
         .select({
           id: users.id,
