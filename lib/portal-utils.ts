@@ -103,7 +103,12 @@ export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]
       tone: course.tone,
     }));
   });
-  return entries.sort((first, second) => first.date.localeCompare(second.date));
+  return entries.sort((first, second) => compareIsoDates(first.date, second.date));
+}
+
+// Implements: REQ-PERF-02
+export function compareIsoDates(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 const TIME_ZONE = "America/Santiago";

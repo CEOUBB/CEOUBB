@@ -85,6 +85,13 @@
       "when": 1788476803435,
       "tag": "0012_gray_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788488544455,
+      "tag": "0012_daffy_dragon_man",
+      "breakpoints": true
     }
   ]
 }

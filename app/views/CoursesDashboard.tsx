@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { Archive, ArrowRight, ChalkboardTeacher } from "@phosphor-icons/react";
+import { CourseCard } from "./CourseCard";
 import { Course, PERIOD } from "../../lib/courses";
 import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
@@ -11,11 +12,8 @@ import {
   dayOf,
   firstName,
   getSantiagoDateISO,
-  instantTransition,
   nextEntry,
-  rise,
   shortDate,
-  springDefault,
   stagger,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
@@ -49,6 +47,13 @@ export function CoursesDashboard({
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
   const shouldReduceMotion = useReducedMotion();
+
+  const handleOpenCourse = useCallback(
+    (courseToOpen: Course) => {
+      openCourse(courseToOpen);
+    },
+    [openCourse]
+  );
 
   // Implements: REQ-PERF-07
   const activitySummaryByCourse = useMemo(() => {
@@ -169,53 +174,15 @@ export function CoursesDashboard({
             )}
           </div>
         )}
-        {courses.map((course) => {
-          const summary = activitySummaryByCourse.get(course.id);
-          const upcoming = summary?.upcoming;
-          const total = summary?.total ?? 0;
-          const unseen = summary?.unseen ?? 0;
-          return (
-            <m.article
-              className="course-card"
-              key={course.id}
-              style={{ "--course-tone": course.tone } as React.CSSProperties}
-              transition={shouldReduceMotion ? instantTransition : springDefault}
-              variants={shouldReduceMotion ? undefined : rise}
-              whileHover={shouldReduceMotion ? undefined : { y: -1 }}
-            >
-              <div aria-hidden="true" className="course-thumb" />
-              <div className="course-body">
-                <div className="course-head">
-                  <span className="course-code">{course.code}</span>
-                  {unseen > 0 && (
-                    <span className="fresh num">
-                      {unseen} {unseen === 1 ? "nueva" : "nuevas"}
-                    </span>
-                  )}
-                </div>
-                <h3>{course.name}</h3>
-                <p>{course.teacher}</p>
-                <div className="course-meta">
-                  <span className="num">
-                    {total === 0
-                      ? "Sin publicaciones aún"
-                      : `${total} ${total === 1 ? "publicación" : "publicaciones"}`}
-                  </span>
-                  {upcoming ? (
-                    <time className="num" dateTime={upcoming.date}>
-                      {shortDate(upcoming.date)} · {upcoming.detail}
-                    </time>
-                  ) : (
-                    <span className="course-open">Material disponible</span>
-                  )}
-                </div>
-                <button className="course-action" onClick={() => openCourse(course)} type="button">
-                  Entrar al aula <ArrowRight size={15} />
-                </button>
-              </div>
-            </m.article>
-          );
-        })}
+        {courses.map((course) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            summary={activitySummaryByCourse.get(course.id)}
+            shouldReduceMotion={Boolean(shouldReduceMotion)}
+            onOpen={handleOpenCourse}
+          />
+        ))}
       </m.section>
       {archivedCourses.length > 0 && (
         <details className="archived-courses">

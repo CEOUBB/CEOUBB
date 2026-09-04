@@ -40,7 +40,10 @@ export const sessions = sqliteTable(
     expiresAt: text("expires_at").notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [index("idx_sessions_user_id").on(table.userId)]
+  (table) => [
+    index("idx_sessions_user_id").on(table.userId),
+    index("idx_sessions_expires_at").on(table.expiresAt),
+  ]
 );
 
 /*

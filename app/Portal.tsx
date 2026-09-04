@@ -155,6 +155,7 @@ export function AccessScreen({
             alt="Escudo de la Universidad del Bío-Bío"
             width={388}
             height={594}
+            sizes="(max-width: 640px) 140px, (max-width: 1024px) 240px, 388px"
             priority
           />
           <h1>
@@ -245,6 +246,7 @@ export function AccessScreen({
                   alt="App Store"
                   width={3840}
                   height={1284}
+                  sizes="135px"
                 />
               </div>
               <div className="store-badge">
@@ -253,6 +255,7 @@ export function AccessScreen({
                   alt="Google Play"
                   width={2214}
                   height={675}
+                  sizes="135px"
                 />
               </div>
             </div>

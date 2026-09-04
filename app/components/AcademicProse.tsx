@@ -1,4 +1,4 @@
-import { AcademicContentTooLargeError, sanitizeAcademicHtml } from "@/lib/academic-content";
+import { AcademicContentTooLargeError, sanitizeAcademicHtml } from "@/lib/academic-sanitizer";
 
 const OVERSIZED_CONTENT_MESSAGE =
   "Este contenido es demasiado extenso para mostrarse de forma segura. Divídelo en publicaciones más pequeñas.";

@@ -95,7 +95,11 @@ export function parseEnrollmentCsv(csv: string): ParsedEnrollmentRow[] {
   if (typeof csv !== "string" || csv.trim().length === 0) {
     throw new EnrollmentImportError("invalid_csv", "El archivo CSV está vacío.", 422);
   }
-  if (new TextEncoder().encode(csv).byteLength > MAX_ENROLLMENT_CSV_BYTES) {
+  // Implements: REQ-PERF-03
+  const byteLength =
+    typeof Buffer !== "undefined" ? Buffer.byteLength(csv, "utf8") : new Blob([csv]).size;
+
+  if (byteLength > MAX_ENROLLMENT_CSV_BYTES) {
     throw new EnrollmentImportError("file_too_large", "El archivo supera el máximo de 5 MiB.", 413);
   }
 
@@ -324,71 +328,119 @@ function detectDelimiter(source: string): "," | ";" {
   return semicolons > commas ? ";" : ",";
 }
 
+// Implements: REQ-PERF-04
 function parseCsvRecords(source: string, delimiter: "," | ";"): CsvRecord[] {
   const records: CsvRecord[] = [];
   let values: string[] = [];
-  let field = "";
   let line = 1;
   let recordLine = 1;
   let quoted = false;
-  let closedQuote = false;
+  let fieldStart = 0;
+  let hasEscapedQuotes = false;
 
-  const pushRecord = () => {
-    values.push(field);
+  const pushRecord = (finalField: string) => {
+    values.push(finalField);
     if (values.some(validText)) records.push({ line: recordLine, values });
     values = [];
-    field = "";
     recordLine = line + 1;
-    closedQuote = false;
+    hasEscapedQuotes = false;
   };
 
-  for (let index = 0; index < source.length; index += 1) {
+  const getField = (start: number, end: number, isQuoted: boolean, hadEscapes: boolean): string => {
+    if (!isQuoted) return source.slice(start, end);
+    const raw = source.slice(start, end);
+    return hadEscapes ? raw.replaceAll('""', '"') : raw;
+  };
+
+  let index = 0;
+  const len = source.length;
+
+  while (index < len) {
     const character = source[index];
+
     if (quoted) {
       if (character === '"') {
         if (source[index + 1] === '"') {
-          field += '"';
-          index += 1;
+          hasEscapedQuotes = true;
+          index += 2;
+          continue;
         } else {
           quoted = false;
-          closedQuote = true;
+          const extracted = getField(fieldStart, index, true, hasEscapedQuotes);
+          index += 1;
+          while (index < len && (source[index] === " " || source[index] === "\t")) {
+            index += 1;
+          }
+          if (index < len) {
+            const nextChar = source[index];
+            if (nextChar === delimiter) {
+              values.push(extracted);
+              index += 1;
+              fieldStart = index;
+              hasEscapedQuotes = false;
+              continue;
+            } else if (nextChar === "\r" || nextChar === "\n") {
+              if (nextChar === "\r" && source[index + 1] === "\n") index += 1;
+              index += 1;
+              pushRecord(extracted);
+              line += 1;
+              fieldStart = index;
+              continue;
+            } else {
+              throw malformedCsv(recordLine);
+            }
+          } else {
+            pushRecord(extracted);
+            return records;
+          }
         }
       } else {
-        field += character;
         if (character === "\n") line += 1;
+        index += 1;
       }
       continue;
     }
 
-    if (closedQuote) {
-      if (character === " " || character === "\t") continue;
-      if (character !== delimiter && character !== "\r" && character !== "\n") {
-        throw malformedCsv(recordLine);
-      }
+    if (character === '"') {
+      if (index > fieldStart) throw malformedCsv(recordLine);
+      quoted = true;
+      hasEscapedQuotes = false;
+      index += 1;
+      fieldStart = index;
+      continue;
     }
 
-    if (character === '"') {
-      if (field.length > 0) throw malformedCsv(recordLine);
-      quoted = true;
-      closedQuote = false;
-    } else if (character === delimiter) {
-      values.push(field);
-      field = "";
-      closedQuote = false;
-    } else if (character === "\r" || character === "\n") {
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      pushRecord();
-      line += 1;
-    } else {
-      field += character;
+    if (character === delimiter) {
+      values.push(source.slice(fieldStart, index));
+      index += 1;
+      fieldStart = index;
+      hasEscapedQuotes = false;
+      continue;
     }
+
+    if (character === "\r" || character === "\n") {
+      const currentField = source.slice(fieldStart, index);
+      if (character === "\r" && source[index + 1] === "\n") index += 1;
+      index += 1;
+      pushRecord(currentField);
+      line += 1;
+      fieldStart = index;
+      continue;
+    }
+
+    index += 1;
   }
 
   if (quoted) throw malformedCsv(recordLine);
-  if (field.length > 0 || values.length > 0) {
-    values.push(field);
-    if (values.some(validText)) records.push({ line: recordLine, values });
+
+  if (fieldStart <= len) {
+    const trailingField = source.slice(fieldStart, len);
+    if (trailingField.length > 0 || values.length > 0) {
+      values.push(trailingField);
+      if (values.some(validText)) records.push({ line: recordLine, values });
+    }
   }
+
   return records;
 }
 
