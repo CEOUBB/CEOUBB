@@ -96,6 +96,7 @@ To optimize semantic density and prevent context contamination, the following gl
    - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle y-axis translation).
    - **Data & Numerals:** Mandatory application of `font-variant-numeric: tabular-nums lining-nums` (`.num`) on all tables, grades, counters, and dates.
    - **Iconography:** Mandatory exclusive use of `@phosphor-icons/react`. Do not hand-roll raw inline SVG icons.
+7. **NO UNFORMATTED COMMITS (CODE FORMATTING GOVERNANCE):** Agents are strictly forbidden from committing or pushing unformatted code. Running `pnpm run format` is mandatory prior to staging/committing, and `pnpm run format:check` must terminate with exit code `0` before any push or pull request.
 
 ---
 
@@ -114,9 +115,11 @@ When implementing or refactoring entities, clone the architectural patterns of t
 ### 7.1 Local Verification Pipeline
 
 ```bash
-pnpm run verify:fast         # 1. Typecheck + Unit Tests + SHA-256 Test-Locking Check (<3.0s)
-pnpm run verify:invariants   # 2. Security Invariants + Firebase Rules Validation (<500ms)
-pnpm test                    # 3. Full Production Build + 15 Integration Suites (Pre-flight)
+pnpm run format              # 0. Code formatting with Prettier (mandatory before commit/push)
+pnpm run format:check        # 1. Formatting verification (<1.0s)
+pnpm run verify:fast         # 2. Typecheck + Unit Tests + SHA-256 Test-Locking Check (<3.0s)
+pnpm run verify:invariants   # 3. Security Invariants + Firebase Rules Validation (<500ms)
+pnpm test                    # 4. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
 
 ### 7.2 Contractual Definition of Done (DoD)
@@ -124,7 +127,7 @@ pnpm test                    # 3. Full Production Build + 15 Integration Suites 
 A task is considered complete ONLY when:
 
 1. Every requirement `REQ-XX` from the specification carries its code-level traceability marker `// Implements: REQ-XX`.
-2. `pnpm run typecheck` and `pnpm run lint` terminate with exit code `0` (zero errors, zero warnings).
+2. `pnpm run typecheck`, `pnpm run lint`, and `pnpm run format:check` terminate with exit code `0` (zero errors, zero warnings, clean Prettier style). Agents must execute `pnpm run format` prior to committing any file.
 3. All unit and integration tests pass with zero test assertions modified or weakened in `tests/`.
 4. Security policies and trans-store synchronization remain fully intact.
 5. Database queries implement strict limits and bounded pagination.
