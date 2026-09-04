@@ -210,17 +210,36 @@ function parseDateSafely(value: string): Date | null {
   return Number.isNaN(atNoon.getTime()) ? null : atNoon;
 }
 
-export function countdown(value: string): string {
+/** Días entre hoy (Santiago) y la fecha dada; negativo si ya pasó. */
+export function daysUntil(value: string): number | null {
   const parsed = parseDateSafely(value);
-  if (!parsed) return "";
-  const target = parsed.getTime();
+  if (!parsed) return null;
   const todayISO = getSantiagoDateISO();
   const current = new Date(`${todayISO}T12:00:00-04:00`).getTime();
-  const days = Math.round((target - current) / 86400000);
+  return Math.round((parsed.getTime() - current) / 86400000);
+}
+
+export function countdown(value: string): string {
+  const days = daysUntil(value);
+  if (days === null) return "";
   if (days < 0) return "Realizada";
   if (days === 0) return "Hoy";
   if (days === 1) return "Mañana";
   return `En ${days} días`;
+}
+
+export type EvaluationUrgency = "past" | "today" | "soon" | "ahead";
+
+/**
+ * Nivel de apremio de una evaluación. Separa el color del rótulo de su texto:
+ * la ficha de cartelera tiñe la cuenta atrás según esto y no leyendo la cadena.
+ */
+export function evaluationUrgency(value: string): EvaluationUrgency {
+  const days = daysUntil(value);
+  if (days === null || days < 0) return "past";
+  if (days === 0) return "today";
+  if (days <= 3) return "soon";
+  return "ahead";
 }
 
 export function shortDate(value: string): string {
