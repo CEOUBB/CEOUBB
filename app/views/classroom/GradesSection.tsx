@@ -4,8 +4,6 @@ import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useSt
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
 import {
-  CaretLeft,
-  CaretRight,
   ChatCenteredText,
   CheckCircle,
   ClockCounterClockwise,
@@ -42,6 +40,7 @@ import {
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
 import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
+import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
@@ -779,33 +778,11 @@ function TeacherGrades({
                 estudiantes
                 {deferredQuery ? ` (${students.length} en total)` : ""}
               </span>
-              {paginated.totalPages > 1 && (
-                <div className="pagination-actions">
-                  <button
-                    aria-label="Página anterior"
-                    className="pagination-btn"
-                    disabled={paginated.page <= 1}
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    type="button"
-                  >
-                    <CaretLeft aria-hidden="true" size={16} />
-                    Anterior
-                  </button>
-                  <span className="pagination-indicator num">
-                    Página {paginated.page} de {paginated.totalPages}
-                  </span>
-                  <button
-                    aria-label="Página siguiente"
-                    className="pagination-btn"
-                    disabled={paginated.page >= paginated.totalPages}
-                    onClick={() => setCurrentPage((p) => Math.min(paginated.totalPages, p + 1))}
-                    type="button"
-                  >
-                    Siguiente
-                    <CaretRight aria-hidden="true" size={16} />
-                  </button>
-                </div>
-              )}
+              <PaginationActions
+                page={paginated.page}
+                totalPages={paginated.totalPages}
+                onPageChange={setCurrentPage}
+              />
             </nav>
           )}
           <FinalGradeRecordsPanel

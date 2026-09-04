@@ -66,8 +66,13 @@ async function readField(
     cache: "no-store",
     signal: AbortSignal.timeout(15000),
   });
-  if (!response.ok)
-    fail("El cuestionario o su pauta no están disponibles.", response.status === 404 ? 404 : 503);
+  // Implements: REQ-QMD-05
+  if (!response.ok) {
+    throw fail(
+      "El cuestionario o su pauta no están disponibles.",
+      response.status === 404 ? 404 : 503
+    );
+  }
   const doc = z.object({ fields: z.record(z.string(), z.unknown()) }).parse(await response.json());
   return firestoreValue(doc.fields[field]);
 }

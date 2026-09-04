@@ -29,14 +29,19 @@ function plain(node: XmlNode | undefined) {
 }
 
 function shape(node: XmlNode): string {
+  // Implements: REQ-QMD-06
   return JSON.stringify([
     node.name,
     Object.entries(node.attributes)
       .filter(([k]) => !k.startsWith("xmlns"))
       .sort(([a], [b]) => a.localeCompare(b)),
-    node.content
-      .filter((p) => typeof p !== "string" || p.trim())
-      .map((p) => (typeof p === "string" ? p.trim() : shape(p))),
+    node.content.flatMap((p) => {
+      if (typeof p === "string") {
+        const trimmed = p.trim();
+        return trimmed ? [trimmed] : [];
+      }
+      return [shape(p)];
+    }),
   ]);
 }
 
@@ -256,10 +261,8 @@ function parseItem(root: XmlNode, sourceLine: number): ImportedQuizQuestion {
       interaction.children.length
     )
       fail("La respuesta contiene presentación no soportada.");
-    q.prompt = bodies[0].children
-      .filter((n) => n !== interaction)
-      .map(plain)
-      .join("\n");
+    // Implements: REQ-QMD-06
+    q.prompt = bodies[0].children.flatMap((n) => (n !== interaction ? [plain(n)] : [])).join("\n");
     if (declaration.attributes.baseType === "string") {
       q.kind = a.kind = "short_answer";
       a.acceptedAnswers = descendants(processors[0], "stringMatch").map((n) =>
@@ -392,6 +395,8 @@ export async function importQtiBank(bytes: Uint8Array): Promise<QuizImportResult
     if (manifest.name !== "manifest") fail("Manifiesto QTI inválido.");
     const resources = children(child(manifest, "resources"), "resource");
     if (resources.length > MAX_IMPORTED_QUESTIONS) fail("El banco supera 500 ítems.");
+    // Implements: REQ-QMD-06
+    const itemsToRead: { path: string; index: number }[] = [];
     for (const [index, resource] of resources.entries()) {
       if (resource.attributes.type !== "imsqti_item_xmlv2p1") {
         result.warnings.push({
@@ -402,7 +407,16 @@ export async function importQtiBank(bytes: Uint8Array): Promise<QuizImportResult
       }
       const path = safePackagePath(resource.attributes.href ?? "");
       if (!archive.has(path)) fail("El manifiesto QTI referencia un archivo ausente.");
-      append(parseXml(await archive.read(path, 1024 * 1024)), index);
+      itemsToRead.push({ path, index });
+    }
+    const readContents = await Promise.all(
+      itemsToRead.map(async ({ path, index }) => ({
+        xml: await archive.read(path, 1024 * 1024),
+        index,
+      }))
+    );
+    for (const { xml, index } of readContents) {
+      append(parseXml(xml), index);
     }
   }
   return result;

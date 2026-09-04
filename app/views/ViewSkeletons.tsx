@@ -202,6 +202,36 @@ export function CalendarSkeleton() {
   );
 }
 
+function LeadHeaderSkeleton({
+  title,
+  titleWidth,
+  subtitleWidth,
+}: {
+  title: string;
+  titleWidth: string;
+  subtitleWidth: string;
+}) {
+  return (
+    <div className="page-head lead">
+      <h1 style={{ margin: 0 }}>
+        <span className="sr-only">{title}</span>
+        <span
+          className="sk boot-title"
+          style={{ width: titleWidth, height: "32px", "--sk-delay": "50ms" } as React.CSSProperties}
+        />
+      </h1>
+      <p style={{ marginTop: "6px" }}>
+        <span
+          className="sk boot-subtitle"
+          style={
+            { width: subtitleWidth, height: "13px", "--sk-delay": "80ms" } as React.CSSProperties
+          }
+        />
+      </p>
+    </div>
+  );
+}
+
 export function ResourcesSkeleton() {
   return (
     <section
@@ -210,21 +240,7 @@ export function ResourcesSkeleton() {
       className="resources-hub"
       role="status"
     >
-      <div className="page-head lead">
-        <h1 style={{ margin: 0 }}>
-          <span className="sr-only">Recursos de estudio</span>
-          <span
-            className="sk boot-title"
-            style={{ width: "240px", height: "32px", "--sk-delay": "50ms" } as React.CSSProperties}
-          />
-        </h1>
-        <p style={{ marginTop: "6px" }}>
-          <span
-            className="sk boot-subtitle"
-            style={{ width: "440px", height: "13px", "--sk-delay": "80ms" } as React.CSSProperties}
-          />
-        </p>
-      </div>
+      <LeadHeaderSkeleton subtitleWidth="440px" title="Recursos de estudio" titleWidth="240px" />
 
       <div className="res-top">
         {/* Portada: biblioteca académica */}
@@ -340,21 +356,11 @@ export function ResourcesSkeleton() {
 export function AdminSkeleton() {
   return (
     <section aria-busy="true" aria-label="Cargando administración de cuentas…" role="status">
-      <div className="page-head lead">
-        <h1 style={{ margin: 0 }}>
-          <span className="sr-only">Administración de cuentas</span>
-          <span
-            className="sk boot-title"
-            style={{ width: "280px", height: "32px", "--sk-delay": "50ms" } as React.CSSProperties}
-          />
-        </h1>
-        <p style={{ marginTop: "6px" }}>
-          <span
-            className="sk boot-subtitle"
-            style={{ width: "260px", height: "13px", "--sk-delay": "80ms" } as React.CSSProperties}
-          />
-        </p>
-      </div>
+      <LeadHeaderSkeleton
+        subtitleWidth="260px"
+        title="Administración de cuentas"
+        titleWidth="280px"
+      />
 
       <div className="admin-toolbar">
         <div

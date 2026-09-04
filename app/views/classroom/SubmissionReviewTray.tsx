@@ -494,9 +494,11 @@ function GradingPanel({
     mientras llega una actualización en tiempo real.
   */
   // Implements: REQ-REV-02
-  const [grade, setGrade] = useState(row.grade === null ? "" : formatGrade(row.grade));
+  const initialGrade = row.grade === null ? "" : formatGrade(row.grade);
+  const initialFeedback = row.feedback;
+  const [grade, setGrade] = useState(initialGrade);
   const [gradeError, setGradeError] = useState("");
-  const [feedback, setFeedback] = useState(row.feedback);
+  const [feedback, setFeedback] = useState(initialFeedback);
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState("");
 

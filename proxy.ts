@@ -1,9 +1,18 @@
+// Implements: REQ-QMD-05
 import { NextResponse, type NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const configured = process.env.INTEROP_CONTENT_ORIGIN;
+  let configuredHostname: string | null = null;
+  if (configured) {
+    try {
+      configuredHostname = new URL(configured).hostname;
+    } catch {
+      configuredHostname = null;
+    }
+  }
   if (
-    configured &&
-    request.nextUrl.hostname === new URL(configured).hostname &&
+    configuredHostname &&
+    request.nextUrl.hostname === configuredHostname &&
     !request.nextUrl.pathname.startsWith("/api/interop/content/")
   ) {
     return new NextResponse("No encontrado", {

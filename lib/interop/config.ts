@@ -1,13 +1,12 @@
 import { z } from "zod";
 import { fail } from "./errors.ts";
 
+// Implements: REQ-QMD-05
 export function secureUrl(value: string) {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
+  if (!URL.canParse(value)) {
     return fail("La URL no es válida.");
   }
+  const url = new URL(value);
   if (
     url.protocol !== "https:" ||
     url.username ||
@@ -23,7 +22,12 @@ export function secureUrl(value: string) {
 
 export function platformOrigin() {
   const value = process.env.INTEROP_PLATFORM_ORIGIN || "https://ceoubb.com";
-  const url = new URL(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    fail("El origen del portal no está configurado correctamente.", 503);
+  }
   if (
     url.pathname !== "/" ||
     url.search ||
@@ -44,14 +48,25 @@ export function platformOrigin() {
 export function contentOrigin() {
   const value = process.env.INTEROP_CONTENT_ORIGIN;
   if (!value) fail("Falta configurar el origen aislado para los objetos de aprendizaje.", 503);
-  const url = new URL(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    fail("Falta configurar el origen aislado para los objetos de aprendizaje.", 503);
+  }
+  let platformHostname: string;
+  try {
+    platformHostname = new URL(platformOrigin()).hostname;
+  } catch {
+    platformHostname = "";
+  }
   if (
     url.pathname !== "/" ||
     url.search ||
     url.hash ||
     url.username ||
     url.password ||
-    url.hostname === new URL(platformOrigin()).hostname ||
+    url.hostname === platformHostname ||
     (url.protocol !== "https:" &&
       !(
         process.env.NODE_ENV !== "production" &&
@@ -63,19 +78,17 @@ export function contentOrigin() {
   return url.origin;
 }
 
-export const toolInputSchema = z
-  .object({
-    name: z.string().trim().min(1).max(160),
-    loginUrl: z.string().max(2000).transform(secureUrl),
-    redirectUris: z.array(z.string().max(2000).transform(secureUrl)).min(1).max(10),
-    targetUris: z.array(z.string().max(2000).transform(secureUrl)).min(1).max(20),
-  })
-  .strict();
+// Implements: REQ-INT-05
+export const toolInputSchema = z.strictObject({
+  name: z.string().trim().min(1).max(160),
+  loginUrl: z.string().max(2000).transform(secureUrl),
+  redirectUris: z.array(z.string().max(2000).transform(secureUrl)).min(1).max(10),
+  targetUris: z.array(z.string().max(2000).transform(secureUrl)).min(1).max(20),
+});
 
-export const resourceInputSchema = z
-  .object({
-    title: z.string().trim().min(1).max(160),
-    toolId: z.uuid(),
-    targetUrl: z.string().max(2000).transform(secureUrl),
-  })
-  .strict();
+// Implements: REQ-INT-05
+export const resourceInputSchema = z.strictObject({
+  title: z.string().trim().min(1).max(160),
+  toolId: z.uuid(),
+  targetUrl: z.string().max(2000).transform(secureUrl),
+});

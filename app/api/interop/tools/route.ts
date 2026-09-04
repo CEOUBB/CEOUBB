@@ -27,9 +27,9 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const actor = await sessionActor(request, true);
+    // Implements: REQ-INT-05
     const input = z
-      .object({ id: z.uuid(), enabled: z.boolean() })
-      .strict()
+      .strictObject({ id: z.uuid(), enabled: z.boolean() })
       .parse(await readJson(request));
     await setToolEnabled(actor, input.id, input.enabled);
     return json({ ok: true });

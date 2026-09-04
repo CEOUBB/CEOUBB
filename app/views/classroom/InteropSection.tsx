@@ -1,15 +1,16 @@
 "use client";
 
+// Implements: REQ-QMD-07
 import {
   useCallback,
   useEffect,
+  useReducer,
   useRef,
   useState,
   useTransition,
   type ChangeEvent,
-  type FormEvent,
 } from "react";
-import { ArrowSquareOut, DownloadSimple, Package, Plus, X } from "@phosphor-icons/react";
+import { ArrowSquareOut, DownloadSimple, X } from "@phosphor-icons/react";
 import { z } from "zod";
 import {
   downloadInteropFile,
@@ -17,12 +18,13 @@ import {
   launchSchema,
   resourcePageSchema,
   toolPageSchema,
-  toolSchema,
   type InteropResource,
   type InteropTool,
 } from "../../../lib/interop/client";
 import { MAX_PACKAGE_BYTES } from "../../../lib/interop/zip";
 import type { Note } from "./classroom-utils";
+import { InteropAuthoringPanel } from "./InteropAuthoringPanel";
+import { ToolRegistration } from "./InteropToolRegistration";
 import "./interop.css";
 
 const kindLabel = {
@@ -31,6 +33,66 @@ const kindLabel = {
   scorm2004: "SCORM 2004",
   xapi: "xAPI",
 };
+
+interface InteropState {
+  resources: InteropResource[];
+  tools: InteropTool[];
+  cursor: string | null;
+  toolCursor: string | null;
+  loading: boolean;
+  error: string;
+}
+
+type InteropAction =
+  | {
+      type: "LOAD_SUCCESS";
+      resources: InteropResource[];
+      cursor: string | null;
+      tools: InteropTool[];
+      toolCursor: string | null;
+    }
+  | { type: "LOAD_ERROR"; error: string }
+  | { type: "APPEND_RESOURCES"; resources: InteropResource[]; cursor: string | null }
+  | { type: "APPEND_TOOLS"; tools: InteropTool[]; toolCursor: string | null };
+
+const initialInteropState: InteropState = {
+  resources: [],
+  tools: [],
+  cursor: null,
+  toolCursor: null,
+  loading: true,
+  error: "",
+};
+
+function interopReducer(state: InteropState, action: InteropAction): InteropState {
+  switch (action.type) {
+    case "LOAD_SUCCESS":
+      return {
+        ...state,
+        resources: action.resources,
+        cursor: action.cursor,
+        tools: action.tools,
+        toolCursor: action.toolCursor,
+        loading: false,
+        error: "",
+      };
+    case "LOAD_ERROR":
+      return { ...state, loading: false, error: action.error };
+    case "APPEND_RESOURCES":
+      return {
+        ...state,
+        resources: [...state.resources, ...action.resources],
+        cursor: action.cursor,
+      };
+    case "APPEND_TOOLS":
+      return {
+        ...state,
+        tools: [...state.tools, ...action.tools],
+        toolCursor: action.toolCursor,
+      };
+  }
+}
+
 export function InteropSection({
   sectionId,
   canTeach,
@@ -44,20 +106,16 @@ export function InteropSection({
   readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
 }) {
-  const [resources, setResources] = useState<InteropResource[]>([]);
-  const [tools, setTools] = useState<InteropTool[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [toolCursor, setToolCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [state, dispatch] = useReducer(interopReducer, initialInteropState);
   const [busy, startTransition] = useTransition();
-  const [selectedTool, setSelectedTool] = useState("");
   const [player, setPlayer] = useState<{ url: string; title: string } | null>(null);
   const noteRef = useRef(note);
   const base = "/api/courses/" + encodeURIComponent(sectionId) + "/interop";
+
   useEffect(() => {
     noteRef.current = note;
   }, [note]);
+
   const refresh = useCallback(
     (signal?: AbortSignal) => {
       return Promise.all([
@@ -68,24 +126,26 @@ export function InteropSection({
       ])
         .then(([page, registered]) => {
           if (signal?.aborted) return;
-          setResources(page.items);
-          setCursor(page.nextCursor);
-          setTools(registered.items);
-          setToolCursor(registered.nextCursor);
-          setError("");
+          dispatch({
+            type: "LOAD_SUCCESS",
+            resources: page.items,
+            cursor: page.nextCursor,
+            tools: registered.items,
+            toolCursor: registered.nextCursor,
+          });
         })
         .catch((cause: unknown) => {
-          if (!signal?.aborted)
-            setError(
-              cause instanceof Error ? cause.message : "No se pudieron cargar los recursos."
-            );
-        })
-        .finally(() => {
-          if (!signal?.aborted) setLoading(false);
+          if (!signal?.aborted) {
+            dispatch({
+              type: "LOAD_ERROR",
+              error: cause instanceof Error ? cause.message : "No se pudieron cargar los recursos.",
+            });
+          }
         });
     },
     [base, canTeach]
   );
+
   useEffect(() => {
     const controller = new AbortController();
     void refresh(controller.signal);
@@ -104,6 +164,7 @@ export function InteropSection({
       }
     });
   };
+
   const upload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -121,26 +182,30 @@ export function InteropSection({
       note("Objeto de aprendizaje disponible en la sección.", "ok");
     });
   };
-  const link = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const values = new FormData(form);
+
+  const linkTool = async (data: { title: string; toolId: string; targetUrl: string }) => {
     performAction(async () => {
       await interopRequest(base, z.object({ id: z.string() }), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: values.get("title"),
-          toolId: selectedTool,
-          targetUrl: values.get("targetUrl"),
-        }),
+        body: JSON.stringify(data),
       });
-      form.reset();
-      setSelectedTool("");
       await refresh();
       note("Herramienta vinculada a la sección.", "ok");
     });
   };
+
+  const loadMoreTools = async () => {
+    if (!state.toolCursor) return;
+    performAction(async () => {
+      const page = await interopRequest(
+        "/api/interop/tools?cursor=" + encodeURIComponent(state.toolCursor!),
+        toolPageSchema
+      );
+      dispatch({ type: "APPEND_TOOLS", tools: page.items, toolCursor: page.nextCursor });
+    });
+  };
+
   const open = (resource: InteropResource) =>
     performAction(async () => {
       const result = await interopRequest(base + "/" + resource.id, launchSchema, {
@@ -149,6 +214,7 @@ export function InteropSection({
       if (result.kind === "lti") window.location.assign(result.url);
       else setPlayer({ url: result.url, title: result.title });
     });
+
   if (player)
     return (
       <section className="interop-player" aria-label={player.title}>
@@ -171,6 +237,7 @@ export function InteropSection({
         />
       </section>
     );
+
   return (
     <section className="interop-workspace" aria-label="Herramientas y objetos de aprendizaje">
       <header>
@@ -179,126 +246,42 @@ export function InteropSection({
           <p>Abre los laboratorios, bibliotecas y actividades que comparte tu equipo docente.</p>
         </div>
       </header>
-      {error && (
+      {state.error && (
         <div role="alert">
-          <p>{error}</p>
+          <p>{state.error}</p>
           <button className="secondary-button" onClick={() => void refresh()} type="button">
             Reintentar
           </button>
         </div>
       )}
       {canTeach && !readOnly && (
-        <details className="interop-authoring">
-          <summary>
-            <Plus size={18} aria-hidden="true" />
-            Agregar recurso
-          </summary>
-          <div className="interop-authoring-grid">
-            <div>
-              <h3>Objeto de aprendizaje</h3>
-              <p>SCORM 1.2, SCORM 2004 o xAPI con un solo objeto. ZIP de hasta 50 MiB.</p>
-              <label className="secondary-button interop-upload">
-                <Package size={18} aria-hidden="true" />
-                Seleccionar paquete ZIP
-                <input
-                  accept=".zip,application/zip"
-                  disabled={busy}
-                  onChange={upload}
-                  type="file"
-                />
-              </label>
-              <p className="interop-help">
-                Los paquetes que requieren secuenciación, varios objetos o recursos remotos no son
-                compatibles.
-              </p>
-            </div>
-            <form onSubmit={link}>
-              <h3>Herramienta externa</h3>
-              <label>
-                Nombre en el aula
-                <input name="title" maxLength={160} required />
-              </label>
-              <label>
-                Herramienta registrada
-                <select
-                  required
-                  value={selectedTool}
-                  onChange={(e) => setSelectedTool(e.target.value)}
-                >
-                  <option value="">Seleccionar herramienta…</option>
-                  {tools.flatMap((tool) =>
-                    tool.enabled ? (
-                      <option value={tool.id} key={tool.id}>
-                        {tool.name}
-                      </option>
-                    ) : (
-                      []
-                    )
-                  )}
-                </select>
-              </label>
-              <label>
-                Destino
-                <select name="targetUrl" required key={selectedTool}>
-                  <option value="">Seleccionar destino…</option>
-                  {tools
-                    .find((t) => t.id === selectedTool)
-                    ?.targetUris.map((uri) => (
-                      <option key={uri} value={uri}>
-                        {uri}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              {toolCursor && (
-                <button
-                  className="secondary-button"
-                  disabled={busy}
-                  onClick={() =>
-                    void performAction(async () => {
-                      const page = await interopRequest(
-                        "/api/interop/tools?cursor=" + encodeURIComponent(toolCursor),
-                        toolPageSchema
-                      );
-                      setTools((current) => [...current, ...page.items]);
-                      setToolCursor(page.nextCursor);
-                    })
-                  }
-                  type="button"
-                >
-                  Más herramientas
-                </button>
-              )}
-              <button className="primary-button" disabled={busy || !selectedTool} type="submit">
-                Vincular herramienta
-              </button>
-              {tools.length === 0 && (
-                <p className="interop-help">
-                  Administración debe registrar primero una herramienta LTI.
-                </p>
-              )}
-            </form>
-          </div>
-        </details>
+        <InteropAuthoringPanel
+          busy={busy}
+          tools={state.tools}
+          toolCursor={state.toolCursor}
+          upload={upload}
+          onLinkTool={linkTool}
+          onLoadMoreTools={loadMoreTools}
+        />
       )}
       {isOwner && (
         <ToolRegistration
-          tools={tools}
+          tools={state.tools}
           disabled={busy}
           onChanged={refresh}
           onError={(message) => note(message, "bad")}
         />
       )}
       {busy && <p role="status">Procesando recurso…</p>}
-      {loading ? (
+      {state.loading ? (
         <p role="status">Cargando recursos…</p>
-      ) : resources.length === 0 && !error ? (
+      ) : state.resources.length === 0 && !state.error ? (
         <p className="interop-empty">
           Todavía no hay herramientas ni objetos de aprendizaje en esta sección.
         </p>
       ) : (
         <ul className="interop-resource-list">
-          {resources.map((resource) => (
+          {state.resources.map((resource) => (
             <li key={resource.id}>
               <div>
                 <span>{kindLabel[resource.kind]}</span>
@@ -335,18 +318,21 @@ export function InteropSection({
           ))}
         </ul>
       )}
-      {cursor && (
+      {state.cursor && (
         <button
           className="secondary-button"
           disabled={busy}
           onClick={() =>
             void performAction(async () => {
               const page = await interopRequest(
-                base + "?cursor=" + encodeURIComponent(cursor),
+                base + "?cursor=" + encodeURIComponent(state.cursor!),
                 resourcePageSchema
               );
-              setResources((current) => [...current, ...page.items]);
-              setCursor(page.nextCursor);
+              dispatch({
+                type: "APPEND_RESOURCES",
+                resources: page.items,
+                cursor: page.nextCursor,
+              });
             })
           }
           type="button"
@@ -355,126 +341,5 @@ export function InteropSection({
         </button>
       )}
     </section>
-  );
-}
-
-function ToolRegistration({
-  tools,
-  disabled,
-  onChanged,
-  onError,
-}: {
-  tools: InteropTool[];
-  disabled: boolean;
-  onChanged: () => Promise<void>;
-  onError: (message: string) => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const values = new FormData(form);
-    setSaving(true);
-    try {
-      await interopRequest("/api/interop/tools", toolSchema, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: values.get("name"),
-          loginUrl: values.get("loginUrl"),
-          redirectUris: String(values.get("redirectUris"))
-            .split(/\r?\n/)
-            .map((s) => s.trim())
-            .filter(Boolean),
-          targetUris: String(values.get("targetUris"))
-            .split(/\r?\n/)
-            .map((s) => s.trim())
-            .filter(Boolean),
-        }),
-      });
-      form.reset();
-      await onChanged();
-    } catch (cause) {
-      onError(cause instanceof Error ? cause.message : "No se pudo registrar la herramienta.");
-    } finally {
-      setSaving(false);
-    }
-  };
-  return (
-    <details className="interop-authoring">
-      <summary>Administrar herramientas LTI</summary>
-      <p>
-        Este registro habilita destinos para todas las secciones. Configura en el proveedor el
-        issuer, la URL de autorización y JWKS disponibles en{" "}
-        <a href="/api/interop/lti/configuration" target="_blank" rel="noreferrer">
-          configuración de la plataforma
-        </a>
-        .
-      </p>
-      <form className="interop-registration" onSubmit={submit}>
-        <label>
-          Nombre de la herramienta
-          <input name="name" maxLength={160} required />
-        </label>
-        <label>
-          URL de inicio OIDC
-          <input
-            name="loginUrl"
-            type="url"
-            maxLength={2000}
-            placeholder="https://proveedor.cl/login"
-            required
-          />
-        </label>
-        <label>
-          URLs de retorno, una por línea
-          <textarea name="redirectUris" rows={3} maxLength={20000} required />
-        </label>
-        <label>
-          Destinos autorizados, uno por línea
-          <textarea name="targetUris" rows={3} maxLength={40000} required />
-        </label>
-        <button className="primary-button" disabled={saving || disabled} type="submit">
-          {saving ? "Registrando…" : "Registrar herramienta"}
-        </button>
-      </form>
-      <ul className="interop-tool-list">
-        {tools.map((tool) => (
-          <li key={tool.id}>
-            <strong>{tool.name}</strong>
-            <dl>
-              <dt>Client ID</dt>
-              <dd>{tool.clientId}</dd>
-              <dt>Deployment ID</dt>
-              <dd>{tool.deploymentId}</dd>
-            </dl>
-            <button
-              className="secondary-button"
-              disabled={saving || disabled}
-              onClick={async () => {
-                setSaving(true);
-                try {
-                  await interopRequest("/api/interop/tools", z.object({ ok: z.boolean() }), {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: tool.id, enabled: !tool.enabled }),
-                  });
-                  await onChanged();
-                } catch (cause) {
-                  onError(
-                    cause instanceof Error ? cause.message : "No se pudo cambiar la herramienta."
-                  );
-                } finally {
-                  setSaving(false);
-                }
-              }}
-              type="button"
-            >
-              {tool.enabled ? "Deshabilitar" : "Habilitar"}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </details>
   );
 }
