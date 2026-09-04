@@ -22,7 +22,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <nav aria-label="Documentos relacionados" className="site-footer-nav">
+        <nav aria-label="Documentos institucionales y legales" className="site-footer-nav">
           {ENLACES.map((enlace) => (
             <Link href={enlace.href} key={enlace.href}>
               {enlace.texto}

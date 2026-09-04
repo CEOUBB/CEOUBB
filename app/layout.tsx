@@ -9,10 +9,12 @@ const manrope = Manrope({
   display: "swap",
 });
 
+// Implements: REQ-SEO-04
 const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 /** Voz institucional: firma títulos y nombres de ramo. */
@@ -24,8 +26,12 @@ const merriweather = Merriweather({
   style: ["normal"],
 });
 
+// Implements: REQ-SEO-03
 export const metadata: Metadata = {
   metadataBase: new URL("https://ceoubb.com"),
+  alternates: {
+    canonical: "./",
+  },
   title: "Centro de Estudio UBB | Ingeniería Mecánica",
   description:
     "Aula, certámenes, ejercicios resueltos, apuntes y recursos para estudiantes de Ingeniería Mecánica UBB.",
