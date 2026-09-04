@@ -123,6 +123,6 @@
   "simple-git-hooks": {
     "pre-commit": "node scripts/scan-staged-secrets.mjs && node scripts/verify-test-hashes.mjs --check && pnpm run verify:invariants",
     "commit-msg": "node scripts/verify-commit-msg.mjs $1",
-    "pre-push": "pnpm run verify:fast"
+    "pre-push": "pnpm run format:check && pnpm run verify:fast"
   }
 }
