@@ -32,3 +32,10 @@
 - **Attempted / Identified Solution:** Cortocircuito escalar $O(1)$ `if (!content.includes("$$")) return content;` al inicio de `normalizeDisplayMath` y reutilización de una única instancia `academicProcessor` entre formatos.
 - **Outcome / Learning:** Se eliminó la división de cadenas y asignaciones de arreglos $O(N)$ por renderizado para contenido de prosa general, además de reducir el consumo de memoria al cargar el módulo.
 - **Future Rule:** Cortocircuitar transformaciones de texto basadas en arreglos o expresiones regulares usando comprobaciones escalares simples (`includes`, `indexOf`) antes de efectuar operaciones de segmentación.
+
+## 2026-09-04 - Construcción de mapas en centro de comunicaciones (`lib/communications.ts`)
+
+- **Finding:** `readCursorMap` y `deriveNotifications` utilizaban el patrón `new Map(array.map(...))` asignando arreglos de tuplas intermedias `[clave, valor]` en cada derivación de notificaciones y recuento de mensajes no leídos.
+- **Attempted / Identified Solution:** Reemplazo por bucles `for..of` directos con `map.set(...)` sin asignación de tuplas intermedias.
+- **Outcome / Learning:** Se eliminó la doble asignación de memoria por elemento en la generación de notificaciones, reduciendo la presión sobre el recolector de basura en re-renderizados frecuentes del portal.
+- **Future Rule:** Construir objetos `Map` iterando directamente con `for..of` e invocando `map.set()` en lugar de mapear colecciones a arreglos temporales de tuplas `[k, v]`.
