@@ -10,7 +10,7 @@ import {
   useTransition,
   type ChangeEvent,
 } from "react";
-import { ArrowSquareOut, DownloadSimple, X } from "@phosphor-icons/react";
+import { ArrowSquareOut, DownloadSimple, PlugsConnected, X } from "@phosphor-icons/react";
 import { z } from "zod";
 import {
   downloadInteropFile,
@@ -25,6 +25,7 @@ import { MAX_PACKAGE_BYTES } from "../../../lib/interop/zip";
 import type { Note } from "./classroom-utils";
 import { InteropAuthoringPanel } from "./InteropAuthoringPanel";
 import { ToolRegistration } from "./InteropToolRegistration";
+import { EmptyState } from "./EmptyState";
 import "./interop.css";
 
 const kindLabel = {
@@ -238,47 +239,48 @@ export function InteropSection({
       </section>
     );
 
+  /*
+    El contenido de la sección va primero y el formulario después: antes la
+    pantalla abría con dos paneles de administración y dejaba la lista real de
+    recursos al final, debajo de un registro LTI que sólo usa administración.
+  */
+  const canAuthor = canTeach && !readOnly;
+
   return (
     <section className="interop-workspace" aria-label="Herramientas y objetos de aprendizaje">
-      <header>
-        <div>
-          <h2>Herramientas y objetos de aprendizaje</h2>
-          <p>Abre los laboratorios, bibliotecas y actividades que comparte tu equipo docente.</p>
-        </div>
-      </header>
+      <div className="section-title compact-title">
+        <h2>Herramientas y objetos de aprendizaje</h2>
+      </div>
+      <p className="interop-lede">
+        Abre los laboratorios, bibliotecas y actividades que comparte tu equipo docente.
+      </p>
       {state.error && (
-        <div role="alert">
+        <div className="interop-alert" role="alert">
           <p>{state.error}</p>
           <button className="secondary-button" onClick={() => void refresh()} type="button">
             Reintentar
           </button>
         </div>
       )}
-      {canTeach && !readOnly && (
-        <InteropAuthoringPanel
-          busy={busy}
-          tools={state.tools}
-          toolCursor={state.toolCursor}
-          upload={upload}
-          onLinkTool={linkTool}
-          onLoadMoreTools={loadMoreTools}
-        />
-      )}
-      {isOwner && (
-        <ToolRegistration
-          tools={state.tools}
-          disabled={busy}
-          onChanged={refresh}
-          onError={(message) => note(message, "bad")}
-        />
-      )}
-      {busy && <p role="status">Procesando recurso…</p>}
-      {state.loading ? (
-        <p role="status">Cargando recursos…</p>
-      ) : state.resources.length === 0 && !state.error ? (
-        <p className="interop-empty">
-          Todavía no hay herramientas ni objetos de aprendizaje en esta sección.
+      {busy && (
+        <p className="interop-progress" role="status">
+          Procesando recurso…
         </p>
+      )}
+      {state.loading ? (
+        <p className="interop-progress" role="status">
+          Cargando recursos…
+        </p>
+      ) : state.resources.length === 0 && !state.error ? (
+        <EmptyState
+          icon={PlugsConnected}
+          title="Esta sección aún no tiene recursos externos"
+          description={
+            canAuthor
+              ? "Sube un paquete SCORM o xAPI, o vincula una herramienta LTI ya registrada por administración."
+              : "Los laboratorios y actividades que agregue el equipo docente aparecerán aquí."
+          }
+        />
       ) : (
         <ul className="interop-resource-list">
           {state.resources.map((resource) => (
@@ -339,6 +341,25 @@ export function InteropSection({
         >
           Cargar más recursos
         </button>
+      )}
+      {canAuthor && (
+        <InteropAuthoringPanel
+          busy={busy}
+          tools={state.tools}
+          toolCursor={state.toolCursor}
+          upload={upload}
+          onLinkTool={linkTool}
+          onLoadMoreTools={loadMoreTools}
+          defaultOpen={state.resources.length === 0 && !state.loading}
+        />
+      )}
+      {isOwner && (
+        <ToolRegistration
+          tools={state.tools}
+          disabled={busy}
+          onChanged={refresh}
+          onError={(message) => note(message, "bad")}
+        />
       )}
     </section>
   );

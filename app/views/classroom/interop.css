@@ -1,150 +1,395 @@
 .interop-workspace {
   display: grid;
-  gap: 24px;
+  gap: var(--space-md);
 }
-.interop-workspace header p,
+
+.interop-lede {
+  margin: -8px 0 var(--space-xs);
+  max-width: 70ch;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .interop-help,
 .interop-player > p {
   color: var(--text-muted);
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.55;
 }
-.interop-workspace h2,
+
+.interop-progress {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.interop-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--shield-red-deep) 30%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-red-deep) 5%, var(--surface-card));
+  font-size: 14px;
+}
+
 .interop-player h2 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-xs);
 }
+
+/* ── Paneles plegables ────────────────────────────────────── */
+
 .interop-authoring {
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
 }
+
 .interop-authoring summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-weight: 700;
-  min-height: 28px;
+  list-style: none;
+  transition: background var(--transition-fast);
 }
-.interop-authoring summary svg {
-  vertical-align: middle;
-  margin-right: 6px;
+
+.interop-authoring summary::-webkit-details-marker,
+.interop-authoring summary::marker {
+  display: none;
+  content: "";
 }
-.interop-authoring-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  padding-top: 16px;
+
+.interop-authoring summary:hover {
+  background: var(--canvas-soft);
 }
-.interop-workspace form {
-  display: grid;
-  gap: 14px;
+
+.interop-authoring summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
-.interop-workspace label {
-  display: grid;
-  gap: 6px;
-  font-size: 14px;
+
+.interop-authoring summary > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.interop-authoring summary strong {
+  font-size: 15px;
   font-weight: 600;
 }
+
+.interop-authoring summary small {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.interop-caret {
+  flex: none;
+  color: var(--text-faint);
+  transition: transform var(--transition-fast);
+}
+
+.interop-authoring[open] > summary .interop-caret {
+  transform: rotate(90deg);
+}
+
+.interop-admin summary strong {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ── Composición del panel de autoría ─────────────────────── */
+
+/* La medianera se paga a medias entre los dos paneles: si sólo el derecho
+   cargara el relleno, su columna quedaría 28px más angosta que la izquierda. */
+.interop-authoring-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: var(--space-lg);
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.interop-authoring-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.interop-authoring-pane:first-child {
+  padding-right: var(--space-xl);
+}
+
+.interop-authoring-pane + .interop-authoring-pane {
+  padding-left: var(--space-xl);
+  border-left: 1px solid var(--border-hairline);
+}
+
+.interop-authoring-pane h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.interop-authoring-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: 4px;
+}
+
+.interop-inline-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--shield-gold) 40%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-gold) 10%, var(--surface-card));
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.interop-inline-alert svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--academic-bronze);
+}
+
+/* ── Controles de formulario ──────────────────────────────── */
+
+.interop-workspace label {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 .interop-workspace input,
 .interop-workspace select,
 .interop-workspace textarea {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  padding: 10px;
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-xs);
   color: var(--text-body);
   background: var(--surface-card);
   font: inherit;
+  font-weight: 400;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
+
+.interop-workspace input:focus-visible,
+.interop-workspace select:focus-visible,
+.interop-workspace textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
 .interop-workspace .interop-upload {
-  display: inline-flex;
+  display: flex;
   position: relative;
+  align-items: center;
+  gap: var(--space-sm);
   overflow: hidden;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: var(--color-primary-wash);
   cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
+
+.interop-upload:hover {
+  border-color: var(--color-primary);
+}
+
+.interop-upload svg {
+  flex: none;
+  color: var(--color-primary);
+}
+
+.interop-upload > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.interop-upload strong {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.interop-upload small {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
 .interop-upload input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
 }
+
 .interop-upload:focus-within {
-  outline: 2px solid var(--ubb-royal-blue);
+  outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
+
+/* ── Listas ───────────────────────────────────────────────── */
+
 .interop-resource-list,
 .interop-tool-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
+.interop-resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
 .interop-resource-list li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
 }
+
+.interop-resource-list li:hover {
+  border-color: color-mix(in srgb, var(--course-tone, var(--color-primary)) 34%, var(--hairline));
+}
+
 .interop-resource-list h3 {
-  margin: 4px 0;
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
-.interop-resource-list span {
+
+.interop-resource-list li > div:first-child > span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
 }
+
 .interop-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-xs);
   flex-shrink: 0;
 }
-.interop-empty {
-  padding: 40px 24px;
-  border: 1px dashed var(--hairline);
-  border-radius: 12px;
-  text-align: center;
-}
+
 .interop-registration {
-  margin: 20px 0;
-  max-width: 640px;
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+  max-width: 620px;
 }
+
+.interop-tool-list {
+  padding: 0 var(--space-md) var(--space-md);
+}
+
 .interop-tool-list li {
-  padding: 16px 0;
-  border-top: 1px solid var(--hairline);
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--border-hairline);
 }
+
 .interop-tool-list dl {
   display: grid;
   grid-template-columns: 110px 1fr;
-  gap: 6px;
+  gap: 4px;
+  margin: 0;
   font-size: 13px;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums lining-nums;
 }
+
 .interop-tool-list dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+.interop-tool-list button {
+  justify-self: start;
+}
+
+.interop-admin > p,
+.interop-admin > form {
+  margin-inline: var(--space-md);
+}
+
+/* ── Reproductor ──────────────────────────────────────────── */
+
 .interop-player header {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--space-lg);
   align-items: center;
+  margin-bottom: var(--space-sm);
 }
+
 .interop-player iframe {
   width: 100%;
   height: 72vh;
   min-height: 400px;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
 }
-@media (max-width: 700px) {
+
+@media (max-width: 860px) {
   .interop-authoring-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
   }
+  .interop-authoring-pane:first-child {
+    padding-right: 0;
+  }
+  .interop-authoring-pane + .interop-authoring-pane {
+    padding-left: 0;
+    padding-top: var(--space-lg);
+    border-left: 0;
+    border-top: 1px solid var(--border-hairline);
+  }
+}
+
+@media (max-width: 700px) {
   .interop-resource-list li,
-  .interop-player header {
+  .interop-player header,
+  .interop-alert {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -158,5 +403,14 @@
   .interop-workspace select,
   .interop-workspace textarea {
     font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interop-caret,
+  .interop-authoring summary,
+  .interop-upload,
+  .interop-resource-list li {
+    transition: none;
   }
 }

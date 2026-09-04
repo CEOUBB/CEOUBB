@@ -2,6 +2,7 @@
 
 // Implements: REQ-QMD-07
 import { useState, type FormEvent } from "react";
+import { CaretRight } from "@phosphor-icons/react";
 import { z } from "zod";
 import { interopRequest, toolSchema, type InteropTool } from "../../../lib/interop/client";
 
@@ -48,11 +49,16 @@ export function ToolRegistration({
     }
   };
   return (
-    <details className="interop-authoring">
-      <summary>Administrar herramientas LTI</summary>
-      <p>
-        Este registro habilita destinos para todas las secciones. Configura en el proveedor el
-        issuer, la URL de autorización y JWKS disponibles en{" "}
+    <details className="interop-authoring interop-admin">
+      <summary>
+        <CaretRight className="interop-caret" size={16} weight="bold" aria-hidden="true" />
+        <span>
+          <strong>Administrar herramientas LTI</strong>
+          <small>Registro institucional: afecta a todas las secciones.</small>
+        </span>
+      </summary>
+      <p className="interop-help">
+        Configura en el proveedor el issuer, la URL de autorización y JWKS disponibles en{" "}
         <a href="/api/interop/lti/configuration" target="_blank" rel="noreferrer">
           configuración de la plataforma
         </a>

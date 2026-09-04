@@ -3,10 +3,11 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { ChartBar, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses.ts";
 import type { ClassroomStudent } from "../../../lib/firebase-classroom-client.ts";
 import { ease, formatDate, instantTransition } from "../../../lib/portal-utils";
+import { EmptyState } from "./EmptyState";
 import { Bar } from "./ProgressBar";
 import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList } from "./classroom-utils";
@@ -26,10 +27,11 @@ function StudentProgress({
 
   if (total === 0) {
     return (
-      <div className="empty-state">
-        <strong>Este ramo aún no tiene resultados de aprendizaje cargados.</strong>
-        <p>Tu avance por unidad aparecerá cuando el curso publique su programa.</p>
-      </div>
+      <EmptyState
+        icon={ChartBar}
+        title="Este ramo aún no tiene resultados de aprendizaje"
+        description="Tu avance por unidad aparecerá cuando el curso publique su programa."
+      />
     );
   }
 
