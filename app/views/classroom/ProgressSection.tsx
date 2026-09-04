@@ -3,11 +3,12 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses.ts";
 import type { ClassroomStudent } from "../../../lib/firebase-classroom-client.ts";
 import { ease, formatDate, instantTransition } from "../../../lib/portal-utils";
 import { Bar } from "./ProgressBar";
+import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList } from "./classroom-utils";
 
 // Implements: REQ-DELIB-02, REQ-DELIB-06, REQ-PAG-04
@@ -201,33 +202,11 @@ export function ProgressSection({
                 estudiantes
                 {deferredQuery ? ` (${students.length} en total)` : ""}
               </span>
-              {paginated.totalPages > 1 && (
-                <div className="pagination-actions">
-                  <button
-                    aria-label="Página anterior"
-                    className="pagination-btn"
-                    disabled={paginated.page <= 1}
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    type="button"
-                  >
-                    <CaretLeft aria-hidden="true" size={16} />
-                    Anterior
-                  </button>
-                  <span className="pagination-indicator num">
-                    Página {paginated.page} de {paginated.totalPages}
-                  </span>
-                  <button
-                    aria-label="Página siguiente"
-                    className="pagination-btn"
-                    disabled={paginated.page >= paginated.totalPages}
-                    onClick={() => setCurrentPage((p) => Math.min(paginated.totalPages, p + 1))}
-                    type="button"
-                  >
-                    Siguiente
-                    <CaretRight aria-hidden="true" size={16} />
-                  </button>
-                </div>
-              )}
+              <PaginationActions
+                page={paginated.page}
+                totalPages={paginated.totalPages}
+                onPageChange={setCurrentPage}
+              />
             </nav>
           )}
         </>

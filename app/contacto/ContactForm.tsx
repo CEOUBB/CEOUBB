@@ -1,5 +1,6 @@
 "use client";
 
+// Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01, REQ-QMD-07
 import { CheckCircle, Info, PaperPlaneTilt, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { roleForEmail } from "../../lib/access-policy.ts";
@@ -11,28 +12,10 @@ import {
   erroresPorCampo,
   solicitudSoporteSchema,
 } from "../../lib/support-request.ts";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (
-        container: string | HTMLElement,
-        params: {
-          sitekey: string;
-          callback?: (token: string) => void;
-          "error-callback"?: () => void;
-          "expired-callback"?: () => void;
-          theme?: "light" | "dark" | "auto";
-        }
-      ) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
+import { useTurnstile } from "./useTurnstile.ts";
 
 const CORREO_INSTITUCIONAL = "contacto@ceoubb.com";
 
-// Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01
 type Estado = "listo" | "enviando" | "entregado" | "diferido" | "error";
 
 type FormValues = {
@@ -99,6 +82,199 @@ function ContactReceipt({
   );
 }
 
+function NombreField({
+  value,
+  error,
+  onChange,
+}: {
+  value: string;
+  error?: string;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="policy-field">
+      <label htmlFor="soporte-nombre">Nombre</label>
+      <input
+        aria-describedby={error ? "error-nombre" : undefined}
+        aria-invalid={error ? true : undefined}
+        autoComplete="name"
+        id="soporte-nombre"
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Tu nombre completo"
+        type="text"
+        value={value}
+      />
+      {error ? (
+        <p className="policy-field-error" id="error-nombre">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function EmailField({
+  value,
+  error,
+  avisoDominio,
+  onBlur,
+  onChange,
+}: {
+  value: string;
+  error?: string;
+  avisoDominio: boolean;
+  onBlur: () => void;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="policy-field">
+      <label htmlFor="soporte-email">Correo</label>
+      <input
+        aria-describedby={error ? "error-email" : avisoDominio ? "aviso-email" : "ayuda-email"}
+        aria-invalid={error ? true : undefined}
+        autoComplete="email"
+        id="soporte-email"
+        onBlur={onBlur}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="nombre@alumnos.ubiobio.cl o correo personal"
+        type="email"
+        value={value}
+      />
+      {error ? (
+        <p className="policy-field-error" id="error-email">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {error}
+        </p>
+      ) : avisoDominio ? (
+        <p className="policy-field-note" id="aviso-email">
+          <Info aria-hidden="true" size={16} weight="fill" />
+          No es un correo institucional. Te responderemos igual, pero no podremos verificar tu
+          matrícula desde esa dirección.
+        </p>
+      ) : (
+        <p className="policy-field-hint" id="ayuda-email">
+          Usa tu correo institucional si puedes. Si no tienes acceso a él, cualquier otro sirve.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function CategoriaField({
+  value,
+  error,
+  onChange,
+}: {
+  value: CategoriaSoporte | "";
+  error?: string;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="policy-field">
+      <label htmlFor="soporte-categoria">Categoría</label>
+      <select
+        aria-describedby={error ? "error-categoria" : undefined}
+        aria-invalid={error ? true : undefined}
+        id="soporte-categoria"
+        onChange={(e) => onChange(e.target.value)}
+        value={value}
+      >
+        <option value="">Selecciona una categoría</option>
+        {CATEGORIAS_SOPORTE.map((categoria) => (
+          <option key={categoria} value={categoria}>
+            {CATEGORIA_ETIQUETAS[categoria]}
+          </option>
+        ))}
+      </select>
+      {error ? (
+        <p className="policy-field-error" id="error-categoria">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function AsuntoField({
+  value,
+  error,
+  onChange,
+}: {
+  value: string;
+  error?: string;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="policy-field">
+      <div className="policy-field-head">
+        <label htmlFor="soporte-asunto">Asunto</label>
+        <span aria-live="polite" className="policy-field-counter num">
+          {value.length} / 160
+        </span>
+      </div>
+      <input
+        aria-describedby={error ? "error-asunto" : undefined}
+        aria-invalid={error ? true : undefined}
+        id="soporte-asunto"
+        maxLength={160}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="¿De qué se trata tu consulta o problema?"
+        type="text"
+        value={value}
+      />
+      {error ? (
+        <p className="policy-field-error" id="error-asunto">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function MensajeField({
+  value,
+  error,
+  onChange,
+}: {
+  value: string;
+  error?: string;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="policy-field">
+      <div className="policy-field-head">
+        <label htmlFor="soporte-mensaje">Mensaje</label>
+        <span aria-live="polite" className="policy-field-counter num">
+          {value.length < 20 ? `${value.length} / 20 mín. (máx. 4000)` : `${value.length} / 4000`}
+        </span>
+      </div>
+      <textarea
+        aria-describedby={error ? "error-mensaje" : "ayuda-mensaje"}
+        aria-invalid={error ? true : undefined}
+        id="soporte-mensaje"
+        maxLength={4000}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Describe con detalle lo que intentabas hacer, lo que esperabas y lo que ocurrió…"
+        value={value}
+      />
+      {error ? (
+        <p className="policy-field-error" id="error-mensaje">
+          <WarningCircle aria-hidden="true" size={16} weight="fill" />
+          {error}
+        </p>
+      ) : (
+        <p className="policy-field-hint" id="ayuda-mensaje">
+          Cuéntanos qué intentabas hacer, qué esperabas y qué ocurrió. Si es un error, indícanos el
+          ramo y el navegador.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ContactForm() {
   const [valores, setValores] = useState<FormValues>(VALORES_INICIALES);
   const [errores, setErrores] = useState<ErroresPorCampo>({});
@@ -106,69 +282,15 @@ export default function ContactForm() {
   const [mensajeEstado, setMensajeEstado] = useState("");
   const [avisoDominio, setAvisoDominio] = useState(false);
   const [categoriaEnviada, setCategoriaEnviada] = useState<CategoriaSoporte | null>(null);
-  const turnstileToken = useRef<string>("");
-  const turnstileContainerRef = useRef<HTMLDivElement>(null);
   const senuelo = useRef<HTMLInputElement>(null);
   const montadoEn = useRef<number>(0);
   const enviandoAhora = useRef(false);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const { turnstileToken, turnstileContainerRef } = useTurnstile(siteKey);
 
   useEffect(() => {
     montadoEn.current = performance.now();
   }, []);
-
-  useEffect(() => {
-    if (!siteKey || !turnstileContainerRef.current) return;
-
-    let widgetId: string | undefined;
-
-    const renderWidget = () => {
-      if (window.turnstile && turnstileContainerRef.current) {
-        try {
-          widgetId = window.turnstile.render(turnstileContainerRef.current, {
-            sitekey: siteKey,
-            callback: (token: string) => {
-              turnstileToken.current = token;
-            },
-            "expired-callback": () => {
-              turnstileToken.current = "";
-            },
-            "error-callback": () => {
-              turnstileToken.current = "";
-            },
-            theme: "auto",
-          });
-        } catch {
-          // No-op si ya está renderizado
-        }
-      }
-    };
-
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      const scriptId = "cf-turnstile-script";
-      if (!document.getElementById(scriptId)) {
-        const script = document.createElement("script");
-        script.id = scriptId;
-        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-        script.async = true;
-        script.defer = true;
-        script.onload = renderWidget;
-        document.head.appendChild(script);
-      }
-    }
-
-    return () => {
-      if (widgetId && window.turnstile) {
-        try {
-          window.turnstile.reset(widgetId);
-        } catch {
-          // Ignorar al desmontar
-        }
-      }
-    };
-  }, [siteKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -279,140 +401,35 @@ export default function ContactForm() {
 
   return (
     <form className="policy-form" noValidate onSubmit={enviar}>
-      <div className="policy-field">
-        <label htmlFor="soporte-nombre">Nombre</label>
-        <input
-          aria-describedby={errores.nombre ? "error-nombre" : undefined}
-          aria-invalid={errores.nombre ? true : undefined}
-          autoComplete="name"
-          id="soporte-nombre"
-          onChange={(evento) => actualizar("nombre", evento.target.value)}
-          placeholder="Tu nombre completo"
-          type="text"
-          value={valores.nombre}
-        />
-        {errores.nombre ? (
-          <p className="policy-field-error" id="error-nombre">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {errores.nombre}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="policy-field">
-        <label htmlFor="soporte-email">Correo</label>
-        <input
-          aria-describedby={
-            errores.email ? "error-email" : avisoDominio ? "aviso-email" : "ayuda-email"
-          }
-          aria-invalid={errores.email ? true : undefined}
-          autoComplete="email"
-          id="soporte-email"
-          onBlur={() =>
-            setAvisoDominio(valores.email.includes("@") && roleForEmail(valores.email) === null)
-          }
-          onChange={(evento) => actualizar("email", evento.target.value)}
-          placeholder="nombre@alumnos.ubiobio.cl o correo personal"
-          type="email"
-          value={valores.email}
-        />
-        {errores.email ? (
-          <p className="policy-field-error" id="error-email">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {errores.email}
-          </p>
-        ) : avisoDominio ? (
-          <p className="policy-field-note" id="aviso-email">
-            <Info aria-hidden="true" size={16} weight="fill" />
-            No es un correo institucional. Te responderemos igual, pero no podremos verificar tu
-            matrícula desde esa dirección.
-          </p>
-        ) : (
-          <p className="policy-field-hint" id="ayuda-email">
-            Usa tu correo institucional si puedes. Si no tienes acceso a él, cualquier otro sirve.
-          </p>
-        )}
-      </div>
-
-      <div className="policy-field">
-        <label htmlFor="soporte-categoria">Categoría</label>
-        <select
-          aria-describedby={errores.categoria ? "error-categoria" : undefined}
-          aria-invalid={errores.categoria ? true : undefined}
-          id="soporte-categoria"
-          onChange={(evento) => actualizar("categoria", evento.target.value)}
-          value={valores.categoria}
-        >
-          <option value="">Selecciona una categoría</option>
-          {CATEGORIAS_SOPORTE.map((categoria) => (
-            <option key={categoria} value={categoria}>
-              {CATEGORIA_ETIQUETAS[categoria]}
-            </option>
-          ))}
-        </select>
-        {errores.categoria ? (
-          <p className="policy-field-error" id="error-categoria">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {errores.categoria}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="policy-field">
-        <div className="policy-field-head">
-          <label htmlFor="soporte-asunto">Asunto</label>
-          <span aria-live="polite" className="policy-field-counter num">
-            {valores.asunto.length} / 160
-          </span>
-        </div>
-        <input
-          aria-describedby={errores.asunto ? "error-asunto" : undefined}
-          aria-invalid={errores.asunto ? true : undefined}
-          id="soporte-asunto"
-          maxLength={160}
-          onChange={(evento) => actualizar("asunto", evento.target.value)}
-          placeholder="¿De qué se trata tu consulta o problema?"
-          type="text"
-          value={valores.asunto}
-        />
-        {errores.asunto ? (
-          <p className="policy-field-error" id="error-asunto">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {errores.asunto}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="policy-field">
-        <div className="policy-field-head">
-          <label htmlFor="soporte-mensaje">Mensaje</label>
-          <span aria-live="polite" className="policy-field-counter num">
-            {valores.mensaje.length < 20
-              ? `${valores.mensaje.length} / 20 mín. (máx. 4000)`
-              : `${valores.mensaje.length} / 4000`}
-          </span>
-        </div>
-        <textarea
-          aria-describedby={errores.mensaje ? "error-mensaje" : "ayuda-mensaje"}
-          aria-invalid={errores.mensaje ? true : undefined}
-          id="soporte-mensaje"
-          maxLength={4000}
-          onChange={(evento) => actualizar("mensaje", evento.target.value)}
-          placeholder="Describe con detalle lo que intentabas hacer, lo que esperabas y lo que ocurrió…"
-          value={valores.mensaje}
-        />
-        {errores.mensaje ? (
-          <p className="policy-field-error" id="error-mensaje">
-            <WarningCircle aria-hidden="true" size={16} weight="fill" />
-            {errores.mensaje}
-          </p>
-        ) : (
-          <p className="policy-field-hint" id="ayuda-mensaje">
-            Cuéntanos qué intentabas hacer, qué esperabas y qué ocurrió. Si es un error, indícanos
-            el ramo y el navegador.
-          </p>
-        )}
-      </div>
+      <NombreField
+        error={errores.nombre}
+        onChange={(val) => actualizar("nombre", val)}
+        value={valores.nombre}
+      />
+      <EmailField
+        avisoDominio={avisoDominio}
+        error={errores.email}
+        onBlur={() =>
+          setAvisoDominio(valores.email.includes("@") && roleForEmail(valores.email) === null)
+        }
+        onChange={(val) => actualizar("email", val)}
+        value={valores.email}
+      />
+      <CategoriaField
+        error={errores.categoria}
+        onChange={(val) => actualizar("categoria", val as CategoriaSoporte | "")}
+        value={valores.categoria}
+      />
+      <AsuntoField
+        error={errores.asunto}
+        onChange={(val) => actualizar("asunto", val)}
+        value={valores.asunto}
+      />
+      <MensajeField
+        error={errores.mensaje}
+        onChange={(val) => actualizar("mensaje", val)}
+        value={valores.mensaje}
+      />
 
       <input
         aria-hidden="true"

@@ -70,7 +70,10 @@ export function parseXml(bytes: Uint8Array): XmlNode {
       if (!parent && text.trim()) fail("Texto fuera de la raíz XML.");
       parent?.node.content.push(text);
     } else {
-      const raw = part.match(/^<([^\s/>]+)/)![1];
+      // Implements: REQ-QMD-05
+      const tagMatch = part.match(/^<([^\s/>]+)/);
+      if (!tagMatch || !tagMatch[1]) fail("La etiqueta XML está mal formada.");
+      const raw = tagMatch[1];
       const namespaces: Record<string, string> = {
         xml: "http://www.w3.org/XML/1998/namespace",
         ...parent?.namespaces,
