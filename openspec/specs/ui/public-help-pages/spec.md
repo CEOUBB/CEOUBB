@@ -223,6 +223,8 @@ Both routes SHALL be listed in the sitemap, in the portal footer alongside the e
 
 Both pages SHALL be fully operable by keyboard with a visible focus indicator on every interactive element, SHALL meet AA contrast in every state, and SHALL respect `prefers-reduced-motion` by removing every transition when it is set.
 
+Furthermore, all navigation landmarks rendered on the page, including the shared document footer (`app/site-footer.tsx`), SHALL provide distinct and unambiguous accessible labels (`aria-label="Documentos institucionales y legales"` in the footer) to prevent duplicate landmark announcements for screen reader users.
+
 #### Scenario: A keyboard-only visitor completes the support form
 
 - **GIVEN** a visitor using only a keyboard
@@ -240,3 +242,10 @@ Both pages SHALL be fully operable by keyboard with a visible focus indicator on
 
 - **WHEN** the accessibility statement is read after this change
 - **THEN** its enumerated page list SHALL include `/contacto` and `/faq`
+
+#### Scenario: Landmark uniqueness verification
+
+- **GIVEN** an automated accessibility scanner or screen reader traversing `/contacto` or `/faq`
+- **WHEN** inspecting the landmarks `<nav>` on the document
+- **THEN** each `<nav>` landmark SHALL have a unique `aria-label`
+- **AND** the footer landmark SHALL identify itself as `"Documentos institucionales y legales"`

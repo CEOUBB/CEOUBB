@@ -5,7 +5,6 @@ import { verifyGitHubSignature } from "@/lib/github-signature";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET || "";
 const DISCORD_WEBHOOK_URL =
   process.env.DISCORD_CI_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
 const TARGET_CHANNEL_ID = process.env.DISCORD_CI_CHANNEL_ID || "1536936245643579462"; // #🚨-❙-alertas
@@ -73,11 +72,12 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get("x-hub-signature-256");
 
-    // Implements: REQ-SEC-05
-    if (!GITHUB_WEBHOOK_SECRET) {
-      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
+    // Implements: REQ-INT-01, REQ-SEC-05
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return new Response(null, { status: 404 });
     }
-    if (!verifyGitHubSignature(rawBody, signature, GITHUB_WEBHOOK_SECRET)) {
+    if (!verifyGitHubSignature(rawBody, signature, webhookSecret)) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
