@@ -114,6 +114,8 @@ function HistoryPage({
   const [attempt, setAttempt] = useState(0);
   const { studentId, gradeItemId } = selection;
   useEffect(() => {
+    setPage(null);
+    setError("");
     const controller = new AbortController();
     loadGradeHistoryPage(sectionId, studentId, gradeItemId, cursor, controller.signal).then(
       (result) => {
@@ -150,7 +152,7 @@ function HistoryPage({
             </button>
           </div>
         )}
-        {page?.items.length === 0 && (
+        {(page?.items?.length ?? 0) === 0 && page !== null && (
           <div className={styles.state} role="status">
             <ClockCounterClockwise aria-hidden="true" size={32} />
             <strong>No hay cambios registrados</strong>
@@ -160,7 +162,7 @@ function HistoryPage({
             </p>
           </div>
         )}
-        {page && page.items.length > 0 && (
+        {page && (page.items?.length ?? 0) > 0 && (
           <>
             <p className={styles.order}>Más recientes primero</p>
             <ol className={styles.timeline} aria-label="Cambios de la nota">

@@ -194,8 +194,26 @@ export function unseenCount(
   ).length;
 }
 
+function parseDateSafely(value: string): Date | null {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  // Si ya contiene separador de hora 'T', parsear directamente
+  if (trimmed.includes("T")) {
+    const direct = new Date(trimmed);
+    return Number.isNaN(direct.getTime()) ? null : direct;
+  }
+
+  // Fecha solo año-mes-día: asumir mediodía para evitar desfases de huso horario
+  const atNoon = new Date(`${trimmed}T12:00:00`);
+  return Number.isNaN(atNoon.getTime()) ? null : atNoon;
+}
+
 export function countdown(value: string): string {
-  const target = new Date(`${value}T12:00:00-04:00`).getTime();
+  const parsed = parseDateSafely(value);
+  if (!parsed) return "";
+  const target = parsed.getTime();
   const todayISO = getSantiagoDateISO();
   const current = new Date(`${todayISO}T12:00:00-04:00`).getTime();
   const days = Math.round((target - current) / 86400000);
@@ -206,31 +224,40 @@ export function countdown(value: string): string {
 }
 
 export function shortDate(value: string): string {
-  return shortFormat.format(new Date(`${value}T12:00:00`)).replace(".", "");
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return shortFormat.format(date).replace(".", "");
 }
 
 export function dayOf(value: string): string {
-  return dayFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dayFormat.format(date);
 }
 
 export function monthLabel(value: string): string {
-  const label = monthYearFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  const label = monthYearFormat.format(date);
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export function monthOf(value: string): string {
-  return monthFormat
-    .format(new Date(`${value}T12:00:00`))
-    .replace(".", "")
-    .toUpperCase();
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return monthFormat.format(date).replace(".", "").toUpperCase();
 }
 
 export function formatDate(value: string): string {
-  return dateFormat.format(new Date(value));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dateFormat.format(date);
 }
 
 export function formatDay(value: string): string {
-  return dateFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dateFormat.format(date);
 }
 
 /** Fecha y hora de Santiago de una marca ISO completa, como la de una entrega. */
@@ -241,6 +268,7 @@ export function formatDateTime(value: string): string {
 }
 
 export function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0 KB";
   if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }

@@ -20,6 +20,7 @@ import { RichTextAssets } from "./RichText";
 import { useClassroomHandlers } from "./use-classroom-handlers";
 import type { SectionRole } from "../../../lib/section-roles";
 import { canReadGradeHistory } from "../../../lib/section-roles";
+import { ClassroomErrorBoundary } from "../../components/ClassroomErrorBoundary";
 
 const MoodleImportDialog = dynamic(
   () => import("./MoodleImportDialog").then((module) => module.MoodleImportDialog),
@@ -223,119 +224,121 @@ export function ClassroomView({
         </nav>
         <AnimatePresence initial={false} mode="wait">
           <Screen key={tab}>
-            {tab === "home" && (
-              <>
-                <LiveClassSection
-                  liveClass={classroom.liveClass}
-                  canTeach={canTeach && !readOnly}
-                  status={liveClassStatus}
-                  invalid={liveClassInvalid}
-                  onSave={saveLiveClass}
-                  onClear={clearLiveClass}
-                />
-                <div className="classroom-columns">
-                  <PostsSection
-                    posts={posts}
-                    user={user}
-                    canManageContent={canManageContent}
-                    editPost={editPost}
-                    deletePost={deletePost}
-                    openAttachment={openAttachment}
-                    startPublication={startPublication}
+            <ClassroomErrorBoundary fallbackTitle="No se pudo cargar la vista del curso" key={tab}>
+              {tab === "home" && (
+                <>
+                  <LiveClassSection
+                    liveClass={classroom.liveClass}
+                    canTeach={canTeach && !readOnly}
+                    status={liveClassStatus}
+                    invalid={liveClassInvalid}
+                    onSave={saveLiveClass}
+                    onClear={clearLiveClass}
                   />
-                  <aside className="course-rail">
-                    <div className="section-title compact-title">
-                      <h2>
-                        <Info size={19} weight="fill" aria-hidden="true" />
-                        Información del ramo
-                      </h2>
-                    </div>
-                    <div className="course-facts">
-                      <dl>
-                        <div>
-                          <dt>Coordinación</dt>
-                          <dd>
-                            <b>{course.teacher}</b>
-                            <small>Cuenta docente institucional</small>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
-                          <dd>
-                            <b>
-                              {canTeach
-                                ? studentCount(students.length)
-                                : units.length > 0
-                                  ? `${completed} de ${units.length} unidades`
-                                  : "Sin unidades cargadas"}
-                            </b>
-                            {!canTeach && units.length > 0 && (
-                              <span className="mini-progress">
-                                <Bar ratio={units.length ? completed / units.length : 0} />
-                              </span>
-                            )}
-                          </dd>
-                        </div>
-                      </dl>
-                    </div>
-                    {status.text && (
-                      <p className={`tool-status ${status.tone}`} role="status">
-                        {status.text}
-                      </p>
-                    )}
-                  </aside>
-                </div>
-              </>
-            )}
-            {tab === "grades" && (
-              <GradesSection
-                course={course}
-                classroom={classroom}
-                canTeach={canTeach}
-                canReadHistory={canReadGradeHistory(user.role, sectionRole)}
-                note={note}
-                status={status}
-                readOnly={readOnly}
-              />
-            )}
-            {tab === "quizzes" && (
-              <QuizzesSection
-                course={course}
-                classroom={classroom}
-                canTeach={canTeach}
-                note={note}
-                readOnly={readOnly}
-              />
-            )}
-            {tab === "interop" && (
-              <InteropSection
-                key={course.id}
-                sectionId={course.id}
-                canTeach={canTeach}
-                isOwner={user.role === "owner"}
-                readOnly={readOnly}
-                note={note}
-              />
-            )}
-            {tab === "progress" && (
-              <ProgressSection
-                units={units}
-                canTeach={canTeach}
-                completed={completed}
-                students={students}
-                updateProgress={updateProgress}
-                readOnly={readOnly}
-              />
-            )}
-            {tab === "people" && (
-              <PeopleSection
-                canTeach={canTeach}
-                course={course}
-                sectionRole={sectionRole}
-                students={students}
-                user={user}
-              />
-            )}
+                  <div className="classroom-columns">
+                    <PostsSection
+                      posts={posts}
+                      user={user}
+                      canManageContent={canManageContent}
+                      editPost={editPost}
+                      deletePost={deletePost}
+                      openAttachment={openAttachment}
+                      startPublication={startPublication}
+                    />
+                    <aside className="course-rail">
+                      <div className="section-title compact-title">
+                        <h2>
+                          <Info size={19} weight="fill" aria-hidden="true" />
+                          Información del ramo
+                        </h2>
+                      </div>
+                      <div className="course-facts">
+                        <dl>
+                          <div>
+                            <dt>Coordinación</dt>
+                            <dd>
+                              <b>{course.teacher}</b>
+                              <small>Cuenta docente institucional</small>
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
+                            <dd>
+                              <b>
+                                {canTeach
+                                  ? studentCount(students.length)
+                                  : units.length > 0
+                                    ? `${completed} de ${units.length} unidades`
+                                    : "Sin unidades cargadas"}
+                              </b>
+                              {!canTeach && units.length > 0 && (
+                                <span className="mini-progress">
+                                  <Bar ratio={units.length ? completed / units.length : 0} />
+                                </span>
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                      {status.text && (
+                        <p className={`tool-status ${status.tone}`} role="status">
+                          {status.text}
+                        </p>
+                      )}
+                    </aside>
+                  </div>
+                </>
+              )}
+              {tab === "grades" && (
+                <GradesSection
+                  course={course}
+                  classroom={classroom}
+                  canTeach={canTeach}
+                  canReadHistory={canReadGradeHistory(user.role, sectionRole)}
+                  note={note}
+                  status={status}
+                  readOnly={readOnly}
+                />
+              )}
+              {tab === "quizzes" && (
+                <QuizzesSection
+                  course={course}
+                  classroom={classroom}
+                  canTeach={canTeach}
+                  note={note}
+                  readOnly={readOnly}
+                />
+              )}
+              {tab === "interop" && (
+                <InteropSection
+                  key={course.id}
+                  sectionId={course.id}
+                  canTeach={canTeach}
+                  isOwner={user.role === "owner"}
+                  readOnly={readOnly}
+                  note={note}
+                />
+              )}
+              {tab === "progress" && (
+                <ProgressSection
+                  units={units}
+                  canTeach={canTeach}
+                  completed={completed}
+                  students={students}
+                  updateProgress={updateProgress}
+                  readOnly={readOnly}
+                />
+              )}
+              {tab === "people" && (
+                <PeopleSection
+                  canTeach={canTeach}
+                  course={course}
+                  sectionRole={sectionRole}
+                  students={students}
+                  user={user}
+                />
+              )}
+            </ClassroomErrorBoundary>
           </Screen>
         </AnimatePresence>
       </main>
