@@ -59,8 +59,13 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
             <span className="course-open">Material disponible</span>
           )}
         </div>
-        <button className="course-action" onClick={() => onOpen(course)} type="button">
-          Entrar al aula <ArrowRight size={15} />
+        <button
+          aria-label={`Entrar al aula de ${course.name}`}
+          className="course-action"
+          onClick={() => onOpen(course)}
+          type="button"
+        >
+          Entrar al aula <ArrowRight aria-hidden="true" size={15} />
         </button>
       </div>
     </m.article>

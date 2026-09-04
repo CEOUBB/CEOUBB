@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / CourseCard & CoursesDashboard
+
+- **Finding:** Repeated action buttons ("Entrar al aula", "Ir al ramo", "Abrir en solo lectura") across course cards and next-evaluation banners lacked item-specific ARIA context, causing screen reader ambiguity across list items, while nested decorative Phosphor SVG vector icons lacked `aria-hidden="true"` (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added course-specific `aria-label` attributes (`aria-label={`Entrar al aula de ${course.name}`}`, `aria-label={`Ir al ramo ${nextCourse.name}`}`, `aria-label={`Abrir en solo lectura el ramo ${course.name}`}`) and `aria-hidden="true"` on decorative `<ArrowRight>` icons.
+- **Design System Constraint:** Retained existing Phosphor icon props and button utility classes without modifying visual styles or DOM structure.
+- **Future Rule:** Ensure generic course action buttons in dashboard lists expose course name context via `aria-label` and decorative vector arrows hide from screen readers via `aria-hidden="true"`.
+
 ## [2026-03-31] - Calendar / CalendarHeader & BlockDialog
 
 - **Finding:** Decorative Phosphor SVG icons embedded in calendar action buttons (`<CaretLeft>`, `<CaretRight>`, `<Plus>`, `<X>`, `<TrashSimple>`) lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within button triggers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
