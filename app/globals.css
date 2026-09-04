@@ -526,6 +526,7 @@ img {
 .section-title h2,
 .classroom-top h1,
 .course-card h3,
+.next-eval-title,
 .library-panel h2,
 .policy-page h1,
 .access-brand h1,
@@ -2609,16 +2610,19 @@ img {
   font-variant-numeric: var(--num);
 }
 
-/* Cabecera del área personal: la voz display a plena escala. */
+/* Cabecera del área personal. El saludo abre la página, no la ocupa: a 64px se
+   comía la primera pantalla entera sin aportar un dato más que el nombre, y lo
+   que se viene a hacer aquí —ver la evaluación que viene y entrar a un ramo—
+   quedaba bajo el pliegue. Queda una voz display de titular, no de portada. */
 .page-head.lead {
   display: grid;
-  gap: var(--space-sm);
-  padding-bottom: var(--space-lg);
+  gap: 6px;
+  padding-bottom: var(--space-md);
 }
 .page-head.lead h1 {
-  font-size: clamp(38px, 5.4vw, 64px);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: clamp(30px, 3.6vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
 }
 .page-head.lead p {
   display: flex;
@@ -2631,79 +2635,147 @@ img {
   color: var(--text-secondary);
 }
 
-/* Aviso de cartelera: la próxima evaluación del periodo. */
-.next-strip {
+/* Secciones del área personal: el rótulo y su contenido son un mismo bloque,
+   más separado de la sección vecina que de lo que él mismo encabeza. */
+.dashboard-section {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
   gap: var(--space-md);
-  padding: 12px 16px 12px 12px;
+}
+
+/*
+  Ficha de cartelera: la próxima evaluación del periodo.
+  Las celdas se colocan por áreas y no por orden de marcado, así el teléfono
+  reordena las mismas cuatro piezas sin repetir contenido. En escritorio el
+  asunto y la cuenta atrás comparten renglón —son los dos datos que se vienen a
+  leer— y la entrada al aula queda anclada al canto derecho de la ficha.
+*/
+.next-eval {
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) minmax(min-content, 1fr) auto;
+  grid-template-areas:
+    "date title count action"
+    "date meta  meta  action";
+  align-items: center;
+  gap: 4px var(--space-md);
+  padding: 14px var(--space-md) 14px 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
 }
 
-.next-strip-date {
+/* La fecha es el ancla de la ficha: bloque de calendario teñido con el color
+   del ramo, el único lugar donde ese color estructura algo. */
+.next-eval-date {
+  grid-area: date;
   display: grid;
   justify-items: center;
   align-content: center;
   gap: 1px;
-  min-width: 62px;
+  min-width: 66px;
   padding: 8px 10px 9px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--course-tone) 12%, #fff);
 }
-.next-strip-day {
+.next-eval-weekday {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--course-tone) 34%, var(--ink-700));
+}
+.next-eval-day {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--text-body);
   font-variant-numeric: var(--num);
 }
-.next-strip-month {
-  font-size: 12px;
+.next-eval-month {
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.next-strip-body {
-  display: grid;
-  gap: 2px;
+
+.next-eval-title {
+  grid-area: title;
+  /* El asunto y su metadato son un solo bloque: se apoyan contra la línea que
+     separa las dos filas en vez de flotar cada uno en el centro de la suya, que
+     es lo que abría 20px de aire dentro de un mismo párrafo. */
+  align-self: end;
   min-width: 0;
-}
-.next-strip-line {
-  font-size: 15px;
-  color: var(--text-secondary);
-}
-.next-strip-line strong {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text-body);
+  text-wrap: balance;
 }
-.next-strip-detail {
-  font-size: 14px;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.next-strip-end {
+
+.next-eval-meta {
+  grid-area: meta;
+  align-self: start;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
-}
-.next-strip-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  gap: 2px 7px;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
   font-variant-numeric: var(--num);
-  white-space: nowrap;
 }
-.next-strip-action,
+/* El nombre del ramo lleva su color oscurecido contra tinta: los tonos claros
+   de la paleta (celeste del escudo, oro) no llegan a 4.5:1 sobre papel. */
+.next-eval-course {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--course-tone) 38%, #0f172a);
+}
+.next-eval-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--course-tone);
+}
+
+/* Cuenta atrás: el rótulo dice cuánto falta y el color, cuánto apremia. */
+.next-eval-count {
+  grid-area: count;
+  align-self: end;
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: var(--num);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+}
+.next-eval-count[data-urgency="today"],
+.next-eval-count[data-urgency="soon"] {
+  background: color-mix(in srgb, var(--shield-red) 10%, var(--surface-card));
+  color: var(--shield-red-deep);
+}
+/* Una evaluación ya rendida no necesita pastilla: baja a texto suelto, que es
+   la única forma de restarle peso sin bajar del 4.5:1 a 12.5px. */
+.next-eval-count[data-urgency="past"] {
+  background: transparent;
+  padding-inline: 0;
+}
+
+.next-eval-action {
+  grid-area: action;
+  justify-self: end;
+}
+
+.next-eval-action,
 .course-action {
   display: inline-flex;
   align-items: center;
@@ -2717,8 +2789,14 @@ img {
   white-space: nowrap;
   transition: background var(--transition-fast);
 }
-.next-strip-action:hover {
+.next-eval-action:hover {
   background: var(--color-primary-wash);
+}
+.next-eval-action svg {
+  transition: transform var(--transition-fast);
+}
+.next-eval:hover .next-eval-action svg {
+  transform: translateX(3px);
 }
 
 .section-title {
@@ -10711,19 +10789,6 @@ mark,
   }
   .admin-row span:last-child {
     grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 700px) {
-  .next-strip {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-  .next-strip-end {
-    grid-column: 1 / -1;
-    justify-content: space-between;
-  }
-  .next-strip-detail {
-    white-space: normal;
   }
 }
 
