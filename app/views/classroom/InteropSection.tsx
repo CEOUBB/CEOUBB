@@ -12,6 +12,7 @@ import {
 } from "react";
 import { ArrowSquareOut, DownloadSimple, PlugsConnected, X } from "@phosphor-icons/react";
 import { z } from "zod";
+import { InteropListSkeleton } from "../ViewSkeletons";
 import {
   downloadInteropFile,
   interopRequest,
@@ -268,9 +269,7 @@ export function InteropSection({
         </p>
       )}
       {state.loading ? (
-        <p className="interop-progress" role="status">
-          Cargando recursos…
-        </p>
+        <InteropListSkeleton />
       ) : state.resources.length === 0 && !state.error ? (
         <EmptyState
           icon={PlugsConnected}

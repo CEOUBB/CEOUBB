@@ -33,8 +33,10 @@ import {
   AdminSkeleton,
   CalendarSkeleton,
   ClassroomSkeleton,
+  CommunicationsSkeleton,
   ResourcesSkeleton,
   SettingsSkeleton,
+  TeacherCoursesSkeleton,
 } from "./views/ViewSkeletons";
 
 const CalendarView = dynamic(
@@ -57,7 +59,7 @@ const CommunicationsCenter = dynamic(
   () => import("./views/CommunicationsCenter").then((m) => m.CommunicationsCenter),
   {
     ssr: false,
-    loading: () => <ResourcesSkeleton />,
+    loading: () => <CommunicationsSkeleton />,
   }
 );
 
@@ -70,7 +72,7 @@ const TeacherCoursesView = dynamic(
   () => import("./views/TeacherCoursesView").then((m) => m.TeacherCoursesView),
   {
     ssr: false,
-    loading: () => <AdminSkeleton />,
+    loading: () => <TeacherCoursesSkeleton />,
   }
 );
 

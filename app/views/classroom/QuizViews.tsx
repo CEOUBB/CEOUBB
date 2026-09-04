@@ -3,13 +3,10 @@
 // Implements: REQ-QUIZ-01, REQ-QUIZ-02
 import { Exam } from "@phosphor-icons/react";
 import { EmptyState } from "./EmptyState";
+import { QuizListSkeleton } from "../ViewSkeletons";
 
 export function QuizLoading() {
-  return (
-    <div className="quiz-loading" role="status">
-      Cargando cuestionarios…
-    </div>
-  );
+  return <QuizListSkeleton />;
 }
 
 export function QuizEmpty({ teacher = false }: { teacher?: boolean }) {

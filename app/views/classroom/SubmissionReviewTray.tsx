@@ -51,6 +51,7 @@ import {
   type ReviewFilter,
   type ReviewRow,
 } from "./submission-review-model";
+import { DocumentPaneSkeleton } from "../ViewSkeletons";
 
 /*
   El visor arrastra PDF.js y su worker: se descarga cuando el docente abre una
@@ -59,7 +60,7 @@ import {
 // Implements: REQ-REV-01 REQ-PERF-01
 const PDFViewerPane = dynamic(
   () => import("./PDFViewerPane").then((module) => module.PDFViewerPane),
-  { ssr: false, loading: () => <p className="review-doc-loading">Preparando el visor…</p> }
+  { ssr: false, loading: () => <DocumentPaneSkeleton /> }
 );
 
 const QUEUE_PAGE_SIZE = 25;
