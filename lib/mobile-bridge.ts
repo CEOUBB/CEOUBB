@@ -169,28 +169,30 @@ export function useAppVisibility(): boolean {
   useEffect(() => {
     if (typeof document === "undefined") return;
 
+    let isMounted = true;
+
     const handleVisibilityChange = () => {
-      setIsActive(document.visibilityState === "visible");
+      if (isMounted) {
+        setIsActive(document.visibilityState === "visible");
+      }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    let removeCapacitorListener: (() => void) | undefined;
-    if (Capacitor.isNativePlatform()) {
-      App.addListener("appStateChange", ({ isActive: appActive }) => {
-        setIsActive(appActive);
-      })
-        .then((handle) => {
-          removeCapacitorListener = () => {
-            void handle.remove().catch(() => undefined);
-          };
+    const listenerPromise = Capacitor.isNativePlatform()
+      ? App.addListener("appStateChange", ({ isActive: appActive }) => {
+          if (isMounted) {
+            setIsActive(appActive);
+          }
         })
-        .catch(() => undefined);
-    }
+      : null;
 
     return () => {
+      isMounted = false;
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      removeCapacitorListener?.();
+      if (listenerPromise) {
+        void listenerPromise.then((handle) => handle.remove()).catch(() => undefined);
+      }
     };
   }, []);
 
