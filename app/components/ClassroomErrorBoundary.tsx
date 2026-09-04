@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ArrowClockwise, WarningCircle } from "@phosphor-icons/react";
 
 type Props = {

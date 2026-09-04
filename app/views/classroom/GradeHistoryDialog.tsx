@@ -114,8 +114,6 @@ function HistoryPage({
   const [attempt, setAttempt] = useState(0);
   const { studentId, gradeItemId } = selection;
   useEffect(() => {
-    setPage(null);
-    setError("");
     const controller = new AbortController();
     loadGradeHistoryPage(sectionId, studentId, gradeItemId, cursor, controller.signal).then(
       (result) => {
@@ -144,6 +142,7 @@ function HistoryPage({
               className="utility-button"
               type="button"
               onClick={() => {
+                setPage(null);
                 setError("");
                 setAttempt((value) => value + 1);
               }}
