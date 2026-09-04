@@ -93,7 +93,11 @@ export function mergeMessageThreads(
 export function readCursorMap(
   cursors: readonly CommunicationReadCursor[]
 ): ReadonlyMap<string, string> {
-  return new Map(cursors.map((cursor) => [cursor.key, cursor.readAt]));
+  const map = new Map<string, string>();
+  for (const cursor of cursors) {
+    map.set(cursor.key, cursor.readAt);
+  }
+  return map;
 }
 
 export function timestampIsUnread(value: string, readAt: string | undefined): boolean {
@@ -169,7 +173,10 @@ export function deriveNotifications(
   courses: readonly NotificationCourse[]
 ): NotificationItem[] {
   const reads = readCursorMap(cursors);
-  const enrolled = new Map(courses.map((course) => [course.id, course]));
+  const enrolled = new Map<string, NotificationCourse>();
+  for (const course of courses) {
+    enrolled.set(course.id, course);
+  }
   const items: NotificationItem[] = [];
 
   for (const item of activity) {
