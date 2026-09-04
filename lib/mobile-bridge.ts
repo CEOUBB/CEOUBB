@@ -160,6 +160,16 @@ export function useHardwareBack(onBack: () => boolean): void {
   }, []);
 }
 
+function subscribeAppState(onStateChange: (isActive: boolean) => void): () => void {
+  if (!Capacitor.isNativePlatform()) return () => undefined;
+  const handlePromise = App.addListener("appStateChange", ({ isActive }) => {
+    onStateChange(isActive);
+  });
+  return () => {
+    void handlePromise.then((handle) => handle.remove()).catch(() => undefined);
+  };
+}
+
 // Implements: REQ-CAP-16
 export function useAppVisibility(): boolean {
   const [isActive, setIsActive] = useState<boolean>(() =>
@@ -179,20 +189,16 @@ export function useAppVisibility(): boolean {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    const listenerPromise = Capacitor.isNativePlatform()
-      ? App.addListener("appStateChange", ({ isActive: appActive }) => {
-          if (isMounted) {
-            setIsActive(appActive);
-          }
-        })
-      : null;
+    const unsubscribeNative = subscribeAppState((appActive) => {
+      if (isMounted) {
+        setIsActive(appActive);
+      }
+    });
 
     return () => {
       isMounted = false;
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      if (listenerPromise) {
-        void listenerPromise.then((handle) => handle.remove()).catch(() => undefined);
-      }
+      unsubscribeNative();
     };
   }, []);
 
