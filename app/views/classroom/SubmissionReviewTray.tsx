@@ -12,6 +12,7 @@ import {
   FileText,
   Funnel,
   MagnifyingGlass,
+  Tray,
   Warning,
   X,
 } from "@phosphor-icons/react";
@@ -33,6 +34,7 @@ import {
 import { hapticTap } from "../../../lib/mobile-bridge";
 import { formatBytes, formatDateTime } from "../../../lib/portal-utils";
 import { paginateList } from "./classroom-utils";
+import { EmptyState } from "./EmptyState";
 import { RichText } from "./RichText";
 import {
   REVIEW_FILTERS,
@@ -239,12 +241,12 @@ export function SubmissionReviewTray({
       </header>
 
       {gradebook.length === 0 ? (
-        <div className="empty-state review-empty">
-          <strong>Guarda primero la ponderación del ramo.</strong>
-          <p>
-            La bandeja corrige entregas por evaluación. Define las evaluaciones y sus porcentajes en
-            la pestaña de notas para abrir la cola.
-          </p>
+        <div className="review-empty">
+          <EmptyState
+            icon={Tray}
+            title="Guarda primero la ponderación del ramo"
+            description="La bandeja corrige entregas por evaluación. Define las evaluaciones y sus porcentajes en la pestaña Notas para abrir la cola."
+          />
         </div>
       ) : (
         <div className="review-workspace">

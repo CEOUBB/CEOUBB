@@ -88,11 +88,28 @@ test("la portada coloca el banner antes de los avisos y no reserva un vacío al 
     new URL("../app/views/classroom/LiveClassSection.tsx", import.meta.url),
     "utf8"
   );
-  assert.ok(view.indexOf("<LiveClassSection") < view.indexOf("<PostsSection"));
-  assert.match(section, /if \(!liveClass && !canTeach\) return null;/);
+  assert.ok(view.indexOf("<LiveClassBanner") < view.indexOf("<PostsSection"));
+  // Sin enlace no se dibuja nada: el aviso jamás reserva un hueco vacío.
+  assert.match(section, /export function LiveClassBanner[\s\S]*?if \(!liveClass\) return null;/);
   assert.match(section, /Entrar a la clase/);
   assert.match(section, /target="_blank"/);
   assert.match(section, /rel="noopener noreferrer"/);
   assert.match(section, /htmlFor="live-class-url"/);
   assert.match(section, /role="status"/);
+});
+
+test("configurar el enlace vive en el riel y nunca encabeza la portada", () => {
+  const view = readFileSync(
+    new URL("../app/views/classroom/ClassroomView.tsx", import.meta.url),
+    "utf8"
+  );
+  const rail = readFileSync(
+    new URL("../app/views/classroom/CourseRail.tsx", import.meta.url),
+    "utf8"
+  );
+  // El editor es una tarea puntual del semestre: sólo lo monta el riel lateral.
+  assert.ok(!view.includes("<LiveClassEditor"));
+  assert.match(rail, /<LiveClassEditor/);
+  // Y sigue siendo exclusivo de quien enseña una sección abierta.
+  assert.match(rail, /canTeach && !readOnly && \(\s*<LiveClassEditor/);
 });

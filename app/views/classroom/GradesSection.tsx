@@ -7,6 +7,7 @@ import {
   ChatCenteredText,
   CheckCircle,
   ClockCounterClockwise,
+  GraduationCap,
   MagnifyingGlass,
   Paperclip,
   X,
@@ -42,6 +43,7 @@ import { formatBytes, formatDay } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
+import { EmptyState } from "./EmptyState";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
@@ -170,13 +172,11 @@ function StudentGrades({
 
   if (gradebook.length === 0) {
     return (
-      <div className="empty-state">
-        <strong>El docente aún no publica la ponderación del ramo.</strong>
-        <p>
-          Cuando cargue las evaluaciones y sus porcentajes podrás ver tu promedio y simular la nota
-          que necesitas.
-        </p>
-      </div>
+      <EmptyState
+        icon={GraduationCap}
+        title="El docente aún no publica la ponderación"
+        description="Cuando cargue las evaluaciones y sus porcentajes podrás ver tu promedio y simular la nota que necesitas."
+      />
     );
   }
 
@@ -692,10 +692,11 @@ function TeacherGrades({
         <h2>Notas oficiales</h2>
       </div>
       {gradebook.length === 0 && (
-        <div className="empty-state">
-          <strong>Guarda primero la ponderación.</strong>
-          <p>Las columnas de notas aparecen cuando el ramo tiene evaluaciones definidas.</p>
-        </div>
+        <EmptyState
+          icon={GraduationCap}
+          title="Guarda primero la ponderación"
+          description="Las columnas de notas aparecen cuando el ramo tiene evaluaciones definidas."
+        />
       )}
       {gradebook.length > 0 && (
         <>

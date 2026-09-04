@@ -2977,16 +2977,16 @@ img {
 
 .classroom-top {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
-  min-height: 34px;
+  flex-wrap: wrap;
 }
 /* Sólo el bloque del título apila; las acciones son una fila. */
 .classroom-heading {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 .classroom-top h1 {
@@ -2994,6 +2994,14 @@ img {
   line-height: 1.08;
   letter-spacing: -0.02em;
   text-wrap: balance;
+}
+/* La identidad académica va bajo el título: el h1 nombra el ramo y esta línea
+   dice de qué sección y período se trata sin robarle jerarquía. */
+.classroom-identity {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+  font-variant-numeric: var(--num);
 }
 .classroom-meta {
   display: flex;
@@ -3003,26 +3011,75 @@ img {
   flex: 0 0 auto;
 }
 
+/* Las tres acciones comparten geometría para leerse como un grupo, y el peso
+   visual declara el orden: publicar es la acción del día, corregir la sigue e
+   importar desde Moodle se hace una vez por semestre. */
+.classroom-meta > .review-cta,
+.classroom-meta > .moodle-import-trigger,
+.classroom-meta > .publication-cta {
+  height: 42px;
+  min-height: 0;
+  padding-block: 0;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Importar Moodle deja de competir: sin relleno ni borde, es una utilidad. */
+.classroom-meta > .moodle-import-trigger {
+  padding-inline: 14px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--text-secondary);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.classroom-meta > .moodle-import-trigger:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+/* El código deja de ser un botón con aspecto de chip técnico: la referencia se
+   lee como dato y el gesto de copiar queda a su derecha, en tipografía de
+   interfaz. */
 .course-reference {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 44px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-hairline);
+  gap: 8px;
+  min-height: 40px;
+  margin: -6px 0 0 -6px;
+  padding: 4px 10px 4px 6px;
   border-radius: var(--radius-md);
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-variant-numeric: var(--num);
+  color: var(--text-muted);
+  font-family: var(--font-core);
+  font-size: 13px;
+  font-weight: 500;
   transition:
     background var(--transition-fast),
-    color var(--transition-fast),
-    border-color var(--transition-fast);
+    color var(--transition-fast);
+}
+.course-reference > span {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--canvas-soft);
+  color: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: var(--num);
+}
+.course-reference svg {
+  margin-right: -2px;
+  color: var(--text-faint);
+  transition: color var(--transition-fast);
 }
 .course-reference:hover {
-  background: var(--canvas-soft);
-  border-color: var(--color-primary);
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+.course-reference:hover svg {
   color: var(--color-primary);
 }
 
@@ -3045,11 +3102,7 @@ img {
   gap: var(--space-md);
 }
 
-.live-class-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+/* ── Aula · clase en vivo ─────────────────────────────────── */
 
 .live-class-banner {
   position: relative;
@@ -3106,85 +3159,107 @@ img {
   white-space: nowrap;
 }
 
-.live-class-editor {
-  display: grid;
-  grid-template-columns: minmax(210px, 0.7fr) minmax(280px, 1fr) auto;
-  align-items: center;
-  gap: var(--space-sm) var(--space-md);
-  padding: var(--space-sm) var(--space-md);
+/* ── Aula · tarjetas plegables del riel ───────────────────── */
+
+/* Configurar la reunión es una tarea de una vez por semestre. Vive plegada en
+   el riel, no encabezando la Portada. */
+.rail-card {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
 }
 
-.live-class-editor-copy {
+.rail-card > summary {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  list-style: none;
+  transition: background var(--transition-fast);
 }
-.live-class-editor-copy > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+.rail-card > summary::-webkit-details-marker,
+.rail-card > summary::marker {
+  display: none;
+  content: "";
 }
-.live-class-editor-copy strong {
-  font-size: 14px;
-  font-weight: 600;
+.rail-card > summary:hover {
+  background: var(--canvas-soft);
 }
-.live-class-editor-copy small {
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.35;
-  text-wrap: pretty;
+.rail-card > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
-.live-class-editor-icon {
+.rail-card-icon {
   display: inline-grid;
   place-items: center;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   background: var(--canvas-soft);
   color: var(--text-secondary);
 }
 
-.live-class-field {
+.rail-card-heading {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 1px;
   min-width: 0;
 }
-.live-class-field label {
+.rail-card-heading strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.rail-card-heading small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.rail-card-help {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.live-class-editor > form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+}
+.live-class-editor label {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
 }
-.live-class-field input {
+.live-class-editor input {
   width: 100%;
-  min-height: 44px;
+  min-height: 42px;
   padding: 8px 10px;
   background: var(--surface-card);
   border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   color: var(--text-body);
-  font-size: 16px;
+  font-size: 15px;
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
 }
-.live-class-field input::placeholder {
+.live-class-editor input::placeholder {
   color: var(--text-faint);
 }
-.live-class-field input:focus-visible {
+.live-class-editor input:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);
 }
-.live-class-field input[aria-invalid="true"] {
+.live-class-editor input[aria-invalid="true"] {
   border-color: var(--shield-red-deep);
 }
 
@@ -3192,19 +3267,19 @@ img {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  margin-top: 2px;
 }
 .live-class-actions .primary-button,
 .live-class-actions .secondary-button {
-  min-height: 44px;
+  min-height: 40px;
   padding-inline: var(--space-md);
   font-size: 14px;
   white-space: nowrap;
 }
-.live-class-editor > .tool-status {
-  grid-column: 2 / -1;
+.live-class-editor .tool-status {
   margin: 0;
 }
-.live-class-editor > .tool-status:empty {
+.live-class-editor .tool-status:empty {
   display: none;
 }
 
@@ -10079,48 +10154,88 @@ mark,
 
 /* ── Estados vacíos ──────────────────────────────────────── */
 
+/* El aula tenía cuatro estados vacíos distintos. Éste es el único: glifo del
+   dominio, título en la voz de titulares, una línea de explicación y, cuando
+   corresponde, la acción que resuelve el vacío. */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: var(--space-xl) var(--space-lg);
-  background: var(--canvas-soft);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px var(--space-md);
+  padding: var(--space-lg);
+  background: var(--surface-card);
+  border: 1px dashed color-mix(in srgb, var(--border-hairline) 78%, var(--text-faint));
+  border-radius: var(--radius-lg);
   text-align: left;
 }
 
+.empty-state-glyph {
+  display: inline-grid;
+  place-items: center;
+  grid-row: 1 / span 2;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--course-tone, var(--color-primary)) 11%, var(--canvas-soft));
+  color: color-mix(in srgb, var(--course-tone, var(--color-primary)) 62%, var(--text-secondary));
+}
+
+.empty-state-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 62ch;
+  padding-top: 3px;
+}
+
+/* Sin glifo la caja sigue siendo una sola columna: el uso directo del markup
+   (esqueletos, filtros sin resultados) no debe partirse en dos columnas. */
+.empty-state > strong,
+.empty-state > p,
+.empty-state > span:not(.empty-state-glyph) {
+  grid-column: 1 / -1;
+}
+
 .empty-state strong {
-  font-size: 16px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 .empty-state p {
-  max-width: 68ch;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 .empty-state-action {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
-  align-self: flex-start;
-  min-height: 44px;
-  margin: var(--space-xs) 0 -4px -10px;
+  gap: 6px;
+  grid-column: 2;
+  justify-self: start;
+  min-height: 40px;
+  margin: 2px 0 -6px -10px;
   padding: 6px 10px;
   border-radius: var(--radius-md);
   color: var(--color-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  transition: background var(--transition-fast);
 }
 .empty-state-action:hover {
   background: var(--color-primary-wash);
   color: var(--color-primary);
 }
 
+/* Ausencia dentro de una lista o tabla ya enmarcada: no lleva otra caja. */
 .empty-row {
   padding: var(--space-md);
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--text-muted);
 }
 
@@ -10135,13 +10250,6 @@ mark,
 @media (max-width: 1100px) {
   .course-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .live-class-editor {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .live-class-editor-copy,
-  .live-class-editor > .tool-status {
-    grid-column: 1 / -1;
   }
   .classroom-columns,
   .grades-view {
@@ -10416,6 +10524,23 @@ mark,
   .classroom-layout {
     padding: var(--space-md) var(--space-md) var(--space-xxl);
   }
+  /* Tres acciones no caben en una fila de teléfono: publicar sube a su propia
+     línea y las otras dos reparten la de abajo. */
+  .classroom-meta {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .classroom-meta > .publication-cta {
+    order: -1;
+    flex: 1 0 100%;
+  }
+  .classroom-meta > .review-cta,
+  .classroom-meta > .moodle-import-trigger {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 10px;
+    justify-content: center;
+  }
   .live-class-banner {
     grid-template-columns: auto minmax(0, 1fr);
     padding: var(--space-md);
@@ -10423,13 +10548,6 @@ mark,
   .live-class-join {
     grid-column: 1 / -1;
     width: 100%;
-  }
-  .live-class-editor {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .live-class-editor-copy,
-  .live-class-editor > .tool-status {
-    grid-column: 1;
   }
   .live-class-actions {
     flex-direction: column;
@@ -10488,7 +10606,16 @@ mark,
     width: 100%;
     justify-content: center;
   }
-  .empty-state,
+  .empty-state {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-md);
+  }
+  .empty-state-glyph {
+    grid-row: auto;
+  }
+  .empty-state-action {
+    grid-column: 1;
+  }
   .policy-page article {
     padding: var(--space-lg);
   }
@@ -11341,32 +11468,10 @@ mark,
   color: var(--shield-red-deep);
 }
 
+/* El estado vacío del portal es el mismo componente que usa el aula: sólo
+   necesita ocupar el ancho completo de la grilla de ramos. */
 .course-empty-state {
-  display: grid;
   grid-column: 1 / -1;
-  min-height: 230px;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-xl);
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-xl);
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.course-empty-state svg {
-  color: var(--ubb-royal-blue);
-}
-
-.course-empty-state strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 18px;
-}
-
-.course-empty-state p {
-  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -13205,39 +13310,16 @@ mark,
   font-variant-numeric: var(--num);
 }
 
-.quiz-loading,
-.quiz-empty {
+.quiz-loading {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 180px;
   padding: var(--space-xl);
   border: 1px dashed var(--border-hairline);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-muted);
   text-align: center;
-}
-
-.quiz-empty {
-  gap: 7px;
-}
-
-.quiz-empty svg {
-  margin-bottom: 6px;
-  color: var(--color-primary);
-}
-
-.quiz-empty strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 18px;
-}
-
-.quiz-empty p {
-  max-width: 440px;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .quiz-runner {
