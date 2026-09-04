@@ -44,6 +44,7 @@
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "982a991ba338bb6208c49c17297b1cf9b01d54102306978446f0c3ff0eed5fd3",
+  "tests/preview-demo-seed.test.ts": "7222cb2aa3434353ce1c5034b2af14e09a54498e56acbc78182d19d5bbe66b6b",
   "tests/privacy-terms.test.ts": "6224da71dce0d578425a4777816bc9d76f54e31ec8348c2bf80081afa355cbcc",
   "tests/publication-workflow.test.ts": "282b9ce29f75bb9049de52b2c3e0780b45d8ba476ff778eecbcd430842779936",
   "tests/quiz-engine.test.ts": "66389e5cf1305ac1274a24f8a595f8846af75503e9c9bd5f7e1a9673dfaf2b30",
