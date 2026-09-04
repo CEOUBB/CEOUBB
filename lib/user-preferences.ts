@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   defaultPreferences,
+  preferencesSchema,
   type NotificationChannel,
   type UserPreferences,
 } from "./services/user-profile.ts";
@@ -39,7 +40,15 @@ function readCache(): UserPreferences | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
-    return raw ? (JSON.parse(raw) as UserPreferences) : null;
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    const validation = preferencesSchema.safeParse(parsed);
+    if (validation.success) {
+      return validation.data;
+    }
+    // Si la caché tiene un esquema viejo o datos corruptos, limpiar para no romper la UI
+    window.localStorage.removeItem(CACHE_KEY);
+    return defaultPreferences();
   } catch {
     return null;
   }

@@ -54,6 +54,26 @@ Companion files:
 
 ## Active work
 
+- [DONE] **CEO-82: Protocolo de Confiabilidad, Concurrencia y Persistencia Multitienda — Planes 070 al 080 (2026-09-04).** Felipe Arce / Antigravity, rama `full_reliability_audit_protocol`. Se implementaron de forma secuencial y bajo la filosofía `/ponytail full` los 11 planes de confiabilidad auditados en `plans/`:
+  - **Onda 1 (Crashes, Outages e Integridad Numérica):**
+    - Plan 070: Normalización determinista de timestamps en `lib/firebase/mappers.ts:iso()` protegiendo strings ISO históricos, marcas numéricas y Dates sin sobrescritura con reloj local.
+    - Plan 071: Parseo defensivo `parseDateSafely()` en `lib/portal-utils.ts` eliminando `RangeError: Invalid time value` en `formatDay()`, previendo `NaN` en `countdown()` y soportando `formatBytes(0)` con `'0 KB'`.
+    - Plan 072: Reconciliación de esquema Turso en producción `ceoubb` mediante DDL idempotente creando 4 tablas faltantes (`section_profiles`, `assistant_assignments`, `matriculas_pendientes`, `moodle_imports`) e índices B-Tree en `sessions` (`idx_sessions_expires_at`, `idx_sessions_user_id`). Verificado 100% íntegro vía `scripts/verify-turso-production-schema.mjs`.
+    - Plan 073: Blindaje de `normalizeItems` en `lib/grades.ts` con `Number.isFinite(rawWeight) && rawWeight > 0`, previniendo fugas de `NaN` en promedios y notas requeridas; sincronización a Cloud Functions (`firebase/functions/generated/grades.js`).
+  - **Onda 2 (Concurrencia, Cierres, SSOT y Resiliencia en React):**
+    - Plan 074: Telemetría estructurada en `applyEnrollmentImport()`, exportación de `reconcileSectionProjections()` y nuevo endpoint seguro `app/api/sections/[sectionId]/projections/reconcile/route.ts` para mitigar proyecciones huérfanas en Firestore.
+    - Plan 075: Componente accesible `ClassroomErrorBoundary` envolviendo paneles dinámicos en `app/views/classroom/ClassroomView.tsx`, reteniendo sesión y estado global ante fallos en vistas hijas.
+    - Plan 077: Guardas atómicas de reentrancia `if (saving) return;` en `GradebookSettingsEditor.tsx` e indicador con bloqueo UI `disabled={exportingQti}` en `TeacherQuizzes.tsx`.
+    - Plan 078: Limpieza síncrona en `useEffect` (`setPage(null); setError("");`) y encadenamiento seguro `(page?.items?.length ?? 0) === 0` en `GradeHistoryDialog.tsx`, eliminando retención de datos de estudiantes previos.
+    - Plan 079: Eliminación de mutación cliente redundante a Firestore en `AdminView.tsx`, preservando SSOT transaccional en `/api/admin/users`.
+    - Plan 080: Validación determinista con `preferencesSchema.safeParse` en `lib/user-preferences.ts:readCache()` con fallback seguro a `defaultPreferences()`.
+  - **Onda 3 (Puente Nativo Móvil y Respaldo Offline):**
+    - Plan 076: Intercepción de errores de red del frame principal (`isForMainFrame()`) en `MainActivity.java` y configuración de `errorPath: "index.html"` en `capacitor.config.ts`, cargando el documento de respaldo local en lugar de la pantalla genérica Chromium.
+  - **Verificación Completa:**
+    - Arnés rápido `pnpm run verify:fast`: 553/553 tests unitarios pasando, 62/62 archivos de pruebas sellados con hash SHA-256 intactos, 29/29 especificaciones OpenSpec validadas.
+    - Invariantes `pnpm run verify:invariants`: 35/35 pruebas de invariantes de seguridad y modelo académico pasando.
+    - Formato `pnpm run format:check`: 100% de archivos con estilo Prettier limpio.
+
 - [DONE] **CEO-79: remediación integral de calidad React Doctor y modularización frontend (2026-09-04).** Felipe Arce / Antigravity, rama `sync_run_react_doctor`. Se completaron al 100% las 17 tareas de `openspec/changes/remediacion-react-doctor`:
   - Seguridad y rutas: eliminación de `Object.create(null)` y supresión de efectos colaterales en GET (`app/api/interop/lti/authorize/route.ts`).
   - Robustez runtime: protección de parseos URL con `URL.canParse()` y bloques try/catch en `lib/interop/config.ts` y `proxy.ts`, eliminación de aserción `!` en `lib/interop/xml.ts`, interrupción explícita con `throw fail(...)` en `lib/services/interop-qti.ts`, y paralelización de consultas en `lib/services/interop.ts`.

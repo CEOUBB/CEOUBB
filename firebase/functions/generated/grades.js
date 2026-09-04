@@ -62,8 +62,9 @@ function normalizeItems(value) {
   return value.flatMap((item, index) => {
     if (!item || typeof item !== "object") return [];
     const record = item;
-    const weight = Math.max(0, Number(record.weight ?? 0));
-    if (weight <= 0) return [];
+    const rawWeight = Number(record.weight ?? 0);
+    if (!Number.isFinite(rawWeight) || rawWeight <= 0) return [];
+    const weight = Math.round(rawWeight * 100) / 100;
     return [
       {
         id: String(record.id ?? `item-${index}`),
@@ -106,7 +107,7 @@ function formatGrade(value) {
   return value.toFixed(1).replace(".", ",");
 }
 function round1(value) {
-  return Math.round(value * 10) / 10;
+  return Math.round((value + Number.EPSILON) * 10) / 10;
 }
 function gradeFromPoints(earnedPoints, totalPoints, passingRatio = 0.6) {
   if (

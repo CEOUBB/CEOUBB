@@ -43,6 +43,7 @@ export function GradebookSettingsEditor({
   };
 
   const save = async () => {
+    if (saving) return;
     const target = exemptionValue.trim() ? Number(exemptionValue) : null;
     const validation = gradeSchemeError(items, target);
     if (validation) {

@@ -142,6 +142,7 @@ function HistoryPage({
               className="utility-button"
               type="button"
               onClick={() => {
+                setPage(null);
                 setError("");
                 setAttempt((value) => value + 1);
               }}
@@ -150,7 +151,7 @@ function HistoryPage({
             </button>
           </div>
         )}
-        {page?.items.length === 0 && (
+        {(page?.items?.length ?? 0) === 0 && page !== null && (
           <div className={styles.state} role="status">
             <ClockCounterClockwise aria-hidden="true" size={32} />
             <strong>No hay cambios registrados</strong>
@@ -160,7 +161,7 @@ function HistoryPage({
             </p>
           </div>
         )}
-        {page && page.items.length > 0 && (
+        {page && (page.items?.length ?? 0) > 0 && (
           <>
             <p className={styles.order}>Más recientes primero</p>
             <ol className={styles.timeline} aria-label="Cambios de la nota">

@@ -45,6 +45,7 @@ function QuizBuilderForm({
   const [warnings, setWarnings] = useState<QuizImportWarning[]>([]);
   const [fileName, setFileName] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [exportingQti, setExportingQti] = useState(false);
 
   const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -219,18 +220,24 @@ function QuizBuilderForm({
         <div className="quiz-import-preview">
           <button
             className="secondary-button"
+            disabled={exportingQti}
             type="button"
             onClick={async () => {
+              if (exportingQti) return;
+              setExportingQti(true);
               try {
                 const { exportQtiBank } = await import("../../../lib/interop/qti.ts");
                 downloadInteropBytes(exportQtiBank(questions), "banco-qti.zip");
+                note("Banco QTI descargado exitosamente.", "ok");
               } catch (cause) {
                 note(cause instanceof Error ? cause.message : "No se pudo exportar QTI.", "bad");
+              } finally {
+                setExportingQti(false);
               }
             }}
           >
             <DownloadSimple size={18} aria-hidden="true" />
-            Exportar banco QTI
+            {exportingQti ? "Exportando banco…" : "Exportar banco QTI"}
           </button>
           <div>
             <strong>
