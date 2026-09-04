@@ -11,29 +11,28 @@ export const metadata = {
     "Respuestas sobre cuentas institucionales, secciones, cálculo de notas en la escala 1,0 a 7,0, biblioteca de estudio y aplicación móvil de Centro de Estudio UBB.",
 };
 
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: CATEGORIAS_FAQ.flatMap((categoria) =>
+    categoria.preguntas.map((p) => ({
+      "@type": "Question",
+      name: p.pregunta,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: p.respuesta.join(" "),
+      },
+    }))
+  ),
+};
+
+const FAQ_JSON_LD_STRING = JSON.stringify(FAQ_JSON_LD).replace(/</g, "\\u003c");
+
 // Implements: REQ-HELP-01, REQ-HELP-06, REQ-HELP-09, REQ-HELP-10, REQ-SEO-03
 export default function FaqPage() {
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: CATEGORIAS_FAQ.flatMap((categoria) =>
-      categoria.preguntas.map((p) => ({
-        "@type": "Question",
-        name: p.pregunta,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: p.respuesta.join(" "),
-        },
-      }))
-    ),
-  };
-
   return (
     <main className="policy-page">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSON_LD_STRING }} />
       <a className="skip-link" href="#contenido-principal">
         Saltar al contenido principal
       </a>

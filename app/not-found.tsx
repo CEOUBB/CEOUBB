@@ -1,12 +1,13 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Question } from "@phosphor-icons/react";
-import { motion, useReducedMotion } from "motion/react";
-import type { Transition } from "motion/react";
+import { ArrowLeft, Question } from "@phosphor-icons/react/ssr";
 import { SiteFooter } from "./site-footer";
+
+export const metadata = {
+  title: "Página no encontrada · Centro de Estudio UBB",
+  description:
+    "El recurso o página solicitada no está disponible en la plataforma académica de Centro de Estudio UBB.",
+};
 
 /*
   Implements: REQ-UI-404
@@ -25,32 +26,19 @@ import { SiteFooter } from "./site-footer";
              Cuerpo explicativo y botones de acción en Manrope (sans-serif moderna y legible).
   SPACE:     Rhythm de sección espacioso (min-h-[70vh] flex items-center justify-center p-6), espaciado interno estricto (gap-4, p-8).
   SHAPE:     Radio canónico rounded-2xl, micro-border perimetral border-surface-border.
-  MOTION:    Envoltura con useReducedMotion(). Animación sutil de entrada (opacity y translateY <= 8px,
-             física de muelle crítico stiffness: 340, damping: 28), 0ms en reducción de movimiento.
+  MOTION:    Animación CSS fluida respetando prefers-reduced-motion (0ms de transición bajo reducción de movimiento).
   SIGNATURE: Composición sobria con isotipo institucional de CEOUBB, mensaje empático en español ("Página no encontrada")
              y botón accesible con icono Phosphor ArrowLeft hacia "/".
 */
 
 export default function NotFound() {
-  const prefersReduced = useReducedMotion();
-  const mainRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    // Foco accesible programático para tecnologías de asistencia
-    mainRef.current?.focus();
-  }, []);
-
-  const transition: Transition = prefersReduced
-    ? { duration: 0 }
-    : { type: "spring", stiffness: 340, damping: 28, mass: 0.8 };
-
   return (
     <div className="flex min-h-screen flex-col bg-surface-base text-text-primary">
       <a className="skip-link" href="#main-content">
         Saltar al contenido principal
       </a>
 
-      <header className="policy-head" role="banner">
+      <header className="policy-head">
         <Link className="app-brand" href="/">
           <Image
             src="/brand/ubb-shield.webp"
@@ -69,16 +57,10 @@ export default function NotFound() {
 
       <main
         id="main-content"
-        ref={mainRef}
         tabIndex={-1}
         className="flex flex-1 items-center justify-center px-4 py-12 outline-none sm:px-6"
       >
-        <motion.div
-          initial={{ opacity: prefersReduced ? 1 : 0, y: prefersReduced ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transition}
-          className="w-full max-w-lg rounded-2xl border border-surface-border bg-surface-raised p-8 text-center shadow-xs sm:p-10"
-        >
+        <div className="w-full max-w-lg rounded-2xl border border-surface-border bg-surface-raised p-8 text-center shadow-xs transition-transform duration-150 motion-reduce:transform-none sm:p-10">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-surface-border bg-surface-base">
             <Image
               src="/favicon.svg"
@@ -121,7 +103,7 @@ export default function NotFound() {
               Preguntas frecuentes
             </Link>
           </div>
-        </motion.div>
+        </div>
       </main>
 
       <SiteFooter />
