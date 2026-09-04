@@ -11,10 +11,29 @@ export const metadata = {
     "Respuestas sobre cuentas institucionales, secciones, cálculo de notas en la escala 1,0 a 7,0, biblioteca de estudio y aplicación móvil de Centro de Estudio UBB.",
 };
 
-// Implements: REQ-HELP-01, REQ-HELP-06, REQ-HELP-09, REQ-HELP-10
+// Implements: REQ-HELP-01, REQ-HELP-06, REQ-HELP-09, REQ-HELP-10, REQ-SEO-03
 export default function FaqPage() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: CATEGORIAS_FAQ.flatMap((categoria) =>
+      categoria.preguntas.map((p) => ({
+        "@type": "Question",
+        name: p.pregunta,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: p.respuesta.join(" "),
+        },
+      }))
+    ),
+  };
+
   return (
     <main className="policy-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <a className="skip-link" href="#contenido-principal">
         Saltar al contenido principal
       </a>
