@@ -11,11 +11,13 @@ import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
   countdown,
   dayOf,
+  evaluationUrgency,
   firstName,
   getSantiagoDateISO,
   nextEntry,
   shortDate,
   stagger,
+  weekdayOf,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
 
@@ -47,6 +49,7 @@ export function CoursesDashboard({
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
+  const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useReducedMotion();
 
   const handleOpenCourse = useCallback(
@@ -100,96 +103,135 @@ export function CoursesDashboard({
           Bienvenid{user.name.trim().toLowerCase().endsWith("a") ? "a" : "o"},{" "}
           {firstName(user.name)}
         </h1>
+        {/* La línea de contexto es la del rol que mira. Un docente no tiene
+            carrera ni rinde evaluaciones: esos dos datos ocupaban sitio sin
+            decirle nada. Lo suyo son las secciones que dicta este período. */}
         <p>
-          <span>{user.carrera?.trim() ? user.carrera.trim() : "Sin carrera"}</span>
+          {teaches ? (
+            <span>
+              <b className="num">{courses.length}</b>{" "}
+              {courses.length === 1 ? "sección a tu cargo" : "secciones a tu cargo"}
+            </span>
+          ) : (
+            <span>{user.carrera?.trim() ? user.carrera.trim() : "Sin carrera"}</span>
+          )}
           <span>·</span>
           <span>
             Periodo <b className="num">{courses[0]?.periodId ?? PERIOD}</b>
           </span>
-          <span>·</span>
-          <span>
-            <b className="num">{entries.length}</b>{" "}
-            {entries.length === 1 ? "evaluación" : "evaluaciones"} en el calendario
-          </span>
+          {!teaches && (
+            <>
+              <span>·</span>
+              <span>
+                <b className="num">{entries.length}</b>{" "}
+                {entries.length === 1 ? "evaluación" : "evaluaciones"} en el calendario
+              </span>
+            </>
+          )}
         </p>
       </section>
       {next && (
-        <div className="next-strip" style={{ "--course-tone": next.tone } as React.CSSProperties}>
-          <div className="next-strip-date">
-            <span className="next-strip-day num">{dayOf(next.date)}</span>
-            <span className="next-strip-month">{shortDate(next.date).slice(3)}</span>
+        <section className="dashboard-section">
+          <div className="section-title">
+            <h2>Próxima evaluación</h2>
           </div>
-          <div className="next-strip-body">
-            {/* El punto medio separa en una línea; en el teléfono el nombre del
-                ramo baja a su propio renglón y el separador quedaría colgando. */}
-            <p className="next-strip-line">
-              Próxima evaluación<span className="next-strip-sep"> · </span>
-              <strong>{next.course}</strong>
-            </p>
-            <p className="next-strip-detail">{next.detail}</p>
-          </div>
-          <div className="next-strip-end">
-            <time className="next-strip-count num" dateTime={next.date}>
-              {countdown(next.date)}
+          {/*
+            La ficha de cartelera. Cuatro piezas sueltas en una rejilla —fecha,
+            asunto, cuenta atrás y entrada al aula— para que escritorio y teléfono
+            reordenen las mismas celdas sin duplicar marcado: en ancho van en fila
+            con la cuenta atrás y la acción apoyadas contra un filete; estrechada,
+            la fecha y la cuenta atrás comparten el renglón de arriba, el asunto
+            ocupa el ancho completo y la acción se convierte en el pie de la ficha.
+          */}
+          <article
+            className="next-eval"
+            style={{ "--course-tone": next.tone } as React.CSSProperties}
+          >
+            <time className="next-eval-date" dateTime={next.date}>
+              <span className="next-eval-weekday">{weekdayOf(next.date)}</span>
+              <span className="next-eval-day num">{dayOf(next.date)}</span>
+              <span className="next-eval-month">{shortDate(next.date).slice(3)}</span>
             </time>
+            <h3 className="next-eval-title">{next.detail}</h3>
+            <p className="next-eval-meta">
+              <span className="next-eval-course">
+                <span aria-hidden="true" className="next-eval-dot" />
+                {next.course}
+              </span>
+              {nextCourse && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="num">{nextCourse.code}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    Sección <span className="num">{nextCourse.section}</span>
+                  </span>
+                </>
+              )}
+            </p>
+            <span className="next-eval-count num" data-urgency={evaluationUrgency(next.date)}>
+              {countdown(next.date)}
+            </span>
             {nextCourse && (
               <button
                 aria-label={`Ir al ramo ${nextCourse.name}`}
-                className="next-strip-action"
+                className="next-eval-action"
                 onClick={() => openCourse(nextCourse)}
                 type="button"
               >
                 Ir al ramo <ArrowRight aria-hidden="true" size={15} />
               </button>
             )}
-          </div>
-        </div>
+          </article>
+        </section>
       )}
-      <div className="section-title">
-        <h2>Mis cursos</h2>
-      </div>
-      <m.section
-        animate="show"
-        className="course-grid"
-        initial={shouldReduceMotion ? "show" : "hidden"}
-        variants={shouldReduceMotion ? undefined : stagger}
-      >
-        {/* Un solo estado vacío: antes el portal apilaba dos cajas que decían
+      <section className="dashboard-section">
+        <div className="section-title">
+          <h2>Mis cursos</h2>
+        </div>
+        <m.div
+          animate="show"
+          className="course-grid"
+          initial={shouldReduceMotion ? "show" : "hidden"}
+          variants={shouldReduceMotion ? undefined : stagger}
+        >
+          {/* Un solo estado vacío: antes el portal apilaba dos cajas que decían
             lo mismo, una encima de la otra. */}
-        {courses.length === 0 && (
-          <div className="course-empty-state">
-            <EmptyState
-              icon={ChalkboardTeacher}
-              title={
-                manageCourses
-                  ? "Todavía no administras ningún ramo"
-                  : "No tienes ramos vigentes en este período"
-              }
-              description={
-                manageCourses
-                  ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
-                  : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
-              }
-              action={
-                manageCourses ? (
-                  <button className="empty-state-action" onClick={manageCourses} type="button">
-                    Administrar ramos <ArrowRight size={15} />
-                  </button>
-                ) : undefined
-              }
+          {courses.length === 0 && (
+            <div className="course-empty-state">
+              <EmptyState
+                icon={ChalkboardTeacher}
+                title={
+                  manageCourses
+                    ? "Todavía no administras ningún ramo"
+                    : "No tienes ramos vigentes en este período"
+                }
+                description={
+                  manageCourses
+                    ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
+                    : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
+                }
+                action={
+                  manageCourses ? (
+                    <button className="empty-state-action" onClick={manageCourses} type="button">
+                      Administrar ramos <ArrowRight size={15} />
+                    </button>
+                  ) : undefined
+                }
+              />
+            </div>
+          )}
+          {courses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              summary={activitySummaryByCourse.get(course.id)}
+              shouldReduceMotion={Boolean(shouldReduceMotion)}
+              onOpen={handleOpenCourse}
             />
-          </div>
-        )}
-        {courses.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            summary={activitySummaryByCourse.get(course.id)}
-            shouldReduceMotion={Boolean(shouldReduceMotion)}
-            onOpen={handleOpenCourse}
-          />
-        ))}
-      </m.section>
+          ))}
+        </m.div>
+      </section>
       {archivedCourses.length > 0 && (
         <details className="archived-courses">
           <summary>
