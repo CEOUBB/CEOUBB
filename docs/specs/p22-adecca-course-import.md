@@ -213,7 +213,7 @@ Se agregan `adecca_imports`, `adecca_import_run_items` y `pending_adecca_matricu
 - [x] **T5 — REQ-ADECCA-03/06/09/10:** implementar diálogo dinámico, responsive y accesible junto al importador Moodle. `pnpm run lint && pnpm run typecheck`
 - [x] **T6 — REQ-ADECCA-06/11:** integrar reclamo de pendientes, privacidad, manual operativo y handoff. `pnpm run verify:invariants`
 - [x] **T7 — REQ-ADECCA-01..11:** ejecutar focal, fast, invariantes, lint, formato, Functions, suite completa y QA web móvil/escritorio. `pnpm test`
-- [ ] **T8 — REQ-ADECCA-01..11:** marcar `VERIFICADA`, commit/push en español y abrir PR en español sin desplegar producción.
+- [x] **T8 — REQ-ADECCA-01..11:** marcar `VERIFICADA LOCALMENTE`, commit/push en español y abrir [PR #151](https://github.com/CEOUBB/CEOUBB/pull/151) en español sin desplegar producción. CI iniciado; la validación de despliegue permanece pendiente.
 
 ## 9. Evidencia de verificación y límites de entrega — 2026-09-05
 
