@@ -166,6 +166,7 @@ export function AdminView() {
                 </span>
               ) : (
                 <button
+                  aria-label={`Archivar el período ${period.nombre}`}
                   className="secondary-button"
                   disabled={archivingPeriod.length > 0}
                   onClick={() => archivePeriod(period)}
@@ -204,7 +205,7 @@ export function AdminView() {
               }}
               aria-label="Limpiar búsqueda"
             >
-              <X size={14} />
+              <X aria-hidden="true" size={14} />
             </button>
           )}
         </div>
@@ -257,7 +258,7 @@ export function AdminView() {
             disabled={page <= 1 || loading}
             aria-label="Página anterior"
           >
-            <CaretLeft size={16} />
+            <CaretLeft aria-hidden="true" size={16} />
             <span>Anterior</span>
           </button>
           <span className="admin-page-info">
@@ -271,7 +272,7 @@ export function AdminView() {
             aria-label="Página siguiente"
           >
             <span>Siguiente</span>
-            <CaretRight size={16} />
+            <CaretRight aria-hidden="true" size={16} />
           </button>
         </div>
       )}
