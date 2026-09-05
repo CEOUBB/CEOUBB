@@ -53,8 +53,9 @@ function InventorySection() {
       <p>
         Tus matrículas y el estado de cada una, las secciones a las que perteneces (asignatura,
         período académico y número de sección) y si estás en ellas como estudiante o como docente.
-        Cuando un docente importa una nómina de Moodle, podemos conservar temporalmente el correo
-        institucional de una cuenta que todavía no existe para vincularla cuando inicie sesión.
+        Cuando un docente importa una nómina desde Moodle o ADECCA, podemos conservar temporalmente
+        el correo institucional de una cuenta que todavía no existe para vincularla cuando inicie
+        sesión.
       </p>
 
       <h3>Desempeño académico</h3>

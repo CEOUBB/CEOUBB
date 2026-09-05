@@ -3283,10 +3283,13 @@ img {
 }
 .classroom-meta {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-xs);
   flex: 0 0 auto;
+  max-width: 100%;
 }
 
 /* Las tres acciones comparten geometría para leerse como un grupo, y el peso
@@ -11893,6 +11896,11 @@ mark,
   box-shadow: 0 24px 80px rgb(15 23 42 / 22%);
 }
 
+.moodle-import-dialog[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
 .moodle-import-dialog::backdrop {
   background: rgb(0 43 92 / 36%);
 }
@@ -11919,6 +11927,12 @@ mark,
   margin-block: var(--space-xxs);
 }
 
+.moodle-import-disclaimer {
+  max-width: 62ch;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .moodle-import-dialog__header p,
 .moodle-import-file small,
 .moodle-import-source small,
@@ -11938,8 +11952,10 @@ mark,
 
 .moodle-import-dialog__body {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: var(--space-lg);
-  max-height: calc(100dvh - 240px);
+  min-height: 0;
   padding: var(--space-lg);
   overflow-y: auto;
 }
@@ -12002,6 +12018,58 @@ mark,
   font-weight: 750;
 }
 
+.moodle-import-compatible {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
+}
+
+.moodle-import-compatible h3,
+.moodle-import-compatible h4 {
+  margin: 0;
+}
+
+.moodle-import-compatible h3 {
+  font-size: 0.95rem;
+}
+
+.moodle-import-compatible h4 {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.moodle-import-compatible > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.moodle-import-compatible section {
+  min-width: 0;
+}
+
+.moodle-import-compatible ul {
+  margin-block-start: var(--space-xs);
+}
+
+.moodle-import-compatible li {
+  overflow-wrap: anywhere;
+}
+
+.moodle-import-compatible li > span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.moodle-import-compatible small {
+  color: var(--text-muted);
+}
+
 .moodle-import-preview details {
   padding: var(--space-md);
   border: 1px solid var(--border-hairline);
@@ -12024,12 +12092,15 @@ mark,
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
+  min-height: 44px;
   padding: var(--space-md);
   border-radius: 14px;
   background: var(--canvas-soft);
+  cursor: pointer;
 }
 
 .moodle-import-participants input {
+  flex: 0 0 auto;
   width: 20px;
   height: 20px;
 }
@@ -12064,6 +12135,7 @@ mark,
 }
 
 .moodle-import-dialog__footer {
+  flex-wrap: wrap;
   justify-content: flex-end;
   border-block-start: 1px solid var(--border-hairline);
 }
@@ -12073,6 +12145,16 @@ mark,
 }
 
 @media (max-width: 600px) {
+  .classroom-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .classroom-meta > button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
   .moodle-import-dialog {
     width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
@@ -12098,6 +12180,10 @@ mark,
 
   .moodle-import-preview dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .moodle-import-compatible > div {
+    grid-template-columns: 1fr;
   }
 
   .moodle-import-dialog__footer {
