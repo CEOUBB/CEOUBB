@@ -3,6 +3,8 @@ import {
   auditIpRetentionCutoff,
   purgeAgedAuditIpAddresses,
 } from "../../../../lib/services/academic-catalog";
+import { purgeExpiredPendingAdeccaEnrollments } from "../../../../lib/services/adecca-import";
+import { purgeExpiredPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +28,18 @@ export async function GET(request: Request) {
 
   try {
     const purged = await purgeAgedAuditIpAddresses(auditIpRetentionCutoff(new Date()));
-    return Response.json({ purged });
+    let pendingAdeccaPurged = 0;
+    let pendingMoodlePurged = 0;
+    for (let batch = 0; batch < 50; batch += 1) {
+      const [adecca, moodle] = await Promise.all([
+        purgeExpiredPendingAdeccaEnrollments(),
+        purgeExpiredPendingMoodleEnrollments(),
+      ]);
+      pendingAdeccaPurged += adecca;
+      pendingMoodlePurged += moodle;
+      if (adecca < 100 && moodle < 100) break;
+    }
+    return Response.json({ purged, pendingAdeccaPurged, pendingMoodlePurged });
   } catch {
     return Response.json({ error: "No se pudo ejecutar la purga de retención." }, { status: 500 });
   }

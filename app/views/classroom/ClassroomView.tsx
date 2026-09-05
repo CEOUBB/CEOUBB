@@ -27,6 +27,11 @@ const MoodleImportDialog = dynamic(
   { ssr: false }
 );
 
+const AdeccaImportDialog = dynamic(
+  () => import("./AdeccaImportDialog").then((module) => module.AdeccaImportDialog),
+  { ssr: false }
+);
+
 const InteropSection = dynamic(
   () => import("./InteropSection").then((module) => module.InteropSection),
   { ssr: false }
@@ -194,6 +199,7 @@ export function ClassroomView({
               {canManageContent && (
                 <>
                   {canTeach && <MoodleImportDialog course={course} />}
+                  {canTeach && <AdeccaImportDialog course={course} />}
                   <button className="publication-cta" onClick={startPublication} type="button">
                     <Plus size={17} weight="bold" aria-hidden="true" />
                     Nueva publicación

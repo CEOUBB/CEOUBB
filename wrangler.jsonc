@@ -1,13 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ceoubb",
-  "main": ".open-next/worker.js",
+  "main": "cloudflare-worker.js",
   "compatibility_date": "2025-02-15",
   "compatibility_flags": ["nodejs_compat"],
   // Hardening: Desactivar workers.dev en producción para obligar paso por el WAF de ceoubb.com
   "workers_dev": false,
   "preview_urls": false,
   "minify": true,
+  "triggers": {
+    "crons": ["30 5 * * *"],
+  },
   "routes": [
     {
       "pattern": "ceoubb.com",

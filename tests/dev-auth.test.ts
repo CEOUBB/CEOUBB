@@ -88,6 +88,40 @@ before(async () => {
       updated_at text NOT NULL
     );`
   );
+  await db.run(
+    sql`CREATE TABLE IF NOT EXISTS adecca_imports (
+      id text PRIMARY KEY NOT NULL,
+      seccion_id text NOT NULL REFERENCES secciones(id),
+      fingerprint text NOT NULL,
+      source_key text NOT NULL,
+      actor_id text REFERENCES users(id),
+      status text NOT NULL DEFAULT 'running',
+      source_course_id text NOT NULL DEFAULT '',
+      source_course_name text NOT NULL DEFAULT '',
+      source_adecca_version text NOT NULL DEFAULT '',
+      source_format text NOT NULL,
+      source_file_name text NOT NULL,
+      content_count integer NOT NULL DEFAULT 0,
+      file_count integer NOT NULL DEFAULT 0,
+      participant_count integer NOT NULL DEFAULT 0,
+      warning_count integer NOT NULL DEFAULT 0,
+      report_json text NOT NULL DEFAULT '{}',
+      created_at text NOT NULL,
+      updated_at text NOT NULL
+    );`
+  );
+  await db.run(
+    sql`CREATE TABLE IF NOT EXISTS pending_adecca_matriculas (
+      id text PRIMARY KEY NOT NULL,
+      seccion_id text NOT NULL REFERENCES secciones(id),
+      email text NOT NULL,
+      rol_seccion text NOT NULL DEFAULT 'student',
+      source_import_id text NOT NULL REFERENCES adecca_imports(id),
+      expires_at text NOT NULL,
+      created_at text NOT NULL,
+      updated_at text NOT NULL
+    );`
+  );
 });
 
 test("REQ-AUTH-06: Aislamiento estricto de producción en autenticación de testing", () => {
