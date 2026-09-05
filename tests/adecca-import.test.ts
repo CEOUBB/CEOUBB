@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { File as NodeFile } from "node:buffer";
+import { spawnSync } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 import { deflateRawSync } from "node:zlib";
@@ -19,7 +20,12 @@ import {
   users,
 } from "../db/schema.ts";
 import type { PublicUser } from "../lib/auth.ts";
-import { containsForbiddenSecretMaterial, safeAdeccaHttpUrl } from "../lib/adecca/privacy.ts";
+import {
+  containsCredentialLikeMaterial,
+  containsForbiddenSecretMaterial,
+  containsUnsafeHttpUrl,
+  safeAdeccaHttpUrl,
+} from "../lib/adecca/privacy.ts";
 import {
   ADECCA_IMPORT_REQUIREMENTS,
   MAX_ADECCA_ARCHIVE_BYTES,
@@ -50,6 +56,48 @@ import {
 import { createIsolatedTestDb } from "./helpers/db-harness.ts";
 
 const encoder = new TextEncoder();
+
+test("REQ-ADECCA-02: el recorte de puntuación conserva la clasificación de URLs", () => {
+  for (const suffix of ["", ")", ",", ".", ";", "),.;)"]) {
+    assert.equal(containsCredentialLikeMaterial(`Ver https://example.org/guia${suffix}`), false);
+    assert.equal(containsUnsafeHttpUrl(`Ver https://example.org/guia${suffix}`), false);
+    assert.equal(
+      containsCredentialLikeMaterial(`Ver https://usuario:abc@example.org/guia${suffix}`),
+      true
+    );
+    assert.equal(containsUnsafeHttpUrl(`Ver https://adecca.ubiobio.cl/guia${suffix}`), true);
+  }
+  assert.equal(containsCredentialLikeMaterial("https://example.org/guia),.;x"), false);
+  assert.equal(containsUnsafeHttpUrl("https://example.org/guia),.;x"), false);
+  assert.equal(containsCredentialLikeMaterial("https://usuario):abc@example.org/guia)."), true);
+  assert.equal(
+    containsUnsafeHttpUrl("https://example.org/guia https://adecca.ubiobio.cl/guia)."),
+    true
+  );
+});
+
+test("REQ-ADECCA-02: las URLs con puntuación adversarial no bloquean el análisis", () => {
+  const privacyModule = new URL("../lib/adecca/privacy.ts", import.meta.url).href;
+  const script = `
+    import assert from "node:assert/strict";
+    import { containsCredentialLikeMaterial, containsUnsafeHttpUrl } from ${JSON.stringify(privacyModule)};
+    for (const terminal of ["x", ""]) {
+      const url = "https://example.org/guia" + ")".repeat(200_000) + terminal;
+      assert.equal(containsCredentialLikeMaterial(url), false);
+      assert.equal(containsUnsafeHttpUrl(url), false);
+    }
+  `;
+  const result = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "--input-type=module", "-e", script],
+    {
+      encoding: "utf8",
+      timeout: 5_000,
+    }
+  );
+  assert.equal(result.error, undefined, "El análisis de URLs excedió cinco segundos");
+  assert.equal(result.status, 0, result.stderr);
+});
 
 function concat(parts: Uint8Array[]) {
   const output = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));

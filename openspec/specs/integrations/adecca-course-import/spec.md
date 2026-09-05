@@ -30,6 +30,15 @@ IF an archive exceeds 250 MiB compressed, 512 MiB expanded, 20,000 entries, cont
 - **THEN** the analyzer SHALL reject the package
 - **AND** Turso, Firestore and Storage SHALL remain unchanged
 
+The URL privacy checks SHALL remove trailing prose punctuation in linear time, without regular-expression backtracking, while preserving credential and unsafe-link detection.
+
+#### Scenario: A URL contains adversarial punctuation
+
+- **GIVEN** imported text contains an HTTP URL with 200,000 repeated closing parentheses, followed by a non-punctuation character or the end of the URL
+- **WHEN** credential and unsafe-link detection inspect the text
+- **THEN** both checks SHALL complete within the isolated regression process budget of five seconds
+- **AND** punctuation inside the URL SHALL remain intact and unsafe URLs SHALL still be rejected
+
 ### Requirement: Preview the Local Reconciliation Plan (REQ-ADECCA-03)
 
 WHILE a valid source has been analyzed but not confirmed, the system SHALL show source, destination, folders, posts, files, upload bytes, students and omissions without persistent writes.

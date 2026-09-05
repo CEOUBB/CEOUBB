@@ -174,11 +174,19 @@ export function isSecretFieldName(value: string) {
   );
 }
 
+function trimUrlProsePunctuation(value: string) {
+  let end = value.length;
+  while (end > 0 && "),.;".includes(value.charAt(end - 1))) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
 export function containsCredentialLikeMaterial(value: string) {
   if (containsDirectCredentialMaterial(value)) return true;
   HTTP_URL_PATTERN.lastIndex = 0;
   for (const match of value.matchAll(HTTP_URL_PATTERN)) {
-    const url = parsedHttpUrl(match[0].replace(/[),.;]+$/u, ""));
+    const url = parsedHttpUrl(trimUrlProsePunctuation(match[0]));
     if (url && (url.username || url.password || urlContainsSecretMaterial(url))) return true;
   }
   return false;
@@ -249,7 +257,7 @@ export function safeAdeccaHttpUrl(value: string) {
 export function containsUnsafeHttpUrl(value: string) {
   HTTP_URL_PATTERN.lastIndex = 0;
   for (const match of value.matchAll(HTTP_URL_PATTERN)) {
-    const candidate = match[0].replace(/[),.;]+$/u, "");
+    const candidate = trimUrlProsePunctuation(match[0]);
     if (!safeAdeccaHttpUrl(candidate)) return true;
   }
   return false;

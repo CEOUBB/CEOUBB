@@ -74,6 +74,8 @@ Companion files:
 
 ## Active work
 
+- [REVIEW] **P22: corrección CodeQL en PR #151 (2026-09-05).** Codex/Juako, rama `codex/importador-adecca`, base `origin/main` verificada en `f9fc4e4`. Corregidos ambos recortes de puntuación de URLs en `lib/adecca/privacy.ts` mediante un recorrido inverso lineal compartido, sin omitir alertas ni modificar reglas de seguridad. Regresión RED/GREEN: 200.000 paréntesis superaban cinco segundos; ahora la misma prueba termina en unos 140 ms. Verificación local: lint, formato, compilación/TypeScript y `pnpm test` 596/596, incluidas 19/19 ADECCA; especificación actualizada y pruebas selladas. Invariantes y arnés rápido ejecutados por hooks de publicación. El commit anterior ya aprobó CI, emuladores, Android, Semgrep, tamaño y compilación/despliegue de preview Cloudflare; pendiente nueva comprobación remota CodeQL del commit correctivo. Sin fusión ni despliegue productivo.
+
 - [DONE] **CEO-83: Rediseño integral de los esqueletos de carga (2026-09-04).** Felipe Arce / Claude Code, rama `claude/skeleton-design-improvements-d8d29d`. Los esqueletos ahora replican el contenido real de cada pantalla en vez de aproximarlo:
   - **Barrido más calmo:** `.sk::after` baja la cresta de `rgba(255,255,255,0.92)` a `0.5` y ensancha el degradado (1.9 s); nuevo hueso `.sk-quiet` para lo que en la pantalla real es texto secundario, de modo que la silueta conserva jerarquía.
   - **Copia fija escrita de verdad:** los títulos, bajadas, pestañas y rótulos que no dependen de datos (`Calendario`, `Avisos y mensajes`, `Configuración`, `Administración de cuentas`, `Recursos de estudio`, `Administrar ramos`) se renderizan como texto y ya no parpadean al resolver el módulo.

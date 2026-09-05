@@ -224,3 +224,12 @@ QA de navegador con base local y datos sintéticos: botón junto a Moodle, carga
 El empaquetado OpenNext local compiló Next.js, pero no completó el artefacto Cloudflare: Windows rechazó symlinks y, tras un adaptador temporal de junctions, el empaquetador intentó resolver binarios nativos de `sharp`. El adaptador no forma parte de la entrega. GitHub debe confirmar el build Linux y su tamaño antes de aprobar despliegue. El ejecutor local de pnpm requirió `pnpm_config_verify_deps_before_run=false` para evitar reinstalaciones automáticas; no se cambiaron dependencias ni políticas del repositorio.
 
 Aplicar migración 0013 antes de habilitar la nueva versión y configurar `CRON_SECRET`. Cancelar conserva escrituras ya confirmadas; puede dejar blobs huérfanos antes del lote de publicaciones, al igual que una reimportación desde otra cuenta. La recuperación usa el mismo actor, paquete y plan. Se conserva el último trabajo por sección/huella, no un historial por reintento. Estas limitaciones y la revisión de documentos binarios están detalladas en el manual operativo.
+
+## 10. Corrección CodeQL — REQ-ADECCA-02 — 2026-09-05
+
+El mantenedor solicita corregir los fallos de la PR #151. CodeQL identifica dos usos del mismo recorte por expresión regular en `lib/adecca/privacy.ts` (check `101312119399`), con retroceso cuadrático ante puntuación repetida. Alcance aprobado: reemplazar exclusivamente ese recorte por un recorrido inverso lineal compartido, preservando la detección de secretos, datos personales y enlaces ADECCA. Sin supresiones de CodeQL, cambios de políticas ni dependencias.
+
+- [x] RED: regresiones de semántica y ejecución aislada con 200.000 paréntesis; fallo reproducido por `ETIMEDOUT` al superar cinco segundos antes del cambio.
+- [x] GREEN/REFACTOR: recorte lineal compartido entre los dos puntos señalados; las mismas aserciones pasan, con la ejecución aislada en aproximadamente 140 ms.
+- [x] VERIFY local: formato, lint y `pnpm test` con compilación, TypeScript y 596/596 pruebas; 19/19 regresiones ADECCA. El arnés rápido y los invariantes vuelven a ejecutarse mediante los hooks de publicación.
+- [ ] VERIFY remoto: nueva comprobación CodeQL del commit correctivo en la misma PR; no se desactiva ni se descarta ninguna alerta.
