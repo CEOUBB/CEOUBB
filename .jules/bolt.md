@@ -39,3 +39,10 @@
 - **Attempted / Identified Solution:** Reemplazo por bucles `for..of` directos con `map.set(...)` sin asignación de tuplas intermedias.
 - **Outcome / Learning:** Se eliminó la doble asignación de memoria por elemento en la generación de notificaciones, reduciendo la presión sobre el recolector de basura en re-renderizados frecuentes del portal.
 - **Future Rule:** Construir objetos `Map` iterando directamente con `for..of` e invocando `map.set()` en lugar de mapear colecciones a arreglos temporales de tuplas `[k, v]`.
+
+## 2026-09-05 - Construcción de Map de cursos en el planificador (`lib/planner.ts`)
+
+- **Finding:** `plannerItems` utilizaba `new Map(input.courses.map((course) => [course.id, course]))`, generando arreglos de tuplas intermedias `[id, course]` en la construcción del alimentador de eventos.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(course.id, course)`.
+- **Outcome / Learning:** Se eliminó la asignación temporal de arreglos de tuplas por elemento en cada renderizado y filtrado del calendario, reduciendo la recolección de basura.
+- **Future Rule:** Construir mapas directamente con iteraciones `for..of` en funciones puras de transformación llamadas frecuentemente.
