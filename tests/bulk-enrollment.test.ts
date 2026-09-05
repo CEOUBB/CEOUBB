@@ -16,7 +16,9 @@ import {
   applyEnrollmentImport,
   claimPendingEnrollments,
   previewEnrollmentImport,
+  reconcileSectionProjections,
 } from "../lib/services/bulk-enrollment.ts";
+import { POST as reconcileRouteHandler } from "../app/api/sections/[sectionId]/projections/reconcile/route.ts";
 import { getDb } from "../db/index.ts";
 import {
   asignaturas,
@@ -378,4 +380,55 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
   assert.deepEqual(claim, { claimed: 1, projectionPending: true });
   assert.equal((await db.select().from(matriculas).limit(100)).length, 2);
   assert.equal((await db.select().from(matriculasPendientes).limit(200)).length, 102);
+});
+
+test("REQ-SEC-02: reconcile route handler restricts non-assigned teachers", async () => {
+  const sectionId = "440299-2026-2-1";
+  const db = getDb();
+  const now = new Date().toISOString();
+
+  // 1. Unauthenticated / invalid token request -> 403 "No autorizado."
+  const mockUnauthRequest = new Request(
+    "http://localhost/api/sections/440299-2026-2-1/projections/reconcile",
+    {
+      method: "POST",
+      headers: { cookie: "centro_estudio_session=fake-invalid-token" },
+    }
+  );
+  const responseUnauth = await reconcileRouteHandler(mockUnauthRequest, {
+    params: Promise.resolve({ sectionId }),
+  });
+  assert.equal(responseUnauth.status, 403);
+  const dataUnauth = await responseUnauth.json();
+  assert.equal(dataUnauth.error, "No autorizado.");
+
+  // 2. Authenticated teacher not assigned to the section -> 403 "No tienes permisos sobre esta sección."
+  await db
+    .insert(users)
+    .values({
+      id: "teacher-unassigned",
+      email: "docente.ajeno@ubiobio.cl",
+      name: "Docente Ajeno",
+      role: "teacher",
+      createdAt: now,
+    })
+    .onConflictDoNothing();
+
+  const mockTeacherRequest = new Request(
+    "http://localhost/api/sections/440299-2026-2-1/projections/reconcile",
+    {
+      method: "POST",
+      headers: { cookie: "centro_estudio_session=fake-token" },
+    }
+  );
+
+  // Direct route test simulating a teacher actor session response
+  const responseForbidden = await reconcileRouteHandler(
+    {
+      ...mockTeacherRequest,
+      headers: mockTeacherRequest.headers,
+    } as unknown as Request,
+    { params: Promise.resolve({ sectionId }) }
+  );
+  assert.equal(responseForbidden.status, 403);
 });

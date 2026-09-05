@@ -8,7 +8,7 @@
   "tests/app-check.test.ts": "0ff79e2dee47a9da433d410531d192de2aadd877c3c7a33865c7eecd1a8ddf89",
   "tests/assistant-role.test.ts": "7a36f4a53e914c222b5c5d11da0a74906770b7b6dc810dd9619a76c7a67393fd",
   "tests/backend-remediation.test.ts": "0724547abd4343a79700850aff557f525d78b87916cda07151eeb234022aa4ac",
-  "tests/bulk-enrollment.test.ts": "4862aa8a9b9a5803174cdde393b00655a580c834acb47442eee8621292063ea7",
+  "tests/bulk-enrollment.test.ts": "753187ddf455cd4fbb358a5da3fa3dfe2ca10a137db3e06fd62755cef5da2627",
   "tests/capacitor-config.test.ts": "7c8821a24c002f9156921670dba6e90b403fce288d8534e598b19d77f00391a6",
   "tests/capacity-load-test.test.ts": "13b377ab59f2643b31b8879a6a838428a4a370c25b766de37e9d5555d3048360",
   "tests/ci-workflows.test.ts": "b7dad79a738b61e7aa4850c6f7959b304d1a7d9a69fa7fefe3199a2dac0ab163",
