@@ -14,6 +14,7 @@ const {
   diffFeedback,
   diffScores,
   groupRowsByTeam,
+  mergeReplicatedScores,
   normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
@@ -528,7 +529,15 @@ exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (
             const previousFeedback = storedFeedbackMap(
               current.exists ? current.get("feedback") : {}
             );
-            const changes = diffScores(previousScores, row.scores);
+            /*
+              Una fila nacida de la réplica sólo describe las evaluaciones del
+              equipo. Escribirla tal cual sobre el expediente reemplazaría el
+              libro completo del compañero por esa única nota y la auditoría
+              registraría el resto como borrado.
+            */
+            // Implements: REQ-TEAM-02
+            const nextScores = mergeReplicatedScores(previousScores, row);
+            const changes = diffScores(previousScores, nextScores);
             if (changes.length === 0) continue;
             const nextFeedback = { ...previousFeedback };
             const feedbackChanges = changes.flatMap((change) => {
@@ -538,7 +547,14 @@ exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (
               delete nextFeedback[change.gradeItemId];
               return [{ gradeItemId: change.gradeItemId, ...feedbackChange }];
             });
-            pending.push({ row, ref: gradeRefs[index], nextFeedback, changes, feedbackChanges });
+            pending.push({
+              row,
+              ref: gradeRefs[index],
+              nextScores,
+              nextFeedback,
+              changes,
+              feedbackChanges,
+            });
           }
           if (pending.length === 0) return 0;
           let changedCount = 0;
@@ -546,7 +562,7 @@ exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (
             transaction.set(entry.ref, {
               uid: entry.row.userId,
               courseId,
-              scores: entry.row.scores,
+              scores: entry.nextScores,
               feedback: entry.nextFeedback,
               updatedBy: actor.actorUid,
               updatedAt: FieldValue.serverTimestamp(),

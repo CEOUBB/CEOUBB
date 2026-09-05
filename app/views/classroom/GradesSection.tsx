@@ -2,15 +2,11 @@
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { useReducedMotion } from "motion/react";
 import {
   ChatCenteredText,
-  CheckCircle,
   ClockCounterClockwise,
   GraduationCap,
   MagnifyingGlass,
-  Paperclip,
-  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
@@ -18,13 +14,9 @@ import {
   ClassroomState,
   ClassroomStudent,
   MAX_SUBMISSION_BYTES,
-  StudentSubmission,
-  SubmissionTeam,
   saveGradeFeedback,
   saveSimulation,
   saveStudentScores,
-  uploadStudentSubmission,
-  watchOwnSubmissions,
 } from "../../../lib/firebase-classroom-client";
 import {
   DEFAULT_EXEMPTION_GRADE,
@@ -52,6 +44,7 @@ import { EmptyState } from "./EmptyState";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
 import { TeamSubmissionPicker } from "./TeamSubmissionPicker";
+import { SubmissionSlot, useOwnSubmissions, useSubmissionUpload } from "./SubmissionSlot";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
 
 const GradeHistoryDialog = dynamic(
@@ -271,36 +264,13 @@ function StudentGrades({
             </button>
           ))}
         </div>
-        <aside className="grades-summary">
-          <div className="grades-average">
-            <strong className="num">
-              {summary.average === null ? "sin nota" : formatGrade(summary.average)}
-            </strong>
-            <div>
-              <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
-              <p>
-                <span className="num">{summary.gradedWeight}%</span> de{" "}
-                <span className="num">{summary.totalWeight}%</span> ya tiene nota
-              </p>
-            </div>
-          </div>
-          <dl className="grades-targets">
-            <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
-            <TargetLine
-              label={`Para eximirte con ${formatGrade(exemptionTarget)}`}
-              target={exempt}
-            />
-          </dl>
-          <p className="grades-note">
-            La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-            editar aquí.
-          </p>
-          {status.text && (
-            <p className={`tool-status ${status.tone}`} role="status">
-              {status.text}
-            </p>
-          )}
-        </aside>
+        <StudentGradesSummary
+          exemptionTarget={exemptionTarget}
+          exempt={exempt}
+          passing={passing}
+          status={status}
+          summary={summary}
+        />
         {detail && (
           <MobileSheet
             onOpenChange={(open) => !open && setDetail(null)}
@@ -399,34 +369,14 @@ function StudentGrades({
           </div>
         ))}
       </div>
-      <aside className="grades-summary">
-        <div className="grades-average">
-          <strong className="num">
-            {summary.average === null ? "sin nota" : formatGrade(summary.average)}
-          </strong>
-          <div>
-            <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
-            <p>
-              <span className="num">{summary.gradedWeight}%</span> de{" "}
-              <span className="num">{summary.totalWeight}%</span> ya tiene nota
-            </p>
-          </div>
-        </div>
-        <dl className="grades-targets">
-          <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
-          <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
-        </dl>
-        <p className="grades-note">
-          La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-          editar aquí. Cada entrega admite hasta {formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el
-          equipo docente del ramo.
-        </p>
-        {status.text && (
-          <p className={`tool-status ${status.tone}`} role="status">
-            {status.text}
-          </p>
-        )}
-      </aside>
+      <StudentGradesSummary
+        exemptionTarget={exemptionTarget}
+        exempt={exempt}
+        passing={passing}
+        status={status}
+        summary={summary}
+        withSubmissionNote
+      />
       {/* Implements: REQ-TEAM-02 */}
       {teamPicker && (
         <TeamSubmissionPicker
@@ -448,211 +398,58 @@ function StudentGrades({
 }
 
 /*
-  Buzón de entregas del estudiante. Vive dentro de la fila de la evaluación
-  porque una entrega no es una pantalla aparte: es el estado de esa evaluación.
-  La celda muestra sólo un estado a la vez —adjuntar, enviando o comprobante—
-  para que la tabla siga leyéndose de un vistazo.
+  Promedio, metas y avisos del estudiante. La tabla de escritorio y la lista de
+  teléfono muestran exactamente el mismo resumen; tenerlo dos veces escrito hacía
+  que cada ajuste de redacción se aplicara en un lado y se olvidara en el otro.
+  El teléfono omite la nota sobre el peso de las entregas porque allí la columna
+  de entrega no está a la vista.
 */
-// Implements: REQ-EVAL-01
-function useOwnSubmissions(courseId: string) {
-  /*
-    El identificador del ramo viaja junto a los comprobantes: al cambiar de aula
-    la lista anterior deja de coincidir y se descarta al derivar, sin reiniciar
-    estado durante el render.
-  */
-  const [state, setState] = useState<{ courseId: string; items: StudentSubmission[] }>({
-    courseId,
-    items: [],
-  });
-  useEffect(
-    () =>
-      watchOwnSubmissions(
-        courseId,
-        (items) => setState({ courseId, items }),
-        () => setState({ courseId, items: [] })
-      ),
-    [courseId]
-  );
-  return useMemo(() => {
-    const rows = state.courseId === courseId ? state.items : [];
-    return new Map(rows.map((item) => [item.evalId, item]));
-  }, [courseId, state]);
-}
-
-// Implements: REQ-EVAL-01
-function useSubmissionUpload(
-  courseId: string,
-  note: (text: string, tone?: Note["tone"]) => void,
-  enabled: boolean
-) {
-  const input = useRef<HTMLInputElement | null>(null);
-  const pending = useRef<{ evalId: string; team?: SubmissionTeam } | null>(null);
-  const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
-
-  const pick = useCallback(
-    (evalId: string, team?: SubmissionTeam) => {
-      if (!enabled) return note("Este ramo está archivado y no recibe nuevas entregas.", "bad");
-      pending.current = { evalId, team };
-      input.current?.click();
-    },
-    [enabled, note]
-  );
-
-  const send = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      const target = pending.current;
-      event.target.value = "";
-      pending.current = null;
-      if (!file || !target) return;
-      const { evalId, team } = target;
-      if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES) {
-        note(`La entrega debe pesar entre 1 byte y ${formatBytes(MAX_SUBMISSION_BYTES)}.`, "bad");
-        return;
-      }
-      setState({ evalId, percent: 0 });
-      try {
-        await uploadStudentSubmission(
-          courseId,
-          evalId,
-          file,
-          (percent) => setState({ evalId, percent }),
-          team
-        );
-        note(
-          team
-            ? `Entrega recibida y registrada para los ${team.memberIds.length} integrantes del equipo.`
-            : "Entrega recibida. El comprobante queda en la evaluación.",
-          "ok"
-        );
-      } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No se pudo enviar la entrega.", "bad");
-      } finally {
-        setState(null);
-      }
-    },
-    [courseId, note]
-  );
-
-  const field = (
-    <input
-      aria-hidden="true"
-      className="sr-only"
-      onChange={send}
-      ref={input}
-      tabIndex={-1}
-      type="file"
-    />
-  );
-
-  return { field, pick, state };
-}
-
-/*
-  Comprobante de una entrega ya recibida. La huella acorta a doce caracteres
-  porque nadie lee sesenta y cuatro de un vistazo: sirve para comparar dos
-  comprobantes, y el valor completo queda en el título para copiarlo.
-*/
-// Implements: REQ-TEAM-03, REQ-TEAM-04
-function SubmissionReceiptDetails({ receipt }: { receipt: StudentSubmission }) {
-  const isTeam = receipt.memberIds.length > 1;
-  const uploader = receipt.submittedByName.trim();
-  if (!isTeam && !receipt.sha256) return null;
-  return (
-    <small className="grades-receipt-trace">
-      {isTeam && (
-        <span>
-          Equipo de <span className="num">{receipt.memberIds.length}</span>
-          {uploader ? ` · entregó ${uploader}` : ""}
-        </span>
-      )}
-      {receipt.sha256 && (
-        <code className="num" title={`SHA-256: ${receipt.sha256}`}>
-          {receipt.sha256.slice(0, 12)}
-        </code>
-      )}
-    </small>
-  );
-}
-
-// Implements: REQ-EVAL-01, REQ-TEAM-01
-function SubmissionSlot({
-  item,
-  receipt,
-  percent,
-  onPick,
-  readOnly,
+function StudentGradesSummary({
+  summary,
+  passing,
+  exempt,
+  exemptionTarget,
+  status,
+  withSubmissionNote = false,
 }: {
-  item: GradeItem;
-  receipt: StudentSubmission | undefined;
-  percent: number | null;
-  onPick: (item: GradeItem) => void;
-  readOnly: boolean;
+  summary: ReturnType<typeof summarize>;
+  passing: ReturnType<typeof requiredGrade>;
+  exempt: ReturnType<typeof requiredGrade>;
+  exemptionTarget: number;
+  status: Note;
+  withSubmissionNote?: boolean;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-  const mode = submissionModeOf(item);
-  const teamLabel = mode === "individual" ? "" : "en equipo";
-
-  if (percent !== null) {
-    return (
-      <span className="grades-upload">
-        <span className="grades-upload-track">
-          <span
-            className="grades-upload-fill"
-            style={{
-              transform: `scaleX(${percent / 100})`,
-              transition: shouldReduceMotion ? "none" : undefined,
-            }}
-          />
-        </span>
-        <small className="num" role="status">
-          Enviando {percent}%
-        </small>
-      </span>
-    );
-  }
-
-  if (receipt) {
-    return (
-      <span className="grades-receipt">
-        <b title={receipt.fileName}>
-          <CheckCircle aria-hidden="true" size={14} weight="fill" />
-          {receipt.fileName}
-        </b>
-        <small className="num">
-          {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
-        </small>
-        <SubmissionReceiptDetails receipt={receipt} />
-        {!readOnly && (
-          <button
-            aria-label={`Reemplazar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
-            className="grades-attach"
-            onClick={() => onPick(item)}
-            type="button"
-          >
-            Reemplazar
-          </button>
-        )}
-      </span>
-    );
-  }
-
-  if (readOnly) return <span className="grades-closed">Sin nuevas entregas</span>;
-
   return (
-    <button
-      aria-label={`Adjuntar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
-      className="grades-attach"
-      onClick={() => onPick(item)}
-      type="button"
-    >
-      {mode === "individual" ? (
-        <Paperclip aria-hidden="true" size={14} />
-      ) : (
-        <UsersThree aria-hidden="true" size={14} weight="fill" />
+    <aside className="grades-summary">
+      <div className="grades-average">
+        <strong className="num">
+          {summary.average === null ? "sin nota" : formatGrade(summary.average)}
+        </strong>
+        <div>
+          <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
+          <p>
+            <span className="num">{summary.gradedWeight}%</span> de{" "}
+            <span className="num">{summary.totalWeight}%</span> ya tiene nota
+          </p>
+        </div>
+      </div>
+      <dl className="grades-targets">
+        <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
+        <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
+      </dl>
+      <p className="grades-note">
+        La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
+        editar aquí.
+        {withSubmissionNote
+          ? ` Cada entrega admite hasta ${formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el equipo docente del ramo.`
+          : ""}
+      </p>
+      {status.text && (
+        <p className={`tool-status ${status.tone}`} role="status">
+          {status.text}
+        </p>
       )}
-      {mode === "individual" ? "Adjuntar" : "Entregar en equipo"}
-    </button>
+    </aside>
   );
 }
 

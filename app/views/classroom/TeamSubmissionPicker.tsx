@@ -63,9 +63,10 @@ export function TeamSubmissionPicker({
     )
       .then((page) => {
         setRoster(
-          page.items
-            .map((entry) => ({ ...entry, id: firebaseUidOf(entry.id) }))
-            .filter((entry) => entry.id !== selfUid)
+          page.items.flatMap((entry) => {
+            const id = firebaseUidOf(entry.id);
+            return id === selfUid ? [] : [{ ...entry, id }];
+          })
         );
         setLoading(false);
       })
@@ -88,6 +89,9 @@ export function TeamSubmissionPicker({
     );
   }, [roster, query]);
 
+  /* La lista se repinta con cada tecla del buscador: preguntar por pertenencia
+     con un Set evita recorrer la selección una vez por compañero visible. */
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
   const remaining = MAX_TEAM_MEMBERS - 1 - selected.length;
 
   const toggle = (userId: string) => {
@@ -140,7 +144,7 @@ export function TeamSubmissionPicker({
               <li className="empty-row">No hay compañeros que coincidan con la búsqueda.</li>
             )}
             {visible.map((entry) => {
-              const checked = selected.includes(entry.id);
+              const checked = selectedIds.has(entry.id);
               return (
                 <li key={entry.id}>
                   <label htmlFor={`team-member-${entry.id}`}>

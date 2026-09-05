@@ -62,6 +62,6 @@
   "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
   "tests/teacher-course-management.test.ts": "fd0b1b5f8495764586344565da6593fec398581954f3ae31991ee39b141723fe",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
-  "tests/team-submissions.test.ts": "e04981a64b0214a7821e5350a2dc9807948568fc0d44546e16de12948a9fb553",
+  "tests/team-submissions.test.ts": "03c03aed0671bdf94d7c9f61a334a7d00ae70465a3052f0b893566ca8d18d61b",
   "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25"
 }

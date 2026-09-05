@@ -14,23 +14,38 @@ import {
 import { firebaseUidOf } from "../lib/section-roles.ts";
 
 const require = createRequire(import.meta.url);
-const { groupRowsByTeam, normalizeTeamSubmissionRequest, normalizeGradebookRequest } =
-  require("../firebase/functions/grade-audit.js") as {
-    groupRowsByTeam: (
-      rows: { userId: string; scores: Record<string, number> }[],
-      teamsByItem: Map<string, string[][]>
-    ) => { userId: string; scores: Record<string, number> }[][];
-    normalizeTeamSubmissionRequest: (value: unknown) => {
-      courseId: string;
-      evalId: string;
-      teamId: string;
-      memberIds: string[];
-      sha256: string;
-    };
-    normalizeGradebookRequest: (value: unknown) => {
-      items: { id: string; submissionMode: string; teams: { memberIds: string[] }[] }[];
-    };
+type TeamRow = {
+  userId: string;
+  scores: Record<string, number>;
+  clear: string[];
+  partial: boolean;
+};
+
+const {
+  groupRowsByTeam,
+  mergeReplicatedScores,
+  normalizeTeamSubmissionRequest,
+  normalizeGradebookRequest,
+} = require("../firebase/functions/grade-audit.js") as {
+  groupRowsByTeam: (
+    rows: { userId: string; scores: Record<string, number> }[],
+    teamsByItem: Map<string, string[][]>
+  ) => TeamRow[][];
+  mergeReplicatedScores: (
+    previousScores: Record<string, number>,
+    row: TeamRow
+  ) => Record<string, number>;
+  normalizeTeamSubmissionRequest: (value: unknown) => {
+    courseId: string;
+    evalId: string;
+    teamId: string;
+    memberIds: string[];
+    sha256: string;
   };
+  normalizeGradebookRequest: (value: unknown) => {
+    items: { id: string; submissionMode: string; teams: { memberIds: string[] }[] }[];
+  };
+};
 
 function item(values: Partial<GradeItem> = {}): GradeItem {
   return {
@@ -256,4 +271,59 @@ test("el servidor rechaza un libro con un estudiante en dos equipos de la misma 
   });
   assert.equal(valid.items[0].submissionMode, "team_fixed");
   assert.equal(valid.items[0].teams.length, 2);
+});
+
+/*
+  La réplica describe sólo las evaluaciones del equipo. Si la transacción
+  escribiera esa fila tal cual sobre el expediente del compañero, reemplazaría
+  su libro completo por esa única nota y la auditoría registraría el resto como
+  borrado: pérdida de datos irreversible.
+*/
+test("la réplica no borra las notas previas del compañero", () => {
+  const teamsByItem = new Map([["taller-1", [["u1", "u2"]]]]);
+  const groups = groupRowsByTeam([{ userId: "u1", scores: { "taller-1": 6.2 } }], teamsByItem);
+  const replicated = groups.flat().find((row) => row.userId === "u2");
+
+  assert.equal(replicated?.partial, true, "la fila de u2 nació de una réplica");
+
+  const previous = { "certamen-1": 5.0, "taller-2": 3.4 };
+  const merged = mergeReplicatedScores(previous, replicated!);
+  assert.deepEqual(merged, { "certamen-1": 5.0, "taller-2": 3.4, "taller-1": 6.2 });
+});
+
+test("la fila que envió el docente se escribe completa y no se funde", () => {
+  const teamsByItem = new Map([["taller-1", [["u1", "u2"]]]]);
+  const groups = groupRowsByTeam([{ userId: "u1", scores: { "taller-1": 6.2 } }], teamsByItem);
+  const own = groups.flat().find((row) => row.userId === "u1");
+
+  assert.equal(own?.partial, false);
+  /* El cliente manda el expediente completo del estudiante abierto: fundirlo
+     con lo previo resucitaría una nota que el docente acaba de retirar. */
+  assert.deepEqual(mergeReplicatedScores({ "certamen-1": 5.0 }, own!), { "taller-1": 6.2 });
+});
+
+test("retirar la nota de un trabajo grupal la retira de todo el equipo", () => {
+  const teamsByItem = new Map([["taller-1", [["u1", "u2"]]]]);
+  /* El cliente envía el mapa completo de u1 ya sin `taller-1`: así viaja el
+     borrado de una nota. */
+  const groups = groupRowsByTeam([{ userId: "u1", scores: { "certamen-1": 4.5 } }], teamsByItem);
+  const replicated = groups.flat().find((row) => row.userId === "u2");
+
+  assert.deepEqual(replicated?.clear, ["taller-1"]);
+  assert.deepEqual(mergeReplicatedScores({ "taller-1": 6.2, "certamen-1": 3.0 }, replicated!), {
+    "certamen-1": 3.0,
+  });
+});
+
+test("una evaluación individual jamás entra en la fusión del compañero", () => {
+  const teamsByItem = new Map([["taller-1", [["u1", "u2"]]]]);
+  const groups = groupRowsByTeam(
+    [{ userId: "u1", scores: { "taller-1": 6.2, "certamen-1": 7.0 } }],
+    teamsByItem
+  );
+  const replicated = groups.flat().find((row) => row.userId === "u2");
+  assert.deepEqual(mergeReplicatedScores({ "certamen-1": 2.0 }, replicated!), {
+    "certamen-1": 2.0,
+    "taller-1": 6.2,
+  });
 });

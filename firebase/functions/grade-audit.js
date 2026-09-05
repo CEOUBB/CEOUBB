@@ -243,6 +243,7 @@ function groupRowsByTeam(rows, teamsByItem) {
 
   const explicit = new Set(rows.map((row) => row.userId));
   const scoresByUser = new Map(rows.map((row) => [row.userId, { ...row.scores }]));
+  const clearByUser = new Map();
   for (const userId of scoresByUser.keys()) find(userId);
 
   const teamFor = (gradeItemId, userId) => {
@@ -252,18 +253,31 @@ function groupRowsByTeam(rows, teamsByItem) {
   };
 
   for (const row of rows) {
-    for (const [gradeItemId, score] of Object.entries(row.scores)) {
+    /*
+      Se recorren las evaluaciones grupales y no las notas enviadas: una nota
+      grupal retirada llega como la ausencia de esa clave en la fila del
+      estudiante abierto, y si sólo se miraran las presentes el equipo
+      conservaría una nota que el docente ya borró.
+    */
+    for (const gradeItemId of teamsByItem.keys()) {
       const members = teamFor(gradeItemId, row.userId);
       if (!members) continue;
+      const scored = Object.hasOwn(row.scores, gradeItemId);
       for (const memberId of members) {
         union(row.userId, memberId);
         if (memberId === row.userId) continue;
+        /* La fila que el docente envió para un integrante manda sobre el eco de
+           su compañero: ya trae el estado completo que quiso dejar escrito. */
+        if (explicit.has(memberId)) continue;
         const current = scoresByUser.get(memberId) ?? {};
-        /* Una fila enviada explícitamente manda sobre la réplica: si el docente
-           corrigió a dos integrantes en la misma llamada, gana lo que escribió
-           para cada uno, no el eco del compañero. */
-        if (explicit.has(memberId) && Object.hasOwn(current, gradeItemId)) continue;
-        current[gradeItemId] = score;
+        if (scored) {
+          current[gradeItemId] = row.scores[gradeItemId];
+          if (clearByUser.has(memberId)) clearByUser.get(memberId).delete(gradeItemId);
+        } else {
+          delete current[gradeItemId];
+          if (!clearByUser.has(memberId)) clearByUser.set(memberId, new Set());
+          clearByUser.get(memberId).add(gradeItemId);
+        }
         scoresByUser.set(memberId, current);
       }
     }
@@ -273,9 +287,35 @@ function groupRowsByTeam(rows, teamsByItem) {
   for (const [userId, scores] of scoresByUser) {
     const root = find(userId);
     if (!groups.has(root)) groups.set(root, []);
-    groups.get(root).push({ userId, scores });
+    /*
+      `partial` distingue las dos naturalezas de una fila. La que envió el
+      cliente describe el expediente completo del estudiante y se escribe tal
+      cual, como siempre. La que nació de una réplica sólo habla de las
+      evaluaciones del equipo, así que la transacción debe fundirla con las
+      notas que ese estudiante ya tenía: escribirla entera borraría el resto de
+      su libro.
+    */
+    groups.get(root).push({
+      userId,
+      scores,
+      clear: [...(clearByUser.get(userId) ?? [])],
+      partial: !explicit.has(userId),
+    });
   }
   return [...groups.values()];
+}
+
+/*
+  Expediente resultante de una réplica: las notas previas del estudiante, con
+  las evaluaciones del equipo puestas al día y las que el equipo perdió
+  retiradas. Nunca toca una evaluación ajena al equipo.
+*/
+// Implements: REQ-TEAM-02
+function mergeReplicatedScores(previousScores, row) {
+  if (!row.partial) return row.scores;
+  const merged = { ...previousScores, ...row.scores };
+  for (const gradeItemId of row.clear ?? []) delete merged[gradeItemId];
+  return merged;
 }
 
 function normalizeFeedbackRequest(value) {
@@ -404,6 +444,7 @@ module.exports = {
   diffFeedback,
   diffScores,
   groupRowsByTeam,
+  mergeReplicatedScores,
   normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
