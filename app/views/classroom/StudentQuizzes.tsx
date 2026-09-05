@@ -100,7 +100,6 @@ export function StudentQuizzes({
     <section className="quiz-student-view">
       <div className="quiz-student-hero">
         <div>
-          <span className="eyebrow">Controles en línea</span>
           <h2>Cuestionarios de la sección</h2>
           <p>
             Tu avance se guarda pregunta por pregunta. Al entregar verás la corrección y tu nota

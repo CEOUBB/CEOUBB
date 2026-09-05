@@ -26,6 +26,12 @@ export default function ContactoPage() {
           proponer una mejora. Responde una persona, no un sistema automático.
         </p>
 
+        <nav className="contact-shortcuts" aria-label="Opciones de ayuda">
+          <a href="#formulario">Escribir a soporte</a>
+          <Link href="/faq">Consultar preguntas frecuentes</Link>
+          <a href="#canales">Canales y plazos</a>
+        </nav>
+
         <h2 id="antes-de-escribir">Antes de escribir</h2>
         <p>
           Buena parte de las consultas que recibimos ya está respondida. Si tu pregunta es sobre

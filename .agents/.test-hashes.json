@@ -16,6 +16,7 @@
   "tests/cloudflare-bundle.test.ts": "873565922aa29f98105674a1e274a22dcc7ed0f1e7c6f4f0cce455c52393d937",
   "tests/communications.test.ts": "98e63fae4cf2e86053cd271d04069c02f9d1fd1b118b5ca1fb2b8c990c40c32f",
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
+  "tests/dashboard-agenda.test.ts": "ec8458d9b61aac7b1027f62af60eacc7b75775df268c6b34764b99dc73ea85b5",
   "tests/deep-security-remediation.test.ts": "8f771997eaf0b08eb8a34950186b3ea35d906f4252c915306e5fe6058cb7d3a5",
   "tests/dev-auth.test.ts": "57a1a80e47996dda055389dd7a0ae6aedfa556e6a2e311df6913db3c062863a7",
   "tests/discord-interactions.test.ts": "c552bdcb242b75e39bf4861b7b181ccb443f79856f61024c48bfd35a01e50a4d",

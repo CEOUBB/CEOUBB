@@ -264,6 +264,7 @@ function CommunicationsPanels({
       aria-labelledby="communications-messages-tab"
       className="communications-panel communications-messages"
       data-conversation-open={Boolean(activeTarget)}
+      data-empty={targets.length === 0}
       id="communications-messages"
       role="tabpanel"
       tabIndex={0}
@@ -332,7 +333,11 @@ function CommunicationsPanels({
         )}
       </aside>
 
-      <section aria-label="Conversación seleccionada" className="conversation-panel">
+      <section
+        aria-label="Conversación seleccionada"
+        className="conversation-panel"
+        hidden={targets.length === 0}
+      >
         {activeTarget ? (
           <>
             <header className="conversation-heading">
