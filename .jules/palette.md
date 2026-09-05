@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Admin / AdminView
+
+- **Finding:** In `AdminView.tsx`, repeated period archive buttons lacked period-specific ARIA context (`aria-label`), while decorative search clear and pagination Phosphor SVG icons (`<X>`, `<CaretLeft>`, `<CaretRight>`) inside labeled buttons lacked `aria-hidden="true"` (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added `aria-label={`Archivar el período ${period.nombre}`}` to the period action button and added `aria-hidden="true"` to decorative vector icons inside search clear and page navigation buttons.
+- **Design System Constraint:** Preserved existing layout and button styling without custom CSS or structural alterations.
+- **Future Rule:** Ensure administrative list action buttons include entity names in `aria-label` and decorative pagination or search clear vector icons explicitly declare `aria-hidden="true"`.
+
 ## [2026-03-31] - Views / CourseCard & CoursesDashboard
 
 - **Finding:** Repeated action buttons ("Entrar al aula", "Ir al ramo", "Abrir en solo lectura") across course cards and next-evaluation banners lacked item-specific ARIA context, causing screen reader ambiguity across list items, while nested decorative Phosphor SVG vector icons lacked `aria-hidden="true"` (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
