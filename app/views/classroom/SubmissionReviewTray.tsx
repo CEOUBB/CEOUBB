@@ -13,6 +13,7 @@ import {
   Funnel,
   MagnifyingGlass,
   Tray,
+  UsersThree,
   Warning,
   X,
 } from "@phosphor-icons/react";
@@ -430,6 +431,23 @@ function DocumentPane({ row }: { row: ReviewRow | undefined }) {
           <small className="num">
             {formatBytes(row.size)} · {formatDateTime(row.submittedAt)}
           </small>
+          {/* Implements: REQ-TEAM-03, REQ-TEAM-04 */}
+          {(row.teamSize > 1 || row.sha256) && (
+            <small className="review-doc-trace">
+              {row.teamSize > 1 && (
+                <span>
+                  <UsersThree aria-hidden="true" size={13} weight="fill" />
+                  Equipo de <span className="num">{row.teamSize}</span>
+                  {row.submittedByName ? ` · subió ${row.submittedByName}` : ""}
+                </span>
+              )}
+              {row.sha256 && (
+                <code className="num" title={`SHA-256: ${row.sha256}`}>
+                  {row.sha256.slice(0, 12)}
+                </code>
+              )}
+            </small>
+          )}
         </span>
         {url ? (
           <a className="review-doc-download" download={row.fileName} href={url} rel="noopener">

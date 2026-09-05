@@ -20,8 +20,6 @@ test("paginateList divide una nómina de 300 estudiantes en páginas exactas de 
     userId: `user-${index + 1}`,
     name: `Estudiante ${index + 1}`,
     email: `estudiante${index + 1}@alumnos.ubiobio.cl`,
-    completed: 0,
-    total: 4,
     updatedAt: "2026-08-20T10:00:00.000Z",
   }));
 
@@ -77,24 +75,18 @@ test("filterRoster busca insensible a mayúsculas y acentos por nombre o correo"
       userId: "u1",
       name: "María González",
       email: "maria.gonzalez@alumnos.ubiobio.cl",
-      completed: 2,
-      total: 4,
       updatedAt: "",
     },
     {
       userId: "u2",
       name: "Carlos Pérez",
       email: "cperez@alumnos.ubiobio.cl",
-      completed: 1,
-      total: 4,
       updatedAt: "",
     },
     {
       userId: "u3",
       name: "Matías Soto",
       email: "msoto@alumnos.ubiobio.cl",
-      completed: 3,
-      total: 4,
       updatedAt: "",
     },
   ];

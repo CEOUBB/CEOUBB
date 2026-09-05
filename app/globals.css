@@ -3561,58 +3561,6 @@ img {
   display: none;
 }
 
-.unit-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.unit-grid article {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) var(--space-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast);
-}
-
-.unit-grid article:hover {
-  border-color: color-mix(in srgb, var(--course-tone) 34%, var(--hairline));
-}
-
-.unit-grid h3 {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.unit-grid p {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-.unit-grid article > strong {
-  font-weight: 400;
-  color: var(--text-secondary);
-}
-
-.unit-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.unit-check input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary);
-}
-
 .course-rail {
   display: flex;
   flex-direction: column;
@@ -3662,28 +3610,6 @@ img {
 .course-facts dd small {
   font-size: 13px;
   color: var(--text-faint);
-}
-
-.mini-progress,
-.big-progress {
-  display: block;
-  width: 100%;
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: var(--canvas-soft);
-  overflow: hidden;
-}
-.mini-progress span,
-.big-progress span {
-  display: block;
-  height: 100%;
-  width: 100%;
-  border-radius: inherit;
-  background: var(--color-primary);
-  transform-origin: left center;
-}
-.big-progress {
-  height: 8px;
 }
 
 /* ── Aula · avisos ────────────────────────────────────────── */
@@ -6220,52 +6146,6 @@ mark,
   }
 }
 
-/* ── Aula · progreso ─────────────────────────────────────── */
-
-.progress-view {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.personal-progress {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xl);
-}
-
-.personal-progress > strong {
-  font-family: var(--font-display);
-  font-variant-numeric: var(--num);
-  font-size: 46px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--color-primary);
-}
-
-.personal-progress > div {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.personal-progress h3 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.125px;
-}
-.personal-progress p {
-  font-size: 15px;
-  color: var(--text-muted);
-}
-
-.progress-table,
 .admin-table,
 .grades-table,
 .grades-matrix {
@@ -6275,16 +6155,6 @@ mark,
   overflow: hidden;
 }
 
-.progress-table-head,
-.progress-table-row {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-md);
-  align-items: center;
-  padding: var(--space-sm) var(--space-md);
-}
-
-.progress-table-head,
 .admin-head,
 .grades-head,
 .grades-matrix-head {
@@ -6295,42 +6165,6 @@ mark,
   letter-spacing: 0.7px;
   text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.progress-table-row {
-  border-top: 1px solid var(--border-hairline);
-  font-size: 15px;
-}
-.progress-table-row:first-of-type {
-  border-top: 0;
-}
-.progress-table-row b,
-.progress-table-row small {
-  display: block;
-}
-.progress-table-row b {
-  font-size: 15px;
-  font-weight: 500;
-}
-.progress-table-row small {
-  font-size: 13px;
-  color: var(--text-faint);
-}
-
-.progress-table-row i {
-  display: block;
-  margin-top: 6px;
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: var(--canvas-soft);
-  overflow: hidden;
-}
-.progress-table-row em {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: var(--color-primary);
-  transform-origin: left center;
 }
 
 /* ── Participantes ───────────────────────────────────────── */
@@ -9175,7 +9009,7 @@ mark,
 
 .grades-editor-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 110px 160px auto;
+  grid-template-columns: minmax(0, 2fr) 100px 150px minmax(170px, 1fr) auto;
   gap: var(--space-sm);
   align-items: end;
   padding-top: var(--space-sm);
@@ -9235,6 +9069,245 @@ mark,
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.125px;
+}
+
+/* ── Aula · entregas en equipo ─────────────────── */
+
+/* La nómina de equipos pertenece a su evaluación: ocupa el ancho completo de
+   la fila que la declara, debajo de los campos que la configuran. */
+.teams-editor {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  padding: var(--space-md);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.teams-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+.teams-editor-head svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+.teams-editor-head p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.teams-editor-search {
+  max-width: 320px;
+}
+
+.teams-editor-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.teams-editor-card-head {
+  display: flex;
+  align-items: end;
+  gap: var(--space-sm);
+}
+.teams-editor-card-head label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.teams-editor-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+.teams-editor-members li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.teams-editor-members li button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  color: var(--text-faint);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.teams-editor-members li button:hover {
+  background: rgba(227, 27, 35, 0.08);
+  color: var(--shield-red-deep);
+}
+
+.teams-editor-hint {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.teams-editor-add {
+  max-width: 380px;
+}
+
+/* Elección de compañeros antes de subir el archivo. */
+.team-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.team-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.team-picker-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+.team-picker-head svg {
+  color: var(--color-primary);
+}
+.team-picker-head > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.team-picker-head > button:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+.team-picker-note {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.team-picker-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.team-picker-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  list-style: none;
+}
+.team-picker-list li + li {
+  border-top: 1px solid var(--border-hairline);
+}
+.team-picker-list label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  min-height: 44px;
+  padding: 6px var(--space-sm);
+  cursor: pointer;
+}
+.team-picker-list input {
+  grid-row: 1 / span 2;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+.team-picker-list label b {
+  font-size: 14px;
+  font-weight: 500;
+}
+.team-picker-list label small {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.team-picker-list input:disabled ~ b,
+.team-picker-list input:disabled ~ small {
+  color: var(--text-faint);
+}
+
+.team-picker-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+.team-picker-foot > span:first-child {
+  margin-right: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Trazabilidad del comprobante: quién entregó y con qué huella. */
+.grades-receipt-trace,
+.review-doc-trace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.grades-receipt-trace span,
+.review-doc-trace span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.grades-receipt-trace code,
+.review-doc-trace code {
+  padding: 1px 6px;
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2px;
 }
 
 .weight-total.ok {
@@ -10766,20 +10839,14 @@ mark,
     min-width: 0;
     padding-inline: 12px;
   }
-  .progress-table-head,
-  .progress-table-row,
+
   .admin-head,
   .admin-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .progress-table-head span:last-child,
+
   .admin-head span:last-child {
     display: none;
-  }
-  .progress-table-row span:last-child {
-    grid-column: 1 / -1;
-    font-size: 13px;
-    color: var(--text-faint);
   }
   .admin-row span:last-child {
     grid-column: 1 / -1;
@@ -10820,15 +10887,11 @@ mark,
     flex-direction: column;
     align-items: stretch;
   }
-  .unit-grid article,
+
   .post-list article {
     grid-template-columns: minmax(0, 1fr);
   }
-  .unit-grid article > strong,
-  .unit-check {
-    justify-self: start;
-  }
-  .personal-progress,
+
   .grades-average {
     grid-template-columns: minmax(0, 1fr);
     flex-wrap: wrap;
@@ -10848,7 +10911,8 @@ mark,
   .grades-editor-row {
     grid-template-columns: minmax(0, 1fr) 1fr;
   }
-  .grades-editor-row > label:first-child {
+  .grades-editor-row > label:first-child,
+  .grades-editor-row > label:nth-child(4) {
     grid-column: 1 / -1;
   }
   .remove-row {
@@ -11766,7 +11830,8 @@ mark,
     grid-template-columns: minmax(0, 1fr) 100px;
   }
 
-  .teacher-config-panel .grades-editor-row label:nth-child(3) {
+  .teacher-config-panel .grades-editor-row label:nth-child(3),
+  .teacher-config-panel .grades-editor-row label:nth-child(4) {
     grid-column: 1 / 2;
   }
 }

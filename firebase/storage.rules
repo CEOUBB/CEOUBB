@@ -112,10 +112,27 @@ service firebase.storage {
       Buzón de entregas. Cada estudiante matriculado escribe únicamente bajo su
       propio UID y el docente de la sección puede leer para corregir. 25 MB es
       el techo por archivo: un informe con imágenes cabe, un video no.
+
+      En una entrega en equipo el archivo vive en la carpeta de quien lo subió y
+      sus compañeros necesitan poder abrirlo. El permiso no se concede por
+      pertenecer a un grupo declarado en la petición, sino por tener un
+      comprobante propio de esa misma evaluación que apunte a ese mismo autor:
+      el documento lo escribió el servidor y nadie más puede fabricarlo.
     */
-    // Implements: REQ-EVAL-01
+    // Implements: REQ-EVAL-01, REQ-TEAM-02
+    function submissionReceipt(courseId, evalId) {
+      return /databases/(default)/documents/courses/$(courseId)/submissions/$(evalId + '_' + request.auth.uid);
+    }
+
+    function sharesTeamSubmission(courseId, evalId, userId) {
+      return signedIn()
+        && firestore.exists(submissionReceipt(courseId, evalId))
+        && firestore.get(submissionReceipt(courseId, evalId)).data.get('submittedBy', '') == userId;
+    }
+
     match /courses/{courseId}/submissions/{evalId}/{userId}/{fileName} {
-      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId
+        || sharesTeamSubmission(courseId, evalId, userId);
       allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024 && isAllowedAcademicMimeType();
       allow delete: if (isOwner() || signedIn() && request.auth.uid == userId) && sectionIsWritable(courseId);
     }

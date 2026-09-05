@@ -134,7 +134,6 @@ export type ClassroomState = {
   posts: ClassroomPost[];
   files: ClassroomFile[];
   students: ClassroomStudent[];
-  ownProgress: number;
   gradebook: GradeItem[];
   exemption: number | null;
   officialScores: GradeScores;
@@ -249,7 +248,7 @@ export function watchClassroom(
               sdk.orderBy("lastSeen", "desc")
             ),
             (snapshot) => onChange({ students: snapshot.docs.map(toStudent) }),
-            () => onError("No se pudo sincronizar el progreso del curso.")
+            () => onError("No se pudo sincronizar la nómina del curso.")
           )
         );
         stops.push(
@@ -279,10 +278,9 @@ export function watchClassroom(
             sdk.doc(db, "courses", courseId, "progress", user.uid),
             (snapshot) =>
               onChange({
-                ownProgress: snapshot.exists() ? Number(snapshot.data().completed ?? 0) : 0,
                 simulation: snapshot.exists() ? normalizeScores(snapshot.data().simulated) : {},
               }),
-            () => onError("No se pudo cargar tu progreso.")
+            () => onError("No se pudo cargar tu simulación de notas.")
           )
         );
         stops.push(

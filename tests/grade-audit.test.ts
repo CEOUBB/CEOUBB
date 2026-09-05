@@ -98,7 +98,16 @@ test("REQ-AUDIT-07: gradebook payloads normalize a complete auditable value", ()
     }),
     {
       courseId: "440299-2026-2-1",
-      items: [{ id: "certamen-1", name: "Certamen 1", weight: 40, date: "2026-09-10" }],
+      items: [
+        {
+          id: "certamen-1",
+          name: "Certamen 1",
+          weight: 40,
+          date: "2026-09-10",
+          submissionMode: "individual",
+          teams: [],
+        },
+      ],
       exemption: 5,
     }
   );

@@ -13,9 +13,12 @@ const {
   canEditSection,
   diffFeedback,
   diffScores,
+  groupRowsByTeam,
+  mergeReplicatedScores,
   normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
+  normalizeTeamSubmissionRequest,
   storedFeedbackMap,
   storedGradebook,
   storedScoreMap,
@@ -84,7 +87,14 @@ async function authorizedGradeActor(request, db, courseId) {
   return actor;
 }
 
-async function authorizedQuizStudent(request, db, courseId) {
+/* Estudiante con matrícula activa en una sección abierta. El motivo viaja en el
+   mensaje porque el mismo control sirve para rendir y para entregar. */
+async function authorizedSectionStudent(
+  request,
+  db,
+  courseId,
+  purpose = "rendir este cuestionario"
+) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
@@ -101,7 +111,7 @@ async function authorizedQuizStudent(request, db, courseId) {
   ) {
     throw new HttpsError(
       "permission-denied",
-      "Debes estar matriculado como estudiante para rendir este cuestionario."
+      `Debes estar matriculado como estudiante para ${purpose}.`
     );
   }
   return actorFromAuth(request.auth);
@@ -222,7 +232,7 @@ exports.startQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request)
   try {
     const next = normalizeQuizRequest(request.data);
     const db = getFirestore();
-    await authorizedQuizStudent(request, db, next.courseId);
+    await authorizedSectionStudent(request, db, next.courseId);
     const quizRef = db
       .collection("courses")
       .doc(next.courseId)
@@ -284,7 +294,7 @@ exports.submitQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request
   try {
     const next = normalizeQuizRequest(request.data);
     const db = getFirestore();
-    const actor = await authorizedQuizStudent(request, db, next.courseId);
+    const actor = await authorizedSectionStudent(request, db, next.courseId);
     const quizRef = db
       .collection("courses")
       .doc(next.courseId)
@@ -411,67 +421,188 @@ async function inConcurrentGroups(items, limit, operation) {
   return results;
 }
 
+/*
+  Techo de comprobantes leídos al resolver los equipos de una corrección. Es el
+  mismo de la bandeja docente: ninguna sección de la universidad supera esa
+  cantidad de entregas por evaluación, y el límite evita que un dato corrupto
+  abra una consulta sin fondo.
+*/
+// Implements: REQ-TEAM-02
+const MAX_TEAM_LOOKUP_SUBMISSIONS = 500;
+const EVAL_ID_QUERY_BATCH = 30;
+
+/*
+  Equipos vigentes de cada evaluación grupal que participa en esta corrección.
+
+  Se cruzan dos fuentes. La nómina publicada en el libro describe la intención
+  del docente en la modalidad de equipos fijos; los comprobantes describen quién
+  firmó realmente el trabajo, y son los que mandan, porque la nota debe seguir a
+  la entrega que se corrigió y no a una lista editada después.
+
+  Si ninguna evaluación involucrada es grupal la función no consulta nada: la
+  corrección individual no paga por una funcionalidad que no usa.
+*/
+// Implements: REQ-TEAM-02
+async function teamsByItemFor(db, courseId, gradeItemIds) {
+  const teamsByItem = new Map();
+  if (gradeItemIds.length === 0) return teamsByItem;
+
+  const gradebook = await db
+    .collection("courses")
+    .doc(courseId)
+    .collection("meta")
+    .doc("gradebook")
+    .get();
+  const stored = gradebook.exists ? storedGradebook(gradebook.data()) : null;
+  const requested = new Set(gradeItemIds);
+  const teamItems = (stored?.items ?? []).filter(
+    (item) => item.submissionMode !== "individual" && requested.has(item.id)
+  );
+  if (teamItems.length === 0) return teamsByItem;
+
+  for (const item of teamItems) {
+    teamsByItem.set(
+      item.id,
+      (item.teams ?? []).map((team) => [...team.memberIds])
+    );
+  }
+
+  const ids = teamItems.map((item) => item.id);
+  for (const batch of chunk(ids, EVAL_ID_QUERY_BATCH)) {
+    const snapshot = await db
+      .collection("courses")
+      .doc(courseId)
+      .collection("submissions")
+      .where("evalId", "in", batch)
+      .limit(MAX_TEAM_LOOKUP_SUBMISSIONS)
+      .get();
+    for (const document of snapshot.docs) {
+      const evalId = document.get("evalId");
+      const memberIds = document.get("memberIds");
+      if (!teamsByItem.has(evalId)) continue;
+      if (!Array.isArray(memberIds) || memberIds.length < 2) continue;
+      const members = memberIds.filter((member) => typeof member === "string" && member);
+      if (members.length < 2) continue;
+      /* Cada integrante tiene su propia fila con la misma nómina: reemplazar
+         todo equipo que comparta gente deja una sola copia por entrega. */
+      const remaining = teamsByItem
+        .get(evalId)
+        .filter((team) => !team.some((member) => members.includes(member)));
+      remaining.push(members);
+      teamsByItem.set(evalId, remaining);
+    }
+  }
+  return teamsByItem;
+}
+
 // Implements: REQ-AUDIT-01, REQ-AUDIT-02, REQ-AUDIT-04, REQ-AUDIT-06
 exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
   try {
     const { courseId, rows } = normalizeScoreRequest(request.data);
     const db = getFirestore();
     const actor = await authorizedGradeActor(request, db, courseId);
-    await assertStudentsEnrolled(db, courseId, rows);
-    const changesByRow = await inConcurrentGroups(rows, MAX_CONCURRENT_TRANSACTIONS, async (row) =>
-      db.runTransaction(async (transaction) => {
-        const gradeRef = db
-          .collection("courses")
-          .doc(courseId)
-          .collection("grades")
-          .doc(row.userId);
-        const current = await transaction.get(gradeRef);
-        const previousScores = storedScoreMap(current.exists ? current.get("scores") : {});
-        const previousFeedback = storedFeedbackMap(current.exists ? current.get("feedback") : {});
-        const changes = diffScores(previousScores, row.scores);
-        if (changes.length === 0) return 0;
-        const nextFeedback = { ...previousFeedback };
-        const feedbackChanges = changes.flatMap((change) => {
-          if (change.newValue !== null) return [];
-          const feedbackChange = diffFeedback(previousFeedback, change.gradeItemId, null);
-          if (!feedbackChange) return [];
-          delete nextFeedback[change.gradeItemId];
-          return [{ gradeItemId: change.gradeItemId, ...feedbackChange }];
-        });
-        transaction.set(gradeRef, {
-          uid: row.userId,
-          courseId,
-          scores: row.scores,
-          feedback: nextFeedback,
-          updatedBy: actor.actorUid,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        for (const change of changes) {
-          const auditRef = db.collection("courses").doc(courseId).collection("gradeAudit").doc();
-          transaction.create(auditRef, {
-            targetType: "score",
-            courseId,
-            studentId: row.userId,
-            ...change,
-            ...actor,
-            changedAt: FieldValue.serverTimestamp(),
-          });
-        }
-        for (const change of feedbackChanges) {
-          const auditRef = db.collection("courses").doc(courseId).collection("gradeAudit").doc();
-          transaction.create(auditRef, {
-            targetType: "feedback",
-            courseId,
-            studentId: row.userId,
-            ...change,
-            ...actor,
-            changedAt: FieldValue.serverTimestamp(),
-          });
-        }
-        return changes.length + feedbackChanges.length;
-      })
+    /*
+      La nota de una evaluación grupal pertenece al equipo, no a quien el docente
+      abrió en la bandeja. Se expande antes de escribir y cada equipo viaja en su
+      propia transacción: o quedan todos con la misma nota o no queda ninguna, y
+      la corrección individual conserva exactamente el camino de siempre porque
+      una fila sin equipo forma un grupo de una.
+    */
+    // Implements: REQ-TEAM-02
+    const gradeItemIds = [...new Set(rows.flatMap((row) => Object.keys(row.scores)))];
+    const teamsByItem = await teamsByItemFor(db, courseId, gradeItemIds);
+    const groups = groupRowsByTeam(rows, teamsByItem);
+    await assertStudentsEnrolled(db, courseId, groups.flat());
+    const changesByGroup = await inConcurrentGroups(
+      groups,
+      MAX_CONCURRENT_TRANSACTIONS,
+      async (group) =>
+        db.runTransaction(async (transaction) => {
+          const gradeRefs = group.map((row) =>
+            db.collection("courses").doc(courseId).collection("grades").doc(row.userId)
+          );
+          const snapshots = await transaction.getAll(...gradeRefs);
+          const pending = [];
+          for (const [index, row] of group.entries()) {
+            const current = snapshots[index];
+            const previousScores = storedScoreMap(current.exists ? current.get("scores") : {});
+            const previousFeedback = storedFeedbackMap(
+              current.exists ? current.get("feedback") : {}
+            );
+            /*
+              Una fila nacida de la réplica sólo describe las evaluaciones del
+              equipo. Escribirla tal cual sobre el expediente reemplazaría el
+              libro completo del compañero por esa única nota y la auditoría
+              registraría el resto como borrado.
+            */
+            // Implements: REQ-TEAM-02
+            const nextScores = mergeReplicatedScores(previousScores, row);
+            const changes = diffScores(previousScores, nextScores);
+            if (changes.length === 0) continue;
+            const nextFeedback = { ...previousFeedback };
+            const feedbackChanges = changes.flatMap((change) => {
+              if (change.newValue !== null) return [];
+              const feedbackChange = diffFeedback(previousFeedback, change.gradeItemId, null);
+              if (!feedbackChange) return [];
+              delete nextFeedback[change.gradeItemId];
+              return [{ gradeItemId: change.gradeItemId, ...feedbackChange }];
+            });
+            pending.push({
+              row,
+              ref: gradeRefs[index],
+              nextScores,
+              nextFeedback,
+              changes,
+              feedbackChanges,
+            });
+          }
+          if (pending.length === 0) return 0;
+          let changedCount = 0;
+          for (const entry of pending) {
+            transaction.set(entry.ref, {
+              uid: entry.row.userId,
+              courseId,
+              scores: entry.nextScores,
+              feedback: entry.nextFeedback,
+              updatedBy: actor.actorUid,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+            for (const change of entry.changes) {
+              const auditRef = db
+                .collection("courses")
+                .doc(courseId)
+                .collection("gradeAudit")
+                .doc();
+              transaction.create(auditRef, {
+                targetType: "score",
+                courseId,
+                studentId: entry.row.userId,
+                ...change,
+                ...actor,
+                changedAt: FieldValue.serverTimestamp(),
+              });
+            }
+            for (const change of entry.feedbackChanges) {
+              const auditRef = db
+                .collection("courses")
+                .doc(courseId)
+                .collection("gradeAudit")
+                .doc();
+              transaction.create(auditRef, {
+                targetType: "feedback",
+                courseId,
+                studentId: entry.row.userId,
+                ...change,
+                ...actor,
+                changedAt: FieldValue.serverTimestamp(),
+              });
+            }
+            changedCount += entry.changes.length + entry.feedbackChanges.length;
+          }
+          return changedCount;
+        })
     );
-    return { changedCount: changesByRow.reduce((total, count) => total + count, 0) };
+    return { changedCount: changesByGroup.reduce((total, count) => total + count, 0) };
   } catch (cause) {
     throw callableError(cause);
   }
@@ -482,57 +613,188 @@ exports.saveAuditedGradeFeedback = onCall(async (request) => {
     const next = normalizeFeedbackRequest(request.data);
     const db = getFirestore();
     const actor = await authorizedGradeActor(request, db, next.courseId);
-    await assertStudentsEnrolled(db, next.courseId, [next]);
+    /*
+      La retroalimentación de un trabajo en equipo es una sola y la reciben todos
+      sus integrantes: escribirla en un expediente y no en los demás dejaría a
+      parte del equipo sin la explicación de su propia nota. La transacción es la
+      misma, sólo que ahora abarca al equipo completo.
+    */
+    // Implements: REQ-TEAM-02, REQ-FEEDBACK-01
+    const teamsByItem = await teamsByItemFor(db, next.courseId, [next.gradeItemId]);
+    const team = (teamsByItem.get(next.gradeItemId) ?? []).find((members) =>
+      members.includes(next.userId)
+    );
+    const targets = team && team.length > 1 ? team : [next.userId];
+    await assertStudentsEnrolled(
+      db,
+      next.courseId,
+      targets.map((userId) => ({ userId }))
+    );
     const changedCount = await db.runTransaction(async (transaction) => {
-      const gradeRef = db
-        .collection("courses")
-        .doc(next.courseId)
-        .collection("grades")
-        .doc(next.userId);
-      const current = await transaction.get(gradeRef);
-      const scores = storedScoreMap(current.exists ? current.get("scores") : {});
-      if (!Object.hasOwn(scores, next.gradeItemId)) {
+      const gradeRefs = targets.map((userId) =>
+        db.collection("courses").doc(next.courseId).collection("grades").doc(userId)
+      );
+      const snapshots = await transaction.getAll(...gradeRefs);
+      const owner = snapshots[targets.indexOf(next.userId)];
+      const ownerScores = storedScoreMap(owner.exists ? owner.get("scores") : {});
+      if (!Object.hasOwn(ownerScores, next.gradeItemId)) {
         throw new HttpsError(
           "failed-precondition",
           "La evaluación debe tener una nota oficial antes de recibir retroalimentación."
         );
       }
-      const previousFeedback = storedFeedbackMap(current.get("feedback"));
-      const change = diffFeedback(previousFeedback, next.gradeItemId, next.feedback);
-      if (!change) return 0;
-      const nextFeedback = { ...previousFeedback };
-      if (next.feedback === null) delete nextFeedback[next.gradeItemId];
-      else {
-        if (
-          !Object.hasOwn(nextFeedback, next.gradeItemId) &&
-          Object.keys(nextFeedback).length >= 100
-        ) {
-          throw new GradeAuditInputError("Una fila admite como máximo 100 retroalimentaciones.");
+      const writes = [];
+      for (const [index, userId] of targets.entries()) {
+        const current = snapshots[index];
+        const scores = storedScoreMap(current.exists ? current.get("scores") : {});
+        /* Un integrante sin nota oficial todavía no puede recibirla: la regla
+           que protege al expediente individual también protege al del equipo. */
+        if (!Object.hasOwn(scores, next.gradeItemId)) continue;
+        const previousFeedback = storedFeedbackMap(current.exists ? current.get("feedback") : {});
+        const change = diffFeedback(previousFeedback, next.gradeItemId, next.feedback);
+        if (!change) continue;
+        const nextFeedback = { ...previousFeedback };
+        if (next.feedback === null) delete nextFeedback[next.gradeItemId];
+        else {
+          if (
+            !Object.hasOwn(nextFeedback, next.gradeItemId) &&
+            Object.keys(nextFeedback).length >= 100
+          ) {
+            throw new GradeAuditInputError("Una fila admite como máximo 100 retroalimentaciones.");
+          }
+          nextFeedback[next.gradeItemId] = next.feedback;
         }
-        nextFeedback[next.gradeItemId] = next.feedback;
+        writes.push({ userId, ref: gradeRefs[index], nextFeedback, change });
       }
-      transaction.set(
-        gradeRef,
-        {
-          feedback: nextFeedback,
-          updatedBy: actor.actorUid,
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-      const auditRef = db.collection("courses").doc(next.courseId).collection("gradeAudit").doc();
-      transaction.create(auditRef, {
-        targetType: "feedback",
-        courseId: next.courseId,
-        studentId: next.userId,
-        gradeItemId: next.gradeItemId,
-        ...change,
-        ...actor,
-        changedAt: FieldValue.serverTimestamp(),
-      });
-      return 1;
+      for (const write of writes) {
+        transaction.set(
+          write.ref,
+          {
+            feedback: write.nextFeedback,
+            updatedBy: actor.actorUid,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        const auditRef = db.collection("courses").doc(next.courseId).collection("gradeAudit").doc();
+        transaction.create(auditRef, {
+          targetType: "feedback",
+          courseId: next.courseId,
+          studentId: write.userId,
+          gradeItemId: next.gradeItemId,
+          ...write.change,
+          ...actor,
+          changedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      return writes.length;
     });
     return { changedCount };
+  } catch (cause) {
+    throw callableError(cause);
+  }
+});
+
+/*
+  Comprobante de una entrega en equipo.
+
+  El archivo ya viajó a la carpeta de quien lo subió, que es la única que las
+  reglas de Storage le permiten escribir. Lo que ningún estudiante puede hacer
+  desde el cliente es crear el comprobante de sus compañeros: las reglas exigen
+  `uid == request.auth.uid` y así debe seguir siendo. Por eso la fila de cada
+  integrante la escribe el servidor, y las escribe todas en un mismo lote: el
+  equipo entero queda con entrega registrada o no queda ninguna, sin estados
+  intermedios en los que la mitad del grupo aparezca como no entregada.
+*/
+// Implements: REQ-TEAM-02, REQ-TEAM-03, REQ-TEAM-04
+exports.registerTeamSubmission = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
+  try {
+    const next = normalizeTeamSubmissionRequest(request.data);
+    const db = getFirestore();
+    const actor = await authorizedSectionStudent(
+      request,
+      db,
+      next.courseId,
+      "entregar en esta sección"
+    );
+    if (!next.memberIds.includes(actor.actorUid)) {
+      throw new HttpsError(
+        "permission-denied",
+        "Sólo puedes entregar por un equipo del que formes parte."
+      );
+    }
+
+    /* La ruta debe apuntar al archivo que este estudiante acaba de subir: sin
+       esta comprobación un comprobante podría señalar la entrega de otro. */
+    const expectedPrefix = `courses/${next.courseId}/submissions/${next.evalId}/${actor.actorUid}/`;
+    if (!next.storagePath.startsWith(expectedPrefix)) {
+      throw new HttpsError("permission-denied", "La ruta del archivo no corresponde a tu entrega.");
+    }
+
+    const gradebook = await db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("meta")
+      .doc("gradebook")
+      .get();
+    const item = (gradebook.exists ? storedGradebook(gradebook.data()).items : []).find(
+      (candidate) => candidate.id === next.evalId
+    );
+    if (!item || item.submissionMode === "individual") {
+      throw new HttpsError("failed-precondition", "Esta evaluación no admite entregas en equipo.");
+    }
+    if (item.submissionMode === "team_fixed") {
+      const published = (item.teams ?? []).find((team) => team.memberIds.includes(actor.actorUid));
+      if (!published || published.id !== next.teamId) {
+        throw new HttpsError(
+          "failed-precondition",
+          "El equipo indicado no coincide con el que publicó el docente."
+        );
+      }
+      const sameTeam =
+        published.memberIds.length === next.memberIds.length &&
+        published.memberIds.every((member) => next.memberIds.includes(member));
+      if (!sameTeam) {
+        throw new HttpsError(
+          "failed-precondition",
+          "La entrega debe incluir exactamente a los integrantes publicados por el docente."
+        );
+      }
+    }
+
+    await assertStudentsEnrolled(
+      db,
+      next.courseId,
+      next.memberIds.map((userId) => ({ userId }))
+    );
+
+    const createdAt = FieldValue.serverTimestamp();
+    const batch = db.batch();
+    for (const userId of next.memberIds) {
+      const ref = db
+        .collection("courses")
+        .doc(next.courseId)
+        .collection("submissions")
+        .doc(`${next.evalId}_${userId}`);
+      batch.set(ref, {
+        uid: userId,
+        courseId: next.courseId,
+        evalId: next.evalId,
+        authorName: actor.actorName,
+        fileName: next.fileName,
+        storagePath: next.storagePath,
+        contentType: next.contentType,
+        size: next.size,
+        sha256: next.sha256,
+        submittedBy: actor.actorUid,
+        submittedByName: actor.actorName,
+        teamId: next.teamId,
+        memberIds: next.memberIds,
+        createdAt,
+      });
+    }
+    await batch.commit();
+    return { memberCount: next.memberIds.length };
   } catch (cause) {
     throw callableError(cause);
   }

@@ -1,4 +1,5 @@
 import {
+  cloudFunctions,
   cloudStorage,
   firestore,
   currentUser,
@@ -22,6 +23,31 @@ export type StudentSubmission = {
   contentType: string;
   size: number;
   createdAt: string;
+  /*
+    Huella del archivo tal como salió del computador del estudiante. Es lo que
+    convierte el comprobante en prueba: dos entregas con el mismo `sha256` son
+    el mismo trabajo, y una entrega alterada después del envío deja de coincidir
+    con lo que quedó registrado.
+  */
+  // Implements: REQ-TEAM-03
+  sha256: string;
+  /*
+    Trazabilidad de la entrega en equipo: `submittedBy` es el estudiante que
+    subió la versión final y `memberIds` el equipo completo que la firma. En una
+    entrega individual `submittedBy` coincide con `uid` y `memberIds` va vacío.
+  */
+  // Implements: REQ-TEAM-04
+  submittedBy: string;
+  submittedByName: string;
+  teamId: string;
+  memberIds: string[];
+};
+
+/** Equipo que respalda una entrega grupal, resuelto antes de subir el archivo. */
+// Implements: REQ-TEAM-02
+export type SubmissionTeam = {
+  teamId: string;
+  memberIds: string[];
 };
 
 /** Deja el nombre en caracteres seguros para una ruta de Cloud Storage. */
@@ -126,23 +152,51 @@ export async function uploadClassroomFile(
 }
 
 /*
-  Buzón de entregas del estudiante. El archivo viaja a una ruta que sólo su UID
-  puede escribir y queda un comprobante en Firestore para que tanto el docente
-  como el propio estudiante vean qué se entregó y cuándo.
+  Huella SHA-256 del archivo entregado, calculada en el navegador antes de
+  subirlo. `crypto.subtle` sólo existe en contextos seguros; el desarrollo local
+  sobre http no es uno, así que allí el comprobante se guarda sin huella en vez
+  de bloquear la entrega.
 */
-// Implements: REQ-EVAL-01
+// Implements: REQ-TEAM-03
+export async function fileDigestSha256(file: File): Promise<string> {
+  if (typeof crypto === "undefined" || !crypto.subtle) return "";
+  try {
+    const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return "";
+  }
+}
+
+/*
+  Buzón de entregas. El archivo siempre viaja a la carpeta del estudiante que lo
+  sube, porque es la única que las reglas de Storage le dejan escribir.
+
+  Cuando la evaluación es grupal, el comprobante no lo escribe el cliente: una
+  entrega de equipo necesita una fila por integrante y ningún estudiante puede
+  escribir el expediente de otro. Esas filas las crea `registerTeamSubmission` en
+  una sola transacción del servidor, de modo que el equipo entero queda con
+  entrega o ninguno la tiene.
+*/
+// Implements: REQ-EVAL-01, REQ-TEAM-02, REQ-TEAM-03
 export async function uploadStudentSubmission(
   courseId: string,
   evalId: string,
   file: File,
-  onProgress: (percent: number) => void
+  onProgress: (percent: number) => void,
+  team?: SubmissionTeam
 ) {
   if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES)
     throw new Error("La entrega debe pesar entre 1 byte y 25 MB.");
-  const user = await currentUser();
+  /* La sesión, la huella del archivo y el SDK de Storage no dependen entre sí:
+     resolverlas en serie sumaba la lectura completa del archivo al arranque. */
+  const [user, sha256, cloud] = await Promise.all([
+    currentUser(),
+    fileDigestSha256(file),
+    cloudStorage(),
+  ]);
   const contentType = file.type || "application/octet-stream";
   const storagePath = submissionStoragePath(courseId, evalId, user.uid, file.name, Date.now());
-  const cloud = await cloudStorage();
   const task = cloud.sdk.uploadBytesResumable(cloud.sdk.ref(cloud.storage, storagePath), file, {
     contentType,
   });
@@ -154,6 +208,22 @@ export async function uploadStudentSubmission(
       resolve
     )
   );
+
+  if (team) {
+    await registerTeamSubmission({
+      courseId,
+      evalId,
+      teamId: team.teamId,
+      memberIds: team.memberIds,
+      fileName: file.name,
+      storagePath,
+      contentType,
+      size: file.size,
+      sha256,
+    });
+    return storagePath;
+  }
+
   const { sdk, db } = await firestore();
   await sdk.setDoc(sdk.doc(db, "courses", courseId, "submissions", `${evalId}_${user.uid}`), {
     uid: user.uid,
@@ -164,21 +234,59 @@ export async function uploadStudentSubmission(
     storagePath,
     contentType,
     size: file.size,
+    sha256,
+    submittedBy: user.uid,
+    submittedByName: user.displayName ?? "",
+    teamId: "",
+    memberIds: [],
     createdAt: sdk.serverTimestamp(),
   });
   return storagePath;
 }
 
+// Implements: REQ-TEAM-02
+async function registerTeamSubmission(payload: {
+  courseId: string;
+  evalId: string;
+  teamId: string;
+  memberIds: string[];
+  fileName: string;
+  storagePath: string;
+  contentType: string;
+  size: number;
+  sha256: string;
+}) {
+  const { sdk, functions } = await cloudFunctions();
+  try {
+    await sdk.httpsCallable(functions, "registerTeamSubmission")(payload);
+  } catch (cause) {
+    const message =
+      cause && typeof cause === "object" && "message" in cause
+        ? String((cause as { message: unknown }).message)
+        : "";
+    throw new Error(message || "No se pudo registrar la entrega del equipo.", { cause });
+  }
+}
+
 function toStudentSubmission(id: string, value: Record<string, unknown>): StudentSubmission {
+  const memberIds = Array.isArray(value.memberIds)
+    ? value.memberIds.filter((member): member is string => typeof member === "string")
+    : [];
+  const uid = String(value.uid ?? "");
   return {
     id,
     evalId: String(value.evalId ?? ""),
-    uid: String(value.uid ?? ""),
+    uid,
     fileName: String(value.fileName ?? "Entrega"),
     storagePath: String(value.storagePath ?? ""),
     contentType: String(value.contentType ?? "application/octet-stream"),
     size: Number(value.size ?? 0),
     createdAt: iso(value.createdAt),
+    sha256: String(value.sha256 ?? ""),
+    submittedBy: String(value.submittedBy ?? uid),
+    submittedByName: String(value.submittedByName ?? value.authorName ?? ""),
+    teamId: String(value.teamId ?? ""),
+    memberIds,
   };
 }
 

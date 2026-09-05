@@ -35,6 +35,17 @@ export type ReviewRow = {
   size: number;
   grade: number | null;
   feedback: string;
+  /*
+    Trazabilidad de la entrega en equipo. `teamSize` es 1 en una entrega
+    individual, de modo que la bandeja distingue el trabajo grupal sin consultar
+    de nuevo la modalidad de la evaluación, y `submittedByName` responde la
+    pregunta que un docente hace siempre al corregir en grupo: quién subió la
+    versión que está leyendo.
+  */
+  // Implements: REQ-TEAM-04
+  teamSize: number;
+  submittedByName: string;
+  sha256: string;
 };
 
 export const SUBMISSION_STATE_LABELS: Record<SubmissionState, string> = {
@@ -120,6 +131,9 @@ export function buildReviewQueue(
       size: submission?.size ?? 0,
       grade,
       feedback,
+      teamSize: Math.max(1, submission?.memberIds.length ?? 1),
+      submittedByName: submission?.submittedByName ?? "",
+      sha256: submission?.sha256 ?? "",
     };
   });
 }

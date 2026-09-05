@@ -9,7 +9,7 @@ import {
   deleteClassroomPost,
   editClassroomPost,
   publishClassroomPost,
-  saveClassroomProgress,
+  touchSectionPresence,
   saveLiveClassLink,
   watchClassroom,
 } from "../../../lib/firebase-classroom-client";
@@ -39,11 +39,6 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
   const canTeach = canTeachSection(user.role, sectionRole);
   const { students, posts } = classroom;
-  const units = course.units;
-  const completed =
-    typeof classroom.ownProgress === "number" && !Number.isNaN(classroom.ownProgress)
-      ? classroom.ownProgress
-      : 0;
   const courseReference = `${course.code} - ${course.section}`;
   const rejectReadOnly = () => {
     if (!readOnly) return false;
@@ -66,14 +61,17 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [tab]);
 
-  const updateProgress = async (next: number) => {
-    if (rejectReadOnly()) return;
-    const safeNext = typeof next === "number" && !Number.isNaN(next) ? Math.max(0, next) : 0;
-    setClassroom((current) => ({ ...current, ownProgress: safeNext }));
-    await saveClassroomProgress(course.id, safeNext, units.length).catch((cause) =>
-      note(cause instanceof Error ? cause.message : "No se pudo guardar el progreso.", "bad")
-    );
-  };
+  /*
+    Marca de presencia del estudiante. La nómina que el equipo docente corrige
+    se arma con estos documentos, así que registrarla al abrir el aula deja
+    visible a todo matriculado, entregue o no. Un fallo aquí no se le informa al
+    estudiante: no le pidió nada y no puede hacer nada al respecto.
+  */
+  // Implements: REQ-EVAL-04
+  useEffect(() => {
+    if (canTeach || readOnly) return;
+    void touchSectionPresence(course.id).catch(() => undefined);
+  }, [course.id, canTeach, readOnly]);
 
   // Implements: REQ-PUB-09
   const publish = async (
@@ -232,10 +230,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     canTeach,
     students,
     posts,
-    units,
-    completed,
     courseReference,
-    updateProgress,
     publish,
     editPost,
     deletePost,

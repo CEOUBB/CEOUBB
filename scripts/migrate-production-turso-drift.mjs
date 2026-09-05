@@ -75,6 +75,19 @@ async function main() {
     // 5. Indices B-Tree en sessions
     `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);`,
     `CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at);`,
+
+    /*
+      6. Purga de tablas residuales del modelo anterior a las secciones. La
+      migracion 0002 ya las eliminaba, pero produccion se reconcilio a mano y
+      nunca registro esa entrada, asi que sobrevivieron vacias y fuera de
+      db/schema.ts. Los avisos, archivos y notificaciones viven hoy en
+      Firestore; el avance por unidades se retiro del aula.
+    */
+    `DROP TABLE IF EXISTS notification_reads;`,
+    `DROP TABLE IF EXISTS notifications;`,
+    `DROP TABLE IF EXISTS progress;`,
+    `DROP TABLE IF EXISTS posts;`,
+    `DROP TABLE IF EXISTS files;`,
   ];
 
   for (const sql of statements) {
