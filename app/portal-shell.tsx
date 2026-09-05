@@ -7,6 +7,7 @@ import {
   Archive,
   Bell,
   CaretDown,
+  ChalkboardTeacher,
   FolderSimple,
   Gear,
   Lifebuoy,
@@ -164,6 +165,8 @@ export function PortalHeader({
   onHome,
   onCommunications,
   onSettings,
+  onManageCourses,
+  onAdministration,
   onSearch,
   onOpenNotification,
   onMarkAllNotifications,
@@ -179,6 +182,8 @@ export function PortalHeader({
   onHome: () => void;
   onCommunications: () => void;
   onSettings: () => void;
+  onManageCourses?: () => void;
+  onAdministration?: () => void;
   onSearch: () => void;
   onOpenNotification: (item: NotificationItem) => void;
   onMarkAllNotifications: () => void;
@@ -343,6 +348,28 @@ export function PortalHeader({
           <div className="account-popover">
             <strong>{user.name}</strong>
             <span>{user.email}</span>
+            {onManageCourses && (
+              <button
+                onClick={() => {
+                  closeAccount();
+                  onManageCourses();
+                }}
+                type="button"
+              >
+                <ChalkboardTeacher aria-hidden="true" size={16} /> Administrar ramos
+              </button>
+            )}
+            {onAdministration && (
+              <button
+                onClick={() => {
+                  closeAccount();
+                  onAdministration();
+                }}
+                type="button"
+              >
+                <Gear aria-hidden="true" size={16} /> Administración
+              </button>
+            )}
             <button
               data-requirement="Implements: REQ-CFG-01"
               onClick={() => {
@@ -555,6 +582,7 @@ export function PortalMainView({
                   activity={activity}
                   seen={seen}
                   entries={entries}
+                  onCalendar={() => setScreen("calendar")}
                   manageCourses={
                     user.role === "teacher" || user.role === "owner"
                       ? () => setScreen("teacher")

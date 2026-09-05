@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
 import "./globals.css";
 import "./mobile-shell.css";
+import "./campus.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",

@@ -38,7 +38,15 @@ export function PlannerGrid({
   firstFreeHour: number;
 }) {
   return (
-    <div className="planner-grid" key={`grid-${days[0]}`} ref={onOpenGrid}>
+    <div
+      className="planner-grid"
+      key={`grid-${days[0]}`}
+      ref={onOpenGrid}
+      role="region"
+      aria-label="Horario semanal"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- El horario desplazable necesita foco para usar las flechas del teclado.
+      tabIndex={0}
+    >
       <div aria-hidden="true" className="planner-hours">
         {SLOT_HOURS.map((hour) => (
           <span key={hour} style={{ top: offsetOf(hour * 60) }}>

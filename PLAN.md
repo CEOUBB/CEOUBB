@@ -1,5 +1,25 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: pulido del campus, 2026-09-04
+
+- **Ajuste solicitado:** restaurado únicamente el icono gris de calendario junto a «En tu agenda»; se mantiene un solo acceso contextual.
+
+- **Correcciones:** navegación lateral blanca con selección azul tenue; retiradas las franjas decorativas de cuestionarios; entrada al aula alineada y subrayada al pasar el cursor, sin movimiento de tarjeta; columnas del calendario con la misma reserva de scrollbar.
+- **Simplificación:** eliminada la promoción de biblioteca del dashboard y el botón superior de calendario. La agenda conserva un único acceso contextual, sin iconos repetidos. Login, Merriweather y `public/biblioteca/` preservados.
+- **Regresión reproducible:** `e2e/campus-polish.spec.ts` comprueba dashboard, hover, calendario y cuestionarios a 1918, 1440, 900 y 390 px contra la base local de demostración.
+- **Verificación del pulido:** cuatro recorridos de navegador aprobados; `verify:fast` completado con typecheck, 559 pruebas, 64 sellos y 29 especificaciones; lint sin errores. La revisión visual independiente pidió retirar el texto redundante «Controles en línea», ya eliminado y recapturado.
+
+## Handoff: rediseño del campus, 2026-09-04
+
+- **Alcance entregado:** portal autenticado y soporte, con navegación azul profundo, Merriweather conservada, cursos compactos, agenda contextual, estados vacíos honestos, accesos docentes móviles, categorías de recursos y entrada directa al formulario de contacto. Auditoría: `docs/design/campus-review.md`. Sistema construido: `DESIGN.md`.
+- **Límites:** login y `public/biblioteca/` preservados; sin dependencias nuevas, cambios de seguridad, cambios de datos de producción ni despliegue. CSS de rediseño aislado en `app/campus.css`, importado después de las capas existentes.
+- **Corrección funcional:** `nextEntry` no devuelve evaluaciones pasadas. Nueva prueba `tests/dashboard-agenda.test.ts`; se añadió exclusivamente su sello SHA-256, sin cambiar pruebas ni sellos anteriores.
+- **Verificación:** `verify:fast` pasó con 559 pruebas y 29 especificaciones; `verify:invariants` pasó con 35 pruebas. Compilación de producción completada. La suite completa pasó con 577 pruebas en ejecución secuencial. La ejecución paralela tuvo un fallo de salida del proceso de interop, aunque sus subpruebas pasaron; su ejecución aislada pasó con 10 pruebas. No se modificaron aserciones para resolverlo. React Doctor: 90/100, tres advertencias en los módulos de interoperabilidad no modificados.
+- **UX local:** recorridos en 1440 × 1000 y 390 × 844, búsqueda administrativa y acceso a gestión docente móvil. Se comprobaron controles cargados, teclado en mensajes, saltos de soporte y desbordamiento del documento. Capturas de desarrollo en `.impeccable/review/`. Revisión independiente de Impeccable: `ship` para las correcciones puntuadas de gestión docente y aula.
+- **Accesibilidad:** axe sin infracciones detectadas en siete pantallas y dos tamaños, con reglas WCAG A/AA hasta 2.2. Se añadió foco y nombre accesible a la región desplazable del calendario, con comprobación de teclado. El resultado corresponde a los estados probados, no a una certificación completa.
+- **Desarrollo:** servidor en `http://localhost:3000`, con `TURSO_DATABASE_URL=file:local.db` y `CEOUBB_ENVIRONMENT=preview`; ejecutar `pnpm dev --port 3000` con esas variables si se reinicia. Las cuentas de demostración pertenecen a la base local. Para pruebas de producción, quitar `CEOUBB_ENVIRONMENT=preview` del proceso de pruebas.
+- **Limitaciones:** las funciones de Firebase requieren sus servicios y credenciales; no se fabricaron conversaciones o resultados de producción. La automatización de Brave fue detenida por Computadora al no poder determinar con suficiente certeza la URL de la ventana. No se afirma una entrega visual verificada dentro de Brave.
+
 Last verified 2026-09-01 · baseline `2131d97` · repo `https://github.com/CEOUBB/CEOUBB.git` · production `https://ceoubb.com`
 
 **Objective: present CEOUBB to Universidad del Bío-Bío as the next official LMS.** Every priority is ordered against that. Rationale: `docs/institutional/moodle-adecca-comparison.md` (scope and adoption dossier); this file is authoritative for status, deployment, and verification.

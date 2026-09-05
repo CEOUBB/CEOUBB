@@ -181,7 +181,7 @@ export function formatDueDate(value: string): string {
 
 export function nextEntry(entries: CalendarEntry[]): CalendarEntry | null {
   const today = getSantiagoDateISO();
-  return entries.find((entry) => entry.date >= today) ?? entries[entries.length - 1] ?? null;
+  return entries.find((entry) => entry.date >= today) ?? null;
 }
 
 export function unseenCount(
