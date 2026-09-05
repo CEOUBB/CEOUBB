@@ -10,6 +10,7 @@ import {
   GraduationCap,
   MagnifyingGlass,
   Paperclip,
+  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
@@ -18,6 +19,7 @@ import {
   ClassroomStudent,
   MAX_SUBMISSION_BYTES,
   StudentSubmission,
+  SubmissionTeam,
   saveGradeFeedback,
   saveSimulation,
   saveStudentScores,
@@ -36,16 +38,20 @@ import {
   formatGrade,
   isValidGrade,
   requiredGrade,
+  submissionModeOf,
   summarize,
+  teamForStudent,
 } from "../../../lib/grades";
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
-import { formatBytes, formatDay } from "../../../lib/portal-utils";
+import { firebaseUidOf } from "../../../lib/section-roles";
+import { formatBytes, formatDay, type User } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { EmptyState } from "./EmptyState";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
+import { TeamSubmissionPicker } from "./TeamSubmissionPicker";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
 
 const GradeHistoryDialog = dynamic(
@@ -69,6 +75,7 @@ type FeedbackEditor = {
 export function GradesSection({
   course,
   classroom,
+  user,
   canTeach,
   canReadHistory = false,
   readOnly,
@@ -77,6 +84,7 @@ export function GradesSection({
 }: {
   course: Course;
   classroom: ClassroomState;
+  user: User;
   canTeach: boolean;
   canReadHistory?: boolean;
   readOnly: boolean;
@@ -100,6 +108,7 @@ export function GradesSection({
   return (
     <StudentGrades
       course={course}
+      user={user}
       gradebook={gradebook}
       exemption={exemption}
       officialFeedback={classroom.officialFeedback}
@@ -114,6 +123,7 @@ export function GradesSection({
 
 function StudentGrades({
   course,
+  user,
   gradebook,
   exemption,
   officialFeedback,
@@ -124,6 +134,7 @@ function StudentGrades({
   status,
 }: {
   course: Course;
+  user: User;
   gradebook: GradeItem[];
   exemption: number | null;
   officialFeedback: GradeFeedback;
@@ -138,6 +149,37 @@ function StudentGrades({
   const [detail, setDetail] = useState<GradeItem | null>(null);
   const submissions = useOwnSubmissions(course.id);
   const upload = useSubmissionUpload(course.id, note, !readOnly);
+  /*
+    El expediente de notas y los comprobantes viven en Firestore, indexados por
+    el UID de Firebase; la sesión del portal identifica al estudiante con el
+    identificador de Turso, que puede llegar con prefijo.
+  */
+  // Implements: REQ-TEAM-02
+  const selfUid = firebaseUidOf(user.id);
+  const [teamPicker, setTeamPicker] = useState<GradeItem | null>(null);
+
+  /*
+    Camino de la entrega según la modalidad de la evaluación. La individual no
+    cambia. La de equipos publicados resuelve el grupo sin preguntar nada. La de
+    equipos libres se detiene a que el estudiante declare con quién trabajó,
+    porque después esa lista determina quién recibe la nota.
+  */
+  // Implements: REQ-TEAM-02
+  const startSubmission = (item: GradeItem) => {
+    const mode = submissionModeOf(item);
+    if (mode === "individual") return upload.pick(item.id);
+    if (mode === "team_fixed") {
+      const team = teamForStudent(item, selfUid);
+      if (!team) {
+        return note(
+          `Todavía no tienes equipo asignado en «${item.name}». Pídeselo al equipo docente.`,
+          "bad"
+        );
+      }
+      return upload.pick(item.id, { teamId: team.id, memberIds: team.memberIds });
+    }
+    setTeamPicker(item);
+  };
   const draft =
     typed ??
     Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
@@ -292,13 +334,28 @@ function StudentGrades({
               Entrega
               <SubmissionSlot
                 item={detail}
-                onPick={upload.pick}
+                onPick={startSubmission}
                 percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
                 readOnly={readOnly}
                 receipt={submissions.get(detail.id)}
               />
             </div>
           </MobileSheet>
+        )}
+        {/* Implements: REQ-TEAM-02 */}
+        {teamPicker && (
+          <TeamSubmissionPicker
+            initialMemberIds={submissions.get(teamPicker.id)?.memberIds ?? []}
+            item={teamPicker}
+            onCancel={() => setTeamPicker(null)}
+            onConfirm={(memberIds) => {
+              const item = teamPicker;
+              setTeamPicker(null);
+              upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+            }}
+            sectionId={course.id}
+            selfUid={selfUid}
+          />
         )}
         {upload.field}
       </section>
@@ -332,7 +389,7 @@ function StudentGrades({
             <span className="grades-submission">
               <SubmissionSlot
                 item={item}
-                onPick={upload.pick}
+                onPick={startSubmission}
                 percent={upload.state?.evalId === item.id ? upload.state.percent : null}
                 readOnly={readOnly}
                 receipt={submissions.get(item.id)}
@@ -370,6 +427,21 @@ function StudentGrades({
           </p>
         )}
       </aside>
+      {/* Implements: REQ-TEAM-02 */}
+      {teamPicker && (
+        <TeamSubmissionPicker
+          initialMemberIds={submissions.get(teamPicker.id)?.memberIds ?? []}
+          item={teamPicker}
+          onCancel={() => setTeamPicker(null)}
+          onConfirm={(memberIds) => {
+            const item = teamPicker;
+            setTeamPicker(null);
+            upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+          }}
+          sectionId={course.id}
+          selfUid={selfUid}
+        />
+      )}
       {upload.field}
     </section>
   );
@@ -414,13 +486,13 @@ function useSubmissionUpload(
   enabled: boolean
 ) {
   const input = useRef<HTMLInputElement | null>(null);
-  const pending = useRef("");
+  const pending = useRef<{ evalId: string; team?: SubmissionTeam } | null>(null);
   const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
 
   const pick = useCallback(
-    (evalId: string) => {
+    (evalId: string, team?: SubmissionTeam) => {
       if (!enabled) return note("Este ramo está archivado y no recibe nuevas entregas.", "bad");
-      pending.current = evalId;
+      pending.current = { evalId, team };
       input.current?.click();
     },
     [enabled, note]
@@ -429,20 +501,30 @@ function useSubmissionUpload(
   const send = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      const evalId = pending.current;
+      const target = pending.current;
       event.target.value = "";
-      pending.current = "";
-      if (!file || !evalId) return;
+      pending.current = null;
+      if (!file || !target) return;
+      const { evalId, team } = target;
       if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES) {
         note(`La entrega debe pesar entre 1 byte y ${formatBytes(MAX_SUBMISSION_BYTES)}.`, "bad");
         return;
       }
       setState({ evalId, percent: 0 });
       try {
-        await uploadStudentSubmission(courseId, evalId, file, (percent) =>
-          setState({ evalId, percent })
+        await uploadStudentSubmission(
+          courseId,
+          evalId,
+          file,
+          (percent) => setState({ evalId, percent }),
+          team
         );
-        note("Entrega recibida. El comprobante queda en la evaluación.", "ok");
+        note(
+          team
+            ? `Entrega recibida y registrada para los ${team.memberIds.length} integrantes del equipo.`
+            : "Entrega recibida. El comprobante queda en la evaluación.",
+          "ok"
+        );
       } catch (cause) {
         note(cause instanceof Error ? cause.message : "No se pudo enviar la entrega.", "bad");
       } finally {
@@ -466,7 +548,34 @@ function useSubmissionUpload(
   return { field, pick, state };
 }
 
-// Implements: REQ-EVAL-01
+/*
+  Comprobante de una entrega ya recibida. La huella acorta a doce caracteres
+  porque nadie lee sesenta y cuatro de un vistazo: sirve para comparar dos
+  comprobantes, y el valor completo queda en el título para copiarlo.
+*/
+// Implements: REQ-TEAM-03, REQ-TEAM-04
+function SubmissionReceiptDetails({ receipt }: { receipt: StudentSubmission }) {
+  const isTeam = receipt.memberIds.length > 1;
+  const uploader = receipt.submittedByName.trim();
+  if (!isTeam && !receipt.sha256) return null;
+  return (
+    <small className="grades-receipt-trace">
+      {isTeam && (
+        <span>
+          Equipo de <span className="num">{receipt.memberIds.length}</span>
+          {uploader ? ` · entregó ${uploader}` : ""}
+        </span>
+      )}
+      {receipt.sha256 && (
+        <code className="num" title={`SHA-256: ${receipt.sha256}`}>
+          {receipt.sha256.slice(0, 12)}
+        </code>
+      )}
+    </small>
+  );
+}
+
+// Implements: REQ-EVAL-01, REQ-TEAM-01
 function SubmissionSlot({
   item,
   receipt,
@@ -477,10 +586,12 @@ function SubmissionSlot({
   item: GradeItem;
   receipt: StudentSubmission | undefined;
   percent: number | null;
-  onPick: (evalId: string) => void;
+  onPick: (item: GradeItem) => void;
   readOnly: boolean;
 }) {
   const shouldReduceMotion = useReducedMotion();
+  const mode = submissionModeOf(item);
+  const teamLabel = mode === "individual" ? "" : "en equipo";
 
   if (percent !== null) {
     return (
@@ -511,11 +622,12 @@ function SubmissionSlot({
         <small className="num">
           {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
         </small>
+        <SubmissionReceiptDetails receipt={receipt} />
         {!readOnly && (
           <button
-            aria-label={`Reemplazar la entrega de ${item.name}`}
+            aria-label={`Reemplazar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
             className="grades-attach"
-            onClick={() => onPick(item.id)}
+            onClick={() => onPick(item)}
             type="button"
           >
             Reemplazar
@@ -529,13 +641,17 @@ function SubmissionSlot({
 
   return (
     <button
-      aria-label={`Adjuntar la entrega de ${item.name}`}
+      aria-label={`Adjuntar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
       className="grades-attach"
-      onClick={() => onPick(item.id)}
+      onClick={() => onPick(item)}
       type="button"
     >
-      <Paperclip aria-hidden="true" size={14} />
-      Adjuntar
+      {mode === "individual" ? (
+        <Paperclip aria-hidden="true" size={14} />
+      ) : (
+        <UsersThree aria-hidden="true" size={14} weight="fill" />
+      )}
+      {mode === "individual" ? "Adjuntar" : "Entregar en equipo"}
     </button>
   );
 }
@@ -687,7 +803,12 @@ function TeacherGrades({
       <div className="section-title compact-title">
         <h2>Ponderación del ramo</h2>
       </div>
-      <GradebookSettingsEditor courseId={course.id} exemption={exemption} gradebook={gradebook} />
+      <GradebookSettingsEditor
+        courseId={course.id}
+        exemption={exemption}
+        gradebook={gradebook}
+        students={students}
+      />
       <div className="section-title compact-title">
         <h2>Notas oficiales</h2>
       </div>

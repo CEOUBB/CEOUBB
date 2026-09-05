@@ -30,8 +30,6 @@ function student(userId: string, name: string): ClassroomStudent {
     userId,
     name,
     email: `${userId}@alumnos.ubiobio.cl`,
-    completed: 0,
-    total: 0,
     updatedAt: null,
   };
 }
@@ -46,6 +44,11 @@ function submission(uid: string, createdAt: string, extra: Partial<StudentSubmis
     contentType: "application/pdf",
     size: 120_000,
     createdAt,
+    sha256: "",
+    submittedBy: uid,
+    submittedByName: "",
+    teamId: "",
+    memberIds: [],
     ...extra,
   } satisfies StudentSubmission;
 }

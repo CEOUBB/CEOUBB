@@ -78,3 +78,20 @@ export function sectionRoleLabel(role: SectionRole): string {
 export function canReadGradeHistory(accountRole: AccountRole, sectionRole: SectionRole | null) {
   return canTeachSection(accountRole, sectionRole) || sectionRole === "assistant";
 }
+
+/*
+  Identidad del usuario en Firebase a partir de la que guarda Turso.
+
+  El sistema de registro conserva las cuentas creadas por el flujo institucional
+  con el prefijo `firebase:` y las cuentas sembradas sin él. Firestore, en
+  cambio, indexa siempre por el UID desnudo: expedientes de notas, comprobantes
+  de entrega y proyecciones de matrícula. Traducir en un solo lugar evita que un
+  equipo de trabajo quede formado por identificadores que nunca coinciden con la
+  fila de notas que deben recibir.
+*/
+// Implements: REQ-SEC-07, REQ-TEAM-02
+export function firebaseUidOf(userId: string): string {
+  return typeof userId === "string" && userId.startsWith("firebase:")
+    ? userId.slice("firebase:".length)
+    : userId;
+}

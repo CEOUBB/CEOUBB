@@ -12,11 +12,62 @@ export const GRADE_FEEDBACK_REQUIREMENTS = [
   "REQ-FEEDBACK-06",
 ] as const;
 
+export const TEAM_SUBMISSION_REQUIREMENTS = [
+  "REQ-TEAM-01",
+  "REQ-TEAM-02",
+  "REQ-TEAM-03",
+  "REQ-TEAM-04",
+] as const;
+
+/*
+  Modalidad de entrega de una evaluación.
+
+  - `individual`: cada estudiante sube su propio archivo. Es el modo histórico y
+    el que asume toda evaluación que no declare otra cosa.
+  - `team_free`: el curso trabaja en equipos, pero quien los arma es el propio
+    estudiantado. El representante elige a sus compañeros al momento de subir.
+  - `team_fixed`: el equipo docente publica la nómina de equipos y el estudiante
+    sólo puede entregar por el suyo.
+*/
+// Implements: REQ-TEAM-01
+export const SUBMISSION_MODES = ["individual", "team_free", "team_fixed"] as const;
+
+export type SubmissionMode = (typeof SUBMISSION_MODES)[number];
+
+export const SUBMISSION_MODE_LABELS: Record<SubmissionMode, string> = {
+  individual: "Individual",
+  team_free: "En equipo, integrantes elegidos por el curso",
+  team_fixed: "En equipo, integrantes definidos por el docente",
+};
+
+/*
+  Techo de integrantes por equipo. Un taller o laboratorio de la universidad no
+  organiza grupos mayores, y el límite acota la réplica atómica de la entrega,
+  la nota y la retroalimentación: son escrituras que deben caber en una sola
+  transacción de Firestore.
+*/
+// Implements: REQ-TEAM-02
+export const MAX_TEAM_MEMBERS = 8;
+
+/** Techo de equipos por evaluación: una sección grande dividida en pares. */
+// Implements: REQ-TEAM-01
+export const MAX_TEAMS_PER_ITEM = 120;
+
+export type EvaluationTeam = {
+  id: string;
+  name: string;
+  memberIds: string[];
+};
+
 export type GradeItem = {
   id: string;
   name: string;
   weight: number;
   date: string;
+  /* Ausente en las evaluaciones creadas antes de la entrega grupal: se lee
+     siempre a través de `submissionModeOf`, que las trata como individuales. */
+  submissionMode?: SubmissionMode;
+  teams?: EvaluationTeam[];
 };
 
 export type GradeScores = Record<string, number>;
@@ -65,6 +116,62 @@ export function normalizeGradeFeedback(value: unknown): GradeFeedback {
   return feedback;
 }
 
+// Implements: REQ-TEAM-01
+export function submissionModeOf(item: Pick<GradeItem, "submissionMode">): SubmissionMode {
+  const mode = item.submissionMode;
+  return SUBMISSION_MODES.includes(mode as SubmissionMode)
+    ? (mode as SubmissionMode)
+    : "individual";
+}
+
+// Implements: REQ-TEAM-01
+export function isTeamSubmission(item: Pick<GradeItem, "submissionMode">): boolean {
+  return submissionModeOf(item) !== "individual";
+}
+
+/*
+  Depura la nómina de equipos publicada por el docente. Un identificador de
+  usuario repetido dentro del mismo equipo se colapsa, un equipo sin integrantes
+  desaparece y el orden se conserva tal como lo escribió quien enseña la
+  sección. La validación de reglas académicas —mínimo de integrantes, un
+  estudiante en un solo equipo— vive en `gradeSchemeError`, porque allí puede
+  explicarse con un mensaje que el docente entienda.
+*/
+// Implements: REQ-TEAM-01
+export function normalizeTeams(value: unknown): EvaluationTeam[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, MAX_TEAMS_PER_ITEM).flatMap((team, index) => {
+    if (!team || typeof team !== "object") return [];
+    const record = team as Record<string, unknown>;
+    const memberIds = Array.isArray(record.memberIds)
+      ? [
+          ...new Set(
+            record.memberIds
+              .filter(
+                (member): member is string => typeof member === "string" && member.trim() !== ""
+              )
+              .map((member) => member.trim())
+          ),
+        ].slice(0, MAX_TEAM_MEMBERS)
+      : [];
+    if (memberIds.length === 0) return [];
+    return [
+      {
+        id: String(record.id ?? `team-${index + 1}`),
+        name: String(record.name ?? "").trim() || `Equipo ${index + 1}`,
+        memberIds,
+      },
+    ];
+  });
+}
+
+/** Equipo publicado al que pertenece un estudiante en una evaluación fija. */
+// Implements: REQ-TEAM-02
+export function teamForStudent(item: GradeItem, userId: string): EvaluationTeam | null {
+  if (submissionModeOf(item) !== "team_fixed") return null;
+  return (item.teams ?? []).find((team) => team.memberIds.includes(userId)) ?? null;
+}
+
 export function normalizeItems(value: unknown): GradeItem[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item, index) => {
@@ -73,12 +180,17 @@ export function normalizeItems(value: unknown): GradeItem[] {
     const rawWeight = Number(record.weight ?? 0);
     if (!Number.isFinite(rawWeight) || rawWeight <= 0) return [];
     const weight = Math.round(rawWeight * 100) / 100;
+    const submissionMode = submissionModeOf(record as Pick<GradeItem, "submissionMode">);
     return [
       {
         id: String(record.id ?? `item-${index}`),
         name: String(record.name ?? "Evaluación"),
         weight,
         date: String(record.date ?? ""),
+        submissionMode,
+        /* Los equipos sólo existen en la modalidad que los publica: guardarlos
+           en las demás dejaría una nómina invisible lista para revivir sola. */
+        teams: submissionMode === "team_fixed" ? normalizeTeams(record.teams) : [],
       },
     ];
   });

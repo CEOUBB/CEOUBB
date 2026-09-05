@@ -110,7 +110,16 @@ export function watchGradebooks(
   };
 }
 
-export async function saveClassroomProgress(courseId: string, completed: number, total: number) {
+/*
+  Presencia del estudiante en la sección. El documento vive en `progress` por
+  compatibilidad con los expedientes ya escritos, pero ya no guarda avance
+  declarado: sólo identifica a quien abrió el aula y cuándo. De él sale la
+  nómina que el equipo docente ve en Participantes y en la bandeja de
+  corrección, así que escribirlo al entrar corrige el vacío anterior, donde un
+  estudiante sólo aparecía si simulaba una nota.
+*/
+// Implements: REQ-EVAL-04
+export async function touchSectionPresence(courseId: string) {
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   await sdk.setDoc(
     sdk.doc(db, "courses", courseId, "progress", user.uid),
@@ -118,9 +127,6 @@ export async function saveClassroomProgress(courseId: string, completed: number,
       uid: user.uid,
       displayName: user.displayName ?? "",
       email: emailOf(user),
-      completed,
-      total,
-      percent: total ? Math.round((100 * completed) / total) : 0,
       lastSeen: sdk.serverTimestamp(),
     },
     { merge: true }

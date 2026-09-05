@@ -1,5 +1,5 @@
 import { createSign } from "node:crypto";
-import { SECTION_ROLES, type SectionRole } from "../section-roles.ts";
+import { SECTION_ROLES, firebaseUidOf, type SectionRole } from "../section-roles.ts";
 export type { SectionRole };
 
 /*
@@ -93,7 +93,7 @@ export function enrollmentDocumentPath(
   seccionId: string,
   projectId = FIREBASE_PROJECT_ID
 ) {
-  const cleanUid = userId.startsWith("firebase:") ? userId.replace("firebase:", "") : userId;
+  const cleanUid = firebaseUidOf(userId);
   return `projects/${projectId}/databases/(default)/documents/enrollments/${cleanUid}/sections/${seccionId}`;
 }
 
@@ -210,7 +210,7 @@ export async function projectUserRoleToFirestore(
     return;
   }
 
-  const cleanUid = userId.startsWith("firebase:") ? userId.replace("firebase:", "") : userId;
+  const cleanUid = firebaseUidOf(userId);
   const name = `projects/${projectId}/databases/(default)/documents/users/${cleanUid}`;
   const write: FirestoreWrite = {
     update: {

@@ -47,7 +47,7 @@ export {
 
 import { classroomFileUrl as getFileUrl } from "./firebase/storage.ts";
 
-export type { StudentSubmission } from "./firebase/storage.ts";
+export type { StudentSubmission, SubmissionTeam } from "./firebase/storage.ts";
 
 export {
   uploadClassroomFile,
@@ -71,7 +71,7 @@ export type { CourseGradebook, StudentScoreRow } from "./firebase/grades.ts";
 export {
   watchGradebook,
   watchGradebooks,
-  saveClassroomProgress,
+  touchSectionPresence,
   saveSimulation,
   saveGradebook,
   saveStudentScores,

@@ -324,9 +324,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Implements: REQ-EVAL-01, REQ-SEC-08
+    /*
+      Comprobantes de entrega. Cada estudiante lee el suyo y el equipo docente
+      lee todos. Un integrante también lee el comprobante de sus compañeros de
+      equipo, porque los cuatro describen el mismo archivo y sin esa lectura la
+      entrega grupal sería invisible para quien no la subió.
+
+      La escritura sigue siendo estrictamente propia: la fila de un compañero
+      sólo la crea `registerTeamSubmission` con credenciales de servidor, que no
+      pasan por estas reglas. Dejar que un estudiante escribiera el expediente
+      de otro abriría la entrega en nombre ajeno.
+    */
+    // Implements: REQ-EVAL-01, REQ-SEC-08, REQ-TEAM-02
     match /courses/{courseId}/submissions/{submissionId} {
-      allow read: if isOwner() || teachesSection(courseId) || signedIn() && resource.data.uid == request.auth.uid;
+      allow read: if isOwner() || teachesSection(courseId)
+        || signedIn() && (resource.data.uid == request.auth.uid
+          || request.auth.uid in resource.data.get('memberIds', []));
       allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid);
       allow delete: if (isOwner() || signedIn() && resource.data.uid == request.auth.uid) && sectionIsWritable(courseId);
     }
