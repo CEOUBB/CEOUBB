@@ -16,6 +16,7 @@ import {
   applyEnrollmentImport,
   claimPendingEnrollments,
   previewEnrollmentImport,
+  reconcileSectionProjections,
 } from "../lib/services/bulk-enrollment.ts";
 import { getDb } from "../db/index.ts";
 import {
@@ -378,4 +379,29 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
   assert.deepEqual(claim, { claimed: 1, projectionPending: true });
   assert.equal((await db.select().from(matriculas).limit(100)).length, 2);
   assert.equal((await db.select().from(matriculasPendientes).limit(200)).length, 102);
+
+  const unauthorizedTeacher = {
+    id: "teacher-other",
+    email: "other@ubiobio.cl",
+    name: "Other Teacher",
+    role: "teacher" as const,
+  };
+  await assert.rejects(
+    async () => reconcileSectionProjections(unauthorizedTeacher, "440299-2026-2-1"),
+    (cause) =>
+      cause instanceof EnrollmentImportError && cause.code === "forbidden" && cause.status === 403
+  );
+
+  const authorizedTeacher = {
+    id: "teacher",
+    email: "teacher@ubiobio.cl",
+    name: "Teacher",
+    role: "teacher" as const,
+  };
+  // reconcileSectionProjections attempts to project to Firestore via projectEnrollments.
+  // In unit test environment without Firebase credentials, projectEnrollments throws.
+  await assert.rejects(
+    async () => reconcileSectionProjections(authorizedTeacher, "440299-2026-2-1"),
+    (cause) => cause instanceof Error && cause.message.includes("FIREBASE_SERVICE_ACCOUNT_EMAIL")
+  );
 });
