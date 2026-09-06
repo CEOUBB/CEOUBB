@@ -39,3 +39,10 @@
 - **Attempted / Identified Solution:** Reemplazo por bucles `for..of` directos con `map.set(...)` sin asignación de tuplas intermedias.
 - **Outcome / Learning:** Se eliminó la doble asignación de memoria por elemento en la generación de notificaciones, reduciendo la presión sobre el recolector de basura en re-renderizados frecuentes del portal.
 - **Future Rule:** Construir objetos `Map` iterando directamente con `for..of` e invocando `map.set()` en lugar de mapear colecciones a arreglos temporales de tuplas `[k, v]`.
+
+## 2026-09-05 - Determinación de columnas máximas en tablas de `convertTables` (`lib/multimodal-editor.ts`)
+
+- **Finding:** `convertTables` ejecutaba `Math.max(...grid.map((row) => row.length))` para calcular las columnas máximas al convertir tablas HTML a Markdown, creando un arreglo temporal intermedio y desempacando argumentos variádicos en la pila de llamadas.
+- **Attempted / Identified Solution:** Reemplazo por un bucle `for..of` directo de pasada única sobre `grid` que mantiene escalarmente el recuento máximo de columnas.
+- **Outcome / Learning:** Se eliminó la asignación de memoria intermedia $O(N)$ por tabla y el riesgo de desbordamiento de pila en tablas con un número elevado de filas.
+- **Future Rule:** Reemplazar `Math.max(...arr.map(...))` por bucles iterativos `for..of` escalares simples en utilidades de transformación de texto o documentos.
