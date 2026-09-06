@@ -35,6 +35,7 @@ export function MobileCoursesSheet({
         )}
         {courses.map((item) => (
           <button
+            aria-label={`Ir al ramo ${item.name}`}
             className="sheet-row"
             data-active={screen === "course" && openedCourseId === item.id}
             key={item.id}
@@ -43,7 +44,7 @@ export function MobileCoursesSheet({
             type="button"
           >
             <span className="sheet-row-icon">
-              <FolderSimple size={20} weight="fill" />
+              <FolderSimple aria-hidden="true" size={20} weight="fill" />
             </span>
             <span>
               {item.name}
@@ -58,7 +59,7 @@ export function MobileCoursesSheet({
           onClick={() => onOpenChange(false)}
         >
           <span className="sheet-row-icon">
-            <Archive size={20} />
+            <Archive aria-hidden="true" size={20} />
           </span>
           <span>
             Biblioteca de Estudio
@@ -106,6 +107,7 @@ export function MobileCoursePreviewSheet({
         </div>
       </dl>
       <button
+        aria-label={`Entrar al aula de ${preview.name}`}
         className="sheet-cta"
         onClick={() => {
           enterCourse(preview);
