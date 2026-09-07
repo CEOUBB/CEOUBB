@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Resources / ResourcesView
+
+- **Finding:** Decorative Phosphor SVG icons (`<ArrowUpRight>`, `<Books>`, `<ArrowRight>`, `<Check>`, `<DeviceMobile>`, `<DownloadSimple>`) in resource cards, CTA buttons, and feature lists lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes inside interactive links and text containers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor SVG icons embedded within links, buttons, and point list items.
+- **Design System Constraint:** Preserved existing Phosphor icon props (`size`, `weight`, `className`) and layout structure without altering visual styles or element geometry.
+- **Future Rule:** Ensure decorative SVG icons inside links, buttons, and list items with explicit text or ARIA labels explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Views / CourseCard & CoursesDashboard
 
 - **Finding:** Repeated action buttons ("Entrar al aula", "Ir al ramo", "Abrir en solo lectura") across course cards and next-evaluation banners lacked item-specific ARIA context, causing screen reader ambiguity across list items, while nested decorative Phosphor SVG vector icons lacked `aria-hidden="true"` (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
