@@ -1,4 +1,5 @@
 import { getSessionUser } from "../../../../../../lib/auth.ts";
+import { EnrollmentImportError } from "../../../../../../lib/bulk-enrollment.ts";
 import { reconcileSectionProjections } from "../../../../../../lib/services/bulk-enrollment.ts";
 
 export const runtime = "nodejs";
@@ -16,7 +17,10 @@ export async function POST(
   try {
     const result = await reconcileSectionProjections(actor, sectionId);
     return Response.json(result);
-  } catch (cause) {
+  } catch (cause: unknown) {
+    if (cause instanceof EnrollmentImportError) {
+      return Response.json({ error: cause.message, code: cause.code }, { status: cause.status });
+    }
     console.error(`[POST /api/sections/${sectionId}/projections/reconcile] Error:`, cause);
     return Response.json(
       { error: "No fue posible reconciliar las proyecciones con Firestore." },
