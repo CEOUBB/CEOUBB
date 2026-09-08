@@ -3,14 +3,7 @@
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import Image from "next/image";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Books,
-  Check,
-  DeviceMobile,
-  DownloadSimple,
-} from "@phosphor-icons/react";
+import { ArrowUpRight, DeviceMobile, DownloadSimple } from "@phosphor-icons/react";
 import {
   APK_URL,
   instantTransition,
@@ -38,12 +31,6 @@ const BRAND_LOGOS: Record<Brand, string> = {
   youtubemusic: "/brand/youtubemusic.svg",
   perplexity: "/brand/perplexity.svg",
 };
-
-const LIBRARY_POINTS = [
-  "Accede a evaluaciones y documentos de años anteriores cuando lo necesites.",
-  "Practica con material real de la UBB para estudiar con anticipación.",
-  "Abierta a todas las facultades: crece con lo que aportan estudiantes y docentes.",
-];
 
 /* El índice entra después de la portada: opacidad y 6px, no el mismo salto que
    la zona superior. Un solo gesto de carga, en dos tiempos. */
@@ -143,27 +130,6 @@ export function ResourcesView() {
         transition={shouldReduceMotion ? instantTransition : springDefault}
         variants={shouldReduceMotion ? undefined : rise}
       >
-        <section className="library-panel">
-          <div className="library-lead">
-            <span className="library-icon">
-              <Books aria-hidden="true" size={24} />
-            </span>
-            <h2>Biblioteca académica</h2>
-            {/* Implements: REQ-QMD-03 */}
-            {/* react-doctor-disable-next-line nextjs-no-a-element */}
-            <a className="library-cta" href="/biblioteca/index.html">
-              Abrir biblioteca <ArrowRight aria-hidden="true" size={16} />
-            </a>
-          </div>
-          <ul className="library-points">
-            {LIBRARY_POINTS.map((point) => (
-              <li key={point}>
-                <Check aria-hidden="true" size={15} weight="bold" /> {point}
-              </li>
-            ))}
-          </ul>
-        </section>
-
         <div className="mobile-strip">
           <span className="mobile-strip-icon">
             <DeviceMobile aria-hidden="true" size={20} />

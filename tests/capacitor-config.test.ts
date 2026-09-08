@@ -148,10 +148,10 @@ test("the iOS target exists as a versioned scaffold", async () => {
 });
 
 // REQ-CAP-13
-test("REQ-CAP-13: Invariante de biblioteca única: android/app/src/main/assets/www no debe existir", async () => {
+test("REQ-CAP-13: Invariante de aislamiento nativo: android/app/src/main/assets/www no debe existir", async () => {
   assert.equal(
     await exists("../android/app/src/main/assets/www"),
     false,
-    "El directorio duplicado android/app/src/main/assets/www no debe existir. La biblioteca reside únicamente en public/biblioteca/."
+    "El directorio duplicado android/app/src/main/assets/www no debe existir. La plataforma se sirve remotamente desde el portal web."
   );
 });

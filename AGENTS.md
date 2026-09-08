@@ -47,10 +47,10 @@ Access to course data is granted **if and only if** an active enrollment project
 - **Course Identity:** A course is always a **Section** (_subject $\times$ academic period $\times$ section_), never a plain unstructured string.
 - **Grade Arithmetic:** `lib/grades.ts` is the single source of truth for the Chilean 1.0–7.0 scale and weighted average calculations.
 
-### 2.3 Mobile Seam & Study Library
+### 2.3 Mobile Seam & Remote Architecture
 
 - **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
-- **Single Library Copy:** `public/biblioteca/` is the only valid copy of the study library. Do not regenerate duplicated asset trees under `android/`.
+- **Native Asset Isolation:** All academic features are served remotely from the authoritative web portal. Do not regenerate duplicated asset trees under `android/`.
 
 ---
 

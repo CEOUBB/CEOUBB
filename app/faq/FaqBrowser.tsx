@@ -111,7 +111,7 @@ export default function FaqBrowser() {
             autoComplete="off"
             id="faq-filtro"
             onChange={(evento) => setTermino(evento.target.value)}
-            placeholder="notas, contraseña, biblioteca…"
+            placeholder="notas, contraseña, materiales…"
             type="search"
             value={termino}
           />
@@ -152,11 +152,7 @@ export default function FaqBrowser() {
                     <p key={parrafo.slice(0, 40)}>{parrafo}</p>
                   ))}
                   {pregunta.enlace ? (
-                    pregunta.enlace.href.startsWith("/biblioteca") ? (
-                      <a href={pregunta.enlace.href}>{pregunta.enlace.texto}</a>
-                    ) : (
-                      <Link href={pregunta.enlace.href}>{pregunta.enlace.texto}</Link>
-                    )
+                    <Link href={pregunta.enlace.href}>{pregunta.enlace.texto}</Link>
                   ) : null}
                 </div>
               </details>

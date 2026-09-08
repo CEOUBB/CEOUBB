@@ -1,5 +1,11 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: eliminación de biblioteca de estudio y desacople de KaTeX, 2026-09-08
+
+- **Alcance entregado:** Eliminación integral de la biblioteca estática (`public/biblioteca/` y `https://ceoubb.com/biblioteca/index.html`), desvinculación de accesos en UI (`portal-shell.tsx`, `portal-sheets.tsx`, `ResourcesView.tsx`, `PostsSection.tsx`), redirección 307 en `next.config.ts` (`/biblioteca/:path*` -> `/`), actualización del Service Worker (`public/sw.js` a `v9` eliminando precaché y rutas obsoletas), desacoplamiento de dependencias de KaTeX a `public/vendor/katex/` para fórmulas en aula virtual, actualización de categorías de FAQ (`recursos`), ajuste de documentos de gobernanza (`AGENTS.md`, `DESIGN.md`, `openspec/specs/mobile/spec.md`) y actualización de sellos de prueba SHA-256.
+- **Límites:** Cero regresión en renderizado LaTeX de publicaciones del aula. Cero debilitamiento de aserciones de pruebas.
+- **Verificación:** `verify:fast`, `verify:invariants`, `format:check`, `typecheck`, `lint` y suite de tests ejecutados con éxito.
+
 ## Handoff: auditoría de seguridad 081, 2026-09-08
 
 - **Seguimiento PR #163:** corregidos tres avisos CodeQL en mocks de URL; cerrada fuga de blobs al abrir pautas, con limpieza propia para el visor persistente; revocación paralela acotada y cubierta por regresión. React Doctor local 100/100, con una excepción puntual explicada para el cleanup asíncrono; sin reglas globales desactivadas. PR Agent no propuso cambios. Tras la revisión pasan lint, TypeScript, build, 578 pruebas completas y 569 de `verify:fast`.

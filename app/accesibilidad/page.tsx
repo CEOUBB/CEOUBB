@@ -62,9 +62,6 @@ export default function AccessibilityPage() {
             autenticadas para estudiantes, docentes y administración.
           </li>
           <li>
-            <code>https://ceoubb.com/biblioteca/index.html</code> y sus estados interactivos.
-          </li>
-          <li>
             <code>https://ceoubb.com/privacidad</code>, <code>/terminos</code>,{" "}
             <code>/accesibilidad</code>, <code>/faq</code> y <code>/contacto</code>, incluidos el
             filtro de preguntas y el formulario de soporte con sus estados de validación, envío,

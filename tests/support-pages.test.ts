@@ -87,7 +87,7 @@ test("REQ-SUP-05: la política de privacidad declara la nueva categoría y su pl
 });
 
 test("REQ-HELP-06: el FAQ cubre las cinco categorías comprometidas", () => {
-  const esperadas = ["acceso", "cursos", "notas", "biblioteca", "movil"];
+  const esperadas = ["acceso", "cursos", "notas", "recursos", "movil"];
   assert.deepEqual(
     CATEGORIAS_FAQ.map((c) => c.slug),
     esperadas

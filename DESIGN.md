@@ -130,7 +130,7 @@ Navegación clara, documentos blancos y jerarquía académica contenida. Merriwe
 
 **Alcance y fuente:** `app/globals.css` conserva los tokens base; `app/mobile-shell.css`, el comportamiento móvil; `app/campus.css`, importado después de ambos, aplica el rediseño al portal autenticado y páginas de ayuda y políticas. El frontmatter registra el campus y los tokens base compartidos, distinguiendo `base-hairline` de `campus-hairline`. Las capturas revisadas cubren dashboard a 1440px y 390px, gestión docente, aula, recursos y contacto; el código final prevalece sobre capturas anteriores.
 
-**Regla del acceso intacto.** El login conserva exactamente su composición, colores, tipografía y comportamiento. No trasladar el rediseño a selectores raíz ni al acceso. Las entradas a biblioteca pertenecen al campus; `public/biblioteca/` y las demás carpetas de biblioteca quedan fuera de este alcance.
+**Regla del acceso intacto.** El login conserva exactamente su composición, colores, tipografía y comportamiento. No trasladar el rediseño a selectores raíz ni al acceso.
 
 **Key Characteristics:**
 
@@ -147,7 +147,7 @@ Navegación clara, documentos blancos y jerarquía académica contenida. Merriwe
 
 ### Secondary
 
-`navy` permanece en el panel de acceso a biblioteca en Recursos. El riel blanco combina `rail-text`, `rail-hover` y texto azul primario sobre `primary-wash` para la selección. El bloque de biblioteca del panel personal se retiró por petición del usuario.
+El riel blanco combina `rail-text`, `rail-hover` y texto azul primario sobre `primary-wash` para la selección. El bloque de biblioteca del panel personal se retiró por petición del usuario.
 
 ### Neutral
 
@@ -197,7 +197,7 @@ Acciones y navegación redondean a 8px; símbolos de curso a 10px; tarjetas de c
 
 **Acciones y foco:** botones principales y secundarios de mínimo 44px, texto de 13px y peso 600. Primario azul; secundario blanco con borde fino. Conservan presión a `scale(0.985)`. Foco global de 2px en azul separado 2px; foco del riel de 2px en azul separado 3px. Los controles enfocados dentro del campus y políticas eliminan la transición.
 
-**Cursos y agenda:** símbolo de 44px, código, nombre Merriweather, docente, sección, actividad y entrada al aula. Padding de 24px, reducido a 20px en móvil, sin portada gráfica vacía. La agenda muestra próxima evaluación o estado vacío con un único acceso contextual al calendario. No repite iconos de agenda ni un botón de calendario en la cabecera, y no contiene promoción de biblioteca.
+**Cursos y agenda:** símbolo de 44px, código, nombre Merriweather, docente, sección, actividad y entrada al aula. Padding de 24px, reducido a 20px en móvil, sin portada gráfica vacía. La agenda muestra próxima evaluación o estado vacío con un único acceso contextual al calendario. No repite iconos de agenda ni un botón de calendario en la cabecera.
 
 **Gestión docente:** selector con puntos de color de 8px y estado activo explícito; ficha con título y una sola línea de contexto para período y sección. Pestañas de 48px, campos con etiquetas visibles y guardado al pie. Los formularios conservan sus controles nativos y variantes existentes.
 
@@ -205,7 +205,7 @@ Acciones y navegación redondean a 8px; símbolos de curso a 10px; tarjetas de c
 
 **Calendario y comunicaciones:** cuadrícula de horario con desplazamiento acotado a `min(60dvh, 620px)` y región accesible por teclado, identificada como Horario semanal. Cabecera, franja de eventos y cuadrícula comparten `scrollbar-width: thin` y reserva estable para mantener alineadas sus columnas. Comunicaciones mantiene listado y conversación, y presenta un estado vacío sin un panel de conversación innecesario.
 
-**Recursos y ayuda:** entrada a biblioteca, acceso móvil, índice y filas de enlaces de mínimo 84px con padding 18px. Contacto usa artículo de lectura y accesos directos de mínimo 44px, con el primero azul. El pie conserva ayuda, privacidad, términos, accesibilidad y descargo de independencia.
+**Recursos y ayuda:** acceso móvil, índice y filas de enlaces de mínimo 84px con padding 18px. Contacto usa artículo de lectura y accesos directos de mínimo 44px, con el primero azul. El pie conserva ayuda, privacidad, términos, accesibilidad y descargo de independencia.
 
 **Movimiento:** `--transition-base` local es `150ms ease-out`; las tarjetas transicionan solo borde y sombra durante 150ms. Botones heredan `--transition-fast` de 120ms con `cubic-bezier(0.2, 0, 0, 1)`. Movimiento reducido fija scroll automático y transiciones y animaciones a 0ms dentro del campus y sus páginas de políticas. Los componentes React animados deben respetar `useReducedMotion()`.
 
@@ -216,7 +216,7 @@ Acciones y navegación redondean a 8px; símbolos de curso a 10px; tarjetas de c
 - Usar tokens semánticos y Phosphor para interfaz; respetar marcas externas existentes en Recursos.
 - Mantener foco visible, teclado, áreas seguras y movimiento reducido.
 - Preservar independencia y distintivos de tiendas sin enlace hasta el acuerdo institucional.
-- No modificar ni duplicar carpetas de biblioteca para extender este sistema.
+- No duplicar carpetas o assets web en árboles nativos para extender este sistema.
 - No introducir gradientes de texto, resplandores saturados, emojis decorativos ni `transition: all`.
 - No convertir rótulos pequeños en mayúsculas de tablas o navegación en decoración encima de títulos.
 - No afirmar conformidad WCAG AA o AAA por estas capturas o comprobaciones automáticas; la auditoría integral sigue pendiente.

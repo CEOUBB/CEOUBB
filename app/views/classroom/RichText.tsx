@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import Script from "next/script";
-import "../../../public/biblioteca/assets/vendor/katex/katex.min.css";
+import "../../../public/vendor/katex/katex.min.css";
 import {
   CLASSROOM_COMPATIBILITY_REQUIREMENTS,
   calloutFromQuote,
@@ -50,7 +50,7 @@ export function RichTextAssets() {
   return (
     <Script
       id="ceoubb-katex"
-      src="/biblioteca/assets/vendor/katex/katex.min.js"
+      src="/vendor/katex/katex.min.js"
       strategy="afterInteractive"
       onReady={() => {
         for (const subscriber of katexSubscribers) subscriber();

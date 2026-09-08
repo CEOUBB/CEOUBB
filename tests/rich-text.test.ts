@@ -138,7 +138,7 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   const capacitorSource = fs.readFileSync(path.join(process.cwd(), "capacitor.config.ts"), "utf8");
   assert.doesNotMatch(source, /dangerouslySetInnerHTML/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
-  assert.match(source, /biblioteca\/assets\/vendor\/katex\/katex\.min\.js/);
+  assert.match(source, /vendor\/katex\/katex\.min\.js/);
   assert.match(source, /trust:\s*false/);
   assert.match(source, /strict:\s*"error"/);
   assert.match(source, /maxSize:\s*10/);
