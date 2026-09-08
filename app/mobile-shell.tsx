@@ -18,7 +18,7 @@ export type MobileTab = {
   label: string;
   Icon: Icon;
   active: boolean;
-  /** Enlace real cuando la pestaña sale del portal (la biblioteca es HTML estático). */
+  /** Enlace real cuando la pestaña navega fuera del portal SPA. */
   href?: string;
   onSelect?: () => void;
 };

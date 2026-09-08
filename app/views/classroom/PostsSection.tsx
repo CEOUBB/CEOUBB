@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useDeferredValue, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -150,11 +149,7 @@ export function PostsSection({
               <button className="empty-state-action" onClick={startPublication} type="button">
                 Crear la primera publicación <ArrowRight size={15} />
               </button>
-            ) : (
-              <Link className="empty-state-action" href="/biblioteca/index.html" prefetch={false}>
-                Abrir biblioteca académica <ArrowRight size={15} />
-              </Link>
-            )
+            ) : undefined
           }
         />
       )}

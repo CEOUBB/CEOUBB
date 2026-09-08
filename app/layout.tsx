@@ -48,14 +48,15 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   openGraph: {
     title: "Centro de Estudio UBB",
-    description: "Tu aula y biblioteca académica de Ingeniería Mecánica en cualquier dispositivo.",
+    description:
+      "Tu aula virtual y portal académico de Ingeniería Mecánica en cualquier dispositivo.",
     type: "website",
     locale: "es_CL",
   },
   twitter: {
     card: "summary_large_image",
     title: "Centro de Estudio UBB",
-    description: "Aula y biblioteca académica de Ingeniería Mecánica UBB.",
+    description: "Aula virtual y portal académico de Ingeniería Mecánica UBB.",
   },
   icons: {
     icon: [

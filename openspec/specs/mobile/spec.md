@@ -2,7 +2,7 @@
 
 ### Purpose
 
-Gobierna la integración híbrida de Capacitor 7 (`cl.ubb.centroestudio`), el puente nativo con degradación segura en la web, los presupuestos de rendimiento móvil y la gestión de la biblioteca estática.
+Gobierna la integración híbrida de Capacitor 7 (`cl.ubb.centroestudio`), el puente nativo con degradación segura en la web, los presupuestos de rendimiento móvil y el aislamiento de recursos nativos.
 
 ### Requirements
 
@@ -26,11 +26,11 @@ The system SHALL ensure that all native bridge invocations (`lib/mobile-bridge.t
 - **WHEN** `triggerHapticFeedback()` is called
 - **THEN** it SHALL resolve safely without throwing an exception
 
-#### Requirement: Single Study Library Copy
+#### Requirement: Native Asset Isolation
 
-The system SHALL maintain `public/biblioteca/` as the single authoritative copy of study resources, avoiding duplication in native asset trees.
+The system SHALL NOT maintain a duplicated `android/app/src/main/assets/www` tree, serving all client features and academic resources remotely from the authoritative web portal.
 
-##### Scenario: Asset resolution
+##### Scenario: Native asset tree hygiene
 
-- **WHEN** referencing study documents or guides
-- **THEN** the client SHALL resolve them via `/biblioteca/...`
+- **WHEN** building or inspecting the Android project
+- **THEN** `android/app/src/main/assets/www` SHALL NOT exist

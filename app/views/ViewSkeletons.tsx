@@ -295,43 +295,6 @@ export function ResourcesSkeleton() {
       />
 
       <div className="res-top">
-        {/* Portada: biblioteca académica */}
-        <div className="library-panel" style={{ "--sk-delay": "110ms" } as React.CSSProperties}>
-          <div className="library-lead">
-            <span
-              className="sk"
-              style={{ width: "46px", height: "46px", borderRadius: "var(--radius-md)" }}
-            />
-            <span className="sk" style={{ width: "246px", height: "26px", marginTop: "10px" }} />
-            <span
-              className="sk sk-quiet"
-              style={{ width: "100%", height: "13px", marginTop: "10px" }}
-            />
-            <span
-              className="sk sk-quiet"
-              style={{ width: "72%", height: "13px", marginTop: "6px" }}
-            />
-            <span
-              className="sk"
-              style={{
-                width: "182px",
-                height: "44px",
-                marginTop: "16px",
-                borderRadius: "var(--radius-full)",
-              }}
-            />
-          </div>
-          <div className="library-points">
-            {[94, 88, 96].map((w, idx) => (
-              <span
-                className="sk sk-quiet"
-                key={`lib-point-${idx}`}
-                style={{ width: `${w}%`, height: "13px" }}
-              />
-            ))}
-          </div>
-        </div>
-
         {/* Tira de la app móvil */}
         <div className="mobile-strip" style={{ "--sk-delay": "150ms" } as React.CSSProperties}>
           <span

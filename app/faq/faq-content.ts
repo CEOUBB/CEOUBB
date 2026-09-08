@@ -166,33 +166,31 @@ export const CATEGORIAS_FAQ: CategoriaFaq[] = [
     ],
   },
   {
-    slug: "biblioteca",
-    titulo: "Biblioteca y recursos de estudio",
+    slug: "recursos",
+    titulo: "Recursos y materiales de estudio",
     preguntas: [
-      {
-        slug: "que-es-la-biblioteca",
-        pregunta: "¿Qué es la biblioteca de estudio?",
-        respuesta: [
-          "Es un conjunto de apuntes y material de repaso organizado por ramo, independiente de las secciones. No necesitas estar matriculado en un curso para consultarla.",
-          "Hoy cubre Ecuaciones Diferenciales, Estadística, Estática, Inglés Comunicacional I, Termodinámica Aplicada y Programación en Ingeniería con MATLAB.",
-        ],
-        enlace: { href: "/biblioteca/index.html", texto: "Abrir la biblioteca" },
-      },
-      {
-        slug: "aportar-material",
-        pregunta: "¿Puedo aportar apuntes a la biblioteca?",
-        respuesta: [
-          "Sí, y es la mejor forma de que crezca. Escríbenos contando qué ramo cubre tu material y en qué formato lo tienes.",
-          "Ten presente que solo se publica material del que puedas ceder el uso. Guías, pruebas y textos con derechos de autor de terceros no entran.",
-        ],
-        enlace: { href: "/contacto", texto: "Proponer material" },
-      },
       {
         slug: "archivos-del-curso",
         pregunta: "¿Dónde están los archivos que sube mi docente?",
         respuesta: [
-          "En la sección de materiales de cada ramo, agrupados en carpetas. Son distintos de la biblioteca: los materiales pertenecen a una sección concreta y solo los ve quien está matriculado en ella.",
+          "En la sección de materiales de cada ramo, agrupados en carpetas. Los materiales pertenecen a una sección concreta y solo los ve quien está matriculado en ella.",
         ],
+      },
+      {
+        slug: "plataformas-externas",
+        pregunta: "¿Qué herramientas y servicios externos incluye la plataforma?",
+        respuesta: [
+          "En la vista de Recursos dispones de accesos directos a asistentes de IA autorizados, herramientas de desarrollo y diseño, servicios de bienestar y enlaces a plataformas institucionales como Werken y Moodle UBB.",
+        ],
+        enlace: { href: "/contacto", texto: "Sugerir nuevo recurso" },
+      },
+      {
+        slug: "aportar-material",
+        pregunta: "¿Puedo proponer nuevos recursos académicos?",
+        respuesta: [
+          "Sí. Si conoces convenios, plataformas abiertas o herramientas de utilidad para estudiantes y docentes de la universidad, escríbenos a través del formulario de contacto.",
+        ],
+        enlace: { href: "/contacto", texto: "Proponer recurso" },
       },
     ],
   },
