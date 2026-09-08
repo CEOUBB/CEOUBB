@@ -289,7 +289,12 @@ function convertTables(value: string) {
         escapeTableCell(convertHtmlFragment(cell[2]))
       )
     );
-    const columns = Math.max(...grid.map((row) => row.length));
+    let columns = 0;
+    for (const row of grid) {
+      if (row.length > columns) {
+        columns = row.length;
+      }
+    }
     if (columns === 0) return "";
     const pad = (row: string[]) =>
       `| ${Array.from({ length: columns }, (_, index) => row[index] ?? "").join(" | ")} |`;
