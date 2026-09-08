@@ -341,8 +341,11 @@ export function highlightCode(value: string, language: CodeLanguage): SyntaxToke
         ? result._emitter.rootNode
         : undefined;
     const tree = extractHljsChildren(rootNode);
+    if (tree.length === 0 && value.length > 0) {
+      return [{ kind: "plain", value }];
+    }
     const flat = flattenHljsTokens(tree, "plain");
-    return mergeTokens(flat);
+    return flat.length > 0 ? mergeTokens(flat) : [{ kind: "plain", value }];
   } catch {
     return [{ kind: "plain", value }];
   }

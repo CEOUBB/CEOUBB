@@ -60,6 +60,26 @@ function getMetaData(node: Record<PropertyKey, unknown>): XmlMetaData | undefine
   return undefined;
 }
 
+function hasNonWhitespaceOrComments(s: string): boolean {
+  let i = 0;
+  while (i < s.length) {
+    if (/\s/.test(s[i])) {
+      i++;
+    } else if (s.startsWith("<!--", i)) {
+      const end = s.indexOf("-->", i + 4);
+      if (end === -1) return true;
+      i = end + 3;
+    } else if (s.startsWith("<?", i)) {
+      const end = s.indexOf("?>", i + 2);
+      if (end === -1) return true;
+      i = end + 2;
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Implements: REQ-IO-05, REQ-IO-09, REQ-QMD-05
 export function parseXml(bytes: Uint8Array): XmlNode {
   if (bytes.length > 1024 * 1024) fail("El XML supera 1 MiB.", 413);
@@ -125,15 +145,10 @@ export function parseXml(bytes: Uint8Array): XmlNode {
   const rootEntry = rootElements[0];
   const meta = getMetaData(rootEntry);
   if (meta) {
-    const before = source
-      .slice(0, meta.startIndex)
-      .replace(/<\?[\s\S]*?\?>/g, "")
-      .replace(/<!--[\s\S]*?-->/g, "");
-    if (before.trim().length > 0) {
-      fail("Texto fuera de la raíz XML.");
-    }
-    const after = source.slice(meta.endIndex).replace(/<!--[\s\S]*?-->/g, "");
-    if (after.trim().length > 0) {
+    if (
+      hasNonWhitespaceOrComments(source.slice(0, meta.startIndex)) ||
+      hasNonWhitespaceOrComments(source.slice(meta.endIndex))
+    ) {
       fail("Texto fuera de la raíz XML.");
     }
   }

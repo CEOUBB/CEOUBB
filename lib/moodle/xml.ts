@@ -73,6 +73,26 @@ function getMetaData(node: Record<PropertyKey, unknown>): XmlMetaData | undefine
   return undefined;
 }
 
+function hasNonWhitespaceOrComments(s: string): boolean {
+  let i = 0;
+  while (i < s.length) {
+    if (/\s/.test(s[i])) {
+      i++;
+    } else if (s.startsWith("<!--", i)) {
+      const end = s.indexOf("-->", i + 4);
+      if (end === -1) return true;
+      i = end + 3;
+    } else if (s.startsWith("<?", i)) {
+      const end = s.indexOf("?>", i + 2);
+      if (end === -1) return true;
+      i = end + 2;
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Implements: REQ-MOODLE-01, REQ-MOODLE-09
 export function parseMoodleXml(bytes: Uint8Array, label: string): MoodleXmlNode {
   if (bytes.length > MAX_MOODLE_XML_BYTES) {
@@ -123,15 +143,10 @@ export function parseMoodleXml(bytes: Uint8Array, label: string): MoodleXmlNode 
   const rootEntry = rootElements[0];
   const meta = getMetaData(rootEntry);
   if (meta) {
-    const before = source
-      .slice(0, meta.startIndex)
-      .replace(/<\?[\s\S]*?\?>/g, "")
-      .replace(/<!--[\s\S]*?-->/g, "");
-    if (before.trim().length > 0) {
-      invalid(`${label} contiene texto fuera de la raíz.`);
-    }
-    const after = source.slice(meta.endIndex).replace(/<!--[\s\S]*?-->/g, "");
-    if (after.trim().length > 0) {
+    if (
+      hasNonWhitespaceOrComments(source.slice(0, meta.startIndex)) ||
+      hasNonWhitespaceOrComments(source.slice(meta.endIndex))
+    ) {
       invalid(`${label} contiene texto fuera de la raíz.`);
     }
   }
