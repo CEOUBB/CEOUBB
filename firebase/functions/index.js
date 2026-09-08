@@ -1,11 +1,10 @@
 const { initializeApp } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
 const { FieldValue, Timestamp, getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
-const { getStorage } = require("firebase-admin/storage");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
+const { authenticationIsActive } = require("./auth-access");
 const {
   MAX_CONCURRENT_TRANSACTIONS,
   GradeAuditInputError,
@@ -60,10 +59,18 @@ async function assertSectionWritable(db, courseId) {
   }
 }
 
+async function assertActiveAuthentication(request, db) {
+  const marker = await db.collection("authRevocations").doc(request.auth.uid).get();
+  if (!authenticationIsActive(request.auth, marker.exists ? marker.data() : null)) {
+    throw new HttpsError("unauthenticated", "Vuelve a autenticarte con tu cuenta institucional.");
+  }
+}
+
 async function authorizedGradeActor(request, db, courseId) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
+  await assertActiveAuthentication(request, db);
   await assertSectionWritable(db, courseId);
   const actor = actorFromAuth(request.auth);
   const profile = await db.collection("users").doc(actor.actorUid).get();
@@ -98,6 +105,7 @@ async function authorizedSectionStudent(
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
+  await assertActiveAuthentication(request, db);
   await assertSectionWritable(db, courseId);
   const [profile, enrollment] = await Promise.all([
     db.collection("users").doc(request.auth.uid).get(),
@@ -121,6 +129,7 @@ async function authorizedQuizPublisher(request, db, courseId) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
+  await assertActiveAuthentication(request, db);
   await assertSectionWritable(db, courseId);
   const actor = actorFromAuth(request.auth);
   const profile = await db.collection("users").doc(actor.actorUid).get();
@@ -1011,39 +1020,9 @@ exports.deleteMyAccount = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) 
     throw new HttpsError("failed-precondition", "La cuenta propietaria no puede eliminarse.");
   }
 
-  const bucket = getStorage().bucket();
-  const [posts, progress] = await Promise.all([
-    db.collectionGroup("posts").where("authorId", "==", uid).get(),
-    db.collectionGroup("progress").where("uid", "==", uid).get(),
-  ]);
-
-  // Clean up storage files dynamically
-  const storageDeletions = [];
-  for (const document of posts.docs) {
-    const storagePath = text(document.get("storagePath"), "", 900);
-    if (storagePath.startsWith("courses/") && storagePath.includes(`/${uid}/`)) {
-      storageDeletions.push(bucket.file(storagePath).delete({ ignoreNotFound: true }));
-    }
-  }
-  await Promise.all(storageDeletions);
-
-  // Batch delete Firestore documents in chunks of up to 400 operations
-  const allDocRefs = [
-    ...posts.docs.map((doc) => doc.ref),
-    ...progress.docs.map((doc) => doc.ref),
-    db.collection("users").doc(uid),
-  ];
-
-  const BATCH_SIZE = 400;
-  for (let i = 0; i < allDocRefs.length; i += BATCH_SIZE) {
-    const chunk = allDocRefs.slice(i, i + BATCH_SIZE);
-    const batch = db.batch();
-    for (const ref of chunk) {
-      batch.delete(ref);
-    }
-    await batch.commit();
-  }
-
-  await getAuth().deleteUser(uid);
-  return { deleted: true };
+  // El portal usa DELETE /api/auth/me, que coordina Turso y Firebase.
+  throw new HttpsError(
+    "failed-precondition",
+    "Elimina tu cuenta desde Configuración en el portal para completar la limpieza en ambos sistemas."
+  );
 });

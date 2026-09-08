@@ -36,7 +36,29 @@ export async function openDocumentNatively(url: string, fileName: string): Promi
   try {
     // Directory.Cache: material académico reemplazable, el sistema puede
     // limpiarlo bajo presión de almacenamiento sin perder nada del alumno.
-    const download = await Filesystem.downloadFile({ url, path, directory: Directory.Cache });
+    const download = url.startsWith("blob:")
+      ? await (async () => {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("No se pudo leer el archivo.");
+          const blob = await response.blob();
+          const data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(reader.error);
+            reader.onload = () =>
+              typeof reader.result === "string"
+                ? resolve(reader.result.split(",")[1])
+                : reject(new Error("Archivo inválido."));
+            reader.readAsDataURL(blob);
+          });
+          const file = await Filesystem.writeFile({
+            path,
+            data,
+            directory: Directory.Cache,
+            recursive: true,
+          });
+          return { path: file.uri };
+        })()
+      : await Filesystem.downloadFile({ url, path, directory: Directory.Cache });
     // `downloadFile` devuelve la ruta del archivo escrito; si el plugin no la
     // entrega se resuelve el URI del mismo destino que se acaba de pedir.
     const uri =

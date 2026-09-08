@@ -68,6 +68,23 @@ test("REQ-SUP-02: rechaza un tipo de contenido que no es JSON", async () => {
   assert.equal((await filas()).length, 0);
 });
 
+test("SEC-08: solicitudes concurrentes respetan cuota por origen y global", async () => {
+  const sameOrigin = await Promise.all(
+    Array.from({ length: 8 }, () => POST(peticion(CUERPO_VALIDO)))
+  );
+  assert.equal(sameOrigin.filter((response) => response.status === 202).length, 3);
+  assert.equal(sameOrigin.filter((response) => response.status === 429).length, 5);
+  assert.equal((await filas()).length, 3);
+  const distinctOrigins = await Promise.all(
+    Array.from({ length: 24 }, (_, index) =>
+      POST(peticion(CUERPO_VALIDO, { ip: `203.0.113.${index + 30}` }))
+    )
+  );
+  assert.equal(distinctOrigins.filter((response) => response.status === 202).length, 17);
+  assert.equal(distinctOrigins.filter((response) => response.status === 429).length, 7);
+  assert.equal((await filas()).length, 20);
+});
+
 test("REQ-SUP-02: rechaza un cuerpo sobre el máximo declarado en la cabecera", async () => {
   const peticionGrande = new Request("https://ceoubb.com/api/soporte", {
     method: "POST",

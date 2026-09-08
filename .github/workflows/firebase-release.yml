@@ -46,10 +46,20 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Verify application and infrastructure
+        # CFG-03: el despliegue espera las reglas del mismo commit.
         run: |
           pnpm run verify:fast
           pnpm run verify:invariants
           pnpm run check:functions
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Verify Firestore and Storage permissions
+        run: pnpm run check:rules
 
   deploy_staging:
     name: Deploy and seed staging

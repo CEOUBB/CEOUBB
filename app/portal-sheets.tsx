@@ -42,7 +42,7 @@ export function MobileCoursesSheet({
             style={{ "--course-tone": item.tone } as React.CSSProperties}
             type="button"
           >
-            <span className="sheet-row-icon">
+            <span aria-hidden="true" className="sheet-row-icon">
               <FolderSimple size={20} weight="fill" />
             </span>
             <span>
@@ -57,7 +57,7 @@ export function MobileCoursesSheet({
           prefetch={false}
           onClick={() => onOpenChange(false)}
         >
-          <span className="sheet-row-icon">
+          <span aria-hidden="true" className="sheet-row-icon">
             <Archive size={20} />
           </span>
           <span>
