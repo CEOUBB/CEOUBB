@@ -11,6 +11,8 @@ allowBuilds:
   "@sentry/cli": true
   esbuild: true
   protobufjs: true
+  simple-git-hooks: true
+  workerd: true
 onlyBuiltDependencies:
   - "@firebase/util"
   - "@fission-ai/openspec"
