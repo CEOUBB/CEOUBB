@@ -622,7 +622,7 @@ function AccountPanel({
         return;
       }
       setSessions((current) => (current ?? []).filter((item) => item.id !== data.revoked));
-      onStatus("La sesión quedó cerrada en ese dispositivo.");
+      onStatus("Se cerraron todas las sesiones. Vuelve a autenticarte con Google.");
     } catch (cause) {
       setSessionsError(failureMessage(cause, "No se pudo cerrar esa sesión."));
     } finally {
@@ -697,7 +697,7 @@ function AccountPanel({
                   type="button"
                 >
                   <X aria-hidden="true" size={16} />
-                  {revoking === session.id ? "Cerrando…" : "Cerrar sesión"}
+                  {revoking === session.id ? "Cerrando…" : "Cerrar todas las sesiones"}
                 </button>
               )}
             </li>

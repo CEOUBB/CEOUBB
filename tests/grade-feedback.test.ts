@@ -89,7 +89,7 @@ test("REQ-FEEDBACK-01/05 persiste feedback y auditoría en una transacción dedi
   assert.match(functions, /normalizeFeedbackRequest\(request\.data\)/);
   assert.match(functions, /storedScoreMap/);
   assert.match(functions, /Object\.hasOwn\(scores, next\.gradeItemId\)/);
-  assert.match(functions, /feedback:\s*nextFeedback/);
+  assert.match(functions, /feedback:\s*write\.nextFeedback/);
   assert.match(functions, /\{\s*merge:\s*true\s*\}/);
   assert.match(functions, /targetType:\s*"feedback"/);
   assert.match(functions, /transaction\.create\(auditRef/);

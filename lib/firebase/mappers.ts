@@ -76,8 +76,6 @@ export type ClassroomStudent = {
   userId: string;
   name: string;
   email: string;
-  completed: number;
-  total: number;
   updatedAt: string | null;
 };
 
@@ -139,8 +137,6 @@ export function toStudent(document: QueryDocumentSnapshot<DocumentData>): Classr
     userId: document.id,
     name: String(value.displayName ?? "Estudiante"),
     email: String(value.email ?? ""),
-    completed: Number(value.completed ?? 0),
-    total: Number(value.total ?? 0),
     updatedAt: value.lastSeen ? iso(value.lastSeen) : null,
   };
 }

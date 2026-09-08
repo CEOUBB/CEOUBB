@@ -8,6 +8,14 @@ const MAX_FEEDBACK_LENGTH = 2000;
 const MAX_CONCURRENT_TRANSACTIONS = 10;
 const COURSE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,60}$/;
 const ENTITY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+const STORAGE_PATH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9/._-]{0,511}$/;
+const SHA256_PATTERN = /^[a-f0-9]{64}$/;
+
+// Espejo de `SUBMISSION_MODES` y sus techos en lib/grades.ts.
+const SUBMISSION_MODES = ["individual", "team_free", "team_fixed"];
+const MAX_TEAM_MEMBERS = 8;
+const MAX_TEAMS_PER_ITEM = 120;
+const MAX_SUBMISSION_BYTES = 25 * 1024 * 1024;
 
 class GradeAuditInputError extends Error {}
 
@@ -146,6 +154,170 @@ function normalizeScoreRequest(value) {
   return { courseId, rows };
 }
 
+/*
+  Comprobante de una entrega en equipo. El archivo ya está en Cloud Storage
+  cuando llega esta solicitud: lo que se valida aquí es el recibo que se
+  replicará a cada integrante.
+*/
+// Implements: REQ-TEAM-02, REQ-TEAM-03
+function normalizeTeamSubmissionRequest(value) {
+  const record = inputRecord(value, "La solicitud");
+  const memberIds = Array.isArray(record.memberIds)
+    ? [...new Set(record.memberIds.map((member) => identifier(member, "El integrante")))]
+    : [];
+  if (memberIds.length < 2 || memberIds.length > MAX_TEAM_MEMBERS) {
+    throw new GradeAuditInputError(
+      `Una entrega en equipo debe tener entre 2 y ${MAX_TEAM_MEMBERS} integrantes.`
+    );
+  }
+  const storagePath = typeof record.storagePath === "string" ? record.storagePath.trim() : "";
+  if (!STORAGE_PATH_PATTERN.test(storagePath)) {
+    throw new GradeAuditInputError("La ruta del archivo entregado no es válida.");
+  }
+  const size = record.size;
+  if (
+    typeof size !== "number" ||
+    !Number.isInteger(size) ||
+    size <= 0 ||
+    size > MAX_SUBMISSION_BYTES
+  ) {
+    throw new GradeAuditInputError("El tamaño de la entrega no es válido.");
+  }
+  const sha256 = typeof record.sha256 === "string" ? record.sha256.trim().toLowerCase() : "";
+  /* La huella puede faltar en un navegador sin `crypto.subtle`; lo que no se
+     acepta es una cadena que finja ser una huella sin serlo. */
+  if (sha256 && !SHA256_PATTERN.test(sha256)) {
+    throw new GradeAuditInputError("La huella del archivo entregado no es válida.");
+  }
+  const fileName = typeof record.fileName === "string" ? record.fileName.trim().slice(0, 200) : "";
+  if (!fileName) throw new GradeAuditInputError("La entrega debe tener nombre de archivo.");
+  return {
+    courseId: identifier(record.courseId, "La sección", COURSE_ID_PATTERN),
+    evalId: identifier(record.evalId, "El identificador de evaluación"),
+    teamId: identifier(record.teamId, "El identificador de equipo"),
+    memberIds,
+    fileName,
+    storagePath,
+    contentType:
+      typeof record.contentType === "string" && record.contentType.trim()
+        ? record.contentType.trim().slice(0, 160)
+        : "application/octet-stream",
+    size,
+    sha256,
+  };
+}
+
+/*
+  Reparte las filas de notas en grupos que deben confirmarse juntos.
+
+  Una evaluación grupal exige que la nota llegue a todo el equipo o a nadie: si
+  la escritura se corta a la mitad, dos integrantes del mismo trabajo quedan con
+  notas distintas y el libro deja de ser auditable. Esta función expande cada
+  fila hacia los compañeros de equipo de cada evaluación y luego une en un mismo
+  grupo a todo estudiante enlazado por algún equipo, de modo que cada expediente
+  se escriba exactamente una vez y cada grupo quepa en una sola transacción.
+
+  Sólo se replican las evaluaciones que `teamsByItem` declara grupales. Las
+  individuales viajan en la misma fila y no salen de ella.
+*/
+// Implements: REQ-TEAM-02, REQ-AUDIT-01
+function groupRowsByTeam(rows, teamsByItem) {
+  const parent = new Map();
+  const find = (userId) => {
+    if (!parent.has(userId)) parent.set(userId, userId);
+    let root = userId;
+    while (parent.get(root) !== root) root = parent.get(root);
+    let cursor = userId;
+    while (parent.get(cursor) !== cursor) {
+      const next = parent.get(cursor);
+      parent.set(cursor, root);
+      cursor = next;
+    }
+    return root;
+  };
+  const union = (left, right) => {
+    const a = find(left);
+    const b = find(right);
+    if (a !== b) parent.set(b, a);
+  };
+
+  const explicit = new Set(rows.map((row) => row.userId));
+  const scoresByUser = new Map(rows.map((row) => [row.userId, { ...row.scores }]));
+  const clearByUser = new Map();
+  for (const userId of scoresByUser.keys()) find(userId);
+
+  const teamFor = (gradeItemId, userId) => {
+    const teams = teamsByItem.get(gradeItemId);
+    if (!teams) return null;
+    return teams.find((members) => members.includes(userId)) ?? null;
+  };
+
+  for (const row of rows) {
+    /*
+      Se recorren las evaluaciones grupales y no las notas enviadas: una nota
+      grupal retirada llega como la ausencia de esa clave en la fila del
+      estudiante abierto, y si sólo se miraran las presentes el equipo
+      conservaría una nota que el docente ya borró.
+    */
+    for (const gradeItemId of teamsByItem.keys()) {
+      const members = teamFor(gradeItemId, row.userId);
+      if (!members) continue;
+      const scored = Object.hasOwn(row.scores, gradeItemId);
+      for (const memberId of members) {
+        union(row.userId, memberId);
+        if (memberId === row.userId) continue;
+        /* La fila que el docente envió para un integrante manda sobre el eco de
+           su compañero: ya trae el estado completo que quiso dejar escrito. */
+        if (explicit.has(memberId)) continue;
+        const current = scoresByUser.get(memberId) ?? {};
+        if (scored) {
+          current[gradeItemId] = row.scores[gradeItemId];
+          if (clearByUser.has(memberId)) clearByUser.get(memberId).delete(gradeItemId);
+        } else {
+          delete current[gradeItemId];
+          if (!clearByUser.has(memberId)) clearByUser.set(memberId, new Set());
+          clearByUser.get(memberId).add(gradeItemId);
+        }
+        scoresByUser.set(memberId, current);
+      }
+    }
+  }
+
+  const groups = new Map();
+  for (const [userId, scores] of scoresByUser) {
+    const root = find(userId);
+    if (!groups.has(root)) groups.set(root, []);
+    /*
+      `partial` distingue las dos naturalezas de una fila. La que envió el
+      cliente describe el expediente completo del estudiante y se escribe tal
+      cual, como siempre. La que nació de una réplica sólo habla de las
+      evaluaciones del equipo, así que la transacción debe fundirla con las
+      notas que ese estudiante ya tenía: escribirla entera borraría el resto de
+      su libro.
+    */
+    groups.get(root).push({
+      userId,
+      scores,
+      clear: [...(clearByUser.get(userId) ?? [])],
+      partial: !explicit.has(userId),
+    });
+  }
+  return [...groups.values()];
+}
+
+/*
+  Expediente resultante de una réplica: las notas previas del estudiante, con
+  las evaluaciones del equipo puestas al día y las que el equipo perdió
+  retiradas. Nunca toca una evaluación ajena al equipo.
+*/
+// Implements: REQ-TEAM-02
+function mergeReplicatedScores(previousScores, row) {
+  if (!row.partial) return row.scores;
+  const merged = { ...previousScores, ...row.scores };
+  for (const gradeItemId of row.clear ?? []) delete merged[gradeItemId];
+  return merged;
+}
+
 function normalizeFeedbackRequest(value) {
   const record = inputRecord(value, "La solicitud");
   return {
@@ -178,7 +350,63 @@ function gradebookItems(value) {
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       throw new GradeAuditInputError("La fecha de evaluación no es válida.");
     }
-    return { id, name, weight, date };
+    const submissionMode = SUBMISSION_MODES.includes(item.submissionMode)
+      ? item.submissionMode
+      : "individual";
+    return {
+      id,
+      name,
+      weight,
+      date,
+      submissionMode,
+      teams: submissionMode === "team_fixed" ? evaluationTeams(item.teams) : [],
+    };
+  });
+}
+
+/*
+  Nómina de equipos de una evaluación. Se valida igual que en el cliente porque
+  las reglas de Firestore no pueden mirar dentro de un arreglo: si un estudiante
+  quedara en dos equipos de la misma evaluación, la réplica de la nota escribiría
+  dos veces sobre su fila del libro y una de las dos ganaría en silencio.
+*/
+// Implements: REQ-TEAM-01, REQ-TEAM-02
+function evaluationTeams(value) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_TEAMS_PER_ITEM) {
+    throw new GradeAuditInputError(
+      `Una evaluación admite entre 0 y ${MAX_TEAMS_PER_ITEM} equipos.`
+    );
+  }
+  const seenIds = new Set();
+  const assigned = new Set();
+  return value.map((rawTeam, index) => {
+    const team = inputRecord(rawTeam, "El equipo");
+    const id = identifier(team.id, "El identificador de equipo");
+    if (seenIds.has(id)) throw new GradeAuditInputError("La evaluación repite un equipo.");
+    seenIds.add(id);
+    const name = typeof team.name === "string" ? team.name.trim().slice(0, 120) : "";
+    if (!name) throw new GradeAuditInputError("Cada equipo debe tener nombre.");
+    if (!Array.isArray(team.memberIds)) {
+      throw new GradeAuditInputError(`El equipo «${name}» no tiene una lista de integrantes.`);
+    }
+    const memberIds = team.memberIds.map((member) =>
+      identifier(member, "El identificador de integrante")
+    );
+    if (memberIds.length < 2 || memberIds.length > MAX_TEAM_MEMBERS) {
+      throw new GradeAuditInputError(
+        `El equipo «${name}» debe tener entre 2 y ${MAX_TEAM_MEMBERS} integrantes.`
+      );
+    }
+    for (const memberId of memberIds) {
+      if (assigned.has(memberId)) {
+        throw new GradeAuditInputError(
+          "Un estudiante no puede pertenecer a dos equipos de la misma evaluación."
+        );
+      }
+      assigned.add(memberId);
+    }
+    return { id: id || `team-${index + 1}`, name, memberIds };
   });
 }
 
@@ -209,14 +437,18 @@ function storedGradebook(value) {
 module.exports = {
   MAX_CONCURRENT_TRANSACTIONS,
   MAX_ROWS_PER_REQUEST,
+  MAX_TEAM_MEMBERS,
   GradeAuditInputError,
   actorFromAuth,
   canEditSection,
   diffFeedback,
   diffScores,
+  groupRowsByTeam,
+  mergeReplicatedScores,
   normalizeFeedbackRequest,
   normalizeGradebookRequest,
   normalizeScoreRequest,
+  normalizeTeamSubmissionRequest,
   storedFeedbackMap,
   storedGradebook,
   storedScoreMap,

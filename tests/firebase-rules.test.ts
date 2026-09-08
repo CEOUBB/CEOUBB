@@ -7,8 +7,16 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFile } from "node:fs/promises";
 import { after, before, beforeEach, test } from "node:test";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { deleteObject, getBytes, listAll, ref, uploadBytes } from "firebase/storage";
 
 const PROJECT_ID = "demo-ceoubb-rules";
 const BUCKET_URL = "gs://" + PROJECT_ID + ".appspot.com";
@@ -99,6 +107,9 @@ async function seedBaseState(): Promise<void> {
         authorId: users.teacher.uid,
         title: "Bienvenida",
       }),
+      setDoc(doc(database, "courses", ENROLLED_SECTION_ID, "meta", "gradebook"), {
+        items: [{ id: "eval-1", name: "Informe", weight: 100, date: "2026-09-04" }],
+      }),
       setDoc(doc(database, "courses", OTHER_SECTION_ID, "posts", "private"), {
         authorId: users.teacher.uid,
         title: "Otra sección",
@@ -144,6 +155,15 @@ before(async () => {
 
 beforeEach(async () => {
   await Promise.all([testEnvironment.clearFirestore(), testEnvironment.clearStorage()]);
+  // clearStorage() del SDK sólo elimina objetos en la raíz, no los prefijos anidados.
+  await testEnvironment.withSecurityRulesDisabled(async (context) => {
+    const directory = ref(
+      context.storage(BUCKET_URL),
+      `courses/${ENROLLED_SECTION_ID}/submissions/eval-1/${users.student.uid}`
+    );
+    const files = await listAll(directory);
+    await Promise.all(files.items.map((file) => deleteObject(file)));
+  });
   await seedBaseState();
 });
 
@@ -158,11 +178,6 @@ test("REQ-EMU-02: estudiante matriculado usa sólo su sección y su UID", async 
 
   await assertSucceeds(getDoc(doc(database, "courses", ENROLLED_SECTION_ID, "posts", "welcome")));
   await assertFails(getDoc(doc(database, "courses", OTHER_SECTION_ID, "posts", "private")));
-  await assertSucceeds(
-    setDoc(doc(database, "courses", ENROLLED_SECTION_ID, "submissions", "student-1-report"), {
-      uid: users.student.uid,
-    })
-  );
   await assertFails(
     setDoc(doc(database, "courses", ENROLLED_SECTION_ID, "submissions", "forged-report"), {
       uid: users.otherStudent.uid,
@@ -196,6 +211,162 @@ test("REQ-EMU-02: estudiante matriculado usa sólo su sección y su UID", async 
       { contentType: "application/pdf" }
     )
   );
+  await assertSucceeds(
+    setDoc(
+      doc(database, "courses", ENROLLED_SECTION_ID, "submissions", `eval-1_${users.student.uid}`),
+      submission()
+    )
+  );
+});
+
+function submission() {
+  return {
+    uid: users.student.uid,
+    courseId: ENROLLED_SECTION_ID,
+    evalId: "eval-1",
+    evaluation: { id: "eval-1", name: "Informe", weight: 100, date: "2026-09-04" },
+    authorName: "Estudiante",
+    fileName: "report.pdf",
+    contentType: "application/pdf",
+    size: 7,
+    storagePath: `courses/${ENROLLED_SECTION_ID}/submissions/eval-1/${users.student.uid}/report.pdf`,
+    createdAt: serverTimestamp(),
+  };
+}
+
+test("SEC-02/04: comprobante exige identidad, evaluación y fecha de servidor", async () => {
+  const db = authenticated(users.student).firestore();
+  const own = doc(db, "courses", ENROLLED_SECTION_ID, "submissions", `eval-1_${users.student.uid}`);
+  await assertFails(setDoc(own, { uid: users.student.uid }));
+  await assertFails(setDoc(own, { ...submission(), createdAt: Timestamp.fromMillis(1) }));
+  await assertFails(
+    setDoc(
+      doc(db, "courses", ENROLLED_SECTION_ID, "submissions", `eval-1_${users.otherStudent.uid}`),
+      submission()
+    )
+  );
+  await assertFails(setDoc(own, { ...submission(), evalId: "missing" }));
+  await assertFails(
+    setDoc(own, {
+      ...submission(),
+      storagePath: `courses/${ENROLLED_SECTION_ID}/submissions/eval-1/${users.otherStudent.uid}/report.pdf`,
+    })
+  );
+  await assertSucceeds(setDoc(own, submission()));
+  await assertFails(updateDoc(own, { fileName: "nuevo.pdf" }));
+  await assertSucceeds(setDoc(own, { ...submission(), fileName: "nuevo.pdf" }));
+});
+
+test("SEC-05: retirar matrícula impide leer y borrar entrega y progreso propios", async () => {
+  const ctx = authenticated(users.student);
+  const receipt = doc(
+    ctx.firestore(),
+    "courses",
+    ENROLLED_SECTION_ID,
+    "submissions",
+    `eval-1_${users.student.uid}`
+  );
+  const progress = doc(
+    ctx.firestore(),
+    "courses",
+    ENROLLED_SECTION_ID,
+    "progress",
+    users.student.uid
+  );
+  const file = ref(ctx.storage(BUCKET_URL), submission().storagePath);
+  await assertSucceeds(setDoc(progress, { uid: users.student.uid }));
+  await assertSucceeds(
+    uploadBytes(file, new TextEncoder().encode("entrega"), { contentType: "application/pdf" })
+  );
+  await assertSucceeds(setDoc(receipt, submission()));
+  await assertFails(
+    uploadBytes(file, new TextEncoder().encode("sustitución"), { contentType: "application/pdf" })
+  );
+  await assertSucceeds(getBytes(file));
+  await testEnvironment.withSecurityRulesDisabled((admin) =>
+    deleteDoc(
+      doc(admin.firestore(), "enrollments", users.student.uid, "sections", ENROLLED_SECTION_ID)
+    )
+  );
+  for (const target of [receipt, progress]) {
+    await assertFails(getDoc(target));
+    await assertFails(deleteDoc(target));
+  }
+  await assertFails(getBytes(file));
+  await assertFails(deleteObject(file));
+});
+
+test("SEC-02: un comprobante previo no permite cargar contenido posteriormente con su fecha", async () => {
+  const ctx = authenticated(users.student);
+  await assertSucceeds(
+    setDoc(
+      doc(
+        ctx.firestore(),
+        "courses",
+        ENROLLED_SECTION_ID,
+        "submissions",
+        `eval-1_${users.student.uid}`
+      ),
+      submission()
+    )
+  );
+  await assertFails(
+    uploadBytes(
+      ref(ctx.storage(BUCKET_URL), submission().storagePath),
+      new TextEncoder().encode("tardío"),
+      { contentType: "application/pdf" }
+    )
+  );
+});
+
+test("SEC-01: ID token anterior pierde Firestore y Storage, sólo reautenticación restaura acceso", async () => {
+  const authTime = Math.floor(Date.now() / 1000) - 10;
+  const old = testEnvironment.authenticatedContext(users.student.uid, {
+    email: users.student.email,
+    email_verified: true,
+    auth_time: authTime,
+  });
+  const filePath = submission().storagePath;
+  await assertSucceeds(
+    uploadBytes(ref(old.storage(BUCKET_URL), filePath), new TextEncoder().encode("entrega"), {
+      contentType: "application/pdf",
+    })
+  );
+  await testEnvironment.withSecurityRulesDisabled((admin) =>
+    setDoc(doc(admin.firestore(), "authRevocations", users.student.uid), {
+      revokedAt: authTime,
+      disabled: false,
+    })
+  );
+  await assertFails(
+    getDoc(doc(old.firestore(), "courses", ENROLLED_SECTION_ID, "posts", "welcome"))
+  );
+  await assertFails(getBytes(ref(old.storage(BUCKET_URL), filePath)));
+  await assertFails(
+    setDoc(doc(old.firestore(), "authRevocations", users.student.uid), {
+      revokedAt: 0,
+      disabled: false,
+    })
+  );
+  const fresh = testEnvironment.authenticatedContext(users.student.uid, {
+    email: users.student.email,
+    email_verified: true,
+    auth_time: authTime + 1,
+  });
+  await assertSucceeds(
+    getDoc(doc(fresh.firestore(), "courses", ENROLLED_SECTION_ID, "posts", "welcome"))
+  );
+  await assertSucceeds(getBytes(ref(fresh.storage(BUCKET_URL), filePath)));
+  await testEnvironment.withSecurityRulesDisabled((admin) =>
+    setDoc(doc(admin.firestore(), "authRevocations", users.student.uid), {
+      revokedAt: authTime,
+      disabled: true,
+    })
+  );
+  await assertFails(
+    getDoc(doc(fresh.firestore(), "courses", ENROLLED_SECTION_ID, "posts", "welcome"))
+  );
+  await assertFails(getBytes(ref(fresh.storage(BUCKET_URL), filePath)));
 });
 
 test("REQ-EMU-03: docente administra el aula sin escribir notas directamente", async () => {

@@ -96,8 +96,15 @@
     {
       "idx": 13,
       "version": "6",
+      "when": 1790000000000,
+      "tag": "0013_purge_legacy_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
       "when": 1788521015814,
-      "tag": "0013_importacion_adecca",
+      "tag": "0014_importacion_adecca",
       "breakpoints": true
     }
   ]

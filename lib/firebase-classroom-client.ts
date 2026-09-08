@@ -45,9 +45,10 @@ export {
   deleteClassroomPost,
 } from "./firebase/posts.ts";
 
-import { classroomFileUrl as getFileUrl } from "./firebase/storage.ts";
+import { classroomFileBlob } from "./firebase/storage.ts";
+export { classroomFileBlob };
 
-export type { StudentSubmission } from "./firebase/storage.ts";
+export type { StudentSubmission, SubmissionTeam } from "./firebase/storage.ts";
 
 export {
   uploadClassroomFile,
@@ -63,7 +64,12 @@ export {
 } from "./firebase/storage.ts";
 
 export async function classroomFileUrl(storagePath: string) {
-  return getFileUrl(storagePath);
+  const blob = await classroomFileBlob(storagePath);
+  if (!blob) return "#";
+  const url = URL.createObjectURL(blob);
+  // URL temporal para abrir una descarga; el visor persistente conserva su propio blob.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return url;
 }
 
 export type { CourseGradebook, StudentScoreRow } from "./firebase/grades.ts";
@@ -71,7 +77,7 @@ export type { CourseGradebook, StudentScoreRow } from "./firebase/grades.ts";
 export {
   watchGradebook,
   watchGradebooks,
-  saveClassroomProgress,
+  touchSectionPresence,
   saveSimulation,
   saveGradebook,
   saveStudentScores,

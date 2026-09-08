@@ -572,12 +572,13 @@ function rosterFromCsv(bytes: Uint8Array, omissions: AdeccaImportOmission[]) {
 }
 
 function semanticCategory(path: string) {
-  const tokens = normalizedText(path.replace(/\[(?:correo|rut) omitido\]/gi, " "))
+  const tokenList = normalizedText(path.replace(/\[(?:correo|rut) omitido\]/gi, " "))
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/);
-  const compact = tokens.join("");
-  const has = (...values: string[]) => values.some((value) => tokens.includes(value));
+  const tokenSet = new Set(tokenList);
+  const compact = tokenList.join("");
+  const has = (...values: string[]) => values.some((value) => tokenSet.has(value));
   if (has("nomina", "participantes", "roster")) return "roster-data";
   if (has("nota", "notas", "grade", "grades", "calificacion", "calificaciones")) return "grades";
   if (has("entrega", "entregas", "submission", "submissions")) return "submissions";
@@ -1053,8 +1054,10 @@ async function prepareJson(file: SourceFile): Promise<PreparedAdeccaCourseImport
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
   const manifest = parseManifest(bytes, file.name);
-  const fingerprint = await sha256Bytes(bytes);
-  const sourceKey = await sha256Text(`adecca\u0000${manifest.courseId}`);
+  const [fingerprint, sourceKey] = await Promise.all([
+    sha256Bytes(bytes),
+    sha256Text(`adecca\u0000${manifest.courseId}`),
+  ]);
   const source = sourceFromManifest(manifest, fingerprint, file, "json", sourceKey);
   const omissions: AdeccaImportOmission[] = [];
   const folders = new Set<string>();

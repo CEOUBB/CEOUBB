@@ -606,7 +606,7 @@ test("REQ-ADECCA-05..11: API, cliente, retención y UI mantienen los invariantes
     readFile(new URL("../app/views/classroom/AdeccaImportDialog.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/views/classroom/ClassroomView.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/cron/audit-retention/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../drizzle/0013_importacion_adecca.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0014_importacion_adecca.sql", import.meta.url), "utf8"),
   ]);
   assert.match(route, /getSessionUser\(request\)/);
   assert.match(route, /authorizeAdeccaImport/);

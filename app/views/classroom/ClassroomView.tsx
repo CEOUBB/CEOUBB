@@ -11,7 +11,6 @@ import { hapticTap } from "../../../lib/mobile-bridge";
 import { COURSE_TABS } from "./classroom-utils";
 import { PostsSection } from "./PostsSection";
 import { GradesSection } from "./GradesSection";
-import { ProgressSection } from "./ProgressSection";
 import { PeopleSection } from "./PeopleSection";
 import { LiveClassBanner } from "./LiveClassSection";
 import { CourseRail } from "./CourseRail";
@@ -82,10 +81,7 @@ export function ClassroomView({
     canTeach,
     students,
     posts,
-    units,
-    completed,
     courseReference,
-    updateProgress,
     publish,
     editPost,
     deletePost,
@@ -244,8 +240,6 @@ export function ClassroomView({
                       canTeach={canTeach}
                       readOnly={readOnly}
                       students={students}
-                      units={units}
-                      completed={completed}
                       courseReference={courseReference}
                       copiedCourseReference={copiedCourseReference}
                       copyCourseReference={copyCourseReference}
@@ -263,6 +257,7 @@ export function ClassroomView({
                 <GradesSection
                   course={course}
                   classroom={classroom}
+                  user={user}
                   canTeach={canTeach}
                   canReadHistory={canReadGradeHistory(user.role, sectionRole)}
                   note={note}
@@ -287,16 +282,6 @@ export function ClassroomView({
                   isOwner={user.role === "owner"}
                   readOnly={readOnly}
                   note={note}
-                />
-              )}
-              {tab === "progress" && (
-                <ProgressSection
-                  units={units}
-                  canTeach={canTeach}
-                  completed={completed}
-                  students={students}
-                  updateProgress={updateProgress}
-                  readOnly={readOnly}
                 />
               )}
               {tab === "people" && (

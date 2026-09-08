@@ -28,12 +28,14 @@ function downloadReport(report: AdeccaImportReport) {
   URL.revokeObjectURL(url);
 }
 
+const bytesFormatter = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 });
+
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0 B";
   const units = ["B", "KiB", "MiB", "GiB"];
   const unitIndex = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
   const amount = value / 1024 ** unitIndex;
-  return `${new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 }).format(amount)} ${units[unitIndex]}`;
+  return `${bytesFormatter.format(amount)} ${units[unitIndex]}`;
 }
 
 export function AdeccaImportDialog({ course }: { course: Course }) {

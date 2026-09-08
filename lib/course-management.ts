@@ -1,4 +1,9 @@
-import type { GradeItem } from "./grades.ts";
+import {
+  MAX_TEAMS_PER_ITEM,
+  MAX_TEAM_MEMBERS,
+  submissionModeOf,
+  type GradeItem,
+} from "./grades.ts";
 import type { Course } from "./courses.ts";
 
 export const COURSE_MODALITIES = ["presencial", "hibrida", "remota"] as const;
@@ -199,6 +204,49 @@ export function modalityLabel(modality: CourseModality): string {
   return modality === "hibrida" ? "Híbrida" : modality === "remota" ? "Remota" : "Presencial";
 }
 
+/*
+  Reglas de una nómina de equipos publicada por el docente. Se validan aquí y no
+  al normalizar porque el docente necesita saber qué corregir: un equipo de una
+  sola persona o un estudiante repetido en dos equipos harían que la réplica de
+  la nota escribiera dos veces sobre la misma fila del libro.
+*/
+// Implements: REQ-TEAM-01, REQ-TEAM-02
+export function teamSchemeError(item: GradeItem): string | null {
+  if (submissionModeOf(item) !== "team_fixed") return null;
+  const teams = item.teams ?? [];
+  const label = item.name.trim() || "la evaluación";
+  if (teams.length === 0) {
+    return `Define al menos un equipo para «${label}» o cámbiala a entrega individual.`;
+  }
+  if (teams.length > MAX_TEAMS_PER_ITEM) {
+    return `«${label}» admite como máximo ${MAX_TEAMS_PER_ITEM} equipos.`;
+  }
+  const assigned = new Map<string, string>();
+  const names = new Set<string>();
+  for (const team of teams) {
+    const teamName = team.name.trim();
+    if (!teamName) return `Cada equipo de «${label}» necesita un nombre.`;
+    if (names.has(teamName)) {
+      return `«${label}» repite el nombre de equipo «${teamName}».`;
+    }
+    names.add(teamName);
+    if (team.memberIds.length < 2) {
+      return `El equipo «${teamName}» necesita al menos dos integrantes.`;
+    }
+    if (team.memberIds.length > MAX_TEAM_MEMBERS) {
+      return `El equipo «${teamName}» supera los ${MAX_TEAM_MEMBERS} integrantes permitidos.`;
+    }
+    for (const memberId of team.memberIds) {
+      const previous = assigned.get(memberId);
+      if (previous) {
+        return `Un estudiante figura en «${previous}» y en «${teamName}»: sólo puede pertenecer a un equipo por evaluación.`;
+      }
+      assigned.set(memberId, teamName);
+    }
+  }
+  return null;
+}
+
 export function gradeSchemeError(
   items: readonly GradeItem[],
   exemption: number | null
@@ -218,6 +266,8 @@ export function gradeSchemeError(
     if (item.date && !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
       return "Revisa la fecha de cada evaluación.";
     }
+    const teamError = teamSchemeError(item);
+    if (teamError) return teamError;
     total += item.weight;
   }
   if (Math.round(total * 10) !== 1000) return "La ponderación total debe sumar 100%.";

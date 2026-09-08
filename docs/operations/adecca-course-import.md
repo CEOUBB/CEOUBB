@@ -113,7 +113,7 @@ La purga diaria procesa como máximo 5.000 pendientes vencidos por proveedor y e
 
 ## Despliegue y recuperación
 
-Aplique `drizzle/0013_importacion_adecca.sql` después de todas las migraciones anteriores y antes de habilitar la nueva versión. La entrega se realiza como PR; no aplica migraciones ni despliega producción automáticamente.
+Aplique `drizzle/0014_importacion_adecca.sql` después de todas las migraciones anteriores y antes de habilitar la nueva versión. La entrega se realiza como PR; no aplica migraciones ni despliega producción automáticamente.
 
 Cada trabajo queda asociado a sección, paquete, actor y plan. Los reintentos del mismo actor con el mismo paquete y selección de estudiantes retoman la ejecución; cada lote lleva un token emitido por el servidor y el resultado se calcula a partir de registros aplicados únicos. Un lote concurrente devuelve conflicto; un bloqueo interrumpido puede recuperarse después de diez minutos al reintentar el lote. Una ejecución finalizada no admite más escrituras y su siguiente importación obtiene un token nuevo.
 

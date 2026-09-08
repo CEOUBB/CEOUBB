@@ -55,7 +55,7 @@ test("Functions permanece en observación antes del enforcement", async () => {
   const source = await read("firebase/functions/index.js");
 
   assert.match(source, /APP_CHECK_OBSERVATION_OPTIONS = \{ enforceAppCheck: false \}/);
-  assert.equal(source.match(/onCall\(APP_CHECK_OBSERVATION_OPTIONS/g)?.length, 6);
+  assert.equal(source.match(/onCall\(APP_CHECK_OBSERVATION_OPTIONS/g)?.length, 7);
   assert.doesNotMatch(source, /enforceAppCheck:\s*true/);
 });
 

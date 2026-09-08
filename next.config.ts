@@ -33,7 +33,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
   "font-src 'self' data:",
-  `connect-src ${connectSrc} https://www.google.com/recaptcha/ https://cloudflareinsights.com`,
+  `connect-src ${connectSrc} blob: https://www.google.com/recaptcha/ https://cloudflareinsights.com`,
   `frame-src ${learningContentOrigin ? learningContentOrigin + " " : ""}https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",

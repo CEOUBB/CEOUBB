@@ -25,6 +25,9 @@ async function verify() {
     "assistant_assignments",
     "matriculas_pendientes",
     "moodle_imports",
+    "adecca_imports",
+    "adecca_import_run_items",
+    "pending_adecca_matriculas",
     "grade_audit_logs",
     "solicitudes_soporte",
     "interop_tools",
@@ -34,12 +37,26 @@ async function verify() {
     "interop_statements",
   ];
 
+  /*
+    Tablas del modelo anterior a las secciones. Ninguna esta en db/schema.ts y
+    ningun codigo las consulta: si reaparecen es que se restauro un respaldo
+    antiguo o que alguien las recreo a mano, y el esquema dejo de ser el que
+    Drizzle describe.
+  */
+  const forbiddenTables = ["posts", "files", "progress", "notifications", "notification_reads"];
+
   const result = await client.execute("SELECT name FROM sqlite_master WHERE type='table'");
   const existingTables = new Set(result.rows.map((r) => r.name));
 
   const missingTables = expectedTables.filter((t) => !existingTables.has(t));
   if (missingTables.length > 0) {
     console.error("Tablas faltantes en Turso:", missingTables);
+    process.exit(1);
+  }
+
+  const residualTables = forbiddenTables.filter((t) => existingTables.has(t));
+  if (residualTables.length > 0) {
+    console.error("Tablas legacy que siguen en Turso:", residualTables);
     process.exit(1);
   }
 

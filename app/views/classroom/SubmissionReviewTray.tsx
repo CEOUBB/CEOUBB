@@ -13,12 +13,14 @@ import {
   Funnel,
   MagnifyingGlass,
   Tray,
+  UsersThree,
   Warning,
   X,
 } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import {
   classroomFileUrl,
+  classroomFileBlob,
   saveGradeFeedback,
   saveStudentScores,
   watchSectionSubmissions,
@@ -103,11 +105,18 @@ function useSubmissionUrl(storagePath: string) {
   useEffect(() => {
     if (!storagePath) return;
     let active = true;
-    classroomFileUrl(storagePath)
-      .then((url) => active && setState({ path: storagePath, url, failed: false }))
+    let objectUrl = "";
+    classroomFileBlob(storagePath)
+      .then((blob) => {
+        if (!active) return;
+        // oxlint-disable-next-line react-doctor/no-create-object-url-without-revoke -- El cleanup del efecto revoca esta URL; active impide crearla después del desmontaje.
+        objectUrl = blob ? URL.createObjectURL(blob) : "";
+        setState({ path: storagePath, url: objectUrl || "#", failed: false });
+      })
       .catch(() => active && setState({ path: storagePath, url: "", failed: true }));
     return () => {
       active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [storagePath]);
 
@@ -430,6 +439,23 @@ function DocumentPane({ row }: { row: ReviewRow | undefined }) {
           <small className="num">
             {formatBytes(row.size)} · {formatDateTime(row.submittedAt)}
           </small>
+          {/* Implements: REQ-TEAM-03, REQ-TEAM-04 */}
+          {(row.teamSize > 1 || row.sha256) && (
+            <small className="review-doc-trace">
+              {row.teamSize > 1 && (
+                <span>
+                  <UsersThree aria-hidden="true" size={13} weight="fill" />
+                  Equipo de <span className="num">{row.teamSize}</span>
+                  {row.submittedByName ? ` · subió ${row.submittedByName}` : ""}
+                </span>
+              )}
+              {row.sha256 && (
+                <code className="num" title={`SHA-256: ${row.sha256}`}>
+                  {row.sha256.slice(0, 12)}
+                </code>
+              )}
+            </small>
+          )}
         </span>
         {url ? (
           <a className="review-doc-download" download={row.fileName} href={url} rel="noopener">

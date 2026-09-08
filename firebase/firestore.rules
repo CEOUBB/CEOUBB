@@ -3,7 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null && request.auth.token.email_verified == true
+        && (!exists(/databases/$(database)/documents/authRevocations/$(request.auth.uid))
+          || !get(/databases/$(database)/documents/authRevocations/$(request.auth.uid)).data.get('disabled', false)
+            && request.auth.token.auth_time > get(/databases/$(database)/documents/authRevocations/$(request.auth.uid)).data.revokedAt);
     }
 
     function email() {
@@ -300,9 +303,9 @@ service cloud.firestore {
 
     // Implements: REQ-SEC-02
     match /courses/{courseId}/progress/{userId} {
-      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
       allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.data.uid == userId;
-      allow delete: if (isOwner() || signedIn() && request.auth.uid == userId) && sectionIsWritable(courseId);
+      allow delete: if (isOwner() || signedIn() && request.auth.uid == userId && isEnrolled(courseId)) && sectionIsWritable(courseId);
     }
 
     // Implements: REQ-SEC-02, REQ-LIVE-02, REQ-LIVE-06
@@ -324,11 +327,44 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Implements: REQ-EVAL-01, REQ-SEC-08
+    /*
+      Comprobantes de entrega. Cada estudiante lee el suyo y el equipo docente
+      lee todos. Un integrante también lee el comprobante de sus compañeros de
+      equipo, porque los cuatro describen el mismo archivo y sin esa lectura la
+      entrega grupal sería invisible para quien no la subió.
+
+      La escritura sigue siendo estrictamente propia: la fila de un compañero
+      sólo la crea `registerTeamSubmission` con credenciales de servidor, que no
+      pasan por estas reglas. Dejar que un estudiante escribiera el expediente
+      de otro abriría la entrega en nombre ajeno.
+    */
+    // Implements: REQ-EVAL-01, REQ-SEC-08, REQ-TEAM-02
     match /courses/{courseId}/submissions/{submissionId} {
-      allow read: if isOwner() || teachesSection(courseId) || signedIn() && resource.data.uid == request.auth.uid;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid);
-      allow delete: if (isOwner() || signedIn() && resource.data.uid == request.auth.uid) && sectionIsWritable(courseId);
+      // Implements: REQ-EVAL-01, REQ-SEC-08 — SEC-02/04/05.
+      function validSubmission() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['uid', 'courseId', 'evalId', 'evaluation', 'authorName', 'fileName', 'storagePath', 'contentType', 'size', 'createdAt'])
+          && data.uid == request.auth.uid && data.courseId == courseId
+          && data.evalId is string && data.evalId.matches('^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$')
+          && submissionId == data.evalId + '_' + request.auth.uid
+          && data.evaluation is map && data.evaluation.id == data.evalId
+          && exists(/databases/$(database)/documents/courses/$(courseId)/meta/gradebook)
+          && data.evaluation in get(/databases/$(database)/documents/courses/$(courseId)/meta/gradebook).data.items
+          && data.authorName is string && data.authorName.size() <= 120
+          && data.fileName is string && data.fileName.size() > 0 && data.fileName.size() <= 255
+          && data.contentType is string && data.contentType.size() > 0 && data.contentType.size() <= 120
+          && data.size is int && data.size > 0 && data.size <= 25 * 1024 * 1024
+          && data.storagePath is string && data.storagePath.size() <= 900
+          && data.storagePath.split('/').size() == 6
+          && data.storagePath.split('/')[0] == 'courses' && data.storagePath.split('/')[1] == courseId
+          && data.storagePath.split('/')[2] == 'submissions' && data.storagePath.split('/')[3] == data.evalId
+          && data.storagePath.split('/')[4] == request.auth.uid && data.storagePath.split('/')[5].size() > 0
+          && data.createdAt == request.time;
+      }
+      allow read: if isOwner() || teachesSection(courseId)
+        || signedIn() && isEnrolled(courseId) && (resource.data.uid == request.auth.uid || request.auth.uid in resource.data.get('memberIds', []));
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.uid == request.auth.uid && (resource == null || resource.data.uid == request.auth.uid) && validSubmission();
+      allow delete: if (isOwner() || signedIn() && resource.data.uid == request.auth.uid && isEnrolled(courseId)) && sectionIsWritable(courseId);
     }
   }
 }

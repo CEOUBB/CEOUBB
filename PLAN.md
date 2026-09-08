@@ -1,5 +1,14 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: auditoría de seguridad 081, 2026-09-08
+
+- **Seguimiento PR #163:** corregidos tres avisos CodeQL en mocks de URL; cerrada fuga de blobs al abrir pautas, con limpieza propia para el visor persistente; revocación paralela acotada y cubierta por regresión. React Doctor local 100/100, con una excepción puntual explicada para el cleanup asíncrono; sin reglas globales desactivadas. PR Agent no propuso cambios. Tras la revisión pasan lint, TypeScript, build, 578 pruebas completas y 569 de `verify:fast`.
+- **Worktree y rama:** `C:/Users/Pipe/.codex/worktrees/1265/CEOUBB`, `codex/correcciones-auditoria-seguridad-081`, base `f9fc4e4`.
+- **Implementación:** revocación Firebase/Turso y Callables, cierre global informado, contrato e inmutabilidad de entregas, matrícula en lectura/borrado, importación Moodle restringida por período con control concurrente, descarga autenticada e invalidación de enlaces históricos, QTI acotado y cuota atómica de soporte. Endurecidos login, Turnstile, Discord y promoción CI; actualizados los lockfiles vulnerables.
+- **Evidencia y promoción:** [ejecución y límites de la auditoría](docs/security/auditoria-081-ejecucion.md). Las pruebas usan cuentas, archivos y proveedores sintéticos. No hubo despliegue ni modificaciones de producción. CORS/IAM efectivos, navegador nativo, permisos Discord y CSP con nonces siguen requiriendo validación específica.
+- **Contrato de tests:** se conservan assertions existentes; fixtures completos de entrega y timestamps actuales de firmas positivas. Nuevas regresiones en `tests/security-audit-081.test.ts`, matriz Firebase ampliada y prueba de login en navegador.
+- **Verificación:** build y suite completa 578/578; `verify:fast` con 568/568 pruebas, 65 sellos y 29 especificaciones; invariantes 35/35; emuladores 8/8; navegador 4/4; lint y sintaxis Functions aprobados. Auditorías de ambos lockfiles sin avisos. React Doctor 86/100, cinco advertencias de rendimiento revisadas y ningún bug diagnosticado pendiente.
+
 ## Handoff: pulido del campus, 2026-09-04
 
 - **Ajuste solicitado:** restaurado únicamente el icono gris de calendario junto a «En tu agenda»; se mantiene un solo acceso contextual.
@@ -264,6 +273,18 @@ Production deployed: yes/no; target:
 Known risks:
 Next recommended action:
 ```
+
+## Handoff 2026-09-04: entregas grupales y retiro de Progreso (CEO-80, CEO-81)
+
+- **Branch**: `claude/ceo-81-ceo-80-cda2c6`.
+- **CEO-81**: the classroom progress tab, `ProgressSection.tsx` and `ProgressBar.tsx` were removed together with their dead CSS. `saveClassroomProgress` became `touchSectionPresence`: the Firestore path `courses/{id}/progress/{uid}` is kept for compatibility but now stores presence only, and it is written when a student opens a writable section, which closes the hole where a student who never simulated a grade stayed invisible to the teaching roster. `ClassroomStudent` lost `completed` and `total`.
+- **CEO-81 database**: `posts`, `files`, `progress`, `notifications` and `notification_reads` survived only in production, because that database reconciled by hand and never recorded migration 0002. Migration `0013_purge_legacy_tables.sql` drops them idempotently, `scripts/migrate-production-turso-drift.mjs` carries the same statements for the production path, and `scripts/verify-turso-production-schema.mjs` now fails if any of them reappears. All five were empty except one residual `notification_reads` row.
+- **CEO-80**: `GradeItem` gained `submissionMode` (`individual` / `team_free` / `team_fixed`) and `teams`. The new callable `registerTeamSubmission` writes one submission receipt per team member in a single batch; `saveAuditedStudentScores` groups rows by team so a team's grades commit in one transaction, and `saveAuditedGradeFeedback` replicates private feedback to the team inside its existing transaction. Receipts carry a client-computed SHA-256 digest, the uploader and the member list. Contract recorded in `openspec/specs/classroom/team-submissions/spec.md` (REQ-TEAM-01..04, REQ-EVAL-04).
+- **Sealed tests**: `.agents/.test-hashes.json` was regenerated. Five test files changed and none had an assertion weakened: obsolete `completed`/`total` fixture fields removed (`classroom-pagination`, `submission-review`), new submission fields added to a fixture factory (`submission-review`), the callable count in observation mode moved from 6 to 7 (`app-check`), the normalized gradebook shape gained `submissionMode`/`teams` (`grade-audit`), and one source regex followed a renamed local variable (`grade-feedback`). `tests/team-submissions.test.ts` adds 13 new cases.
+- **Checks passed**: `format:check`, `typecheck`, `lint`, 572 unit tests, test-locking seal, `openspec validate --specs`.
+- **Checks not run**: `pnpm run check:rules` (needs the Firebase emulators) and the full `pnpm test` production build.
+- **Corrección posterior a la revisión**: el agente de revisión de la PR detectó pérdida de datos en la réplica de notas. Una fila nacida de la réplica sólo describe las evaluaciones del equipo, y `transaction.set` reemplaza el documento completo: el expediente del compañero habría quedado con esa única nota y la auditoría habría registrado el resto como borrado. `groupRowsByTeam` marca ahora esas filas como `partial` y `mergeReplicatedScores` las funde con las notas leídas dentro de la transacción. En el mismo paso se corrigió que retirar la nota de un trabajo grupal sólo la retiraba del estudiante abierto: la réplica recorre las evaluaciones grupales y no las notas presentes, de modo que la ausencia de una nota viaja al equipo como borrado.
+- **Pending deployment**: Firestore and Storage rules must be deployed for team members to read a teammate's submission, and the Functions deployment must include `registerTeamSubmission`. The production Turso purge is a separate manual step.
 
 ## Next recommended step
 

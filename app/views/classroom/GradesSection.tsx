@@ -2,14 +2,11 @@
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { useReducedMotion } from "motion/react";
 import {
   ChatCenteredText,
-  CheckCircle,
   ClockCounterClockwise,
   GraduationCap,
   MagnifyingGlass,
-  Paperclip,
   X,
 } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
@@ -17,12 +14,9 @@ import {
   ClassroomState,
   ClassroomStudent,
   MAX_SUBMISSION_BYTES,
-  StudentSubmission,
   saveGradeFeedback,
   saveSimulation,
   saveStudentScores,
-  uploadStudentSubmission,
-  watchOwnSubmissions,
 } from "../../../lib/firebase-classroom-client";
 import {
   DEFAULT_EXEMPTION_GRADE,
@@ -36,16 +30,21 @@ import {
   formatGrade,
   isValidGrade,
   requiredGrade,
+  submissionModeOf,
   summarize,
+  teamForStudent,
 } from "../../../lib/grades";
 import { hapticTap, useIsMobileApp } from "../../../lib/mobile-bridge";
-import { formatBytes, formatDay } from "../../../lib/portal-utils";
+import { firebaseUidOf } from "../../../lib/section-roles";
+import { formatBytes, formatDay, type User } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
 import { PaginationActions } from "./PaginationActions";
 import { filterRoster, paginateList, type Note } from "./classroom-utils";
 import { EmptyState } from "./EmptyState";
 import { GradebookSettingsEditor } from "./GradebookSettingsEditor";
 import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
+import { TeamSubmissionPicker } from "./TeamSubmissionPicker";
+import { SubmissionSlot, useOwnSubmissions, useSubmissionUpload } from "./SubmissionSlot";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
 
 const GradeHistoryDialog = dynamic(
@@ -69,6 +68,7 @@ type FeedbackEditor = {
 export function GradesSection({
   course,
   classroom,
+  user,
   canTeach,
   canReadHistory = false,
   readOnly,
@@ -77,6 +77,7 @@ export function GradesSection({
 }: {
   course: Course;
   classroom: ClassroomState;
+  user: User;
   canTeach: boolean;
   canReadHistory?: boolean;
   readOnly: boolean;
@@ -100,6 +101,7 @@ export function GradesSection({
   return (
     <StudentGrades
       course={course}
+      user={user}
       gradebook={gradebook}
       exemption={exemption}
       officialFeedback={classroom.officialFeedback}
@@ -114,6 +116,7 @@ export function GradesSection({
 
 function StudentGrades({
   course,
+  user,
   gradebook,
   exemption,
   officialFeedback,
@@ -124,6 +127,7 @@ function StudentGrades({
   status,
 }: {
   course: Course;
+  user: User;
   gradebook: GradeItem[];
   exemption: number | null;
   officialFeedback: GradeFeedback;
@@ -138,6 +142,37 @@ function StudentGrades({
   const [detail, setDetail] = useState<GradeItem | null>(null);
   const submissions = useOwnSubmissions(course.id);
   const upload = useSubmissionUpload(course.id, note, !readOnly);
+  /*
+    El expediente de notas y los comprobantes viven en Firestore, indexados por
+    el UID de Firebase; la sesión del portal identifica al estudiante con el
+    identificador de Turso, que puede llegar con prefijo.
+  */
+  // Implements: REQ-TEAM-02
+  const selfUid = firebaseUidOf(user.id);
+  const [teamPicker, setTeamPicker] = useState<GradeItem | null>(null);
+
+  /*
+    Camino de la entrega según la modalidad de la evaluación. La individual no
+    cambia. La de equipos publicados resuelve el grupo sin preguntar nada. La de
+    equipos libres se detiene a que el estudiante declare con quién trabajó,
+    porque después esa lista determina quién recibe la nota.
+  */
+  // Implements: REQ-TEAM-02
+  const startSubmission = (item: GradeItem) => {
+    const mode = submissionModeOf(item);
+    if (mode === "individual") return upload.pick(item.id);
+    if (mode === "team_fixed") {
+      const team = teamForStudent(item, selfUid);
+      if (!team) {
+        return note(
+          `Todavía no tienes equipo asignado en «${item.name}». Pídeselo al equipo docente.`,
+          "bad"
+        );
+      }
+      return upload.pick(item.id, { teamId: team.id, memberIds: team.memberIds });
+    }
+    setTeamPicker(item);
+  };
   const draft =
     typed ??
     Object.fromEntries(Object.entries(simulation).map(([id, score]) => [id, String(score)]));
@@ -229,36 +264,13 @@ function StudentGrades({
             </button>
           ))}
         </div>
-        <aside className="grades-summary">
-          <div className="grades-average">
-            <strong className="num">
-              {summary.average === null ? "sin nota" : formatGrade(summary.average)}
-            </strong>
-            <div>
-              <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
-              <p>
-                <span className="num">{summary.gradedWeight}%</span> de{" "}
-                <span className="num">{summary.totalWeight}%</span> ya tiene nota
-              </p>
-            </div>
-          </div>
-          <dl className="grades-targets">
-            <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
-            <TargetLine
-              label={`Para eximirte con ${formatGrade(exemptionTarget)}`}
-              target={exempt}
-            />
-          </dl>
-          <p className="grades-note">
-            La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-            editar aquí.
-          </p>
-          {status.text && (
-            <p className={`tool-status ${status.tone}`} role="status">
-              {status.text}
-            </p>
-          )}
-        </aside>
+        <StudentGradesSummary
+          exemptionTarget={exemptionTarget}
+          exempt={exempt}
+          passing={passing}
+          status={status}
+          summary={summary}
+        />
         {detail && (
           <MobileSheet
             onOpenChange={(open) => !open && setDetail(null)}
@@ -292,13 +304,28 @@ function StudentGrades({
               Entrega
               <SubmissionSlot
                 item={detail}
-                onPick={upload.pick}
+                onPick={startSubmission}
                 percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
                 readOnly={readOnly}
                 receipt={submissions.get(detail.id)}
               />
             </div>
           </MobileSheet>
+        )}
+        {/* Implements: REQ-TEAM-02 */}
+        {teamPicker && (
+          <TeamSubmissionPicker
+            initialMemberIds={submissions.get(teamPicker.id)?.memberIds ?? []}
+            item={teamPicker}
+            onCancel={() => setTeamPicker(null)}
+            onConfirm={(memberIds) => {
+              const item = teamPicker;
+              setTeamPicker(null);
+              upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+            }}
+            sectionId={course.id}
+            selfUid={selfUid}
+          />
         )}
         {upload.field}
       </section>
@@ -332,7 +359,7 @@ function StudentGrades({
             <span className="grades-submission">
               <SubmissionSlot
                 item={item}
-                onPick={upload.pick}
+                onPick={startSubmission}
                 percent={upload.state?.evalId === item.id ? upload.state.percent : null}
                 readOnly={readOnly}
                 receipt={submissions.get(item.id)}
@@ -342,201 +369,87 @@ function StudentGrades({
           </div>
         ))}
       </div>
-      <aside className="grades-summary">
-        <div className="grades-average">
-          <strong className="num">
-            {summary.average === null ? "sin nota" : formatGrade(summary.average)}
-          </strong>
-          <div>
-            <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
-            <p>
-              <span className="num">{summary.gradedWeight}%</span> de{" "}
-              <span className="num">{summary.totalWeight}%</span> ya tiene nota
-            </p>
-          </div>
-        </div>
-        <dl className="grades-targets">
-          <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
-          <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
-        </dl>
-        <p className="grades-note">
-          La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
-          editar aquí. Cada entrega admite hasta {formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el
-          equipo docente del ramo.
-        </p>
-        {status.text && (
-          <p className={`tool-status ${status.tone}`} role="status">
-            {status.text}
-          </p>
-        )}
-      </aside>
+      <StudentGradesSummary
+        exemptionTarget={exemptionTarget}
+        exempt={exempt}
+        passing={passing}
+        status={status}
+        summary={summary}
+        withSubmissionNote
+      />
+      {/* Implements: REQ-TEAM-02 */}
+      {teamPicker && (
+        <TeamSubmissionPicker
+          initialMemberIds={submissions.get(teamPicker.id)?.memberIds ?? []}
+          item={teamPicker}
+          onCancel={() => setTeamPicker(null)}
+          onConfirm={(memberIds) => {
+            const item = teamPicker;
+            setTeamPicker(null);
+            upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+          }}
+          sectionId={course.id}
+          selfUid={selfUid}
+        />
+      )}
       {upload.field}
     </section>
   );
 }
 
 /*
-  Buzón de entregas del estudiante. Vive dentro de la fila de la evaluación
-  porque una entrega no es una pantalla aparte: es el estado de esa evaluación.
-  La celda muestra sólo un estado a la vez —adjuntar, enviando o comprobante—
-  para que la tabla siga leyéndose de un vistazo.
+  Promedio, metas y avisos del estudiante. La tabla de escritorio y la lista de
+  teléfono muestran exactamente el mismo resumen; tenerlo dos veces escrito hacía
+  que cada ajuste de redacción se aplicara en un lado y se olvidara en el otro.
+  El teléfono omite la nota sobre el peso de las entregas porque allí la columna
+  de entrega no está a la vista.
 */
-// Implements: REQ-EVAL-01
-function useOwnSubmissions(courseId: string) {
-  /*
-    El identificador del ramo viaja junto a los comprobantes: al cambiar de aula
-    la lista anterior deja de coincidir y se descarta al derivar, sin reiniciar
-    estado durante el render.
-  */
-  const [state, setState] = useState<{ courseId: string; items: StudentSubmission[] }>({
-    courseId,
-    items: [],
-  });
-  useEffect(
-    () =>
-      watchOwnSubmissions(
-        courseId,
-        (items) => setState({ courseId, items }),
-        () => setState({ courseId, items: [] })
-      ),
-    [courseId]
-  );
-  return useMemo(() => {
-    const rows = state.courseId === courseId ? state.items : [];
-    return new Map(rows.map((item) => [item.evalId, item]));
-  }, [courseId, state]);
-}
-
-// Implements: REQ-EVAL-01
-function useSubmissionUpload(
-  courseId: string,
-  note: (text: string, tone?: Note["tone"]) => void,
-  enabled: boolean
-) {
-  const input = useRef<HTMLInputElement | null>(null);
-  const pending = useRef("");
-  const [state, setState] = useState<{ evalId: string; percent: number } | null>(null);
-
-  const pick = useCallback(
-    (evalId: string) => {
-      if (!enabled) return note("Este ramo está archivado y no recibe nuevas entregas.", "bad");
-      pending.current = evalId;
-      input.current?.click();
-    },
-    [enabled, note]
-  );
-
-  const send = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      const evalId = pending.current;
-      event.target.value = "";
-      pending.current = "";
-      if (!file || !evalId) return;
-      if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES) {
-        note(`La entrega debe pesar entre 1 byte y ${formatBytes(MAX_SUBMISSION_BYTES)}.`, "bad");
-        return;
-      }
-      setState({ evalId, percent: 0 });
-      try {
-        await uploadStudentSubmission(courseId, evalId, file, (percent) =>
-          setState({ evalId, percent })
-        );
-        note("Entrega recibida. El comprobante queda en la evaluación.", "ok");
-      } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No se pudo enviar la entrega.", "bad");
-      } finally {
-        setState(null);
-      }
-    },
-    [courseId, note]
-  );
-
-  const field = (
-    <input
-      aria-hidden="true"
-      className="sr-only"
-      onChange={send}
-      ref={input}
-      tabIndex={-1}
-      type="file"
-    />
-  );
-
-  return { field, pick, state };
-}
-
-// Implements: REQ-EVAL-01
-function SubmissionSlot({
-  item,
-  receipt,
-  percent,
-  onPick,
-  readOnly,
+function StudentGradesSummary({
+  summary,
+  passing,
+  exempt,
+  exemptionTarget,
+  status,
+  withSubmissionNote = false,
 }: {
-  item: GradeItem;
-  receipt: StudentSubmission | undefined;
-  percent: number | null;
-  onPick: (evalId: string) => void;
-  readOnly: boolean;
+  summary: ReturnType<typeof summarize>;
+  passing: ReturnType<typeof requiredGrade>;
+  exempt: ReturnType<typeof requiredGrade>;
+  exemptionTarget: number;
+  status: Note;
+  withSubmissionNote?: boolean;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-
-  if (percent !== null) {
-    return (
-      <span className="grades-upload">
-        <span className="grades-upload-track">
-          <span
-            className="grades-upload-fill"
-            style={{
-              transform: `scaleX(${percent / 100})`,
-              transition: shouldReduceMotion ? "none" : undefined,
-            }}
-          />
-        </span>
-        <small className="num" role="status">
-          Enviando {percent}%
-        </small>
-      </span>
-    );
-  }
-
-  if (receipt) {
-    return (
-      <span className="grades-receipt">
-        <b title={receipt.fileName}>
-          <CheckCircle aria-hidden="true" size={14} weight="fill" />
-          {receipt.fileName}
-        </b>
-        <small className="num">
-          {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
-        </small>
-        {!readOnly && (
-          <button
-            aria-label={`Reemplazar la entrega de ${item.name}`}
-            className="grades-attach"
-            onClick={() => onPick(item.id)}
-            type="button"
-          >
-            Reemplazar
-          </button>
-        )}
-      </span>
-    );
-  }
-
-  if (readOnly) return <span className="grades-closed">Sin nuevas entregas</span>;
-
   return (
-    <button
-      aria-label={`Adjuntar la entrega de ${item.name}`}
-      className="grades-attach"
-      onClick={() => onPick(item.id)}
-      type="button"
-    >
-      <Paperclip aria-hidden="true" size={14} />
-      Adjuntar
-    </button>
+    <aside className="grades-summary">
+      <div className="grades-average">
+        <strong className="num">
+          {summary.average === null ? "sin nota" : formatGrade(summary.average)}
+        </strong>
+        <div>
+          <h3>{summary.complete ? "Nota final" : "Promedio de lo evaluado"}</h3>
+          <p>
+            <span className="num">{summary.gradedWeight}%</span> de{" "}
+            <span className="num">{summary.totalWeight}%</span> ya tiene nota
+          </p>
+        </div>
+      </div>
+      <dl className="grades-targets">
+        <TargetLine label={`Para aprobar con ${formatGrade(PASSING_GRADE)}`} target={passing} />
+        <TargetLine label={`Para eximirte con ${formatGrade(exemptionTarget)}`} target={exempt} />
+      </dl>
+      <p className="grades-note">
+        La simulación es tuya y privada. Las notas oficiales las carga el docente y no se pueden
+        editar aquí.
+        {withSubmissionNote
+          ? ` Cada entrega admite hasta ${formatBytes(MAX_SUBMISSION_BYTES)} y sólo la ve el equipo docente del ramo.`
+          : ""}
+      </p>
+      {status.text && (
+        <p className={`tool-status ${status.tone}`} role="status">
+          {status.text}
+        </p>
+      )}
+    </aside>
   );
 }
 
@@ -687,7 +600,12 @@ function TeacherGrades({
       <div className="section-title compact-title">
         <h2>Ponderación del ramo</h2>
       </div>
-      <GradebookSettingsEditor courseId={course.id} exemption={exemption} gradebook={gradebook} />
+      <GradebookSettingsEditor
+        courseId={course.id}
+        exemption={exemption}
+        gradebook={gradebook}
+        students={students}
+      />
       <div className="section-title compact-title">
         <h2>Notas oficiales</h2>
       </div>
