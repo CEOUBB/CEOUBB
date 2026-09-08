@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import Papa from "papaparse";
 import { normalizeAccessEmail, roleForEmail } from "./access-policy.ts";
 
 export const MAX_ENROLLMENT_CSV_BYTES = 5 * 1024 * 1024;
@@ -104,11 +105,49 @@ export function parseEnrollmentCsv(csv: string): ParsedEnrollmentRow[] {
   }
 
   const source = csv.replace(/^\uFEFF/, "");
-  const records = parseCsvRecords(source, detectDelimiter(source));
-  const header = records.shift();
-  if (!header) {
+  const delimiter = detectDelimiter(source);
+  const parsed = Papa.parse<string[]>(source, { delimiter });
+
+  const quoteErr = parsed.errors.find((err) => err.type === "Quotes");
+  if (quoteErr) {
+    const line =
+      quoteErr.index !== undefined
+        ? source.slice(0, quoteErr.index).split(/\r\n|\r|\n/).length
+        : quoteErr.row !== undefined
+          ? quoteErr.row + 1
+          : 1;
+    throw new EnrollmentImportError(
+      "invalid_csv",
+      `La fila ${line} tiene comillas mal formadas o texto fuera de lugar.`,
+      422
+    );
+  }
+
+  const rawData = parsed.data;
+  if (rawData.length === 0) {
     throw new EnrollmentImportError("invalid_csv", "El archivo CSV no tiene cabecera.", 422);
   }
+
+  const headerRow = rawData[0];
+  if (!headerRow || !headerRow.some(validText)) {
+    throw new EnrollmentImportError("invalid_csv", "El archivo CSV no tiene cabecera.", 422);
+  }
+
+  const newlinesInRow = (row: string[]) =>
+    row.reduce((count, field) => count + (field.match(/\r\n|\r|\n/g)?.length ?? 0), 0);
+
+  let currentLine = 1 + 1 + newlinesInRow(headerRow);
+  const records: CsvRecord[] = [];
+
+  for (const row of rawData.slice(1)) {
+    const rowLine = currentLine;
+    const hasText = row.some(validText);
+    currentLine += 1 + newlinesInRow(row);
+    if (hasText) {
+      records.push({ line: rowLine, values: row });
+    }
+  }
+
   if (records.length > MAX_ENROLLMENT_ROWS) {
     throw new EnrollmentImportError(
       "file_too_large",
@@ -117,7 +156,7 @@ export function parseEnrollmentCsv(csv: string): ParsedEnrollmentRow[] {
     );
   }
 
-  const headers = header.values.map(normalizeHeader);
+  const headers = headerRow.map(normalizeHeader);
   const emailIndex = headers.findIndex((value) => EMAIL_HEADERS.has(value));
   const nameIndex = headers.findIndex((value) => NAME_HEADERS.has(value));
   if (emailIndex < 0 || nameIndex < 0) {
@@ -303,151 +342,35 @@ function validText(value: string): boolean {
   return value.trim().length > 0;
 }
 
+// Implements: REQ-PERF-04
 function detectDelimiter(source: string): "," | ";" {
-  let commas = 0;
-  let semicolons = 0;
-  let quoted = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (character === '"') {
-      if (quoted && source[index + 1] === '"') index += 1;
-      else quoted = !quoted;
-      continue;
-    }
-    if (!quoted && (character === "\n" || character === "\r")) break;
-    if (!quoted && character === ",") commas += 1;
-    if (!quoted && character === ";") semicolons += 1;
+  const pSemi = Papa.parse<string[]>(source, { delimiter: ";", preview: 1 });
+  const pComma = Papa.parse<string[]>(source, { delimiter: ",", preview: 1 });
+
+  const qErr =
+    pSemi.errors.find((e) => e.type === "Quotes") || pComma.errors.find((e) => e.type === "Quotes");
+  if (qErr) {
+    const line =
+      qErr.index !== undefined
+        ? source.slice(0, qErr.index).split(/\r\n|\r|\n/).length
+        : qErr.row !== undefined
+          ? qErr.row + 1
+          : 1;
+    throw new EnrollmentImportError(
+      "invalid_csv",
+      `La fila ${line} tiene comillas mal formadas o texto fuera de lugar.`,
+      422
+    );
   }
-  if (commas === 0 && semicolons === 0) {
+
+  const semiCols = (pSemi.data[0]?.length ?? 0) - 1;
+  const commaCols = (pComma.data[0]?.length ?? 0) - 1;
+  if (semiCols <= 0 && commaCols <= 0) {
     throw new EnrollmentImportError(
       "invalid_csv",
       "La cabecera debe estar separada por coma o punto y coma.",
       422
     );
   }
-  return semicolons > commas ? ";" : ",";
-}
-
-// Implements: REQ-PERF-04
-function parseCsvRecords(source: string, delimiter: "," | ";"): CsvRecord[] {
-  const records: CsvRecord[] = [];
-  let values: string[] = [];
-  let line = 1;
-  let recordLine = 1;
-  let quoted = false;
-  let fieldStart = 0;
-  let hasEscapedQuotes = false;
-
-  const pushRecord = (finalField: string) => {
-    values.push(finalField);
-    if (values.some(validText)) records.push({ line: recordLine, values });
-    values = [];
-    recordLine = line + 1;
-    hasEscapedQuotes = false;
-  };
-
-  const getField = (start: number, end: number, isQuoted: boolean, hadEscapes: boolean): string => {
-    if (!isQuoted) return source.slice(start, end);
-    const raw = source.slice(start, end);
-    return hadEscapes ? raw.replaceAll('""', '"') : raw;
-  };
-
-  let index = 0;
-  const len = source.length;
-
-  while (index < len) {
-    const character = source[index];
-
-    if (quoted) {
-      if (character === '"') {
-        if (source[index + 1] === '"') {
-          hasEscapedQuotes = true;
-          index += 2;
-          continue;
-        } else {
-          quoted = false;
-          const extracted = getField(fieldStart, index, true, hasEscapedQuotes);
-          index += 1;
-          while (index < len && (source[index] === " " || source[index] === "\t")) {
-            index += 1;
-          }
-          if (index < len) {
-            const nextChar = source[index];
-            if (nextChar === delimiter) {
-              values.push(extracted);
-              index += 1;
-              fieldStart = index;
-              hasEscapedQuotes = false;
-              continue;
-            } else if (nextChar === "\r" || nextChar === "\n") {
-              if (nextChar === "\r" && source[index + 1] === "\n") index += 1;
-              index += 1;
-              pushRecord(extracted);
-              line += 1;
-              fieldStart = index;
-              continue;
-            } else {
-              throw malformedCsv(recordLine);
-            }
-          } else {
-            pushRecord(extracted);
-            return records;
-          }
-        }
-      } else {
-        if (character === "\n") line += 1;
-        index += 1;
-      }
-      continue;
-    }
-
-    if (character === '"') {
-      if (index > fieldStart) throw malformedCsv(recordLine);
-      quoted = true;
-      hasEscapedQuotes = false;
-      index += 1;
-      fieldStart = index;
-      continue;
-    }
-
-    if (character === delimiter) {
-      values.push(source.slice(fieldStart, index));
-      index += 1;
-      fieldStart = index;
-      hasEscapedQuotes = false;
-      continue;
-    }
-
-    if (character === "\r" || character === "\n") {
-      const currentField = source.slice(fieldStart, index);
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      index += 1;
-      pushRecord(currentField);
-      line += 1;
-      fieldStart = index;
-      continue;
-    }
-
-    index += 1;
-  }
-
-  if (quoted) throw malformedCsv(recordLine);
-
-  if (fieldStart <= len) {
-    const trailingField = source.slice(fieldStart, len);
-    if (trailingField.length > 0 || values.length > 0) {
-      values.push(trailingField);
-      if (values.some(validText)) records.push({ line: recordLine, values });
-    }
-  }
-
-  return records;
-}
-
-function malformedCsv(line: number) {
-  return new EnrollmentImportError(
-    "invalid_csv",
-    `La fila ${line} contiene comillas o columnas mal formadas.`,
-    422
-  );
+  return semiCols > commaCols ? ";" : ",";
 }

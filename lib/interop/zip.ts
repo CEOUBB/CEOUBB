@@ -1,3 +1,4 @@
+import { zipSync } from "fflate";
 import { openMoodleArchive } from "../moodle/archive.ts";
 import { fail } from "./errors.ts";
 
@@ -72,6 +73,7 @@ export function safePackagePath(path: string) {
   return path;
 }
 
+// Implements: REQ-IO-05
 export async function openPackageZip(bytes: Uint8Array) {
   if (!bytes.length || bytes.length > MAX_PACKAGE_BYTES)
     fail("El paquete debe ocupar hasta 50 MiB.", 413);
@@ -94,73 +96,26 @@ export async function openPackageZip(bytes: Uint8Array) {
   return archive;
 }
 
-function crc32(bytes: Uint8Array) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-export function createZip(entries: ZipEntry[]) {
+// Implements: REQ-IO-05
+export function createZip(entries: ZipEntry[]): Uint8Array {
   if (
     !entries.length ||
     entries.length > MAX_PACKAGE_FILES ||
     new Set(entries.map((e) => e.name)).size !== entries.length
-  )
+  ) {
     fail("Número de archivos ZIP inválido o rutas repetidas.");
-  const encoder = new TextEncoder();
-  const chunks: Uint8Array[] = [];
-  const central: Uint8Array[] = [];
-  let offset = 0;
+  }
   let total = 0;
+  const files: Record<string, Uint8Array> = {};
   for (const entry of entries) {
-    const name = encoder.encode(safePackagePath(entry.name));
+    const name = safePackagePath(entry.name);
     total += entry.bytes.length;
-    if (entry.bytes.length > MAX_ENTRY_BYTES || total > MAX_PACKAGE_BYTES)
+    if (entry.bytes.length > MAX_ENTRY_BYTES || total > MAX_PACKAGE_BYTES) {
       fail("El paquete excede el tamaño permitido.", 413);
-    const crc = crc32(entry.bytes);
-    const local = new Uint8Array(30 + name.length);
-    const lv = new DataView(local.buffer);
-    lv.setUint32(0, 0x04034b50, true);
-    lv.setUint16(4, 20, true);
-    lv.setUint16(6, 0x800, true);
-    lv.setUint32(14, crc, true);
-    lv.setUint32(18, entry.bytes.length, true);
-    lv.setUint32(22, entry.bytes.length, true);
-    lv.setUint16(26, name.length, true);
-    local.set(name, 30);
-    const header = new Uint8Array(46 + name.length);
-    const cv = new DataView(header.buffer);
-    cv.setUint32(0, 0x02014b50, true);
-    cv.setUint16(4, 20, true);
-    cv.setUint16(6, 20, true);
-    cv.setUint16(8, 0x800, true);
-    cv.setUint32(16, crc, true);
-    cv.setUint32(20, entry.bytes.length, true);
-    cv.setUint32(24, entry.bytes.length, true);
-    cv.setUint16(28, name.length, true);
-    cv.setUint32(42, offset, true);
-    header.set(name, 46);
-    chunks.push(local, entry.bytes);
-    central.push(header);
-    offset += local.length + entry.bytes.length;
+    }
+    files[name] = entry.bytes;
   }
-  const end = new Uint8Array(22);
-  const ev = new DataView(end.buffer);
-  ev.setUint32(0, 0x06054b50, true);
-  ev.setUint16(8, entries.length, true);
-  ev.setUint16(10, entries.length, true);
-  const centralSize = central.reduce((n, e) => n + e.length, 0);
-  ev.setUint32(12, centralSize, true);
-  ev.setUint32(16, offset, true);
-  const result = new Uint8Array(offset + centralSize + end.length);
-  let cursor = 0;
-  for (const chunk of [...chunks, ...central, end]) {
-    result.set(chunk, cursor);
-    cursor += chunk.length;
-  }
+  const result = zipSync(files, { level: 0 });
   if (result.length > MAX_PACKAGE_BYTES) fail("El ZIP final supera 50 MiB.", 413);
   return result;
 }

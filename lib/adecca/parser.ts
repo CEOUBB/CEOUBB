@@ -1,3 +1,4 @@
+import Papa from "papaparse";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
 import { sanitizeAcademicHtml } from "../academic-content.ts";
 import { htmlToAcademicMarkdown } from "../multimodal-editor.ts";
@@ -474,39 +475,6 @@ function participantsFromManifest(values: unknown[], omissions: AdeccaImportOmis
   return participants;
 }
 
-function csvRows(source: string, delimiter: string) {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let quoted = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (character === '"') {
-      if (quoted && source[index + 1] === '"') {
-        cell += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === delimiter && !quoted) {
-      row.push(cell.trim());
-      cell = "";
-    } else if ((character === "\n" || character === "\r") && !quoted) {
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      row.push(cell.trim());
-      if (row.some(Boolean)) rows.push(row);
-      row = [];
-      cell = "";
-    } else {
-      cell += character;
-    }
-  }
-  if (quoted) fail("La nómina CSV termina dentro de una celda con comillas.");
-  row.push(cell.trim());
-  if (row.some(Boolean)) rows.push(row);
-  return rows;
-}
-
 function normalizedHeader(value: string) {
   return value
     .normalize("NFD")
@@ -522,11 +490,15 @@ function rosterFromCsv(bytes: Uint8Array, omissions: AdeccaImportOmission[]) {
     fail("La nómina CSV debe pesar entre 1 byte y 1 MiB.", "ADECCA_PACKAGE_LIMIT");
   }
   const source = utf8(bytes, "La nómina CSV");
-  const headerLine = source.split(/\r?\n/, 1)[0] ?? "";
-  const delimiter = [";", ",", "\t"].sort(
-    (left, right) => headerLine.split(right).length - headerLine.split(left).length
-  )[0];
-  const rows = csvRows(source, delimiter);
+  const parsed = Papa.parse<string[]>(source, {
+    delimitersToGuess: [";", ",", "\t"],
+    skipEmptyLines: "greedy",
+    transform: (value) => value.trim(),
+  });
+  if (parsed.errors.some((err) => err.type === "Quotes")) {
+    fail("La nómina CSV termina dentro de una celda con comillas.");
+  }
+  const rows = parsed.data;
   if (rows.length < 2 || rows.length - 1 > MAX_ADECCA_CSV_ROWS) {
     fail("La nómina CSV debe contener entre 1 y 5.000 estudiantes.", "ADECCA_PACKAGE_LIMIT");
   }

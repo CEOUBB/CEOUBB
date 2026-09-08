@@ -1,3 +1,5 @@
+import hljs from "highlight.js";
+
 export const RICH_TEXT_MAX_LENGTH = 40_000;
 
 export const RICH_TEXT_REQUIREMENTS = [
@@ -187,35 +189,6 @@ const LANGUAGE_ALIASES: Record<string, CodeLanguage> = {
   shell: "bash",
 };
 
-import { Prism } from "prism-react-renderer";
-
-if (typeof Prism !== "undefined" && Prism.languages) {
-  if (!Prism.languages.matlab) {
-    Prism.languages.matlab = {
-      comment: [/%\{[\s\S]*?%\}|%[^\n]*/],
-      string: { pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/, greedy: true },
-      number: /\b(?:0x[\da-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b/i,
-      keyword:
-        /\b(?:break|case|catch|classdef|continue|else|elseif|end|for|function|global|if|methods|otherwise|parfor|persistent|properties|return|spmd|switch|try|while)\b/,
-      function: /\b[a-z_]\w*(?=\s*\()/i,
-      operator: /[+\-*/%=<>!&|^~:.,;()[\]{}]+/,
-    };
-  }
-  if (!Prism.languages.bash) {
-    Prism.languages.bash = {
-      comment: { pattern: /(^|[^#])#.*/, lookbehind: true },
-      string: { pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/, greedy: true },
-      variable: /\$[a-zA-Z_0-9]+/,
-      number: /\b\d+\b/,
-      operator: /[|&;()<>$`\\=!]/,
-      keyword: /\b(?:if|then|else|elif|fi|for|while|in|do|done|case|esac|function|return|echo)\b/,
-    };
-  }
-  if (!Prism.languages.java && Prism.languages.clike) {
-    Prism.languages.java = Prism.languages.clike;
-  }
-}
-
 export function normalizeCodeLanguage(value: string): CodeLanguage {
   const label = value.trim().toLowerCase().split(/\s+/, 1)[0] ?? "";
   return LANGUAGE_ALIASES[label] ?? "plain";
@@ -266,97 +239,85 @@ export function normalizeRichTextBody(value: string) {
   return body;
 }
 
-function mapPrismGrammar(language: CodeLanguage) {
-  if (!Prism?.languages) return null;
-  switch (language) {
-    case "c":
-      return Prism.languages.c ?? Prism.languages.clike;
-    case "cpp":
-      return Prism.languages.cpp ?? Prism.languages.clike;
-    case "java":
-      return Prism.languages.java ?? Prism.languages.clike;
-    case "python":
-      return Prism.languages.python;
-    case "sql":
-      return Prism.languages.sql;
-    case "html":
-      return Prism.languages.markup ?? Prism.languages.html;
-    case "javascript":
-      return Prism.languages.javascript ?? Prism.languages.js;
-    case "typescript":
-      return Prism.languages.typescript ?? Prism.languages.ts;
-    case "css":
-      return Prism.languages.css;
-    case "json":
-      return Prism.languages.json;
-    case "bash":
-      return Prism.languages.bash;
-    case "matlab":
-      return Prism.languages.matlab;
-    default:
-      return Prism.languages.plain;
-  }
+const HLJS_LANGUAGES: Readonly<Record<CodeLanguage, string>> = {
+  matlab: "matlab",
+  python: "python",
+  cpp: "cpp",
+  c: "c",
+  java: "java",
+  sql: "sql",
+  html: "xml",
+  javascript: "javascript",
+  typescript: "typescript",
+  css: "css",
+  json: "json",
+  bash: "bash",
+  plain: "plaintext",
+};
+
+type HljsTreeChild =
+  | string
+  | {
+      scope?: string;
+      children?: HljsTreeChild[];
+    };
+
+function isObjectRecord(item: unknown): item is Record<string, unknown> {
+  return typeof item === "object" && item !== null;
 }
 
-function flattenPrismTokens(
-  tokens: Array<string | { type: string; content: unknown }>
-): SyntaxToken[] {
-  const result: SyntaxToken[] = [];
-  for (const token of tokens) {
-    if (typeof token === "string") {
-      result.push({ kind: "plain", value: token });
-    } else if (Array.isArray(token.content)) {
-      result.push(
-        ...flattenPrismTokens(token.content as Array<string | { type: string; content: unknown }>)
-      );
-    } else if (
-      typeof token.content === "object" &&
-      token.content !== null &&
-      "type" in token.content
-    ) {
-      result.push(...flattenPrismTokens([token.content as { type: string; content: unknown }]));
-    } else {
-      let kind: SyntaxTokenKind = "plain";
-      const type = token.type;
-      if (type === "comment" || type === "prolog" || type === "doctype" || type === "cdata") {
-        kind = "comment";
-      } else if (type === "string" || type === "char" || type === "attr-value") {
-        kind = "string";
-      } else if (type === "number" || type === "boolean") {
-        kind = "number";
-      } else if (
-        type === "keyword" ||
-        type === "builtin" ||
-        type === "important" ||
-        type === "atrule"
-      ) {
-        kind = "keyword";
-      } else if (type === "class-name" || type === "type") {
-        kind = "type";
-      } else if (type === "function") {
-        kind = "function";
-      } else if (type === "operator" || type === "punctuation") {
-        kind = "operator";
-      } else if (type === "tag") {
-        kind = "tag";
-      } else if (type === "attr-name" || type === "property" || type === "variable") {
-        kind = "attr";
-      }
-      result.push({ kind, value: String(token.content ?? "") });
+function extractHljsChildren(node: unknown): HljsTreeChild[] {
+  if (!isObjectRecord(node) || !Array.isArray(node.children)) return [];
+  const result: HljsTreeChild[] = [];
+  for (const child of node.children) {
+    if (typeof child === "string") {
+      result.push(child);
+    } else if (isObjectRecord(child)) {
+      const scope = typeof child.scope === "string" ? child.scope : undefined;
+      const children = Array.isArray(child.children) ? extractHljsChildren(child) : undefined;
+      result.push({ scope, children });
     }
   }
   return result;
 }
 
-export function highlightCode(value: string, language: CodeLanguage): SyntaxToken[] {
-  if (!value) return [];
-  if (language === "plain") return [{ kind: "plain", value }];
-  const grammar = mapPrismGrammar(language);
-  if (!grammar) return [{ kind: "plain", value }];
-  const rawTokens = Prism.tokenize(value, grammar);
-  const flat = flattenPrismTokens(rawTokens as Array<string | { type: string; content: unknown }>);
+function mapHljsScope(scope: string | undefined): SyntaxTokenKind | null {
+  if (!scope) return null;
+  const s = scope.toLowerCase();
+  if (s.includes("keyword")) return "keyword";
+  if (s.includes("comment") || s.includes("doctag")) return "comment";
+  if (s.includes("string")) return "string";
+  if (s.includes("number")) return "number";
+  if (s.includes("type") || s.includes("class")) return "type";
+  if (s.includes("function") || s.includes("title")) return "function";
+  if (s.includes("operator") || s.includes("punctuation")) return "operator";
+  if (s.includes("tag") || s.includes("name")) return "tag";
+  if (s.includes("attr") || s.includes("property") || s.includes("variable")) return "attr";
+  return "plain";
+}
+
+function flattenHljsTokens(
+  nodes: readonly HljsTreeChild[],
+  inheritedKind: SyntaxTokenKind = "plain"
+): SyntaxToken[] {
+  const result: SyntaxToken[] = [];
+  for (const node of nodes) {
+    if (typeof node === "string") {
+      result.push({ kind: inheritedKind, value: node });
+    } else {
+      const mapped = mapHljsScope(node.scope);
+      const kind = mapped !== null && mapped !== "plain" ? mapped : inheritedKind;
+      if (node.children && node.children.length > 0) {
+        result.push(...flattenHljsTokens(node.children, kind));
+      }
+    }
+  }
+  return result;
+}
+
+function mergeTokens(tokens: readonly SyntaxToken[]): SyntaxToken[] {
   const merged: SyntaxToken[] = [];
-  for (const token of flat) {
+  for (const token of tokens) {
     const previous = merged.at(-1);
     if (previous && previous.kind === token.kind) {
       previous.value += token.value;
@@ -365,6 +326,29 @@ export function highlightCode(value: string, language: CodeLanguage): SyntaxToke
     }
   }
   return merged;
+}
+
+// Implements: REQ-RICH-03
+export function highlightCode(value: string, language: CodeLanguage): SyntaxToken[] {
+  if (!value || language === "plain") {
+    return [{ kind: "plain", value }];
+  }
+  const hljsLang = HLJS_LANGUAGES[language] ?? language;
+  try {
+    const result = hljs.highlight(value, { language: hljsLang, ignoreIllegals: true });
+    const rootNode =
+      isObjectRecord(result._emitter) && "rootNode" in result._emitter
+        ? result._emitter.rootNode
+        : undefined;
+    const tree = extractHljsChildren(rootNode);
+    if (tree.length === 0 && value.length > 0) {
+      return [{ kind: "plain", value }];
+    }
+    const flat = flattenHljsTokens(tree, "plain");
+    return flat.length > 0 ? mergeTokens(flat) : [{ kind: "plain", value }];
+  } catch {
+    return [{ kind: "plain", value }];
+  }
 }
 
 function appendText(nodes: RichInline[], value: string) {
