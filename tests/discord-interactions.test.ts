@@ -16,7 +16,7 @@ import {
 test("verifyDiscordSignature: valida correctamente una firma Ed25519 auténtica", () => {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
   const rawBody = JSON.stringify({ type: 1 });
-  const timestamp = "1723766400";
+  const timestamp = String(Math.floor(Date.now() / 1000));
   const message = Buffer.from(timestamp + rawBody);
 
   const signature = crypto.sign(null, message, privateKey).toString("hex");
@@ -33,7 +33,7 @@ test("verifyDiscordSignature: valida correctamente una firma Ed25519 auténtica"
 test("verifyDiscordSignature: rechaza un payload alterado o firma inválida", () => {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
   const rawBody = JSON.stringify({ type: 1 });
-  const timestamp = "1723766400";
+  const timestamp = String(Math.floor(Date.now() / 1000));
   const signature = crypto.sign(null, Buffer.from(timestamp + rawBody), privateKey).toString("hex");
   const exportedSpki = publicKey.export({ type: "spki", format: "der" });
   const rawPublicKeyHex = exportedSpki.subarray(12).toString("hex");
@@ -73,7 +73,7 @@ test("getDiscordPublicKeys: retorna un array de claves públicas configuradas", 
 test("verifyDiscordRequestSignature: valida contra lista de claves", () => {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
   const rawBody = JSON.stringify({ type: 1 });
-  const timestamp = "1723766400";
+  const timestamp = String(Math.floor(Date.now() / 1000));
   const signature = crypto.sign(null, Buffer.from(timestamp + rawBody), privateKey).toString("hex");
   const rawPublicKeyHex = publicKey
     .export({ type: "spki", format: "der" })

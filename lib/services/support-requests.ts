@@ -108,21 +108,21 @@ export async function registrarSolicitud(entrada: {
   mensaje: string;
   ipHash: string;
   userId: string | null;
-}): Promise<SolicitudPersistida> {
+}): Promise<SolicitudPersistida | null> {
   const id = randomUUID();
-  await getDb().insert(solicitudesSoporte).values({
-    id,
-    nombre: entrada.nombre,
-    email: entrada.email,
-    rolDeclarado: entrada.rolDeclarado,
-    categoria: entrada.categoria,
-    asunto: entrada.asunto,
-    mensaje: entrada.mensaje,
-    estado: "pendiente",
-    ipHash: entrada.ipHash,
-    userId: entrada.userId,
-    createdAt: new Date().toISOString(),
-  });
+  const now = new Date().toISOString();
+  const desde = new Date(Date.now() - VENTANA_LIMITE_MS).toISOString();
+  // Implements: REQ-SUP-04 — SEC-08: una sola escritura serializa cuota y persistencia.
+  const result = await getDb().run(sql`
+    INSERT INTO solicitudes_soporte
+      (id, nombre, email, rol_declarado, categoria, asunto, mensaje, estado, ip_hash, user_id, created_at)
+    SELECT ${id}, ${entrada.nombre}, ${entrada.email}, ${entrada.rolDeclarado},
+      ${entrada.categoria}, ${entrada.asunto}, ${entrada.mensaje}, 'pendiente',
+      ${entrada.ipHash}, ${entrada.userId}, ${now}
+    WHERE (SELECT count(*) FROM solicitudes_soporte WHERE ip_hash = ${entrada.ipHash} AND created_at >= ${desde} LIMIT 1) < ${LIMITE_POR_ORIGEN}
+      AND (SELECT count(*) FROM solicitudes_soporte WHERE created_at >= ${desde} LIMIT 1) < ${LIMITE_GLOBAL}
+  `);
+  if (result.rowsAffected === 0) return null;
 
   return {
     id,

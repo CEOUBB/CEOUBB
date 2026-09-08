@@ -1,5 +1,13 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: auditoría de seguridad 081, 2026-09-08
+
+- **Worktree y rama:** `C:/Users/Pipe/.codex/worktrees/1265/CEOUBB`, `codex/correcciones-auditoria-seguridad-081`, base `f9fc4e4`.
+- **Implementación:** revocación Firebase/Turso y Callables, cierre global informado, contrato e inmutabilidad de entregas, matrícula en lectura/borrado, importación Moodle restringida por período con control concurrente, descarga autenticada e invalidación de enlaces históricos, QTI acotado y cuota atómica de soporte. Endurecidos login, Turnstile, Discord y promoción CI; actualizados los lockfiles vulnerables.
+- **Evidencia y promoción:** [ejecución y límites de la auditoría](docs/security/auditoria-081-ejecucion.md). Las pruebas usan cuentas, archivos y proveedores sintéticos. No hubo despliegue ni modificaciones de producción. CORS/IAM efectivos, navegador nativo, permisos Discord y CSP con nonces siguen requiriendo validación específica.
+- **Contrato de tests:** se conservan assertions existentes; fixtures completos de entrega y timestamps actuales de firmas positivas. Nuevas regresiones en `tests/security-audit-081.test.ts`, matriz Firebase ampliada y prueba de login en navegador.
+- **Verificación:** build y suite completa 578/578; `verify:fast` con 568/568 pruebas, 65 sellos y 29 especificaciones; invariantes 35/35; emuladores 8/8; navegador 4/4; lint y sintaxis Functions aprobados. Auditorías de ambos lockfiles sin avisos. React Doctor 86/100, cinco advertencias de rendimiento revisadas y ningún bug diagnosticado pendiente.
+
 ## Handoff: pulido del campus, 2026-09-04
 
 - **Ajuste solicitado:** restaurado únicamente el icono gris de calendario junto a «En tu agenda»; se mantiene un solo acceso contextual.

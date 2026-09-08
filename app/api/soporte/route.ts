@@ -134,6 +134,11 @@ export async function POST(request: Request) {
       ipHash,
       userId: sesion?.id ?? null,
     });
+    if (!solicitud)
+      return Response.json(
+        { error: "Se alcanzó el límite de solicitudes. Inténtalo más tarde." },
+        { status: 429 }
+      );
 
     const entrega = await enviarCorreoSoporte({
       nombre: solicitud.nombre,

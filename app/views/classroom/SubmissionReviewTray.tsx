@@ -103,11 +103,20 @@ function useSubmissionUrl(storagePath: string) {
   useEffect(() => {
     if (!storagePath) return;
     let active = true;
+    let objectUrl = "";
     classroomFileUrl(storagePath)
-      .then((url) => active && setState({ path: storagePath, url, failed: false }))
+      .then((url) => {
+        if (!active) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setState({ path: storagePath, url, failed: false });
+      })
       .catch(() => active && setState({ path: storagePath, url: "", failed: true }));
     return () => {
       active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [storagePath]);
 

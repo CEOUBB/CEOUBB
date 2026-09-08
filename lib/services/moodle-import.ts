@@ -1,7 +1,14 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, gt, inArray, lt, or } from "drizzle-orm";
 import { getDb } from "../../db/index.ts";
-import { matriculas, moodleImports, pendingMatriculas, secciones, users } from "../../db/schema.ts";
+import {
+  matriculas,
+  moodleImports,
+  pendingMatriculas,
+  periodos,
+  secciones,
+  users,
+} from "../../db/schema.ts";
 import type { PublicUser } from "../auth.ts";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
 import { stableMoodleDocumentId } from "../moodle/ids.ts";
@@ -12,10 +19,11 @@ import type {
   MoodleRosterParticipant,
 } from "../moodle/types.ts";
 import {
-  commitFirestoreWrites,
+  commitOpenSectionWrites,
   FIREBASE_PROJECT_ID,
   isValidPathSegment,
-  projectEnrollments,
+  toFirestoreWrite,
+  parseEnrollmentProjection,
   type FirestoreWrite,
 } from "./enrollment-projection.ts";
 
@@ -134,7 +142,11 @@ export function validateMoodleImportPosts(
 }
 
 // Implements: REQ-MOODLE-07
-export async function authorizeMoodleImport(actor: PublicUser, sectionId: string) {
+export async function authorizeMoodleImport(
+  actor: PublicUser,
+  sectionId: string,
+  writable = false
+) {
   if (!SECTION_ID_PATTERN.test(sectionId)) {
     throw new MoodleImportServiceError("La sección no existe.", "SECTION_NOT_FOUND", 404);
   }
@@ -147,6 +159,7 @@ export async function authorizeMoodleImport(actor: PublicUser, sectionId: string
   if (!section[0]) {
     throw new MoodleImportServiceError("La sección no existe.", "SECTION_NOT_FOUND", 404);
   }
+  if (writable) await requireOpenMoodleSection(db, sectionId);
   if (actor.role === "owner") return section[0];
   const enrollment = await db
     .select({ id: matriculas.id })
@@ -168,6 +181,26 @@ export async function authorizeMoodleImport(actor: PublicUser, sectionId: string
     );
   }
   return section[0];
+}
+
+type ImportTransaction = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
+
+async function requireOpenMoodleSection(
+  db: ReturnType<typeof getDb> | ImportTransaction,
+  sectionId: string
+) {
+  const [section] = await db
+    .select({ status: periodos.estado })
+    .from(secciones)
+    .innerJoin(periodos, eq(secciones.periodoId, periodos.id))
+    .where(eq(secciones.id, sectionId))
+    .limit(1);
+  if (section?.status !== "abierto")
+    throw new MoodleImportServiceError(
+      "El período de esta sección está cerrado.",
+      "PERIOD_READ_ONLY",
+      409
+    );
 }
 
 function digestId(...parts: string[]) {
@@ -202,25 +235,29 @@ export async function startMoodleImport(
 ) {
   const now = new Date().toISOString();
   const id = importId(sectionId, source.fingerprint);
-  await getDb()
-    .insert(moodleImports)
-    .values({
-      id,
-      seccionId: sectionId,
-      fingerprint: source.fingerprint,
-      actorId: actor.id,
-      status: "running",
-      sourceCourseId: source.courseId,
-      sourceCourseName: source.courseName,
-      sourceMoodleVersion: source.moodleVersion,
-      sourceFileName: source.fileName,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [moodleImports.seccionId, moodleImports.fingerprint],
-      set: { actorId: actor.id, status: "running", updatedAt: now },
-    });
+  await getDb().transaction(async (tx) => {
+    await requireOpenMoodleSection(tx, sectionId);
+    await commitOpenSectionWrites(sectionId, []);
+    await tx
+      .insert(moodleImports)
+      .values({
+        id,
+        seccionId: sectionId,
+        fingerprint: source.fingerprint,
+        actorId: actor.id,
+        status: "running",
+        sourceCourseId: source.courseId,
+        sourceCourseName: source.courseName,
+        sourceMoodleVersion: source.moodleVersion,
+        sourceFileName: source.fileName,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [moodleImports.seccionId, moodleImports.fingerprint],
+        set: { actorId: actor.id, status: "running", updatedAt: now },
+      });
+  });
   return { id };
 }
 
@@ -261,7 +298,10 @@ export async function writeMoodleImportPosts(
     };
     return { update: { name, fields }, updateMask: { fieldPaths: Object.keys(fields) } };
   });
-  await commitFirestoreWrites(writes);
+  await getDb().transaction(async (tx) => {
+    await requireOpenMoodleSection(tx, sectionId);
+    await commitOpenSectionWrites(sectionId, writes);
+  });
   return { imported: writes.length };
 }
 
@@ -294,6 +334,7 @@ export async function reconcileMoodleRoster(
   values: MoodleRosterParticipant[]
 ) {
   await requireMoodleImport(sectionId, fingerprint);
+  await requireOpenMoodleSection(getDb(), sectionId);
   const participants = normalizeRoster(values);
   if (participants.length === 0) return { matched: 0, pending: 0 };
   const db = getDb();
@@ -339,6 +380,7 @@ export async function reconcileMoodleRoster(
   }
 
   await db.transaction(async (tx) => {
+    await requireOpenMoodleSection(tx, sectionId);
     if (matchedValues.length > 0) {
       await tx
         .insert(matriculas)
@@ -357,23 +399,18 @@ export async function reconcileMoodleRoster(
           set: { sourceImportId, expiresAt, updatedAt: now },
         });
     }
+    await commitOpenSectionWrites(
+      sectionId,
+      matchedUsers
+        .map((user) => ({
+          seccionId: sectionId,
+          userId: user.id,
+          role: "student" as const,
+          status: "activa" as const,
+        }))
+        .map((entry) => toFirestoreWrite(parseEnrollmentProjection(entry)))
+    );
   });
-  try {
-    await projectEnrollments(
-      matchedUsers.map((user) => ({
-        seccionId: sectionId,
-        userId: user.id,
-        role: "student" as const,
-        status: "activa" as const,
-      }))
-    );
-  } catch {
-    throw new MoodleImportServiceError(
-      "Las matrículas se guardaron, pero Firebase no pudo proyectarlas.",
-      "PROJECTION_UNAVAILABLE",
-      503
-    );
-  }
   if (matchedUsers.length > 0) {
     await db.delete(pendingMatriculas).where(
       and(
@@ -397,40 +434,48 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
   const pending = await db
     .select({ id: pendingMatriculas.id, seccionId: pendingMatriculas.seccionId })
     .from(pendingMatriculas)
-    .where(and(eq(pendingMatriculas.email, email), gt(pendingMatriculas.expiresAt, now)))
+    .innerJoin(secciones, eq(pendingMatriculas.seccionId, secciones.id))
+    .innerJoin(periodos, eq(secciones.periodoId, periodos.id))
+    .where(
+      and(
+        eq(pendingMatriculas.email, email),
+        gt(pendingMatriculas.expiresAt, now),
+        eq(periodos.estado, "abierto")
+      )
+    )
     .limit(MAX_IMPORT_BATCH);
   if (pending.length === 0) return 0;
-  const claimedValues = pending.map((entry) => ({
-    id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
-    seccionId: entry.seccionId,
-    usuarioId: actor.id,
-    rolSeccion: "student" as const,
-    estado: "activa" as const,
-    createdAt: now,
-  }));
-  await db.transaction(async (tx) => {
-    await tx
-      .insert(matriculas)
-      .values(claimedValues)
-      .onConflictDoUpdate({
-        target: [matriculas.seccionId, matriculas.usuarioId],
-        set: { rolSeccion: "student", estado: "activa" },
-      });
-  });
-  await projectEnrollments(
-    pending.map((entry) => ({
+  for (const entry of pending) {
+    const claimedValue = {
+      id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
       seccionId: entry.seccionId,
-      userId: actor.id,
-      role: "student" as const,
-      status: "activa" as const,
-    }))
-  );
-  await db.delete(pendingMatriculas).where(
-    inArray(
-      pendingMatriculas.id,
-      pending.map((item) => item.id)
-    )
-  );
+      usuarioId: actor.id,
+      rolSeccion: "student" as const,
+      estado: "activa" as const,
+      createdAt: now,
+    };
+    await db.transaction(async (tx) => {
+      await requireOpenMoodleSection(tx, entry.seccionId);
+      await tx
+        .insert(matriculas)
+        .values(claimedValue)
+        .onConflictDoUpdate({
+          target: [matriculas.seccionId, matriculas.usuarioId],
+          set: { rolSeccion: "student", estado: "activa" },
+        });
+      await commitOpenSectionWrites(entry.seccionId, [
+        toFirestoreWrite(
+          parseEnrollmentProjection({
+            seccionId: entry.seccionId,
+            userId: actor.id,
+            role: "student" as const,
+            status: "activa" as const,
+          })
+        ),
+      ]);
+      await tx.delete(pendingMatriculas).where(eq(pendingMatriculas.id, entry.id));
+    });
+  }
   return pending.length;
 }
 
@@ -469,23 +514,27 @@ export async function completeMoodleImport(
     warnings: report.warnings.slice(0, 100),
     finishedAt: report.finishedAt,
   };
-  await getDb()
-    .update(moodleImports)
-    .set({
-      status: report.status,
-      contentCount: report.contentImported,
-      fileCount: report.filesImported,
-      participantCount: report.participantsMatched + report.participantsPending,
-      warningCount: Math.min(20_000, Math.max(report.warnings.length, reportedWarningCount)),
-      reportJson: JSON.stringify(compact).slice(0, 40_000),
-      updatedAt: new Date().toISOString(),
-    })
-    .where(
-      and(
-        eq(moodleImports.seccionId, sectionId),
-        eq(moodleImports.fingerprint, report.source.fingerprint)
-      )
-    );
+  await getDb().transaction(async (tx) => {
+    await requireOpenMoodleSection(tx, sectionId);
+    await commitOpenSectionWrites(sectionId, []);
+    await tx
+      .update(moodleImports)
+      .set({
+        status: report.status,
+        contentCount: report.contentImported,
+        fileCount: report.filesImported,
+        participantCount: report.participantsMatched + report.participantsPending,
+        warningCount: Math.min(20_000, Math.max(report.warnings.length, reportedWarningCount)),
+        reportJson: JSON.stringify(compact).slice(0, 40_000),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(
+        and(
+          eq(moodleImports.seccionId, sectionId),
+          eq(moodleImports.fingerprint, report.source.fingerprint)
+        )
+      );
+  });
   return compact;
 }
 

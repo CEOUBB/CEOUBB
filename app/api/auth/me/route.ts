@@ -12,6 +12,10 @@ import {
 import { interopResources, interopTools } from "../../../../db/interop-schema";
 import { destroySession, getSessionUser } from "../../../../lib/auth";
 import {
+  deleteFirebaseAccountData,
+  revokeFirebaseAccess,
+} from "../../../../lib/services/firebase-revocation";
+import {
   MAX_PAGE_SIZE,
   listUserSections,
   listUserSectionMemberships,
@@ -82,6 +86,8 @@ export async function DELETE(request: Request) {
   }
 
   try {
+    await revokeFirebaseAccess(user.id, true);
+    await deleteFirebaseAccountData(user.id);
     await db.batch([
       db
         .update(solicitudesSoporte)

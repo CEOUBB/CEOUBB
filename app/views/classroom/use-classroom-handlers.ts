@@ -143,8 +143,12 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     if (isNativeShell()) {
       note("Descargando archivo…");
       try {
-        const url = file.url || (await classroomFileUrl(file.storagePath));
-        if (await openDocumentNatively(url, file.name)) return note("", "info");
+        const url = file.storagePath ? await classroomFileUrl(file.storagePath) : file.url || "";
+        try {
+          if (await openDocumentNatively(url, file.name)) return note("", "info");
+        } finally {
+          if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+        }
       } catch (cause) {
         return note(
           cause instanceof Error ? cause.message : "No fue posible abrir el archivo.",
@@ -156,9 +160,11 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     const tab = window.open("", "_blank");
     if (tab) tab.opener = null;
     try {
-      const url = file.url || (await classroomFileUrl(file.storagePath));
+      const url = file.storagePath ? await classroomFileUrl(file.storagePath) : file.url || "";
       if (tab) tab.location.href = url;
       else window.open(url, "_blank", "noopener,noreferrer");
+      // El visor ya recibe bytes locales; liberar la copia del documento tras abrirlo.
+      if (url.startsWith("blob:")) window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (cause) {
       tab?.close();
       note(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.", "bad");

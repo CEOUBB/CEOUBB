@@ -3,7 +3,10 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null && request.auth.token.email_verified == true
+        && (!firestore.exists(/databases/(default)/documents/authRevocations/$(request.auth.uid))
+          || !firestore.get(/databases/(default)/documents/authRevocations/$(request.auth.uid)).data.get('disabled', false)
+            && request.auth.token.auth_time > firestore.get(/databases/(default)/documents/authRevocations/$(request.auth.uid)).data.revokedAt);
     }
 
     function email() {
@@ -115,9 +118,14 @@ service firebase.storage {
     */
     // Implements: REQ-EVAL-01
     match /courses/{courseId}/submissions/{evalId}/{userId}/{fileName} {
-      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId;
-      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024 && isAllowedAcademicMimeType();
-      allow delete: if (isOwner() || signedIn() && request.auth.uid == userId) && sectionIsWritable(courseId);
+      function unreferencedFile() {
+        let receipt = /databases/(default)/documents/courses/$(courseId)/submissions/$(evalId + '_' + userId);
+        return !firestore.exists(receipt) || firestore.get(receipt).data.storagePath != 'courses/' + courseId + '/submissions/' + evalId + '/' + userId + '/' + fileName;
+      }
+      allow read: if isOwner() || teachesSection(courseId) || signedIn() && request.auth.uid == userId && isEnrolled(courseId);
+      // SEC-02: sustituir contenido exige una ruta nueva y un comprobante con fecha nueva.
+      allow create, update: if isMember() && isEnrolled(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024 && isAllowedAcademicMimeType() && resource == null && unreferencedFile();
+      allow delete: if (isOwner() || signedIn() && request.auth.uid == userId && isEnrolled(courseId)) && sectionIsWritable(courseId);
     }
   }
 }

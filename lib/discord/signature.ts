@@ -21,6 +21,9 @@ export function verifyDiscordSignature(
   publicKey: string
 ): boolean {
   if (!publicKey || !signature || !timestamp) return false;
+  // Implements: REQ-SEC-04 — CFG-05: limitar replay de solicitudes firmadas.
+  if (!/^\d{1,12}$/.test(timestamp) || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300)
+    return false;
   try {
     const spki = Buffer.concat([
       Buffer.from("302a300506032b6570032100", "hex"),
