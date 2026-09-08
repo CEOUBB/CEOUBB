@@ -32,11 +32,12 @@ export async function GET(request: Request, context: Context) {
     if (resource.kind === "lti")
       fail("Las herramientas LTI no contienen un paquete descargable.", 400);
     const response = await readInteropObject(resource.storagePrefix + "original.zip");
+    const safeResourceId = resource.id.replace(/[^a-zA-Z0-9_-]/g, "");
     return new Response(response.body, {
       headers: {
         ...privateHeaders,
         "Content-Type": "application/zip",
-        "Content-Disposition": 'attachment; filename="objeto-' + resource.id + '.zip"',
+        "Content-Disposition": 'attachment; filename="objeto-' + safeResourceId + '.zip"',
       },
     });
   } catch (error) {

@@ -141,8 +141,12 @@ export function filterReviewQueue(
 }
 
 export function reviewProgress(rows: readonly ReviewRow[]) {
-  const graded = rows.filter((row) => row.state === "graded").length;
-  const delivered = rows.filter((row) => row.state !== "missing").length;
+  let graded = 0;
+  let delivered = 0;
+  for (const row of rows) {
+    if (row.state === "graded") graded++;
+    if (row.state !== "missing") delivered++;
+  }
   return { graded, delivered, total: rows.length };
 }
 

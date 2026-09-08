@@ -112,7 +112,7 @@ function ResourceRow({ item }: { item: ResourceItem }) {
           </span>
           {item.note ? <small>{item.note}</small> : <small className="res-host">{item.host}</small>}
         </span>
-        <ArrowUpRight className="brand-go" size={14} />
+        <ArrowUpRight aria-hidden="true" className="brand-go" size={14} />
       </a>
     </li>
   );
@@ -146,19 +146,19 @@ export function ResourcesView() {
         <section className="library-panel">
           <div className="library-lead">
             <span className="library-icon">
-              <Books size={24} />
+              <Books aria-hidden="true" size={24} />
             </span>
             <h2>Biblioteca académica</h2>
             {/* Implements: REQ-QMD-03 */}
             {/* react-doctor-disable-next-line nextjs-no-a-element */}
             <a className="library-cta" href="/biblioteca/index.html">
-              Abrir biblioteca <ArrowRight size={16} />
+              Abrir biblioteca <ArrowRight aria-hidden="true" size={16} />
             </a>
           </div>
           <ul className="library-points">
             {LIBRARY_POINTS.map((point) => (
               <li key={point}>
-                <Check size={15} weight="bold" /> {point}
+                <Check aria-hidden="true" size={15} weight="bold" /> {point}
               </li>
             ))}
           </ul>
@@ -166,7 +166,7 @@ export function ResourcesView() {
 
         <div className="mobile-strip">
           <span className="mobile-strip-icon">
-            <DeviceMobile size={20} />
+            <DeviceMobile aria-hidden="true" size={20} />
           </span>
           <div className="mobile-strip-text">
             <b>CEOUBB Móvil</b>
@@ -197,7 +197,7 @@ export function ResourcesView() {
             </div>
           </div>
           <a className="mobile-strip-action" href={APK_URL}>
-            <DownloadSimple size={16} /> Descargar APK
+            <DownloadSimple aria-hidden="true" size={16} /> Descargar APK
           </a>
         </div>
       </m.div>

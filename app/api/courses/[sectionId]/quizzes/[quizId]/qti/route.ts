@@ -13,11 +13,12 @@ export async function GET(
     const actor = await sessionActor(request);
     const { sectionId, quizId } = await context.params;
     const bytes = await exportPublishedQuiz(actor, sectionId, quizId);
+    const safeQuizId = quizId.replace(/[^a-zA-Z0-9_-]/g, "");
     return new Response(bytes.slice().buffer, {
       headers: {
         ...privateHeaders,
         "Content-Type": "application/zip",
-        "Content-Disposition": 'attachment; filename="banco-qti-' + quizId + '.zip"',
+        "Content-Disposition": 'attachment; filename="banco-qti-' + safeQuizId + '.zip"',
       },
     });
   } catch (error) {

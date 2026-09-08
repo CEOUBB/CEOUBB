@@ -157,9 +157,10 @@ export async function applyEnrollmentImport(
 }
 
 export async function reconcileSectionProjections(
-  actor: Pick<PublicUser, "id" | "role">,
+  actor: PublicUser,
   sectionId: string
 ): Promise<{ total: number; reconciled: number }> {
+  await authorizeEnrollmentImport(actor, sectionId);
   const db = getDb();
   const activeEnrollments = await db
     .select({
