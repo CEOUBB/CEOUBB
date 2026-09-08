@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, BookOpen } from "@phosphor-icons/react";
 import * as m from "motion/react-m";
 import type { Course } from "../../lib/courses";
 import type { CalendarEntry } from "../../lib/portal-utils";
@@ -31,12 +31,15 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
       style={{ "--course-tone": course.tone } as React.CSSProperties}
       transition={shouldReduceMotion ? instantTransition : springDefault}
       variants={shouldReduceMotion ? undefined : rise}
-      whileHover={shouldReduceMotion ? undefined : { y: -1 }}
     >
-      <div aria-hidden="true" className="course-thumb" />
       <div className="course-body">
         <div className="course-head">
-          <span className="course-code">{course.code}</span>
+          <span className="course-identity">
+            <span className="course-symbol" aria-hidden="true">
+              <BookOpen size={23} weight="duotone" />
+            </span>
+            <span className="course-code num">{course.code}</span>
+          </span>
           {unseen > 0 && (
             <span className="fresh num">
               {unseen} {unseen === 1 ? "nueva" : "nuevas"}
@@ -45,6 +48,9 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
         </div>
         <h3>{course.name}</h3>
         <p>{course.teacher}</p>
+        <p className="course-section num">
+          Sección {course.section} · {course.periodId ?? course.period}
+        </p>
         <div className="course-meta">
           <span className="num">
             {total === 0
@@ -56,7 +62,7 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
               {shortDate(upcoming.date)} · {upcoming.detail}
             </time>
           ) : (
-            <span className="course-open">Material disponible</span>
+            <span className="course-open">Sin evaluaciones próximas</span>
           )}
         </div>
         <button

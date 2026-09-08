@@ -364,6 +364,12 @@ export function Portal({
             onOpenNotification={openNotification}
             onSearch={() => setSearchOpen(true)}
             onSettings={() => setScreen("settings")}
+            onManageCourses={
+              user.role === "teacher" || user.role === "owner"
+                ? () => setScreen("teacher")
+                : undefined
+            }
+            onAdministration={user.role === "owner" ? () => setScreen("admin") : undefined}
             sidebarOpen={sidebarOpen}
             toggleSidebar={() => setSidebarOpen((open) => !open)}
             unreadCommunications={unreadCommunications}

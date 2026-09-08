@@ -181,7 +181,7 @@ export function formatDueDate(value: string): string {
 
 export function nextEntry(entries: CalendarEntry[]): CalendarEntry | null {
   const today = getSantiagoDateISO();
-  return entries.find((entry) => entry.date >= today) ?? entries[entries.length - 1] ?? null;
+  return entries.find((entry) => entry.date >= today) ?? null;
 }
 
 export function unseenCount(
@@ -194,43 +194,89 @@ export function unseenCount(
   ).length;
 }
 
-export function countdown(value: string): string {
-  const target = new Date(`${value}T12:00:00-04:00`).getTime();
+function parseDateSafely(value: string): Date | null {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  // Si ya contiene separador de hora 'T', parsear directamente
+  if (trimmed.includes("T")) {
+    const direct = new Date(trimmed);
+    return Number.isNaN(direct.getTime()) ? null : direct;
+  }
+
+  // Fecha solo año-mes-día: asumir mediodía para evitar desfases de huso horario
+  const atNoon = new Date(`${trimmed}T12:00:00`);
+  return Number.isNaN(atNoon.getTime()) ? null : atNoon;
+}
+
+/** Días entre hoy (Santiago) y la fecha dada; negativo si ya pasó. */
+export function daysUntil(value: string): number | null {
+  const parsed = parseDateSafely(value);
+  if (!parsed) return null;
   const todayISO = getSantiagoDateISO();
   const current = new Date(`${todayISO}T12:00:00-04:00`).getTime();
-  const days = Math.round((target - current) / 86400000);
+  return Math.round((parsed.getTime() - current) / 86400000);
+}
+
+export function countdown(value: string): string {
+  const days = daysUntil(value);
+  if (days === null) return "";
   if (days < 0) return "Realizada";
   if (days === 0) return "Hoy";
   if (days === 1) return "Mañana";
   return `En ${days} días`;
 }
 
+export type EvaluationUrgency = "past" | "today" | "soon" | "ahead";
+
+/**
+ * Nivel de apremio de una evaluación. Separa el color del rótulo de su texto:
+ * la ficha de cartelera tiñe la cuenta atrás según esto y no leyendo la cadena.
+ */
+export function evaluationUrgency(value: string): EvaluationUrgency {
+  const days = daysUntil(value);
+  if (days === null || days < 0) return "past";
+  if (days === 0) return "today";
+  if (days <= 3) return "soon";
+  return "ahead";
+}
+
 export function shortDate(value: string): string {
-  return shortFormat.format(new Date(`${value}T12:00:00`)).replace(".", "");
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return shortFormat.format(date).replace(".", "");
 }
 
 export function dayOf(value: string): string {
-  return dayFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dayFormat.format(date);
 }
 
 export function monthLabel(value: string): string {
-  const label = monthYearFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  const label = monthYearFormat.format(date);
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export function monthOf(value: string): string {
-  return monthFormat
-    .format(new Date(`${value}T12:00:00`))
-    .replace(".", "")
-    .toUpperCase();
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return monthFormat.format(date).replace(".", "").toUpperCase();
 }
 
 export function formatDate(value: string): string {
-  return dateFormat.format(new Date(value));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dateFormat.format(date);
 }
 
 export function formatDay(value: string): string {
-  return dateFormat.format(new Date(`${value}T12:00:00`));
+  const date = parseDateSafely(value);
+  if (!date) return "";
+  return dateFormat.format(date);
 }
 
 /** Fecha y hora de Santiago de una marca ISO completa, como la de una entrega. */
@@ -241,6 +287,7 @@ export function formatDateTime(value: string): string {
 }
 
 export function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0 KB";
   if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }

@@ -202,10 +202,18 @@ export function ResourcesView() {
         </div>
       </m.div>
 
+      <nav className="resource-index" aria-label="Categorías de recursos">
+        {RESOURCE_GROUPS.map((group) => (
+          <a href={`#recursos-${group.id}`} key={group.id}>
+            {group.title}
+          </a>
+        ))}
+      </nav>
       {RESOURCE_GROUPS.map((group) => (
         <m.section
           className={`res-group${group.disclaimer ? " res-group-ubb" : ""}`}
           key={group.id}
+          id={`recursos-${group.id}`}
           transition={shouldReduceMotion ? instantTransition : springDefault}
           variants={shouldReduceMotion ? undefined : settle}
         >

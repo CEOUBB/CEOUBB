@@ -159,28 +159,22 @@ export function HomePanel({ state, onNavigate, onEditActivity, onCreate }: HomeP
       </header>
 
       {nextActivity && nextDue && (
-        <div className="next-strip" style={{ marginBottom: "var(--space-lg)" }}>
-          <span className="next-strip-date">
-            <span className="next-strip-day">{nextDue.getDate()}</span>
-            <span className="next-strip-month">{MONTHS[nextDue.getMonth()]}</span>
+        <div className="next-eval" style={{ marginBottom: "var(--space-lg)" }}>
+          <span className="next-eval-date">
+            <span className="next-eval-day num">{nextDue.getDate()}</span>
+            <span className="next-eval-month">{MONTHS[nextDue.getMonth()]}</span>
           </span>
-          <span className="next-strip-body">
-            <span className="next-strip-line">
-              <strong>{nextActivity.title}</strong>
-            </span>
-            <span className="next-strip-detail">
-              Próximo vencimiento · {formatDateTime(nextActivity.dueAt)} · visible para estudiantes
-            </span>
+          <span className="next-eval-title">{nextActivity.title}</span>
+          <span className="next-eval-meta">
+            Próximo vencimiento · {formatDateTime(nextActivity.dueAt)} · visible para estudiantes
           </span>
-          <span className="next-strip-end">
-            <button
-              className="next-strip-action"
-              type="button"
-              onClick={() => onEditActivity(nextActivity)}
-            >
-              <PencilSimple size={16} aria-hidden="true" /> Editar
-            </button>
-          </span>
+          <button
+            className="next-eval-action"
+            type="button"
+            onClick={() => onEditActivity(nextActivity)}
+          >
+            <PencilSimple size={16} aria-hidden="true" /> Editar
+          </button>
         </div>
       )}
 

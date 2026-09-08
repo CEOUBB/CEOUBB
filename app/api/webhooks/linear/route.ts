@@ -2,26 +2,23 @@ import { NextResponse } from "next/server";
 
 import { isFreshTimestamp, verifyLinearSignature } from "@/lib/linear-signature";
 
-// Discord webhook URL for #🎯-❙-linear
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_LINEAR_WEBHOOK_URL;
-const LINEAR_WEBHOOK_SECRET = process.env.LINEAR_WEBHOOK_SECRET;
-
 export async function POST(request: Request) {
   try {
-    if (!LINEAR_WEBHOOK_SECRET || !DISCORD_WEBHOOK_URL) {
-      console.error(
-        "[Linear Webhook] LINEAR_WEBHOOK_SECRET or DISCORD_LINEAR_WEBHOOK_URL is not configured"
-      );
+    // Implements: REQ-INT-01
+    const linearWebhookSecret = process.env.LINEAR_WEBHOOK_SECRET;
+    if (!linearWebhookSecret) {
+      return new Response(null, { status: 404 });
+    }
+
+    const discordWebhookUrl = process.env.DISCORD_LINEAR_WEBHOOK_URL;
+    if (!discordWebhookUrl) {
+      console.error("[Linear Webhook] DISCORD_LINEAR_WEBHOOK_URL is not configured");
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
     }
 
     const rawBody = await request.text();
     if (
-      !verifyLinearSignature(
-        rawBody,
-        request.headers.get("linear-signature"),
-        LINEAR_WEBHOOK_SECRET
-      )
+      !verifyLinearSignature(rawBody, request.headers.get("linear-signature"), linearWebhookSecret)
     ) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -149,7 +146,7 @@ export async function POST(request: Request) {
     };
 
     // Implements: REQ-NET-01
-    const discordResponse = await fetch(DISCORD_WEBHOOK_URL, {
+    const discordResponse = await fetch(discordWebhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: AbortSignal.timeout(6000),

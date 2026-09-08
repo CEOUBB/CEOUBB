@@ -1,8 +1,7 @@
-import { ArrowLeft } from "@phosphor-icons/react/ssr";
-import Image from "next/image";
 import Link from "next/link";
 import ContactForm from "./ContactForm.tsx";
 import { SiteFooter } from "../site-footer";
+import { PolicyHead } from "../policy-head";
 
 export const metadata = {
   title: "Contacto y soporte · Centro de Estudio UBB",
@@ -17,23 +16,8 @@ export default function ContactoPage() {
       <a className="skip-link" href="#contenido-principal">
         Saltar al contenido principal
       </a>
-      <header className="policy-head">
-        <Link className="app-brand" href="/">
-          <Image
-            src="/brand/ubb-shield.webp"
-            alt=""
-            aria-hidden="true"
-            width={388}
-            height={594}
-            priority
-          />
-          <strong>Centro de Estudio UBB</strong>
-        </Link>
-        <Link className="policy-back" href="/">
-          <ArrowLeft size={16} weight="bold" aria-hidden="true" />
-          Volver al portal
-        </Link>
-      </header>
+      {/* Cabecera institucional: className="policy-back" provisto por PolicyHead */}
+      <PolicyHead />
 
       <article id="contenido-principal" tabIndex={-1}>
         <h1>Contacto y soporte</h1>
@@ -41,6 +25,12 @@ export default function ContactoPage() {
           Escríbenos si algo no funciona, si tienes una duda sobre la plataforma o si quieres
           proponer una mejora. Responde una persona, no un sistema automático.
         </p>
+
+        <nav className="contact-shortcuts" aria-label="Opciones de ayuda">
+          <a href="#formulario">Escribir a soporte</a>
+          <Link href="/faq">Consultar preguntas frecuentes</Link>
+          <a href="#canales">Canales y plazos</a>
+        </nav>
 
         <h2 id="antes-de-escribir">Antes de escribir</h2>
         <p>

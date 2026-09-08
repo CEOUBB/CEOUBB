@@ -137,8 +137,12 @@ export async function applyEnrollmentImport(
       input.sectionId,
       plan.registeredForProjection.map((row) => row.email)
     );
-  } catch {
+  } catch (error) {
     projectionPending = projections.length > 0;
+    console.error(
+      `[applyEnrollmentImport] Falló proyección a Firestore para sección ${input.sectionId} (${projections.length} estudiantes):`,
+      error
+    );
   }
 
   return {
@@ -150,6 +154,38 @@ export async function applyEnrollmentImport(
     projected: projectionPending ? 0 : projections.length,
     projectionPending,
   };
+}
+
+export async function reconcileSectionProjections(
+  actor: Pick<PublicUser, "id" | "role">,
+  sectionId: string
+): Promise<{ total: number; reconciled: number }> {
+  const db = getDb();
+  const activeEnrollments = await db
+    .select({
+      userId: matriculas.usuarioId,
+      role: matriculas.rolSeccion,
+      status: matriculas.estado,
+    })
+    .from(matriculas)
+    .where(and(eq(matriculas.seccionId, sectionId), eq(matriculas.estado, "activa")))
+    .limit(500);
+
+  if (activeEnrollments.length === 0) {
+    return { total: 0, reconciled: 0 };
+  }
+
+  const now = new Date().toISOString();
+  const projections = activeEnrollments.map((enr) => ({
+    seccionId: sectionId,
+    userId: enr.userId,
+    role: enr.role as "student" | "teacher" | "assistant" | "coordinator",
+    status: "activa" as const,
+    updatedAt: now,
+  }));
+
+  await projectEnrollments(projections);
+  return { total: activeEnrollments.length, reconciled: projections.length };
 }
 
 export async function claimPendingEnrollments(user: {

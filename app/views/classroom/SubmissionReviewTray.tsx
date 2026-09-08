@@ -12,6 +12,7 @@ import {
   FileText,
   Funnel,
   MagnifyingGlass,
+  Tray,
   Warning,
   X,
 } from "@phosphor-icons/react";
@@ -33,6 +34,7 @@ import {
 import { hapticTap } from "../../../lib/mobile-bridge";
 import { formatBytes, formatDateTime } from "../../../lib/portal-utils";
 import { paginateList } from "./classroom-utils";
+import { EmptyState } from "./EmptyState";
 import { RichText } from "./RichText";
 import {
   REVIEW_FILTERS,
@@ -49,6 +51,7 @@ import {
   type ReviewFilter,
   type ReviewRow,
 } from "./submission-review-model";
+import { DocumentPaneSkeleton } from "../ViewSkeletons";
 
 /*
   El visor arrastra PDF.js y su worker: se descarga cuando el docente abre una
@@ -57,7 +60,7 @@ import {
 // Implements: REQ-REV-01 REQ-PERF-01
 const PDFViewerPane = dynamic(
   () => import("./PDFViewerPane").then((module) => module.PDFViewerPane),
-  { ssr: false, loading: () => <p className="review-doc-loading">Preparando el visor…</p> }
+  { ssr: false, loading: () => <DocumentPaneSkeleton /> }
 );
 
 const QUEUE_PAGE_SIZE = 25;
@@ -239,12 +242,12 @@ export function SubmissionReviewTray({
       </header>
 
       {gradebook.length === 0 ? (
-        <div className="empty-state review-empty">
-          <strong>Guarda primero la ponderación del ramo.</strong>
-          <p>
-            La bandeja corrige entregas por evaluación. Define las evaluaciones y sus porcentajes en
-            la pestaña de notas para abrir la cola.
-          </p>
+        <div className="review-empty">
+          <EmptyState
+            icon={Tray}
+            title="Guarda primero la ponderación del ramo"
+            description="La bandeja corrige entregas por evaluación. Define las evaluaciones y sus porcentajes en la pestaña Notas para abrir la cola."
+          />
         </div>
       ) : (
         <div className="review-workspace">
@@ -494,9 +497,11 @@ function GradingPanel({
     mientras llega una actualización en tiempo real.
   */
   // Implements: REQ-REV-02
-  const [grade, setGrade] = useState(row.grade === null ? "" : formatGrade(row.grade));
+  const initialGrade = row.grade === null ? "" : formatGrade(row.grade);
+  const initialFeedback = row.feedback;
+  const [grade, setGrade] = useState(initialGrade);
   const [gradeError, setGradeError] = useState("");
-  const [feedback, setFeedback] = useState(row.feedback);
+  const [feedback, setFeedback] = useState(initialFeedback);
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState("");
 

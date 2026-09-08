@@ -31,6 +31,7 @@
     "db:setup:local": "node scripts/setup-local-db.mjs --reset",
     "db:seed:local": "node scripts/setup-local-db.mjs",
     "staging:seed": "node scripts/seed-staging.mjs",
+    "preview:seed": "node scripts/seed-preview-demo.mjs",
     "capacity:preflight": "node scripts/capacity-preflight.mjs",
     "capacity:prepare": "node scripts/prepare-capacity-fixtures.mjs",
     "capacity:disable-auth": "node scripts/capacity-auth-provider.mjs disable",

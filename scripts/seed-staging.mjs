@@ -48,9 +48,17 @@ export async function seedTursoWithClient(client) {
   };
 }
 
-export async function seedFirestore({ projectId, clientEmail, privateKey, bearerToken }) {
+/* `documents` queda parametrizado para que el sembrado de demo de las previews
+   reutilice este transporte sin duplicar la autenticación con Firestore. */
+export async function seedFirestore({
+  projectId,
+  clientEmail,
+  privateKey,
+  bearerToken,
+  documents = firestoreDocuments(),
+}) {
   const token = bearerToken || (await accessToken(clientEmail, privateKey));
-  const writes = firestoreDocuments().map(({ path, data }) => ({
+  const writes = documents.map(({ path, data }) => ({
     update: {
       name: `projects/${projectId}/databases/(default)/documents/${path}`,
       fields: firestoreFields(data),
@@ -151,7 +159,7 @@ async function main() {
   );
 }
 
-function upsert(table, values) {
+export function upsert(table, values) {
   const columns = Object.keys(values).map(snakeCase);
   const placeholders = columns.map(() => "?").join(", ");
   const updates = columns
@@ -185,7 +193,7 @@ function firestoreValue(value) {
   return { mapValue: { fields: firestoreFields(value) } };
 }
 
-async function serviceAccountCredentials() {
+export async function serviceAccountCredentials() {
   let clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL?.trim() ?? "";
   let privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n") ?? "";
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;

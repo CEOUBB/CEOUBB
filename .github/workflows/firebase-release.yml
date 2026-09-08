@@ -106,6 +106,19 @@ jobs:
           FIREBASE_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
         run: pnpm run staging:seed
 
+      # Las previews comparten esta base, asi que el ramo de demostracion se
+      # siembra una sola vez aqui en lugar de entregar credenciales a un job
+      # disparado por pull request.
+      - name: "Implements: REQ-AUTH-05 validate demo targets"
+        env:
+          PREVIEW_SEED_DRY_RUN: "1"
+        run: pnpm run preview:seed
+
+      - name: "Implements: REQ-AUTH-05 seed preview demo course"
+        env:
+          FIREBASE_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
+        run: pnpm run preview:seed
+
   deploy_production:
     name: Promote Firebase to production
     needs: deploy_staging

@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   DownloadSimple,
   MagnifyingGlass,
+  Megaphone,
   Paperclip,
   X,
 } from "@phosphor-icons/react";
@@ -15,6 +16,7 @@ import type { ClassroomAttachment, ClassroomPost } from "../../../lib/firebase-c
 import { formatBytes, formatDate, formatDueDate, type User } from "../../../lib/portal-utils";
 import { safeLinkDestination } from "../../../lib/rich-text";
 import { filterPostsByQuery, kindLabel } from "./classroom-utils";
+import { EmptyState } from "./EmptyState";
 import { RichPostEditor } from "./RichPostEditor";
 import { RichText } from "./RichText";
 
@@ -133,19 +135,28 @@ export function PostsSection({
       )}
 
       {posts.length === 0 && (
-        <div className="empty-state">
-          <strong>Todavía no hay publicaciones.</strong>
-          <p>Cuando el docente publique un aviso, una guía o un certamen aparecerá aquí.</p>
-          {canManageContent ? (
-            <button className="empty-state-action" onClick={startPublication} type="button">
-              Crear la primera publicación <ArrowRight size={15} />
-            </button>
-          ) : (
-            <Link className="empty-state-action" href="/biblioteca/index.html" prefetch={false}>
-              Abrir biblioteca académica <ArrowRight size={15} />
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          icon={Megaphone}
+          title={
+            canManageContent ? "Aún no publicas nada en este ramo" : "Todavía no hay publicaciones"
+          }
+          description={
+            canManageContent
+              ? "Los avisos, guías y certámenes que publiques encabezarán la portada del ramo."
+              : "Cuando el docente publique un aviso, una guía o un certamen aparecerá aquí."
+          }
+          action={
+            canManageContent ? (
+              <button className="empty-state-action" onClick={startPublication} type="button">
+                Crear la primera publicación <ArrowRight size={15} />
+              </button>
+            ) : (
+              <Link className="empty-state-action" href="/biblioteca/index.html" prefetch={false}>
+                Abrir biblioteca académica <ArrowRight size={15} />
+              </Link>
+            )
+          }
+        />
       )}
 
       {posts.length > 0 && visiblePosts.length === 0 && (

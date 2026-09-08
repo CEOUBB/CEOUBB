@@ -34,24 +34,22 @@ export function publicLtiKeys() {
   const keys = [{ kty: "RSA", n: key.n, e: key.e, kid: key.kid, alg: "RS256", use: "sig" }];
   if (process.env.LTI_PREVIOUS_PUBLIC_JWKS) {
     try {
+      // Implements: REQ-INT-05
       const previous = z
-        .object({
+        .strictObject({
           keys: z
             .array(
-              z
-                .object({
-                  kty: z.literal("RSA"),
-                  n: z.string().min(342).max(1400),
-                  e: z.literal("AQAB"),
-                  kid: z.string().min(1).max(100),
-                  alg: z.literal("RS256").optional(),
-                  use: z.literal("sig").optional(),
-                })
-                .strict()
+              z.strictObject({
+                kty: z.literal("RSA"),
+                n: z.string().min(342).max(1400),
+                e: z.literal("AQAB"),
+                kid: z.string().min(1).max(100),
+                alg: z.literal("RS256").optional(),
+                use: z.literal("sig").optional(),
+              })
             )
             .max(3),
         })
-        .strict()
         .parse(JSON.parse(process.env.LTI_PREVIOUS_PUBLIC_JWKS));
       for (const item of previous.keys) {
         if (keys.some((k) => k.kid === item.kid)) throw new Error();
@@ -63,20 +61,19 @@ export function publicLtiKeys() {
   }
   return { keys };
 }
-export const oidcSchema = z
-  .object({
-    client_id: z.string().min(1).max(128),
-    login_hint: z.string().regex(/^[a-f0-9]{64}$/),
-    lti_message_hint: z.string().min(1).max(128).optional(),
-    redirect_uri: z.string().max(2000),
-    response_type: z.literal("id_token"),
-    response_mode: z.literal("form_post"),
-    scope: z.literal("openid"),
-    prompt: z.literal("none"),
-    nonce: z.string().min(1).max(512),
-    state: z.string().min(1).max(2048),
-  })
-  .strict();
+// Implements: REQ-INT-05
+export const oidcSchema = z.strictObject({
+  client_id: z.string().min(1).max(128),
+  login_hint: z.string().regex(/^[a-f0-9]{64}$/),
+  lti_message_hint: z.string().min(1).max(128).optional(),
+  redirect_uri: z.string().max(2000),
+  response_type: z.literal("id_token"),
+  response_mode: z.literal("form_post"),
+  scope: z.literal("openid"),
+  prompt: z.literal("none"),
+  nonce: z.string().min(1).max(512),
+  state: z.string().min(1).max(2048),
+});
 export function ltiRole(role: SectionRole | "owner") {
   const names = {
     student: "Learner",

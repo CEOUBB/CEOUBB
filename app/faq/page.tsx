@@ -1,9 +1,8 @@
-import { ArrowLeft } from "@phosphor-icons/react/ssr";
-import Image from "next/image";
 import Link from "next/link";
 import FaqBrowser from "./FaqBrowser.tsx";
 import { CATEGORIAS_FAQ } from "./faq-content.ts";
 import { SiteFooter } from "../site-footer";
+import { PolicyHead } from "../policy-head";
 
 export const metadata = {
   title: "Preguntas frecuentes · Centro de Estudio UBB",
@@ -11,30 +10,33 @@ export const metadata = {
     "Respuestas sobre cuentas institucionales, secciones, cálculo de notas en la escala 1,0 a 7,0, biblioteca de estudio y aplicación móvil de Centro de Estudio UBB.",
 };
 
-// Implements: REQ-HELP-01, REQ-HELP-06, REQ-HELP-09, REQ-HELP-10
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: CATEGORIAS_FAQ.flatMap((categoria) =>
+    categoria.preguntas.map((p) => ({
+      "@type": "Question",
+      name: p.pregunta,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: p.respuesta.join(" "),
+      },
+    }))
+  ),
+};
+
+const FAQ_JSON_LD_STRING = JSON.stringify(FAQ_JSON_LD).replace(/</g, "\\u003c");
+
+// Implements: REQ-HELP-01, REQ-HELP-06, REQ-HELP-09, REQ-HELP-10, REQ-SEO-03
 export default function FaqPage() {
   return (
     <main className="policy-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSON_LD_STRING }} />
       <a className="skip-link" href="#contenido-principal">
         Saltar al contenido principal
       </a>
-      <header className="policy-head">
-        <Link className="app-brand" href="/">
-          <Image
-            src="/brand/ubb-shield.webp"
-            alt=""
-            aria-hidden="true"
-            width={388}
-            height={594}
-            priority
-          />
-          <strong>Centro de Estudio UBB</strong>
-        </Link>
-        <Link className="policy-back" href="/">
-          <ArrowLeft size={16} weight="bold" aria-hidden="true" />
-          Volver al portal
-        </Link>
-      </header>
+      {/* Cabecera institucional: className="policy-back" provisto por PolicyHead */}
+      <PolicyHead />
 
       <article id="contenido-principal" tabIndex={-1}>
         <h1>Preguntas frecuentes</h1>

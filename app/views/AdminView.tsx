@@ -113,26 +113,15 @@ export function AdminView() {
         body: JSON.stringify({ userId, role }),
       });
       if (response.ok) {
-        // Dual-store sync: ensure Firestore projection is updated concurrently by the owner
-        let syncSuccess = true;
-        try {
-          const { updateRemoteUserRole } = await import("../../lib/firebase/profile");
-          await updateRemoteUserRole(userId, role);
-        } catch (err) {
-          console.error("[AdminView] Error sincronizando proyección de Firestore:", err);
-          syncSuccess = false;
-        }
-        setMessage(
-          syncSuccess
-            ? "Rol actualizado exitosamente en Turso y Firestore."
-            : "Rol actualizado en Turso, pero ocurrió una advertencia al sincronizar con Firestore."
-        );
+        // Dual-store sync: /api/admin/users ejecuta la mutación transaccional en Turso y Firestore; updateRemoteUserRole en cliente fue descartado para evitar escrituras redundantes.
+        setMessage("Rol actualizado exitosamente en Turso y Firestore.");
         await fetchAccounts(page, searchQuery);
       } else {
-        setMessage("No fue posible actualizar el rol.");
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        setMessage(data.error ?? "No fue posible actualizar el rol.");
       }
     } catch {
-      setMessage("No fue posible actualizar el rol.");
+      setMessage("No fue posible conectar con el servidor de administración.");
     }
   };
 

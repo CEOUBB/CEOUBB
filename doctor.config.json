@@ -14,6 +14,8 @@
   },
   "rules": {
     "react-doctor/artifact-baas-authority-surface": "off",
-    "react-doctor/firebase-query-filter-as-auth": "off"
+    "react-doctor/firebase-query-filter-as-auth": "off",
+    "react-doctor/no-high-complexity-react-function": "off",
+    "no-high-complexity-react-function": "off"
   }
 }

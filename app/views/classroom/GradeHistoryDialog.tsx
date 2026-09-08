@@ -9,6 +9,7 @@ import {
   type GradeHistoryPage,
 } from "../../../lib/grade-history";
 import styles from "./grade-history.module.css";
+import { GradeHistorySkeleton } from "../ViewSkeletons";
 
 export type GradeHistorySelection = {
   studentId: string;
@@ -130,11 +131,7 @@ function HistoryPage({
   return (
     <>
       <div className={styles.body} aria-busy={!page && !error}>
-        {!page && !error && (
-          <p className={styles.state} role="status">
-            Cargando historial…
-          </p>
-        )}
+        {!page && !error && <GradeHistorySkeleton />}
         {error && (
           <div className={styles.state}>
             <p role="alert">{error}</p>
@@ -142,6 +139,7 @@ function HistoryPage({
               className="utility-button"
               type="button"
               onClick={() => {
+                setPage(null);
                 setError("");
                 setAttempt((value) => value + 1);
               }}
@@ -150,7 +148,7 @@ function HistoryPage({
             </button>
           </div>
         )}
-        {page?.items.length === 0 && (
+        {(page?.items?.length ?? 0) === 0 && page !== null && (
           <div className={styles.state} role="status">
             <ClockCounterClockwise aria-hidden="true" size={32} />
             <strong>No hay cambios registrados</strong>
@@ -160,7 +158,7 @@ function HistoryPage({
             </p>
           </div>
         )}
-        {page && page.items.length > 0 && (
+        {page && (page.items?.length ?? 0) > 0 && (
           <>
             <p className={styles.order}>Más recientes primero</p>
             <ol className={styles.timeline} aria-label="Cambios de la nota">

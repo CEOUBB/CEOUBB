@@ -15,6 +15,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import type { Course } from "../../lib/courses.ts";
+import { ConversationSkeleton } from "./ViewSkeletons";
 import {
   announcementCursorKey,
   canListStudentThreads,
@@ -263,6 +264,7 @@ function CommunicationsPanels({
       aria-labelledby="communications-messages-tab"
       className="communications-panel communications-messages"
       data-conversation-open={Boolean(activeTarget)}
+      data-empty={targets.length === 0}
       id="communications-messages"
       role="tabpanel"
       tabIndex={0}
@@ -331,7 +333,11 @@ function CommunicationsPanels({
         )}
       </aside>
 
-      <section aria-label="Conversación seleccionada" className="conversation-panel">
+      <section
+        aria-label="Conversación seleccionada"
+        className="conversation-panel"
+        hidden={targets.length === 0}
+      >
         {activeTarget ? (
           <>
             <header className="conversation-heading">
@@ -356,7 +362,7 @@ function CommunicationsPanels({
 
             <div aria-busy={loadingMessages} aria-live="polite" className="message-history">
               {loadingMessages ? (
-                <p className="message-loading">Cargando conversación…</p>
+                <ConversationSkeleton />
               ) : messages.length === 0 ? (
                 <div className="message-empty">
                   <ChatCircleText aria-hidden="true" size={28} weight="duotone" />

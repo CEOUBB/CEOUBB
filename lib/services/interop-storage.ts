@@ -70,18 +70,23 @@ export async function importLearningPackage(
   const uploaded: string[] = [];
   let published = false;
   try {
-    await uploadObject(prefix + "original.zip", bytes, "application/zip", token);
+    // Implements: REQ-INT-05 REQ-QMD-06
     uploaded.push(prefix + "original.zip");
     for (const entry of archive.entries) {
-      const path = prefix + "files/" + entry.name;
-      await uploadObject(
-        path,
-        await archive.read(entry.name),
-        packageContentType(entry.name),
-        token
-      );
-      uploaded.push(path);
+      uploaded.push(prefix + "files/" + entry.name);
     }
+    await Promise.all([
+      uploadObject(prefix + "original.zip", bytes, "application/zip", token),
+      ...archive.entries.map(async (entry) => {
+        const content = await archive.read(entry.name);
+        await uploadObject(
+          prefix + "files/" + entry.name,
+          content,
+          packageContentType(entry.name),
+          token
+        );
+      }),
+    ]);
     await authorizeInteropSection(actor, sectionId, true);
     const savedId = await insertInteropResource({
       id,
@@ -98,7 +103,8 @@ export async function importLearningPackage(
     return { id: savedId, reused: savedId !== id };
   } finally {
     if (!published) {
-      for (const path of uploaded) await deleteObject(path, token).catch(() => undefined);
+      // Implements: REQ-INT-05 REQ-QMD-06
+      await Promise.all(uploaded.map((path) => deleteObject(path, token).catch(() => undefined)));
     }
   }
 }

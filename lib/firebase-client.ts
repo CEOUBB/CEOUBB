@@ -27,6 +27,15 @@ let appCheckInitialized = false;
 
 export function ensureAppCheck() {
   if (typeof window === "undefined" || appCheckInitialized) return;
+
+  // En previews transitorias (*.workers.dev), reCAPTCHA Enterprise no admite orígenes comodín en public suffixes
+  if (
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview" ||
+    window.location.hostname.endsWith(".workers.dev")
+  ) {
+    return;
+  }
+
   appCheckInitialized = true;
 
   if (

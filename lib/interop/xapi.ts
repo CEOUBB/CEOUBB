@@ -2,65 +2,60 @@ import { z } from "zod";
 import { fail } from "./errors.ts";
 
 const iri = z.string().max(1000).url();
+// Implements: REQ-INT-05
 const scoreSchema = z
-  .object({
+  .strictObject({
     scaled: z.number().min(-1).max(1).optional(),
     raw: z.number().finite().optional(),
     min: z.number().finite().optional(),
     max: z.number().finite().optional(),
   })
-  .strict()
   .refine(
     (v) =>
       (v.min === undefined || v.max === undefined || v.min < v.max) &&
       (v.raw === undefined ||
         ((v.min === undefined || v.raw >= v.min) && (v.max === undefined || v.raw <= v.max)))
   );
-const statementSchema = z
-  .object({
-    id: z.uuid().optional(),
-    actor: z
-      .object({
-        objectType: z.literal("Agent").optional(),
-        name: z.string().max(160).optional(),
-        account: z.object({ homePage: iri, name: z.string().min(1).max(200) }).strict(),
+
+// Implements: REQ-INT-05
+const statementSchema = z.strictObject({
+  id: z.uuid().optional(),
+  actor: z.strictObject({
+    objectType: z.literal("Agent").optional(),
+    name: z.string().max(160).optional(),
+    account: z.strictObject({ homePage: iri, name: z.string().min(1).max(200) }),
+  }),
+  verb: z.strictObject({
+    id: iri,
+    display: z.record(z.string().max(40), z.string().max(200)).optional(),
+  }),
+  object: z.strictObject({
+    objectType: z.literal("Activity").optional(),
+    id: iri,
+    definition: z
+      .strictObject({
+        name: z.record(z.string(), z.string().max(200)).optional(),
+        description: z.record(z.string(), z.string().max(2000)).optional(),
+        type: iri.optional(),
       })
-      .strict(),
-    verb: z
-      .object({ id: iri, display: z.record(z.string().max(40), z.string().max(200)).optional() })
-      .strict(),
-    object: z
-      .object({
-        objectType: z.literal("Activity").optional(),
-        id: iri,
-        definition: z
-          .object({
-            name: z.record(z.string(), z.string().max(200)).optional(),
-            description: z.record(z.string(), z.string().max(2000)).optional(),
-            type: iri.optional(),
-          })
-          .strict()
-          .optional(),
-      })
-      .strict(),
-    result: z
-      .object({
-        score: scoreSchema.optional(),
-        success: z.boolean().optional(),
-        completion: z.boolean().optional(),
-        response: z.string().max(2000).optional(),
-        duration: z
-          .string()
-          .max(100)
-          .regex(/^P(?=\d|T\d)(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/)
-          .optional(),
-      })
-      .strict()
       .optional(),
-    context: z.object({ registration: z.uuid() }).strict().optional(),
-    timestamp: z.iso.datetime({ offset: true }).optional(),
-  })
-  .strict();
+  }),
+  result: z
+    .strictObject({
+      score: scoreSchema.optional(),
+      success: z.boolean().optional(),
+      completion: z.boolean().optional(),
+      response: z.string().max(2000).optional(),
+      duration: z
+        .string()
+        .max(100)
+        .regex(/^P(?=\d|T\d)(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/)
+        .optional(),
+    })
+    .optional(),
+  context: z.strictObject({ registration: z.uuid() }).optional(),
+  timestamp: z.iso.datetime({ offset: true }).optional(),
+});
 
 export type StatementContext = {
   actorId: string;

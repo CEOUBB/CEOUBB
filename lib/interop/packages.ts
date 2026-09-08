@@ -78,7 +78,8 @@ export async function inspectLearningPackage(bytes: Uint8Array) {
   } else fail("El ZIP no contiene imsmanifest.xml ni tincan.xml.");
   if (!/\.html?$/i.test(launchPath) || !archive.has(launchPath))
     fail("El documento de lanzamiento HTML no existe.");
-  for (const entry of archive.entries) await archive.read(entry.name);
+  // Implements: REQ-QMD-06
+  await Promise.all(archive.entries.map((entry) => archive.read(entry.name)));
   const manifest = packageManifestSchema.parse({
     kind,
     title: title.slice(0, 160),

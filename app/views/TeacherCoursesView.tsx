@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BookOpenText,
   CheckCircle,
-  ChalkboardTeacher,
   Plus,
   Trash,
   UserPlus,
@@ -32,6 +31,7 @@ import {
   updateManagedCourse,
 } from "../../lib/teacher-course-client";
 import { GradebookSettingsEditor } from "./classroom/GradebookSettingsEditor";
+import { TeacherCoursesBodySkeleton } from "./ViewSkeletons";
 
 type ManagerTab = "data" | "evaluations" | "assistants";
 
@@ -193,10 +193,6 @@ export function TeacherCoursesView({
     <section className="teacher-manager">
       <header className="teacher-manager-hero">
         <div>
-          <span className="teacher-manager-kicker">
-            <ChalkboardTeacher aria-hidden="true" size={17} weight="fill" />
-            Espacio docente
-          </span>
           <h1>Administrar ramos</h1>
           <p>Crea tu sección y mantén su ficha, evaluaciones y ayudantes desde un solo lugar.</p>
         </div>
@@ -224,9 +220,7 @@ export function TeacherCoursesView({
       </p>
 
       {loading ? (
-        <div aria-busy="true" className="teacher-manager-loading">
-          Cargando espacio docente…
-        </div>
+        <TeacherCoursesBodySkeleton />
       ) : courses.length === 0 ? (
         <div className="teacher-manager-empty">
           <BookOpenText aria-hidden="true" size={36} />
@@ -271,9 +265,10 @@ export function TeacherCoursesView({
             <div className="teacher-course-workspace">
               <div className="teacher-course-heading">
                 <div>
-                  <span>{selected.eyebrow}</span>
                   <h2>{selected.name}</h2>
-                  <p>{selected.period}</p>
+                  <p className="num">
+                    {selected.period} · Sección {selected.section}
+                  </p>
                 </div>
                 <button
                   className="secondary-button"

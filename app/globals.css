@@ -526,6 +526,7 @@ img {
 .section-title h2,
 .classroom-top h1,
 .course-card h3,
+.next-eval-title,
 .library-panel h2,
 .policy-page h1,
 .access-brand h1,
@@ -578,19 +579,27 @@ img {
 }
 
 /* El brillo viaja sobre el bloque; el ancho del recorrido es el del propio bloque,
-   y el retraso compartido hace que la cresta cruce la página como una sola ola. */
+   y el retraso compartido hace que la cresta cruce la página como una sola ola.
+   La cresta se queda muy por debajo del blanco puro: sobre un lienzo de papel un
+   destello opaco se lee como parpadeo, no como espera. */
 .sk::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     105deg,
-    transparent 32%,
-    rgba(255, 255, 255, 0.92) 50%,
-    transparent 68%
+    transparent 18%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 82%
   );
-  animation: sk-sweep 1.55s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  animation: sk-sweep 1.9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
   animation-delay: var(--sk-delay, 0ms);
+}
+
+/* Hueso apagado para lo que en la pantalla real es texto secundario: la silueta
+   conserva jerarquía en vez de aplanar todo al mismo gris. */
+.sk-quiet {
+  background: color-mix(in srgb, var(--hairline) 38%, var(--canvas));
 }
 
 .sk-round {
@@ -648,6 +657,15 @@ img {
   height: 38px;
   flex: 0 0 auto;
 }
+
+/* La barra real lleva la ruta activa junto a la marca; sin ella el encabezado
+   del esqueleto queda medio vacío y al llegar la vista el título se corre. */
+.boot-crumb {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 12px;
+  margin-left: var(--space-md);
+}
 .boot-search {
   flex: 0 1 320px;
   min-width: 0;
@@ -655,31 +673,92 @@ img {
   margin-left: auto;
   border-radius: var(--radius-full);
 }
+.boot-bell {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  margin-left: var(--space-md);
+}
+.boot-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 0 0 auto;
+  margin-left: var(--space-sm);
+}
 .boot-avatar {
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  margin-left: var(--space-sm);
+}
+.boot-identity-lines {
+  display: grid;
+  gap: 5px;
+}
+.boot-identity-lines .sk:first-child {
+  width: 58px;
+  height: 11px;
+}
+.boot-identity-lines .sk:last-child {
+  width: 78px;
+  height: 9px;
 }
 
 .boot-side {
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 2px;
   padding: var(--space-md) 10px;
   background: var(--canvas);
   border-right: 1px solid var(--border-hairline);
 }
 
+/* La navegación real es icono más rótulo sobre blanco, no una losa gris de
+   ancho completo: el esqueleto dibuja esa misma anatomía. */
 .boot-row {
-  height: 38px;
-  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 10px;
+  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
+}
+.boot-row > .sk {
+  animation: none;
+}
+.boot-row-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+}
+.boot-row-label {
+  height: 12px;
+}
+.boot-row-lines {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.boot-row-lines .sk:first-child {
+  height: 12px;
+}
+.boot-row-lines .sk:last-child {
+  width: 54px;
+  height: 9px;
 }
 .boot-legend {
   width: 84px;
   height: 11px;
   margin: var(--space-md) 0 4px 10px;
+}
+.boot-side-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
 }
 
 .boot-main {
@@ -707,9 +786,52 @@ img {
   width: min(76%, 460px);
   height: 13px;
 }
+
+/* La tira de la próxima evaluación ya es una tarjeta blanca con su bloque de
+   fecha: se dibuja como tal, no como un rectángulo gris del alto aproximado. */
 .boot-strip {
-  height: 74px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 86px;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
+}
+.boot-strip .sk {
+  animation: none;
+}
+.boot-strip-date {
+  width: 58px;
+  height: 54px;
+  border-radius: var(--radius-md);
+}
+.boot-strip-lines {
+  min-width: 0;
+  display: grid;
+  gap: 9px;
+}
+.boot-strip-lines .sk:first-child {
+  width: min(72%, 260px);
+  height: 14px;
+}
+.boot-strip-lines .sk:last-child {
+  width: min(52%, 190px);
+  height: 12px;
+}
+.boot-strip-action {
+  width: 96px;
+  height: 13px;
+}
+
+.boot-section-title {
+  width: 128px;
+  height: 21px;
+  margin-top: var(--space-xs);
 }
 
 .boot-grid {
@@ -744,13 +866,98 @@ img {
 .boot-line {
   height: 12px;
 }
+.boot-code {
+  width: 58px;
+  height: 10px;
+  margin-top: 4px !important;
+}
 .boot-line.wide {
   width: 78%;
-  height: 17px;
-  margin-top: 4px;
+  height: 18px;
 }
 .boot-line.short {
   width: 42%;
+}
+
+/* En la tarjeta real una línea fina separa la ficha de sus metadatos. Es una
+   regla verdadera, no un hueso: no debe brillar. */
+.boot-card-rule {
+  height: 1px;
+  margin: 6px var(--space-md) 2px;
+  background: var(--border-hairline);
+}
+.boot-card-action {
+  width: 118px;
+  height: 13px;
+  margin-top: 6px !important;
+}
+
+/* ── Esqueletos de vistas y de módulos internos ────────────────
+   Sólo las geometrías que la pantalla real no expone en una clase propia.
+   Todo lo demás reutiliza las clases verdaderas de cada lista o panel.
+   ─────────────────────────────────────────────────────────── */
+
+.teacher-course-row-skeleton {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr);
+  gap: 11px;
+  align-items: stretch;
+  min-height: 66px;
+  padding: 9px 11px 9px 7px;
+  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
+}
+.teacher-course-row-skeleton > .sk {
+  animation: none;
+}
+
+.teacher-manager-tabs-skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: 0 26px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.teacher-course-form-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--space-lg);
+  padding: 26px;
+}
+
+.grade-history-skeleton {
+  display: grid;
+  gap: var(--space-lg);
+  padding: 4px 0 0 14px;
+}
+.grade-history-skeleton-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-sm);
+  padding-left: 8px;
+  border-left: 1px solid var(--border-hairline);
+  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
+}
+.grade-history-skeleton-row > .sk {
+  animation: none;
+}
+.grade-history-skeleton-row > .sk:first-child {
+  margin: 5px 0 0 -13px;
+}
+
+.review-doc-skeleton {
+  display: grid;
+  min-height: 420px;
+  padding: var(--space-lg);
+  place-items: center;
+}
+.review-doc-skeleton-page {
+  width: min(100%, 520px);
+  aspect-ratio: 1 / 1.294;
+  max-height: 560px;
+  border-radius: var(--radius-sm);
 }
 
 /* Sin animación, el esqueleto sigue siendo una silueta legible del portal. */
@@ -2403,16 +2610,19 @@ img {
   font-variant-numeric: var(--num);
 }
 
-/* Cabecera del área personal: la voz display a plena escala. */
+/* Cabecera del área personal. El saludo abre la página, no la ocupa: a 64px se
+   comía la primera pantalla entera sin aportar un dato más que el nombre, y lo
+   que se viene a hacer aquí —ver la evaluación que viene y entrar a un ramo—
+   quedaba bajo el pliegue. Queda una voz display de titular, no de portada. */
 .page-head.lead {
   display: grid;
-  gap: var(--space-sm);
-  padding-bottom: var(--space-lg);
+  gap: 6px;
+  padding-bottom: var(--space-md);
 }
 .page-head.lead h1 {
-  font-size: clamp(38px, 5.4vw, 64px);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: clamp(30px, 3.6vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
 }
 .page-head.lead p {
   display: flex;
@@ -2425,79 +2635,147 @@ img {
   color: var(--text-secondary);
 }
 
-/* Aviso de cartelera: la próxima evaluación del periodo. */
-.next-strip {
+/* Secciones del área personal: el rótulo y su contenido son un mismo bloque,
+   más separado de la sección vecina que de lo que él mismo encabeza. */
+.dashboard-section {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
   gap: var(--space-md);
-  padding: 12px 16px 12px 12px;
+}
+
+/*
+  Ficha de cartelera: la próxima evaluación del periodo.
+  Las celdas se colocan por áreas y no por orden de marcado, así el teléfono
+  reordena las mismas cuatro piezas sin repetir contenido. En escritorio el
+  asunto y la cuenta atrás comparten renglón —son los dos datos que se vienen a
+  leer— y la entrada al aula queda anclada al canto derecho de la ficha.
+*/
+.next-eval {
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) minmax(min-content, 1fr) auto;
+  grid-template-areas:
+    "date title count action"
+    "date meta  meta  action";
+  align-items: center;
+  gap: 4px var(--space-md);
+  padding: 14px var(--space-md) 14px 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
 }
 
-.next-strip-date {
+/* La fecha es el ancla de la ficha: bloque de calendario teñido con el color
+   del ramo, el único lugar donde ese color estructura algo. */
+.next-eval-date {
+  grid-area: date;
   display: grid;
   justify-items: center;
   align-content: center;
   gap: 1px;
-  min-width: 62px;
+  min-width: 66px;
   padding: 8px 10px 9px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--course-tone) 12%, #fff);
 }
-.next-strip-day {
+.next-eval-weekday {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--course-tone) 34%, var(--ink-700));
+}
+.next-eval-day {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--text-body);
   font-variant-numeric: var(--num);
 }
-.next-strip-month {
-  font-size: 12px;
+.next-eval-month {
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.next-strip-body {
-  display: grid;
-  gap: 2px;
+
+.next-eval-title {
+  grid-area: title;
+  /* El asunto y su metadato son un solo bloque: se apoyan contra la línea que
+     separa las dos filas en vez de flotar cada uno en el centro de la suya, que
+     es lo que abría 20px de aire dentro de un mismo párrafo. */
+  align-self: end;
   min-width: 0;
-}
-.next-strip-line {
-  font-size: 15px;
-  color: var(--text-secondary);
-}
-.next-strip-line strong {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text-body);
+  text-wrap: balance;
 }
-.next-strip-detail {
-  font-size: 14px;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.next-strip-end {
+
+.next-eval-meta {
+  grid-area: meta;
+  align-self: start;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
-}
-.next-strip-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  gap: 2px 7px;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
   font-variant-numeric: var(--num);
-  white-space: nowrap;
 }
-.next-strip-action,
+/* El nombre del ramo lleva su color oscurecido contra tinta: los tonos claros
+   de la paleta (celeste del escudo, oro) no llegan a 4.5:1 sobre papel. */
+.next-eval-course {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--course-tone) 38%, #0f172a);
+}
+.next-eval-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--course-tone);
+}
+
+/* Cuenta atrás: el rótulo dice cuánto falta y el color, cuánto apremia. */
+.next-eval-count {
+  grid-area: count;
+  align-self: end;
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: var(--num);
+  background: var(--canvas-soft);
+  color: var(--text-secondary);
+}
+.next-eval-count[data-urgency="today"],
+.next-eval-count[data-urgency="soon"] {
+  background: color-mix(in srgb, var(--shield-red) 10%, var(--surface-card));
+  color: var(--shield-red-deep);
+}
+/* Una evaluación ya rendida no necesita pastilla: baja a texto suelto, que es
+   la única forma de restarle peso sin bajar del 4.5:1 a 12.5px. */
+.next-eval-count[data-urgency="past"] {
+  background: transparent;
+  padding-inline: 0;
+}
+
+.next-eval-action {
+  grid-area: action;
+  justify-self: end;
+}
+
+.next-eval-action,
 .course-action {
   display: inline-flex;
   align-items: center;
@@ -2511,8 +2789,14 @@ img {
   white-space: nowrap;
   transition: background var(--transition-fast);
 }
-.next-strip-action:hover {
+.next-eval-action:hover {
   background: var(--color-primary-wash);
+}
+.next-eval-action svg {
+  transition: transform var(--transition-fast);
+}
+.next-eval:hover .next-eval-action svg {
+  transform: translateX(3px);
 }
 
 .section-title {
@@ -2576,10 +2860,6 @@ img {
     border-color var(--transition-base);
 }
 
-.course-card:hover {
-  box-shadow: var(--shadow-1);
-  border-color: color-mix(in srgb, var(--course-tone) 34%, var(--hairline));
-}
 .course-card:focus-within {
   border-color: var(--color-primary);
 }
@@ -2660,7 +2940,7 @@ img {
 
 .course-action {
   align-self: flex-start;
-  margin: 10px 0 -2px -10px;
+  margin: 10px 0 0;
   padding: 4px 10px;
   border-radius: var(--radius-md);
   color: var(--color-primary);
@@ -2670,13 +2950,11 @@ img {
 }
 
 .course-action:hover {
-  background: var(--color-primary-wash);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
-.course-action svg {
-  transition: transform var(--transition-fast);
-}
-.course-card:hover .course-action svg {
-  transform: translateX(3px);
+.course-action:active {
+  color: var(--color-primary-active);
 }
 
 .course-empty-state {
@@ -2977,16 +3255,16 @@ img {
 
 .classroom-top {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
-  min-height: 34px;
+  flex-wrap: wrap;
 }
 /* Sólo el bloque del título apila; las acciones son una fila. */
 .classroom-heading {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 .classroom-top h1 {
@@ -2994,6 +3272,14 @@ img {
   line-height: 1.08;
   letter-spacing: -0.02em;
   text-wrap: balance;
+}
+/* La identidad académica va bajo el título: el h1 nombra el ramo y esta línea
+   dice de qué sección y período se trata sin robarle jerarquía. */
+.classroom-identity {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+  font-variant-numeric: var(--num);
 }
 .classroom-meta {
   display: flex;
@@ -3003,26 +3289,75 @@ img {
   flex: 0 0 auto;
 }
 
+/* Las tres acciones comparten geometría para leerse como un grupo, y el peso
+   visual declara el orden: publicar es la acción del día, corregir la sigue e
+   importar desde Moodle se hace una vez por semestre. */
+.classroom-meta > .review-cta,
+.classroom-meta > .moodle-import-trigger,
+.classroom-meta > .publication-cta {
+  height: 42px;
+  min-height: 0;
+  padding-block: 0;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Importar Moodle deja de competir: sin relleno ni borde, es una utilidad. */
+.classroom-meta > .moodle-import-trigger {
+  padding-inline: 14px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--text-secondary);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.classroom-meta > .moodle-import-trigger:hover {
+  background: var(--canvas-soft);
+  color: var(--text-body);
+}
+
+/* El código deja de ser un botón con aspecto de chip técnico: la referencia se
+   lee como dato y el gesto de copiar queda a su derecha, en tipografía de
+   interfaz. */
 .course-reference {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 44px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-hairline);
+  gap: 8px;
+  min-height: 40px;
+  margin: -6px 0 0 -6px;
+  padding: 4px 10px 4px 6px;
   border-radius: var(--radius-md);
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-variant-numeric: var(--num);
+  color: var(--text-muted);
+  font-family: var(--font-core);
+  font-size: 13px;
+  font-weight: 500;
   transition:
     background var(--transition-fast),
-    color var(--transition-fast),
-    border-color var(--transition-fast);
+    color var(--transition-fast);
+}
+.course-reference > span {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--canvas-soft);
+  color: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: var(--num);
+}
+.course-reference svg {
+  margin-right: -2px;
+  color: var(--text-faint);
+  transition: color var(--transition-fast);
 }
 .course-reference:hover {
-  background: var(--canvas-soft);
-  border-color: var(--color-primary);
+  background: var(--color-primary-wash);
+  color: var(--color-primary);
+}
+.course-reference:hover svg {
   color: var(--color-primary);
 }
 
@@ -3045,11 +3380,7 @@ img {
   gap: var(--space-md);
 }
 
-.live-class-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+/* ── Aula · clase en vivo ─────────────────────────────────── */
 
 .live-class-banner {
   position: relative;
@@ -3106,85 +3437,107 @@ img {
   white-space: nowrap;
 }
 
-.live-class-editor {
-  display: grid;
-  grid-template-columns: minmax(210px, 0.7fr) minmax(280px, 1fr) auto;
-  align-items: center;
-  gap: var(--space-sm) var(--space-md);
-  padding: var(--space-sm) var(--space-md);
+/* ── Aula · tarjetas plegables del riel ───────────────────── */
+
+/* Configurar la reunión es una tarea de una vez por semestre. Vive plegada en
+   el riel, no encabezando la Portada. */
+.rail-card {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
 }
 
-.live-class-editor-copy {
+.rail-card > summary {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  list-style: none;
+  transition: background var(--transition-fast);
 }
-.live-class-editor-copy > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+.rail-card > summary::-webkit-details-marker,
+.rail-card > summary::marker {
+  display: none;
+  content: "";
 }
-.live-class-editor-copy strong {
-  font-size: 14px;
-  font-weight: 600;
+.rail-card > summary:hover {
+  background: var(--canvas-soft);
 }
-.live-class-editor-copy small {
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.35;
-  text-wrap: pretty;
+.rail-card > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
-.live-class-editor-icon {
+.rail-card-icon {
   display: inline-grid;
   place-items: center;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   background: var(--canvas-soft);
   color: var(--text-secondary);
 }
 
-.live-class-field {
+.rail-card-heading {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 1px;
   min-width: 0;
 }
-.live-class-field label {
+.rail-card-heading strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.rail-card-heading small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.rail-card-help {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.live-class-editor > form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  border-top: 1px solid var(--border-hairline);
+}
+.live-class-editor label {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
 }
-.live-class-field input {
+.live-class-editor input {
   width: 100%;
-  min-height: 44px;
+  min-height: 42px;
   padding: 8px 10px;
   background: var(--surface-card);
   border: 1px solid var(--border-control);
   border-radius: var(--radius-xs);
   color: var(--text-body);
-  font-size: 16px;
+  font-size: 15px;
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
 }
-.live-class-field input::placeholder {
+.live-class-editor input::placeholder {
   color: var(--text-faint);
 }
-.live-class-field input:focus-visible {
+.live-class-editor input:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);
 }
-.live-class-field input[aria-invalid="true"] {
+.live-class-editor input[aria-invalid="true"] {
   border-color: var(--shield-red-deep);
 }
 
@@ -3192,19 +3545,19 @@ img {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  margin-top: 2px;
 }
 .live-class-actions .primary-button,
 .live-class-actions .secondary-button {
-  min-height: 44px;
+  min-height: 40px;
   padding-inline: var(--space-md);
   font-size: 14px;
   white-space: nowrap;
 }
-.live-class-editor > .tool-status {
-  grid-column: 2 / -1;
+.live-class-editor .tool-status {
   margin: 0;
 }
-.live-class-editor > .tool-status:empty {
+.live-class-editor .tool-status:empty {
   display: none;
 }
 
@@ -9377,7 +9730,8 @@ mark,
   background: var(--canvas-soft);
 }
 
-.communications-tabs button {
+.communications-tabs button,
+.communications-tabs [role="tab"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9394,7 +9748,8 @@ mark,
     box-shadow var(--transition-fast);
 }
 
-.communications-tabs button[aria-selected="true"] {
+.communications-tabs button[aria-selected="true"],
+.communications-tabs [role="tab"][aria-selected="true"] {
   background: var(--surface-card);
   color: var(--color-primary);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
@@ -10079,48 +10434,88 @@ mark,
 
 /* ── Estados vacíos ──────────────────────────────────────── */
 
+/* El aula tenía cuatro estados vacíos distintos. Éste es el único: glifo del
+   dominio, título en la voz de titulares, una línea de explicación y, cuando
+   corresponde, la acción que resuelve el vacío. */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: var(--space-xl) var(--space-lg);
-  background: var(--canvas-soft);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px var(--space-md);
+  padding: var(--space-lg);
+  background: var(--surface-card);
+  border: 1px dashed color-mix(in srgb, var(--border-hairline) 78%, var(--text-faint));
+  border-radius: var(--radius-lg);
   text-align: left;
 }
 
+.empty-state-glyph {
+  display: inline-grid;
+  place-items: center;
+  grid-row: 1 / span 2;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--course-tone, var(--color-primary)) 11%, var(--canvas-soft));
+  color: color-mix(in srgb, var(--course-tone, var(--color-primary)) 62%, var(--text-secondary));
+}
+
+.empty-state-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 62ch;
+  padding-top: 3px;
+}
+
+/* Sin glifo la caja sigue siendo una sola columna: el uso directo del markup
+   (esqueletos, filtros sin resultados) no debe partirse en dos columnas. */
+.empty-state > strong,
+.empty-state > p,
+.empty-state > span:not(.empty-state-glyph) {
+  grid-column: 1 / -1;
+}
+
 .empty-state strong {
-  font-size: 16px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 .empty-state p {
-  max-width: 68ch;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 .empty-state-action {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
-  align-self: flex-start;
-  min-height: 44px;
-  margin: var(--space-xs) 0 -4px -10px;
+  gap: 6px;
+  grid-column: 2;
+  justify-self: start;
+  min-height: 40px;
+  margin: 2px 0 -6px -10px;
   padding: 6px 10px;
   border-radius: var(--radius-md);
   color: var(--color-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  transition: background var(--transition-fast);
 }
 .empty-state-action:hover {
   background: var(--color-primary-wash);
   color: var(--color-primary);
 }
 
+/* Ausencia dentro de una lista o tabla ya enmarcada: no lleva otra caja. */
 .empty-row {
   padding: var(--space-md);
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--text-muted);
 }
 
@@ -10135,13 +10530,6 @@ mark,
 @media (max-width: 1100px) {
   .course-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .live-class-editor {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .live-class-editor-copy,
-  .live-class-editor > .tool-status {
-    grid-column: 1 / -1;
   }
   .classroom-columns,
   .grades-view {
@@ -10398,23 +10786,27 @@ mark,
   }
 }
 
-@media (max-width: 700px) {
-  .next-strip {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-  .next-strip-end {
-    grid-column: 1 / -1;
-    justify-content: space-between;
-  }
-  .next-strip-detail {
-    white-space: normal;
-  }
-}
-
 @media (max-width: 520px) {
   .portal-main,
   .classroom-layout {
     padding: var(--space-md) var(--space-md) var(--space-xxl);
+  }
+  /* Tres acciones no caben en una fila de teléfono: publicar sube a su propia
+     línea y las otras dos reparten la de abajo. */
+  .classroom-meta {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .classroom-meta > .publication-cta {
+    order: -1;
+    flex: 1 0 100%;
+  }
+  .classroom-meta > .review-cta,
+  .classroom-meta > .moodle-import-trigger {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 10px;
+    justify-content: center;
   }
   .live-class-banner {
     grid-template-columns: auto minmax(0, 1fr);
@@ -10423,13 +10815,6 @@ mark,
   .live-class-join {
     grid-column: 1 / -1;
     width: 100%;
-  }
-  .live-class-editor {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .live-class-editor-copy,
-  .live-class-editor > .tool-status {
-    grid-column: 1;
   }
   .live-class-actions {
     flex-direction: column;
@@ -10488,7 +10873,16 @@ mark,
     width: 100%;
     justify-content: center;
   }
-  .empty-state,
+  .empty-state {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-md);
+  }
+  .empty-state-glyph {
+    grid-row: auto;
+  }
+  .empty-state-action {
+    grid-column: 1;
+  }
   .policy-page article {
     padding: var(--space-lg);
   }
@@ -11341,32 +11735,10 @@ mark,
   color: var(--shield-red-deep);
 }
 
+/* El estado vacío del portal es el mismo componente que usa el aula: sólo
+   necesita ocupar el ancho completo de la grilla de ramos. */
 .course-empty-state {
-  display: grid;
   grid-column: 1 / -1;
-  min-height: 230px;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-xl);
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-xl);
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.course-empty-state svg {
-  color: var(--ubb-royal-blue);
-}
-
-.course-empty-state strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 18px;
-}
-
-.course-empty-state p {
-  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -13133,16 +13505,6 @@ mark,
   padding: var(--space-xl);
 }
 
-.quiz-student-hero::before,
-.quiz-result-hero::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  left: 0;
-  width: 4px;
-  background: var(--color-primary);
-}
-
 .quiz-student-hero h2,
 .quiz-result-hero h2,
 .quiz-runner-header h2 {
@@ -13205,39 +13567,16 @@ mark,
   font-variant-numeric: var(--num);
 }
 
-.quiz-loading,
-.quiz-empty {
+.quiz-loading {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 180px;
   padding: var(--space-xl);
   border: 1px dashed var(--border-hairline);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-muted);
   text-align: center;
-}
-
-.quiz-empty {
-  gap: 7px;
-}
-
-.quiz-empty svg {
-  margin-bottom: 6px;
-  color: var(--color-primary);
-}
-
-.quiz-empty strong {
-  color: var(--text-body);
-  font-family: var(--font-display);
-  font-size: 18px;
-}
-
-.quiz-empty p {
-  max-width: 440px;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .quiz-runner {

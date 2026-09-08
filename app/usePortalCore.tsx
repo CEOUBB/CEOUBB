@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
   useAppVisibility,
@@ -42,6 +50,15 @@ import { portalSessionReducer } from "./portal-session";
 import { sectionRoleFor } from "../lib/section-roles";
 import type { PaletteItem } from "./command-palette";
 import type { MobileTab } from "./mobile-shell";
+
+const DESKTOP_NAV = "(min-width: 901px)";
+function subscribeDesktopNav(onChange: () => void) {
+  const query = window.matchMedia(DESKTOP_NAV);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+const desktopNavSnapshot = () => window.matchMedia(DESKTOP_NAV).matches;
+const serverDesktopNav = () => false;
 
 // Implements: REQ-QMD-01
 export function usePortalCore(initialSession?: SessionState) {
@@ -88,12 +105,25 @@ export function usePortalCore(initialSession?: SessionState) {
     (p: Course | null) => dispatchNav({ type: "SET_PREVIEW", preview: p }),
     []
   );
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarPreference, setSidebarPreference] = useState<boolean | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
   const previousView = useRef<string | null>(null);
 
   const mobile = useIsMobileApp();
+  const desktopNav = useSyncExternalStore(
+    subscribeDesktopNav,
+    desktopNavSnapshot,
+    serverDesktopNav
+  );
+  const sidebarOpen = sidebarPreference ?? (desktopNav && !mobile);
+  const setSidebarOpen = useCallback(
+    (value: boolean | ((open: boolean) => boolean)) =>
+      setSidebarPreference((previous) =>
+        typeof value === "function" ? value(previous ?? (desktopNav && !mobile)) : value
+      ),
+    [desktopNav, mobile]
+  );
   // Implements: REQ-CFG-05
   const prefersReducedMotion = useReducedMotionPreference(user !== null);
   useStatusBar(user !== null ? "canvas" : "hero");
@@ -147,6 +177,7 @@ export function usePortalCore(initialSession?: SessionState) {
     setCoursesSheet,
     setPreview,
     setScreen,
+    setSidebarOpen,
   ]);
 
   useHardwareBack(handleHardwareBack);

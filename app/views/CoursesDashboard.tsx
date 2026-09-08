@@ -3,18 +3,21 @@
 import { useCallback, useMemo } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { Archive, ArrowRight, ChalkboardTeacher } from "@phosphor-icons/react";
+import { Archive, ArrowRight, CalendarBlank, ChalkboardTeacher } from "@phosphor-icons/react";
 import { CourseCard } from "./CourseCard";
+import { EmptyState } from "./classroom/EmptyState";
 import { Course, PERIOD } from "../../lib/courses";
 import type { CourseActivity } from "../../lib/firebase-classroom-client";
 import {
   countdown,
   dayOf,
+  evaluationUrgency,
   firstName,
   getSantiagoDateISO,
   nextEntry,
   shortDate,
   stagger,
+  weekdayOf,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
 
@@ -28,6 +31,7 @@ export function CoursesDashboard({
   seen,
   entries,
   manageCourses,
+  onCalendar,
   openCourse,
   onLoadMoreArchived,
 }: {
@@ -40,12 +44,14 @@ export function CoursesDashboard({
   seen: Record<string, string>;
   entries: CalendarEntry[];
   manageCourses?: () => void;
+  onCalendar: () => void;
   openCourse: (course: Course) => void;
   onLoadMoreArchived: () => void;
 }) {
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
+  const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useReducedMotion();
 
   const handleOpenCourse = useCallback(
@@ -94,97 +100,147 @@ export function CoursesDashboard({
 
   return (
     <>
-      <section className="page-head lead">
-        <h1>
-          Bienvenid{user.name.trim().toLowerCase().endsWith("a") ? "a" : "o"},{" "}
-          {firstName(user.name)}
-        </h1>
-        <p>
-          <span>{user.carrera?.trim() ? user.carrera.trim() : "Sin carrera"}</span>
-          <span>·</span>
-          <span>
-            Periodo <b className="num">{courses[0]?.periodId ?? PERIOD}</b>
-          </span>
-          <span>·</span>
-          <span>
-            <b className="num">{entries.length}</b>{" "}
-            {entries.length === 1 ? "evaluación" : "evaluaciones"} en el calendario
-          </span>
-        </p>
+      <section className="page-head lead dashboard-heading">
+        <div>
+          <h1>Hola, {firstName(user.name)}</h1>
+          {/* La línea de contexto es la del rol que mira. Un docente no tiene
+            carrera ni rinde evaluaciones: esos dos datos ocupaban sitio sin
+            decirle nada. Lo suyo son las secciones que dicta este período. */}
+          <p>
+            {teaches ? (
+              <span>
+                <b className="num">{courses.length}</b>{" "}
+                {courses.length === 1 ? "sección a tu cargo" : "secciones a tu cargo"}
+              </span>
+            ) : (
+              <span>{user.carrera?.trim() ? user.carrera.trim() : "Tu espacio de estudio"}</span>
+            )}
+            <span>·</span>
+            <span>
+              Periodo <b className="num">{courses[0]?.periodId ?? PERIOD}</b>
+            </span>
+            {!teaches && (
+              <>
+                <span>·</span>
+                <span>
+                  <b className="num">{entries.length}</b>{" "}
+                  {entries.length === 1 ? "evaluación" : "evaluaciones"} en el calendario
+                </span>
+              </>
+            )}
+          </p>
+        </div>
       </section>
-      {next && (
-        <div className="next-strip" style={{ "--course-tone": next.tone } as React.CSSProperties}>
-          <div className="next-strip-date">
-            <span className="next-strip-day num">{dayOf(next.date)}</span>
-            <span className="next-strip-month">{shortDate(next.date).slice(3)}</span>
+      <div className="dashboard-workspace">
+        <section className="dashboard-section dashboard-courses">
+          <div className="section-title">
+            <h2>Mis cursos</h2>
+            <span className="section-count num">
+              {courses.length} {courses.length === 1 ? "sección" : "secciones"}
+            </span>
           </div>
-          <div className="next-strip-body">
-            {/* El punto medio separa en una línea; en el teléfono el nombre del
-                ramo baja a su propio renglón y el separador quedaría colgando. */}
-            <p className="next-strip-line">
-              Próxima evaluación<span className="next-strip-sep"> · </span>
-              <strong>{next.course}</strong>
-            </p>
-            <p className="next-strip-detail">{next.detail}</p>
-          </div>
-          <div className="next-strip-end">
-            <time className="next-strip-count num" dateTime={next.date}>
-              {countdown(next.date)}
-            </time>
-            {nextCourse && (
-              <button
-                aria-label={`Ir al ramo ${nextCourse.name}`}
-                className="next-strip-action"
-                onClick={() => openCourse(nextCourse)}
-                type="button"
-              >
-                Ir al ramo <ArrowRight aria-hidden="true" size={15} />
-              </button>
+          <m.div
+            animate="show"
+            className="course-grid"
+            initial={shouldReduceMotion ? "show" : "hidden"}
+            variants={shouldReduceMotion ? undefined : stagger}
+          >
+            {/* Un solo estado vacío: antes el portal apilaba dos cajas que decían
+            lo mismo, una encima de la otra. */}
+            {courses.length === 0 && (
+              <div className="course-empty-state">
+                <EmptyState
+                  icon={ChalkboardTeacher}
+                  title={
+                    manageCourses
+                      ? "Todavía no administras ningún ramo"
+                      : "No tienes ramos vigentes en este período"
+                  }
+                  description={
+                    manageCourses
+                      ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
+                      : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
+                  }
+                  action={
+                    manageCourses ? (
+                      <button className="empty-state-action" onClick={manageCourses} type="button">
+                        Administrar ramos <ArrowRight size={15} />
+                      </button>
+                    ) : undefined
+                  }
+                />
+              </div>
             )}
+            {courses.map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                summary={activitySummaryByCourse.get(course.id)}
+                shouldReduceMotion={Boolean(shouldReduceMotion)}
+                onOpen={handleOpenCourse}
+              />
+            ))}
+          </m.div>
+        </section>
+        <section className="dashboard-section dashboard-agenda">
+          <div className="section-title">
+            <h2>En tu agenda</h2>
+            <CalendarBlank size={20} aria-hidden="true" />
           </div>
-        </div>
-      )}
-      <div className="section-title">
-        <h2>Mis cursos</h2>
+          {next ? (
+            <article
+              className="next-eval"
+              style={{ "--course-tone": next.tone } as React.CSSProperties}
+            >
+              <time className="next-eval-date" dateTime={next.date}>
+                <span className="next-eval-weekday">{weekdayOf(next.date)}</span>
+                <span className="next-eval-day num">{dayOf(next.date)}</span>
+                <span className="next-eval-month">{shortDate(next.date).slice(3)}</span>
+              </time>
+              <h3 className="next-eval-title">{next.detail}</h3>
+              <p className="next-eval-meta">
+                <span className="next-eval-course">
+                  <span aria-hidden="true" className="next-eval-dot" />
+                  {next.course}
+                </span>
+                {nextCourse && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="num">{nextCourse.code}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      Sección <span className="num">{nextCourse.section}</span>
+                    </span>
+                  </>
+                )}
+              </p>
+              <span className="next-eval-count num" data-urgency={evaluationUrgency(next.date)}>
+                {countdown(next.date)}
+              </span>
+              {nextCourse && (
+                <button
+                  aria-label={`Ir al ramo ${nextCourse.name}`}
+                  className="next-eval-action"
+                  onClick={() => openCourse(nextCourse)}
+                  type="button"
+                >
+                  Ir al ramo <ArrowRight aria-hidden="true" size={15} />
+                </button>
+              )}
+            </article>
+          ) : (
+            <div className="agenda-clear">
+              <h3>Espacio para organizarte</h3>
+              <p>
+                No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.
+              </p>
+              <button className="empty-state-action" onClick={onCalendar} type="button">
+                Abrir calendario <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </section>
       </div>
-      {courses.length === 0 && (
-        <div className="empty-state course-empty-state">
-          <strong>No tienes ramos vigentes en este período.</strong>
-          <p>Las nuevas secciones aparecerán aquí cuando tu matrícula quede activa.</p>
-        </div>
-      )}
-      <m.section
-        animate="show"
-        className="course-grid"
-        initial={shouldReduceMotion ? "show" : "hidden"}
-        variants={shouldReduceMotion ? undefined : stagger}
-      >
-        {courses.length === 0 && (
-          <div className="course-empty-state">
-            <ChalkboardTeacher aria-hidden="true" size={30} />
-            <strong>No hay ramos activos en tu portal</strong>
-            <p>
-              {manageCourses
-                ? "Crea una sección para comenzar a preparar el aula."
-                : "Tus ramos aparecerán aquí cuando tu matrícula esté activa."}
-            </p>
-            {manageCourses && (
-              <button className="primary-button" onClick={manageCourses} type="button">
-                Administrar ramos
-              </button>
-            )}
-          </div>
-        )}
-        {courses.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            summary={activitySummaryByCourse.get(course.id)}
-            shouldReduceMotion={Boolean(shouldReduceMotion)}
-            onOpen={handleOpenCourse}
-          />
-        ))}
-      </m.section>
       {archivedCourses.length > 0 && (
         <details className="archived-courses">
           <summary>

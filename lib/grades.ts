@@ -70,8 +70,9 @@ export function normalizeItems(value: unknown): GradeItem[] {
   return value.flatMap((item, index) => {
     if (!item || typeof item !== "object") return [];
     const record = item as Record<string, unknown>;
-    const weight = Math.max(0, Number(record.weight ?? 0));
-    if (weight <= 0) return [];
+    const rawWeight = Number(record.weight ?? 0);
+    if (!Number.isFinite(rawWeight) || rawWeight <= 0) return [];
+    const weight = Math.round(rawWeight * 100) / 100;
     return [
       {
         id: String(record.id ?? `item-${index}`),

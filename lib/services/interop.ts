@@ -328,6 +328,7 @@ export async function authorizeLti(actor: PublicUser, sessionHash: string, input
     !tool.targetUris.includes(resource.targetUrl)
   )
     fail("Los parámetros del lanzamiento no corresponden a la herramienta.", 400);
+  // Implements: REQ-QMD-06
   const token = await signLtiLaunch({
     clientId: tool.clientId,
     deploymentId: tool.deploymentId,
@@ -381,12 +382,15 @@ export async function contentGrant(token: string, requestOrigin: string) {
     )
     .limit(1);
   if (!session) fail("La sesión del portal terminó. Vuelve a iniciar sesión.", 401);
-  const [actor] = await getDb().select().from(users).where(eq(users.id, grant.userId)).limit(1);
-  const [resource] = await getDb()
-    .select()
-    .from(interopResources)
-    .where(eq(interopResources.id, grant.resourceId))
-    .limit(1);
+  // Implements: REQ-QMD-06
+  const [[actor], [resource]] = await Promise.all([
+    getDb().select().from(users).where(eq(users.id, grant.userId)).limit(1),
+    getDb()
+      .select()
+      .from(interopResources)
+      .where(eq(interopResources.id, grant.resourceId))
+      .limit(1),
+  ]);
   if (!actor || !resource || resource.kind === "lti") fail("El recurso no está disponible.", 404);
   const access = await authorizeInteropSection(actor, resource.sectionId);
   if (access.state !== "abierto") fail("La sección está cerrada.", 403);
@@ -414,12 +418,12 @@ export async function saveInteropProgress(
 ) {
   if (context.resource.kind !== "scorm12" && context.resource.kind !== "scorm2004")
     fail("El recurso no utiliza SCORM.");
+  // Implements: REQ-INT-05
   const parsed = z
-    .object({
+    .strictObject({
       version: z.number().int().min(0),
       data: z.record(z.string().max(100), z.string().max(64000)),
     })
-    .strict()
     .parse(input);
   if (Object.keys(parsed.data).length > 50) fail("El avance contiene demasiados campos.");
   let data: Record<string, string>;
@@ -493,12 +497,17 @@ export async function saveXapiStatements(
     });
   });
   return getDb().transaction(async (tx) => {
+    // Implements: REQ-QMD-06
+    const ids = parsed
+      .map((s) => s.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+    const existingRows = ids.length
+      ? await tx.select().from(interopStatements).where(inArray(interopStatements.id, ids))
+      : [];
+    const existingMap = new Map(existingRows.map((r) => [r.id, r]));
+    const toInsert: { statement: (typeof parsed)[number]; inputJson: string }[] = [];
     for (const statement of parsed) {
-      const [existing] = await tx
-        .select()
-        .from(interopStatements)
-        .where(eq(interopStatements.id, statement.id))
-        .limit(1);
+      const existing = existingMap.get(statement.id);
       const inputJson = canonicalJson(statement);
       if (existing) {
         if (
@@ -509,38 +518,44 @@ export async function saveXapiStatements(
           fail("El UUID xAPI ya existe con otro contenido.", 409);
         continue;
       }
+      toInsert.push({ statement, inputJson });
+    }
+    if (toInsert.length > 0) {
       const quota = await tx
         .update(interopGrants)
-        .set({ writeCount: sql`${interopGrants.writeCount} + 1` })
+        .set({ writeCount: sql`${interopGrants.writeCount} + ${toInsert.length}` })
         .where(
           and(
             eq(interopGrants.tokenHash, context.grant.tokenHash),
-            lt(interopGrants.writeCount, 1000),
+            sql`${interopGrants.writeCount} + ${toInsert.length} <= 1000`,
             gt(interopGrants.expiresAt, new Date().toISOString())
           )
         )
         .returning({ id: interopGrants.tokenHash });
       if (!quota.length) fail("La sesión alcanzó su límite de Statements.", 429);
       const now = new Date().toISOString();
-      const stored = {
-        ...statement,
-        timestamp: statement.timestamp ?? now,
-        stored: now,
-        version: "1.0.3",
-        authority: {
-          objectType: "Agent",
-          account: { homePage: platformOrigin(), name: "ceoubb-platform" },
-        },
-      };
-      await tx.insert(interopStatements).values({
-        id: statement.id,
-        userId: context.actor.id,
-        resourceId: context.resource.id,
-        registration: context.grant.registration,
-        inputJson,
-        statementJson: JSON.stringify(stored),
-        storedAt: now,
+      const rows = toInsert.map(({ statement, inputJson }) => {
+        const stored = {
+          ...statement,
+          timestamp: statement.timestamp ?? now,
+          stored: now,
+          version: "1.0.3",
+          authority: {
+            objectType: "Agent",
+            account: { homePage: platformOrigin(), name: "ceoubb-platform" },
+          },
+        };
+        return {
+          id: statement.id,
+          userId: context.actor.id,
+          resourceId: context.resource.id,
+          registration: context.grant.registration,
+          inputJson,
+          statementJson: JSON.stringify(stored),
+          storedAt: now,
+        };
       });
+      await tx.insert(interopStatements).values(rows);
     }
     return parsed.map((s) => s.id);
   });

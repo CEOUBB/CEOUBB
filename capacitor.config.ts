@@ -22,6 +22,7 @@ const config: CapacitorConfig = {
     url: serverUrl,
     androidScheme: "https",
     cleartext: isCleartext,
+    errorPath: "index.html",
   },
   android: {
     allowMixedContent: false,

@@ -174,13 +174,35 @@ export function postKind(value: string): ClassroomPostKind {
   return "notice";
 }
 
-export function iso(value: unknown) {
+export function iso(value: unknown): string {
+  if (value === null || value === undefined) {
+    return new Date().toISOString();
+  }
   if (
-    value &&
     typeof value === "object" &&
     "toDate" in value &&
     typeof (value as { toDate?: unknown }).toDate === "function"
-  )
-    return (value as { toDate: () => Date }).toDate().toISOString();
+  ) {
+    try {
+      const date = (value as { toDate: () => Date }).toDate();
+      if (!Number.isNaN(date.getTime())) return date.toISOString();
+    } catch {
+      // Si toDate arroja error, continuar
+    }
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? new Date().toISOString() : value.toISOString();
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed) {
+      const parsed = Date.parse(trimmed);
+      if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
+    }
+  }
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
   return new Date().toISOString();
 }
