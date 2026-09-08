@@ -1,3 +1,4 @@
+import { zipSync, strToU8 } from "fflate";
 import {
   finalGradeOutcomeLabel,
   type FinalGradeMetadata,
@@ -271,101 +272,6 @@ function summaryRows(input: FinalGradeExport): WorkbookRow[] {
   ];
 }
 
-function crc32(bytes: Uint8Array): number {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) {
-      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
-    }
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function bytesOf(...values: number[]): Uint8Array {
-  return Uint8Array.from(values);
-}
-
-function little16(value: number): Uint8Array {
-  return bytesOf(value & 0xff, (value >>> 8) & 0xff);
-}
-
-function little32(value: number): Uint8Array {
-  return bytesOf(value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, (value >>> 24) & 0xff);
-}
-
-function concatenate(parts: readonly Uint8Array[]): Uint8Array {
-  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
-  let offset = 0;
-  for (const part of parts) {
-    result.set(part, offset);
-    offset += part.length;
-  }
-  return result;
-}
-
-function zipStore(entries: readonly { name: string; content: string }[]): Uint8Array {
-  const localParts: Uint8Array[] = [];
-  const centralParts: Uint8Array[] = [];
-  let localOffset = 0;
-  for (const entry of entries) {
-    const name = utf8.encode(entry.name);
-    const data = utf8.encode(entry.content);
-    const checksum = crc32(data);
-    const local = concatenate([
-      little32(0x04034b50),
-      little16(20),
-      little16(0x0800),
-      little16(0),
-      little16(0),
-      little16(33),
-      little32(checksum),
-      little32(data.length),
-      little32(data.length),
-      little16(name.length),
-      little16(0),
-      name,
-      data,
-    ]);
-    localParts.push(local);
-    centralParts.push(
-      concatenate([
-        little32(0x02014b50),
-        little16(20),
-        little16(20),
-        little16(0x0800),
-        little16(0),
-        little16(0),
-        little16(33),
-        little32(checksum),
-        little32(data.length),
-        little32(data.length),
-        little16(name.length),
-        little16(0),
-        little16(0),
-        little16(0),
-        little16(0),
-        little32(0),
-        little32(localOffset),
-        name,
-      ])
-    );
-    localOffset += local.length;
-  }
-  const central = concatenate(centralParts);
-  const end = concatenate([
-    little32(0x06054b50),
-    little16(0),
-    little16(0),
-    little16(entries.length),
-    little16(entries.length),
-    little32(central.length),
-    little32(localOffset),
-    little16(0),
-  ]);
-  return concatenate([...localParts, central, end]);
-}
-
 function workbookEntries(input: FinalGradeExport): { name: string; content: string }[] {
   const acta = actaRows(input);
   const intranet = intranetRows(input);
@@ -426,7 +332,11 @@ function workbookEntries(input: FinalGradeExport): { name: string; content: stri
 
 // Implements: REQ-ACTA-06
 export function createFinalGradeWorkbook(input: FinalGradeExport): Uint8Array {
-  return zipStore(workbookEntries(input));
+  const files: Record<string, Uint8Array> = {};
+  for (const entry of workbookEntries(input)) {
+    files[entry.name] = strToU8(entry.content);
+  }
+  return zipSync(files, { level: 0 });
 }
 
 const windows1252 = new Map<string, number>([

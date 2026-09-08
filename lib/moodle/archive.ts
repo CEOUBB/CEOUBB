@@ -1,3 +1,5 @@
+import { unzipSync, ZipPassThrough } from "fflate";
+
 export const MAX_MOODLE_ARCHIVE_BYTES = 250 * 1024 * 1024;
 export const MAX_MOODLE_EXPANDED_BYTES = 512 * 1024 * 1024;
 export const MAX_MOODLE_ENTRIES = 20_000;
@@ -182,124 +184,97 @@ async function readStreamWithLimit(stream: ReadableStream<Uint8Array>, limit: nu
   return output;
 }
 
-async function decompress(bytes: Uint8Array, format: "gzip" | "deflate-raw", limit: number) {
-  try {
-    const source = new Blob([bytes.slice().buffer]).stream();
-    const stream = source.pipeThrough(new DecompressionStream(format));
-    return await readStreamWithLimit(stream, limit);
-  } catch (cause) {
-    if (cause instanceof MoodleImportError) throw cause;
-    throw new MoodleImportError(
-      "El respaldo usa compresión dañada o no compatible.",
-      "INVALID_ARCHIVE"
-    );
-  }
+function computeCrc(data: Uint8Array): number {
+  const stream = new ZipPassThrough("crc");
+  stream.ondata = () => {};
+  stream.push(data, true);
+  return stream.crc >>> 0;
 }
 
-function crc32(bytes: Uint8Array) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+function getZipCrcMap(bytes: Uint8Array): Map<string, number> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const crcs = new Map<string, number>();
+  let eocd = bytes.length - 22;
+  while (eocd >= Math.max(0, bytes.length - 65557) && view.getUint32(eocd, true) !== 0x06054b50) {
+    eocd--;
   }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function findEndOfCentralDirectory(bytes: Uint8Array) {
-  const start = Math.max(0, bytes.length - 65_557);
-  for (let offset = bytes.length - 22; offset >= start; offset -= 1) {
-    if (
-      bytes[offset] === 0x50 &&
-      bytes[offset + 1] === 0x4b &&
-      bytes[offset + 2] === 0x05 &&
-      bytes[offset + 3] === 0x06
-    ) {
-      return offset;
-    }
+  if (eocd < 0 || view.getUint32(eocd, true) !== 0x06054b50) return crcs;
+  const count = view.getUint16(eocd + 10, true);
+  let offset = view.getUint32(eocd + 16, true);
+  const decoder = new TextDecoder("utf-8");
+  for (let i = 0; i < count; i++) {
+    if (offset + 46 > bytes.length || view.getUint32(offset, true) !== 0x02014b50) break;
+    const crc = view.getUint32(offset + 16, true);
+    const nameLen = view.getUint16(offset + 28, true);
+    const extraLen = view.getUint16(offset + 30, true);
+    const commentLen = view.getUint16(offset + 32, true);
+    const rawName = decoder.decode(bytes.subarray(offset + 46, offset + 46 + nameLen));
+    crcs.set(rawName, crc);
+    offset += 46 + nameLen + extraLen + commentLen;
   }
-  fail("El ZIP no contiene un directorio central válido.");
+  return crcs;
 }
 
 // Implements: REQ-MOODLE-01, REQ-MOODLE-09
 function openZip(bytes: Uint8Array): MoodleArchive {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const eocd = findEndOfCentralDirectory(bytes);
-  const disk = view.getUint16(eocd + 4, true);
-  const centralDisk = view.getUint16(eocd + 6, true);
-  const entriesOnDisk = view.getUint16(eocd + 8, true);
-  const entryCount = view.getUint16(eocd + 10, true);
-  const centralSize = view.getUint32(eocd + 12, true);
-  const centralOffset = view.getUint32(eocd + 16, true);
-  if (disk !== 0 || centralDisk !== 0 || entriesOnDisk !== entryCount) {
-    fail("Los ZIP divididos en varios discos no son compatibles.");
-  }
-  if (entryCount > MAX_MOODLE_ENTRIES) {
-    fail("El respaldo supera 20.000 entradas.", "ARCHIVE_LIMIT");
-  }
-  if (centralOffset + centralSize > eocd) fail("El directorio central ZIP está truncado.");
-
-  const entries: ArchiveEntry[] = [];
-  let offset = centralOffset;
+  const discovered: { rawName: string; name: string; size: number }[] = [];
   let expandedTotal = 0;
-  for (let index = 0; index < entryCount; index += 1) {
-    if (offset + 46 > bytes.length || view.getUint32(offset, true) !== 0x02014b50) {
-      fail("El directorio central ZIP contiene una cabecera inválida.");
-    }
-    const flags = view.getUint16(offset + 8, true);
-    const method = view.getUint16(offset + 10, true);
-    const checksum = view.getUint32(offset + 16, true);
-    const compressedSize = view.getUint32(offset + 20, true);
-    const uncompressedSize = view.getUint32(offset + 24, true);
-    const nameLength = view.getUint16(offset + 28, true);
-    const extraLength = view.getUint16(offset + 30, true);
-    const commentLength = view.getUint16(offset + 32, true);
-    const localOffset = view.getUint32(offset + 42, true);
-    if (
-      compressedSize === 0xffffffff ||
-      uncompressedSize === 0xffffffff ||
-      localOffset === 0xffffffff
-    ) {
-      fail("Los respaldos ZIP64 no caben dentro del límite admitido.", "ARCHIVE_LIMIT");
-    }
-    if ((flags & 1) !== 0) fail("Los respaldos ZIP cifrados no son compatibles.");
-    if (method !== 0 && method !== 8) fail(`El ZIP usa el método de compresión ${method}.`);
-    const nameStart = offset + 46;
-    const nameEnd = nameStart + nameLength;
-    if (nameEnd > bytes.length) fail("El nombre de una entrada ZIP está truncado.");
-    const rawName = text(bytes.subarray(nameStart, nameEnd));
-    offset = nameEnd + extraLength + commentLength;
-    if (offset > bytes.length) fail(`La entrada ZIP ${rawName} está truncada.`);
-    if (rawName.endsWith("/")) continue;
-    const name = safeArchivePath(rawName);
-    if (localOffset + 30 > bytes.length || view.getUint32(localOffset, true) !== 0x04034b50) {
-      fail(`La entrada ZIP ${name} no tiene cabecera local válida.`);
-    }
-    const localNameLength = view.getUint16(localOffset + 26, true);
-    const localExtraLength = view.getUint16(localOffset + 28, true);
-    const dataStart = localOffset + 30 + localNameLength + localExtraLength;
-    const dataEnd = dataStart + compressedSize;
-    if (dataEnd > bytes.length) fail(`La entrada ZIP ${name} está truncada.`);
-    expandedTotal += uncompressedSize;
-    if (expandedTotal > MAX_MOODLE_EXPANDED_BYTES) {
-      fail("El respaldo expandido supera 512 MiB.", "ARCHIVE_LIMIT");
-    }
-    entries.push({
-      name,
-      size: uncompressedSize,
-      read: async () => {
-        const compressed = bytes.subarray(dataStart, dataEnd);
-        const output =
-          method === 0
-            ? new Uint8Array(compressed)
-            : await decompress(compressed, "deflate-raw", uncompressedSize);
-        if (output.length !== uncompressedSize || crc32(output) !== checksum) {
-          fail(`La entrada ZIP ${name} no supera su CRC.`);
+
+  try {
+    unzipSync(bytes, {
+      filter(file) {
+        if (file.name.endsWith("/")) return false;
+        const name = safeArchivePath(file.name);
+        expandedTotal += file.originalSize;
+        if (expandedTotal > MAX_MOODLE_EXPANDED_BYTES) {
+          fail("El respaldo expandido supera 512 MiB.", "ARCHIVE_LIMIT");
         }
-        return output;
+        discovered.push({
+          rawName: file.name,
+          name,
+          size: file.originalSize,
+        });
+        if (discovered.length > MAX_MOODLE_ENTRIES) {
+          fail("El respaldo supera 20.000 entradas.", "ARCHIVE_LIMIT");
+        }
+        return false;
       },
     });
+  } catch (cause) {
+    if (cause instanceof MoodleImportError) throw cause;
+    fail("El archivo ZIP no es válido o está dañado.", "INVALID_ARCHIVE");
   }
-  if (entries.length === 0) fail("El ZIP no contiene archivos restaurables.");
+
+  if (discovered.length === 0) {
+    fail("El ZIP no contiene archivos restaurables.");
+  }
+
+  const expectedCrcs = getZipCrcMap(bytes);
+
+  const entries: ArchiveEntry[] = discovered.map((entry) => ({
+    name: entry.name,
+    size: entry.size,
+    read: async () => {
+      try {
+        const unzipped = unzipSync(bytes, {
+          filter: (file) => file.name === entry.rawName,
+        });
+        const content = unzipped[entry.rawName];
+        if (!content) {
+          fail(`La entrada ZIP ${entry.name} quedó incompleta.`);
+        }
+        const expectedCrc = expectedCrcs.get(entry.rawName);
+        if (expectedCrc !== undefined && computeCrc(content) !== expectedCrc) {
+          fail(`La entrada ZIP ${entry.name} no supera su CRC.`);
+        }
+        return content;
+      } catch (cause) {
+        if (cause instanceof MoodleImportError) throw cause;
+        fail(`La entrada ZIP ${entry.name} está dañada o no supera su descompresión.`);
+      }
+    },
+  }));
+
   return archiveFromEntries(entries);
 }
 
