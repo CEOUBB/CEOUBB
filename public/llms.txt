@@ -1,12 +1,10 @@
 # Centro de Estudio UBB
 
-Centro de Estudio UBB es una plataforma académica y un sistema de gestión del
-aprendizaje independiente para estudiantes y docentes de la Universidad del
-Bío-Bío, con foco inicial en la carrera de Ingeniería Mecánica. Reúne el aula
-virtual (publicaciones, materiales, entregas y calificaciones en la escala
-chilena de 1,0 a 7,0), un calendario académico y una biblioteca de estudio con
-apuntes, certámenes resueltos y ejercicios. Está disponible en la web y como
-aplicación móvil para Android.
+Centro de Estudio UBB (CEOUBB) es una plataforma académica y aula virtual
+independiente para estudiantes y docentes de la Universidad del Bío-Bío.
+Reúne el aula virtual (publicaciones, materiales, entregas y calificaciones en la
+escala chilena de 1,0 a 7,0), un calendario académico y recursos de estudio.
+Está disponible en la web y como aplicación móvil para Android.
 
 La plataforma es independiente. No representa a la Universidad del Bío-Bío ni
 reemplaza sus sistemas oficiales. El acceso está restringido a las cuentas

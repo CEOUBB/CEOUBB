@@ -5,10 +5,11 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
   name: "Centro de Estudio UBB",
+  alternateName: ["CEOUBB", "Centro de Estudio UBB"],
   url: "https://ceoubb.com",
   logo: "https://ceoubb.com/brand/ubb-shield.webp",
   description:
-    "LMS y plataforma académica independiente para estudiantes y docentes de la Universidad del Bío-Bío.",
+    "Plataforma académica y aula virtual independiente para estudiantes y docentes de la Universidad del Bío-Bío.",
   sameAs: ["https://github.com/CEOUBB/CEOUBB"],
 };
 
