@@ -5,7 +5,6 @@ import { Check, CopySimple, Info } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import type { LiveClassLink } from "../../../lib/live-class";
 import { studentCount, type Note } from "./classroom-utils";
-import { Bar } from "./ProgressBar";
 import { LiveClassEditor } from "./LiveClassSection";
 
 /*
@@ -20,8 +19,6 @@ export function CourseRail({
   canTeach,
   readOnly,
   students,
-  units,
-  completed,
   courseReference,
   copiedCourseReference,
   copyCourseReference,
@@ -36,8 +33,6 @@ export function CourseRail({
   canTeach: boolean;
   readOnly: boolean;
   students: readonly unknown[];
-  units: Course["units"];
-  completed: number;
   courseReference: string;
   copiedCourseReference: boolean;
   copyCourseReference: () => void;
@@ -65,23 +60,20 @@ export function CourseRail({
               <small>Cuenta docente institucional</small>
             </dd>
           </div>
-          <div>
-            <dt>{canTeach ? "Estudiantes" : "Tu avance"}</dt>
-            <dd>
-              <b>
-                {canTeach
-                  ? studentCount(students.length)
-                  : units.length > 0
-                    ? `${completed} de ${units.length} unidades`
-                    : "Sin unidades cargadas"}
-              </b>
-              {!canTeach && units.length > 0 && (
-                <span className="mini-progress">
-                  <Bar ratio={units.length ? completed / units.length : 0} />
-                </span>
-              )}
-            </dd>
-          </div>
+          {/*
+            La nómina sólo se sincroniza para quien enseña la sección. El
+            estudiante veía aquí un avance por unidades declarado a mano; su
+            avance real está en Notas y esta ficha no lo duplica.
+          */}
+          {/* Implements: REQ-EVAL-04 */}
+          {canTeach && (
+            <div>
+              <dt>Estudiantes</dt>
+              <dd>
+                <b>{studentCount(students.length)}</b>
+              </dd>
+            </div>
+          )}
           <div>
             <dt>Código de la sección</dt>
             <dd>

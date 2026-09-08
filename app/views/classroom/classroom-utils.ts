@@ -1,11 +1,4 @@
-import {
-  ChartBar,
-  Exam,
-  GraduationCap,
-  House,
-  PlugsConnected,
-  UsersThree,
-} from "@phosphor-icons/react";
+import { Exam, GraduationCap, House, PlugsConnected, UsersThree } from "@phosphor-icons/react";
 import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
 import type {
   ClassroomFile,
@@ -18,15 +11,20 @@ import type {
   acompañan. Una pestaña «Materiales» aparte duplicaba el mismo contenido en dos
   lugares y obligaba al estudiante a adivinar dónde había quedado una guía.
 */
-// Implements: REQ-PUB-13
-export type Tab = "home" | "grades" | "quizzes" | "interop" | "progress" | "people";
+/*
+  «Progreso» se retiró del aula. Sus casillas de auto-completitud pedían al
+  estudiante declarar a mano un avance que nadie verificaba, y asumían que toda
+  asignatura de la universidad se divide en unidades comparables. El avance real
+  vive en Notas: evaluaciones, entregas y calificaciones oficiales.
+*/
+// Implements: REQ-PUB-13, REQ-EVAL-04
+export type Tab = "home" | "grades" | "quizzes" | "interop" | "people";
 
 export const COURSE_TABS: { key: Tab; label: string; Icon: typeof House }[] = [
   { key: "home", label: "Portada", Icon: House },
   { key: "grades", label: "Notas", Icon: GraduationCap },
   { key: "quizzes", label: "Cuestionarios", Icon: Exam },
   { key: "interop", label: "Recursos externos", Icon: PlugsConnected },
-  { key: "progress", label: "Progreso", Icon: ChartBar },
   { key: "people", label: "Participantes", Icon: UsersThree },
 ];
 
@@ -36,7 +34,6 @@ export const emptyClassroom: ClassroomState = {
   posts: [],
   files: [],
   students: [],
-  ownProgress: 0,
   gradebook: [],
   exemption: null,
   officialScores: {},
@@ -74,11 +71,9 @@ export function tabTitle(tab: Tab) {
     ? "Notas y ponderaciones"
     : tab === "quizzes"
       ? "Cuestionarios y controles"
-      : tab === "progress"
-        ? "Progreso y monitoreo"
-        : tab === "people"
-          ? "Participantes"
-          : "Portada del curso";
+      : tab === "people"
+        ? "Participantes"
+        : "Portada del curso";
 }
 
 export function studentCount(total: number) {
