@@ -15,7 +15,7 @@ import {
   ExpandableActionBar,
   type ExpandableActionBarItem,
 } from "@/components/motion/expandable-action-bar";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Course } from "../../../lib/courses";
 import { ClassroomStudent } from "../../../lib/firebase-classroom-client";
 import {
@@ -256,9 +256,9 @@ export function PeopleSection({
     });
   };
 
-  const deselectAll = () => {
+  const deselectAll = useCallback(() => {
     setSelectedIds(new Set());
-  };
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -275,10 +275,14 @@ export function PeopleSection({
     [visibleParticipants, selectedIds]
   );
 
-  const selectedEmails = useMemo(
-    () => selectedParticipants.map((p) => p.email.trim()).filter((email) => email.length > 0),
-    [selectedParticipants]
-  );
+  const selectedEmails = useMemo(() => {
+    const emails: string[] = [];
+    for (const p of selectedParticipants) {
+      const email = p.email.trim();
+      if (email.length > 0) emails.push(email);
+    }
+    return emails;
+  }, [selectedParticipants]);
 
   const selectableParticipants = useMemo(
     () => visibleParticipants.filter((p) => p.role === "student" || Boolean(p.email)),
@@ -288,27 +292,27 @@ export function PeopleSection({
   const allSelectableCount = selectableParticipants.length;
   const isAllSelected = allSelectableCount > 0 && selectedIds.size >= allSelectableCount;
 
-  const handleSelectAllToggle = () => {
+  const handleSelectAllToggle = useCallback(() => {
     if (isAllSelected) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(selectableParticipants.map((p) => p.id)));
     }
-  };
+  }, [isAllSelected, selectableParticipants]);
 
-  const handleCopyEmails = () => {
+  const handleCopyEmails = useCallback(() => {
     if (selectedEmails.length === 0) return;
     navigator.clipboard.writeText(selectedEmails.join(", "));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [selectedEmails]);
 
-  const handleComposeEmail = () => {
+  const handleComposeEmail = useCallback(() => {
     if (selectedEmails.length === 0) return;
     const subject = encodeURIComponent(`Consulta ${course.code} · Sección ${course.section}`);
     const bcc = encodeURIComponent(selectedEmails.join(","));
     window.open(`mailto:?bcc=${bcc}&subject=${subject}`, "_blank");
-  };
+  }, [selectedEmails, course.code, course.section]);
 
   const actionBarItems: ExpandableActionBarItem[] = useMemo(
     () => [
@@ -347,10 +351,10 @@ export function PeopleSection({
       selectedIds.size,
       copied,
       isAllSelected,
-      selectedEmails,
-      course.code,
-      course.section,
-      selectableParticipants,
+      handleCopyEmails,
+      handleComposeEmail,
+      handleSelectAllToggle,
+      deselectAll,
     ]
   );
 

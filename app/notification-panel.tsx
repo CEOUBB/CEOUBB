@@ -37,7 +37,7 @@ function notificationDate(value: string): string {
 
 export type NotificationGroupKey = "today" | "this_week" | "older";
 
-export function groupNotifications(items: readonly NotificationItem[]): {
+function groupNotifications(items: readonly NotificationItem[]): {
   today: NotificationItem[];
   thisWeek: NotificationItem[];
   older: NotificationItem[];
@@ -129,7 +129,7 @@ export function ActionSwapText({
         animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: "0%", filter: "blur(0px)" }}
         exit={reduce ? undefined : { opacity: 0, y: "-90%", filter: "blur(3px)" }}
         transition={SPRING_SWAP}
-        className="absolute left-0 top-[0.08em] inline-block max-w-full truncate will-change-[opacity,filter,transform]"
+        className="absolute left-0 top-[0.08em] inline-block max-w-full truncate"
       >
         {children}
       </motion.span>
@@ -372,10 +372,10 @@ function NotificationRow({
           <span className="notification-dot" aria-label="Sin leer" role="img">
             <motion.span
               className="block h-full w-full rounded-full bg-[oklch(0.55_0.22_25)]"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              whileHover={{ scale: 1.4 }}
-              whileTap={{ scale: 0.8 }}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.25 }}
+              whileTap={{ scale: 0.85 }}
               transition={{ type: "spring", stiffness: 420, damping: 24 }}
             />
           </span>

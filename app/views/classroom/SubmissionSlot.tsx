@@ -85,11 +85,11 @@ export interface FileUploadProps {
 const ROW_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const;
 const FAST_TRANSITION = { duration: 0.16, ease: EASE_OUT } as const;
 
-export const ALLOWED_SUBMISSION_EXTENSIONS = ["pdf", "zip", "docx"] as const;
-export const ALLOWED_SUBMISSION_ACCEPT =
+const ALLOWED_SUBMISSION_EXTENSIONS = ["pdf", "zip", "docx"] as const;
+const ALLOWED_SUBMISSION_ACCEPT =
   ".pdf,.zip,.docx,application/pdf,application/zip,application/x-zip-compressed,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword";
 
-export function isAllowedSubmissionFile(file: File): boolean {
+function isAllowedSubmissionFile(file: File): boolean {
   const ext = file.name.split(".").pop()?.toLowerCase();
   if (
     ext &&
@@ -134,7 +134,7 @@ function getFileIcon(fileName: string, type?: string) {
   return File;
 }
 
-export function createFileUploadItem(file: File, index = 0): FileUploadItem {
+function createFileUploadItem(file: File, index = 0): FileUploadItem {
   return {
     id: `${Date.now()}-${index}-${file.name}`,
     name: file.name,
@@ -761,7 +761,7 @@ export function SubmissionSlot({
   return (
     <button
       aria-label={`Adjuntar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
-      className="grades-attach group relative inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.9_0.012_250)] bg-white px-3 py-1.5 text-xs font-medium text-[oklch(0.2_0.03_260)] transition-all duration-150 hover:border-[oklch(0.48_0.18_255)] hover:bg-[oklch(0.975_0.005_240)] active:scale-95 data-[dragging=true]:border-[oklch(0.48_0.18_255)] data-[dragging=true]:bg-[rgba(0,85,184,0.07)]"
+      className="grades-attach group relative inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.9_0.012_250)] bg-white px-3 py-1.5 text-xs font-medium text-[oklch(0.2_0.03_260)] transition-[color,background-color,border-color,transform] duration-150 hover:border-[oklch(0.48_0.18_255)] hover:bg-[oklch(0.975_0.005_240)] active:scale-95 data-[dragging=true]:border-[oklch(0.48_0.18_255)] data-[dragging=true]:bg-[rgba(0,85,184,0.07)]"
       data-dragging={dragging}
       onClick={() => onPick(item)}
       onDragEnter={handleDragEnter}

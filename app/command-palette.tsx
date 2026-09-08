@@ -92,21 +92,31 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  const setOpenRef = useRef(setOpen);
+  useEffect(() => {
+    setOpenRef.current = setOpen;
+  }, [setOpen]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === shortcut.toLowerCase()) {
         e.preventDefault();
-        setOpen(!open);
+        setOpenRef.current(!openRef.current);
         return;
       }
-      if (e.key === "Escape" && open) {
+      if (e.key === "Escape" && openRef.current) {
         e.preventDefault();
-        setOpen(false);
+        setOpenRef.current(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, shortcut, setOpen]);
+  }, [shortcut]);
 
   useEffect(() => {
     if (!open) return;
@@ -232,7 +242,7 @@ export function CommandPalette({
                 transition={reduce ? { duration: 0.1 } : PANEL_SPRING}
                 {...gate}
                 onKeyDown={onKeyDown}
-                className="pointer-events-auto w-full max-w-xl overflow-hidden rounded-2xl border border-[oklch(0.92_0.006_60)] bg-white shadow-2xl will-change-transform text-[oklch(0.2_0.03_260)]"
+                className="pointer-events-auto w-full max-w-xl overflow-hidden rounded-2xl border border-[oklch(0.92_0.006_60)] bg-white shadow-2xl text-[oklch(0.2_0.03_260)]"
               >
                 <div className="flex items-center gap-3 border-b border-[oklch(0.92_0.006_60)] px-4">
                   <MagnifyingGlass

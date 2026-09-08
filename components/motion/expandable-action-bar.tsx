@@ -168,13 +168,9 @@ export function ExpandableActionBar({
 
   useEffect(() => clearCollapseTimer, [clearCollapseTimer]);
 
-  const wasExpanded = useRef(isExpanded);
-  useEffect(() => {
-    if (wasExpanded.current && !isExpanded) setTapExpanded(false);
-    wasExpanded.current = isExpanded;
-  }, [isExpanded]);
+  const isDismissActive = tapExpanded && isExpanded;
 
-  useDismiss(tapExpanded && isExpanded, close, trackRef, {
+  useDismiss(isDismissActive, close, trackRef, {
     behavior: "consume",
   });
 
@@ -315,16 +311,20 @@ export function ExpandableActionBar({
 
                     {item.shortcut ? (
                       <motion.span
+                        layout="position"
                         aria-hidden={!isExpanded}
-                        animate={{
-                          width: isExpanded ? "auto" : 0,
-                          opacity: isExpanded ? 1 : 0,
-                          marginLeft: isExpanded ? 4 : 0,
-                        }}
-                        transition={LABEL_TRANSITION}
+                        animate={
+                          reduce
+                            ? { opacity: isExpanded ? 1 : 0 }
+                            : {
+                                opacity: isExpanded ? 1 : 0,
+                                scale: isExpanded ? 1 : 0.85,
+                              }
+                        }
+                        transition={reduce ? { duration: 0 } : LABEL_TRANSITION}
                         className={`hidden overflow-hidden whitespace-nowrap text-[10px] text-[oklch(0.52_0.03_250)] sm:inline-block font-mono ${
-                          classNames?.shortcut ?? ""
-                        }`.trim()}
+                          isExpanded ? "ml-1 max-w-[48px]" : "max-w-0"
+                        } ${classNames?.shortcut ?? ""}`.trim()}
                       >
                         {item.shortcut}
                       </motion.span>
