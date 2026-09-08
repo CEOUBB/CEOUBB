@@ -1,4 +1,5 @@
-CREATE TABLE `adecca_imports` (
+-- CREATE TABLE `adecca_imports`
+CREATE TABLE IF NOT EXISTS `adecca_imports` (
 	`id` text PRIMARY KEY NOT NULL,
 	`seccion_id` text NOT NULL,
 	`fingerprint` text NOT NULL,
@@ -31,9 +32,9 @@ CREATE TABLE `adecca_imports` (
 	FOREIGN KEY (`actor_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_adecca_imports_section_fingerprint` ON `adecca_imports` (`seccion_id`,`fingerprint`);--> statement-breakpoint
-CREATE INDEX `idx_adecca_imports_section_updated` ON `adecca_imports` (`seccion_id`,`updated_at`);--> statement-breakpoint
-CREATE TABLE `adecca_import_run_items` (
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_adecca_imports_section_fingerprint` ON `adecca_imports` (`seccion_id`,`fingerprint`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_adecca_imports_section_updated` ON `adecca_imports` (`seccion_id`,`updated_at`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `adecca_import_run_items` (
 	`id` text PRIMARY KEY NOT NULL,
 	`import_id` text NOT NULL,
 	`run_token` text NOT NULL,
@@ -44,9 +45,9 @@ CREATE TABLE `adecca_import_run_items` (
 	FOREIGN KEY (`import_id`) REFERENCES `adecca_imports`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_adecca_run_items_run_item` ON `adecca_import_run_items` (`import_id`,`run_token`,`item_hash`);--> statement-breakpoint
-CREATE INDEX `idx_adecca_run_items_run_outcome` ON `adecca_import_run_items` (`import_id`,`run_token`,`outcome`,`applied_at`);--> statement-breakpoint
-CREATE TABLE `pending_adecca_matriculas` (
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_adecca_run_items_run_item` ON `adecca_import_run_items` (`import_id`,`run_token`,`item_hash`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_adecca_run_items_run_outcome` ON `adecca_import_run_items` (`import_id`,`run_token`,`outcome`,`applied_at`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `pending_adecca_matriculas` (
 	`id` text PRIMARY KEY NOT NULL,
 	`seccion_id` text NOT NULL,
 	`email` text NOT NULL,
@@ -59,6 +60,6 @@ CREATE TABLE `pending_adecca_matriculas` (
 	FOREIGN KEY (`source_import_id`) REFERENCES `adecca_imports`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_pending_adecca_matriculas_section_email` ON `pending_adecca_matriculas` (`seccion_id`,`email`);--> statement-breakpoint
-CREATE INDEX `idx_pending_adecca_matriculas_email` ON `pending_adecca_matriculas` (`email`);--> statement-breakpoint
-CREATE INDEX `idx_pending_adecca_matriculas_expiry` ON `pending_adecca_matriculas` (`expires_at`);
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_pending_adecca_matriculas_section_email` ON `pending_adecca_matriculas` (`seccion_id`,`email`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_pending_adecca_matriculas_email` ON `pending_adecca_matriculas` (`email`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_pending_adecca_matriculas_expiry` ON `pending_adecca_matriculas` (`expires_at`);
