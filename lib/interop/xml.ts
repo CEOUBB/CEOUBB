@@ -1,3 +1,4 @@
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { fail } from "./errors.ts";
 
 export type XmlNode = {
@@ -8,7 +9,7 @@ export type XmlNode = {
   content: (string | XmlNode)[];
 };
 
-function decode(value: string) {
+function decode(value: string): string {
   if (/<|&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[\da-fA-F]+);)/.test(value))
     fail("El XML contiene entidades o caracteres inválidos.");
   return value.replace(/&([^;]+);/g, (_, entity: string) => {
@@ -27,6 +28,39 @@ function decode(value: string) {
   });
 }
 
+const interopParser = new XMLParser({
+  preserveOrder: true,
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  cdataPropName: "__cdata",
+  textNodeName: "#text",
+  parseTagValue: false,
+  parseAttributeValue: false,
+  trimValues: false,
+  captureMetaData: true,
+  processEntities: false,
+});
+
+type XmlMetaData = { startIndex: number; endIndex: number };
+
+function getMetaData(node: Record<PropertyKey, unknown>): XmlMetaData | undefined {
+  for (const sym of Object.getOwnPropertySymbols(node)) {
+    const val = node[sym];
+    if (
+      typeof val === "object" &&
+      val !== null &&
+      "startIndex" in val &&
+      "endIndex" in val &&
+      typeof val.startIndex === "number" &&
+      typeof val.endIndex === "number"
+    ) {
+      return { startIndex: val.startIndex, endIndex: val.endIndex };
+    }
+  }
+  return undefined;
+}
+
+// Implements: REQ-IO-05, REQ-IO-09, REQ-QMD-05
 export function parseXml(bytes: Uint8Array): XmlNode {
   if (bytes.length > 1024 * 1024) fail("El XML supera 1 MiB.", 413);
   let source: string;
@@ -40,79 +74,161 @@ export function parseXml(bytes: Uint8Array): XmlNode {
     [...source].some((c) => c.charCodeAt(0) < 32 && ![9, 10, 13].includes(c.charCodeAt(0)))
   )
     fail("El XML contiene declaraciones o caracteres no permitidos.");
-  const token =
-    /<!--[\s\S]*?-->|<\?xml\s[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>|<\/[A-Za-z_][\w:.-]*\s*>|<[A-Za-z_][\w:.-]*(?:\s+[A-Za-z_][\w:.-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*\/?>|[^<]+/y;
-  const stack: { node: XmlNode; raw: string; namespaces: Record<string, string> }[] = [];
-  let root: XmlNode | undefined;
-  let nodes = 0;
-  while (token.lastIndex < source.length) {
-    const pos = token.lastIndex;
-    const match = token.exec(source);
-    if (!match) fail("El XML está mal formado.");
-    const part = match[0];
-    if (part.startsWith("<!--")) {
-      if (part.slice(4, -3).includes("--")) fail("El comentario XML está mal formado.");
-      continue;
-    }
-    if (part.startsWith("<?")) {
-      if (pos !== 0) fail("La declaración XML debe estar al inicio.");
-      continue;
-    }
-    const parent = stack.at(-1);
-    if (part.startsWith("</")) {
-      if (parent?.raw !== part.slice(2, -1).trim()) fail("El XML cierra etiquetas fuera de orden.");
-      stack.pop();
-    } else if (part.startsWith("<![CDATA[")) {
-      if (!parent) fail("CDATA fuera de la raíz.");
-      parent.node.content.push(part.slice(9, -3));
-    } else if (!part.startsWith("<")) {
-      const text = decode(part);
-      if (!parent && text.trim()) fail("Texto fuera de la raíz XML.");
-      parent?.node.content.push(text);
-    } else {
-      // Implements: REQ-QMD-05
-      const tagMatch = part.match(/^<([^\s/>]+)/);
-      if (!tagMatch || !tagMatch[1]) fail("La etiqueta XML está mal formada.");
-      const raw = tagMatch[1];
-      const namespaces: Record<string, string> = {
-        xml: "http://www.w3.org/XML/1998/namespace",
-        ...parent?.namespaces,
-      };
-      const attributes: Record<string, string> = Object.create(null);
-      for (const attr of part.matchAll(/([A-Za-z_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
-        if (Object.hasOwn(attributes, attr[1])) fail("El XML repite un atributo.");
-        attributes[attr[1]] = decode(attr[2] ?? attr[3]);
-        if (attr[1] === "xmlns") namespaces[""] = attributes[attr[1]];
-        else if (attr[1].startsWith("xmlns:")) namespaces[attr[1].slice(6)] = attributes[attr[1]];
-      }
-      const split = raw.split(":");
-      if (split.length > 2 || (split.length === 2 && !namespaces[split[0]]))
-        fail("Prefijo XML no declarado.");
-      for (const key of Object.keys(attributes)) {
-        if (key.includes(":") && !key.startsWith("xmlns:") && !namespaces[key.split(":")[0]])
-          fail("Prefijo de atributo XML no declarado.");
-      }
-      const node: XmlNode = {
-        name: split.at(-1)!,
-        namespace: namespaces[split.length === 2 ? split[0] : ""] ?? "",
-        attributes,
-        children: [],
-        content: [],
-      };
-      if (parent) {
-        parent.node.children.push(node);
-        parent.node.content.push(node);
-      } else {
-        if (root) fail("El XML tiene más de una raíz.");
-        root = node;
-      }
-      if (++nodes > 20000 || stack.length >= 48)
-        fail("El XML excede el límite de complejidad.", 413);
-      if (!part.endsWith("/>")) stack.push({ node, raw, namespaces });
+
+  const xmlDeclIndex = source.indexOf("<?xml");
+  if (xmlDeclIndex > 0) {
+    fail("La declaración XML debe estar al inicio.");
+  }
+  if (xmlDeclIndex !== -1 && source.indexOf("<?xml", xmlDeclIndex + 1) !== -1) {
+    fail("La declaración XML debe estar al inicio.");
+  }
+
+  for (const match of source.matchAll(/<!--([\s\S]*?)-->/g)) {
+    if (match[1].includes("--")) {
+      fail("El comentario XML está mal formado.");
     }
   }
-  if (!root || stack.length) fail("El XML está vacío o incompleto.");
-  return root;
+
+  const validation = XMLValidator.validate(source);
+  if (validation !== true) {
+    fail("El XML está mal formado.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = interopParser.parse(source);
+  } catch {
+    fail("El XML está mal formado.");
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    fail("El XML está vacío o incompleto.");
+  }
+
+  const rootElements: Record<PropertyKey, unknown>[] = [];
+  for (const item of parsed) {
+    if (typeof item !== "object" || item === null) continue;
+    const record = item as Record<string, unknown>;
+    const keys = Object.keys(record);
+    const tagKey = keys.find((k) => k !== ":@" && !k.startsWith("?"));
+    if (tagKey) {
+      rootElements.push(record);
+    } else if ("#text" in record && typeof record["#text"] === "string" && record["#text"].trim()) {
+      fail("Texto fuera de la raíz XML.");
+    }
+  }
+
+  if (rootElements.length !== 1) {
+    fail("El XML tiene más de una raíz.");
+  }
+
+  const rootEntry = rootElements[0];
+  const meta = getMetaData(rootEntry);
+  if (meta) {
+    const before = source
+      .slice(0, meta.startIndex)
+      .replace(/<\?[\s\S]*?\?>/g, "")
+      .replace(/<!--[\s\S]*?-->/g, "");
+    if (before.trim().length > 0) {
+      fail("Texto fuera de la raíz XML.");
+    }
+    const after = source.slice(meta.endIndex).replace(/<!--[\s\S]*?-->/g, "");
+    if (after.trim().length > 0) {
+      fail("Texto fuera de la raíz XML.");
+    }
+  }
+
+  let nodes = 0;
+
+  function mapNode(
+    item: Record<string, unknown>,
+    depth: number,
+    parentNamespaces: Record<string, string>
+  ): XmlNode {
+    if (++nodes > 20000 || depth >= 48) {
+      fail("El XML excede el límite de complejidad.", 413);
+    }
+
+    const rawTag = Object.keys(item).find((k) => k !== ":@" && !k.startsWith("?"));
+    if (!rawTag) {
+      fail("La etiqueta XML está mal formada.");
+    }
+
+    const rawAttrs = (
+      typeof item[":@"] === "object" && item[":@"] !== null ? item[":@"] : {}
+    ) as Record<string, unknown>;
+
+    const namespaces: Record<string, string> = {
+      xml: "http://www.w3.org/XML/1998/namespace",
+      ...parentNamespaces,
+    };
+
+    const attributes: Record<string, string> = Object.create(null);
+
+    for (const [k, v] of Object.entries(rawAttrs)) {
+      const attrName = k.startsWith("@_") ? k.slice(2) : k;
+      const attrVal = decode(String(v ?? ""));
+      attributes[attrName] = attrVal;
+      if (attrName === "xmlns") {
+        namespaces[""] = attrVal;
+      } else if (attrName.startsWith("xmlns:")) {
+        namespaces[attrName.slice(6)] = attrVal;
+      }
+    }
+
+    const split = rawTag.split(":");
+    if (split.length > 2 || (split.length === 2 && !namespaces[split[0]])) {
+      fail("Prefijo XML no declarado.");
+    }
+    for (const key of Object.keys(attributes)) {
+      if (key.includes(":") && !key.startsWith("xmlns:") && !namespaces[key.split(":")[0]]) {
+        fail("Prefijo de atributo XML no declarado.");
+      }
+    }
+
+    const node: XmlNode = {
+      name: split.at(-1)!,
+      namespace: namespaces[split.length === 2 ? split[0] : ""] ?? "",
+      attributes,
+      children: [],
+      content: [],
+    };
+
+    const rawChildren = Array.isArray(item[rawTag]) ? (item[rawTag] as unknown[]) : [];
+
+    for (const childItem of rawChildren) {
+      if (typeof childItem !== "object" || childItem === null) continue;
+      const record = childItem as Record<string, unknown>;
+      if ("#text" in record) {
+        const text = decode(String(record["#text"] ?? ""));
+        node.content.push(text);
+      } else if ("__cdata" in record) {
+        const cdataVal = record["__cdata"];
+        if (Array.isArray(cdataVal)) {
+          for (const c of cdataVal) {
+            if (typeof c === "object" && c !== null && "#text" in c) {
+              node.content.push(String((c as Record<string, unknown>)["#text"] ?? ""));
+            } else if (typeof c === "string") {
+              node.content.push(c);
+            }
+          }
+        } else if (typeof cdataVal === "string") {
+          node.content.push(cdataVal);
+        }
+      } else {
+        const childTag = Object.keys(record).find((k) => k !== ":@" && !k.startsWith("?"));
+        if (childTag) {
+          const childNode = mapNode(record, depth + 1, namespaces);
+          node.children.push(childNode);
+          node.content.push(childNode);
+        }
+      }
+    }
+
+    return node;
+  }
+
+  return mapNode(rootEntry, 1, {});
 }
 
 export const child = (node: XmlNode | undefined, name: string) =>
