@@ -151,7 +151,10 @@ export function plannerItems(input: {
   from: string;
   to: string;
 }): PlannerItem[] {
-  const byId = new Map(input.courses.map((course) => [course.id, course]));
+  const byId = new Map<string, Course>();
+  for (const course of input.courses) {
+    byId.set(course.id, course);
+  }
   const inRange = (date: string) => date >= input.from && date <= input.to;
   const items: PlannerItem[] = [];
 
