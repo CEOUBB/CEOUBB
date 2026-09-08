@@ -40,6 +40,13 @@
 - **Outcome / Learning:** Se eliminó la doble asignación de memoria por elemento en la generación de notificaciones, reduciendo la presión sobre el recolector de basura en re-renderizados frecuentes del portal.
 - **Future Rule:** Construir objetos `Map` iterando directamente con `for..of` e invocando `map.set()` en lugar de mapear colecciones a arreglos temporales de tuplas `[k, v]`.
 
+## 2026-09-07 - Determinación de columnas máximas de tabla en `convertTables` (`lib/multimodal-editor.ts`)
+
+- **Finding:** `convertTables` calculaba la cantidad de columnas de las tablas con `Math.max(...grid.map((row) => row.length))`, generando un arreglo intermedio $O(N)$ y desempaquetando argumentos variádicos en la pila de llamadas.
+- **Attempted / Identified Solution:** Reemplazo por un bucle iterativo `for..of` escalar de pasada única sobre `grid`.
+- **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por tabla en la conversión de HTML a Markdown académico y se previno un posible desbordamiento de pila (_stack overflow_) en tablas extensas.
+- **Future Rule:** Reemplazar `Math.max(...arr.map(...))` por un bucle `for` o `for..of` con acumulador escalar en funciones de transformación o serialización.
+
 ## 2026-09-08 - Recuento de avance de revisiones en `reviewProgress` (`app/views/classroom/submission-review-model.ts`)
 
 - **Finding:** `reviewProgress` realizaba dos llamadas independientes a `rows.filter(...)` en cada cálculo del estado de avance, asignando dos arreglos intermedios temporales $O(N)$ y haciendo dos pasadas completas sobre la lista de entregas.
