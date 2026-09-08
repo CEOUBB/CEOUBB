@@ -401,14 +401,16 @@ export async function reconcileMoodleRoster(
     }
     await commitOpenSectionWrites(
       sectionId,
-      matchedUsers
-        .map((user) => ({
-          seccionId: sectionId,
-          userId: user.id,
-          role: "student" as const,
-          status: "activa" as const,
-        }))
-        .map((entry) => toFirestoreWrite(parseEnrollmentProjection(entry)))
+      matchedUsers.map((user) =>
+        toFirestoreWrite(
+          parseEnrollmentProjection({
+            seccionId: sectionId,
+            userId: user.id,
+            role: "student" as const,
+            status: "activa" as const,
+          })
+        )
+      )
     );
   });
   if (matchedUsers.length > 0) {

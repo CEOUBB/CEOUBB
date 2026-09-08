@@ -52,7 +52,7 @@
   "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
   "tests/rendered-html.test.mjs": "4f8131a3377b7e8f4c62a7b7af6de8d7faf7330605980bcb463cae0a6ae66b47",
   "tests/rich-text.test.ts": "a54dde0cd8337c2bede7ae270f709db6086e7e0e89356eaea918bce95df4c4ad",
-  "tests/security-audit-081.test.ts": "1309c49f10a37223d2e1f8591d13b0479cbc88a4e18c1b1b1f2b195987136f57",
+  "tests/security-audit-081.test.ts": "3455a2db85a3757c6f3bd9c1ed3d1f612723a3fac5ed5505d645f6da8df98b70",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
   "tests/services.test.ts": "b700e6ac6388b305151d601728df186db748bd88a57608eb646aeac0bb8520d6",
   "tests/staging-environment.test.ts": "e9bf2c2fd4d90602cf776c553498e084b6c8cfef6f8cd27f1124c4a443e9e5aa",

@@ -2,6 +2,7 @@
 
 ## Handoff: auditoría de seguridad 081, 2026-09-08
 
+- **Seguimiento PR #163:** corregidos tres avisos CodeQL en mocks de URL; cerrada fuga de blobs al abrir pautas, con limpieza propia para el visor persistente; revocación paralela acotada y cubierta por regresión. React Doctor local 100/100, con una excepción puntual explicada para el cleanup asíncrono; sin reglas globales desactivadas. PR Agent no propuso cambios. Tras la revisión pasan lint, TypeScript, build, 578 pruebas completas y 569 de `verify:fast`.
 - **Worktree y rama:** `C:/Users/Pipe/.codex/worktrees/1265/CEOUBB`, `codex/correcciones-auditoria-seguridad-081`, base `f9fc4e4`.
 - **Implementación:** revocación Firebase/Turso y Callables, cierre global informado, contrato e inmutabilidad de entregas, matrícula en lectura/borrado, importación Moodle restringida por período con control concurrente, descarga autenticada e invalidación de enlaces históricos, QTI acotado y cuota atómica de soporte. Endurecidos login, Turnstile, Discord y promoción CI; actualizados los lockfiles vulnerables.
 - **Evidencia y promoción:** [ejecución y límites de la auditoría](docs/security/auditoria-081-ejecucion.md). Las pruebas usan cuentas, archivos y proveedores sintéticos. No hubo despliegue ni modificaciones de producción. CORS/IAM efectivos, navegador nativo, permisos Discord y CSP con nonces siguen requiriendo validación específica.

@@ -19,6 +19,7 @@ import {
 import type { Course } from "../../../lib/courses";
 import {
   classroomFileUrl,
+  classroomFileBlob,
   saveGradeFeedback,
   saveStudentScores,
   watchSectionSubmissions,
@@ -104,14 +105,12 @@ function useSubmissionUrl(storagePath: string) {
     if (!storagePath) return;
     let active = true;
     let objectUrl = "";
-    classroomFileUrl(storagePath)
-      .then((url) => {
-        if (!active) {
-          URL.revokeObjectURL(url);
-          return;
-        }
-        objectUrl = url;
-        setState({ path: storagePath, url, failed: false });
+    classroomFileBlob(storagePath)
+      .then((blob) => {
+        if (!active) return;
+        // oxlint-disable-next-line react-doctor/no-create-object-url-without-revoke -- El cleanup del efecto revoca esta URL; active impide crearla después del desmontaje.
+        objectUrl = blob ? URL.createObjectURL(blob) : "";
+        setState({ path: storagePath, url: objectUrl || "#", failed: false });
       })
       .catch(() => active && setState({ path: storagePath, url: "", failed: true }));
     return () => {

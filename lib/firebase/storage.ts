@@ -281,15 +281,14 @@ export async function renameClassroomFile(courseId: string, id: string, fileName
   await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), { fileName });
 }
 
-export async function classroomFileUrl(storagePath: string) {
+export async function classroomFileBlob(storagePath: string) {
   try {
     const { sdk, storage } = await cloudStorage();
     // Implements: REQ-SEC-02 — SEC-06: cada descarga evalúa las reglas vigentes.
-    const blob = await sdk.getBlob(sdk.ref(storage, storagePath), MAX_UPLOAD_BYTES);
-    return URL.createObjectURL(blob);
+    return await sdk.getBlob(sdk.ref(storage, storagePath), MAX_UPLOAD_BYTES);
   } catch (cause) {
     if (isDevOrLocalEnvironment()) {
-      return "#";
+      return null;
     }
     throw cause;
   }

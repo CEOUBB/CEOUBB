@@ -17,6 +17,8 @@ import {
 import {
   commitOpenSectionWrites,
   invalidateCourseDownloadTokens,
+  projectEnrollments,
+  FIREBASE_PROJECT_ID,
 } from "../lib/services/enrollment-projection.ts";
 import {
   firebaseCredentialIsActive,
@@ -70,7 +72,7 @@ test("SEC-01: el intercambio de token rechaza credenciales revocadas y errores d
   let status = 200;
   let disabled = false;
   t.mock.method(globalThis, "fetch", async (input: string | URL | Request) => {
-    if (String(input).includes("oauth2.googleapis.com"))
+    if (new URL(String(input)).origin === "https://oauth2.googleapis.com")
       return Response.json({ access_token: "synthetic", expires_in: 3600 });
     return Response.json(
       { fields: { revokedAt: { integerValue: "100" }, disabled: { booleanValue: disabled } } },
@@ -92,7 +94,7 @@ test("SEC-01: eliminación reintentable conserva lápida y limpia proyecciones a
   const operations: string[] = [];
   t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
-    if (url.includes("oauth2.googleapis.com"))
+    if (new URL(url).origin === "https://oauth2.googleapis.com")
       return Response.json({ access_token: "synthetic", expires_in: 3600 });
     if (url.includes(":commit")) {
       const data = JSON.parse(String(init?.body));
@@ -182,7 +184,7 @@ test("SEC-03: Firestore rechaza cierre entre lectura y commit y libera la transa
   let rolledBack = false;
   t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
-    if (url.includes("oauth2.googleapis.com"))
+    if (new URL(url).origin === "https://oauth2.googleapis.com")
       return Response.json({ access_token: "synthetic", expires_in: 3600 });
     if (url.endsWith(":beginTransaction")) return Response.json({ transaction: "transaction-id" });
     if (url.includes("academicSections"))
@@ -238,6 +240,76 @@ test("SEC-06: revoca tokens antiguos por páginas y con precondición de versió
   assert.equal(patches.length, 1);
   conflict = true;
   await assert.rejects(invalidateCourseDownloadTokens("section-1"), /cambió/);
+});
+
+test("SEC-06: la revocación limita la concurrencia y deduplica secciones retiradas", async (t) => {
+  let phase = "files";
+  let activeFiles = 0;
+  let activeSections = 0;
+  let peakFiles = 0;
+  let peakSections = 0;
+  let patched = 0;
+  let listed = 0;
+  const settle = () => new Promise<void>((resolve) => setImmediate(resolve));
+  t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(String(input));
+    if (url.origin === "https://oauth2.googleapis.com")
+      return Response.json({ access_token: "synthetic", expires_in: 3600 });
+    if (url.origin === "https://identitytoolkit.googleapis.com" || url.pathname.endsWith(":commit"))
+      return Response.json({});
+    if (url.origin === "https://firestore.googleapis.com")
+      return Response.json({
+        documents: Array.from({ length: 12 }, (_, index) => ({
+          name: `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/enrollments/student-1/sections/section-${index}`,
+        })),
+      });
+    assert.equal(url.origin, "https://storage.googleapis.com");
+    if (init?.method === "PATCH") {
+      peakFiles = Math.max(peakFiles, ++activeFiles);
+      await settle();
+      activeFiles--;
+      patched++;
+      return Response.json({});
+    }
+    listed++;
+    peakSections = Math.max(peakSections, ++activeSections);
+    await settle();
+    activeSections--;
+    return Response.json({
+      items:
+        phase === "files"
+          ? Array.from({ length: 21 }, (_, index) => ({
+              name: `courses/section-1/file-${index}.pdf`,
+              metageneration: "1",
+              metadata: { firebaseStorageDownloadTokens: "synthetic" },
+            }))
+          : [],
+    });
+  });
+  assert.equal(await invalidateCourseDownloadTokens("section-1"), 21);
+  assert.equal(patched, 21);
+  assert.equal(peakFiles, 10);
+  phase = "sections";
+  listed = 0;
+  peakSections = 0;
+  const entries = Array.from({ length: 12 }, (_, index) => ({
+    seccionId: `section-${index}`,
+    userId: "firebase:student-1",
+    role: "student" as const,
+    status: "retirada" as const,
+  }));
+  await projectEnrollments([
+    ...entries,
+    entries[0],
+    { ...entries[0], seccionId: "active-section", status: "activa" },
+  ]);
+  assert.equal(listed, 12);
+  assert.equal(peakSections, 5);
+  listed = 0;
+  peakSections = 0;
+  await revokeFirebaseAccess("firebase:student-1");
+  assert.equal(listed, 12);
+  assert.equal(peakSections, 5);
 });
 
 test(

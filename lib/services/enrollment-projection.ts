@@ -240,10 +240,11 @@ export async function projectEnrollments(
   const writes = entries.map((entry) => toFirestoreWrite(parseEnrollmentProjection(entry)));
   if (writes.length === 0) return [];
   await commitFirestoreWrites(writes);
-  for (const sectionId of new Set(
-    entries.filter((entry) => entry.status !== "activa").map((entry) => entry.seccionId)
-  )) {
-    await invalidateCourseDownloadTokens(sectionId);
+  const withdrawnSections = new Set(
+    entries.flatMap((entry) => (entry.status !== "activa" ? [entry.seccionId] : []))
+  );
+  for (const batch of chunkWrites([...withdrawnSections], 5)) {
+    await Promise.all(batch.map((sectionId) => invalidateCourseDownloadTokens(sectionId)));
   }
   return writes;
 }
@@ -285,22 +286,26 @@ export async function invalidateCourseDownloadTokens(sectionId?: string, dryRun 
     const response = await fetch(`${base}?${query}`, { headers });
     if (!response.ok) throw new Error("No se pudo invalidar el acceso a archivos anteriores.");
     const page = pageSchema.parse(await response.json());
-    for (const object of page.items ?? []) {
-      if (!object.name.startsWith(prefix))
-        throw new Error("Archivo fuera del alcance de revocación.");
-      if (!object.metadata?.firebaseStorageDownloadTokens) continue;
-      tokenizedFiles++;
-      if (dryRun) continue;
-      const result = await fetch(
-        `${base}/${encodeURIComponent(object.name)}?ifMetagenerationMatch=${encodeURIComponent(object.metageneration)}`,
-        {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({ metadata: { firebaseStorageDownloadTokens: null } }),
-        }
+    for (const batch of chunkWrites(page.items ?? [], 10)) {
+      await Promise.all(
+        batch.map(async (object) => {
+          if (!object.name.startsWith(prefix))
+            throw new Error("Archivo fuera del alcance de revocación.");
+          if (!object.metadata?.firebaseStorageDownloadTokens) return;
+          tokenizedFiles++;
+          if (dryRun) return;
+          const result = await fetch(
+            `${base}/${encodeURIComponent(object.name)}?ifMetagenerationMatch=${encodeURIComponent(object.metageneration)}`,
+            {
+              method: "PATCH",
+              headers,
+              body: JSON.stringify({ metadata: { firebaseStorageDownloadTokens: null } }),
+            }
+          );
+          if (!result.ok && result.status !== 404)
+            throw new Error("Un archivo cambió al revocar sus enlaces. Reintenta.");
+        })
       );
-      if (!result.ok && result.status !== 404)
-        throw new Error("Un archivo cambió al revocar sus enlaces. Reintenta.");
     }
     pageToken = page.nextPageToken ?? "";
   } while (pageToken);

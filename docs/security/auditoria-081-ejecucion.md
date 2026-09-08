@@ -45,7 +45,11 @@ No se inspeccionaron IAM, reglas desplegadas, políticas de proveedores Auth/App
 
 Resultado local del 8 de septiembre: build y `pnpm test` aprobados (578/578); `verify:fast` aprobado (TypeScript, 568/568 pruebas, 65 sellos SHA-256 y 29 especificaciones); invariantes 35/35; emuladores Firestore/Storage 8/8; Playwright de login 4/4 entre escritorio y móvil. ESLint y comprobación sintáctica de Functions sin errores. Ambos lockfiles registraron cero avisos en `pnpm audit --json`.
 
-React Doctor: 86/100, sin advertencias de bugs tras corregir la lectura de respuesta en Capacitor. Sus cinco advertencias de rendimiento fueron revisadas: las URLs se liberan en los dos consumidores; los recorridos están acotados por lote y la revocación procesa páginas secuencialmente para respetar errores/precondiciones. No se añadieron supresiones.
+Seguimiento de la PR #163: CodeQL identificó tres comparaciones por substring en mocks de OAuth; ahora comparan el origen HTTPS exacto. PR Agent no identificó problemas ni propuso cambios.
+
+React Doctor pasa de 86/100 a 100/100. Se corrigió la fuga al abrir pautas: la función de URL temporal libera el blob después de abrirlo, mientras el visor persistente descarga sus bytes y libera su URL al cambiar de archivo o desmontarse. Hay una única excepción de lint, documentada junto a la creación de la URL del visor: el analizador no sigue el cleanup desde el callback asíncrono. El guard `active` evita crear URLs tras desmontarse y el cleanup revoca la URL creada. No se deshabilitó ninguna regla global.
+
+La revocación conserva páginas secuenciales, con hasta cinco secciones y diez archivos por sección en paralelo. La nueva regresión verifica 21 archivos, 12 secciones, deduplicación de matrículas y ambos límites de concurrencia; mantiene las comprobaciones de conflicto y versión. Tras estas correcciones pasan lint, TypeScript, build, 578 pruebas de la suite completa y 569 de `verify:fast`, con los 65 sellos y 29 especificaciones intactos.
 
 Los fixtures positivos de Firebase ahora incluyen el comprobante completo; las firmas positivas Discord usan la hora actual. Se conservan sus assertions y se añaden rechazos. El resellado SHA-256 registra estas ampliaciones y el archivo nuevo de regresiones; no se omiten pruebas ni se debilitan umbrales.
 

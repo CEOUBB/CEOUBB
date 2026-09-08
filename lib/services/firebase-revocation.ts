@@ -5,6 +5,7 @@ import {
   googleAccessToken,
   isValidPathSegment,
   invalidateCourseDownloadTokens,
+  chunkWrites,
 } from "./enrollment-projection.ts";
 
 const documents = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
@@ -77,10 +78,17 @@ export async function revokeFirebaseAccess(userId: string, disabled = false, own
       if (!response.ok) throw new Error("No se pudieron revocar los enlaces de esta cuenta.");
       const page = pageSchema.parse(await response.json());
       const prefix = `${documents}/enrollments/${uid}/sections/`;
-      for (const entry of page.documents ?? []) {
-        if (!entry.name.startsWith(prefix) || !isValidPathSegment(entry.name.slice(prefix.length)))
-          throw new Error("Matrícula inválida.");
-        await invalidateCourseDownloadTokens(entry.name.slice(prefix.length));
+      for (const batch of chunkWrites(page.documents ?? [], 5)) {
+        await Promise.all(
+          batch.map(async (entry) => {
+            if (
+              !entry.name.startsWith(prefix) ||
+              !isValidPathSegment(entry.name.slice(prefix.length))
+            )
+              throw new Error("Matrícula inválida.");
+            await invalidateCourseDownloadTokens(entry.name.slice(prefix.length));
+          })
+        );
       }
       pageToken = page.nextPageToken ?? "";
     } while (pageToken);
