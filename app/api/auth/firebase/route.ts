@@ -7,6 +7,7 @@ import {
   roleForEmail,
 } from "../../../../lib/access-policy";
 import { createSession, publicUser } from "../../../../lib/auth";
+import { firebaseCredentialIsActive } from "../../../../lib/services/firebase-revocation";
 import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
@@ -33,6 +34,11 @@ type FirebaseAccount = {
 };
 
 export async function POST(request: Request) {
+  // Implements: REQ-SEC-01 — INV-01: impedir que otro sitio instale una sesión.
+  if (request.headers.get("origin") !== new URL(request.url).origin)
+    return error("Origen no autorizado.", 403);
+  if (request.headers.get("content-type")?.split(";")[0].trim() !== "application/json")
+    return error("Formato no admitido.", 415);
   try {
     let jsonBody: unknown;
     try {
@@ -64,6 +70,8 @@ export async function POST(request: Request) {
     const email = normalizeAccessEmail(account?.email ?? "");
     if (!account?.localId || !account.emailVerified)
       return error("Tu correo de Google debe estar verificado.", 403);
+    if (!(await firebaseCredentialIsActive(idToken, account.localId)))
+      return error("Vuelve a autenticarte con Google.", 401);
 
     const db = getDb();
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);

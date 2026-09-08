@@ -28,21 +28,23 @@ function plain(node: XmlNode | undefined) {
   return walk(node).trim();
 }
 
-function shape(node: XmlNode): string {
+type XmlShape = [string, [string, string][], (string | XmlShape)[]];
+
+function shape(node: XmlNode): XmlShape {
   // Implements: REQ-QMD-06
-  return JSON.stringify([
+  return [
     node.name,
     Object.entries(node.attributes)
       .filter(([k]) => !k.startsWith("xmlns"))
       .sort(([a], [b]) => a.localeCompare(b)),
-    node.content.flatMap((p) => {
+    node.content.flatMap<string | XmlShape>((p) => {
       if (typeof p === "string") {
         const trimmed = p.trim();
         return trimmed ? [trimmed] : [];
       }
       return [shape(p)];
     }),
-  ]);
+  ];
 }
 
 function scoring(entry: ImportedQuizQuestion) {
@@ -305,7 +307,7 @@ function parseItem(root: XmlNode, sourceLine: number): ImportedQuizQuestion {
     if (!Number.isFinite(q.points) || q.points <= 0 || q.points > 100)
       fail("Puntaje QTI inválido.");
     const expected = parseXml(encoder.encode(scoring(entry)));
-    if (shape(processor) !== shape(expected))
+    if (JSON.stringify(shape(processor)) !== JSON.stringify(shape(expected)))
       fail("La lógica de corrección QTI no está soportada.");
   }
   const feedback = children(root, "modalFeedback");

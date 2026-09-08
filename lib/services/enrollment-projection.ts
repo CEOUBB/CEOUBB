@@ -1,4 +1,5 @@
 import { createSign } from "node:crypto";
+import { z } from "zod";
 import { SECTION_ROLES, type SectionRole } from "../section-roles.ts";
 export type { SectionRole };
 
@@ -55,6 +56,7 @@ export type FirestoreWrite =
   | {
       update: { name: string; fields: Record<string, FirestoreValue> };
       updateMask: { fieldPaths: string[] };
+      updateTransforms?: { fieldPath: string; maximum: { integerValue: string } }[];
     }
   | { delete: string };
 
@@ -238,7 +240,76 @@ export async function projectEnrollments(
   const writes = entries.map((entry) => toFirestoreWrite(parseEnrollmentProjection(entry)));
   if (writes.length === 0) return [];
   await commitFirestoreWrites(writes);
+  const withdrawnSections = new Set(
+    entries.flatMap((entry) => (entry.status !== "activa" ? [entry.seccionId] : []))
+  );
+  for (const batch of chunkWrites([...withdrawnSections], 5)) {
+    await Promise.all(batch.map((sectionId) => invalidateCourseDownloadTokens(sectionId)));
+  }
   return writes;
+}
+
+// Implements: REQ-SEC-02 — SEC-06: los enlaces históricos dejan de autorizar descargas.
+export async function invalidateCourseDownloadTokens(sectionId?: string, dryRun = false) {
+  if (sectionId !== undefined && !isValidPathSegment(sectionId))
+    throw new Error("Sección inválida.");
+  const bucket =
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+    `${FIREBASE_PROJECT_ID}.firebasestorage.app`;
+  const base = `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o`;
+  const token = await googleAccessToken(STORAGE_SCOPE);
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const prefix = sectionId ? `courses/${sectionId}/` : "courses/";
+  const pageSchema = z.object({
+    nextPageToken: z.string().optional(),
+    items: z
+      .array(
+        z.object({
+          name: z.string(),
+          metageneration: z.string(),
+          metadata: z.record(z.string(), z.string()).optional(),
+        })
+      )
+      .optional(),
+  });
+  let pageToken = "";
+  let tokenizedFiles = 0;
+  // ponytail: recorre los archivos de la sección al revocar; migrar a un gateway si el volumen exige revocación O(1).
+  do {
+    const query = new URLSearchParams({
+      prefix,
+      maxResults: "100",
+      fields: "nextPageToken,items(name,metageneration,metadata)",
+      ...(pageToken ? { pageToken } : {}),
+    });
+    const response = await fetch(`${base}?${query}`, { headers });
+    if (!response.ok) throw new Error("No se pudo invalidar el acceso a archivos anteriores.");
+    const page = pageSchema.parse(await response.json());
+    for (const batch of chunkWrites(page.items ?? [], 10)) {
+      await Promise.all(
+        batch.map(async (object) => {
+          if (!object.name.startsWith(prefix))
+            throw new Error("Archivo fuera del alcance de revocación.");
+          if (!object.metadata?.firebaseStorageDownloadTokens) return;
+          tokenizedFiles++;
+          if (dryRun) return;
+          const result = await fetch(
+            `${base}/${encodeURIComponent(object.name)}?ifMetagenerationMatch=${encodeURIComponent(object.metageneration)}`,
+            {
+              method: "PATCH",
+              headers,
+              body: JSON.stringify({ metadata: { firebaseStorageDownloadTokens: null } }),
+            }
+          );
+          if (!result.ok && result.status !== 404)
+            throw new Error("Un archivo cambió al revocar sus enlaces. Reintenta.");
+        })
+      );
+    }
+    pageToken = page.nextPageToken ?? "";
+  } while (pageToken);
+  return tokenizedFiles;
 }
 
 // Implements: REQ-MOODLE-05
@@ -247,6 +318,59 @@ export async function commitFirestoreWrites(writes: FirestoreWrite[]): Promise<v
   const token = await accessToken();
   for (const batch of chunkWrites(writes)) {
     await commit(batch, token);
+  }
+}
+
+// Implements: REQ-MOODLE-07 — SEC-03: el archivado compite con esta transacción.
+export async function commitOpenSectionWrites(sectionId: string, writes: FirestoreWrite[]) {
+  if (!isValidPathSegment(sectionId) || writes.length > MAX_WRITES_PER_COMMIT)
+    throw new Error("Lote de sección inválido.");
+  const token = await accessToken();
+  const base = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  const begin = await fetch(`${base}:beginTransaction`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ options: { readWrite: {} } }),
+  });
+  if (!begin.ok) throw new Error("No se pudo iniciar la comprobación del período.");
+  const { transaction } = z.object({ transaction: z.string().min(1) }).parse(await begin.json());
+  try {
+    const query = new URLSearchParams({ transaction });
+    const section = await fetch(
+      `${base}/academicSections/${encodeURIComponent(sectionId)}?${query}`,
+      { headers }
+    );
+    if (!section.ok) throw new Error("La sección no está sincronizada.");
+    const { fields } = z
+      .object({
+        fields: z.object({
+          periodoId: z.object({ stringValue: z.string().refine(isValidPathSegment) }),
+        }),
+      })
+      .parse(await section.json());
+    const period = await fetch(
+      `${base}/academicPeriods/${encodeURIComponent(fields.periodoId.stringValue)}?${query}`,
+      { headers }
+    );
+    if (!period.ok) throw new Error("El período no está sincronizado.");
+    const data = z
+      .object({ fields: z.object({ status: z.object({ stringValue: z.literal("abierto") }) }) })
+      .safeParse(await period.json());
+    if (!data.success) throw new Error("El período de esta sección está cerrado.");
+    const response = await fetch(`${base}:commit`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ writes, transaction }),
+    });
+    if (!response.ok) throw new Error("El período cambió durante la importación. Reintenta.");
+  } catch (cause) {
+    await fetch(`${base}:rollback`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ transaction }),
+    }).catch(() => undefined);
+    throw cause;
   }
 }
 

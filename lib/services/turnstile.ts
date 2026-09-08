@@ -3,12 +3,11 @@
 
 /**
  * Valida un token de Cloudflare Turnstile contra el endpoint oficial de siteverify.
- * Si TURNSTILE_SECRET_KEY no está configurada (por ejemplo en tests unitarios o desarrollo local sin llaves),
- * retorna true para permitir degradación limpia y pruebas sin conexión externa.
+ * Sin secreto sólo permite desarrollo y tests locales; producción falla cerrada.
  */
 export async function verifyTurnstileToken(token?: string, ip?: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true;
+  if (!secret) return process.env.NODE_ENV !== "production";
 
   if (!token || typeof token !== "string" || token.trim() === "") {
     return false;

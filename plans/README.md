@@ -109,3 +109,7 @@ All plans are fully self-contained, specify exact file locations, explain the co
 | **08** | Avatar Upload Magic Bytes Spoofing | Web API / File Ingestion | **MEDIUM (6.3)** | [Plan 057](057-sec-avatar-magic-bytes-validation.md) | **RESOLVED** |
 | **09** | Indirect Prompt Injection in PR Reviewer | AI Copilot / LLM | **MEDIUM (6.5)** | [Plan 058](058-sec-discord-pr-prompt-injection.md) | **RESOLVED** |
 | **10** | Uncontrolled Session Concurrency & Dead Pruning | Authentication / Sessions | **MEDIUM (5.3)** | [Plan 059](059-sec-session-concurrency-dependency-audit.md) | **RESOLVED** |
+
+## 7. Auditoría de seguridad del 4 de septiembre de 2026
+
+[Informe 081: auditoría de seguridad](081-auditoria-seguridad-2026-09-04.md), basado en `f9fc4e4`: ocho hallazgos sustentados en código (tres altos y cinco medios), con candidatos y condiciones de despliegue separados. Estado: correcciones implementadas; [evidencia y pendientes de promoción](../docs/security/auditoria-081-ejecucion.md). El informe conserva el diagnóstico original. Los estados anteriores no certifican la seguridad del código actual.

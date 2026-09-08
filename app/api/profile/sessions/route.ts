@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getDb } from "../../../../db";
 import { sessions } from "../../../../db/schema";
 import { currentSessionTokenHash, getSessionUser, sessionPublicId } from "../../../../lib/auth";
+import { destroySession } from "../../../../lib/auth";
+import { revokeFirebaseAccess } from "../../../../lib/services/firebase-revocation";
 
 const MAX_ACTIVE_SESSIONS = 20;
 
@@ -98,9 +100,15 @@ export async function DELETE(request: Request) {
     }
     if (!target) return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
-    await db.delete(sessions).where(eq(sessions.tokenHash, target));
-    const currentHash = await currentSessionTokenHash(request);
-    return Response.json({ revoked: parsed.data.id, current: target === currentHash });
+    // Implements: REQ-SEC-01 — SEC-01: Firebase exige revocación global y reautenticación.
+    await revokeFirebaseAccess(actor.id, false, actor.role === "owner");
+    await db.delete(sessions).where(eq(sessions.userId, actor.id));
+    return Response.json(
+      { revoked: parsed.data.id, current: true, scope: "all" },
+      {
+        headers: { "Set-Cookie": await destroySession(request) },
+      }
+    );
   } catch (cause) {
     console.error("[api/profile/sessions] DELETE", cause);
     return Response.json({ error: "No se pudo cerrar la sesión." }, { status: 500 });

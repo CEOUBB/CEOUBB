@@ -140,6 +140,16 @@ export async function uploadStudentSubmission(
   if (file.size <= 0 || file.size > MAX_SUBMISSION_BYTES)
     throw new Error("La entrega debe pesar entre 1 byte y 25 MB.");
   const user = await currentUser();
+  const { sdk, db } = await firestore();
+  const gradebook = await sdk.getDoc(sdk.doc(db, "courses", courseId, "meta", "gradebook"));
+  const items: unknown = gradebook.data()?.items;
+  const evaluation: unknown = Array.isArray(items)
+    ? items.find(
+        (item: unknown) =>
+          item !== null && typeof item === "object" && "id" in item && item.id === evalId
+      )
+    : undefined;
+  if (!evaluation) throw new Error("La evaluación ya no existe en el libro de notas.");
   const contentType = file.type || "application/octet-stream";
   const storagePath = submissionStoragePath(courseId, evalId, user.uid, file.name, Date.now());
   const cloud = await cloudStorage();
@@ -154,11 +164,11 @@ export async function uploadStudentSubmission(
       resolve
     )
   );
-  const { sdk, db } = await firestore();
   await sdk.setDoc(sdk.doc(db, "courses", courseId, "submissions", `${evalId}_${user.uid}`), {
     uid: user.uid,
     courseId,
     evalId,
+    evaluation,
     authorName: user.displayName ?? "",
     fileName: file.name,
     storagePath,
@@ -271,13 +281,14 @@ export async function renameClassroomFile(courseId: string, id: string, fileName
   await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), { fileName });
 }
 
-export async function classroomFileUrl(storagePath: string) {
+export async function classroomFileBlob(storagePath: string) {
   try {
     const { sdk, storage } = await cloudStorage();
-    return await sdk.getDownloadURL(sdk.ref(storage, storagePath));
+    // Implements: REQ-SEC-02 — SEC-06: cada descarga evalúa las reglas vigentes.
+    return await sdk.getBlob(sdk.ref(storage, storagePath), MAX_UPLOAD_BYTES);
   } catch (cause) {
     if (isDevOrLocalEnvironment()) {
-      return "#";
+      return null;
     }
     throw cause;
   }

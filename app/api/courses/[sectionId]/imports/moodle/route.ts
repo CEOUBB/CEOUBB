@@ -91,7 +91,7 @@ async function sessionAndSection(request: Request, context: MoodleRouteContext) 
     throw new MoodleImportServiceError("Inicia sesión para continuar.", "UNAUTHENTICATED", 401);
   }
   const { sectionId } = await context.params;
-  await authorizeMoodleImport(actor, sectionId);
+  await authorizeMoodleImport(actor, sectionId, request.method !== "GET");
   return { actor, sectionId };
 }
 
