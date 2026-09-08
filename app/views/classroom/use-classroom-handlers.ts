@@ -171,7 +171,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     try {
       await navigator.clipboard.writeText(courseReference);
       setCopiedCourseReference(true);
-      window.setTimeout(() => setCopiedCourseReference(false), 1600);
+      window.setTimeout(() => setCopiedCourseReference(false), 2000);
       note("Código del ramo copiado.", "ok");
     } catch {
       note("No fue posible copiar el código del ramo.", "bad");

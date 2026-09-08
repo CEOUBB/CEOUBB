@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="es" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CEOUBB · Catálogo de Componentes Modernizados</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: oklch(0.48 0.18 255);
+        --primary-active: oklch(0.38 0.16 255);
+        --primary-wash: rgba(0, 85, 184, 0.08);
+        --navy: oklch(0.24 0.09 255);
+        --canvas: oklch(0.975 0.005 240);
+        --surface: #ffffff;
+        --surface-raised: #f8fafc;
+        --ink: oklch(0.2 0.03 260);
+        --ink-secondary: oklch(0.36 0.03 255);
+        --ink-muted: oklch(0.48 0.03 250);
+        --campus-hairline: oklch(0.9 0.012 250);
+        --base-hairline: oklch(0.92 0.006 60);
+        --emerald: oklch(0.7 0.17 155);
+        --emerald-wash: rgba(16, 185, 129, 0.1);
+        --red: oklch(0.55 0.22 25);
+        --red-wash: rgba(239, 68, 68, 0.1);
+        --gold: oklch(0.75 0.16 75);
+        --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+        --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+        --shadow-float:
+          0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+        --spring-physics: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Manrope",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background-color: var(--canvas);
+        color: var(--ink);
+        line-height: 1.5;
+        padding: 2rem 1.5rem 6rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .num {
+        font-variant-numeric: tabular-nums lining-nums;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      /* Top Brand Header */
+      .header {
+        background: var(--surface);
+        border: 1px solid var(--campus-hairline);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .brand-title {
+        font-family: "Merriweather", Georgia, serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--navy);
+        letter-spacing: -0.02em;
+      }
+
+      .brand-sub {
+        color: var(--ink-secondary);
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+      }
+
+      .badge-ceoubb {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-wash);
+        color: var(--primary);
+        border: 1px solid rgba(0, 85, 184, 0.18);
+        padding: 0.4rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      /* Grid Sections */
+      .section-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--campus-hairline);
+        border-radius: 16px;
+        padding: 1.75rem;
+        box-shadow: var(--shadow-sm);
+        transition:
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: rgba(0, 85, 184, 0.25);
+      }
+
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--campus-hairline);
+      }
+
+      .card-title-group h2 {
+        font-family: "Merriweather", Georgia, serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--navy);
+      }
+
+      .card-title-group p {
+        color: var(--ink-muted);
+        font-size: 0.875rem;
+        margin-top: 0.2rem;
+      }
+
+      .source-tag {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        white-space: nowrap;
+      }
+
+      .source-tag.beui {
+        background: #ede9fe;
+        color: #6d28d9;
+        border-color: #ddd6fe;
+      }
+      .source-tag.reui {
+        background: #e0f2fe;
+        color: #0284c7;
+        border-color: #bae6fd;
+      }
+      .source-tag.coss {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+      }
+      .source-tag.transitions {
+        background: #dcfce7;
+        color: #15803d;
+        border-color: #bbf7d0;
+      }
+      .source-tag.beautiful {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+      }
+
+      /* 1. MORPHING TABS (beui.dev style) */
+      .tabs-wrapper {
+        position: relative;
+        background: #f1f5f9;
+        border-radius: 12px;
+        padding: 4px;
+        display: inline-flex;
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .tab-item {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        text-align: center;
+        padding: 0.6rem 1.1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--ink-secondary);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: color 0.15s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+      }
+
+      .tab-item:hover {
+        color: var(--navy);
+      }
+
+      .tab-item.active {
+        color: var(--navy);
+      }
+
+      .tab-pill-slider {
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        left: 4px;
+        width: 120px;
+        background: var(--surface);
+        border-radius: 8px;
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.06),
+          0 1px 2px rgba(0, 0, 0, 0.04);
+        z-index: 1;
+        transition:
+          transform 0.28s var(--spring-physics),
+          width 0.28s var(--spring-physics);
+        pointer-events: none;
+      }
+
+      .tab-badge {
+        background: var(--primary-wash);
+        color: var(--primary);
+        font-size: 0.75rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+
+      .tab-panel-display {
+        margin-top: 1.25rem;
+        padding: 1.25rem;
+        background: var(--surface-raised);
+        border: 1px dashed var(--campus-hairline);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        color: var(--ink-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* 2. ADVANCED DROPZONE (reui.io style) */
+      .dropzone {
+        border: 2px dashed var(--campus-hairline);
+        border-radius: 14px;
+        padding: 2.25rem 1.5rem;
+        text-align: center;
+        background: #fafbfd;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .dropzone:hover,
+      .dropzone.dragover {
+        border-color: var(--primary);
+        background: var(--primary-wash);
+      }
+
+      .dropzone-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.75rem;
+        color: var(--primary);
+        background: white;
+        border: 1px solid var(--campus-hairline);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .file-preview-card {
+        margin-top: 1rem;
+        background: white;
+        border: 1px solid var(--campus-hairline);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .file-icon {
+        width: 40px;
+        height: 40px;
+        background: #fee2e2;
+        color: #dc2626;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.8rem;
+      }
+
+      .file-info {
+        flex: 1;
+        text-align: left;
+      }
+
+      .file-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--navy);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .file-meta {
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+        margin-top: 0.15rem;
+      }
+
+      .progress-bar-bg {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: var(--primary);
+        width: 68%;
+        border-radius: 999px;
+        transition: width 0.3s ease;
+      }
+
+      /* 3. CALENDAR & SCHEDULE BLOCK (coss.com / Cal.com style) */
+      .schedule-grid {
+        display: grid;
+        grid-template-columns: 75px 1fr;
+        gap: 1rem;
+        background: var(--surface-raised);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid var(--campus-hairline);
+      }
+
+      .time-col {
+        display: flex;
+        flex-direction: column;
+        gap: 2.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ink-muted);
+        text-align: right;
+        padding-top: 0.5rem;
+      }
+
+      .events-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .schedule-block {
+        background: white;
+        border: 1px solid var(--campus-hairline);
+        border-left: 4px solid var(--primary);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow-sm);
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .schedule-block:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .schedule-block.active-now {
+        border-left-color: var(--emerald);
+        background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white 25%);
+      }
+
+      .block-info h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--navy);
+      }
+
+      .block-info p {
+        font-size: 0.825rem;
+        color: var(--ink-secondary);
+        margin-top: 0.15rem;
+      }
+
+      .live-pulse {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #059669;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        padding: 0.25rem 0.6rem;
+        border-radius: 9999px;
+      }
+
+      .pulse-dot {
+        width: 7px;
+        height: 7px;
+        background: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+      }
+
+      /* 4. MICRO-SWAPS & BUTTONS (transitions.dev & emilkowal.ski) */
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .swap-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: var(--surface);
+        border: 1px solid var(--campus-hairline);
+        color: var(--navy);
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.65rem 1.25rem;
+        border-radius: 9px;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: all 0.15s ease;
+        min-width: 175px;
+      }
+
+      .swap-button:hover {
+        background: var(--surface-raised);
+        border-color: #cbd5e1;
+      }
+
+      .swap-button:active {
+        transform: scale(0.98);
+      }
+
+      .swap-button.copied {
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+        color: #047857;
+      }
+
+      .swap-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition:
+          transform 0.18s var(--spring-physics),
+          opacity 0.18s ease;
+      }
+
+      .swap-button.copied .state-default {
+        transform: translateY(-24px);
+        opacity: 0;
+        position: absolute;
+      }
+
+      .swap-button.copied .state-copied {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .swap-button:not(.copied) .state-copied {
+        transform: translateY(24px);
+        opacity: 0;
+        position: absolute;
+      }
+
+      /* 5. AUDIT DIFF VIEWER (beautifului.dev style) */
+      .diff-card {
+        background: white;
+        border: 1px solid var(--campus-hairline);
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .diff-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: var(--ink-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .diff-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--surface-raised);
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+      }
+
+      .diff-badge {
+        font-size: 1.1rem;
+        font-weight: 800;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        min-width: 55px;
+        text-align: center;
+      }
+
+      .diff-badge.old {
+        background: var(--red-wash);
+        color: #b91c1c;
+        text-decoration: line-through;
+      }
+
+      .diff-badge.new {
+        background: var(--emerald-wash);
+        color: #047857;
+      }
+
+      .diff-arrow {
+        color: var(--ink-muted);
+        font-weight: 700;
+      }
+
+      /* 6. FLOATING ACTION BAR (beui.dev style) */
+      .table-container {
+        border: 1px solid var(--campus-hairline);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .student-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.875rem;
+      }
+
+      .student-table th {
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        color: var(--ink-secondary);
+        border-bottom: 1px solid var(--campus-hairline);
+      }
+
+      .student-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--campus-hairline);
+      }
+
+      .student-table tr:hover {
+        background: #f8fafc;
+      }
+
+      .floating-bar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--navy);
+        color: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 999px;
+        box-shadow: var(--shadow-float);
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        z-index: 100;
+        transition:
+          transform 0.35s var(--spring-physics),
+          opacity 0.35s ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .floating-bar.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .floating-btn {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .floating-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .floating-btn.danger {
+        background: rgba(239, 68, 68, 0.25);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
+      }
+
+      /* Comparison Tabs: Antes vs Después */
+      .compare-toggle {
+        display: inline-flex;
+        background: #e2e8f0;
+        padding: 3px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.8rem;
+      }
+
+      .compare-btn {
+        border: none;
+        padding: 0.35rem 0.85rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #475569;
+        background: transparent;
+        transition: all 0.15s ease;
+      }
+
+      .compare-btn.active {
+        background: white;
+        color: var(--navy);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* SVG Utilities */
+      svg {
+        display: inline-block;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div>
+          <div class="badge-ceoubb">
+            <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+              <path
+                d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192ZM120,88v80a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Zm48,0v80a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Z"
+              />
+            </svg>
+            CEOUBB · Sistema de Componentes Modernizados
+          </div>
+          <h1 class="brand-title" style="margin-top: 0.5rem">Prototipo de Integración Visual</h1>
+          <p class="brand-sub">
+            Patrones extraídos de <strong>beui.dev</strong>, <strong>reui.io</strong>,
+            <strong>coss.com</strong>, <strong>transitions.dev</strong> y
+            <strong>beautifului.dev</strong> adaptados con tokens OKLCH institucionales.
+          </p>
+        </div>
+        <div>
+          <span style="font-size: 0.85rem; color: var(--ink-muted); font-weight: 600"
+            >Paleta: OKLCH UBB · Iconos: Phosphor</span
+          >
+        </div>
+      </header>
+
+      <!-- Main Grid -->
+      <div class="section-grid">
+        <!-- 1. MORPHING TABS -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>1. Pestañas de Navegación del Aula (Morphing Spring Tabs)</h2>
+              <p>
+                Reemplaza las pestañas fijas de <code>ClassroomView.tsx</code> por un indicador
+                flotante con resorte físico.
+              </p>
+            </div>
+            <span class="source-tag beui">beui.dev</span>
+          </div>
+
+          <div class="tabs-wrapper" id="classroomTabs">
+            <div class="tab-pill-slider" id="tabSlider"></div>
+            <button class="tab-item active" data-index="0" data-view="Portada del Ramo">
+              <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor">
+                <path
+                  d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v88a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H48V120L128,40l80,80Z"
+                />
+              </svg>
+              Portada
+            </button>
+            <button class="tab-item" data-index="1" data-view="Planilla de Notas y Evaluaciones">
+              <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor">
+                <path
+                  d="M251.76,88.94l-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87v48.42a15.91,15.91,0,0,0,4.06,10.65C49.16,191.53,78.51,216,128,216s78.84-24.47,91.94-39.06A15.91,15.91,0,0,0,224,166.29V117.87l27.76-14.81a8,8,0,0,0,0-14.12ZM128,41.05l99.28,52.95L128,147l-99.28-53Zm80,125.24c-11.45,12.7-37.49,33.71-80,33.71s-68.55-21-80-33.71V126.4L124.24,167a8,8,0,0,0,7.52,0L208,126.4Z"
+                />
+              </svg>
+              Notas <span class="tab-badge num">3</span>
+            </button>
+            <button class="tab-item" data-index="2" data-view="Cuestionarios y Certámenes Online">
+              <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor">
+                <path
+                  d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM96,80a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H104A8,8,0,0,1,96,80Zm0,48a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H104A8,8,0,0,1,96,128Zm0,48a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,176ZM72,88a8,8,0,1,1,8-8A8,8,0,0,1,72,88Zm0,48a8,8,0,1,1,8-8A8,8,0,0,1,72,136Zm0,48a8,8,0,1,1,8-8A8,8,0,0,1,72,184Z"
+                />
+              </svg>
+              Cuestionarios
+            </button>
+            <button class="tab-item" data-index="3" data-view="Roster de Alumnos y Grupos">
+              <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor">
+                <path
+                  d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.37a8,8,0,0,1-11.07-2.33,79.83,79.83,0,0,0-54.34-37.17,8,8,0,0,1,4.77-15.26,95.66,95.66,0,0,1,63,43.69A8,8,0,0,1,250.14,206.37ZM168,140a8,8,0,0,1-8-8,44,44,0,0,0-44-44,8,8,0,0,1,0-16,60,60,0,0,1,60,60A8,8,0,0,1,168,140Z"
+                />
+              </svg>
+              Participantes
+            </button>
+          </div>
+
+          <div class="tab-panel-display" id="tabContentDisplay">
+            <div>
+              <strong>Vista activa:</strong> <span id="activeViewName">Portada del Ramo</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--primary); font-weight: 600"
+              >Física de resorte amortiguado (stiffness: 340, damping: 28)</span
+            >
+          </div>
+        </article>
+
+        <!-- 2. ADVANCED FILE UPLOAD -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>2. Zona de Entrega de Tareas con Subida Progresiva</h2>
+              <p>
+                Reemplaza el input simple de <code>SubmissionSlot.tsx</code> por un uploader
+                interactivo con feedback de subida a Storage.
+              </p>
+            </div>
+            <span class="source-tag reui">reui.io/components</span>
+          </div>
+
+          <div class="dropzone" id="dropzoneArea">
+            <div class="dropzone-icon">
+              <svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor">
+                <path
+                  d="M238,136v64a14,14,0,0,1-14,14H32a14,14,0,0,1-14-14V136a14,14,0,0,1,14-14H72a6,6,0,0,1,0,12H32a2,2,0,0,0-2,2v64a2,2,0,0,0,2,2H224a2,2,0,0,0,2-2V136a2,2,0,0,0-2-2H184a6,6,0,0,1,0-12h40A14,14,0,0,1,238,136ZM83.76,76.24,122,38v98a6,6,0,0,0,12,0V38l38.24,38.24a6,6,0,0,0,8.48-8.48l-48-48a6,6,0,0,0-8.48,0l-48,48a6,6,0,0,0,8.48,8.48Z"
+                />
+              </svg>
+            </div>
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--navy)">
+              Arrastra tu informe o haz clic para subir
+            </h3>
+            <p style="font-size: 0.825rem; color: var(--ink-muted); margin-top: 0.25rem">
+              Formatos aceptados: PDF, DOCX, ZIP · Tamaño máximo: <span class="num">25 MB</span>
+            </p>
+          </div>
+
+          <div class="file-preview-card">
+            <div class="file-icon">PDF</div>
+            <div class="file-info">
+              <div class="file-name">
+                <span>Informe_Laboratorio_3_Sepulveda.pdf</span>
+                <span class="tab-badge num">4.2 MB</span>
+              </div>
+              <div class="file-meta">
+                <span id="uploadStatusText">Subiendo a Firebase Storage... 72%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="uploadBar" style="width: 72%"></div>
+              </div>
+            </div>
+            <button
+              id="simulateUploadBtn"
+              style="
+                background: none;
+                border: 1px solid var(--campus-hairline);
+                border-radius: 8px;
+                padding: 0.4rem 0.75rem;
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+              "
+            >
+              Reintentar
+            </button>
+          </div>
+        </article>
+
+        <!-- 3. SCHEDULE / CALENDAR BLOCKS -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>3. Bloques de Horario y Planificador Semanal</h2>
+              <p>
+                Reemplaza los bloques rígidos de <code>PlannerGrid.tsx</code> con el layout de
+                precisión de <strong>Cal.com</strong>.
+              </p>
+            </div>
+            <span class="source-tag coss">coss.com/ui</span>
+          </div>
+
+          <div class="schedule-grid">
+            <div class="time-col num">
+              <div>08:15</div>
+              <div>09:50</div>
+              <div>11:25</div>
+            </div>
+            <div class="events-col">
+              <!-- Event 1 (Active Now) -->
+              <div class="schedule-block active-now">
+                <div class="block-info">
+                  <div style="display: flex; align-items: center; gap: 0.5rem">
+                    <h4>Sistemas Distribuidos</h4>
+                    <span class="live-pulse"> <span class="pulse-dot"></span> En curso </span>
+                  </div>
+                  <p><span class="num">220138-1</span> · Lab 4 DINF · Prof. Carlos Gómez</p>
+                </div>
+                <div class="num" style="font-size: 0.85rem; font-weight: 700; color: #047857">
+                  08:15 – 09:45
+                </div>
+              </div>
+
+              <!-- Event 2 -->
+              <div class="schedule-block">
+                <div class="block-info">
+                  <h4>Ingeniería de Software II</h4>
+                  <p><span class="num">220140-2</span> · Sala A-201 · Prof. Valeria Ríos</p>
+                </div>
+                <div
+                  class="num"
+                  style="font-size: 0.85rem; font-weight: 600; color: var(--ink-secondary)"
+                >
+                  09:50 – 11:20
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 4. MICRO-SWAPS -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>4. Micro-Swaps de Botones y Estados</h2>
+              <p>
+                Reemplaza los redibujados bruscos de <code>CourseRail.tsx</code> y
+                <code>GradesSection.tsx</code> por micro-animaciones CSS ($\le 120\text{ms}$).
+              </p>
+            </div>
+            <span class="source-tag transitions">transitions.dev</span>
+          </div>
+
+          <div class="btn-row">
+            <!-- Copy Section Code Button -->
+            <button class="swap-button" id="copyCodeBtn" type="button">
+              <span class="swap-content state-default">
+                <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+                  <path
+                    d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"
+                  />
+                </svg>
+                Copiar código ramo
+              </span>
+              <span class="swap-content state-copied">
+                <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+                  <path
+                    d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
+                  />
+                </svg>
+                ¡Copiado al portapapeles!
+              </span>
+            </button>
+
+            <!-- Save Grade Button -->
+            <button class="swap-button" id="saveGradeBtn" type="button">
+              <span class="swap-content state-default">
+                <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+                  <path
+                    d="M224,80l-32-32H48A16,16,0,0,0,32,64V192a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V80ZM128,184a24,24,0,1,1,24-24A24,24,0,0,1,128,184ZM160,88H64V64h96Z"
+                  />
+                </svg>
+                Guardar calificaciones
+              </span>
+              <span class="swap-content state-copied">
+                <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+                  <path
+                    d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
+                  />
+                </svg>
+                Notas guardadas
+              </span>
+            </button>
+          </div>
+        </article>
+
+        <!-- 5. AUDIT & DIFF VIEWER -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>5. Visor de Auditoría y Comparador de Calificaciones</h2>
+              <p>
+                Para <code>GradeHistoryDialog.tsx</code>: visualización clara de antes/después en
+                rectificación de notas.
+              </p>
+            </div>
+            <span class="source-tag beautiful">beautifului.dev</span>
+          </div>
+
+          <div class="diff-card">
+            <div class="diff-header">
+              <div><strong>Certamen 1 (Ponderación 25%)</strong> · Alumno: Matías Sepúlveda</div>
+              <div class="num">08 Sep 2026, 17:42</div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-badge old num">4.1</div>
+              <div class="diff-arrow">→</div>
+              <div class="diff-badge new num">5.7</div>
+              <div style="font-size: 0.85rem; color: var(--ink-secondary); margin-left: 0.5rem">
+                <strong>Delta: +1.6</strong> · Motivo:
+                <em>«Revisión ítem 2 aceptada por cátedra»</em> · Modificado por:
+                <strong>Prof. Valeria Ríos</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 6. BATCH SELECTION & FLOATING DOCK -->
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title-group">
+              <h2>6. Selección Múltiple y Barra Flotante de Acciones</h2>
+              <p>
+                Nuevo componente para <code>PeopleSection.tsx</code> y
+                <code>GradesSection.tsx</code>. Marca alumnos para activar la barra flotante.
+              </p>
+            </div>
+            <span class="source-tag beui">beui.dev</span>
+          </div>
+
+          <div class="table-container">
+            <table class="student-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px"><input type="checkbox" id="selectAllCheckbox" /></th>
+                  <th>Estudiante</th>
+                  <th>RUT</th>
+                  <th>Promedio Actual</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" class="student-row-check" /></td>
+                  <td><strong>Bastián Concha</strong></td>
+                  <td class="num">20.481.932-5</td>
+                  <td class="num" style="font-weight: 700; color: #047857">6.1</td>
+                  <td>
+                    <span class="tab-badge" style="background: #ecfdf5; color: #047857"
+                      >Eximido</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="student-row-check" /></td>
+                  <td><strong>Camila Sanhueza</strong></td>
+                  <td class="num">21.092.114-K</td>
+                  <td class="num" style="font-weight: 700; color: var(--navy)">5.4</td>
+                  <td><span class="tab-badge">Regular</span></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="student-row-check" /></td>
+                  <td><strong>Diego Navarrete</strong></td>
+                  <td class="num">20.893.201-1</td>
+                  <td class="num" style="font-weight: 700; color: #dc2626">3.8</td>
+                  <td>
+                    <span class="tab-badge" style="background: #fee2e2; color: #b91c1c"
+                      >En riesgo</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- FLOATING ACTION DOCK -->
+    <div class="floating-bar" id="floatingBar">
+      <div
+        style="
+          font-weight: 700;
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <span class="num" id="selectedCount">0</span> seleccionados
+      </div>
+      <div style="height: 18px; width: 1px; background: rgba(255, 255, 255, 0.2)"></div>
+      <button class="floating-btn" id="bulkExemptBtn">
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor">
+          <path
+            d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
+          />
+        </svg>
+        Eximir seleccionados
+      </button>
+      <button class="floating-btn" id="bulkMessageBtn">
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor">
+          <path
+            d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192Z"
+          />
+        </svg>
+        Enviar comunicado
+      </button>
+      <button class="floating-btn danger" id="clearSelectionBtn">Deseleccionar</button>
+    </div>
+
+    <script>
+      // 1. Interactive Morphing Tabs
+      const tabsWrapper = document.getElementById("classroomTabs");
+      const tabSlider = document.getElementById("tabSlider");
+      const tabs = tabsWrapper.querySelectorAll(".tab-item");
+      const activeViewName = document.getElementById("activeViewName");
+
+      function updateSlider(targetTab) {
+        const tabRect = targetTab.getBoundingClientRect();
+        const wrapperRect = tabsWrapper.getBoundingClientRect();
+        const leftOffset = tabRect.left - wrapperRect.left + tabsWrapper.scrollLeft;
+        tabSlider.style.transform = `translateX(${leftOffset}px)`;
+        tabSlider.style.width = `${tabRect.width}px`;
+      }
+
+      // Set initial position
+      window.addEventListener("load", () => {
+        const activeTab = tabsWrapper.querySelector(".tab-item.active");
+        if (activeTab) updateSlider(activeTab);
+      });
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          updateSlider(tab);
+          activeViewName.textContent = tab.getAttribute("data-view");
+        });
+      });
+
+      // 2. Simulated Upload Progress
+      const simulateBtn = document.getElementById("simulateUploadBtn");
+      const uploadBar = document.getElementById("uploadBar");
+      const uploadStatus = document.getElementById("uploadStatusText");
+
+      simulateBtn.addEventListener("click", () => {
+        uploadBar.style.width = "0%";
+        uploadStatus.textContent = "Iniciando subida... 0%";
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 15) + 10;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            uploadStatus.innerHTML =
+              '<span style="color:#047857; font-weight:700;">✓ Subida completada con éxito</span>';
+          } else {
+            uploadStatus.textContent = `Subiendo a Firebase Storage... ${progress}%`;
+          }
+          uploadBar.style.width = `${progress}%`;
+        }, 200);
+      });
+
+      // 3. Micro-swap buttons
+      const copyCodeBtn = document.getElementById("copyCodeBtn");
+      copyCodeBtn.addEventListener("click", () => {
+        copyCodeBtn.classList.add("copied");
+        setTimeout(() => {
+          copyCodeBtn.classList.remove("copied");
+        }, 2200);
+      });
+
+      const saveGradeBtn = document.getElementById("saveGradeBtn");
+      saveGradeBtn.addEventListener("click", () => {
+        saveGradeBtn.classList.add("copied");
+        setTimeout(() => {
+          saveGradeBtn.classList.remove("copied");
+        }, 2200);
+      });
+
+      // 4. Batch Selection & Floating Dock
+      const selectAll = document.getElementById("selectAllCheckbox");
+      const rowChecks = document.querySelectorAll(".student-row-check");
+      const floatingBar = document.getElementById("floatingBar");
+      const selectedCount = document.getElementById("selectedCount");
+      const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+
+      function updateSelection() {
+        const checkedCount = document.querySelectorAll(".student-row-check:checked").length;
+        selectedCount.textContent = checkedCount;
+        if (checkedCount > 0) {
+          floatingBar.classList.add("show");
+        } else {
+          floatingBar.classList.remove("show");
+        }
+        selectAll.checked = checkedCount === rowChecks.length && rowChecks.length > 0;
+      }
+
+      selectAll.addEventListener("change", () => {
+        rowChecks.forEach((check) => (check.checked = selectAll.checked));
+        updateSelection();
+      });
+
+      rowChecks.forEach((check) => {
+        check.addEventListener("change", updateSelection);
+      });
+
+      clearSelectionBtn.addEventListener("click", () => {
+        rowChecks.forEach((check) => (check.checked = false));
+        selectAll.checked = false;
+        updateSelection();
+      });
+    </script>
+  </body>
+</html>

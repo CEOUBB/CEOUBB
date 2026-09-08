@@ -2,12 +2,19 @@
 
 import {
   ArrowDown,
+  CheckSquare,
+  Copy,
   EnvelopeSimple,
   MagnifyingGlass,
   UsersThree,
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  ExpandableActionBar,
+  type ExpandableActionBarItem,
+} from "@/components/motion/expandable-action-bar";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Course } from "../../../lib/courses";
 import { ClassroomStudent } from "../../../lib/firebase-classroom-client";
@@ -84,15 +91,36 @@ function ParticipantRow({
   participant,
   currentUserId,
   course,
+  selected = false,
+  onToggleSelect,
+  selectable = false,
 }: {
   participant: ParticipantDirectoryEntry;
   currentUserId: string;
   course: Course;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  selectable?: boolean;
 }) {
   const isCurrentUser = participant.id === currentUserId;
   const contactHref = participantContactHref(participant.email, course.code, course.section);
   return (
-    <article className="participant-row" data-current={isCurrentUser || undefined}>
+    <article
+      className={`participant-row ${selectable ? "has-checkbox" : ""}`}
+      data-current={isCurrentUser || undefined}
+      data-selected={selected || undefined}
+    >
+      {selectable && (
+        <label className="participant-checkbox-wrap" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect?.(participant.id)}
+            aria-label={`Seleccionar a ${participant.name}`}
+            className="participant-checkbox"
+          />
+        </label>
+      )}
       {isCurrentUser ? (
         <Avatar large email={participant.email} name={participant.name} />
       ) : (
@@ -214,6 +242,117 @@ export function PeopleSection({
   const total = participantCount(counts);
   const filteredTotal = roleFilter === "all" ? total : participantGroupCount(counts, roleFilter);
   const shown = visibleParticipants.length;
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState(false);
+  const reduce = useReducedMotion();
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && selectedIds.size > 0) {
+        setSelectedIds(new Set());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIds.size]);
+
+  const selectedParticipants = useMemo(
+    () => visibleParticipants.filter((p) => selectedIds.has(p.id)),
+    [visibleParticipants, selectedIds]
+  );
+
+  const selectedEmails = useMemo(
+    () => selectedParticipants.map((p) => p.email.trim()).filter((email) => email.length > 0),
+    [selectedParticipants]
+  );
+
+  const selectableParticipants = useMemo(
+    () => visibleParticipants.filter((p) => p.role === "student" || Boolean(p.email)),
+    [visibleParticipants]
+  );
+
+  const allSelectableCount = selectableParticipants.length;
+  const isAllSelected = allSelectableCount > 0 && selectedIds.size >= allSelectableCount;
+
+  const handleSelectAllToggle = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableParticipants.map((p) => p.id)));
+    }
+  };
+
+  const handleCopyEmails = () => {
+    if (selectedEmails.length === 0) return;
+    navigator.clipboard.writeText(selectedEmails.join(", "));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleComposeEmail = () => {
+    if (selectedEmails.length === 0) return;
+    const subject = encodeURIComponent(`Consulta ${course.code} · Sección ${course.section}`);
+    const bcc = encodeURIComponent(selectedEmails.join(","));
+    window.open(`mailto:?bcc=${bcc}&subject=${subject}`, "_blank");
+  };
+
+  const actionBarItems: ExpandableActionBarItem[] = useMemo(
+    () => [
+      {
+        id: "count",
+        label: `${selectedIds.size} ${selectedIds.size === 1 ? "alumno" : "alumnos"}`,
+        icon: <UsersThree size={16} weight="bold" />,
+        badge: selectedIds.size,
+      },
+      {
+        id: "copy",
+        label: copied ? "¡Copiados!" : "Copiar correos",
+        icon: <Copy size={16} weight="bold" />,
+        onClick: handleCopyEmails,
+      },
+      {
+        id: "email",
+        label: "Escribir correo",
+        icon: <EnvelopeSimple size={16} weight="bold" />,
+        onClick: handleComposeEmail,
+      },
+      {
+        id: "select-all",
+        label: isAllSelected ? "Deseleccionar todo" : "Seleccionar todo",
+        icon: <CheckSquare size={16} weight="bold" />,
+        onClick: handleSelectAllToggle,
+      },
+      {
+        id: "deselect",
+        label: "Deseleccionar",
+        icon: <X size={16} weight="bold" />,
+        onClick: deselectAll,
+      },
+    ],
+    [
+      selectedIds.size,
+      copied,
+      isAllSelected,
+      selectedEmails,
+      course.code,
+      course.section,
+      selectableParticipants,
+    ]
+  );
 
   const roleFilters: { key: ParticipantRoleFilter; label: string; count: number }[] = [
     { key: "all", label: "Todos", count: total },
@@ -399,6 +538,9 @@ export function PeopleSection({
                         currentUserId={user.id}
                         key={participant.id}
                         participant={participant}
+                        selected={selectedIds.has(participant.id)}
+                        onToggleSelect={toggleSelect}
+                        selectable={participant.role === "student" || Boolean(participant.email)}
                       />
                     ))}
                   </div>
@@ -429,6 +571,24 @@ export function PeopleSection({
           {loadingMore ? "Cargando…" : "Cargar más participantes"}
         </button>
       )}
+
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.aside
+            role="region"
+            aria-label="Acciones de participantes seleccionados"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 340, damping: 28 }}
+            className="fixed bottom-6 inset-x-0 z-50 flex justify-center pointer-events-none px-4"
+          >
+            <div className="pointer-events-auto shadow-2xl">
+              <ExpandableActionBar items={actionBarItems} size="md" expandOnHover />
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -4,7 +4,9 @@ import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useSt
 import dynamic from "next/dynamic";
 import {
   ChatCenteredText,
+  Check,
   ClockCounterClockwise,
+  FloppyDisk,
   GraduationCap,
   MagnifyingGlass,
   X,
@@ -567,8 +569,8 @@ function TeacherGrades({
     });
   }, []);
 
-  const persistFeedback = async (value: string) => {
-    if (!feedbackEditor) return;
+  const persistFeedback = async (value: string): Promise<boolean> => {
+    if (!feedbackEditor) return false;
     setFeedbackBusy(true);
     setFeedbackError("");
     try {
@@ -584,12 +586,13 @@ function TeacherGrades({
           : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
         "ok"
       );
-      setFeedbackEditor(null);
+      return true;
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "No fue posible guardar la retroalimentación.";
       setFeedbackError(message);
       note(message, "bad");
+      return false;
     } finally {
       setFeedbackBusy(false);
     }
@@ -828,11 +831,12 @@ function FeedbackDialog({
   busy: boolean;
   error: string;
   onClose: () => void;
-  onSave: (value: string) => Promise<void>;
+  onSave: (value: string) => Promise<boolean | void>;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(editor.feedback);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (dialogRef.current && !dialogRef.current.open) {
@@ -841,6 +845,19 @@ function FeedbackDialog({
     }
   }, []);
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy || saved) return;
+    const ok = await onSave(value);
+    if (ok !== false) {
+      setSaved(true);
+      window.setTimeout(() => {
+        setSaved(false);
+        onClose();
+      }, 2000);
+    }
+  };
+
   return (
     <dialog
       aria-labelledby="grade-feedback-dialog-title"
@@ -848,22 +865,17 @@ function FeedbackDialog({
       data-requirement="Implements: REQ-FEEDBACK-03 REQ-FEEDBACK-04"
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy) onClose();
+        if (!busy && !saved) onClose();
       }}
       onClose={onClose}
       ref={dialogRef}
     >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void onSave(value);
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         <header>
           <h2 id="grade-feedback-dialog-title">Retroalimentación de {editor.item.name}</h2>
           <button
             aria-label="Cerrar retroalimentación"
-            disabled={busy}
+            disabled={busy || saved}
             onClick={onClose}
             type="button"
           >
@@ -881,6 +893,7 @@ function FeedbackDialog({
               error ? "grade-feedback-help grade-feedback-error" : "grade-feedback-help"
             }
             aria-invalid={Boolean(error)}
+            disabled={saved}
             id="grade-feedback-text"
             maxLength={MAX_GRADE_FEEDBACK_LENGTH}
             onChange={(event) => setValue(event.target.value)}
@@ -903,11 +916,30 @@ function FeedbackDialog({
           </p>
         )}
         <footer>
-          <button className="planner-dialog-cancel" disabled={busy} onClick={onClose} type="button">
+          <button
+            className="planner-dialog-cancel"
+            disabled={busy || saved}
+            onClick={onClose}
+            type="button"
+          >
             Cancelar
           </button>
-          <button className="planner-dialog-save" disabled={busy} type="submit">
-            {busy ? "Guardando…" : "Guardar retroalimentación"}
+          <button
+            className={`planner-dialog-save swap-button ${saved ? "copied" : ""}`}
+            data-copied={saved ? "true" : undefined}
+            disabled={busy}
+            type="submit"
+          >
+            <span className="swap-wrapper" aria-hidden="true">
+              <span className="swap-content state-default">
+                <FloppyDisk aria-hidden="true" size={16} />
+                {busy ? "Guardando…" : "Guardar retroalimentación"}
+              </span>
+              <span className="swap-content state-copied">
+                <Check aria-hidden="true" size={16} weight="bold" />
+                Retroalimentación guardada
+              </span>
+            </span>
           </button>
         </footer>
       </form>
