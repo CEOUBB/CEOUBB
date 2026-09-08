@@ -49,7 +49,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "@phosphor-icons/react",
       "@phosphor-icons/react/ssr",
-      "katex",
       "highlight.js",
       "motion",
       "vaul",
@@ -87,13 +86,7 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
       {
-        source: "/biblioteca/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=86400" },
-        ],
-      },
-      {
-        source: "/biblioteca/assets/vendor/:path*",
+        source: "/vendor/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
@@ -101,6 +94,15 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/biblioteca/:path*",
+        destination: "/",
+        permanent: false,
       },
     ];
   },

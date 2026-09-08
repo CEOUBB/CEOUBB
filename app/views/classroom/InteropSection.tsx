@@ -253,7 +253,7 @@ export function InteropSection({
         <h2>Herramientas y objetos de aprendizaje</h2>
       </div>
       <p className="interop-lede">
-        Abre los laboratorios, bibliotecas y actividades que comparte tu equipo docente.
+        Abre los laboratorios, recursos y actividades que comparte tu equipo docente.
       </p>
       {state.error && (
         <div className="interop-alert" role="alert">

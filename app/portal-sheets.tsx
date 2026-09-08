@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Archive, FolderSimple } from "@phosphor-icons/react";
+import { FolderSimple } from "@phosphor-icons/react";
 import type { Course } from "../lib/courses";
 import { MobileSheet } from "./mobile-shell";
 
@@ -51,20 +50,6 @@ export function MobileCoursesSheet({
             </span>
           </button>
         ))}
-        <Link
-          className="sheet-row"
-          href="/biblioteca/index.html"
-          prefetch={false}
-          onClick={() => onOpenChange(false)}
-        >
-          <span aria-hidden="true" className="sheet-row-icon">
-            <Archive size={20} />
-          </span>
-          <span>
-            Biblioteca de Estudio
-            <small>Catálogo completo</small>
-          </span>
-        </Link>
       </div>
     </MobileSheet>
   );

@@ -527,7 +527,6 @@ img {
 .classroom-top h1,
 .course-card h3,
 .next-eval-title,
-.library-panel h2,
 .policy-page h1,
 .access-brand h1,
 .login-card h2 {
@@ -1994,7 +1993,7 @@ img {
   /* Ancho fijo: al plegar, la columna del grid se cierra pero los rótulos no
      se reajustan a mitad de la animación. El panel sale deslizándose entero. */
   width: 268px;
-  /* dvh: en móvil la barra del navegador no debe empujar la biblioteca fuera de alcance. */
+  /* dvh: en móvil la barra del navegador no debe empujar el contenido fuera de alcance. */
   height: calc(100dvh - var(--header-offset));
   overflow-y: auto;
   overflow-x: hidden;
@@ -8070,10 +8069,8 @@ mark,
 }
 
 /* ── Recursos ─────────────────────────────────────────────────
-   Una portada y un índice. Arriba, lo único que vive dentro de CEOUBB
-   —la biblioteca— más la tira de la app; abajo, los servicios externos
-   en una sola retícula de filas con filtro, para que buscar sea un
-   gesto y no un recorrido por cuatro bloques distintos.
+   Una cabecera, la tira de la app y los servicios externos
+   en una retícula organizada de filas con filtro rápido.
    ─────────────────────────────────────────────────────────── */
 
 .resources-hub {
@@ -8084,97 +8081,11 @@ mark,
   margin-bottom: 0;
 }
 
-/* ── Portada: la biblioteca y la app ─────────────────────── */
+/* ── Portada: la app móvil ───────────────────────────────── */
 
 .res-top {
   display: grid;
   gap: var(--space-sm);
-}
-
-/* La biblioteca es lo único propio de la página: se lleva el ancho
-   completo, la voz display y el único botón sólido del hub. */
-.library-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: var(--space-xl);
-  padding: var(--space-xl) var(--space-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xl);
-}
-
-.library-lead {
-  display: grid;
-  gap: var(--space-xs);
-  align-content: start;
-}
-
-.library-icon {
-  display: inline-grid;
-  place-items: center;
-  margin-bottom: var(--space-xxs);
-  width: 46px;
-  height: 46px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
-}
-
-.library-panel h2 {
-  font-size: clamp(23px, 2.6vw, 30px);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-}
-
-.library-panel p {
-  max-width: 52ch;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.library-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-  min-height: 44px;
-  padding: 0 var(--space-lg);
-  background: var(--color-primary);
-  border-radius: var(--radius-full);
-  color: var(--color-on-primary);
-  font-size: 15px;
-  font-weight: 500;
-  transition: background var(--transition-fast);
-}
-.library-cta:hover {
-  background: var(--color-primary-active);
-  color: var(--color-on-primary);
-}
-
-.library-points {
-  margin: 0;
-  padding: 0 0 0 var(--space-xl);
-  list-style: none;
-  display: grid;
-  gap: var(--space-sm);
-  align-content: center;
-  border-left: 1px solid var(--border-hairline);
-}
-.library-points li {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-xs);
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-.library-points svg {
-  flex: none;
-  margin-top: 4px;
-  color: var(--academic-teal);
 }
 
 /* La app todavía no está publicada: una tira de servicio, no una
@@ -10610,15 +10521,6 @@ mark,
   .classroom-columns,
   .grades-view {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .library-panel {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-lg);
-  }
-  .library-points {
-    padding: var(--space-lg) 0 0;
-    border-top: 1px solid var(--border-hairline);
-    border-left: 0;
   }
   .planner-frame {
     --planner-gutter: 54px;

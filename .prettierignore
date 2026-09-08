@@ -24,7 +24,7 @@ pnpm-lock.yaml
 # Proyectos nativos móviles y recursos estáticos
 android
 ios
-public/biblioteca
+public/vendor
 
 # Bases de datos y archivos binarios
 *.db

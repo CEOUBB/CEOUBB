@@ -33,13 +33,17 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "./",
   },
-  title: "Centro de Estudio UBB | Ingeniería Mecánica",
+  title: "Centro de Estudio UBB | Aula Virtual UBB",
   description:
-    "Aula, certámenes, ejercicios resueltos, apuntes y recursos para estudiantes de Ingeniería Mecánica UBB.",
+    "Plataforma académica y aula virtual independiente para estudiantes y docentes de la Universidad del Bío-Bío.",
   applicationName: "Centro de Estudio UBB",
   manifest: "/manifest.webmanifest",
   keywords: [
-    "centro de estudios UBB",
+    "Centro de Estudio UBB",
+    "CEOUBB",
+    "aula virtual UBB",
+    "Universidad del Bío-Bío",
+    "LMS UBB",
     "Ingeniería Mecánica UBB",
     "Estática",
     "Termodinámica Aplicada",
@@ -47,15 +51,17 @@ export const metadata: Metadata = {
   ],
   robots: { index: true, follow: true },
   openGraph: {
-    title: "Centro de Estudio UBB",
-    description: "Tu aula y biblioteca académica de Ingeniería Mecánica en cualquier dispositivo.",
+    title: "Centro de Estudio UBB | Aula Virtual UBB",
+    description:
+      "Plataforma académica y aula virtual independiente para estudiantes y docentes de la Universidad del Bío-Bío.",
     type: "website",
     locale: "es_CL",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Centro de Estudio UBB",
-    description: "Aula y biblioteca académica de Ingeniería Mecánica UBB.",
+    title: "Centro de Estudio UBB | Aula Virtual UBB",
+    description:
+      "Plataforma académica y aula virtual independiente para estudiantes y docentes de la Universidad del Bío-Bío.",
   },
   icons: {
     icon: [

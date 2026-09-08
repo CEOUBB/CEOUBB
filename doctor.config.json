@@ -9,6 +9,7 @@
       "build/**",
       "android/**",
       "firebase/**",
+      "public/vendor/**",
       "node_modules/**"
     ]
   },

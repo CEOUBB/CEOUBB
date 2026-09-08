@@ -1,14 +1,12 @@
 /*
-  Única cobertura offline de la biblioteca. La copia que vivía en
-  `android/app/src/main/assets/www/` desapareció con el WebView artesanal: el
-  contenedor Capacitor carga `https://ceoubb.com`, así que quien sirve
-  `/biblioteca` sin conexión es este service worker y nadie más.
+  Cobertura offline del portal web y PWA de Centro de Estudio UBB.
+  El contenedor Capacitor carga https://ceoubb.com y este service worker
+  proporciona la resiliencia offline necesaria.
 */
 // Implements: REQ-CAP-19
-const CACHE = "centro-estudio-ubb-v8";
-const SHELL = ["/", "/manifest.webmanifest", "/biblioteca/index.html"];
-const IMMUTABLE = /^\/(_next\/static\/|biblioteca\/assets\/vendor\/)/;
-const REVALIDATE = /^\/biblioteca\/assets\/(app|data)\.js$|^\/biblioteca\/assets\/styles\.css$/;
+const CACHE = "centro-estudio-ubb-v9";
+const SHELL = ["/", "/manifest.webmanifest"];
+const IMMUTABLE = /^\/(_next\/static\/|vendor\/)/;
 
 if (typeof self !== "undefined" && typeof self.addEventListener === "function") {
   self.addEventListener("install", (event) => {
@@ -37,9 +35,7 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function") 
     const url = new URL(request.url);
     if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
     event.respondWith(
-      IMMUTABLE.test(url.pathname) || REVALIDATE.test(url.pathname)
-        ? cacheFirst(event, request)
-        : networkFirst(event, request)
+      IMMUTABLE.test(url.pathname) ? cacheFirst(event, request) : networkFirst(event, request)
     );
   });
 }

@@ -154,10 +154,6 @@ export default function TermsPage() {
           autorizas a la plataforma a almacenarlos y mostrarlos a los participantes de la sección
           correspondiente, y sólo a ellos.
         </p>
-        <p>
-          La biblioteca de estudio reúne recursos de apoyo. No sustituye la bibliografía oficial de
-          una asignatura ni las instrucciones de tu docente.
-        </p>
 
         <h2 id="disponibilidad">
           <span className="num">6</span>. Disponibilidad del servicio

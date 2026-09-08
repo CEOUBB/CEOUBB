@@ -412,19 +412,11 @@ test("serves the public pages as cacheable static responses", async () => {
   assert.match(html, /https:\/\/ceoubb\.com\/opengraph-image\.jpg/);
 });
 
-test("caches the vendored library assets and keeps the service worker fresh", async () => {
-  const vendor = await request("/biblioteca/assets/vendor/katex/katex.min.js");
+test("caches the vendored assets and keeps the service worker fresh", async () => {
+  const vendor = await request("/vendor/katex/katex.min.js");
   assert.equal(vendor.status, 200);
   assert.match(vendor.headers.get("cache-control") ?? "", /max-age=31536000/);
   assert.match(vendor.headers.get("cache-control") ?? "", /immutable/);
-
-  const data = await request("/biblioteca/assets/data.js");
-  assert.match(data.headers.get("cache-control") ?? "", /stale-while-revalidate/);
-  assert.doesNotMatch(
-    data.headers.get("cache-control") ?? "",
-    /immutable/,
-    "library content is not content-hashed"
-  );
 
   const worker = await request("/sw.js");
   assert.match(worker.headers.get("cache-control") ?? "", /no-store/);
@@ -445,19 +437,15 @@ test("serves a non-blocking service worker", async () => {
   assert.match(source, /caches\.match\("\/"\)/, "the offline navigation fallback must survive");
 });
 
-// REQ-CAP-19 — la biblioteca deja de estar duplicada: sólo el service worker la cubre sin conexión.
-test("covers the library offline from the service worker alone", async () => {
+// REQ-CAP-19 — cobertura offline mediante service worker sin duplicación nativa
+test("covers the app offline from the service worker alone", async () => {
   const source = await (await request("/sw.js")).text();
   assert.match(
     source,
-    /"\/biblioteca\/index\.html"/,
-    "the library entry point must be precached on install"
+    /"\/manifest\.webmanifest"/,
+    "the shell entry points must be precached on install"
   );
-  assert.match(
-    source,
-    /biblioteca\\\/assets\\\/vendor\\\//,
-    "the immutable library assets must be served cache-first"
-  );
+  assert.match(source, /vendor\\\//, "the immutable vendor assets must be served cache-first");
 
   const duplicated = new URL("../android/app/src/main/assets/www/", import.meta.url);
   await assert.rejects(

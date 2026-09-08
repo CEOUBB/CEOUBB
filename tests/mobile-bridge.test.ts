@@ -7,7 +7,7 @@ import { isExternalUrl } from "../lib/mobile-bridge.ts";
 // REQ-CAP-15 — sólo lo que no es del portal sale al navegador del sistema.
 test("keeps portal links inside the WebView", () => {
   for (const href of [
-    "/biblioteca/index.html",
+    "/contacto",
     "https://ceoubb.com/privacidad",
     "https://www.ceoubb.com/",
     "?tab=notas",

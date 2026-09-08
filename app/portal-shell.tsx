@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Archive,
   Bell,
   CaretDown,
   ChalkboardTeacher,
@@ -471,8 +470,7 @@ export function PortalSidebar({
       {/*
         El grupo se ancla abajo. Ayuda y contacto es una fila de navegación
         igual que las de arriba, porque lleva a una vista más de la plataforma.
-        La Biblioteca conserva su caja: sale del portal a un documento aparte.
-        Accesibilidad ya no vive aquí, vive en el pie del sitio.
+        Accesibilidad vive en el pie del sitio.
       */}
       <div className="side-foot-group">
         <Link className="side-item" href="/contacto">
@@ -480,17 +478,6 @@ export function PortalSidebar({
             <Lifebuoy size={18} />
           </span>
           <span className="side-label">Ayuda y contacto</span>
-        </Link>
-        <Link
-          className="side-item side-foot"
-          href="/biblioteca/index.html"
-          prefetch={false}
-          title="Biblioteca de Estudio (abre en la misma pestaña)"
-        >
-          <span aria-hidden="true" className="side-icon">
-            <Archive size={18} />
-          </span>
-          <span className="side-label">Biblioteca de Estudio</span>
         </Link>
       </div>
     </aside>

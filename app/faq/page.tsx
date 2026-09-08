@@ -7,7 +7,7 @@ import { PolicyHead } from "../policy-head";
 export const metadata = {
   title: "Preguntas frecuentes · Centro de Estudio UBB",
   description:
-    "Respuestas sobre cuentas institucionales, secciones, cálculo de notas en la escala 1,0 a 7,0, biblioteca de estudio y aplicación móvil de Centro de Estudio UBB.",
+    "Respuestas sobre cuentas institucionales, secciones, cálculo de notas en la escala 1,0 a 7,0, recursos de estudio y aplicación móvil de Centro de Estudio UBB.",
 };
 
 const FAQ_JSON_LD = {
@@ -42,8 +42,8 @@ export default function FaqPage() {
         <h1>Preguntas frecuentes</h1>
         <p className="policy-lead">
           Lo que la comunidad UBB pregunta con más frecuencia sobre acceso, secciones,
-          calificaciones, biblioteca y aplicación móvil. Cada respuesta tiene su propio enlace, por
-          si necesitas compartirla.
+          calificaciones, recursos y aplicación móvil. Cada respuesta tiene su propio enlace, por si
+          necesitas compartirla.
         </p>
 
         <ul className="policy-index">
