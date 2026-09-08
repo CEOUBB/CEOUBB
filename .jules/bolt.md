@@ -46,3 +46,17 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(course.id, course)`.
 - **Outcome / Learning:** Se eliminó la asignación temporal de arreglos de tuplas por elemento en cada renderizado y filtrado del calendario, reduciendo la recolección de basura.
 - **Future Rule:** Construir mapas directamente con iteraciones `for..of` en funciones puras de transformación llamadas frecuentemente.
+
+## 2026-09-07 - Determinación de columnas máximas de tabla en `convertTables` (`lib/multimodal-editor.ts`)
+
+- **Finding:** `convertTables` calculaba la cantidad de columnas de las tablas con `Math.max(...grid.map((row) => row.length))`, generando un arreglo intermedio $O(N)$ y desempaquetando argumentos variádicos en la pila de llamadas.
+- **Attempted / Identified Solution:** Reemplazo por un bucle iterativo `for..of` escalar de pasada única sobre `grid`.
+- **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por tabla en la conversión de HTML a Markdown académico y se previno un posible desbordamiento de pila (_stack overflow_) en tablas extensas.
+- **Future Rule:** Reemplazar `Math.max(...arr.map(...))` por un bucle `for` o `for..of` con acumulador escalar en funciones de transformación o serialización.
+
+## 2026-09-08 - Recuento de avance de revisiones en `reviewProgress` (`app/views/classroom/submission-review-model.ts`)
+
+- **Finding:** `reviewProgress` realizaba dos llamadas independientes a `rows.filter(...)` en cada cálculo del estado de avance, asignando dos arreglos intermedios temporales $O(N)$ y haciendo dos pasadas completas sobre la lista de entregas.
+- **Attempted / Identified Solution:** Consolidación de ambos contadores (`graded` y `delivered`) en una sola pasada iterativa `for..of` de $O(N)$ tiempo y $O(1)$ espacio.
+- **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos temporales y se redujo la iteración de dos pasadas a una sola, preservando 100% la equivalencia funcional.
+- **Future Rule:** Consolidar pasadas y evitar múltiples invaciones a `.filter()` sobre el mismo arreglo en funciones de agregación o cálculo de métricas.
