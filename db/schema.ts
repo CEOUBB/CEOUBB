@@ -288,6 +288,105 @@ export const pendingMatriculas = sqliteTable(
   ]
 );
 
+export const adeccaImports = sqliteTable(
+  "adecca_imports",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    fingerprint: text("fingerprint").notNull(),
+    sourceKey: text("source_key").notNull(),
+    actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
+    status: text("status", { enum: ["running", "completed", "partial"] })
+      .notNull()
+      .default("running"),
+    sourceCourseId: text("source_course_id").notNull().default(""),
+    sourceCourseName: text("source_course_name").notNull().default(""),
+    sourceAdeccaVersion: text("source_adecca_version").notNull().default(""),
+    sourceFormat: text("source_format", { enum: ["zip", "json", "csv"] }).notNull(),
+    sourceFileName: text("source_file_name").notNull(),
+    runToken: text("run_token").notNull().default(""),
+    operationToken: text("operation_token"),
+    operationStartedAt: text("operation_started_at"),
+    plannedContentCount: integer("planned_content_count").notNull().default(0),
+    plannedFileCount: integer("planned_file_count").notNull().default(0),
+    plannedParticipantCount: integer("planned_participant_count").notNull().default(0),
+    contentCount: integer("content_count").notNull().default(0),
+    fileCount: integer("file_count").notNull().default(0),
+    participantCount: integer("participant_count").notNull().default(0),
+    participantMatchedCount: integer("participant_matched_count").notNull().default(0),
+    participantPendingCount: integer("participant_pending_count").notNull().default(0),
+    participantSkippedCount: integer("participant_skipped_count").notNull().default(0),
+    warningCount: integer("warning_count").notNull().default(0),
+    reportJson: text("report_json").notNull().default("{}"),
+    finishedAt: text("finished_at"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_adecca_imports_section_fingerprint").on(table.seccionId, table.fingerprint),
+    index("idx_adecca_imports_section_updated").on(table.seccionId, table.updatedAt),
+  ]
+);
+
+export const adeccaImportRunItems = sqliteTable(
+  "adecca_import_run_items",
+  {
+    id: text("id").primaryKey(),
+    importId: text("import_id")
+      .notNull()
+      .references(() => adeccaImports.id, { onDelete: "cascade" }),
+    runToken: text("run_token").notNull(),
+    itemHash: text("item_hash").notNull(),
+    outcome: text("outcome", {
+      enum: [
+        "content",
+        "file",
+        "participant-matched",
+        "participant-pending",
+        "participant-skipped",
+      ],
+    }).notNull(),
+    appliedAt: text("applied_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_adecca_run_items_run_item").on(table.importId, table.runToken, table.itemHash),
+    index("idx_adecca_run_items_run_outcome").on(
+      table.importId,
+      table.runToken,
+      table.outcome,
+      table.appliedAt
+    ),
+  ]
+);
+
+export const pendingAdeccaMatriculas = sqliteTable(
+  "pending_adecca_matriculas",
+  {
+    id: text("id").primaryKey(),
+    seccionId: text("seccion_id")
+      .notNull()
+      .references(() => secciones.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    rolSeccion: text("rol_seccion", { enum: ["student"] })
+      .notNull()
+      .default("student"),
+    sourceImportId: text("source_import_id")
+      .notNull()
+      .references(() => adeccaImports.id, { onDelete: "cascade" }),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_pending_adecca_matriculas_section_email").on(table.seccionId, table.email),
+    index("idx_pending_adecca_matriculas_email").on(table.email),
+    index("idx_pending_adecca_matriculas_expiry").on(table.expiresAt),
+  ]
+);
+
 /*
   Bitácora inmutable de notas: sólo se inserta. Cada corrección de una nota
   oficial deja el valor previo, el actor y la IP para auditoría institucional.

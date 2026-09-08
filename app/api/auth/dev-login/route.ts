@@ -8,6 +8,7 @@ import {
   isDevOrPreviewAuthAllowed,
 } from "../../../../lib/auth-dev.ts";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment.ts";
+import { claimPendingAdeccaEnrollments } from "../../../../lib/services/adecca-import.ts";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import.ts";
 import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academic-catalog.ts";
 
@@ -67,6 +68,11 @@ export async function POST(request: Request) {
       await claimPendingMoodleEnrollments(safeUser);
     } catch (claimError) {
       console.error("[Dev Login Moodle Enrollment]:", claimError);
+    }
+    try {
+      await claimPendingAdeccaEnrollments(safeUser);
+    } catch (claimError) {
+      console.error("[Dev Login ADECCA Enrollment]:", claimError);
     }
 
     const cookie = await createSession(user.id);

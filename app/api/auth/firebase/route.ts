@@ -10,6 +10,7 @@ import { createSession, publicUser } from "../../../../lib/auth";
 import { firebaseCredentialIsActive } from "../../../../lib/services/firebase-revocation";
 import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
+import { claimPendingAdeccaEnrollments } from "../../../../lib/services/adecca-import";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
 import { z } from "zod";
 import { MAX_PAGE_SIZE, listUserSections } from "../../../../lib/services/academic-catalog";
@@ -108,6 +109,11 @@ export async function POST(request: Request) {
       await claimPendingMoodleEnrollments(safeUser);
     } catch (claimError) {
       console.error("[Moodle Pending Enrollment]:", claimError);
+    }
+    try {
+      await claimPendingAdeccaEnrollments(safeUser);
+    } catch (claimError) {
+      console.error("[ADECCA Pending Enrollment]:", claimError);
     }
     const cookie = await createSession(user.id);
     const googlePhoto =
