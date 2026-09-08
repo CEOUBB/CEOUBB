@@ -186,3 +186,24 @@ test("REQ-SEC-17: teacher course routes validate courseId presence, format and m
     "Teacher course assistants route must validate courseId with isSectionId"
   );
 });
+
+// Implements: REQ-SEC-18
+test("REQ-SEC-18: Content-Disposition headers sanitize dynamic parameters against CRLF injection", () => {
+  const qtiRoutePath = path.resolve("app/api/courses/[sectionId]/quizzes/[quizId]/qti/route.ts");
+  const qtiContent = fs.readFileSync(qtiRoutePath, "utf8");
+  assert.match(
+    qtiContent,
+    /quizId\.replace\(\/\[\^a-zA-Z0-9_-\]\/g,\s*""\)/,
+    "QTI export route handler must sanitize quizId before interpolating in Content-Disposition"
+  );
+
+  const interopRoutePath = path.resolve(
+    "app/api/courses/[sectionId]/interop/[resourceId]/route.ts"
+  );
+  const interopContent = fs.readFileSync(interopRoutePath, "utf8");
+  assert.match(
+    interopContent,
+    /resource\.id\.replace\(\/\[\^a-zA-Z0-9_-\]\/g,\s*""\)/,
+    "Interop resource route handler must sanitize resource.id before interpolating in Content-Disposition"
+  );
+});
