@@ -39,3 +39,10 @@
 - **Attempted / Identified Solution:** Reemplazo por bucles `for..of` directos con `map.set(...)` sin asignación de tuplas intermedias.
 - **Outcome / Learning:** Se eliminó la doble asignación de memoria por elemento en la generación de notificaciones, reduciendo la presión sobre el recolector de basura en re-renderizados frecuentes del portal.
 - **Future Rule:** Construir objetos `Map` iterando directamente con `for..of` e invocando `map.set()` en lugar de mapear colecciones a arreglos temporales de tuplas `[k, v]`.
+
+## 2026-09-08 - Recuento de avance de revisiones en `reviewProgress` (`app/views/classroom/submission-review-model.ts`)
+
+- **Finding:** `reviewProgress` realizaba dos llamadas independientes a `rows.filter(...)` en cada cálculo del estado de avance, asignando dos arreglos intermedios temporales $O(N)$ y haciendo dos pasadas completas sobre la lista de entregas.
+- **Attempted / Identified Solution:** Consolidación de ambos contadores (`graded` y `delivered`) en una sola pasada iterativa `for..of` de $O(N)$ tiempo y $O(1)$ espacio.
+- **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos temporales y se redujo la iteración de dos pasadas a una sola, preservando 100% la equivalencia funcional.
+- **Future Rule:** Consolidar pasadas y evitar múltiples invaciones a `.filter()` sobre el mismo arreglo en funciones de agregación o cálculo de métricas.
