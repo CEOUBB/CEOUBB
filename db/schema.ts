@@ -451,5 +451,6 @@ export const solicitudesSoporte = sqliteTable(
   (table) => [
     index("idx_soporte_ip_created").on(table.ipHash, table.createdAt),
     index("idx_soporte_estado_created").on(table.estado, table.createdAt),
+    index("idx_support_requests_created_at").on(table.createdAt),
   ]
 );

@@ -1,3 +1,4 @@
+import Papa from "papaparse";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
 import { sanitizeAcademicHtml } from "../academic-content.ts";
 import { htmlToAcademicMarkdown } from "../multimodal-editor.ts";
@@ -538,41 +539,20 @@ function participantsFromUsers(
   return participants;
 }
 
-function csvRows(source: string, delimiter: string) {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let quoted = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (character === '"') {
-      if (quoted && source[index + 1] === '"') {
-        cell += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === delimiter && !quoted) {
-      row.push(cell.trim());
-      cell = "";
-    } else if ((character === "\n" || character === "\r") && !quoted) {
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      row.push(cell.trim());
-      if (row.some(Boolean)) rows.push(row);
-      row = [];
-      cell = "";
-    } else {
-      cell += character;
-    }
-  }
-  if (quoted)
+function parseMoodleCsv(source: string): string[][] {
+  const parsed = Papa.parse<string[]>(source, {
+    skipEmptyLines: false,
+    delimitersToGuess: [";", ",", "\t"],
+  });
+  if (parsed.errors.some((e) => e.type === "Quotes")) {
     throw new MoodleImportError(
       "La nómina CSV termina dentro de una celda con comillas.",
       "INVALID_ARCHIVE"
     );
-  row.push(cell.trim());
-  if (row.some(Boolean)) rows.push(row);
-  return rows;
+  }
+  return parsed.data
+    .map((row) => row.map((cell) => cell.trim()))
+    .filter((row) => row.some(Boolean));
 }
 
 function normalizedHeader(value: string) {
@@ -594,11 +574,7 @@ async function prepareCsv(file: MoodleSourceFile): Promise<PreparedCourseImport>
   } catch {
     throw new MoodleImportError("La nómina CSV no usa UTF-8 válido.", "INVALID_ARCHIVE");
   }
-  const headerLine = source.split(/\r?\n/, 1)[0] ?? "";
-  const delimiter = [";", ",", "\t"].sort(
-    (left, right) => headerLine.split(right).length - headerLine.split(left).length
-  )[0];
-  const rows = csvRows(source, delimiter);
+  const rows = parseMoodleCsv(source);
   if (rows.length < 2 || rows.length - 1 > MAX_CSV_ROWS) {
     throw new MoodleImportError(
       "La nómina CSV debe contener entre 1 y 5.000 estudiantes.",

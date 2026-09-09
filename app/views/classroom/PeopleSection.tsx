@@ -149,7 +149,20 @@ export function PeopleSection({
   canTeach: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query.trim());
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setDebouncedQuery("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const deferredQuery = useDeferredValue(debouncedQuery);
   const [roleFilter, setRoleFilter] = useState<ParticipantRoleFilter>("all");
   const [directory, setDirectory] = useState<{
     key: string;

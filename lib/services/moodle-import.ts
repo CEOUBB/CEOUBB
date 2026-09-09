@@ -447,25 +447,35 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
     )
     .limit(MAX_IMPORT_BATCH);
   if (pending.length === 0) return 0;
-  for (const entry of pending) {
-    const claimedValue = {
-      id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
-      seccionId: entry.seccionId,
-      usuarioId: actor.id,
-      rolSeccion: "student" as const,
-      estado: "activa" as const,
-      createdAt: now,
-    };
-    await db.transaction(async (tx) => {
+  const claimedValues = pending.map((entry) => ({
+    id: `mat-${digestId(entry.seccionId, actor.id).slice(0, 40)}`,
+    seccionId: entry.seccionId,
+    usuarioId: actor.id,
+    rolSeccion: "student" as const,
+    estado: "activa" as const,
+    createdAt: now,
+  }));
+  await db.transaction(async (tx) => {
+    for (const entry of pending) {
       await requireOpenMoodleSection(tx, entry.seccionId);
-      await tx
-        .insert(matriculas)
-        .values(claimedValue)
-        .onConflictDoUpdate({
-          target: [matriculas.seccionId, matriculas.usuarioId],
-          set: { rolSeccion: "student", estado: "activa" },
-        });
-      await commitOpenSectionWrites(entry.seccionId, [
+    }
+    await tx
+      .insert(matriculas)
+      .values(claimedValues)
+      .onConflictDoUpdate({
+        target: [matriculas.seccionId, matriculas.usuarioId],
+        set: { rolSeccion: "student", estado: "activa" },
+      });
+    await tx.delete(pendingMatriculas).where(
+      inArray(
+        pendingMatriculas.id,
+        pending.map((e) => e.id)
+      )
+    );
+  });
+  await Promise.all(
+    pending.map((entry) =>
+      commitOpenSectionWrites(entry.seccionId, [
         toFirestoreWrite(
           parseEnrollmentProjection({
             seccionId: entry.seccionId,
@@ -474,10 +484,9 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
             status: "activa" as const,
           })
         ),
-      ]);
-      await tx.delete(pendingMatriculas).where(eq(pendingMatriculas.id, entry.id));
-    });
-  }
+      ])
+    )
+  );
   return pending.length;
 }
 
