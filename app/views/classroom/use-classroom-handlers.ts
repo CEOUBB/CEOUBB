@@ -33,8 +33,14 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const [liveClassStatus, setLiveClassStatus] = useState<Note>({ text: "", tone: "info" });
   const [liveClassInvalid, setLiveClassInvalid] = useState(false);
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
-
-  const note = (text: string, tone: Note["tone"] = "info") => setStatus({ text, tone });
+  const note = (text: string, tone: Note["tone"] = "info") => {
+    setStatus({ text, tone });
+    if (tone === "ok" && text) {
+      window.setTimeout(() => {
+        setStatus((prev) => (prev.text === text ? { text: "", tone: "info" } : prev));
+      }, 2500);
+    }
+  };
   const readOnly = course.readOnly === true;
   const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
   const canTeach = canTeachSection(user.role, sectionRole);
@@ -171,8 +177,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     try {
       await navigator.clipboard.writeText(courseReference);
       setCopiedCourseReference(true);
-      window.setTimeout(() => setCopiedCourseReference(false), 1600);
-      note("Código del ramo copiado.", "ok");
+      window.setTimeout(() => setCopiedCourseReference(false), 2000);
     } catch {
       note("No fue posible copiar el código del ramo.", "bad");
     }

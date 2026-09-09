@@ -49,14 +49,14 @@ export function PlannerGrid({
     >
       <div aria-hidden="true" className="planner-hours">
         {SLOT_HOURS.map((hour) => (
-          <span key={hour} style={{ top: offsetOf(hour * 60) }}>
+          <span className="num" key={hour} style={{ top: offsetOf(hour * 60) }}>
             {timeOfMinutes(hour * 60)}
           </span>
         ))}
         {days.includes(today) &&
           nowMinutes >= DAY_START_MINUTES &&
           nowMinutes <= DAY_END_MINUTES && (
-            <b className="planner-hours-now" style={{ top: offsetOf(nowMinutes) }}>
+            <b className="planner-hours-now num" style={{ top: offsetOf(nowMinutes) }}>
               {timeOfMinutes(nowMinutes)}
             </b>
           )}
@@ -98,15 +98,20 @@ export function PlannerGrid({
               </button>
             ))}
             <AnimatePresence initial={false}>
-              {blocks.map((block) => (
-                <PlannerBlockArticle
-                  block={block}
-                  key={block.id}
-                  onEdit={onEditBlock}
-                  onRemove={onRemoveBlock}
-                  onToggleDone={onToggleDone}
-                />
-              ))}
+              {blocks.map((block) => {
+                const isLive =
+                  isToday && nowMinutes >= block.startMinutes && nowMinutes < block.endMinutes;
+                return (
+                  <PlannerBlockArticle
+                    block={block}
+                    isLive={isLive}
+                    key={block.id}
+                    onEdit={onEditBlock}
+                    onRemove={onRemoveBlock}
+                    onToggleDone={onToggleDone}
+                  />
+                );
+              })}
             </AnimatePresence>
             {isToday && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES && (
               <div

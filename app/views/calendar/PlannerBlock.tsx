@@ -81,11 +81,13 @@ function PlannerCheckButton({
 
 export function PlannerBlockArticle({
   block,
+  isLive = false,
   onToggleDone,
   onEdit,
   onRemove,
 }: {
   block: PlacedBlock;
+  isLive?: boolean;
   onToggleDone: (block: PlannerItem) => void;
   onEdit: (block: PlannerItem) => void;
   onRemove: (block: PlannerItem) => void;
@@ -98,6 +100,7 @@ export function PlannerBlockArticle({
       animate={motionProps.animate}
       className="planner-block"
       data-done={block.completed ? "true" : undefined}
+      data-live={isLive ? "true" : undefined}
       exit={motionProps.exit}
       initial={motionProps.initial}
       key={block.id}
@@ -123,8 +126,16 @@ export function PlannerBlockArticle({
         onClick={() => onEdit(block)}
         type="button"
       >
-        <strong>{block.title}</strong>
-        <small>
+        <div className="planner-block-title-row">
+          <strong>{block.title}</strong>
+          {isLive && (
+            <span aria-label="En curso" className="live-pulse" role="status">
+              <span aria-hidden="true" className="pulse-dot" />
+              <span>En curso</span>
+            </span>
+          )}
+        </div>
+        <small className="num">
           {block.startTime}–{block.endTime}
           {getBlockSubtitle(block)}
         </small>

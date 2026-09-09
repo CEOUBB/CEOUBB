@@ -1,5 +1,19 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: modernización de componentes UI con registros oficiales (beUI, ReUI, coss.com, beautifului, transitions.dev), 2026-09-08
+
+- **Alcance entregado:** Integración directa de 8 componentes desde fuentes y registros oficiales (`beui.dev`, `reui.io`, Cal.com/`coss.com/ui`, `transitions.dev` y `beautifului.dev`), adaptados a la gobernanza de diseño OKLCH de `DESIGN.md` e iconografía exclusiva `@phosphor-icons/react`.
+  1. _Pestañas del Aula:_ `MorphingTabs` de beUI con indicador deslizante y resortes amortiguados en `ClassroomView.tsx`.
+  2. _Paleta de Comandos (Ctrl+K):_ `CommandPalette` de beUI con cursor reactivo determinista, filtro difuso y navegación de teclado en `app/command-palette.tsx`.
+  3. _Acciones Masivas Flotantes:_ `ExpandableActionBar` de beUI para selección múltiple de participantes en `PeopleSection.tsx`.
+  4. _Zona de Entrega de Tareas:_ `FileUpload` de beUI con drag-and-drop, validación de 25 MB y progreso animado a Firebase Storage en `SubmissionSlot.tsx`.
+  5. _Pila de Notificaciones:_ `NotificationStack` de beUI/ReUI con agrupación cronológica (Hoy, Esta semana, Anteriores) y física de resorte en `app/notification-panel.tsx`.
+  6. _Visor de Auditoría y Rectificaciones:_ `DiffTable` de beautifului.dev en `GradeHistoryDialog.tsx` con deltas numéricos y estilo semántico.
+  7. _Cuadrícula de Horario:_ Scheduler Columns de Cal.com (`coss.com/ui`) con módulos académicos UBB (`ACADEMIC_SLOTS`) y badge de clase en vivo `LivePulse` en `PlannerGrid.tsx` y `PlannerBlock.tsx`.
+  8. _Micro-swaps de Botones:_ Transiciones instantáneas CSS $\le 120\text{ms}$ de transitions.dev en botones de copiado y guardado (`CourseRail.tsx` y `GradesSection.tsx`).
+- **Límites:** Cero regresión funcional en lógica académica, cero debilitamiento de tests, accesibilidad WCAG 2.2 y cumplimiento estricto con `DESIGN.md`.
+- **Verificación:** `verify:fast` (606 pruebas unitarias, 67 sellos SHA-256, 31 especificaciones OpenSpec), `verify:invariants` (35 pruebas), `format:check` y `typecheck` aprobados con código de salida 0.
+
 ## Handoff: eliminación de biblioteca de estudio y desacople de KaTeX, 2026-09-08
 
 - **Alcance entregado:** Eliminación integral de la biblioteca estática (`public/biblioteca/` y `https://ceoubb.com/biblioteca/index.html`), desvinculación de accesos en UI (`portal-shell.tsx`, `portal-sheets.tsx`, `ResourcesView.tsx`, `PostsSection.tsx`), redirección 307 en `next.config.ts` (`/biblioteca/:path*` -> `/`), actualización del Service Worker (`public/sw.js` a `v9` eliminando precaché y rutas obsoletas), desacoplamiento de dependencias de KaTeX a `public/vendor/katex/` para fórmulas en aula virtual, actualización de categorías de FAQ (`recursos`), ajuste de documentos de gobernanza (`AGENTS.md`, `DESIGN.md`, `openspec/specs/mobile/spec.md`) y actualización de sellos de prueba SHA-256.
@@ -293,6 +307,16 @@ Next recommended action:
 - **Pending deployment**: Firestore and Storage rules must be deployed for team members to read a teammate's submission, and the Functions deployment must include `registerTeamSubmission`. The production Turso purge is a separate manual step.
 
 ## Next recommended step
+
+### Revisión del PR 168 — 2026-09-08
+
+- **Rama:** `codex/corregir-componentes-pr-168`, basada en la cabecera del PR 168.
+- **Correcciones:** Ctrl+K tiene un único manejador conectado al estado del portal; la búsqueda conserva el foco y un nombre accesible. Las pestañas limitan sus estilos a los botones y mantienen el indicador de 3 px. Copiar y guardar superponen sus estados sin cambiar de ancho; copiar conserva el foco. Las acciones docentes envuelven en móvil. El calendario vuelve a compartir la escala horaria entre etiquetas y celdas.
+- **Revisión adicional:** corregidos los errores de lint del PR en participantes, historial, hidratación e iconos de entregas; botón de retroalimentación identificado para lectores de pantalla y deshabilitado tras guardar.
+- **Verificación:** 606 pruebas unitarias, 35 invariantes, 67 sellos SHA-256 y 31 especificaciones válidas. Regresión Playwright de búsqueda, pestañas, copiado y calendario más revisión responsive a 1918, 1440, 900 y 390 px; capturas en `.impeccable/review/pr168-*.png`.
+- **Servicios externos:** sin cambios ni despliegue. El aviso del calendario procede de `permission-denied` de Firestore y no demuestra por sí solo que falten reglas. Las reglas locales ya contemplan la agenda privada; la sesión demo local no autentica una cuenta real en Firebase. La sincronización real requiere comprobar la sesión y las reglas publicadas con una cuenta institucional.
+- **Validación final:** `pnpm test` compila producción y pasa 624/624 pruebas; Playwright pasa 6/6 casos. Lint, tipos y formato sin errores. React Doctor: 91/100, siete advertencias existentes (sin regresión). La primera ejecución completa heredó flags de preview y falló tres comprobaciones de entorno; al retirarlos pasó sin modificar pruebas.
+- **Entrega:** corrección destinada al PR existente; sin despliegue de producción.
 
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
