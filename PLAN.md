@@ -321,3 +321,14 @@ Next recommended action:
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.
+
+### Skeletons del campus — 2026-09-08
+
+- **Rama:** `codex/skeletons-fieles-campus`.
+- **Cambios:** la carga inicial reutiliza cursos y agenda del dashboard actual, con riel de 248 px y pie institucional. Calendario conserva controles, filtros y el día visible en móvil sin inventar citas. Aula usa las cinco pestañas canónicas, metadatos y ficha lateral. Recursos, gestión docente, configuración, cuestionarios, notificaciones e historial de notas siguen sus estructuras actuales. Conversación y visor conservan su geometría; el límite de ancho compartido protege los bloques en móvil.
+- **Accesibilidad:** estado de carga anunciado; controles de muestra inertes o deshabilitados; se elimina la entrada desplazada de los bloques y se conserva el brillo con alternativa estática para movimiento reducido.
+- **Verificación:** `pnpm test` compila producción y pasa 624 pruebas; `verify:fast` pasa 606 pruebas, 67 sellos y 31 especificaciones; `verify:invariants` pasa 35 pruebas. Lint, tipos y formato sin errores. React Doctor 91/100, siete advertencias preexistentes. Detector de layout sin hallazgos.
+- **Regresión visual:** `pnpm exec playwright test e2e/skeleton-layout.spec.ts --project=chromium --workers=1` pasa 2 casos y recorre las 15 variantes a 1440 y 390 px. Comprueba desbordamiento, tamaño de bloques, movimiento reducido, pestañas vigentes, día móvil y dimensiones de la tarjeta frente a `CourseCard`. Capturas locales en `.impeccable/review/skeleton-*.png`.
+- **Límites:** las filas de datos aún desconocidos representan contenido pendiente; su cantidad final y los estados vacíos o de error dependen de la respuesta. La comprobación visual monta los componentes reales con el CSS de producción mediante interceptación de Playwright, no simula la latencia de servicios ni autentica cuentas institucionales reales. No se ejecutaron emuladores Firebase ni pruebas sobre dispositivos físicos.
+- **Servicios externos:** sin cambios de configuración ni despliegue de producción. Entrega mediante PR.
+- **Corrección de las capturas:** el HTML interceptado de Playwright ahora declara UTF-8 en `Content-Type` y en `meta charset`. Los textos fuente estaban intactos; la prueba comprueba `document.characterSet` y rechaza caracteres de codificación corrupta en las 15 variantes. Las capturas se regeneraron y ambos casos responsive pasan.

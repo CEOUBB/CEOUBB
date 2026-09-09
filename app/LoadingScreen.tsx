@@ -1,17 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import { CalendarBlank } from "@phosphor-icons/react";
+import { SiteFooter } from "./site-footer";
 
-const SKELETON_COURSES = [0, 1, 2, 3, 4, 5];
-/* Los seis destinos fijos del portal más los dos accesos del pie. */
+const SKELETON_COURSES = [0, 1];
+/* La navegación reserva los destinos del portal y el acceso de ayuda. */
 const SKELETON_NAV = [0, 1, 2, 3, 4, 5];
-const SKELETON_NAV_FOOT = [0, 1];
+const SKELETON_NAV_FOOT = [0];
 const SKELETON_SIDE_COURSES = [0, 1, 2];
 
 // Implements: REQ-QMD-01, REQ-SKELETON-01
 export function LoadingScreen() {
   return (
-    <div aria-busy="true" className="boot-shell">
+    <div aria-busy="true" className="app-shell boot-shell">
       <p className="sr-only" role="status">
         Abriendo Centro de Estudio UBB…
       </p>
@@ -87,44 +89,81 @@ export function LoadingScreen() {
           ))}
         </span>
       </aside>
-      <main className="boot-main">
-        <div className="boot-head">
-          <span className="sk boot-title" style={{ "--sk-delay": "60ms" } as React.CSSProperties} />
-          <span
-            className="sk sk-quiet boot-subtitle"
-            style={{ "--sk-delay": "110ms" } as React.CSSProperties}
-          />
+      <main className="portal-main boot-main">
+        <section className="page-head lead dashboard-heading">
+          <div>
+            <h1>
+              <span className="sr-only">Cargando área personal</span>
+              <span className="sk" style={{ width: "240px", height: "1.22em" }} />
+            </h1>
+            <p>
+              <span className="sk sk-quiet" style={{ width: "270px", height: "1.6em" }} />
+            </p>
+          </div>
+        </section>
+        <div className="dashboard-workspace">
+          <section className="dashboard-section dashboard-courses">
+            <div className="section-title">
+              <h2>Mis cursos</h2>
+              <span className="sk sk-quiet" style={{ width: "64px", height: "12px" }} />
+            </div>
+            <div className="course-grid">
+              {SKELETON_COURSES.map((card) => (
+                <article
+                  className="course-card"
+                  key={card}
+                  style={{ "--sk-delay": `${160 + card * 60}ms` } as React.CSSProperties}
+                >
+                  <div className="course-body">
+                    <div className="course-head">
+                      <span className="course-identity">
+                        <span className="sk course-symbol" />
+                        <span className="sk" style={{ width: "60px", height: "12px" }} />
+                      </span>
+                    </div>
+                    <h3>
+                      <span className="sr-only">Cargando curso</span>
+                      <span className="sk" style={{ width: "72%", height: "1.3em" }} />
+                    </h3>
+                    <p>
+                      <span className="sk sk-quiet" style={{ width: "42%", height: "1.5em" }} />
+                    </p>
+                    <p className="course-section">
+                      <span className="sk sk-quiet" style={{ width: "48%", height: "1.5em" }} />
+                    </p>
+                    <div className="course-meta">
+                      <span className="sk sk-quiet" style={{ width: "62%", height: "1.6em" }} />
+                      <span className="sk sk-quiet" style={{ width: "70%", height: "1.6em" }} />
+                    </div>
+                    <div className="course-action">
+                      <span className="sk" style={{ width: "100px", height: "13px" }} />
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+          <section className="dashboard-section dashboard-agenda">
+            <div className="section-title">
+              <h2>En tu agenda</h2>
+              <CalendarBlank size={20} aria-hidden="true" />
+            </div>
+            <div className="agenda-clear">
+              <h3>
+                <span className="sr-only">Cargando agenda</span>
+                <span className="sk" style={{ width: "90%", height: "1.4em" }} />
+              </h3>
+              <p>
+                <span className="sk sk-quiet" style={{ width: "100%", height: "1.7em" }} />
+                <span className="sk sk-quiet" style={{ width: "82%", height: "1.7em" }} />
+              </p>
+              <div className="empty-state-action">
+                <span className="sk" style={{ width: "130px", height: "13px" }} />
+              </div>
+            </div>
+          </section>
         </div>
-        <div className="boot-strip" style={{ "--sk-delay": "160ms" } as React.CSSProperties}>
-          <span className="sk boot-strip-date" />
-          <span className="boot-strip-lines">
-            <span className="sk" />
-            <span className="sk sk-quiet" />
-          </span>
-          <span className="sk boot-strip-action" />
-        </div>
-        <span
-          className="sk boot-section-title"
-          style={{ "--sk-delay": "200ms" } as React.CSSProperties}
-        />
-        <div className="boot-grid">
-          {SKELETON_COURSES.map((card) => (
-            <article
-              className="boot-card"
-              key={card}
-              style={{ "--sk-delay": `${230 + card * 60}ms` } as React.CSSProperties}
-            >
-              <span className="sk boot-cover" />
-              <span className="sk sk-quiet boot-code" />
-              <span className="sk boot-line wide" />
-              <span className="sk sk-quiet boot-line short" />
-              <span aria-hidden="true" className="boot-card-rule" />
-              <span className="sk sk-quiet boot-line" style={{ width: "62%" }} />
-              <span className="sk sk-quiet boot-line" style={{ width: "48%" }} />
-              <span className="sk boot-card-action" />
-            </article>
-          ))}
-        </div>
+        <SiteFooter />
       </main>
     </div>
   );
