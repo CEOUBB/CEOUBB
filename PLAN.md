@@ -1,5 +1,12 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: rediseño de Avisos y mensajes, 2026-09-09
+
+- **Entrega:** bandeja institucional con riel, búsqueda de conversaciones, avisos en filas, fechas, estados vacíos y redactor móvil visible. Pestañas con teclado y orientación ARIA responsive; scroll limitado al historial.
+- **Integración:** incorporado `main` #169; preservadas sus mejoras de carga y adaptado únicamente el skeleton de comunicaciones al nuevo contenedor.
+- **Verificación:** `pnpm test` (build y 624 pruebas), lint y seis recorridos Playwright aprobados. Invariantes 35/35; verify:fast 606 pruebas, 67 sellos y 31 specs, con repetición final por hook de push.
+- **Evidencia y límites:** `docs/design/communications-review.md`. Conversaciones de prueba con transporte sintético; sin cambios de backend ni datos reales. Revisión visual independiente con un ajuste ARIA corregido y probado; su veredicto final no pudo ejecutarse por cuota del subagente.
+
 ## Handoff: modernización de componentes UI con registros oficiales (beUI, ReUI, coss.com, beautifului, transitions.dev), 2026-09-08
 
 - **Alcance entregado:** Integración directa de 8 componentes desde fuentes y registros oficiales (`beui.dev`, `reui.io`, Cal.com/`coss.com/ui`, `transitions.dev` y `beautifului.dev`), adaptados a la gobernanza de diseño OKLCH de `DESIGN.md` e iconografía exclusiva `@phosphor-icons/react`.

@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef, type FormEvent, type RefObject } from "react";
+import {
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Bell,
   BookOpen,
   ChatCircleText,
@@ -11,6 +21,8 @@ import {
   ClipboardText,
   LinkSimple,
   Megaphone,
+  LockSimple,
+  MagnifyingGlass,
   PaperPlaneTilt,
   type Icon,
 } from "@phosphor-icons/react";
@@ -38,6 +50,15 @@ import type { User } from "../../lib/portal-utils.ts";
 import type { SectionMembership } from "../../lib/section-roles.ts";
 
 type CommunicationsMode = "announcements" | "messages";
+
+const COMMUNICATIONS_COMPACT_QUERY = "(max-width: 1000px)";
+function subscribeCommunicationsLayout(onChange: () => void) {
+  const query = window.matchMedia(COMMUNICATIONS_COMPACT_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+const compactCommunicationsLayout = () => window.matchMedia(COMMUNICATIONS_COMPACT_QUERY).matches;
+const serverCommunicationsLayout = () => false;
 
 type ConversationTarget = {
   key: string;
@@ -174,6 +195,7 @@ function CommunicationsPanels({
   setBody,
   textarea,
   sending,
+  showMessages,
 }: {
   mode: CommunicationsMode;
   activity: CourseActivity[];
@@ -193,7 +215,14 @@ function CommunicationsPanels({
   setBody: (body: string) => void;
   textarea: RefObject<HTMLTextAreaElement | null>;
   sending: boolean;
+  showMessages: () => void;
 }) {
+  const [search, setSearch] = useState("");
+  const visibleTargets = targets.filter((target) =>
+    `${target.heading} ${target.detail}`
+      .toLocaleLowerCase("es-CL")
+      .includes(search.trim().toLocaleLowerCase("es-CL"))
+  );
   if (mode === "announcements") {
     return (
       <div
@@ -203,11 +232,21 @@ function CommunicationsPanels({
         role="tabpanel"
         tabIndex={0}
       >
+        <header className="communications-panel-heading">
+          <div>
+            <h2>Novedades de tus ramos</h2>
+            <p>Avisos, materiales y evaluaciones publicados por el equipo docente.</p>
+          </div>
+          <span className="num">{activity.length} publicaciones</span>
+        </header>
         {activity.length === 0 ? (
           <div className="communications-empty">
-            <CheckCircle aria-hidden="true" size={30} weight="duotone" />
+            <CheckCircle aria-hidden="true" size={48} weight="light" />
             <h2>Todo al día</h2>
             <p>Los avisos de tus ramos aparecerán aquí cuando el equipo docente publique.</p>
+            <button className="communications-empty-action" onClick={showMessages} type="button">
+              Ir a mensajes <ArrowRight aria-hidden="true" size={18} />
+            </button>
           </div>
         ) : (
           <ol className="announcement-list">
@@ -248,7 +287,10 @@ function CommunicationsPanels({
                         {communicationDate(item.createdAt)}
                       </time>
                     </span>
-                    {isUnread && <span aria-hidden="true" className="announcement-unread" />}
+                    <span className="announcement-end">
+                      {isUnread && <span className="announcement-unread">Nuevo</span>}
+                      <ArrowRight aria-hidden="true" size={18} />
+                    </span>
                   </button>
                 </li>
               );
@@ -281,15 +323,35 @@ function CommunicationsPanels({
           </div>
           <span className="num">{targets.length}</span>
         </div>
+        {targets.length > 0 && (
+          <label className="conversation-search">
+            <MagnifyingGlass aria-hidden="true" size={18} />
+            <input
+              aria-label="Buscar conversaciones"
+              type="search"
+              placeholder="Buscar conversación"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+        )}
         {targets.length === 0 ? (
           <div className="communications-empty compact">
-            <ChatCircleText aria-hidden="true" size={28} weight="duotone" />
+            <ChatCircleText aria-hidden="true" size={48} weight="light" />
             <h3>Sin conversaciones</h3>
             <p>Aparecerán al contar con una matrícula activa o una consulta estudiantil.</p>
           </div>
         ) : (
           <ol className="conversation-list">
-            {targets.map((target) => {
+            {visibleTargets.length === 0 && (
+              <li className="conversation-no-results" role="status">
+                No hay conversaciones para «{search}».{" "}
+                <button type="button" onClick={() => setSearch("")}>
+                  Limpiar búsqueda
+                </button>
+              </li>
+            )}
+            {visibleTargets.map((target) => {
               const itemUnread =
                 target.thread?.latestAuthorId !== currentUserId &&
                 Boolean(
@@ -321,6 +383,11 @@ function CommunicationsPanels({
                       <strong>{target.heading}</strong>
                       <small>{target.detail}</small>
                       <span>{target.thread?.latestBody ?? "Iniciar una consulta privada"}</span>
+                      {target.thread && (
+                        <time className="num" dateTime={target.thread.updatedAt}>
+                          {communicationDate(target.thread.updatedAt)}
+                        </time>
+                      )}
                     </span>
                     {itemUnread && (
                       <span aria-label="No leído" className="conversation-unread" role="img" />
@@ -358,6 +425,10 @@ function CommunicationsPanels({
                 <h2>{activeTarget.heading}</h2>
                 <p>{activeTarget.detail}</p>
               </div>
+              <span className="conversation-private">
+                <LockSimple aria-hidden="true" size={15} />
+                Privada
+              </span>
             </header>
 
             <div aria-busy={loadingMessages} aria-live="polite" className="message-history">
@@ -365,7 +436,8 @@ function CommunicationsPanels({
                 <ConversationSkeleton />
               ) : messages.length === 0 ? (
                 <div className="message-empty">
-                  <ChatCircleText aria-hidden="true" size={28} weight="duotone" />
+                  <ChatCircleText aria-hidden="true" size={40} weight="light" />
+                  <h3>La conversación empieza aquí</h3>
                   <p>
                     {activeTarget.teaching
                       ? "Esta consulta aún no tiene mensajes."
@@ -414,7 +486,7 @@ function CommunicationsPanels({
                   {body.length}/2.000
                 </span>
               </div>
-              <button className="message-send" disabled={sending} type="submit">
+              <button className="message-send" disabled={sending || !body.trim()} type="submit">
                 <PaperPlaneTilt aria-hidden="true" size={18} weight="fill" />
                 {sending ? "Enviando…" : "Enviar mensaje"}
               </button>
@@ -422,9 +494,13 @@ function CommunicationsPanels({
           </>
         ) : (
           <div className="conversation-placeholder">
-            <ChatCircleText aria-hidden="true" size={36} weight="duotone" />
+            <ChatCircleText aria-hidden="true" size={56} weight="light" />
             <h2>Elige una conversación</h2>
-            <p>El historial privado y el espacio para responder aparecerán aquí.</p>
+            <p>Un espacio para resolver dudas, hacer seguimiento y conversar con tu sección.</p>
+            <span className="conversation-private">
+              <LockSimple aria-hidden="true" size={15} />
+              Sólo quienes participan pueden leer los mensajes.
+            </span>
           </div>
         )}
       </section>
@@ -454,6 +530,11 @@ export function CommunicationsCenter({
   openCourse: (course: Course) => void;
 }) {
   const [ui, updateUi] = useReducer(updateCommunicationsUi, INITIAL_COMMUNICATIONS_UI);
+  const compactLayout = useSyncExternalStore(
+    subscribeCommunicationsLayout,
+    compactCommunicationsLayout,
+    serverCommunicationsLayout
+  );
   const textarea = useRef<HTMLTextAreaElement>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const currentUserId = firebaseUserId(user.id);
@@ -504,7 +585,8 @@ export function CommunicationsCenter({
   }, [activeCourseId, activeThreadId]);
 
   useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ block: "end" });
+    const history = messagesEnd.current?.parentElement;
+    if (history) history.scrollTop = history.scrollHeight;
   }, [ui.messages]);
 
   /*
@@ -624,94 +706,139 @@ export function CommunicationsCenter({
           <p>Revisa lo nuevo en tus ramos y conversa en privado con el equipo docente.</p>
         </div>
         <div className="communications-summary" aria-label={`${unread} elementos no leídos`}>
-          <span className="num">{unread}</span>
-          <small>{unread === 1 ? "pendiente" : "pendientes"}</small>
+          <Checks aria-hidden="true" size={20} />
+          <small>
+            {unread === 0 ? (
+              "No tienes pendientes"
+            ) : (
+              <>
+                <span className="num">{unread}</span> sin leer
+              </>
+            )}
+          </small>
         </div>
       </header>
 
-      <div className="communications-toolbar">
-        <div
-          aria-label="Secciones del centro de comunicaciones"
-          className="communications-tabs"
-          role="tablist"
-        >
-          <button
-            aria-controls="communications-announcements"
-            aria-selected={ui.mode === "announcements"}
-            id="communications-announcements-tab"
-            onClick={() => {
-              updateUi({ mode: "announcements" });
-              closeConversation();
+      <div className="communications-workspace">
+        <div className="communications-toolbar">
+          <div
+            aria-label="Secciones del centro de comunicaciones"
+            className="communications-tabs"
+            role="tablist"
+            tabIndex={-1}
+            aria-orientation={compactLayout ? "horizontal" : "vertical"}
+            onKeyDown={(event) => {
+              if (
+                !["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                  event.key
+                )
+              )
+                return;
+              event.preventDefault();
+              const tabs = event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+              const index =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? 1
+                    : ui.mode === "announcements"
+                      ? 1
+                      : 0;
+              tabs[index]?.focus();
+              tabs[index]?.click();
             }}
-            role="tab"
-            type="button"
           >
-            <Bell
-              aria-hidden="true"
-              size={18}
-              weight={ui.mode === "announcements" ? "fill" : "regular"}
-            />
-            Avisos
-            {unreadAnnouncements > 0 && (
-              <span className="communications-tab-count num">{unreadAnnouncements}</span>
-            )}
-          </button>
-          <button
-            aria-controls="communications-messages"
-            aria-selected={ui.mode === "messages"}
-            id="communications-messages-tab"
-            onClick={() => updateUi({ mode: "messages" })}
-            role="tab"
-            type="button"
-          >
-            <ChatCircleText
-              aria-hidden="true"
-              size={18}
-              weight={ui.mode === "messages" ? "fill" : "regular"}
-            />
-            Mensajes
-            {unreadThreads > 0 && (
-              <span className="communications-tab-count num">{unreadThreads}</span>
-            )}
-          </button>
+            <button
+              aria-controls="communications-announcements"
+              aria-selected={ui.mode === "announcements"}
+              id="communications-announcements-tab"
+              onClick={() => {
+                updateUi({ mode: "announcements" });
+                closeConversation();
+              }}
+              role="tab"
+              tabIndex={ui.mode === "announcements" ? 0 : -1}
+              type="button"
+            >
+              <Bell
+                aria-hidden="true"
+                size={18}
+                weight={ui.mode === "announcements" ? "fill" : "regular"}
+              />
+              Avisos
+              {unreadAnnouncements > 0 && (
+                <span className="communications-tab-count num">{unreadAnnouncements}</span>
+              )}
+            </button>
+            <button
+              aria-controls="communications-messages"
+              aria-selected={ui.mode === "messages"}
+              id="communications-messages-tab"
+              onClick={() => updateUi({ mode: "messages" })}
+              role="tab"
+              tabIndex={ui.mode === "messages" ? 0 : -1}
+              type="button"
+            >
+              <ChatCircleText
+                aria-hidden="true"
+                size={18}
+                weight={ui.mode === "messages" ? "fill" : "regular"}
+              />
+              Mensajes
+              {unreadThreads > 0 && (
+                <span className="communications-tab-count num">{unreadThreads}</span>
+              )}
+            </button>
+          </div>
+          {unread > 0 && (
+            <button
+              className="communications-read-all"
+              onClick={() => void markAll()}
+              type="button"
+            >
+              <Checks aria-hidden="true" size={18} />
+              Marcar todo como leído
+            </button>
+          )}
+          <p className="communications-rail-note">
+            <LockSimple aria-hidden="true" size={18} />
+            Tus consultas se comparten sólo con el equipo de tu sección.
+          </p>
         </div>
-        {unread > 0 && (
-          <button className="communications-read-all" onClick={() => void markAll()} type="button">
-            <Checks aria-hidden="true" size={18} />
-            Marcar todo como leído
-          </button>
-        )}
+
+        <div className="communications-content">
+          <p aria-atomic="true" className="communications-feedback" role="status">
+            {ui.feedback}
+          </p>
+          {(connectionError || ui.messageError) && (
+            <p className="communications-error" role="alert">
+              {ui.messageError || connectionError}
+            </p>
+          )}
+
+          <CommunicationsPanels
+            activeTarget={activeTarget}
+            activity={activity}
+            body={ui.body}
+            chooseTarget={chooseTarget}
+            closeConversation={closeConversation}
+            courseMap={courseMap}
+            currentUserId={currentUserId}
+            loadingMessages={ui.loadingMessages}
+            messages={ui.messages}
+            messagesEnd={messagesEnd}
+            mode={ui.mode}
+            openAnnouncement={openAnnouncement}
+            reads={reads}
+            sending={ui.sending}
+            setBody={(body) => updateUi({ body })}
+            submitMessage={submitMessage}
+            targets={targets}
+            textarea={textarea}
+            showMessages={() => updateUi({ mode: "messages" })}
+          />
+        </div>
       </div>
-
-      <p aria-atomic="true" className="communications-feedback" role="status">
-        {ui.feedback}
-      </p>
-      {(connectionError || ui.messageError) && (
-        <p className="communications-error" role="alert">
-          {ui.messageError || connectionError}
-        </p>
-      )}
-
-      <CommunicationsPanels
-        activeTarget={activeTarget}
-        activity={activity}
-        body={ui.body}
-        chooseTarget={chooseTarget}
-        closeConversation={closeConversation}
-        courseMap={courseMap}
-        currentUserId={currentUserId}
-        loadingMessages={ui.loadingMessages}
-        messages={ui.messages}
-        messagesEnd={messagesEnd}
-        mode={ui.mode}
-        openAnnouncement={openAnnouncement}
-        reads={reads}
-        sending={ui.sending}
-        setBody={(body) => updateUi({ body })}
-        submitMessage={submitMessage}
-        targets={targets}
-        textarea={textarea}
-      />
     </section>
   );
 }
