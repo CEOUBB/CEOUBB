@@ -1,10 +1,10 @@
 # Centro de Estudio UBB (CEOUBB)
 
 [![CI / CD](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml/badge.svg)](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.1-black?logo=next.js)](https://nextjs.org/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.2.8-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x%20%2F%206.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Capacitor Runtime](https://img.shields.io/badge/Capacitor-Runtime-119EFF?logo=capacitor)](https://capacitorjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Capacitor Runtime](https://img.shields.io/badge/Capacitor-8.5.0-119EFF?logo=capacitor)](https://capacitorjs.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-southamerica--west1-FFCA28?logo=firebase)](https://firebase.google.com/)
 [![Turso / libSQL](https://img.shields.io/badge/Turso-libSQL-00eb84?logo=turso)](https://turso.tech/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -12,7 +12,7 @@
 Plataforma de gestión del aprendizaje (Learning Management System, LMS) y entorno académico digital diseñado para la comunidad universitaria de la **Universidad del Bío-Bío (UBB)**. El sistema está construido sobre una arquitectura desacoplada, de alta concurrencia y orientada a escala institucional (>5.000 estudiantes simultáneos).
 
 - **Portal Web:** [ceoubb.com](https://ceoubb.com) (Alojado en Cloudflare Workers Edge Runtime)
-- **Cliente Móvil:** Runtime nativo Capacitor (`cl.ubb.centroestudio`, Android minSdk 26 / API 34+) con soporte offline y notificaciones push FCM.
+- **Cliente Móvil:** Runtime nativo Capacitor 8 (`cl.ubb.centroestudio`, Android minSdk 26 / Target SDK 36) con soporte offline y notificaciones push FCM.
 - **Región Cloud:** `southamerica-west1` (Santiago de Chile) para Firebase Authentication, Cloud Firestore, Cloud Storage y Cloud Functions.
 
 ---
@@ -23,10 +23,12 @@ Centro de Estudio UBB provee un entorno académico unificado como alternativa mo
 
 ### Capacidades del Sistema
 
-- **Aulas Virtuales y Contenido Estructurado:** Organización de asignaturas por Resultados de Aprendizaje (RAs), jerarquías de carpetas colapsables, visor de documentos integrado y editor enriquecido con soporte LaTeX.
-- **Libreta de Calificaciones y Aritmética Chilena:** Motor de cálculo en escala 1.0 a 7.0 (`lib/grades.ts`) con ponderaciones docentes, cálculo de notas mínimas de aprobación/eximición e historial inmutable de evaluaciones.
+- **Aulas Virtuales y Contenido Estructurado:** Organización de asignaturas por Resultados de Aprendizaje (RAs), jerarquías de carpetas colapsables, visor de documentos integrado, clases en vivo y editor enriquecido con soporte matemático KaTeX.
+- **Interoperabilidad y Migración Académica:** Motor de importación para respaldos de cursos desde Moodle UBB (`.mbz` con descompresión y parseo de estructura) e historial/calificaciones desde Adecca UBB (`.csv`, `.xlsx`).
+- **Libreta de Calificaciones y Aritmética Chilena:** Motor de cálculo en escala 1.0 a 7.0 (`lib/grades.ts`) con ponderaciones docentes, soporte para entregas y evaluaciones grupales, cálculo de notas mínimas de aprobación/eximición e historial inmutable de evaluaciones auditado en Cloud Functions.
 - **Planificador Académico Semanal:** Gestión de bloques horarios, sincronización de fechas de evaluación y seguimiento visual de carga académica.
-- **Biblioteca de Estudio Offline:** Visualizador matemático KaTeX autónomo (`public/biblioteca/`) con recursos de estudio, herramientas de IA autorizadas y portales institucionales.
+- **Centro de Comunicaciones y Solicitudes de Soporte:** Mensajería y avisos por asignatura, más portal de canalización de solicitudes y soporte institucional.
+- **Recursos Académicos e Institucionales:** Hub centralizado de accesos directos a bibliotecas UBB, herramientas de IA y servicios universitarios (`app/views/resources/`).
 - **Seguridad y Control de Acceso Determinístico:** Asignación de roles por dominio de correo institucional (`lib/access-policy.ts`) y aislamiento estricto de secciones mediante proyecciones de matrícula validadas en reglas de seguridad (`exists()`).
 
 ---
@@ -59,7 +61,7 @@ flowchart TD
         Auth["Firebase Authentication\n(Google Sign-In @ubiobio.cl)"]
         Firestore["Cloud Firestore\n- Publicaciones y Materiales\n- Proyección de Matrícula exists()"]
         Storage["Cloud Storage\n- Documentos y Archivos de Cursos"]
-        Functions["Cloud Functions (Node.js 22)\n- Notificaciones Push FCM\n- Auditoría de Calificaciones"]
+        Functions["Cloud Functions (Node.js 22)\n- Notificaciones Push FCM\n- Auditoría de Calificaciones\n- Motor de Cuestionarios"]
     end
 
     Web --> Cloudflare
@@ -81,13 +83,15 @@ flowchart TD
 
 ```text
 .
+├── .agents/              # Reglas modulares y habilidades de ingeniería para agentes de IA
 ├── .github/              # Flujos de trabajo de CI/CD (GitHub Actions)
-├── android/              # Proyecto nativo Android (Capacitor Gradle, minSdk 26)
+├── android/              # Proyecto nativo Android (Capacitor Gradle, minSdk 26, targetSdk 36)
 ├── app/                  # Rutas Next.js App Router, vistas modulares (app/views/) y APIs
-├── capacitor/            # Assets nativos y fallback offline (capacitor/www/)
-├── db/                   # Esquema relacional Turso y cliente Drizzle ORM
-├── docs/                 # Documentación técnica, institucional y operacional
+├── capacitor/            # Configuración nativa y documento offline de contingencia (capacitor/www/)
+├── db/                   # Esquema relacional Turso, esquemas de interoperabilidad y Drizzle ORM
+├── docs/                 # Documentación técnica, institucional, operativa y legal
 │   ├── adr/              # Registros de Decisiones de Arquitectura (ADRs)
+│   ├── architecture/     # Diagramas y especificaciones de arquitectura del sistema
 │   ├── institutional/    # Auditoría Moodle/Adecca y dossier de adopción
 │   ├── legal/            # Convenios de tratamiento, retención y privacidad (Ley 19.628 / 21.719)
 │   ├── operations/       # Líneas base de capacidad, costos y App Check
@@ -96,7 +100,7 @@ flowchart TD
 ├── firebase/             # Reglas declarativas (firestore.rules, storage.rules) y Cloud Functions
 ├── lib/                  # Servicios de dominio, access-policy.ts, grades.ts y clientes SDK
 ├── openspec/             # Especificaciones ejecutables OpenSpec (SDD)
-├── public/               # Assets estáticos y biblioteca offline KaTeX (public/biblioteca/)
+├── public/               # Assets estáticos, marcas, tipografías KaTeX y Service Worker PWA
 ├── scripts/              # Utilidades de verificación criptográfica, herramientas de prueba y seeders
 ├── tests/                # Suites de pruebas unitarias, integración, seguridad y accesibilidad
 ├── AGENTS.md             # Protocolo de gobernanza para agentes de IA e invariantes de sistema
@@ -114,12 +118,12 @@ flowchart TD
 
 Para compilar y ejecutar el proyecto en un entorno local, se requieren las siguientes herramientas:
 
-| Componente      | Versión Mínima Requerida          | Propósito                                                  |
-| :-------------- | :-------------------------------- | :--------------------------------------------------------- |
-| **Node.js**     | `>= 22.13.0`                      | Runtime de ejecución backend y herramientas de compilación |
-| **pnpm**        | `>= 12.0.0`                       | Gestor de paquetes determinístico obligatorio              |
-| **Java JDK**    | `Java 21` (Eclipse Temurin)       | Compilación nativa de la aplicación Android en Gradle      |
-| **Android SDK** | `API 34+` / Build Tools `34.0.0+` | Compilación y emulación móvil de Capacitor                 |
+| Componente      | Versión Mínima Requerida         | Propósito                                                   |
+| :-------------- | :------------------------------- | :---------------------------------------------------------- |
+| **Node.js**     | `>= 22.13.0`                     | Runtime de ejecución backend y herramientas de compilación  |
+| **pnpm**        | `10.5.2` (ó `10.x` compatible)   | Gestor de paquetes determinístico obligatorio               |
+| **Java JDK**    | `Java 21` (Eclipse Temurin)      | Compilación nativa de la aplicación Android en Gradle       |
+| **Android SDK** | `API 36` / Build Tools `36.0.0+` | Compilación y emulación móvil de Capacitor (`targetSdk 36`) |
 
 ---
 
@@ -137,6 +141,10 @@ cp .env.example .env.local
 | :----------------------------------------- | :--------: | :------------------------------------------------------------ | :------------------------------------------ |
 | `TURSO_DATABASE_URL`                       |     Sí     | URL de conexión libSQL/Turso                                  | `file:local.db` (Desarrollo local)          |
 | `TURSO_AUTH_TOKEN`                         | Producción | Token de autenticación de base de datos Turso                 | `eyJhbGci...`                               |
+| `INTEROP_PLATFORM_ORIGIN`                  |  Opcional  | Origen base para interoperabilidad académica y LTI 1.3        | `https://ceoubb.com`                        |
+| `INTEROP_CONTENT_ORIGIN`                   |  Opcional  | Origen de contenidos estáticos e incrustados                  | `https://ceoubb.com`                        |
+| `LTI_PRIVATE_JWK`                          |  Opcional  | Llave privada JWK para firmas de tokens LTI                   | `{"kty":"RSA",...}`                         |
+| `LTI_PREVIOUS_PUBLIC_JWKS`                 |  Opcional  | Llaves públicas previas para rotación de firmas LTI           | `[]`                                        |
 | `NEXT_PUBLIC_CEOUBB_ENVIRONMENT`           |     Sí     | Entorno de ejecución (`development`, `staging`, `production`) | `production`                                |
 | `NEXT_PUBLIC_FIREBASE_API_KEY`             |     Sí     | Clave de API pública de Firebase Client SDK                   | `AIzaSy...`                                 |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`         |     Sí     | Dominio de autenticación Firebase                             | `centro-de-estudio-ubb.firebaseapp.com`     |
@@ -145,8 +153,12 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` |     Sí     | Sender ID para notificaciones push FCM                        | `411177916202`                              |
 | `NEXT_PUBLIC_FIREBASE_APP_ID`              |     Sí     | Identificador de aplicación Web Firebase                      | `1:411177916202:web:...`                    |
 | `FIREBASE_PROJECT_ID`                      |     Sí     | ID de proyecto para operaciones de servidor                   | `centro-de-estudio-ubb`                     |
+| `FIREBASE_SERVICE_ACCOUNT_EMAIL`           |  Servidor  | Correo de cuenta de servicio administrativa de Firebase       | `firebase-adminsdk@...`                     |
+| `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`     |  Servidor  | Clave privada RSA de la cuenta de servicio                    | Clave privada RSA en formato PEM            |
 | `GEMINI_API_KEY`                           |  Opcional  | Clave para servicios de IA y resúmenes académicos             | `AIzaSy...`                                 |
 | `NEXT_PUBLIC_SENTRY_DSN`                   |  Opcional  | DSN para monitoreo de errores en cliente                      | `https://...@sentry.io/...`                 |
+| `SENTRY_DSN`                               |  Opcional  | DSN para captura de excepciones en servidor                   | `https://...@sentry.io/...`                 |
+| `CAPACITOR_SERVER_URL`                     | Desarrollo | Override para conectar la app móvil al servidor local/staging | `http://192.168.1.7:3000`                   |
 
 ---
 
@@ -163,11 +175,11 @@ pnpm install
 ### 2. Configuración de Base de Datos Local
 
 ```bash
-# Generar migraciones de Drizzle ORM
-pnpm run db:generate
+# Inicializar base de datos SQLite local (local.db), aplicar migraciones Drizzle y poblar fixtures de prueba
+pnpm run db:setup:local
 
-# (Opcional) Poblar base de datos con datos de prueba
-pnpm run staging:seed
+# (Opcional) Si solo se desea repoblar fixtures sin reiniciar el esquema:
+pnpm run db:seed:local
 ```
 
 ### 3. Servidor de Desarrollo Web
@@ -190,21 +202,43 @@ El cliente Android sincroniza los plugins nativos y compila mediante Gradle:
 # Sincronizar plugins y puente de Capacitor
 pnpm exec cap sync android
 
-# Compilar APK de depuración
+# Compilar APK de depuración en Unix/macOS:
 cd android
 ./gradlew :app:assembleDebug
+
+# O en PowerShell (Windows):
+cd android
+.\gradlew.bat :app:assembleDebug
 ```
 
 > [!NOTE]
 > El proyecto Android se encuentra en `android/`. Toda llamada a plugins nativos (`@capacitor/*`) en el código web debe degradar a una operación sin efecto (_no-op_) cuando se ejecuta en el navegador, mediante `lib/mobile-bridge.ts`.
 
-### Validación de Firebase y Cloud Functions
+### Despliegue en Cloudflare Workers
+
+El portal web compila mediante `@opennextjs/cloudflare` para su ejecución en Cloudflare Workers:
 
 ```bash
+# Compilar bundle de producción optimizado para Cloudflare Workers
+pnpm run cloudflare:build
+
+# Previsualizar el bundle localmente con Wrangler
+pnpm run cloudflare:preview
+
+# Desplegar a producción en Cloudflare Workers
+pnpm run cloudflare:deploy
+```
+
+### Sincronización y Validación de Firebase / Cloud Functions
+
+```bash
+# Sincronizar motor de cálculo de notas (lib/grades.ts) con Cloud Functions
+pnpm run sync:grade-scale
+
 # Validar sintaxis de Cloud Functions
 pnpm run check:functions
 
-# Verificar integridad sintáctica de reglas declarativas
+# Verificar integridad de reglas declarativas de Firestore y Storage bajo emulador local
 pnpm run check:rules
 
 # Desplegar reglas de seguridad en Firebase (requiere sesión en Firebase CLI)
@@ -217,16 +251,18 @@ pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only fir
 
 El repositorio implementa un sistema de verificación estricto con validación criptográfica SHA-256 (_Test-Locking_) que prohíbe el debilitamiento o salto de pruebas:
 
-| Comando                      | SLA de Tiempo | Alcance                                                                               |
-| :--------------------------- | :-----------: | :------------------------------------------------------------------------------------ |
-| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck (`tsc`) + Tests unitarios + Guardián SHA-256 + Validación OpenSpec          |
-| `pnpm run verify:invariants` |   `< 500ms`   | Pruebas de acceso institucional (`access-policy`), notas (`grades`) y reglas Firebase |
-| `pnpm test`                  |    `< 60s`    | Compilación completa de producción (`next build`) + 45+ suites de prueba              |
-| `pnpm run typecheck`         |   `< 2.0s`    | Comprobación estricta de tipos TypeScript sin emitir artefactos                       |
-| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9                                           |
-| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                        |
-| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor            |
-| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI             |
+| Comando                      | SLA de Tiempo | Alcance                                                                                  |
+| :--------------------------- | :-----------: | :--------------------------------------------------------------------------------------- |
+| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck (`tsc`) + Tests unitarios + Guardián SHA-256 (68 suites) + OpenSpec (31 specs) |
+| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso        |
+| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local                |
+| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + 65 suites de prueba + smoke tests HTML             |
+| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                            |
+| `pnpm run typecheck`         |   `< 2.0s`    | Comprobación estricta de tipos TypeScript sin emitir artefactos                          |
+| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9                                              |
+| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                           |
+| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor               |
+| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                |
 
 ---
 
