@@ -237,34 +237,28 @@ export function ClassroomView({
                 aria-selected={isActive}
                 aria-current={isActive ? "page" : undefined}
                 aria-controls={`classroom-panel-${key}`}
-                className={`relative isolate inline-flex items-center justify-center font-medium transition-colors outline-none cursor-pointer ${
-                  isActive
-                    ? "active text-[oklch(0.48_0.18_255)] font-semibold"
-                    : "text-[oklch(0.36_0.03_255)] hover:text-[oklch(0.2_0.03_260)]"
-                }`}
+                className={`relative ${isActive ? "active" : ""}`}
                 onClick={() => setTab(key)}
                 onKeyDown={(e) => handleTabKeyDown(key, e)}
                 type="button"
               >
+                <Icon size={18} aria-hidden="true" />
+                <span>{label}</span>
                 {isActive && (
                   <motion.span
                     layoutId="active-classroom-tab-indicator"
-                    className="absolute inset-x-0 inset-y-1 z-0 rounded-lg bg-[oklch(0.48_0.18_255/0.1)] border border-[oklch(0.48_0.18_255/0.22)] shadow-xs"
+                    className="absolute inset-x-0 -bottom-[1px] z-10 h-[3px] rounded-t-sm bg-[oklch(0.48_0.18_255)]"
                     transition={
                       reduce
                         ? { duration: 0 }
                         : {
                             type: "spring",
-                            stiffness: 340,
-                            damping: 28,
+                            stiffness: 380,
+                            damping: 30,
                           }
                     }
                   />
                 )}
-                <span className="relative z-10 inline-flex items-center gap-2">
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{label}</span>
-                </span>
               </button>
             );
           })}

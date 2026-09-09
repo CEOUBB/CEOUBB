@@ -1891,15 +1891,25 @@ img {
   color: var(--text-muted);
 }
 
-.palette-field input {
+.palette-field input,
+input[role="combobox"] {
   flex: 1 1 auto;
   min-width: 0;
   border: 0;
-  outline: 0;
+  outline: 0 !important;
   background: none;
   font-size: 16px;
   color: var(--text-body);
   caret-color: var(--color-primary);
+  box-shadow: none !important;
+}
+
+.palette-field input:focus,
+.palette-field input:focus-visible,
+input[role="combobox"]:focus,
+input[role="combobox"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .palette-field input::placeholder {
@@ -3221,7 +3231,7 @@ img {
 .course-tabs span.active {
   color: var(--color-primary);
   font-weight: 600;
-  border-bottom-color: var(--color-primary);
+  border-bottom-color: transparent;
 }
 .course-tabs button.active svg,
 .course-tabs span.active svg {
@@ -3329,8 +3339,8 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  margin: -6px 0 0 -6px;
+  min-height: 36px;
+  margin: 2px 0 0 0;
   padding: 4px 10px 4px 6px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
@@ -3462,6 +3472,16 @@ img {
     transition: none !important;
     transform: none !important;
   }
+}
+
+.scrollbar-hide {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .breadcrumb {

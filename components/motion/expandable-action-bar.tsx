@@ -211,7 +211,7 @@ export function ExpandableActionBar({
         <motion.div
           ref={trackRef}
           layout="size"
-          className={`scrollbar-hide relative inline-flex max-w-full items-center overflow-x-auto overflow-y-hidden rounded-full border border-[oklch(0.92_0.006_60)] bg-white/95 shadow-2xl backdrop-blur-xl ${
+          className={`relative inline-flex max-w-full items-center overflow-hidden rounded-full border border-[oklch(0.92_0.006_60)] bg-white/95 shadow-2xl backdrop-blur-xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
             SIZE_CLASS[size]
           } ${classNames?.track ?? ""}`.trim()}
           transition={ITEM_TRANSITION}

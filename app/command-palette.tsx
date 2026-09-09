@@ -260,9 +260,10 @@ export function CommandPalette({
                     aria-controls={`${uid}-list`}
                     aria-activedescendant={rows.length > 0 ? `${uid}-opt-${active}` : undefined}
                     aria-autocomplete="list"
-                    className={`h-13 flex-1 bg-transparent text-sm text-[oklch(0.2_0.03_260)] placeholder:text-[oklch(0.52_0.03_250)] caret-[oklch(0.48_0.18_255)] outline-none ${
+                    className={`h-13 flex-1 border-0 bg-transparent text-sm text-[oklch(0.2_0.03_260)] placeholder:text-[oklch(0.52_0.03_250)] caret-[oklch(0.48_0.18_255)] !outline-none !ring-0 focus:border-0 focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 shadow-none ${
                       canTouch ? "text-base" : "text-sm"
                     }`}
+                    style={{ outline: "none", boxShadow: "none" }}
                   />
                   <kbd className="hidden rounded border border-[oklch(0.92_0.006_60)] bg-[oklch(0.975_0.005_240)] px-1.5 py-0.5 font-mono text-[10px] text-[oklch(0.52_0.03_250)] sm:inline-block">
                     ESC
