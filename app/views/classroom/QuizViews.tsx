@@ -5,8 +5,8 @@ import { Exam } from "@phosphor-icons/react";
 import { EmptyState } from "./EmptyState";
 import { QuizListSkeleton } from "../ViewSkeletons";
 
-export function QuizLoading() {
-  return <QuizListSkeleton />;
+export function QuizLoading({ teacher = false }: { teacher?: boolean }) {
+  return <QuizListSkeleton teacher={teacher} />;
 }
 
 export function QuizEmpty({ teacher = false }: { teacher?: boolean }) {

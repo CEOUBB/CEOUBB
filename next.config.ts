@@ -56,6 +56,9 @@ const nextConfig: NextConfig = {
       "drizzle-orm",
     ],
   },
+  images: {
+    minimumCacheTTL: 86400,
+  },
   productionBrowserSourceMaps: false,
   allowedDevOrigins: ["192.168.1.7", "192.168.1.*", "localhost", "127.0.0.1"],
   async headers() {

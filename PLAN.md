@@ -1,5 +1,31 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Revisión de bots de la PR 171, 2026-09-09
+
+- React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
+- PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
+
+## Handoff: rediseño de Avisos y mensajes, 2026-09-09
+
+- **Entrega:** bandeja institucional con riel, búsqueda de conversaciones, avisos en filas, fechas, estados vacíos y redactor móvil visible. Pestañas con teclado y orientación ARIA responsive; scroll limitado al historial.
+- **Integración:** incorporado `main` #169; preservadas sus mejoras de carga y adaptado únicamente el skeleton de comunicaciones al nuevo contenedor.
+- **Verificación:** `pnpm test` (build y 624 pruebas), lint y seis recorridos Playwright aprobados. Invariantes 35/35; verify:fast 606 pruebas, 67 sellos y 31 specs, con repetición final por hook de push.
+- **Evidencia y límites:** `docs/design/communications-review.md`. Conversaciones de prueba con transporte sintético; sin cambios de backend ni datos reales. Revisión visual independiente con un ajuste ARIA corregido y probado; su veredicto final no pudo ejecutarse por cuota del subagente.
+
+## Handoff: modernización de componentes UI con registros oficiales (beUI, ReUI, coss.com, beautifului, transitions.dev), 2026-09-08
+
+- **Alcance entregado:** Integración directa de 8 componentes desde fuentes y registros oficiales (`beui.dev`, `reui.io`, Cal.com/`coss.com/ui`, `transitions.dev` y `beautifului.dev`), adaptados a la gobernanza de diseño OKLCH de `DESIGN.md` e iconografía exclusiva `@phosphor-icons/react`.
+  1. _Pestañas del Aula:_ `MorphingTabs` de beUI con indicador deslizante y resortes amortiguados en `ClassroomView.tsx`.
+  2. _Paleta de Comandos (Ctrl+K):_ `CommandPalette` de beUI con cursor reactivo determinista, filtro difuso y navegación de teclado en `app/command-palette.tsx`.
+  3. _Acciones Masivas Flotantes:_ `ExpandableActionBar` de beUI para selección múltiple de participantes en `PeopleSection.tsx`.
+  4. _Zona de Entrega de Tareas:_ `FileUpload` de beUI con drag-and-drop, validación de 25 MB y progreso animado a Firebase Storage en `SubmissionSlot.tsx`.
+  5. _Pila de Notificaciones:_ `NotificationStack` de beUI/ReUI con agrupación cronológica (Hoy, Esta semana, Anteriores) y física de resorte en `app/notification-panel.tsx`.
+  6. _Visor de Auditoría y Rectificaciones:_ `DiffTable` de beautifului.dev en `GradeHistoryDialog.tsx` con deltas numéricos y estilo semántico.
+  7. _Cuadrícula de Horario:_ Scheduler Columns de Cal.com (`coss.com/ui`) con módulos académicos UBB (`ACADEMIC_SLOTS`) y badge de clase en vivo `LivePulse` en `PlannerGrid.tsx` y `PlannerBlock.tsx`.
+  8. _Micro-swaps de Botones:_ Transiciones instantáneas CSS $\le 120\text{ms}$ de transitions.dev en botones de copiado y guardado (`CourseRail.tsx` y `GradesSection.tsx`).
+- **Límites:** Cero regresión funcional en lógica académica, cero debilitamiento de tests, accesibilidad WCAG 2.2 y cumplimiento estricto con `DESIGN.md`.
+- **Verificación:** `verify:fast` (606 pruebas unitarias, 67 sellos SHA-256, 31 especificaciones OpenSpec), `verify:invariants` (35 pruebas), `format:check` y `typecheck` aprobados con código de salida 0.
+
 ## Handoff: eliminación de biblioteca de estudio y desacople de KaTeX, 2026-09-08
 
 - **Alcance entregado:** Eliminación integral de la biblioteca estática (`public/biblioteca/` y `https://ceoubb.com/biblioteca/index.html`), desvinculación de accesos en UI (`portal-shell.tsx`, `portal-sheets.tsx`, `ResourcesView.tsx`, `PostsSection.tsx`), redirección 307 en `next.config.ts` (`/biblioteca/:path*` -> `/`), actualización del Service Worker (`public/sw.js` a `v9` eliminando precaché y rutas obsoletas), desacoplamiento de dependencias de KaTeX a `public/vendor/katex/` para fórmulas en aula virtual, actualización de categorías de FAQ (`recursos`), ajuste de documentos de gobernanza (`AGENTS.md`, `DESIGN.md`, `openspec/specs/mobile/spec.md`) y actualización de sellos de prueba SHA-256.
@@ -294,6 +320,29 @@ Next recommended action:
 
 ## Next recommended step
 
+### Revisión del PR 168 — 2026-09-08
+
+- **Rama:** `codex/corregir-componentes-pr-168`, basada en la cabecera del PR 168.
+- **Correcciones:** Ctrl+K tiene un único manejador conectado al estado del portal; la búsqueda conserva el foco y un nombre accesible. Las pestañas limitan sus estilos a los botones y mantienen el indicador de 3 px. Copiar y guardar superponen sus estados sin cambiar de ancho; copiar conserva el foco. Las acciones docentes envuelven en móvil. El calendario vuelve a compartir la escala horaria entre etiquetas y celdas.
+- **Revisión adicional:** corregidos los errores de lint del PR en participantes, historial, hidratación e iconos de entregas; botón de retroalimentación identificado para lectores de pantalla y deshabilitado tras guardar.
+- **Verificación:** 606 pruebas unitarias, 35 invariantes, 67 sellos SHA-256 y 31 especificaciones válidas. Regresión Playwright de búsqueda, pestañas, copiado y calendario más revisión responsive a 1918, 1440, 900 y 390 px; capturas en `.impeccable/review/pr168-*.png`.
+- **Servicios externos:** sin cambios ni despliegue. El aviso del calendario procede de `permission-denied` de Firestore y no demuestra por sí solo que falten reglas. Las reglas locales ya contemplan la agenda privada; la sesión demo local no autentica una cuenta real en Firebase. La sincronización real requiere comprobar la sesión y las reglas publicadas con una cuenta institucional.
+- **Validación final:** `pnpm test` compila producción y pasa 624/624 pruebas; Playwright pasa 6/6 casos. Lint, tipos y formato sin errores. React Doctor: 91/100, siete advertencias existentes (sin regresión). La primera ejecución completa heredó flags de preview y falló tres comprobaciones de entorno; al retirarlos pasó sin modificar pruebas.
+- **Entrega:** corrección destinada al PR existente; sin despliegue de producción.
+
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.
+
+### Skeletons del campus — 2026-09-08
+
+- **Rama:** `codex/skeletons-fieles-campus`.
+- **Cambios:** la carga inicial reutiliza cursos y agenda del dashboard actual, con riel de 248 px y pie institucional. Calendario conserva controles, filtros y el día visible en móvil sin inventar citas. Aula usa las cinco pestañas canónicas, metadatos y ficha lateral. Recursos, gestión docente, configuración, cuestionarios, notificaciones e historial de notas siguen sus estructuras actuales. Conversación y visor conservan su geometría; el límite de ancho compartido protege los bloques en móvil.
+- **Accesibilidad:** estado de carga anunciado; controles de muestra inertes o deshabilitados; se elimina la entrada desplazada de los bloques y se conserva el brillo con alternativa estática para movimiento reducido.
+- **Verificación:** `pnpm test` compila producción y pasa 624 pruebas; `verify:fast` pasa 606 pruebas, 67 sellos y 31 especificaciones; `verify:invariants` pasa 35 pruebas. Lint, tipos y formato sin errores. React Doctor 91/100, siete advertencias preexistentes. Detector de layout sin hallazgos.
+- **Regresión visual:** `pnpm exec playwright test e2e/skeleton-layout.spec.ts --project=chromium --workers=1` pasa 2 casos y recorre las 16 variantes a 1440 y 390 px. Comprueba desbordamiento, tamaño de bloques, movimiento reducido, pestañas vigentes, día móvil y dimensiones de la tarjeta frente a `CourseCard`. Capturas locales en `.impeccable/review/skeleton-*.png`.
+- **Límites:** las filas de datos aún desconocidos representan contenido pendiente; su cantidad final y los estados vacíos o de error dependen de la respuesta. La comprobación visual monta los componentes reales con el CSS de producción mediante interceptación de Playwright, no simula la latencia de servicios ni autentica cuentas institucionales reales. No se ejecutaron emuladores Firebase ni pruebas sobre dispositivos físicos.
+- **Servicios externos:** sin cambios de configuración ni despliegue de producción. Entrega mediante PR.
+- **Corrección de las capturas:** el HTML interceptado de Playwright ahora declara UTF-8 en `Content-Type` y en `meta charset`. Los textos fuente estaban intactos; la prueba comprueba `document.characterSet` y rechaza caracteres de codificación corrupta en las 16 variantes. Las capturas se regeneraron y ambos casos responsive pasan.
+
+- **Variantes por rol:** el catálogo docente de cuestionarios usa sus filas, exportación y metadatos; el alumno mantiene sus tarjetas con acción lateral. La prueba recorre ambas distribuciones.

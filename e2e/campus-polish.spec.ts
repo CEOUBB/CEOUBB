@@ -74,8 +74,8 @@ for (const width of [1918, 1440, 900, 390]) {
     if (width <= 767)
       await page.getByRole("button", { name: "Entrar al aula", exact: true }).click();
     await page
-      .getByRole("navigation", { name: "Secciones del aula" })
-      .getByRole("button", { name: "Cuestionarios", exact: true })
+      .getByRole("tablist", { name: "Secciones del aula" })
+      .getByRole("tab", { name: "Cuestionarios", exact: true })
       .click();
     await expect(page.getByRole("heading", { name: "Cuestionarios de la sección" })).toBeVisible();
     expect(

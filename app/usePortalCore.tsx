@@ -356,17 +356,6 @@ export function usePortalCore(initialSession?: SessionState) {
     return () => cancelAnimationFrame(frame);
   }, [course?.id, screen, user]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setSearchOpen((open) => !open);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const unreadCommunications = useMemo(
     () =>
       user

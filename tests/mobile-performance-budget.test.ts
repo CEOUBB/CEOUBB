@@ -131,3 +131,28 @@ test("REQ-CAP-08: las filas del feed declaran content-visibility y su alto estim
     );
   }
 });
+
+/* PERF-083: el escudo del velo de `.access-brand::before` sólo es descubrible
+   tras el CSS. Si alguien borra la precarga, el LCP móvil vuelve de ~0.8 s a
+   ~3.5 s sin que cambie un solo píxel, así que nada más lo delataría. */
+test("PERF-083: el escudo del velo de acceso se precarga en el documento inicial", async () => {
+  const cssDeclaresWatermark =
+    /\.access-brand::before\s*\{[^}]*url\(["']?\/brand\/ubb-shield\.webp/.test(css);
+  assert.ok(
+    cssDeclaresWatermark,
+    "`.access-brand::before` ya no referencia /brand/ubb-shield.webp: revisa si la precarga sigue haciendo falta antes de tocar este guard."
+  );
+
+  const entry = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const documentHead = `${entry}\n${layout}`;
+
+  const preload = documentHead.match(
+    /<link[^>]*rel="preload"[^>]*\/brand\/ubb-shield\.webp[^>]*\/>/
+  );
+  assert.ok(
+    preload,
+    'Falta `<link rel="preload" as="image" href="/brand/ubb-shield.webp">` en app/page.tsx (o en el <head> de app/layout.tsx).'
+  );
+  assert.match(preload[0], /as="image"/, 'La precarga del escudo debe declarar as="image".');
+});

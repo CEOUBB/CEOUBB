@@ -18,7 +18,7 @@ The system SHALL provide dedicated, layout-faithful skeleton placeholders for ea
 ##### Scenario: Resources view loading state
 
 - **WHEN** the user navigates to the Resources screen while its dynamic chunk is loading
-- **THEN** the system SHALL render a geometric skeleton containing the lead page header, two-column ecosystem cards, AI assistant chip grids, and institutional benefit tiles
+- **THEN** the system SHALL render a geometric skeleton containing the lead page header, mobile application strip, category index, and resource rows in the same groups as the loaded view
 
 ##### Scenario: Admin view loading state
 

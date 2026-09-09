@@ -312,59 +312,6 @@
   text-wrap: pretty;
   font-size: 11px;
 }
-.app-shell .communications-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 8px;
-}
-.app-shell .communications-summary strong {
-  font-family: var(--font-core);
-  font-size: 20px;
-}
-.app-shell .communications-toolbar {
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
-.app-shell .communications-tabs {
-  padding: 4px;
-  border: 1px solid var(--border-hairline);
-  background: var(--surface-card);
-}
-.app-shell .communications-tabs [aria-selected="true"] {
-  background: var(--color-primary-wash);
-  box-shadow: none;
-}
-.app-shell .communications-empty {
-  min-height: 230px;
-  border-style: solid;
-}
-.app-shell .communications-messages {
-  min-height: 460px;
-  max-height: min(70dvh, 720px);
-  grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.5fr);
-}
-.app-shell .communications-messages[data-empty="true"] {
-  display: block;
-  min-height: 280px;
-}
-.communications-messages[data-empty="true"] .conversation-list-heading {
-  display: none;
-}
-.communications-messages[data-empty="true"] .conversation-list-panel {
-  border: 0;
-}
-.communications-messages .conversation-panel[hidden] {
-  display: none;
-}
-.app-shell .communications-empty.compact {
-  margin: 0;
-  background: transparent;
-  border: 0;
-  min-height: 280px;
-}
 .app-shell .teacher-manager-hero {
   padding: 0 0 24px;
   background: transparent;
@@ -625,11 +572,6 @@
   .course-card .course-body {
     padding: 20px;
   }
-  .app-shell .communications-messages {
-    min-height: 380px;
-    max-height: none;
-    display: block;
-  }
   .app-shell .classroom-top {
     padding: 20px;
   }
@@ -664,5 +606,118 @@
     scroll-behavior: auto;
     transition-duration: 0ms;
     animation-duration: 0ms;
+  }
+}
+
+/* Implements: REQ-SKELETON-01 — la carga consume la geometría del campus. */
+.app-shell.boot-shell {
+  grid-template-rows: calc(var(--header-height) + var(--safe-top)) minmax(0, 1fr);
+}
+.boot-header {
+  gap: 12px;
+  background: var(--surface-card);
+}
+.boot-header strong {
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+.boot-search {
+  border-radius: 8px;
+}
+.boot-side {
+  padding: 24px 14px 18px;
+}
+.boot-row {
+  min-height: 46px;
+  padding: 10px 12px;
+}
+.boot-legend {
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+.boot-main {
+  justify-content: flex-start;
+}
+.boot-shell .course-action {
+  display: flex;
+  align-items: center;
+}
+.boot-shell .sk.course-symbol {
+  background: color-mix(in oklch, var(--border-hairline) 62%, var(--canvas));
+}
+.teacher-course-row-skeleton {
+  grid-template-columns: 8px minmax(0, 1fr);
+}
+.teacher-course-row-skeleton > .sk {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}
+[aria-busy="true"] .classroom-meta {
+  max-width: 100%;
+}
+[aria-busy="true"] .classroom-meta > .sk {
+  flex-shrink: 1;
+}
+[aria-busy="true"] .planner-controls button:disabled,
+[aria-busy="true"] .course-tabs button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+[aria-busy="true"] .planner-filters > .sk {
+  display: block;
+}
+@media (max-width: 700px) {
+  .boot-header {
+    gap: 6px;
+  }
+  .boot-header strong {
+    font-size: 15px;
+    margin-left: 0;
+  }
+  .boot-search {
+    flex: 1 1 auto;
+  }
+}
+
+.skeleton-rail-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+/* La consulta móvil ocupa el espacio útil entre cabecera y navegación. */
+.communications-heading .communications-summary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.communications-messages {
+  flex: none;
+}
+@media (max-width: 700px) {
+  .communications-center:has([data-conversation-open="true"]) .communications-workspace {
+    position: fixed;
+    inset: calc(62px + var(--safe-top, 0px)) 0 calc(58px + var(--safe-bottom, 0px));
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 0;
+    border-inline: 0;
+  }
+  .communications-center:has([data-conversation-open="true"]) .communications-toolbar {
+    display: none;
+  }
+  .communications-center:has([data-conversation-open="true"]) .communications-content {
+    flex: 1;
+    min-height: 0;
+  }
+  .communications-messages[data-conversation-open="true"] {
+    flex: 1;
+    height: auto;
+    min-height: 0;
   }
 }

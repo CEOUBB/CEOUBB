@@ -1,8 +1,15 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import Script from "next/script";
-import "../../../public/vendor/katex/katex.min.css";
 import {
   CLASSROOM_COMPATIBILITY_REQUIREMENTS,
   calloutFromQuote,
@@ -37,6 +44,33 @@ declare global {
   }
 }
 
+let katexRequested = false;
+const katexRequestListeners = new Set<() => void>();
+
+function requestKatex() {
+  if (katexRequested) return;
+  katexRequested = true;
+  if (typeof document !== "undefined" && !document.getElementById("ceoubb-katex-css")) {
+    const link = document.createElement("link");
+    link.id = "ceoubb-katex-css";
+    link.rel = "stylesheet";
+    link.href = "/vendor/katex/katex.min.css";
+    document.head.appendChild(link);
+  }
+  for (const listener of katexRequestListeners) listener();
+}
+
+function subscribeKatexRequest(callback: () => void) {
+  katexRequestListeners.add(callback);
+  return () => {
+    katexRequestListeners.delete(callback);
+  };
+}
+
+function getKatexRequested() {
+  return katexRequested;
+}
+
 const katexSubscribers = new Set<() => void>();
 
 function keyedItems<T>(items: T[], prefix: string) {
@@ -47,6 +81,9 @@ function keyedItems<T>(items: T[], prefix: string) {
 }
 
 export function RichTextAssets() {
+  const requested = useSyncExternalStore(subscribeKatexRequest, getKatexRequested, () => false);
+  if (!requested) return null;
+
   return (
     <Script
       id="ceoubb-katex"
@@ -66,6 +103,7 @@ function MathFormula({ value, display }: { value: string; display: boolean }) {
   const source = display ? `$$\n${value}\n$$` : `$${value}$`;
 
   useEffect(() => {
+    requestKatex();
     const render = () => {
       const element = display ? divRef.current : spanRef.current;
       if (!element) return;
