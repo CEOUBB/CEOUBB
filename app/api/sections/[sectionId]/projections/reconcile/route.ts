@@ -9,7 +9,10 @@ export async function POST(
   { params }: { params: Promise<{ sectionId: string }> }
 ) {
   const actor = await getSessionUser(request);
-  if (!actor || (actor.role !== "teacher" && actor.role !== "owner")) {
+  if (!actor) {
+    return Response.json({ error: "Sesión no válida." }, { status: 401 });
+  }
+  if (actor.role !== "teacher" && actor.role !== "owner") {
     return Response.json({ error: "No autorizado." }, { status: 403 });
   }
 
