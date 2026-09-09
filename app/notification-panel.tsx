@@ -283,10 +283,12 @@ export function NotificationSkeleton() {
       {[0, 1, 2].map((row) => (
         <span className="notification-skeleton-row" key={row}>
           <span className="notification-skeleton-band" />
+          <span className="sk sk-round" style={{ width: 32, height: 32 }} />
           <span className="notification-skeleton-lines">
-            <span className="notification-skeleton-line" />
-            <span className="notification-skeleton-line short" />
+            <span className="sk notification-skeleton-line" />
+            <span className="sk sk-quiet notification-skeleton-line short" />
           </span>
+          <span className="sk sk-quiet" style={{ width: 36, height: 10 }} />
         </span>
       ))}
     </div>

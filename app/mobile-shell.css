@@ -373,44 +373,6 @@
     gap: var(--space-md);
     padding: var(--space-lg) var(--space-md) var(--space-xl);
   }
-  .boot-head {
-    gap: 8px;
-  }
-  .boot-title {
-    width: 68%;
-    height: 28px;
-  }
-  .boot-subtitle {
-    width: 86%;
-  }
-  /* Alto real de la ficha de próxima evaluación con su pie: fecha y texto arriba,
-     la acción cae a su propio renglón como en la tarjeta verdadera. */
-  .boot-strip {
-    min-height: 128px;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-content: center;
-    row-gap: var(--space-sm);
-    padding: var(--space-md);
-  }
-  .boot-strip-action {
-    grid-column: 1 / -1;
-    width: 132px;
-  }
-  .boot-grid {
-    gap: var(--space-sm);
-  }
-  .boot-card {
-    gap: 8px;
-    padding-bottom: 14px;
-  }
-  .boot-cover {
-    aspect-ratio: auto;
-    height: 8px;
-  }
-  .boot-line.wide {
-    height: 19px;
-  }
-
   /* La barra del pulgar es lo único fijo de la pantalla: si falta, al resolver la
      sesión el contenido salta 58px hacia arriba. */
   .boot-shell::after {

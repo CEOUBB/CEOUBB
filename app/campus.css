@@ -666,3 +666,82 @@
     animation-duration: 0ms;
   }
 }
+
+/* Implements: REQ-SKELETON-01 — la carga consume la geometría del campus. */
+.app-shell.boot-shell {
+  grid-template-rows: calc(var(--header-height) + var(--safe-top)) minmax(0, 1fr);
+}
+.boot-header {
+  gap: 12px;
+  background: var(--surface-card);
+}
+.boot-header strong {
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+.boot-search {
+  border-radius: 8px;
+}
+.boot-side {
+  padding: 24px 14px 18px;
+}
+.boot-row {
+  min-height: 46px;
+  padding: 10px 12px;
+}
+.boot-legend {
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+.boot-main {
+  justify-content: flex-start;
+}
+.boot-shell .course-action {
+  display: flex;
+  align-items: center;
+}
+.boot-shell .sk.course-symbol {
+  background: color-mix(in oklch, var(--border-hairline) 62%, var(--canvas));
+}
+.teacher-course-row-skeleton {
+  grid-template-columns: 8px minmax(0, 1fr);
+}
+.teacher-course-row-skeleton > .sk {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}
+[aria-busy="true"] .classroom-meta {
+  max-width: 100%;
+}
+[aria-busy="true"] .classroom-meta > .sk {
+  flex-shrink: 1;
+}
+[aria-busy="true"] .planner-controls button:disabled,
+[aria-busy="true"] .course-tabs button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+[aria-busy="true"] .planner-filters > .sk {
+  display: block;
+}
+@media (max-width: 700px) {
+  .boot-header {
+    gap: 6px;
+  }
+  .boot-header strong {
+    font-size: 15px;
+    margin-left: 0;
+  }
+  .boot-search {
+    flex: 1 1 auto;
+  }
+}
+
+.skeleton-rail-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}

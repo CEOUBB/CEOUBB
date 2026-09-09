@@ -315,7 +315,7 @@ function QuizCatalogList({
         <span className="quiz-count">{quizzes.length}</span>
       </div>
       {loading ? (
-        <QuizLoading />
+        <QuizLoading teacher />
       ) : quizzes.length === 0 ? (
         <QuizEmpty teacher />
       ) : (
