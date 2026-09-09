@@ -308,6 +308,16 @@ Next recommended action:
 
 ## Next recommended step
 
+### Revisión del PR 168 — 2026-09-08
+
+- **Rama:** `codex/corregir-componentes-pr-168`, basada en la cabecera del PR 168.
+- **Correcciones:** Ctrl+K tiene un único manejador conectado al estado del portal; la búsqueda conserva el foco y un nombre accesible. Las pestañas limitan sus estilos a los botones y mantienen el indicador de 3 px. Copiar y guardar superponen sus estados sin cambiar de ancho; copiar conserva el foco. Las acciones docentes envuelven en móvil. El calendario vuelve a compartir la escala horaria entre etiquetas y celdas.
+- **Revisión adicional:** corregidos los errores de lint del PR en participantes, historial, hidratación e iconos de entregas; botón de retroalimentación identificado para lectores de pantalla y deshabilitado tras guardar.
+- **Verificación:** 606 pruebas unitarias, 35 invariantes, 67 sellos SHA-256 y 31 especificaciones válidas. Regresión Playwright de búsqueda, pestañas, copiado y calendario más revisión responsive a 1918, 1440, 900 y 390 px; capturas en `.impeccable/review/pr168-*.png`.
+- **Servicios externos:** sin cambios ni despliegue. El aviso del calendario procede de `permission-denied` de Firestore y no demuestra por sí solo que falten reglas. Las reglas locales ya contemplan la agenda privada; la sesión demo local no autentica una cuenta real en Firebase. La sincronización real requiere comprobar la sesión y las reglas publicadas con una cuenta institucional.
+- **Validación final:** `pnpm test` compila producción y pasa 624/624 pruebas; Playwright pasa 6/6 casos. Lint, tipos y formato sin errores. React Doctor: 91/100, siete advertencias existentes (sin regresión). La primera ejecución completa heredó flags de preview y falló tres comprobaciones de entorno; al retirarlos pasó sin modificar pruebas.
+- **Entrega:** corrección destinada al PR existente; sin despliegue de producción.
+
 Deploy the Firestore and Storage rule sets to `centro-de-estudio-ubb` (using the selective deployment process defined in `AGENTS.md`), then execute the manual verification matrix across owner, teacher, and student roles prior to Cloudflare production promotion.
 
 In parallel, the owner starts P0B.7 item 1 (pilot authorization) and schedules the P0.8 restoration drill against the published RPO/RTO targets. P0.7 capacity evidence is complete in staging.

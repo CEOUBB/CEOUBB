@@ -311,8 +311,6 @@ function HistoryPage({
   const { studentId, gradeItemId } = selection;
 
   useEffect(() => {
-    setPage(null);
-    setError("");
     const controller = new AbortController();
     loadGradeHistoryPage(sectionId, studentId, gradeItemId, cursor, controller.signal).then(
       (result) => {

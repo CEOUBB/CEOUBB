@@ -111,7 +111,7 @@ function ParticipantRow({
       data-selected={selected || undefined}
     >
       {selectable && (
-        <label className="participant-checkbox-wrap" onClick={(e) => e.stopPropagation()}>
+        <label className="participant-checkbox-wrap">
           <input
             type="checkbox"
             checked={selected}

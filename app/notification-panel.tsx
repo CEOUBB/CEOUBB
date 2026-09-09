@@ -1,15 +1,6 @@
 "use client";
 
-import React, {
-  type FocusEvent,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { motion, type Transition, useReducedMotion } from "motion/react";
 import {
   ArrowRight,

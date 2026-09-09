@@ -83,10 +83,7 @@ export function CourseRail({
                 }
                 className={`course-reference swap-button ${copiedCourseReference ? "copied" : ""}`}
                 data-copied={copiedCourseReference ? "true" : undefined}
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  copyCourseReference();
-                }}
+                onClick={copyCourseReference}
                 type="button"
               >
                 <span className="num">{courseReference}</span>

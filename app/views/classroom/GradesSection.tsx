@@ -926,8 +926,15 @@ function FeedbackDialog({
           </button>
           <button
             className={`planner-dialog-save swap-button ${saved ? "copied" : ""}`}
+            aria-label={
+              saved
+                ? "Retroalimentación guardada"
+                : busy
+                  ? "Guardando…"
+                  : "Guardar retroalimentación"
+            }
             data-copied={saved ? "true" : undefined}
-            disabled={busy}
+            disabled={busy || saved}
             type="submit"
           >
             <span className="swap-wrapper" aria-hidden="true">

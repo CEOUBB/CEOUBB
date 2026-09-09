@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import type { Tab } from "./classroom-utils";
 import { LockKey, Plus, Tray } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
@@ -96,7 +96,6 @@ export function ClassroomView({
   const [composing, setComposing] = useState(false);
   // Implements: REQ-REV-04
   const [reviewing, setReviewing] = useState(false);
-  const reduce = useReducedMotion();
 
   const handleTabKeyDown = (key: Tab, event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -106,9 +105,7 @@ export function ClassroomView({
     const nextIndex = (currentIndex + direction + COURSE_TABS.length) % COURSE_TABS.length;
     const nextKey = COURSE_TABS[nextIndex].key;
     setTab(nextKey);
-    requestAnimationFrame(() => {
-      document.getElementById(`classroom-tab-${nextKey}`)?.focus();
-    });
+    document.getElementById(`classroom-tab-${nextKey}`)?.focus();
   };
 
   const startPublication = () => {
@@ -220,7 +217,7 @@ export function ClassroomView({
             </div>
           )}
         </header>
-        <nav
+        <div
           aria-label="Secciones del aula"
           className="course-tabs"
           role="tablist"
@@ -235,34 +232,19 @@ export function ClassroomView({
                 role="tab"
                 tabIndex={isActive ? 0 : -1}
                 aria-selected={isActive}
-                aria-current={isActive ? "page" : undefined}
                 aria-controls={`classroom-panel-${key}`}
-                className={`relative ${isActive ? "active" : ""}`}
+                className={isActive ? "active" : undefined}
                 onClick={() => setTab(key)}
                 onKeyDown={(e) => handleTabKeyDown(key, e)}
                 type="button"
               >
                 <Icon size={18} aria-hidden="true" />
                 <span>{label}</span>
-                {isActive && (
-                  <motion.span
-                    layoutId="active-classroom-tab-indicator"
-                    className="absolute inset-x-0 -bottom-[1px] z-10 h-[3px] rounded-t-sm bg-[oklch(0.48_0.18_255)]"
-                    transition={
-                      reduce
-                        ? { duration: 0 }
-                        : {
-                            type: "spring",
-                            stiffness: 380,
-                            damping: 30,
-                          }
-                    }
-                  />
-                )}
+                {isActive && <span className="course-tab-indicator" aria-hidden="true" />}
               </button>
             );
           })}
-        </nav>
+        </div>
         <AnimatePresence initial={false} mode="wait">
           <Screen key={tab}>
             <div

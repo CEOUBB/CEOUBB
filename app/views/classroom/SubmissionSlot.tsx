@@ -15,6 +15,7 @@ import {
   UploadSimple,
   UsersThree,
   WarningCircle,
+  type IconProps,
 } from "@phosphor-icons/react";
 import {
   MAX_SUBMISSION_BYTES,
@@ -107,12 +108,12 @@ function isAllowedSubmissionFile(file: File): boolean {
   );
 }
 
-function getFileIcon(fileName: string, type?: string) {
+function renderFileIcon(fileName: string, type: string | undefined, props: IconProps) {
   const extension = fileName.includes(".") ? fileName.split(".").pop()?.toLowerCase() : undefined;
   const mime = type?.toLowerCase() ?? "";
 
   if (extension === "pdf" || mime.includes("pdf")) {
-    return FilePdf;
+    return <FilePdf {...props} />;
   }
   if (
     extension === "zip" ||
@@ -121,7 +122,7 @@ function getFileIcon(fileName: string, type?: string) {
     mime.includes("zip") ||
     mime.includes("compressed")
   ) {
-    return FileArchive;
+    return <FileArchive {...props} />;
   }
   if (
     extension === "doc" ||
@@ -129,9 +130,9 @@ function getFileIcon(fileName: string, type?: string) {
     mime.includes("word") ||
     mime.includes("officedocument")
   ) {
-    return FileDoc;
+    return <FileDoc {...props} />;
   }
-  return File;
+  return <File {...props} />;
 }
 
 function createFileUploadItem(file: File, index = 0): FileUploadItem {
@@ -199,7 +200,6 @@ function FileUploadRow({
   const progress = Math.max(0, Math.min(100, item.progress ?? 0));
   const progressRatio = progress / 100;
   const showProgress = status === "uploading" || status === "success";
-  const LeadingIcon = getFileIcon(item.name, item.type);
 
   return (
     <motion.li
@@ -214,7 +214,11 @@ function FileUploadRow({
         <div
           className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[oklch(0.975_0.005_240)] text-[oklch(0.48_0.18_255)] ${classNames?.leading ?? ""}`}
         >
-          <LeadingIcon className="h-5 w-5" weight="duotone" />
+          {renderFileIcon(item.name, item.type, {
+            className: "h-5 w-5",
+            weight: "duotone",
+            "aria-hidden": true,
+          })}
         </div>
 
         <div className={`min-w-0 flex-1 ${classNames?.content ?? ""}`}>
@@ -724,12 +728,15 @@ export function SubmissionSlot({
   }
 
   if (receipt) {
-    const FileTypeIcon = getFileIcon(receipt.fileName, receipt.contentType);
     return (
       <div className="grades-receipt flex flex-col gap-1 text-left min-w-0">
         <div className="flex items-center gap-1.5 text-[13px] font-medium text-[oklch(0.2_0.03_260)] max-w-full truncate">
           <CheckCircle className="h-4 w-4 shrink-0 text-[oklch(0.7_0.17_155)]" weight="fill" />
-          <FileTypeIcon className="h-4 w-4 shrink-0 text-[oklch(0.48_0.18_255)]" weight="duotone" />
+          {renderFileIcon(receipt.fileName, receipt.contentType, {
+            className: "h-4 w-4 shrink-0 text-[oklch(0.48_0.18_255)]",
+            weight: "duotone",
+            "aria-hidden": true,
+          })}
           <span className="truncate" title={receipt.fileName}>
             {receipt.fileName}
           </span>

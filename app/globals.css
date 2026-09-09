@@ -3197,8 +3197,8 @@ input[role="combobox"]:focus-visible {
   display: none;
 }
 
-.course-tabs button,
-.course-tabs span {
+.course-tabs > button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3215,8 +3215,7 @@ input[role="combobox"]:focus-visible {
     background var(--transition-fast);
 }
 
-.course-tabs button svg,
-.course-tabs span svg {
+.course-tabs > button svg {
   color: var(--text-faint);
   transition: color var(--transition-fast);
 }
@@ -3227,15 +3226,23 @@ input[role="combobox"]:focus-visible {
 .course-tabs button:hover svg {
   color: var(--text-secondary);
 }
-.course-tabs button.active,
-.course-tabs span.active {
+.course-tabs > button.active {
   color: var(--color-primary);
   font-weight: 600;
   border-bottom-color: transparent;
 }
-.course-tabs button.active svg,
-.course-tabs span.active svg {
+.course-tabs > button.active svg {
   color: var(--color-primary);
+}
+
+.course-tab-indicator {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--color-primary);
+  pointer-events: none;
 }
 
 .breadcrumb button {
@@ -3255,7 +3262,7 @@ input[role="combobox"]:focus-visible {
   gap: var(--space-xl);
 }
 
-.classroom-main > div {
+.classroom-main > div:not(.course-tabs) {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -3336,6 +3343,7 @@ input[role="combobox"]:focus-visible {
    lee como dato y el gesto de copiar queda a su derecha, en tipografía de
    interfaz. */
 .course-reference {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3351,7 +3359,7 @@ input[role="combobox"]:focus-visible {
     background var(--transition-fast),
     color var(--transition-fast);
 }
-.course-reference > span {
+.course-reference > .num {
   padding: 3px 8px;
   border-radius: var(--radius-sm);
   background: var(--canvas-soft);
@@ -3392,13 +3400,15 @@ input[role="combobox"]:focus-visible {
 
 .swap-button .swap-wrapper {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
 .swap-button .swap-content {
+  grid-area: 1 / 1;
+  justify-content: center;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3415,7 +3425,6 @@ input[role="combobox"]:focus-visible {
 }
 
 .swap-button .state-copied {
-  position: absolute;
   transform: translateY(16px);
   opacity: 0;
   pointer-events: none;
@@ -3438,7 +3447,6 @@ input[role="combobox"]:focus-visible {
 
 .swap-button.copied .state-copied,
 .swap-button[data-copied="true"] .state-copied {
-  position: relative;
   transform: translateY(0);
   opacity: 1;
   pointer-events: auto;
@@ -10994,8 +11002,7 @@ mark,
   .classroom-layout {
     padding: var(--space-md) var(--space-md) var(--space-xxl);
   }
-  /* Tres acciones no caben en una fila de teléfono: publicar sube a su propia
-     línea y las otras dos reparten la de abajo. */
+  /* Las utilidades docentes envuelven según su ancho legible. */
   .classroom-meta {
     width: 100%;
     flex-wrap: wrap;
@@ -11006,7 +11013,7 @@ mark,
   }
   .classroom-meta > .review-cta,
   .classroom-meta > .moodle-import-trigger {
-    flex: 1 1 0;
+    flex: 1 1 160px;
     min-width: 0;
     padding-inline: 10px;
     justify-content: center;

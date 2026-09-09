@@ -3,7 +3,16 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { EASE_OUT } from "@/lib/ease";
 import { useOnOpen } from "@/lib/hooks/use-on-open";
@@ -62,6 +71,10 @@ const ACTIVE_SPRING = {
   damping: 28,
 } as const;
 
+const subscribeToMount = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
 export function CommandPalette({
   items,
   shortcut = "k",
@@ -84,8 +97,7 @@ export function CommandPalette({
   );
 
   const [query, setQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribeToMount, clientSnapshot, serverSnapshot);
   const uid = useId();
   const reduce = useReducedMotion();
   const canTouch = useTouchCapable();
@@ -106,6 +118,7 @@ export function CommandPalette({
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === shortcut.toLowerCase()) {
         e.preventDefault();
+        if (e.repeat) return;
         setOpenRef.current(!openRef.current);
         return;
       }
@@ -163,12 +176,28 @@ export function CommandPalette({
 
   useEffect(() => {
     if (!open) return;
+    const previousFocus = document.activeElement;
     const frame = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
   }, [open]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
+    if (e.key === "Tab") {
+      const controls = Array.from(
+        e.currentTarget.querySelectorAll<HTMLElement>("input, button:not([tabindex='-1'])")
+      ).filter((element) => element.getClientRects().length > 0);
+      const next = e.shiftKey ? controls.at(-1) : controls[0];
+      const boundary = e.shiftKey ? controls[0] : controls.at(-1);
+      if (document.activeElement === boundary) {
+        e.preventDefault();
+        next?.focus();
+      }
+    } else if (e.target !== inputRef.current) {
+      return;
+    } else if (e.key === "ArrowDown") {
       e.preventDefault();
       moveActive(1);
     } else if (e.key === "ArrowUp") {
@@ -251,6 +280,7 @@ export function CommandPalette({
                     className="shrink-0 text-[oklch(0.48_0.03_250)]"
                   />
                   <input
+                    aria-label="Buscar ramos y vistas"
                     ref={inputRef}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -303,6 +333,7 @@ export function CommandPalette({
                           return (
                             <button
                               key={it.id}
+                              tabIndex={-1}
                               type="button"
                               id={`${uid}-opt-${idx}`}
                               role="option"

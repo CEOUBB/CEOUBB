@@ -5,7 +5,7 @@ import { Plus } from "@phosphor-icons/react";
 import { DAY_END_MINUTES, DAY_START_MINUTES, timeOfMinutes } from "../../../lib/planner";
 import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
-import { ACADEMIC_SLOTS, MINUTE_SPAN, SLOT_HOURS, offsetOf } from "./calendar-constants";
+import { MINUTE_SPAN, SLOT_HOURS, offsetOf } from "./calendar-constants";
 import { PlannerBlockArticle } from "./PlannerBlock";
 
 export function PlannerGrid({
@@ -48,9 +48,9 @@ export function PlannerGrid({
       tabIndex={0}
     >
       <div aria-hidden="true" className="planner-hours">
-        {ACADEMIC_SLOTS.map((slot) => (
-          <span className="num" key={slot.time} style={{ top: offsetOf(slot.minutes) }}>
-            {slot.time}
+        {SLOT_HOURS.map((hour) => (
+          <span className="num" key={hour} style={{ top: offsetOf(hour * 60) }}>
+            {timeOfMinutes(hour * 60)}
           </span>
         ))}
         {days.includes(today) &&
