@@ -40,10 +40,22 @@ export async function POST(request: Request) {
     return error("Origen no autorizado.", 403);
   if (request.headers.get("content-type")?.split(";")[0].trim() !== "application/json")
     return error("Formato no admitido.", 415);
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null) {
+    const parsedLength = Number(contentLength);
+    if (Number.isFinite(parsedLength) && parsedLength > 16384) {
+      return error("El payload excede el límite permitido.", 413);
+    }
+  }
   try {
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, "utf8") > 16384) {
+      return error("El payload excede el límite permitido.", 413);
+    }
+
     let jsonBody: unknown;
     try {
-      jsonBody = await request.json();
+      jsonBody = JSON.parse(rawBody);
     } catch {
       return error("El cuerpo de la petición no es un JSON válido.", 400);
     }
