@@ -4,6 +4,11 @@ import {
   listUserCourses,
 } from "../../../../lib/services/teacher-course-management";
 
+const privateHeaders = {
+  "Cache-Control": "private, no-store, max-age=0",
+  Vary: "Cookie",
+};
+
 function limitFrom(request: Request): number {
   const value = Number(new URL(request.url).searchParams.get("limit") ?? 50);
   return Number.isInteger(value) ? Math.max(1, Math.min(100, value)) : 50;
@@ -15,7 +20,10 @@ export async function GET(request: Request) {
   const cursor = new URL(request.url).searchParams.get("cursor");
   try {
     const result = await listUserCourses(actor.id, { limit: limitFrom(request), cursor });
-    return Response.json({ courses: result.items, nextCursor: result.nextCursor });
+    return Response.json(
+      { courses: result.items, nextCursor: result.nextCursor },
+      { headers: privateHeaders }
+    );
   } catch (cause) {
     if (cause instanceof CourseManagementError) {
       return Response.json({ error: cause.message }, { status: cause.status });

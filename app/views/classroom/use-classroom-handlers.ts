@@ -133,7 +133,6 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const deletePost = useCallback(
     async (post: ClassroomPost) => {
       if (rejectReadOnly()) return;
-      if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
       try {
         await deleteClassroomPost(course.id, post.id, post.storagePath);
         note("Publicación eliminada.", "ok");

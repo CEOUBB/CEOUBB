@@ -60,3 +60,10 @@
 - **Attempted / Identified Solution:** Consolidación de ambos contadores (`graded` y `delivered`) en una sola pasada iterativa `for..of` de $O(N)$ tiempo y $O(1)$ espacio.
 - **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos temporales y se redujo la iteración de dos pasadas a una sola, preservando 100% la equivalencia funcional.
 - **Future Rule:** Consolidar pasadas y evitar múltiples invaciones a `.filter()` sobre el mismo arreglo en funciones de agregación o cálculo de métricas.
+
+## 2026-09-09 - Cálculo de contadores en `teacherCounters` (`app/preview/docente/teacher-preview-model.ts`)
+
+- **Finding:** `teacherCounters` ejecutaba tres operaciones `.filter(...)` separadas sobre los arreglos `submissions` y `activities` para calcular los contadores de entregas pendientes, entregas faltantes y actividades borrador. Esto generaba tres arreglos temporales intermedios y pasadas redundantes.
+- **Attempted / Identified Solution:** Consolidación de la agregación de contadores en bucles `for..of` directos de pasada única de $O(N)$ tiempo y $O(1)$ espacio adicional.
+- **Outcome / Learning:** Se eliminó la asignación de arreglos temporales en la derivación de contadores de la vista previa del docente, manteniendo 100% la equivalencia funcional.
+- **Future Rule:** Evitar llamadas encadenadas o múltiples a `.filter(...).length` cuando se computan múltiples contadores escalares a partir de los mismos datos de entrada.

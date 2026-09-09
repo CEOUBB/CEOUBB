@@ -2,14 +2,6 @@
   "regions": ["gru1"],
   "crons": [
     {
-      "path": "/api/cron/standup?type=morning",
-      "schedule": "0 16 * * *"
-    },
-    {
-      "path": "/api/cron/standup?type=night",
-      "schedule": "0 4 * * *"
-    },
-    {
       "path": "/api/cron/audit-retention",
       "schedule": "30 5 * * *"
     }

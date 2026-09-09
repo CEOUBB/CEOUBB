@@ -18,7 +18,7 @@ body:
         - "Sistema de Calificaciones (Escala Chilena 1.0 - 7.0)"
         - "Biblioteca de Estudio & Recursos"
         - "App Móvil Android (Capacitor)"
-        - "Notificaciones Push & Discord Integration"
+        - "Notificaciones Push"
         - "Infraestructura, Rendimiento & CI/CD"
         - "Otro"
     validations:

@@ -1,7 +1,7 @@
 "use client";
 
 // Implements: REQ-PUB-09, REQ-PUB-10, REQ-QMD-07
-import { useRef, useState, type DragEvent, type RefObject } from "react";
+import { useEffect, useRef, useState, type DragEvent, type RefObject } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -17,6 +17,7 @@ import {
   ImageSquare,
   Megaphone,
   Trash,
+  X,
   XCircle,
   type Icon,
 } from "@phosphor-icons/react";
@@ -263,5 +264,80 @@ export function PublishRestoredNotice({ onDismiss }: { onDismiss: () => void }) 
         <XCircle aria-hidden="true" size={17} />
       </button>
     </p>
+  );
+}
+
+export function PublishConfirmDialog({
+  title,
+  message,
+  note,
+  confirmLabel,
+  cancelLabel = "Cancelar",
+  isDestructive = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: React.ReactNode;
+  note?: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  isDestructive?: boolean;
+  busy?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+      cancelRef.current?.focus();
+    }
+  }, []);
+
+  return (
+    <dialog
+      aria-labelledby="publish-dialog-title"
+      className="planner-dialog publication-confirm-dialog"
+      onCancel={onCancel}
+      onClose={onCancel}
+      ref={dialogRef}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onConfirm();
+        }}
+      >
+        <header>
+          <h2 id="publish-dialog-title">{title}</h2>
+          <button aria-label="Cerrar" onClick={onCancel} type="button">
+            <X aria-hidden="true" size={16} weight="bold" />
+          </button>
+        </header>
+        <div className="confirmation-message">{message}</div>
+        {note && <p className="confirmation-note">{note}</p>}
+        <footer>
+          <button
+            ref={cancelRef}
+            className="planner-dialog-cancel"
+            onClick={onCancel}
+            type="button"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            className={isDestructive ? "confirmation-danger" : "planner-dialog-save"}
+            disabled={busy}
+            type="submit"
+          >
+            {confirmLabel}
+          </button>
+        </footer>
+      </form>
+    </dialog>
   );
 }
