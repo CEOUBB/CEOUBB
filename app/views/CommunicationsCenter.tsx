@@ -587,7 +587,7 @@ export function CommunicationsCenter({
   useEffect(() => {
     const history = messagesEnd.current?.parentElement;
     if (history) history.scrollTop = history.scrollHeight;
-  }, [ui.messages]);
+  }, [ui.messages, ui.feedback]);
 
   /*
     El panel del header abre una conversación concreta. La selección se aplica

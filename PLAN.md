@@ -1,5 +1,10 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Revisión de bots de la PR 171, 2026-09-09
+
+- React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
+- PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
+
 ## Handoff: rediseño de Avisos y mensajes, 2026-09-09
 
 - **Entrega:** bandeja institucional con riel, búsqueda de conversaciones, avisos en filas, fechas, estados vacíos y redactor móvil visible. Pestañas con teclado y orientación ARIA responsive; scroll limitado al historial.

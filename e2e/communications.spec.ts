@@ -30,7 +30,7 @@ export function watchDirectMessages(courseId, threadId, onChange) {
 export async function markCommunicationRead() {}
 export async function sendDirectMessage(courseId, threadId, body) {
  if(body === 'Simular error') throw new Error('No se pudo enviar el mensaje. Inténtalo nuevamente.');
- messages.push({id:'sent',authorId:threadId,authorName:'Estudiante',body,createdAt:'2026-09-08T14:05:00Z'});
+ messages.push({id:'sent-'+messages.length,authorId:threadId,authorName:'Estudiante',body,createdAt:'2026-09-08T14:05:00Z'});
  notify?.([...messages]);
 }
 `;
@@ -126,6 +126,18 @@ for (const width of [1918, 1440, 900, 390]) {
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
     ).toBeTruthy();
+    await body.fill("Consulta de prueba para verificar el desplazamiento. ".repeat(30));
+    await send.click();
+    await expect(body).toHaveValue("");
+    const history = center.locator(".message-history");
+    await expect
+      .poll(() => history.evaluate((node) => node.scrollHeight > node.clientHeight))
+      .toBe(true);
+    await expect
+      .poll(() =>
+        history.evaluate((node) => Math.abs(node.scrollHeight - node.clientHeight - node.scrollTop))
+      )
+      .toBeLessThan(2);
     if (width <= 700)
       await center.getByRole("button", { name: "Volver a las conversaciones" }).click();
     await center.locator(".conversation-row").nth(1).click();
