@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useDeferredValue, useMemo, useState } from "react";
+import { FormEvent, useEffect, useDeferredValue, useMemo, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -14,7 +14,7 @@ import {
 import type { ClassroomAttachment, ClassroomPost } from "../../../lib/firebase-classroom-client";
 import { formatBytes, formatDate, formatDueDate, type User } from "../../../lib/portal-utils";
 import { safeLinkDestination } from "../../../lib/rich-text";
-import { filterPostsByQuery, kindLabel } from "./classroom-utils";
+import { filterPostsByQuery, kindLabel, paginateList } from "./classroom-utils";
 import { EmptyState } from "./EmptyState";
 import { RichPostEditor } from "./RichPostEditor";
 import { RichText } from "./RichText";
@@ -94,13 +94,24 @@ export function PostsSection({
   openAttachment: (attachment: { name: string; storagePath: string }) => void;
   startPublication: () => void;
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
-  // Implements: REQ-PAG-06
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [deferredQuery]);
+
+  // Implements: REQ-PAG-06, PERF-100
   const visiblePosts = useMemo(
     () => filterPostsByQuery(posts, deferredQuery),
     [posts, deferredQuery]
+  );
+
+  const paginated = useMemo(
+    () => paginateList(visiblePosts, currentPage, 20),
+    [visiblePosts, currentPage]
   );
 
   return (
@@ -161,7 +172,7 @@ export function PostsSection({
       )}
 
       <div className="post-list">
-        {visiblePosts.map((post) => {
+        {paginated.items.map((post) => {
           const canManage =
             canManageContent &&
             Boolean(post.authorId) &&
@@ -253,6 +264,35 @@ export function PostsSection({
           );
         })}
       </div>
+
+      {paginated.totalPages > 1 && (
+        <nav aria-label="Paginación de publicaciones" className="classroom-pagination">
+          <span className="pagination-summary num">
+            Mostrando {paginated.startIndex}–{paginated.endIndex} de {paginated.totalItems}
+          </span>
+          <div className="pagination-actions">
+            <button
+              className="pagination-btn"
+              disabled={paginated.page <= 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              type="button"
+            >
+              Anterior
+            </button>
+            <span className="pagination-indicator num">
+              Página {paginated.page} de {paginated.totalPages}
+            </span>
+            <button
+              className="pagination-btn"
+              disabled={paginated.page >= paginated.totalPages}
+              onClick={() => setCurrentPage((page) => Math.min(paginated.totalPages, page + 1))}
+              type="button"
+            >
+              Siguiente
+            </button>
+          </div>
+        </nav>
+      )}
     </section>
   );
 }
