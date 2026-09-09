@@ -32,7 +32,13 @@ for (const width of [1440, 390]) {
     const rootClass = await page.locator("html").getAttribute("class");
     const base = page.url();
 
-    const variants = { LoadingScreen, ...skeletons, NotificationSkeleton };
+    const variants = {
+      LoadingScreen,
+      ...skeletons,
+      NotificationSkeleton,
+      TeacherQuizSkeleton: () =>
+        createElement<{ teacher?: boolean }>(skeletons.QuizListSkeleton, { teacher: true }),
+    };
     for (const [name, Component] of Object.entries(variants)) {
       const markup = renderToStaticMarkup(createElement(Component));
       const fixture = new URL("/__skeleton_fixture__", base).href;
@@ -87,6 +93,10 @@ for (const width of [1440, 390]) {
         ]);
         const tab = await page.locator(".course-tabs button").first().boundingBox();
         expect(tab!.height).toBeGreaterThanOrEqual(48);
+      }
+      if (name === "TeacherQuizSkeleton") {
+        await expect(page.locator(".quiz-card-list .quiz-card")).toHaveCount(3);
+        await expect(page.locator(".quiz-student-card")).toHaveCount(0);
       }
       if (name === "CalendarSkeleton") {
         await expect(page.locator(".planner-col:visible")).toHaveCount(width > 900 ? 7 : 1);

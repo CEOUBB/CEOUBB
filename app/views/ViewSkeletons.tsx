@@ -1012,21 +1012,21 @@ export function SettingsSkeleton() {
    ─────────────────────────────────────────────────────────── */
 
 // Implements: REQ-QUIZ-01
-export function QuizListSkeleton() {
+export function QuizListSkeleton({ teacher = false }: { teacher?: boolean } = {}) {
   return (
     <div
       aria-busy="true"
       aria-label="Cargando cuestionarios…"
-      className="quiz-student-list"
+      className={teacher ? "quiz-card-list" : "quiz-student-list"}
       role="status"
     >
       {[0, 1, 2].map((row) => (
         <article
-          className="quiz-student-card"
+          className={teacher ? "quiz-card" : "quiz-student-card"}
           key={`quiz-${row}`}
           style={{ "--sk-delay": `${60 + row * 50}ms` } as React.CSSProperties}
         >
-          <span className="sk" style={{ width: "34px", height: "26px" }} />
+          <span className="sk" style={{ width: teacher ? 44 : 34, height: teacher ? 44 : 26 }} />
           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
             <span
               className="sk"
@@ -1034,20 +1034,38 @@ export function QuizListSkeleton() {
             />
             <span className="sk" style={{ width: `${46 + row * 9}%`, height: "17px" }} />
             <span className="sk sk-quiet" style={{ width: `${78 - row * 6}%`, height: "13px" }} />
-            <span style={{ display: "flex", gap: "var(--space-md)" }}>
-              <span className="sk sk-quiet" style={{ width: "104px", height: "12px" }} />
-              <span className="sk sk-quiet" style={{ width: "92px", height: "12px" }} />
-            </span>
+            {teacher ? (
+              <>
+                <span className="sk" style={{ width: 130, height: 44 }} />
+                <dl>
+                  {["Preguntas", "Tiempo", "Nota"].map((label) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>
+                        <span className="sk sk-quiet" style={{ width: 40, height: 12 }} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            ) : (
+              <span className="quiz-card-facts">
+                <span className="sk sk-quiet" style={{ width: 104, height: 12 }} />
+                <span className="sk sk-quiet" style={{ width: 92, height: 12 }} />
+              </span>
+            )}
           </div>
-          <button
-            className="primary-button"
-            type="button"
-            disabled
-            aria-hidden="true"
-            tabIndex={-1}
-          >
-            <span className="sk" style={{ width: 90, height: 13 }} />
-          </button>
+          {!teacher && (
+            <button
+              className="primary-button"
+              type="button"
+              disabled
+              aria-hidden="true"
+              tabIndex={-1}
+            >
+              <span className="sk" style={{ width: 90, height: 13 }} />
+            </button>
+          )}
         </article>
       ))}
     </div>
