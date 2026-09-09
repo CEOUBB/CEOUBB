@@ -1,5 +1,17 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Revisión de bots de la PR 171, 2026-09-09
+
+- React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
+- PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
+
+## Handoff: rediseño de Avisos y mensajes, 2026-09-09
+
+- **Entrega:** bandeja institucional con riel, búsqueda de conversaciones, avisos en filas, fechas, estados vacíos y redactor móvil visible. Pestañas con teclado y orientación ARIA responsive; scroll limitado al historial.
+- **Integración:** incorporado `main` #169; preservadas sus mejoras de carga y adaptado únicamente el skeleton de comunicaciones al nuevo contenedor.
+- **Verificación:** `pnpm test` (build y 624 pruebas), lint y seis recorridos Playwright aprobados. Invariantes 35/35; verify:fast 606 pruebas, 67 sellos y 31 specs, con repetición final por hook de push.
+- **Evidencia y límites:** `docs/design/communications-review.md`. Conversaciones de prueba con transporte sintético; sin cambios de backend ni datos reales. Revisión visual independiente con un ajuste ARIA corregido y probado; su veredicto final no pudo ejecutarse por cuota del subagente.
+
 ## Handoff: modernización de componentes UI con registros oficiales (beUI, ReUI, coss.com, beautifului, transitions.dev), 2026-09-08
 
 - **Alcance entregado:** Integración directa de 8 componentes desde fuentes y registros oficiales (`beui.dev`, `reui.io`, Cal.com/`coss.com/ui`, `transitions.dev` y `beautifului.dev`), adaptados a la gobernanza de diseño OKLCH de `DESIGN.md` e iconografía exclusiva `@phosphor-icons/react`.
