@@ -15,12 +15,7 @@ export const MODEL_FALLBACK_LIST = [
  * Resuelve la API Key de Gemini desde las distintas variables de entorno soportadas.
  */
 export function getGeminiApiKey(): string | null {
-  return (
-    process.env.STANDUP_GEMINI_API_KEY ||
-    process.env.GEMINI_STANDUP_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    null
-  );
+  return process.env.GEMINI_API_KEY || null;
 }
 
 /**

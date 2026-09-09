@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { enrollmentDocumentPath } from "../lib/services/enrollment-projection.ts";
-import { verifyLinearSignature } from "../lib/linear-signature.ts";
 import { toPost } from "../lib/firebase/mappers.ts";
 
 // Implements: REQ-SEC-07
@@ -38,17 +37,6 @@ test("REQ-SEC-08: firestore.rules prevents cross-student submission update IDOR"
   assert.ok(
     rulesContent.includes("match /courses/{courseId}/submissions/{submissionId}"),
     "Must maintain match on submissions collection"
-  );
-});
-
-// Implements: REQ-SEC-09
-test("REQ-SEC-09: discord context helper spawns processes with shell: false", () => {
-  const helperPath = path.resolve("scripts/discord-context-helper.js");
-  const helperContent = fs.readFileSync(helperPath, "utf8");
-  assert.match(
-    helperContent,
-    /shell:\s*false/,
-    "spawnSafeCommand must specify shell: false to avoid command injection"
   );
 });
 
@@ -101,33 +89,19 @@ test("REQ-SEC-12: toPost sanitizes linkUrl and rejects non-http(s) schemes like 
   assert.equal(validParsed.linkUrl, "https://ceoubb.com/guia.pdf", "Must allow valid https link");
 });
 
-// Implements: REQ-SEC-14
-test("REQ-SEC-14: verifyLinearSignature returns false if secret or signature is empty", () => {
-  assert.equal(
-    verifyLinearSignature('{"action":"create"}', "some-sig", ""),
-    false,
-    "Empty secret must return false"
-  );
-  assert.equal(
-    verifyLinearSignature('{"action":"create"}', "", "some-secret"),
-    false,
-    "Empty signature must return false"
-  );
-});
-
 // Implements: REQ-SEC-03
-test("REQ-SEC-03: standup cron route handler uses timingSafeEqual for CRON_SECRET verification", () => {
-  const routePath = path.resolve("app/api/cron/standup/route.ts");
+test("REQ-SEC-03: audit retention cron route handler uses timingSafeEqual for CRON_SECRET verification", () => {
+  const routePath = path.resolve("app/api/cron/audit-retention/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
     routeContent,
     /timingSafeEqual/,
-    "Standup cron route handler must use timingSafeEqual for secret verification"
+    "Audit retention cron route handler must use timingSafeEqual for secret verification"
   );
   assert.match(
     routeContent,
     /credentialMatches/,
-    "Standup cron route handler must call credentialMatches helper"
+    "Audit retention cron route handler must call credentialMatches helper"
   );
 });
 

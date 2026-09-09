@@ -1,5 +1,18 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: erradicación total de integraciones, bots, scripts y crons de Discord, 2026-09-09
+
+- **Motivación y contexto institucional:** Preparación del código fuente para presentación oficial ante funcionarios y técnicos de la Universidad del Bío-Bío. Las integraciones y bots de Discord se concibieron exclusivamente para acelerar el desarrollo iterativo temprano entre mantenedores y no forman parte del producto ni de los canales institucionales.
+- **Alcance entregado:**
+  1. _Endpoints y Crons:_ Eliminación de `app/api/discord/` (`interactions/route.ts`), `app/api/cron/standup/` (`route.ts`), y webhooks entrantes de reenvío `app/api/webhooks/` (`github/route.ts`, `linear/route.ts`). Preservación íntegra del cron de purga legal `app/api/cron/audit-retention/route.ts` (Ley 21.719) y sus disparos programados en Cloudflare y Vercel (`vercel.json`).
+  2. _Librerías y Servicios:_ Eliminación completa de `lib/discord/` (6 módulos), `lib/github-signature.ts` y `lib/linear-signature.ts`. Desacople de variables `STANDUP_GEMINI_API_KEY` en `lib/services/gemini.ts` y `.env.example`.
+  3. _Scripts y Reglas:_ Eliminación de 7 scripts de bots y puentes locales en `scripts/` (`daily-standup-bot.js`, `discord-*-bridge.js`, `register-discord-commands.js`, etc.) y de la regla `.agents/rules/discord_notifications.md`.
+  4. _Dependencias y Paquetes:_ Retiro de `discord.js` en `package.json` y `pnpm-lock.yaml`; eliminación de los scripts `bot:*`.
+  5. _Pipelines CI/CD:_ Retiro de pasos de alerta a Discord en `.github/workflows/` (`android-ci.yml`, `ci.yml`, `deploy.yml`, `release-android.yml`) y enlaces en issue templates.
+  6. _Suites de Pruebas y Sellado:_ Retiro de pruebas unitarias obsoletas (`discord-interactions.test.ts`, `github-webhook.test.ts`, `linear-webhook.test.ts`), desacople de aserciones de Discord en `ci-workflows.test.ts`, `backend-remediation.test.ts`, `deep-security-remediation.test.ts`, `security-audit-081.test.ts` y `services.test.ts`. Regeneración del sellado criptográfico SHA-256 en `.agents/.test-hashes.json` (65 suites validadas).
+  7. _Especificaciones Formales:_ Actualización de `openspec/specs/integrations/spec.md` y `openspec/specs/operations/capacity-cost/spec.md`.
+- **Verificación:** `verify:fast` (583/583 pruebas unitarias, 65 sellos SHA-256, 31 especificaciones OpenSpec), `verify:invariants` (35/35), `format:check`, `typecheck`, `lint` y build limpios con código 0.
+
 ## Handoff: corrección del calendario personal en Firestore y eliminación de advertencias web, 2026-09-09
 
 - **Alcance entregado:**

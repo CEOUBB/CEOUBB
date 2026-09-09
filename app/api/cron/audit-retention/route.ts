@@ -9,9 +9,9 @@ import { purgeExpiredPendingMoodleEnrollments } from "../../../../lib/services/m
 export const dynamic = "force-dynamic";
 
 /*
-  Borra la IP vencida de la bitácora de notas. Muta auditoría, así que —a diferencia
-  del cron de standup, que sólo lee y publica— exige credencial: un endpoint abierto
-  que limpia campos de auditoría es una forma de lavar un cambio de nota.
+  Borra la IP vencida de la bitácora de notas. Muta auditoría, así que exige
+  credencial: un endpoint abierto que limpia campos de auditoría es una forma
+  de lavar un cambio de nota.
 */
 
 function credentialMatches(header: string | null): boolean {
