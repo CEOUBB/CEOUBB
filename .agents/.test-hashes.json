@@ -19,7 +19,7 @@
   "tests/communications.test.ts": "98e63fae4cf2e86053cd271d04069c02f9d1fd1b118b5ca1fb2b8c990c40c32f",
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
   "tests/dashboard-agenda.test.ts": "ec8458d9b61aac7b1027f62af60eacc7b75775df268c6b34764b99dc73ea85b5",
-  "tests/deep-security-remediation.test.ts": "333195184a025813a7ba829f0c19d6801556a8a536c8eda844bad07e8bec97be",
+  "tests/deep-security-remediation.test.ts": "3e42f688cdf621bee0bc4e0b7e29e20d0f54b3ce46f0efeb1f7eb9fe0fde99d4",
   "tests/dev-auth.test.ts": "6f31c85fcff116d46f60519c4b5ff66903417e964753b8f358d5c12fb9cc395a",
   "tests/discord-interactions.test.ts": "3bced523c4ec0d1254cf1157ca44073349924039bf938eabfa0cc1b94ae63a32",
   "tests/fast-boot-session.test.ts": "71a7834df050fa85c0ab168389de27657b4411e55b10d5beafe589798ae6a84c",
