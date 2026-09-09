@@ -456,9 +456,8 @@ export async function claimPendingMoodleEnrollments(actor: PublicUser) {
     createdAt: now,
   }));
   await db.transaction(async (tx) => {
-    for (const entry of pending) {
-      await requireOpenMoodleSection(tx, entry.seccionId);
-    }
+    const uniqueSeccionIds = Array.from(new Set(pending.map((e) => e.seccionId)));
+    await Promise.all(uniqueSeccionIds.map((seccionId) => requireOpenMoodleSection(tx, seccionId)));
     await tx
       .insert(matriculas)
       .values(claimedValues)

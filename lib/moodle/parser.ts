@@ -550,9 +550,20 @@ function parseMoodleCsv(source: string): string[][] {
       "INVALID_ARCHIVE"
     );
   }
-  return parsed.data
-    .map((row) => row.map((cell) => cell.trim()))
-    .filter((row) => row.some(Boolean));
+  const result: string[][] = [];
+  for (const row of parsed.data) {
+    let hasContent = false;
+    const trimmedRow: string[] = new Array(row.length);
+    for (let i = 0; i < row.length; i++) {
+      const trimmed = (row[i] ?? "").trim();
+      trimmedRow[i] = trimmed;
+      if (trimmed) hasContent = true;
+    }
+    if (hasContent) {
+      result.push(trimmedRow);
+    }
+  }
+  return result;
 }
 
 function normalizedHeader(value: string) {
