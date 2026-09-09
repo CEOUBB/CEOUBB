@@ -113,3 +113,14 @@ All plans are fully self-contained, specify exact file locations, explain the co
 ## 7. Auditoría de seguridad del 4 de septiembre de 2026
 
 [Informe 081: auditoría de seguridad](081-auditoria-seguridad-2026-09-04.md), basado en `f9fc4e4`: ocho hallazgos sustentados en código (tres altos y cinco medios), con candidatos y condiciones de despliegue separados. Estado: correcciones implementadas; [evidencia y pendientes de promoción](../docs/security/auditoria-081-ejecucion.md). El informe conserva el diagnóstico original. Los estados anteriores no certifican la seguridad del código actual.
+
+---
+
+## 8. Master Test Suite Coverage & Regression Matrix (Plans 082–083)
+
+| # | Plan | Superficie / Dominio | Prioridad | Brecha de Cobertura | Cobertura Previa | Objetivo | Estado |
+|---|---|---|---|---|---|---|---|
+| **082** | [Plan 082](082-test-cobertura-archivo-periodos.md) | Academic Core (`academic-period-archive.ts`) | **P1** | Cierre de semestre, paginación con cursores y sincronización forzada hacia Firestore | 0.0% líneas | >85% líneas | **COMPLETED** |
+| **083** | [Plan 083](083-test-cobertura-magic-bytes-perfil.md) | Security & Profile (`user-profile.ts`) | **P1** | Detección binaria de magic bytes PNG/JPEG/WebP y degradación en lectura/escritura de preferencias | 43.8% líneas | >80% líneas | **COMPLETED** |
+
+

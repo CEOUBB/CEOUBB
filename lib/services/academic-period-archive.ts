@@ -30,11 +30,12 @@ export type PeriodSyncResult = {
 };
 
 export class PeriodArchiveError extends Error {
-  constructor(
-    message: string,
-    readonly code: "invalid_period" | "not_found" | "projection_failed"
-  ) {
+  readonly code: "invalid_period" | "not_found" | "projection_failed";
+
+  constructor(message: string, code: "invalid_period" | "not_found" | "projection_failed") {
     super(message);
+    this.name = "PeriodArchiveError";
+    this.code = code;
   }
 }
 
