@@ -289,17 +289,19 @@ export function PublishConfirmDialog({
   onCancel: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (dialogRef.current && !dialogRef.current.open) {
       dialogRef.current.showModal();
+      cancelRef.current?.focus();
     }
   }, []);
 
   return (
     <dialog
       aria-labelledby="publish-dialog-title"
-      className="planner-dialog"
+      className="planner-dialog publication-confirm-dialog"
       onCancel={onCancel}
       onClose={onCancel}
       ref={dialogRef}
@@ -316,16 +318,20 @@ export function PublishConfirmDialog({
             <X aria-hidden="true" size={16} weight="bold" />
           </button>
         </header>
-        <div className="text-sm text-[oklch(0.48_0.03_250)]">{message}</div>
-        {note && <p className="text-xs text-[oklch(0.55_0.15_25)]">{note}</p>}
+        <div className="confirmation-message">{message}</div>
+        {note && <p className="confirmation-note">{note}</p>}
         <footer>
-          <button className="planner-dialog-cancel" onClick={onCancel} type="button">
+          <button
+            ref={cancelRef}
+            className="planner-dialog-cancel"
+            onClick={onCancel}
+            type="button"
+          >
             {cancelLabel}
           </button>
           <button
-            className={isDestructive ? "planner-dialog-delete" : "planner-dialog-save"}
+            className={isDestructive ? "confirmation-danger" : "planner-dialog-save"}
             disabled={busy}
-            style={isDestructive ? { marginRight: 0 } : undefined}
             type="submit"
           >
             {confirmLabel}

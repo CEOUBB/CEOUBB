@@ -5200,6 +5200,82 @@ mark,
 
 /* ── Aula · estado de herramientas ────────────────────────── */
 
+.context-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+}
+.context-confirmation p {
+  flex: 1 1 220px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+.context-confirmation p span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.confirmation-actions button,
+.planner-dialog.publication-confirm-dialog footer button,
+.planner-dialog .context-confirmation button {
+  min-height: 44px;
+  height: auto;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.confirmation-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--shield-red-deep);
+  color: var(--surface-card);
+  border: 1px solid var(--shield-red-deep);
+}
+.confirmation-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--shield-red-deep) 85%, var(--ink-900));
+}
+.confirmation-actions button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.confirmation-actions button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+.confirmation-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.planner-dialog footer.context-confirmation {
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.confirmation-message {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.confirmation-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 .tool-status {
   font-size: 14px;
   line-height: 1.43;
@@ -8736,17 +8812,40 @@ mark,
 
 .grades-matrix-row input[data-status="saving"] {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .grades-matrix-row input[data-status="saved"] {
-  border-color: #047857;
-  box-shadow: 0 0 0 2px color-mix(in srgb, #047857 30%, transparent);
+  border-color: var(--academic-emerald-deep);
 }
 
 .grades-matrix-row input[data-status="error"] {
   border-color: var(--shield-red-deep);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shield-red) 30%, transparent);
+}
+
+.grade-save-status {
+  grid-column: 1 / -1;
+  min-height: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.grade-cell[data-cell-status="saved"] .grade-save-status {
+  color: var(--academic-emerald-deep);
+}
+.grade-cell[data-cell-status="error"] .grade-save-status {
+  color: var(--shield-red-deep);
+}
+.receipt-confirmed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--academic-emerald-deep);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.receipt-confirmed-badge svg {
+  flex-shrink: 0;
 }
 
 .grades-row input:disabled {
@@ -8957,16 +9056,16 @@ mark,
   line-height: 1.4;
   color: var(--text-body);
 }
-.grades-target.secured dd,
-.grades-target[data-secured="true"] dd {
-  color: #047857;
-  font-weight: 600;
+.grades-target.secured dd {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--academic-emerald-deep);
 }
-.grades-target[data-secured="true"] {
-  background: color-mix(in srgb, #047857 7%, transparent);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-sm);
-  border-left: 3px solid #047857;
+.grades-target.secured dd svg {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 3px;
 }
 .grades-target.impossible dd {
   color: var(--shield-red-deep);

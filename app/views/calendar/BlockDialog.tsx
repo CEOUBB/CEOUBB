@@ -171,7 +171,7 @@ export function BlockDialog({
             {problem}
           </p>
         )}
-        <footer>
+        <footer className={confirmingDelete ? "context-confirmation" : undefined}>
           {values.id &&
             (!confirmingDelete ? (
               <button
@@ -182,32 +182,40 @@ export function BlockDialog({
                 <TrashSimple aria-hidden="true" size={15} /> Eliminar
               </button>
             ) : (
-              <div className="mr-auto inline-flex items-center gap-1.5">
-                <span className="text-xs font-medium text-[oklch(0.48_0.03_250)]">¿Confirmar?</span>
-                <button
-                  className="planner-dialog-delete"
-                  disabled={busy}
-                  onClick={remove}
-                  style={{ marginRight: 0 }}
-                  type="button"
-                >
-                  <TrashSimple aria-hidden="true" size={15} /> Sí, eliminar
-                </button>
-                <button
-                  className="planner-dialog-cancel"
-                  onClick={() => setConfirmingDelete(false)}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-              </div>
+              <>
+                <p>
+                  ¿Eliminar este bloque? <span>Esta acción no se puede deshacer.</span>
+                </p>
+                <div className="confirmation-actions">
+                  <button
+                    className="planner-dialog-cancel"
+                    disabled={busy}
+                    onClick={() => setConfirmingDelete(false)}
+                    type="button"
+                  >
+                    Conservar bloque
+                  </button>
+                  <button
+                    className="confirmation-danger"
+                    disabled={busy}
+                    onClick={remove}
+                    type="button"
+                  >
+                    {busy ? "Eliminando…" : "Eliminar bloque"}
+                  </button>
+                </div>
+              </>
             ))}
-          <button className="planner-dialog-cancel" onClick={handleClose} type="button">
-            Cancelar
-          </button>
-          <button className="planner-dialog-save" disabled={busy} type="submit">
-            {busy ? "Guardando…" : "Guardar bloque"}
-          </button>
+          {!confirmingDelete && (
+            <>
+              <button className="planner-dialog-cancel" onClick={handleClose} type="button">
+                Cancelar
+              </button>
+              <button className="planner-dialog-save" disabled={busy} type="submit">
+                {busy ? "Guardando…" : "Guardar bloque"}
+              </button>
+            </>
+          )}
         </footer>
       </form>
     </dialog>

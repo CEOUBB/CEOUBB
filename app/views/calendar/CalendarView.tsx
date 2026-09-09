@@ -279,7 +279,7 @@ export function CalendarView({
       {blockPendingDelete && (
         <dialog
           aria-labelledby="delete-dialog-title"
-          className="planner-dialog"
+          className="planner-dialog publication-confirm-dialog"
           onCancel={() => setBlockPendingDelete(null)}
           onClose={() => setBlockPendingDelete(null)}
           ref={(dialog) => {
@@ -298,7 +298,7 @@ export function CalendarView({
                 <X aria-hidden="true" size={16} weight="bold" />
               </button>
             </header>
-            <p className="text-sm text-[oklch(0.48_0.03_250)]">
+            <p className="confirmation-message">
               ¿Eliminar “<strong>{blockPendingDelete.title}</strong>”? Esta acción no se puede
               deshacer.
             </p>
@@ -310,7 +310,7 @@ export function CalendarView({
               >
                 Cancelar
               </button>
-              <button className="planner-dialog-delete" style={{ marginRight: 0 }} type="submit">
+              <button className="confirmation-danger" type="submit">
                 <TrashSimple aria-hidden="true" size={15} /> Eliminar
               </button>
             </footer>

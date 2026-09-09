@@ -12,7 +12,7 @@
   "tests/bulk-enrollment.test.ts": "b2cdbe056ec4538d20a4e7f9dbc8fc8984eded58b0e6725b093c7b0ca5b4f570",
   "tests/capacitor-config.test.ts": "07de1de77d9d44cd4f758e99aaf8e5e40145c21aa4d9e161fb5ecebecf50af69",
   "tests/capacity-load-test.test.ts": "13b377ab59f2643b31b8879a6a838428a4a370c25b766de37e9d5555d3048360",
-  "tests/chilean-grades-parsing.test.ts": "86b7802510fee4403a6d40859e173fc38c3114fc0db56eadd26552d0b9651f05",
+  "tests/chilean-grades-parsing.test.ts": "e2d36b81c204db07443c92c8df85136164e30bd0e4249cfda2c658c8efbf3612",
   "tests/ci-workflows.test.ts": "b7dad79a738b61e7aa4850c6f7959b304d1a7d9a69fa7fefe3199a2dac0ab163",
   "tests/classroom-pagination.test.ts": "5f6fa5c80a2cee6a710303a7d1cd1978cdf6992da31c82f24de10935b3032fd4",
   "tests/classroom-render-stability.test.ts": "ab1a6d50b2d65a2f96d5567b00f0f8bc70cbfa78e389c186f0f04263af1294a8",

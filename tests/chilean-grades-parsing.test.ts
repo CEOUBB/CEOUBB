@@ -40,9 +40,19 @@ describe("parseChileanGradeInput", () => {
     assert.equal(parseChileanGradeInput(10), 1.0);
   });
 
-  it("rejects out-of-range, single-digit, or invalid values", () => {
+  it("parses single-digit strings from 1 to 7, including whitespace", () => {
+    for (let grade = 1; grade <= 7; grade++) {
+      assert.equal(parseChileanGradeInput(String(grade)), grade);
+      assert.equal(parseChileanGradeInput(` ${grade} `), grade);
+    }
+  });
+
+  it("rejects out-of-range or invalid values", () => {
     assert.equal(parseChileanGradeInput("80"), null);
-    assert.equal(parseChileanGradeInput("5"), null);
+    assert.equal(parseChileanGradeInput("5"), 5);
+    assert.equal(parseChileanGradeInput("0"), null);
+    assert.equal(parseChileanGradeInput("8"), null);
+    assert.equal(parseChileanGradeInput("9"), null);
     assert.equal(parseChileanGradeInput(0), null);
     assert.equal(parseChileanGradeInput(8), null);
     assert.equal(parseChileanGradeInput("abc"), null);

@@ -465,17 +465,16 @@ function TargetLine({
     target.state === "closed"
       ? "Ya no quedan evaluaciones pendientes."
       : isSecured
-        ? "¡Aprobación asegurada! Con tus notas actuales ya no es posible reprobar."
+        ? "Objetivo alcanzado con los valores de esta simulación."
         : target.state === "impossible"
           ? `Ya no es alcanzable: necesitarías ${formatGrade(target.grade)}.`
           : `Necesitas ${formatGrade(target.grade)} en promedio en lo que queda.`;
   return (
-    <div
-      className={`grades-target ${target.state}${isSecured ? " data-secured" : ""}`}
-      data-secured={isSecured ? "true" : undefined}
-    >
+    <div className={`grades-target ${target.state}`}>
       <dt>{label}</dt>
-      <dd>{copy}</dd>
+      <dd>
+        {isSecured && <Check aria-hidden="true" size={16} />} {copy}
+      </dd>
     </div>
   );
 }
@@ -845,10 +844,11 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
           <span className="grade-cell" data-cell-status={status} key={item.id}>
             <input
               aria-label={`${item.name} de ${student.name}`}
-              className={status !== "idle" ? `grade-cell-input-${status}` : undefined}
+              aria-invalid={status === "error"}
+              aria-describedby={`grade-status-${student.userId}-${item.id}`}
               data-status={status}
               defaultValue={isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : ""}
-              disabled={readOnly}
+              disabled={readOnly || status === "saving"}
               inputMode="decimal"
               key={`${item.id}-${scores[item.id] ?? ""}`}
               onBlur={(event) => handleCellBlur(item.id, event.target.value)}
@@ -889,6 +889,19 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
               <ClockCounterClockwise aria-hidden="true" size={15} />
               Historial
             </button>
+            <span
+              className="grade-save-status"
+              id={`grade-status-${student.userId}-${item.id}`}
+              role="status"
+            >
+              {status === "saving"
+                ? "Guardando…"
+                : status === "saved"
+                  ? "Guardada"
+                  : status === "error"
+                    ? "No guardada. Revisa e intenta otra vez."
+                    : ""}
+            </span>
           </span>
         );
       })}

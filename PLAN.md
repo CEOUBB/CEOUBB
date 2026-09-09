@@ -1,5 +1,16 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: refinamiento visual de PR 178, 2026-09-09
+
+- Revisión posterior solicitada: se corrigió el rechazo real de notas enteras 1–7 en el parser compartido; cambio de expectativa del test y sello autorizado expresamente. Los avisos de React Doctor y la sugerencia del callback ref no justifican cambios funcionales; análisis en `docs/design/pr178-refinement.md`.
+- Validación posterior: build, 617 pruebas unitarias y 25 de integración aprobados. El chequeo rápido se ejecuta después del build, porque el test de bundle lee los manifiestos de `.next`.
+
+- Alcance: únicamente los estados y confirmaciones añadidos por la PR 178. Se conserva la estructura del aula, calendario, navegación y entrada chilena de notas.
+- Cambios: comprobante sin chip truncado ni verificación duplicada; objetivo de simulación sin promesa celebratoria; guardado con texto accesible y sin halos; confirmaciones con consecuencias y acciones separadas, sin dos botones Cancelar ni Guardar durante la eliminación del bloque.
+- Evidencia: `docs/design/pr178-refinement.md`; prueba de componentes reales con datos sintéticos en `e2e/pr178-refinement.spec.ts` a 1440 y 390 px. Transporte de prueba aislado; sin verificación de persistencia remota.
+- Verificado: typecheck y lint; verify:fast (616 pruebas, 69 sellos y 31 specs); 35 invariantes. React Doctor: 84/100 al comparar la rama completa con main, con advertencias preexistentes; ninguna configuración de análisis modificada.
+- Cierre: `pnpm test` aprobado con entorno estándar (build, 616 unitarias y 25 integraciones); dos recorridos Playwright aprobados; formato verificado. Cambios locales en `codex/pulir-ux-academica`, basada en la cabecera de PR 178.
+
 ## Revisión de bots de la PR 171, 2026-09-09
 
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.

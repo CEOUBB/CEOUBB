@@ -730,12 +730,11 @@ export function SubmissionSlot({
   if (receipt) {
     return (
       <div className="grades-receipt flex flex-col gap-1 text-left min-w-0">
-        <span className="receipt-confirmed-badge inline-flex w-fit max-w-full items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-[oklch(0.7_0.17_155_/_0.12)] text-[oklch(0.42_0.16_155)] border border-[oklch(0.7_0.17_155_/_0.25)]">
-          <CheckCircle className="h-3.5 w-3.5 shrink-0" weight="fill" />
-          <span className="truncate">Entrega confirmada y resguardada</span>
+        <span className="receipt-confirmed-badge">
+          <CheckCircle aria-hidden="true" size={16} weight="fill" />
+          <span>Entrega recibida</span>
         </span>
         <div className="flex items-center gap-1.5 text-[13px] font-medium text-[oklch(0.2_0.03_260)] max-w-full truncate">
-          <CheckCircle className="h-4 w-4 shrink-0 text-[oklch(0.7_0.17_155)]" weight="fill" />
           {renderFileIcon(receipt.fileName, receipt.contentType, {
             className: "h-4 w-4 shrink-0 text-[oklch(0.48_0.18_255)]",
             weight: "duotone",

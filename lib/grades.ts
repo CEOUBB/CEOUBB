@@ -118,7 +118,7 @@ export function parseChileanGradeInput(value: unknown): number | null {
       return null;
     }
 
-    if (/^\d+\.\d+$/.test(normalized)) {
+    if (/^(?:[1-7]|\d+\.\d+)$/.test(normalized)) {
       const num = Number.parseFloat(normalized);
       if (isValidGrade(num)) {
         return round1(num);
