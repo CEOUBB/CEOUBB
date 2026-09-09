@@ -210,9 +210,7 @@ test("REQ-SEC-18: Content-Disposition headers sanitize dynamic parameters agains
 
 // Implements: REQ-SEC-19
 test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and unauthorized 403 checks", () => {
-  const routePath = path.resolve(
-    "app/api/sections/[sectionId]/projections/reconcile/route.ts"
-  );
+  const routePath = path.resolve("app/api/sections/[sectionId]/projections/reconcile/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
     routeContent,
