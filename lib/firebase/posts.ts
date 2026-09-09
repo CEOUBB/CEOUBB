@@ -35,6 +35,8 @@ import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 import { roleForEmail } from "../access-policy.ts";
 
 const ACTIVITY_LIMIT = 120;
+const MAX_CLASSROOM_POSTS = 100;
+const MAX_CLASSROOM_STUDENTS = 250;
 
 const DEV_POSTS_PREFIX = "ceoubb_dev_posts:";
 const DEV_POSTS_EVENT = "ceoubb_dev_posts_change";
@@ -184,7 +186,8 @@ export function watchClassroom(
         sdk.onSnapshot(
           sdk.query(
             sdk.collection(db, "courses", courseId, "posts"),
-            sdk.orderBy("createdAt", "desc")
+            sdk.orderBy("createdAt", "desc"),
+            sdk.limit(MAX_CLASSROOM_POSTS)
           ),
           (snapshot) => {
             const posts: ClassroomPost[] = [];
@@ -245,30 +248,66 @@ export function watchClassroom(
           sdk.onSnapshot(
             sdk.query(
               sdk.collection(db, "courses", courseId, "progress"),
-              sdk.orderBy("lastSeen", "desc")
+              sdk.orderBy("lastSeen", "desc"),
+              sdk.limit(MAX_CLASSROOM_STUDENTS)
             ),
             (snapshot) => onChange({ students: snapshot.docs.map(toStudent) }),
             () => onError("No se pudo sincronizar la nómina del curso.")
           )
         );
+        let cachedScores: Record<string, GradeScores> = {};
+        let cachedFeedback: Record<string, GradeFeedback> = {};
         stops.push(
           sdk.onSnapshot(
-            sdk.collection(db, "courses", courseId, "grades"),
-            (snapshot) =>
-              onChange({
-                classScores: Object.fromEntries(
+            sdk.query(
+              sdk.collection(db, "courses", courseId, "grades"),
+              sdk.limit(MAX_CLASSROOM_STUDENTS)
+            ),
+            (snapshot) => {
+              if (
+                typeof (snapshot as { docChanges?: unknown }).docChanges === "function" &&
+                Object.keys(cachedScores).length > 0
+              ) {
+                const nextScores = { ...cachedScores };
+                const nextFeedback = { ...cachedFeedback };
+                for (const change of snapshot.docChanges()) {
+                  if (change.type === "removed") {
+                    delete nextScores[change.doc.id];
+                    delete nextFeedback[change.doc.id];
+                  } else {
+                    nextScores[change.doc.id] = normalizeScores(change.doc.data().scores);
+                    nextFeedback[change.doc.id] = normalizeGradeFeedback(
+                      change.doc.data().feedback
+                    );
+                  }
+                }
+                cachedScores = nextScores;
+                cachedFeedback = nextFeedback;
+                onChange({ classScores: nextScores, classFeedback: nextFeedback });
+              } else {
+                cachedScores = Object.fromEntries(
                   snapshot.docs.map((document) => [
                     document.id,
                     normalizeScores(document.data().scores),
                   ])
-                ),
-                classFeedback: Object.fromEntries(
+                );
+                cachedFeedback = Object.fromEntries(
                   snapshot.docs.map((document) => [
                     document.id,
                     normalizeGradeFeedback(document.data().feedback),
                   ])
-                ),
-              }),
+                );
+                onChange({
+                  classScores: cachedScores,
+                  classFeedback: Object.fromEntries(
+                    snapshot.docs.map((document) => [
+                      document.id,
+                      normalizeGradeFeedback(document.data().feedback),
+                    ])
+                  ),
+                });
+              }
+            },
             () => onError("No se pudieron sincronizar las notas del curso.")
           )
         );

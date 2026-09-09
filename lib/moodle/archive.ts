@@ -1,4 +1,4 @@
-import { unzipSync, ZipPassThrough } from "fflate";
+import { inflateSync, unzipSync, ZipPassThrough } from "fflate";
 
 export const MAX_MOODLE_ARCHIVE_BYTES = 250 * 1024 * 1024;
 export const MAX_MOODLE_EXPANDED_BYTES = 512 * 1024 * 1024;
@@ -191,28 +191,46 @@ function computeCrc(data: Uint8Array): number {
   return stream.crc >>> 0;
 }
 
-function getZipCrcMap(bytes: Uint8Array): Map<string, number> {
+type ZipEntryMeta = {
+  crc: number;
+  localOffset: number;
+  compressedSize: number;
+  uncompressedSize: number;
+  compressionMethod: number;
+};
+
+function getZipEntryMap(bytes: Uint8Array): Map<string, ZipEntryMeta> {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const crcs = new Map<string, number>();
+  const entries = new Map<string, ZipEntryMeta>();
   let eocd = bytes.length - 22;
   while (eocd >= Math.max(0, bytes.length - 65557) && view.getUint32(eocd, true) !== 0x06054b50) {
     eocd--;
   }
-  if (eocd < 0 || view.getUint32(eocd, true) !== 0x06054b50) return crcs;
+  if (eocd < 0 || view.getUint32(eocd, true) !== 0x06054b50) return entries;
   const count = view.getUint16(eocd + 10, true);
   let offset = view.getUint32(eocd + 16, true);
   const decoder = new TextDecoder("utf-8");
   for (let i = 0; i < count; i++) {
     if (offset + 46 > bytes.length || view.getUint32(offset, true) !== 0x02014b50) break;
+    const compressionMethod = view.getUint16(offset + 10, true);
     const crc = view.getUint32(offset + 16, true);
+    const compressedSize = view.getUint32(offset + 20, true);
+    const uncompressedSize = view.getUint32(offset + 24, true);
     const nameLen = view.getUint16(offset + 28, true);
     const extraLen = view.getUint16(offset + 30, true);
     const commentLen = view.getUint16(offset + 32, true);
+    const localOffset = view.getUint32(offset + 42, true);
     const rawName = decoder.decode(bytes.subarray(offset + 46, offset + 46 + nameLen));
-    crcs.set(rawName, crc);
+    entries.set(rawName, {
+      crc,
+      localOffset,
+      compressedSize,
+      uncompressedSize,
+      compressionMethod,
+    });
     offset += 46 + nameLen + extraLen + commentLen;
   }
-  return crcs;
+  return entries;
 }
 
 // Implements: REQ-MOODLE-01, REQ-MOODLE-09
@@ -249,24 +267,48 @@ function openZip(bytes: Uint8Array): MoodleArchive {
     fail("El ZIP no contiene archivos restaurables.");
   }
 
-  const expectedCrcs = getZipCrcMap(bytes);
+  const zipEntryMap = getZipEntryMap(bytes);
+  const decompressedCache = new Map<string, Uint8Array>();
 
   const entries: ArchiveEntry[] = discovered.map((entry) => ({
     name: entry.name,
     size: entry.size,
     read: async () => {
+      const cached = decompressedCache.get(entry.rawName);
+      if (cached) return cached;
       try {
-        const unzipped = unzipSync(bytes, {
-          filter: (file) => file.name === entry.rawName,
-        });
-        const content = unzipped[entry.rawName];
+        let content: Uint8Array | undefined;
+        const meta = zipEntryMap.get(entry.rawName);
+        if (meta && meta.localOffset + 30 <= bytes.length) {
+          const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          if (view.getUint32(meta.localOffset, true) === 0x04034b50) {
+            const localNameLen = view.getUint16(meta.localOffset + 26, true);
+            const localExtraLen = view.getUint16(meta.localOffset + 28, true);
+            const dataOffset = meta.localOffset + 30 + localNameLen + localExtraLen;
+            if (dataOffset + meta.compressedSize <= bytes.length) {
+              const slice = bytes.subarray(dataOffset, dataOffset + meta.compressedSize);
+              if (meta.compressionMethod === 0) {
+                content = new Uint8Array(slice);
+              } else if (meta.compressionMethod === 8) {
+                content = inflateSync(slice);
+              }
+            }
+          }
+        }
+        if (!content) {
+          const unzipped = unzipSync(bytes, {
+            filter: (file) => file.name === entry.rawName,
+          });
+          content = unzipped[entry.rawName];
+        }
         if (!content) {
           fail(`La entrada ZIP ${entry.name} quedó incompleta.`);
         }
-        const expectedCrc = expectedCrcs.get(entry.rawName);
+        const expectedCrc = meta?.crc;
         if (expectedCrc !== undefined && computeCrc(content) !== expectedCrc) {
           fail(`La entrada ZIP ${entry.name} no supera su CRC.`);
         }
+        decompressedCache.set(entry.rawName, content);
         return content;
       } catch (cause) {
         if (cause instanceof MoodleImportError) throw cause;
