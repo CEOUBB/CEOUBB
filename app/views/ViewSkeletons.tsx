@@ -484,59 +484,61 @@ export function CommunicationsSkeleton() {
         </div>
       </header>
 
-      <div className="communications-toolbar">
-        <div className="communications-tabs" aria-hidden="true" inert>
-          <button type="button" disabled aria-selected="true" role="tab" tabIndex={-1}>
-            <Bell aria-hidden="true" size={17} weight="fill" /> Avisos
-          </button>
-          <button type="button" disabled aria-selected="false" role="tab" tabIndex={-1}>
-            <ChatCircleDots aria-hidden="true" size={17} /> Mensajes
-          </button>
+      <div className="communications-workspace">
+        <div className="communications-toolbar">
+          <div className="communications-tabs" aria-hidden="true" inert>
+            <button type="button" disabled aria-selected="true" role="tab" tabIndex={-1}>
+              <Bell aria-hidden="true" size={17} weight="fill" /> Avisos
+            </button>
+            <button type="button" disabled aria-selected="false" role="tab" tabIndex={-1}>
+              <ChatCircleDots aria-hidden="true" size={17} /> Mensajes
+            </button>
+          </div>
+          <span
+            className="sk"
+            style={
+              {
+                width: "158px",
+                height: "38px",
+                borderRadius: "var(--radius-md)",
+                "--sk-delay": "120ms",
+              } as React.CSSProperties
+            }
+          />
         </div>
-        <span
-          className="sk"
-          style={
-            {
-              width: "158px",
-              height: "38px",
-              borderRadius: "var(--radius-md)",
-              "--sk-delay": "120ms",
-            } as React.CSSProperties
-          }
-        />
-      </div>
 
-      <div className="communications-panel">
-        <ol className="announcement-list">
-          {[0, 1, 2, 3].map((row) => (
-            <li key={`announcement-${row}`}>
-              <span
-                className="announcement-row"
-                style={{ "--sk-delay": `${150 + row * 45}ms` } as React.CSSProperties}
-              >
+        <div className="communications-panel">
+          <ol className="announcement-list">
+            {[0, 1, 2, 3].map((row) => (
+              <li key={`announcement-${row}`}>
                 <span
-                  className="sk"
-                  style={{ width: "44px", height: "44px", borderRadius: "var(--radius-md)" }}
-                />
-                <span className="announcement-copy">
-                  <span
-                    className="sk sk-quiet"
-                    style={{ width: `${142 + ((row * 37) % 96)}px`, height: "11px" }}
-                  />
+                  className="announcement-row"
+                  style={{ "--sk-delay": `${150 + row * 45}ms` } as React.CSSProperties}
+                >
                   <span
                     className="sk"
-                    style={{ width: `${52 + ((row * 13) % 30)}%`, height: "15px" }}
+                    style={{ width: "44px", height: "44px", borderRadius: "var(--radius-md)" }}
                   />
-                  <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
+                  <span className="announcement-copy">
+                    <span
+                      className="sk sk-quiet"
+                      style={{ width: `${142 + ((row * 37) % 96)}px`, height: "11px" }}
+                    />
+                    <span
+                      className="sk"
+                      style={{ width: `${52 + ((row * 13) % 30)}%`, height: "15px" }}
+                    />
+                    <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
+                  </span>
+                  <span
+                    className="sk sk-quiet"
+                    style={{ width: "10px", height: "10px", borderRadius: "var(--radius-md)" }}
+                  />
                 </span>
-                <span
-                  className="sk sk-quiet"
-                  style={{ width: "10px", height: "10px", borderRadius: "var(--radius-md)" }}
-                />
-              </span>
-            </li>
-          ))}
-        </ol>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </section>
   );
