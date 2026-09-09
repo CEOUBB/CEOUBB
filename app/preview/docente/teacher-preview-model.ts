@@ -597,11 +597,25 @@ export function paginateSubmissions(
 
 // Implements: REQ-DOC-07
 export function teacherCounters(state: TeacherPreviewState): TeacherCounter[] {
-  const pending = state.submissions.filter((submission) =>
-    ["submitted", "late", "review_draft"].includes(submission.state)
-  ).length;
-  const missing = state.submissions.filter((submission) => submission.state === "missing").length;
-  const drafts = state.activities.filter((activity) => activity.lifecycle === "draft").length;
+  let pending = 0;
+  let missing = 0;
+  for (const submission of state.submissions) {
+    if (
+      submission.state === "submitted" ||
+      submission.state === "late" ||
+      submission.state === "review_draft"
+    ) {
+      pending += 1;
+    } else if (submission.state === "missing") {
+      missing += 1;
+    }
+  }
+  let drafts = 0;
+  for (const activity of state.activities) {
+    if (activity.lifecycle === "draft") {
+      drafts += 1;
+    }
+  }
   return [
     {
       id: "pending",
