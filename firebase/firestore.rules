@@ -200,7 +200,7 @@ service cloud.firestore {
         && request.resource.data.startTime is string
         && request.resource.data.endTime is string
         && (request.resource.data.courseId == null || request.resource.data.courseId is string)
-        && request.resource.data.kind in ['clase', 'estudio', 'evaluacion', 'reunion', 'otro']
+        && request.resource.data.kind in ['study', 'personal', 'task', 'clase', 'estudio', 'evaluacion', 'reunion', 'otro']
         && request.resource.data.completed is bool;
     }
 
@@ -225,9 +225,10 @@ service cloud.firestore {
       // ni un docente pueden leer la agenda personal de otra cuenta.
       match /calendar_events/{eventId} {
         allow read, write: if signedIn() && request.auth.uid == userId
-          && (request.resource == null || (validCalendarEventShape() && (resource == null || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 'courseId', 'kind', 'completed', 'updatedAt'
-          ]))));
+          && (request.method in ['get', 'list', 'delete']
+            || (validCalendarEventShape() && (request.method == 'create' || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 'courseId', 'kind', 'completed', 'updatedAt'
+            ]))));
       }
 
       match /notificationReads/{cursorId} {

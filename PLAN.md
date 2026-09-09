@@ -1,5 +1,16 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: corrección del calendario personal en Firestore y eliminación de advertencias web, 2026-09-09
+
+- **Alcance entregado:**
+  1. _Reglas de Firestore (`firebase/firestore.rules`):_ Desacople de la regla combinada `allow read, write:` en `match /users/{userId}/calendar_events/{eventId}` hacia cláusulas explícitas para `read`, `create`, `update` y `delete`. Sincronización del vocabulario de tipos (`kind`) en `validCalendarEventShape()` admitiendo los identificadores de cliente (`'study'`, `'personal'`, `'task'`) junto con los históricos en español (`'clase'`, `'estudio'`, etc.).
+  2. _Despliegue a Producción:_ Reglas publicadas exitosamente a Cloud Firestore (`centro-de-estudio-ubb`) resolviendo de inmediato el error `"Tu calendario personal todavía no está habilitado en el servidor"` para lectura y escritura.
+  3. _Pruebas de Reglas (`tests/firebase-rules.test.ts`):_ Incorporación de 4 suites de prueba (`CAL-01` a `CAL-04`) ejecutadas en el emulador con 100% de éxito (12/12 pruebas pasando), verificando lecturas, inserciones de tipos válidos, denegación ante tipos o campos no autorizados y aislamiento estricto entre usuarios.
+  4. _Cabecera Permissions-Policy (`next.config.ts`):_ Eliminación de la directiva obsoleta `interest-cohort=()` (FLoC retirado) que provocaba advertencias en navegadores Chromium.
+  5. _Precarga de Recursos de Marca (`app/page.tsx` y `app/portal-shell.tsx`):_ Eliminación de la prop `priority` en el logotipo del shell autenticado y condicionamiento del `<link rel="preload">` en `page.tsx` a visitas sin sesión (`!hasSession`), eliminando la advertencia de precarga desperdiciada en consolas DevTools.
+- **Verificación:** `verify:invariants` (35/35 pruebas), `format:check` (Prettier 100% limpio), `typecheck` (`tsc --noEmit` código de salida 0), `lint` (`eslint .` código de salida 0) y `check:rules` (12/12 en emulador Firebase).
+- **Límites:** Cero regresiones funcionales, cero debilitamiento de tests, estricta preservación de invariantes de aislamiento y compatibilidad con Next.js 16 (Turbopack).
+
 ## Revisión de bots de la PR 171, 2026-09-09
 
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.

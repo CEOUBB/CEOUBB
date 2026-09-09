@@ -26,7 +26,7 @@
   "tests/final-grade-records.test.ts": "4fbbd7b05aef53e8445ba8dbcbd5d30719d88f01aac6ca7718887c70022fd213",
   "tests/firebase-mappers.test.ts": "5cbc80506cd06854792a7172fa583427672b93c0a3df51b67b6978467b1ad6d4",
   "tests/firebase-rules-config.test.ts": "593cc993229a4080b55a8ab4473a37ea487beb0158945548867f3a6d63876aa5",
-  "tests/firebase-rules.test.ts": "e88977788e2c176005a82f7fedfa6a69507004737ed9de9ff8ed1ee1cd2b1309",
+  "tests/firebase-rules.test.ts": "2064c6d7d3b54794feca1fe2eb09d02f80d2c23c2c4a1b396e10ec87e8322711",
   "tests/github-webhook.test.ts": "99afb3c4814aae88c88bb691fd79d1f7b2817cf0b4c2ac53ec3d9417b777f1e3",
   "tests/grade-audit.test.ts": "e2d1c17c13b99be00b5440635c386d42fcfb1dded988dfbbb262d9c2d66575bd",
   "tests/grade-feedback.test.ts": "17b877d26afc66f91db06efa1e3dffcc3519b1180111d9f3ac00e037d56d836e",
