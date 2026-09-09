@@ -116,11 +116,11 @@ All plans are fully self-contained, specify exact file locations, explain the co
 
 ---
 
-## 8. Master Test Suite Coverage & Regression Matrix (Plans 082–084)
+## 8. Master Test Suite Coverage & Regression Matrix (Plans 082–083)
 
 | # | Plan | Superficie / Dominio | Prioridad | Brecha de Cobertura | Cobertura Previa | Objetivo | Estado |
 |---|---|---|---|---|---|---|---|
 | **082** | [Plan 082](082-test-cobertura-archivo-periodos.md) | Academic Core (`academic-period-archive.ts`) | **P1** | Cierre de semestre, paginación con cursores y sincronización forzada hacia Firestore | 0.0% líneas | >85% líneas | **COMPLETED** |
 | **083** | [Plan 083](083-test-cobertura-magic-bytes-perfil.md) | Security & Profile (`user-profile.ts`) | **P1** | Detección binaria de magic bytes PNG/JPEG/WebP y degradación en lectura/escritura de preferencias | 43.8% líneas | >80% líneas | **COMPLETED** |
-| **084** | [Plan 084](084-test-cobertura-webhooks-endpoints.md) | Webhook Handlers (`linear` & `github`) | **P1** | Route handlers POST en Next.js, validación de variables de entorno y defensa contra replay attacks | 0.0% directo | >90% líneas | **COMPLETED** |
+
 
