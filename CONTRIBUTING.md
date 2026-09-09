@@ -7,9 +7,9 @@ Este documento establece las directrices y estándares de desarrollo para contri
 ## Requisitos del Entorno
 
 - **Node.js**: `>= 22.13.0`
-- **Gestor de paquetes**: `pnpm >= 12.0.0` (obligatorio; no utilizar `npm` ni `bun`)
+- **Gestor de paquetes**: `pnpm 10.5.2` (ó `10.x` compatible, obligatorio para emulador Firebase; no utilizar `npm` ni `bun`)
 - **Java JDK**: `Java 21` (distribución Temurin recomendada, requerida para compilación de Android en Capacitor)
-- **Android Studio / SDK**: Android API 34+ / Build Tools 34.0.0+ (requerido para emulación y depuración móvil en Capacitor 7)
+- **Android Studio / SDK**: Android API 36 / Build Tools 36.0.0+ (requerido para emulación y depuración móvil en Capacitor)
 
 ---
 
