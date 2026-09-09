@@ -118,6 +118,42 @@ export function onDevPostsChanged(courseId: string, callback: () => void): () =>
   };
 }
 
+const DEV_GRADEBOOK_PREFIX = "ceoubb_dev_gradebook:";
+const DEV_ROSTER_PREFIX = "ceoubb_dev_roster:";
+const DEV_SCORES_PREFIX = "ceoubb_dev_scores:";
+
+export function readDevGradebook(
+  courseId: string
+): { gradebook: GradeItem[]; exemption: number | null } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${DEV_GRADEBOOK_PREFIX}${courseId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readDevRoster(courseId: string): ClassroomStudent[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${DEV_ROSTER_PREFIX}${courseId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readDevScores(courseId: string): Record<string, GradeScores> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${DEV_SCORES_PREFIX}${courseId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 /*
   Techo por sección: 20 publicaciones bastan para el ribbon de novedades y
   acotan la lectura inicial a `secciones x 20` documentos en vez de barrer la
@@ -220,8 +256,27 @@ export function watchClassroom(
       stops.push(
         sdk.onSnapshot(
           sdk.doc(db, "courses", courseId, "meta", "gradebook"),
-          (snapshot) => onChange(toGradebookState(snapshot.exists() ? snapshot.data() : null)),
-          () => onError("No se pudo cargar la ponderación del curso.")
+          (snapshot) => {
+            const state = toGradebookState(snapshot.exists() ? snapshot.data() : null);
+            if (isDevOrLocalEnvironment() && state.gradebook.length === 0) {
+              const devGb = readDevGradebook(courseId);
+              if (devGb && devGb.gradebook.length > 0) {
+                onChange(devGb);
+                return;
+              }
+            }
+            onChange(state);
+          },
+          () => {
+            if (isDevOrLocalEnvironment()) {
+              const devGb = readDevGradebook(courseId);
+              if (devGb) {
+                onChange(devGb);
+                return;
+              }
+            }
+            onError("No se pudo cargar la ponderación del curso.");
+          }
         )
       );
       stops.push(
@@ -244,6 +299,16 @@ export function watchClassroom(
         )
       );
       if (teaching) {
+        if (isDevOrLocalEnvironment()) {
+          const devRoster = readDevRoster(courseId);
+          if (devRoster && devRoster.length > 0) {
+            onChange({ students: devRoster });
+          }
+          const devScores = readDevScores(courseId);
+          if (devScores) {
+            onChange({ classScores: devScores });
+          }
+        }
         stops.push(
           sdk.onSnapshot(
             sdk.query(
@@ -251,8 +316,27 @@ export function watchClassroom(
               sdk.orderBy("lastSeen", "desc"),
               sdk.limit(MAX_CLASSROOM_STUDENTS)
             ),
-            (snapshot) => onChange({ students: snapshot.docs.map(toStudent) }),
-            () => onError("No se pudo sincronizar la nómina del curso.")
+            (snapshot) => {
+              const students = snapshot.docs.map(toStudent);
+              if (isDevOrLocalEnvironment() && students.length === 0) {
+                const devRoster = readDevRoster(courseId);
+                if (devRoster && devRoster.length > 0) {
+                  onChange({ students: devRoster });
+                  return;
+                }
+              }
+              onChange({ students });
+            },
+            () => {
+              if (isDevOrLocalEnvironment()) {
+                const devRoster = readDevRoster(courseId);
+                if (devRoster && devRoster.length > 0) {
+                  onChange({ students: devRoster });
+                  return;
+                }
+              }
+              onError("No se pudo sincronizar la nómina del curso.");
+            }
           )
         );
         let cachedScores: Record<string, GradeScores> = {};

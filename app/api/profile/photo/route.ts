@@ -28,6 +28,22 @@ const fotoSchema = z.object({
 
 // Implements: REQ-CFG-02
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader !== null) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > AVATAR_MAX_BYTES + 65536) {
+      return Response.json(
+        { error: "El archivo excede el tamaño máximo permitido." },
+        { status: 413 }
+      );
+    }
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
 
@@ -86,6 +102,11 @@ export async function POST(request: Request) {
 */
 // Implements: REQ-CFG-03
 export async function DELETE(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
 

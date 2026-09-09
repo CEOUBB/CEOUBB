@@ -308,6 +308,17 @@ export function watchOwnSubmissions(
   let active = true;
   let stop: () => void = () => undefined;
 
+  if (isDevOrLocalEnvironment() && typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(`ceoubb_dev_submissions:${courseId}`);
+      if (raw) {
+        onChange(JSON.parse(raw));
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
   Promise.all([firestore(), currentUser()])
     .then(([{ sdk, db }, user]) => {
       if (!active) return;
@@ -316,14 +327,38 @@ export function watchOwnSubmissions(
           sdk.collection(db, "courses", courseId, "submissions"),
           sdk.where("uid", "==", user.uid)
         ),
-        (snapshot) =>
+        (snapshot) => {
+          if (
+            isDevOrLocalEnvironment() &&
+            typeof window !== "undefined" &&
+            snapshot.docs.length === 0
+          ) {
+            try {
+              const raw = window.localStorage.getItem(`ceoubb_dev_submissions:${courseId}`);
+              if (raw) {
+                onChange(JSON.parse(raw));
+                return;
+              }
+            } catch {
+              // Ignore
+            }
+          }
           onChange(
             snapshot.docs.map((document) => toStudentSubmission(document.id, document.data()))
-          ),
-        () => onError("No se pudieron cargar tus entregas.")
+          );
+        },
+        () => {
+          if (!isDevOrLocalEnvironment()) {
+            onError("No se pudieron cargar tus entregas.");
+          }
+        }
       );
     })
-    .catch(() => onError("No se pudo conectar Firebase."));
+    .catch(() => {
+      if (!isDevOrLocalEnvironment()) {
+        onError("No se pudo conectar Firebase.");
+      }
+    });
 
   return () => {
     active = false;

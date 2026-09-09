@@ -22,6 +22,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();

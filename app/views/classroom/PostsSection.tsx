@@ -96,6 +96,7 @@ export function PostsSection({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
 
@@ -240,7 +241,7 @@ export function PostsSection({
                           Abrir recurso <ArrowUpRight size={12} />
                         </a>
                       )}
-                      {canManage && (
+                      {canManage && deletingId !== post.id && (
                         <span className="content-actions">
                           <button
                             aria-label={`Modificar aviso "${post.title}"`}
@@ -251,7 +252,7 @@ export function PostsSection({
                           </button>
                           <button
                             aria-label={`Eliminar aviso "${post.title}"`}
-                            onClick={() => deletePost(post)}
+                            onClick={() => setDeletingId(post.id)}
                             type="button"
                           >
                             Eliminar
@@ -259,6 +260,37 @@ export function PostsSection({
                         </span>
                       )}
                     </footer>
+                    {canManage && deletingId === post.id && (
+                      <div
+                        className="context-confirmation"
+                        role="group"
+                        aria-label={`Eliminar aviso ${post.title}`}
+                      >
+                        <p>
+                          ¿Eliminar este aviso? <span>Esta acción no se puede deshacer.</span>
+                        </p>
+                        <div className="confirmation-actions">
+                          <button
+                            className="planner-dialog-cancel"
+                            onClick={() => setDeletingId(null)}
+                            type="button"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className="confirmation-danger"
+                            aria-label={`Confirmar eliminación de "${post.title}"`}
+                            onClick={() => {
+                              setDeletingId(null);
+                              deletePost(post);
+                            }}
+                            type="button"
+                          >
+                            Eliminar aviso
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

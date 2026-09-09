@@ -7,11 +7,35 @@
   2. _Despliegue a Producción:_ Reglas publicadas exitosamente a Cloud Firestore (`centro-de-estudio-ubb`) resolviendo de inmediato el error `"Tu calendario personal todavía no está habilitado en el servidor"` para lectura y escritura.
   3. _Pruebas de Reglas (`tests/firebase-rules.test.ts`):_ Incorporación de 4 suites de prueba (`CAL-01` a `CAL-04`) ejecutadas en el emulador con 100% de éxito (12/12 pruebas pasando), verificando lecturas, inserciones de tipos válidos, denegación ante tipos o campos no autorizados y aislamiento estricto entre usuarios.
   4. _Cabecera Permissions-Policy (`next.config.ts`):_ Eliminación de la directiva obsoleta `interest-cohort=()` (FLoC retirado) que provocaba advertencias en navegadores Chromium.
-  5. _Precarga de Recursos de Marca (`app/page.tsx` y `app/portal-shell.tsx`):_ Eliminación de la prop `priority` en el logotipo del shell autenticado y condicionamiento del `<link rel="preload">` en `page.tsx` a visitas sin sesión (`!hasSession`), eliminando la advertencia de precarga desperdiciada en consolas DevTools.
+  5. _Precarga de Recursos de Marca (`app/portal-shell.tsx`):_ Eliminación de la prop `priority` en el logotipo del shell autenticado para evitar advertencias de precarga innecesaria en consolas DevTools. Preservación del renderizado estático síncrono en `app/page.tsx`.
 - **Verificación:** `verify:invariants` (35/35 pruebas), `format:check` (Prettier 100% limpio), `typecheck` (`tsc --noEmit` código de salida 0), `lint` (`eslint .` código de salida 0) y `check:rules` (12/12 en emulador Firebase).
 - **Límites:** Cero regresiones funcionales, cero debilitamiento de tests, estricta preservación de invariantes de aislamiento y compatibilidad con Next.js 16 (Turbopack).
 
-## Revisión de bots de la PR 171, 2026-09-09
+## Handoff: refinamiento visual de PR 178, 2026-09-09
+
+- Revisión posterior solicitada: se corrigió el rechazo real de notas enteras 1–7 en el parser compartido; cambio de expectativa del test y sello autorizado expresamente. Los avisos de React Doctor y la sugerencia del callback ref no justifican cambios funcionales; análisis en `docs/design/pr178-refinement.md`.
+- Validación posterior: build, 617 pruebas unitarias y 25 de integración aprobados. El chequeo rápido se ejecuta después del build, porque el test de bundle lee los manifiestos de `.next`.
+
+- Alcance: únicamente los estados y confirmaciones añadidos por la PR 178. Se conserva la estructura del aula, calendario, navegación y entrada chilena de notas.
+- Cambios: comprobante sin chip truncado ni verificación duplicada; objetivo de simulación sin promesa celebratoria; guardado con texto accesible y sin halos; confirmaciones con consecuencias y acciones separadas, sin dos botones Cancelar ni Guardar durante la eliminación del bloque.
+- Evidencia: `docs/design/pr178-refinement.md`; prueba de componentes reales con datos sintéticos en `e2e/pr178-refinement.spec.ts` a 1440 y 390 px. Transporte de prueba aislado; sin verificación de persistencia remota.
+- Verificado: typecheck y lint; verify:fast (616 pruebas, 69 sellos y 31 specs); 35 invariantes. React Doctor: 84/100 al comparar la rama completa con main, con advertencias preexistentes; ninguna configuración de análisis modificada.
+- Cierre: `pnpm test` aprobado con entorno estándar (build, 616 unitarias y 25 integraciones); dos recorridos Playwright aprobados; formato verificado. Cambios locales en `codex/pulir-ux-academica`, basada en la cabecera de PR 178.
+
+## Handoff: Endurecimiento de Seguridad de la API (CEOUBB), 2026-09-09
+
+- **Alcance entregado:** Auditoría exhaustiva de seguridad sobre todas las rutas de `app/api` e implementación de defensas en profundidad (excluyendo Discord por eliminación paralela).
+  1. _Autenticación & Timing Attacks:_ Comparación en tiempo constante con `crypto.timingSafeEqual` y hash SHA-256 en `lib/auth-dev.ts` (`isDevOrPreviewAuthAllowed`).
+  2. _Validación de Origen (CSRF):_ Comprobación estricta de `origin` contra `new URL(request.url).origin` en `/api/auth/dev-login` y en subida/borrado de avatar en `/api/profile/photo`.
+  3. _Prevención de DoS por Payload:_ Restricción de `Content-Length` y límite en lectura de texto crudo previo a deserialización JSON en `/api/auth/firebase` (16 KB), `/api/admin/users` (16 KB), `/api/teacher/courses` (64 KB) y `/api/profile/photo` (2 MB + sobrecarga multipart).
+  4. _Privacidad y Control de Caché:_ Cabeceras `Cache-Control: private, no-store, max-age=0` y `Vary: Cookie` en respuestas de datos de usuarios (`/api/admin/users`), períodos (`/api/admin/periods`), cursos del estudiante (`/api/courses/me`) y cursos docentes (`/api/teacher/courses`).
+  5. _Saneamiento de IPs de Proxy:_ Validación sintáctica y filtrado de caracteres maliciosos mediante regex en `direccionDeSolicitud()` de `lib/services/support-requests.ts`.
+- **Límites:** Componentes de Discord omitidos según requerimiento explícito del usuario. Preservadas todas las aserciones de tests existentes sin debilitamiento ni modificación de sellos SHA-256.
+- **Verificación:**
+  - `pnpm run format` y `pnpm run format:check` (100% Prettier compliant).
+  - `pnpm run verify:fast` (código 0, 609 tests unitarios, 68 sellos SHA-256, 31 especificaciones OpenSpec).
+  - `pnpm run verify:invariants` (código 0, 35 tests de acceso y modelo académico).
+  - `pnpm run lint` (código 0, cero advertencias, cero errores ESLint).
 
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
 - PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
