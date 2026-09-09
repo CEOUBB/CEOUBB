@@ -135,7 +135,7 @@ test("REQ-CICD-05, REQ-CICD-06: Semantic PR workflow enforces Conventional Commi
   );
 });
 
-test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target and alerts Discord on failure", async () => {
+test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target", async () => {
   const androidCiContent = await readText(".github/workflows/android-ci.yml");
 
   assert.match(androidCiContent, /actions\/setup-java@v4/);
@@ -145,13 +145,6 @@ test("REQ-CICD-01, REQ-CICD-02: Android CI workflow compiles Capacitor target an
   assert.match(androidCiContent, /cap sync android/);
   assert.match(androidCiContent, /chmod \+x android\/gradlew/);
   assert.match(androidCiContent, /assembleDebug lintDebug/);
-
-  assert.match(
-    androidCiContent,
-    /1536936245643579462/,
-    "Debe apuntar al canal de Discord #🚨-❙-alertas"
-  );
-  assert.match(androidCiContent, /if:\s*failure\(\)/);
 
   // Invariante de portabilidad de entorno Android / Gradle
   const gradleProperties = await readText("android/gradle.properties");

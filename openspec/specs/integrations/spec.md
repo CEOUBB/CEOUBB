@@ -2,7 +2,7 @@
 
 ### Purpose
 
-Gobierna las integraciones con servicios externos de automatización y notificaciones: bot de Discord para bridges de agentes y standups diarios, webhooks de Linear para issues y webhooks de GitHub.
+Gobierna las integraciones con servicios externos de automatización y notificaciones: webhooks de Linear para issues y webhooks de GitHub.
 
 ### Requirements
 
@@ -29,12 +29,3 @@ WHERE a webhook secret is not configured in the host environment, the route hand
 - **WHEN** the host environment lacks the corresponding secret variable (`GITHUB_WEBHOOK_SECRET` or `LINEAR_WEBHOOK_SECRET`)
 - **THEN** the handler SHALL respond with HTTP 404 Not Found
 - **AND** SHALL NOT return HTTP 500 Internal Server Error
-
-#### Requirement: Multi-Agent Discord Bridge
-
-The system SHALL support agentic bridge routing (Claude, Codex, Antigravity) via Discord slash commands and standup notifications.
-
-##### Scenario: Agent interaction
-
-- **WHEN** a Discord interaction is received on `/api/discord/interactions`
-- **THEN** it SHALL validate Discord cryptographic signatures and dispatch response payloads

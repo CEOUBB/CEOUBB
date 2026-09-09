@@ -26,16 +26,16 @@ test("services/gemini: MODEL_FALLBACK_LIST contiene modelos Gemini 3.x en orden 
   assert.ok(MODEL_FALLBACK_LIST.includes("gemini-3.5-flash"));
 });
 
-test("services/gemini: getGeminiApiKey resuelve claves de entorno prioritarias", () => {
-  const originalKey = process.env.STANDUP_GEMINI_API_KEY;
+test("services/gemini: getGeminiApiKey resuelve GEMINI_API_KEY", () => {
+  const originalKey = process.env.GEMINI_API_KEY;
   try {
-    process.env.STANDUP_GEMINI_API_KEY = "test-standup-key";
-    assert.equal(getGeminiApiKey(), "test-standup-key");
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    assert.equal(getGeminiApiKey(), "test-gemini-key");
   } finally {
     if (originalKey !== undefined) {
-      process.env.STANDUP_GEMINI_API_KEY = originalKey;
+      process.env.GEMINI_API_KEY = originalKey;
     } else {
-      delete process.env.STANDUP_GEMINI_API_KEY;
+      delete process.env.GEMINI_API_KEY;
     }
   }
 });
@@ -44,19 +44,13 @@ test("services/gemini: getGeminiClient retorna instancia de GoogleGenAI o null",
   const clientWithCustom = getGeminiClient("custom-key-123");
   assert.ok(clientWithCustom instanceof GoogleGenAI);
 
-  const prevStandup = process.env.STANDUP_GEMINI_API_KEY;
-  const prevGemini = process.env.GEMINI_STANDUP_API_KEY;
   const prevDefault = process.env.GEMINI_API_KEY;
   try {
-    delete process.env.STANDUP_GEMINI_API_KEY;
-    delete process.env.GEMINI_STANDUP_API_KEY;
     delete process.env.GEMINI_API_KEY;
 
     const noClient = getGeminiClient();
     assert.equal(noClient, null);
   } finally {
-    if (prevStandup) process.env.STANDUP_GEMINI_API_KEY = prevStandup;
-    if (prevGemini) process.env.GEMINI_STANDUP_API_KEY = prevGemini;
     if (prevDefault) process.env.GEMINI_API_KEY = prevDefault;
   }
 });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { generateKeyPairSync, sign } from "node:crypto";
+import { generateKeyPairSync } from "node:crypto";
 import { createRequire } from "node:module";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -25,7 +25,6 @@ import {
   revokeFirebaseAccess,
   deleteFirebaseAccountData,
 } from "../lib/services/firebase-revocation.ts";
-import { verifyDiscordSignature } from "../lib/discord/signature.ts";
 import { verifyTurnstileToken } from "../lib/services/turnstile.ts";
 import { createZip, openPackageZip } from "../lib/interop/zip.ts";
 import { exportQtiBank, importQtiBank } from "../lib/interop/qti.ts";
@@ -340,7 +339,7 @@ test(
   }
 );
 
-test("CFG-01/05: producción sin Turnstile y firmas Discord antiguas fallan cerradas", async (t) => {
+test("CFG-01/05: producción sin Turnstile falla cerrada", async (t) => {
   const previousEnvironment = process.env.NODE_ENV;
   Object.assign(process.env, { NODE_ENV: "production" });
   t.after(() => {
@@ -349,9 +348,4 @@ test("CFG-01/05: producción sin Turnstile y firmas Discord antiguas fallan cerr
   });
   delete process.env.TURNSTILE_SECRET_KEY;
   assert.equal(await verifyTurnstileToken(), false);
-  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-  const timestamp = String(Math.floor(Date.now() / 1000) - 600);
-  const signature = sign(null, Buffer.from(timestamp + "{}"), privateKey).toString("hex");
-  const key = publicKey.export({ type: "spki", format: "der" }).subarray(12).toString("hex");
-  assert.equal(verifyDiscordSignature("{}", signature, timestamp, key), false);
 });

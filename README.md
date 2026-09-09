@@ -97,7 +97,7 @@ flowchart TD
 ├── lib/                  # Servicios de dominio, access-policy.ts, grades.ts y clientes SDK
 ├── openspec/             # Especificaciones ejecutables OpenSpec (SDD)
 ├── public/               # Assets estáticos y biblioteca offline KaTeX (public/biblioteca/)
-├── scripts/              # Utilidades de verificación criptográfica, bots de Discord y seeders
+├── scripts/              # Utilidades de verificación criptográfica, herramientas de prueba y seeders
 ├── tests/                # Suites de pruebas unitarias, integración, seguridad y accesibilidad
 ├── AGENTS.md             # Protocolo de gobernanza para agentes de IA e invariantes de sistema
 ├── capacitor.config.ts   # Configuración de runtime y plugins de Capacitor
