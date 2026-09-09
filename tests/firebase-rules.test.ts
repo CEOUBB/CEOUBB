@@ -8,9 +8,11 @@ import {
 import { readFile } from "node:fs/promises";
 import { after, before, beforeEach, test } from "node:test";
 import {
+  collection,
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -459,4 +461,114 @@ test("REQ-EMU-05: sesiones ajenas o incompletas reciben rechazo predeterminado",
       )
     );
   }
+});
+
+function calendarEvent(userId: string, overrides: Record<string, unknown> = {}) {
+  return {
+    userId,
+    title: "Bloque de estudio",
+    detail: "Preparación para certamen",
+    date: "2026-09-10",
+    startTime: "09:00",
+    endTime: "10:30",
+    courseId: ENROLLED_SECTION_ID,
+    kind: "study",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+test("CAL-01: usuario autenticado puede leer (get y list) sus propios bloques de calendario", async () => {
+  const context = authenticated(users.student);
+  const database = context.firestore();
+  const eventRef = doc(database, "users", users.student.uid, "calendar_events", "event-read");
+
+  await testEnvironment.withSecurityRulesDisabled(async (adminContext) => {
+    await setDoc(
+      doc(adminContext.firestore(), "users", users.student.uid, "calendar_events", "event-read"),
+      calendarEvent(users.student.uid)
+    );
+  });
+
+  await assertSucceeds(getDoc(eventRef));
+  await assertSucceeds(
+    getDocs(collection(database, "users", users.student.uid, "calendar_events"))
+  );
+});
+
+test("CAL-02: usuario autenticado puede crear bloques con kind 'study', 'personal' y 'task'", async () => {
+  const context = authenticated(users.student);
+  const database = context.firestore();
+
+  for (const kind of ["study", "personal", "task"] as const) {
+    const eventRef = doc(database, "users", users.student.uid, "calendar_events", `event-${kind}`);
+    await assertSucceeds(setDoc(eventRef, calendarEvent(users.student.uid, { kind })));
+  }
+});
+
+test("CAL-03: un usuario ajeno NO puede leer ni escribir en el calendario de otro usuario", async () => {
+  const targetUid = users.student.uid;
+  const otherContext = authenticated(users.otherStudent);
+  const otherDatabase = otherContext.firestore();
+
+  await testEnvironment.withSecurityRulesDisabled(async (adminContext) => {
+    await setDoc(
+      doc(adminContext.firestore(), "users", targetUid, "calendar_events", "target-event"),
+      calendarEvent(targetUid)
+    );
+  });
+
+  const foreignDocRef = doc(otherDatabase, "users", targetUid, "calendar_events", "target-event");
+  const foreignColRef = collection(otherDatabase, "users", targetUid, "calendar_events");
+  const foreignNewDocRef = doc(
+    otherDatabase,
+    "users",
+    targetUid,
+    "calendar_events",
+    "injected-event"
+  );
+
+  // Lecturas denegadas (get y list)
+  await assertFails(getDoc(foreignDocRef));
+  await assertFails(getDocs(foreignColRef));
+
+  // Escrituras denegadas (create, update, delete)
+  await assertFails(setDoc(foreignNewDocRef, calendarEvent(targetUid)));
+  await assertFails(setDoc(foreignNewDocRef, calendarEvent(users.otherStudent.uid)));
+  await assertFails(updateDoc(foreignDocRef, { title: "Modificación no autorizada" }));
+  await assertFails(deleteDoc(foreignDocRef));
+});
+
+test("CAL-04: no se puede crear un bloque con un kind no válido o campos prohibidos", async () => {
+  const context = authenticated(users.student);
+  const database = context.firestore();
+
+  const invalidKindRef = doc(
+    database,
+    "users",
+    users.student.uid,
+    "calendar_events",
+    "event-invalid-kind"
+  );
+  await assertFails(setDoc(invalidKindRef, calendarEvent(users.student.uid, { kind: "invalido" })));
+  await assertFails(setDoc(invalidKindRef, calendarEvent(users.student.uid, { kind: "party" })));
+
+  const forbiddenFieldsRef = doc(
+    database,
+    "users",
+    users.student.uid,
+    "calendar_events",
+    "event-forbidden-fields"
+  );
+  await assertFails(
+    setDoc(forbiddenFieldsRef, calendarEvent(users.student.uid, { isAdmin: true }))
+  );
+  await assertFails(
+    setDoc(forbiddenFieldsRef, calendarEvent(users.student.uid, { role: "admin" }))
+  );
+  await assertFails(
+    setDoc(forbiddenFieldsRef, calendarEvent(users.student.uid, { maliciousPayload: "xyz" }))
+  );
 });

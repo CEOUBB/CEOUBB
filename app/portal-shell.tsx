@@ -233,14 +233,7 @@ export function PortalHeader({
         onClick={onHome}
         type="button"
       >
-        <Image
-          src="/brand/ubb-shield.webp"
-          alt=""
-          aria-hidden="true"
-          width={388}
-          height={594}
-          priority
-        />
+        <Image src="/brand/ubb-shield.webp" alt="" aria-hidden="true" width={388} height={594} />
         <strong>Centro de Estudio UBB</strong>
       </button>
       {/* El contexto vive en su propia miga: pegarlo dentro de la marca deja el rótulo sin separación. */}
