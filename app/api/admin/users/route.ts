@@ -36,6 +36,11 @@ const actualizarUsuarioSchema = z.object({
   role: z.enum(["teacher", "student"]),
 });
 
+const privateHeaders = {
+  "Cache-Control": "private, no-store, max-age=0",
+  Vary: "Cookie",
+};
+
 // Implements: REQ-PERF-03, REQ-PERF-04, REQ-SEC-06, REQ-API-02
 export async function GET(request: Request) {
   const actor = await getSessionUser(request);
@@ -85,12 +90,17 @@ export async function GET(request: Request) {
     const total = Number(countResult[0]?.count ?? 0);
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
-    return Response.json({
-      users: rows,
-      total,
-      page,
-      totalPages,
-    });
+    return Response.json(
+      {
+        users: rows,
+        total,
+        page,
+        totalPages,
+      },
+      {
+        headers: privateHeaders,
+      }
+    );
   } catch {
     return Response.json({ error: "Error al consultar usuarios." }, { status: 500 });
   }
@@ -102,10 +112,26 @@ export async function PATCH(request: Request) {
   if (!actor || actor.role !== "owner")
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > 16384) {
+    return Response.json(
+      { error: "El cuerpo de la solicitud es demasiado extenso." },
+      { status: 413 }
+    );
+  }
+
   try {
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, "utf8") > 16384) {
+      return Response.json(
+        { error: "El cuerpo de la solicitud es demasiado extenso." },
+        { status: 413 }
+      );
+    }
+
     let payload: { userId?: unknown; role?: unknown } | null = null;
     try {
-      payload = (await request.json()) as { userId?: unknown; role?: unknown };
+      payload = JSON.parse(rawBody) as { userId?: unknown; role?: unknown };
     } catch {
       return Response.json({ error: "Datos inválidos." }, { status: 400 });
     }
