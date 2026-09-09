@@ -81,22 +81,22 @@ export function CourseRail({
                 aria-label={
                   copiedCourseReference ? "Código copiado" : `Copiar código ${courseReference}`
                 }
-                className="course-reference"
+                className={`course-reference swap-button ${copiedCourseReference ? "copied" : ""}`}
+                data-copied={copiedCourseReference ? "true" : undefined}
                 onClick={copyCourseReference}
                 type="button"
               >
                 <span className="num">{courseReference}</span>
-                {copiedCourseReference ? (
-                  <>
-                    <Check size={14} aria-hidden="true" />
-                    Copiado
-                  </>
-                ) : (
-                  <>
-                    <CopySimple size={14} aria-hidden="true" />
+                <span className="swap-wrapper" aria-hidden="true">
+                  <span className="swap-content state-default">
+                    <CopySimple aria-hidden="true" size={14} />
                     Copiar
-                  </>
-                )}
+                  </span>
+                  <span className="swap-content state-copied">
+                    <Check aria-hidden="true" size={14} weight="bold" />
+                    Copiado
+                  </span>
+                </span>
               </button>
             </dd>
           </div>

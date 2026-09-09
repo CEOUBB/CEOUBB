@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ClockCounterClockwise, LockKey, X } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ClockCounterClockwise, LockKey, X } from "@phosphor-icons/react";
 import { formatGrade } from "../../../lib/grades";
 import {
   formatGradeHistoryDate,
   loadGradeHistoryPage,
+  type GradeHistoryEntry,
   type GradeHistoryPage,
 } from "../../../lib/grade-history";
 import styles from "./grade-history.module.css";
@@ -18,6 +19,200 @@ export type GradeHistorySelection = {
   gradeItemId: string;
   gradeItemName: string;
 };
+
+/* ─────────────────────────────────────────────────────────
+ * DIFF TABLE (beautifului.dev)
+ * Renderiza auditoría y rectificaciones de notas con diffs
+ * visuales: valor anterior tachado en rojo, nuevo en esmeralda,
+ * delta numérico con .num, autor y justificación.
+ * ───────────────────────────────────────────────────────── */
+
+export function DiffTable({
+  items,
+  className = "",
+}: {
+  items: GradeHistoryEntry[];
+  className?: string;
+}) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-xl border border-[oklch(0.9_0.012_250)] bg-white shadow-sm ${className}`}
+    >
+      <div className="flex items-center justify-between border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)] px-4 py-2.5">
+        <span className="text-xs font-semibold text-[oklch(0.2_0.03_260)]">
+          Auditoría de rectificaciones ({items.length})
+        </span>
+        <span className="text-[11px] font-medium text-[oklch(0.48_0.03_250)]">
+          Más recientes primero
+        </span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full table-fixed border-collapse text-left text-sm">
+          <colgroup>
+            <col className="w-[28%]" />
+            <col className="w-[18%]" />
+            <col className="w-[18%]" />
+            <col className="w-[14%]" />
+            <col className="w-[22%]" />
+          </colgroup>
+          <thead>
+            <tr className="border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)]/60 text-xs font-semibold text-[oklch(0.48_0.03_250)]">
+              <th className="px-3 py-2.5">Fecha y Acción</th>
+              <th className="px-3 py-2.5 text-center">Nota Anterior</th>
+              <th className="px-3 py-2.5 text-center">Nota Nueva</th>
+              <th className="px-3 py-2.5 text-center">Delta</th>
+              <th className="px-3 py-2.5">Autor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((entry) => {
+              const prevVal = entry.previousValue;
+              const newVal = entry.newValue;
+              const action =
+                newVal === null
+                  ? "Nota retirada"
+                  : prevVal === null
+                    ? "Nota registrada"
+                    : "Nota rectificada";
+
+              const hasPrevious = prevVal !== null;
+              const hasNew = newVal !== null;
+
+              let deltaNode: ReactNode = null;
+              if (hasPrevious && hasNew) {
+                const diff = Math.round(((newVal ?? 0) - (prevVal ?? 0)) * 10) / 10;
+                if (diff > 0) {
+                  deltaNode = (
+                    <span className="inline-flex items-center rounded-full bg-[oklch(0.7_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.7_0.17_155)] num">
+                      +{diff.toFixed(1)}
+                    </span>
+                  );
+                } else if (diff < 0) {
+                  deltaNode = (
+                    <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
+                      {diff.toFixed(1)}
+                    </span>
+                  );
+                } else {
+                  deltaNode = (
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-[oklch(0.48_0.03_250)] num">
+                      0.0
+                    </span>
+                  );
+                }
+              } else if (!hasPrevious && hasNew && newVal !== null) {
+                deltaNode = (
+                  <span className="inline-flex items-center rounded-full bg-[oklch(0.7_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.7_0.17_155)] num">
+                    +{formatGrade(newVal)}
+                  </span>
+                );
+              } else if (hasPrevious && !hasNew && prevVal !== null) {
+                deltaNode = (
+                  <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
+                    -{formatGrade(prevVal)}
+                  </span>
+                );
+              }
+
+              return (
+                <tr
+                  key={entry.id}
+                  className="border-b border-[oklch(0.9_0.012_250)] transition-colors duration-200 last:border-0 hover:bg-[oklch(0.975_0.005_240)]/40"
+                >
+                  <td className="px-3 py-2.5 align-top">
+                    <div className="flex flex-col">
+                      <strong className="text-xs font-semibold text-[oklch(0.2_0.03_260)]">
+                        {action}
+                      </strong>
+                      <time
+                        className="num text-[11px] text-[oklch(0.48_0.03_250)] mt-0.5"
+                        dateTime={entry.changedAt}
+                        title={entry.changedAt}
+                      >
+                        {formatGradeHistoryDate(entry.changedAt)}
+                      </time>
+                      <span className="text-[11px] text-[oklch(0.48_0.03_250)] italic mt-0.5">
+                        {newVal === null
+                          ? "Retiro de nota"
+                          : prevVal === null
+                            ? "Ingreso inicial"
+                            : "Corrección oficial"}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td
+                    className="px-3 py-2.5 text-center align-middle"
+                    style={{
+                      background: hasPrevious ? "oklch(0.55 0.22 25 / 0.05)" : undefined,
+                    }}
+                  >
+                    {prevVal !== null ? (
+                      <span
+                        className="num text-sm font-semibold transition-colors"
+                        style={{
+                          color: "oklch(0.55 0.22 25)",
+                          textDecorationLine: "line-through",
+                          textDecorationColor:
+                            "color-mix(in srgb, oklch(0.55 0.22 25) 50%, transparent)",
+                        }}
+                      >
+                        {formatGrade(prevVal)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[oklch(0.48_0.03_250)] italic">Sin nota</span>
+                    )}
+                  </td>
+
+                  <td
+                    className="px-3 py-2.5 text-center align-middle"
+                    style={{
+                      background: hasNew ? "oklch(0.7 0.17 155 / 0.06)" : undefined,
+                    }}
+                  >
+                    {newVal !== null ? (
+                      <span
+                        className="num text-sm font-semibold transition-colors"
+                        style={{ color: "oklch(0.7 0.17 155)" }}
+                      >
+                        {formatGrade(newVal)}
+                      </span>
+                    ) : (
+                      <span className="num text-xs font-medium text-[oklch(0.55_0.22_25)] italic">
+                        Sin nota
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="px-3 py-2.5 text-center align-middle">{deltaNode}</td>
+
+                  <td className="px-3 py-2.5 align-top">
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate text-xs font-semibold text-[oklch(0.2_0.03_260)]">
+                        {entry.actorName || entry.actorEmail || entry.actorUid}
+                      </span>
+                      {entry.actorEmail && (
+                        <span className="truncate text-[11px] text-[oklch(0.48_0.03_250)]">
+                          {entry.actorEmail}
+                        </span>
+                      )}
+                      {!entry.actorEmail && entry.actorName && (
+                        <span className="truncate text-[10px] text-[oklch(0.48_0.03_250)] num">
+                          ID: {entry.actorUid}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 export function GradeHistoryDialog({
   sectionId,
@@ -114,6 +309,7 @@ function HistoryPage({
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const { studentId, gradeItemId } = selection;
+
   useEffect(() => {
     const controller = new AbortController();
     loadGradeHistoryPage(sectionId, studentId, gradeItemId, cursor, controller.signal).then(
@@ -158,51 +354,7 @@ function HistoryPage({
             </p>
           </div>
         )}
-        {page && (page.items?.length ?? 0) > 0 && (
-          <>
-            <p className={styles.order}>Más recientes primero</p>
-            <ol className={styles.timeline} aria-label="Cambios de la nota">
-              {page.items.map((entry) => (
-                <li key={entry.id}>
-                  <div className={styles.eventHeading}>
-                    <strong>
-                      {entry.newValue === null
-                        ? "Nota retirada"
-                        : entry.previousValue === null
-                          ? "Nota registrada"
-                          : "Nota corregida"}
-                    </strong>
-                    <time className="num" dateTime={entry.changedAt} title={entry.changedAt}>
-                      {formatGradeHistoryDate(entry.changedAt)}
-                    </time>
-                  </div>
-                  <div className={styles.values}>
-                    <dl>
-                      <dt>Nota anterior</dt>
-                      <dd className="num">
-                        {entry.previousValue === null
-                          ? "Sin nota"
-                          : formatGrade(entry.previousValue)}
-                      </dd>
-                    </dl>
-                    <ArrowRight aria-hidden="true" size={20} />
-                    <dl>
-                      <dt>Nota final</dt>
-                      <dd className="num">
-                        {entry.newValue === null ? "Sin nota" : formatGrade(entry.newValue)}
-                      </dd>
-                    </dl>
-                  </div>
-                  <p className={styles.actor}>
-                    {entry.actorName || entry.actorEmail || entry.actorUid}
-                    {entry.actorName && entry.actorEmail && <span>{entry.actorEmail}</span>}
-                    {!entry.actorEmail && entry.actorName && <span>ID: {entry.actorUid}</span>}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </>
-        )}
+        {page && (page.items?.length ?? 0) > 0 && <DiffTable items={page.items} />}
       </div>
       <nav className={styles.footer} aria-label="Paginación del historial">
         <button

@@ -571,10 +571,11 @@ img {
 .sk {
   position: relative;
   display: block;
+  max-width: 100%;
+  flex-shrink: 0;
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--hairline) 62%, var(--canvas));
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
 }
 
 /* El brillo viaja sobre el bloque; el ancho del recorrido es el del propio bloque,
@@ -605,12 +606,6 @@ img {
   border-radius: var(--radius-full);
 }
 
-@keyframes sk-settle {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-}
 @keyframes sk-sweep {
   from {
     transform: translateX(-100%);
@@ -721,7 +716,6 @@ img {
   gap: 12px;
   min-height: 40px;
   padding: 0 10px;
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
 }
 .boot-row > .sk {
   animation: none;
@@ -772,125 +766,6 @@ img {
   margin: 0 auto;
 }
 
-.boot-head {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.boot-title {
-  width: min(58%, 340px);
-  height: 30px;
-}
-.boot-subtitle {
-  width: min(76%, 460px);
-  height: 13px;
-}
-
-/* La tira de la próxima evaluación ya es una tarjeta blanca con su bloque de
-   fecha: se dibuja como tal, no como un rectángulo gris del alto aproximado. */
-.boot-strip {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-md);
-  min-height: 86px;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-1);
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
-}
-.boot-strip .sk {
-  animation: none;
-}
-.boot-strip-date {
-  width: 58px;
-  height: 54px;
-  border-radius: var(--radius-md);
-}
-.boot-strip-lines {
-  min-width: 0;
-  display: grid;
-  gap: 9px;
-}
-.boot-strip-lines .sk:first-child {
-  width: min(72%, 260px);
-  height: 14px;
-}
-.boot-strip-lines .sk:last-child {
-  width: min(52%, 190px);
-  height: 12px;
-}
-.boot-strip-action {
-  width: 96px;
-  height: 13px;
-}
-
-.boot-section-title {
-  width: 128px;
-  height: 21px;
-  margin-top: var(--space-xs);
-}
-
-.boot-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-lg);
-}
-
-.boot-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 0 var(--space-md);
-  overflow: hidden;
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-1);
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
-}
-
-/* Los hijos heredan el retraso de su tarjeta: la ola cruza la rejilla, no cada bloque. */
-.boot-card > .sk {
-  margin: 0 var(--space-md);
-  animation: none;
-}
-.boot-cover {
-  aspect-ratio: 16 / 5;
-  margin: 0 !important;
-  border-radius: 0;
-}
-.boot-line {
-  height: 12px;
-}
-.boot-code {
-  width: 58px;
-  height: 10px;
-  margin-top: 4px !important;
-}
-.boot-line.wide {
-  width: 78%;
-  height: 18px;
-}
-.boot-line.short {
-  width: 42%;
-}
-
-/* En la tarjeta real una línea fina separa la ficha de sus metadatos. Es una
-   regla verdadera, no un hueso: no debe brillar. */
-.boot-card-rule {
-  height: 1px;
-  margin: 6px var(--space-md) 2px;
-  background: var(--border-hairline);
-}
-.boot-card-action {
-  width: 118px;
-  height: 13px;
-  margin-top: 6px !important;
-}
-
 /* ── Esqueletos de vistas y de módulos internos ────────────────
    Sólo las geometrías que la pantalla real no expone en una clase propia.
    Todo lo demás reutiliza las clases verdaderas de cada lista o panel.
@@ -903,47 +778,9 @@ img {
   align-items: stretch;
   min-height: 66px;
   padding: 9px 11px 9px 7px;
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
 }
 .teacher-course-row-skeleton > .sk {
   animation: none;
-}
-
-.teacher-manager-tabs-skeleton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-height: 48px;
-  padding: 0 26px;
-  border-bottom: 1px solid var(--border-hairline);
-}
-
-.teacher-course-form-skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: var(--space-lg);
-  padding: 26px;
-}
-
-.grade-history-skeleton {
-  display: grid;
-  gap: var(--space-lg);
-  padding: 4px 0 0 14px;
-}
-.grade-history-skeleton-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-sm);
-  padding-left: 8px;
-  border-left: 1px solid var(--border-hairline);
-  animation: sk-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--sk-delay, 0ms) both;
-}
-.grade-history-skeleton-row > .sk {
-  animation: none;
-}
-.grade-history-skeleton-row > .sk:first-child {
-  margin: 5px 0 0 -13px;
 }
 
 .review-doc-skeleton {
@@ -966,44 +803,12 @@ img {
   }
 }
 
-@media (max-width: 1240px) {
-  .boot-shell {
-    grid-template-columns: 240px minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 1100px) {
-  .boot-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 900px) {
   .boot-shell {
-    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "header" "main";
   }
   .boot-side {
     display: none;
-  }
-  .boot-header strong {
-    display: none;
-  }
-}
-
-@media (max-width: 800px) {
-  .boot-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 520px) {
-  .boot-main {
-    padding: var(--space-md) var(--space-md) var(--space-xxl);
-  }
-  .boot-search {
-    flex: 0 0 38px;
-    border-radius: var(--radius-md);
   }
 }
 
@@ -1891,15 +1696,25 @@ img {
   color: var(--text-muted);
 }
 
-.palette-field input {
+.palette-field input,
+input[role="combobox"] {
   flex: 1 1 auto;
   min-width: 0;
   border: 0;
-  outline: 0;
+  outline: 0 !important;
   background: none;
   font-size: 16px;
   color: var(--text-body);
   caret-color: var(--color-primary);
+  box-shadow: none !important;
+}
+
+.palette-field input:focus,
+.palette-field input:focus-visible,
+input[role="combobox"]:focus,
+input[role="combobox"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .palette-field input::placeholder {
@@ -2469,11 +2284,11 @@ img {
 }
 .notification-skeleton-row {
   display: grid;
-  grid-template-columns: 3px 1fr;
+  grid-template-columns: 4px 32px minmax(0, 1fr) 40px;
   align-items: center;
   gap: var(--space-xs);
-  min-height: 44px;
-  padding: var(--space-sm) var(--space-md);
+  min-height: 72px;
+  padding: 12px;
   border-bottom: 1px solid var(--border-hairline);
 }
 .notification-skeleton-band {
@@ -3187,8 +3002,8 @@ img {
   display: none;
 }
 
-.course-tabs button,
-.course-tabs span {
+.course-tabs > button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3205,8 +3020,7 @@ img {
     background var(--transition-fast);
 }
 
-.course-tabs button svg,
-.course-tabs span svg {
+.course-tabs > button svg {
   color: var(--text-faint);
   transition: color var(--transition-fast);
 }
@@ -3217,15 +3031,23 @@ img {
 .course-tabs button:hover svg {
   color: var(--text-secondary);
 }
-.course-tabs button.active,
-.course-tabs span.active {
+.course-tabs > button.active {
   color: var(--color-primary);
   font-weight: 600;
-  border-bottom-color: var(--color-primary);
+  border-bottom-color: transparent;
 }
-.course-tabs button.active svg,
-.course-tabs span.active svg {
+.course-tabs > button.active svg {
   color: var(--color-primary);
+}
+
+.course-tab-indicator {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--color-primary);
+  pointer-events: none;
 }
 
 .breadcrumb button {
@@ -3245,7 +3067,7 @@ img {
   gap: var(--space-xl);
 }
 
-.classroom-main > div {
+.classroom-main > div:not(.course-tabs) {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -3326,11 +3148,12 @@ img {
    lee como dato y el gesto de copiar queda a su derecha, en tipografía de
    interfaz. */
 .course-reference {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  margin: -6px 0 0 -6px;
+  min-height: 36px;
+  margin: 2px 0 0 0;
   padding: 4px 10px 4px 6px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
@@ -3341,7 +3164,7 @@ img {
     background var(--transition-fast),
     color var(--transition-fast);
 }
-.course-reference > span {
+.course-reference > .num {
   padding: 3px 8px;
   border-radius: var(--radius-sm);
   background: var(--canvas-soft);
@@ -3361,6 +3184,117 @@ img {
 }
 .course-reference:hover svg {
   color: var(--color-primary);
+}
+
+/* ── Microinteracciones swap (transitions.dev & Emil Kowalski micro-physics <= 120ms) ── */
+.swap-button {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  transition:
+    transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.swap-button:active {
+  transform: scale(0.97);
+}
+
+.swap-button .swap-wrapper {
+  position: relative;
+  display: inline-grid;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.swap-button .swap-content {
+  grid-area: 1 / 1;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition:
+    transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 100ms ease;
+  will-change: transform, opacity;
+}
+
+.swap-button .state-default {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.swap-button .state-copied {
+  transform: translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  color: oklch(0.5 0.12 160);
+}
+
+.swap-button.copied,
+.swap-button[data-copied="true"] {
+  background: color-mix(in srgb, oklch(0.7 0.17 155) 12%, var(--surface, #ffffff));
+  border-color: color-mix(in srgb, oklch(0.7 0.17 155) 35%, var(--border-hairline));
+  color: oklch(0.5 0.12 160);
+}
+
+.swap-button.copied .state-default,
+.swap-button[data-copied="true"] .state-default {
+  transform: translateY(-16px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.swap-button.copied .state-copied,
+.swap-button[data-copied="true"] .state-copied {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.course-reference.copied,
+.course-reference[data-copied="true"] {
+  background: color-mix(in srgb, oklch(0.7 0.17 155) 12%, var(--surface, #ffffff));
+  color: oklch(0.5 0.12 160);
+}
+
+.course-reference.copied svg,
+.course-reference[data-copied="true"] svg {
+  color: oklch(0.5 0.12 160);
+}
+
+.planner-dialog-save.copied,
+.planner-dialog-save[data-copied="true"] {
+  background: oklch(0.5 0.12 160);
+  color: var(--color-on-primary, #ffffff);
+}
+
+.planner-dialog-save.copied .state-copied,
+.planner-dialog-save[data-copied="true"] .state-copied {
+  color: var(--color-on-primary, #ffffff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-button,
+  .swap-button .swap-content {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+.scrollbar-hide {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .breadcrumb {
@@ -6962,6 +6896,38 @@ mark,
   background: var(--color-primary-wash);
 }
 
+.participant-row[data-selected="true"] {
+  background: var(--color-primary-wash);
+}
+
+.participant-row.has-checkbox {
+  grid-template-columns: 28px 44px minmax(0, 1fr) auto auto;
+}
+
+.participant-checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.participant-checkbox {
+  width: 17px;
+  height: 17px;
+  border-radius: var(--radius-xs, 4px);
+  border: 1.5px solid var(--control-border, #64748b);
+  accent-color: var(--color-primary, oklch(0.48 0.18 255));
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.participant-checkbox:focus-visible {
+  outline: 2px solid var(--color-primary, oklch(0.48 0.18 255));
+  outline-offset: 2px;
+}
+
 .participant-identity {
   display: flex;
   flex-direction: column;
@@ -7142,6 +7108,15 @@ mark,
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     gap: 8px 10px;
     min-height: 78px;
+  }
+  .participant-row.has-checkbox {
+    grid-template-columns: 24px 40px minmax(0, 1fr) 40px;
+  }
+  .participant-row.has-checkbox .participant-role {
+    grid-column: 3;
+  }
+  .participant-row.has-checkbox .participant-contact {
+    grid-column: 4;
   }
   .participant-role {
     grid-column: 2;
@@ -7673,6 +7648,7 @@ mark,
   padding: 5px 7px;
   background: color-mix(in srgb, var(--course-tone) 13%, white);
   border: 1px solid color-mix(in srgb, var(--course-tone) 38%, white);
+  border-left: 3.5px solid var(--course-tone);
   border-radius: var(--radius-md);
   box-shadow: rgba(15, 23, 42, 0.05) 0 1px 2px;
   transition:
@@ -7683,6 +7659,17 @@ mark,
 .planner-block:hover {
   box-shadow: var(--shadow-1);
   border-color: color-mix(in srgb, var(--course-tone) 62%, white);
+  border-left-color: var(--course-tone);
+}
+
+.planner-block[data-live="true"] {
+  border-left-color: var(--color-emerald, oklch(0.7 0.17 155));
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, oklch(0.7 0.17 155) 12%, white),
+    color-mix(in srgb, var(--course-tone) 10%, white) 35%
+  );
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.15);
 }
 /* El apagado del bloque hecho vive en el texto, no en el artículo: la entrada y
    la salida animan `opacity` en línea y se pisarían entre sí. La marca queda
@@ -7778,6 +7765,57 @@ mark,
   transition: opacity var(--transition-base);
 }
 
+.planner-block-title-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.live-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: oklch(0.5 0.12 160);
+  background: color-mix(in srgb, oklch(0.7 0.17 155) 14%, var(--surface, #ffffff));
+  border: 1px solid color-mix(in srgb, oklch(0.7 0.17 155) 32%, transparent);
+  padding: 1.5px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.pulse-dot {
+  width: 5.5px;
+  height: 5.5px;
+  background: oklch(0.7 0.17 155);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, oklch(0.7 0.17 155) 35%, transparent);
+  animation: live-pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes live-pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot {
+    animation: none;
+  }
+}
+
 .planner-block-open strong,
 .planner-block-open small {
   max-width: 100%;
@@ -7802,6 +7840,12 @@ mark,
 @container (max-width: 104px) {
   .planner-block-open small {
     display: none;
+  }
+  .live-pulse span:last-child {
+    display: none;
+  }
+  .live-pulse {
+    padding: 2px;
   }
 }
 
@@ -10763,8 +10807,7 @@ mark,
   .classroom-layout {
     padding: var(--space-md) var(--space-md) var(--space-xxl);
   }
-  /* Tres acciones no caben en una fila de teléfono: publicar sube a su propia
-     línea y las otras dos reparten la de abajo. */
+  /* Las utilidades docentes envuelven según su ancho legible. */
   .classroom-meta {
     width: 100%;
     flex-wrap: wrap;
@@ -10775,7 +10818,7 @@ mark,
   }
   .classroom-meta > .review-cta,
   .classroom-meta > .moodle-import-trigger {
-    flex: 1 1 0;
+    flex: 1 1 160px;
     min-width: 0;
     padding-inline: 10px;
     justify-content: center;

@@ -50,6 +50,13 @@ const katexRequestListeners = new Set<() => void>();
 function requestKatex() {
   if (katexRequested) return;
   katexRequested = true;
+  if (typeof document !== "undefined" && !document.getElementById("ceoubb-katex-css")) {
+    const link = document.createElement("link");
+    link.id = "ceoubb-katex-css";
+    link.rel = "stylesheet";
+    link.href = "/vendor/katex/katex.min.css";
+    document.head.appendChild(link);
+  }
   for (const listener of katexRequestListeners) listener();
 }
 
@@ -78,18 +85,15 @@ export function RichTextAssets() {
   if (!requested) return null;
 
   return (
-    <>
-      <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
-      <Script
-        id="ceoubb-katex"
-        src="/vendor/katex/katex.min.js"
-        strategy="afterInteractive"
-        onReady={() => {
-          for (const subscriber of katexSubscribers) subscriber();
-          katexSubscribers.clear();
-        }}
-      />
-    </>
+    <Script
+      id="ceoubb-katex"
+      src="/vendor/katex/katex.min.js"
+      strategy="afterInteractive"
+      onReady={() => {
+        for (const subscriber of katexSubscribers) subscriber();
+        katexSubscribers.clear();
+      }}
+    />
   );
 }
 

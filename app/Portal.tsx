@@ -375,11 +375,7 @@ export function Portal({
             unreadCommunications={unreadCommunications}
             user={user}
           />
-          <CommandPalette
-            items={paletteItems}
-            onClose={() => setSearchOpen(false)}
-            open={searchOpen}
-          />
+          <CommandPalette items={paletteItems} onOpenChange={setSearchOpen} open={searchOpen} />
           <PortalSidebar
             courses={courses}
             open={sidebarOpen}

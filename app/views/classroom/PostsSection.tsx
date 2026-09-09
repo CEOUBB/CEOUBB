@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useDeferredValue, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useMemo, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -99,9 +99,11 @@ export function PostsSection({
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
 
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(deferredQuery);
+  if (deferredQuery !== prevQuery) {
+    setPrevQuery(deferredQuery);
     setCurrentPage(1);
-  }, [deferredQuery]);
+  }
 
   // Implements: REQ-PAG-06, PERF-100
   const visiblePosts = useMemo(
