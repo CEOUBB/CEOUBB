@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / TeacherCoursesView
+
+- **Finding:** In `TeacherCoursesView.tsx`, the primary button in the empty state ("Crear mi primer ramo") lacked a visual vector icon and decorative Phosphor icons in action buttons with visible text lacked explicit `aria-hidden="true"` attributes, causing screen readers to announce redundant child vector elements (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `<Plus aria-hidden="true" size={17} weight="bold" />` to the empty state create button, maintaining visual consistency with the hero create action and hiding decorative SVG icons from screen readers.
+- **Design System Constraint:** Reused existing Phosphor `<Plus>` component props and primary button utility classes without modifying visual styles or creating DOM structural drift.
+- **Future Rule:** Ensure primary action triggers across empty and populated views maintain consistent decorative iconography with explicit `aria-hidden="true"` attributes.
+
 ## [2026-03-31] - Admin / AdminView
 
 - **Finding:** In `AdminView.tsx`, repeated period archive buttons lacked period-specific ARIA context (`aria-label`), while decorative search clear and pagination Phosphor SVG icons (`<X>`, `<CaretLeft>`, `<CaretRight>`) inside labeled buttons lacked `aria-hidden="true"` (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
