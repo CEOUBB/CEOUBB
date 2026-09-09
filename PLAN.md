@@ -1,6 +1,19 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Revisión de bots de la PR 171, 2026-09-09
+## Handoff: Endurecimiento de Seguridad de la API (CEOUBB), 2026-09-09
+
+- **Alcance entregado:** Auditoría exhaustiva de seguridad sobre todas las rutas de `app/api` e implementación de defensas en profundidad (excluyendo Discord por eliminación paralela).
+  1. _Autenticación & Timing Attacks:_ Comparación en tiempo constante con `crypto.timingSafeEqual` y hash SHA-256 en `lib/auth-dev.ts` (`isDevOrPreviewAuthAllowed`).
+  2. _Validación de Origen (CSRF):_ Comprobación estricta de `origin` contra `new URL(request.url).origin` en `/api/auth/dev-login` y en subida/borrado de avatar en `/api/profile/photo`.
+  3. _Prevención de DoS por Payload:_ Restricción de `Content-Length` y límite en lectura de texto crudo previo a deserialización JSON en `/api/auth/firebase` (16 KB), `/api/admin/users` (16 KB), `/api/teacher/courses` (64 KB) y `/api/profile/photo` (2 MB + sobrecarga multipart).
+  4. _Privacidad y Control de Caché:_ Cabeceras `Cache-Control: private, no-store, max-age=0` y `Vary: Cookie` en respuestas de datos de usuarios (`/api/admin/users`), períodos (`/api/admin/periods`), cursos del estudiante (`/api/courses/me`) y cursos docentes (`/api/teacher/courses`).
+  5. _Saneamiento de IPs de Proxy:_ Validación sintáctica y filtrado de caracteres maliciosos mediante regex en `direccionDeSolicitud()` de `lib/services/support-requests.ts`.
+- **Límites:** Componentes de Discord omitidos según requerimiento explícito del usuario. Preservadas todas las aserciones de tests existentes sin debilitamiento ni modificación de sellos SHA-256.
+- **Verificación:**
+  - `pnpm run format` y `pnpm run format:check` (100% Prettier compliant).
+  - `pnpm run verify:fast` (código 0, 609 tests unitarios, 68 sellos SHA-256, 31 especificaciones OpenSpec).
+  - `pnpm run verify:invariants` (código 0, 35 tests de acceso y modelo académico).
+  - `pnpm run lint` (código 0, cero advertencias, cero errores ESLint).
 
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
 - PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.

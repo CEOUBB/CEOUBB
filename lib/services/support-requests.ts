@@ -43,20 +43,39 @@ export function hashDireccion(direccion: string): string {
   return createHash("sha256").update(`${direccion}${pepper}`).digest("hex");
 }
 
+const IP_VALIDA_REGEX = /^[0-9a-fA-F:.]+$/;
+
+function sanitizarIp(candidata: string): string | null {
+  const limpia = candidata.trim().replace(/^\[|\]$/g, "");
+  return IP_VALIDA_REGEX.test(limpia) ? limpia : null;
+}
+
 /**
  * Dirección del cliente según las cabeceras del proxy. Se toma el primer salto
  * de `cf-connecting-ip` o `x-forwarded-for`, que garantiza el cliente real;
- * los siguientes los puede escribir cualquiera.
+ * los siguientes los puede escribir cualquiera. Se valida que cumpla el formato
+ * de una dirección IPv4/IPv6 estándar antes de retornarla.
  */
 export function direccionDeSolicitud(request: Request): string {
   const cfIp = request.headers.get("cf-connecting-ip");
-  if (cfIp) return cfIp.trim();
+  if (cfIp) {
+    const ip = sanitizarIp(cfIp);
+    if (ip) return ip;
+  }
   const reenviada = request.headers.get("x-forwarded-for");
   if (reenviada) {
-    const primera = reenviada.split(",")[0]?.trim();
-    if (primera) return primera;
+    const primera = reenviada.split(",")[0];
+    if (primera) {
+      const ip = sanitizarIp(primera);
+      if (ip) return ip;
+    }
   }
-  return request.headers.get("x-real-ip")?.trim() || "desconocida";
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) {
+    const ip = sanitizarIp(realIp);
+    if (ip) return ip;
+  }
+  return "desconocida";
 }
 
 type ConteoReciente = { porOrigen: number; global: number };
