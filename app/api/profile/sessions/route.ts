@@ -101,7 +101,7 @@ export async function DELETE(request: Request) {
     if (!target) return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
     // Implements: REQ-SEC-01 — SEC-01: Firebase exige revocación global y reautenticación.
-    await revokeFirebaseAccess(actor.id, false, actor.role === "owner");
+    await revokeFirebaseAccess(actor.id, false, false);
     await db.delete(sessions).where(eq(sessions.userId, actor.id));
     return Response.json(
       { revoked: parsed.data.id, current: true, scope: "all" },

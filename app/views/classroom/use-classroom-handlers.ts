@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   ClassroomAttachment,
   ClassroomPost,
@@ -33,24 +33,24 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const [liveClassStatus, setLiveClassStatus] = useState<Note>({ text: "", tone: "info" });
   const [liveClassInvalid, setLiveClassInvalid] = useState(false);
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
-  const note = (text: string, tone: Note["tone"] = "info") => {
+  const note = useCallback((text: string, tone: Note["tone"] = "info") => {
     setStatus({ text, tone });
     if (tone === "ok" && text) {
       window.setTimeout(() => {
         setStatus((prev) => (prev.text === text ? { text: "", tone: "info" } : prev));
       }, 2500);
     }
-  };
+  }, []);
   const readOnly = course.readOnly === true;
   const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
   const canTeach = canTeachSection(user.role, sectionRole);
   const { students, posts } = classroom;
   const courseReference = `${course.code} - ${course.section}`;
-  const rejectReadOnly = () => {
+  const rejectReadOnly = useCallback(() => {
     if (!readOnly) return false;
     note("Este ramo está archivado y sólo admite lectura.", "bad");
     return true;
-  };
+  }, [note, readOnly]);
 
   useEffect(
     () =>
@@ -60,7 +60,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
         (patch) => setClassroom((current) => ({ ...current, ...patch })),
         (message) => note(message, "bad")
       ),
-    [course.id, canTeach]
+    [course.id, canTeach, note]
   );
 
   useEffect(() => {
@@ -80,100 +80,109 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   }, [course.id, canTeach, readOnly]);
 
   // Implements: REQ-PUB-09
-  const publish = async (
-    event: FormEvent<HTMLFormElement>,
-    attachments: ClassroomAttachment[] = []
-  ) => {
-    event.preventDefault();
-    if (rejectReadOnly()) return false;
-    note("Publicando…");
-    const formElement = event.currentTarget;
-    const form = new FormData(event.currentTarget);
-    const notifyStudents = String(form.get("notificationMode")) !== "silent";
-    try {
-      await publishClassroomPost(course.id, {
-        title: String(form.get("title") ?? ""),
-        body: String(form.get("body") ?? ""),
-        kind: String(form.get("kind") ?? "notice"),
-        folder: String(form.get("folder") ?? ""),
-        linkUrl: String(form.get("linkUrl") ?? ""),
-        dueDate: String(form.get("dueDate") ?? ""),
-        notifyStudents,
-        attachments,
-      });
-      formElement.reset();
-      note(
-        notifyStudents
-          ? "Publicado correctamente y notificado al curso."
-          : "Publicado correctamente sin enviar alertas.",
-        "ok"
-      );
-      return true;
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");
-      return false;
-    }
-  };
+  const publish = useCallback(
+    async (event: FormEvent<HTMLFormElement>, attachments: ClassroomAttachment[] = []) => {
+      event.preventDefault();
+      if (rejectReadOnly()) return false;
+      note("Publicando…");
+      const formElement = event.currentTarget;
+      const form = new FormData(event.currentTarget);
+      const notifyStudents = String(form.get("notificationMode")) !== "silent";
+      try {
+        await publishClassroomPost(course.id, {
+          title: String(form.get("title") ?? ""),
+          body: String(form.get("body") ?? ""),
+          kind: String(form.get("kind") ?? "notice"),
+          folder: String(form.get("folder") ?? ""),
+          linkUrl: String(form.get("linkUrl") ?? ""),
+          dueDate: String(form.get("dueDate") ?? ""),
+          notifyStudents,
+          attachments,
+        });
+        formElement.reset();
+        note(
+          notifyStudents
+            ? "Publicado correctamente y notificado al curso."
+            : "Publicado correctamente sin enviar alertas.",
+          "ok"
+        );
+        return true;
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible publicar.", "bad");
+        return false;
+      }
+    },
+    [course.id, note, rejectReadOnly]
+  );
 
-  const editPost = async (post: ClassroomPost, values: { title: string; body: string }) => {
-    if (rejectReadOnly()) return false;
-    try {
-      await editClassroomPost(course.id, post.id, values);
-      note("Publicación actualizada.", "ok");
-      return true;
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible modificarla.", "bad");
-      return false;
-    }
-  };
+  const editPost = useCallback(
+    async (post: ClassroomPost, values: { title: string; body: string }) => {
+      if (rejectReadOnly()) return false;
+      try {
+        await editClassroomPost(course.id, post.id, values);
+        note("Publicación actualizada.", "ok");
+        return true;
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible modificarla.", "bad");
+        return false;
+      }
+    },
+    [course.id, note, rejectReadOnly]
+  );
 
-  const deletePost = async (post: ClassroomPost) => {
-    if (rejectReadOnly()) return;
-    if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
-    try {
-      await deleteClassroomPost(course.id, post.id, post.storagePath);
-      note("Publicación eliminada.", "ok");
-    } catch (cause) {
-      note(cause instanceof Error ? cause.message : "No fue posible eliminarla.", "bad");
-    }
-  };
+  const deletePost = useCallback(
+    async (post: ClassroomPost) => {
+      if (rejectReadOnly()) return;
+      if (!window.confirm(`¿Eliminar “${post.title}”?`)) return;
+      try {
+        await deleteClassroomPost(course.id, post.id, post.storagePath);
+        note("Publicación eliminada.", "ok");
+      } catch (cause) {
+        note(cause instanceof Error ? cause.message : "No fue posible eliminarla.", "bad");
+      }
+    },
+    [course.id, note, rejectReadOnly]
+  );
 
   /*
     Sirve tanto al archivo que se publicó solo como al adjunto que viaja dentro
     de un aviso: ambos se identifican por su ruta en Cloud Storage.
   */
   // Implements: REQ-PUB-09
-  const openAttachment = async (file: { name: string; storagePath: string; url?: string }) => {
-    if (isNativeShell()) {
-      note("Descargando archivo…");
+  const openAttachment = useCallback(
+    async (file: { name: string; storagePath: string; url?: string }) => {
+      if (isNativeShell()) {
+        note("Descargando archivo…");
+        try {
+          const url = file.storagePath ? await classroomFileUrl(file.storagePath) : file.url || "";
+          try {
+            if (await openDocumentNatively(url, file.name)) return note("", "info");
+          } finally {
+            if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+          }
+        } catch (cause) {
+          return note(
+            cause instanceof Error ? cause.message : "No fue posible abrir el archivo.",
+            "bad"
+          );
+        }
+        note("No se pudo abrir con el visor del sistema; se intentará en el navegador.", "info");
+      }
+      const tab = window.open("", "_blank");
+      if (tab) tab.opener = null;
       try {
         const url = file.storagePath ? await classroomFileUrl(file.storagePath) : file.url || "";
-        try {
-          if (await openDocumentNatively(url, file.name)) return note("", "info");
-        } finally {
-          if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-        }
+        if (tab) tab.location.href = url;
+        else window.open(url, "_blank", "noopener,noreferrer");
       } catch (cause) {
-        return note(
-          cause instanceof Error ? cause.message : "No fue posible abrir el archivo.",
-          "bad"
-        );
+        tab?.close();
+        note(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.", "bad");
       }
-      note("No se pudo abrir con el visor del sistema; se intentará en el navegador.", "info");
-    }
-    const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
-    try {
-      const url = file.storagePath ? await classroomFileUrl(file.storagePath) : file.url || "";
-      if (tab) tab.location.href = url;
-      else window.open(url, "_blank", "noopener,noreferrer");
-    } catch (cause) {
-      tab?.close();
-      note(cause instanceof Error ? cause.message : "No fue posible abrir el archivo.", "bad");
-    }
-  };
+    },
+    [note]
+  );
 
-  const copyCourseReference = async () => {
+  const copyCourseReference = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(courseReference);
       setCopiedCourseReference(true);
@@ -181,36 +190,39 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     } catch {
       note("No fue posible copiar el código del ramo.", "bad");
     }
-  };
+  }, [courseReference, note]);
 
   // Implements: REQ-LIVE-01, REQ-LIVE-02, REQ-LIVE-05, REQ-LIVE-07
-  const saveLiveClass = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (rejectReadOnly()) return;
-    const formElement = event.currentTarget;
-    const value = String(new FormData(formElement).get("liveClassUrl") ?? "");
-    setLiveClassInvalid(false);
-    setLiveClassStatus({ text: "Guardando enlace…", tone: "info" });
-    try {
-      await saveLiveClassLink(course.id, value);
-      setLiveClassStatus({
-        text: value.trim() ? "Enlace de clase en vivo guardado." : "Enlace eliminado.",
-        tone: "ok",
-      });
-    } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "No se pudo guardar la clase en vivo.";
-      const invalid = message === LIVE_CLASS_INVALID_MESSAGE;
-      setLiveClassInvalid(invalid);
-      setLiveClassStatus({ text: message, tone: "bad" });
-      if (invalid) {
-        (formElement.elements.namedItem("liveClassUrl") as HTMLInputElement | null)?.focus();
+  const saveLiveClass = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (rejectReadOnly()) return;
+      const formElement = event.currentTarget;
+      const value = String(new FormData(formElement).get("liveClassUrl") ?? "");
+      setLiveClassInvalid(false);
+      setLiveClassStatus({ text: "Guardando enlace…", tone: "info" });
+      try {
+        await saveLiveClassLink(course.id, value);
+        setLiveClassStatus({
+          text: value.trim() ? "Enlace de clase en vivo guardado." : "Enlace eliminado.",
+          tone: "ok",
+        });
+      } catch (cause) {
+        const message =
+          cause instanceof Error ? cause.message : "No se pudo guardar la clase en vivo.";
+        const invalid = message === LIVE_CLASS_INVALID_MESSAGE;
+        setLiveClassInvalid(invalid);
+        setLiveClassStatus({ text: message, tone: "bad" });
+        if (invalid) {
+          (formElement.elements.namedItem("liveClassUrl") as HTMLInputElement | null)?.focus();
+        }
       }
-    }
-  };
+    },
+    [course.id, rejectReadOnly]
+  );
 
   // Implements: REQ-LIVE-05, REQ-LIVE-07
-  const clearLiveClass = async () => {
+  const clearLiveClass = useCallback(async () => {
     if (rejectReadOnly()) return;
     setLiveClassInvalid(false);
     setLiveClassStatus({ text: "Quitando enlace…", tone: "info" });
@@ -223,7 +235,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
         tone: "bad",
       });
     }
-  };
+  }, [course.id, rejectReadOnly]);
 
   return {
     tab,

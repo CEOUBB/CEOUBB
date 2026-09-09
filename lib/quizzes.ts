@@ -1,3 +1,5 @@
+import Papa from "papaparse";
+
 export const QUIZ_REQUIREMENTS = [
   "REQ-QUIZ-01",
   "REQ-QUIZ-02",
@@ -443,59 +445,29 @@ function parseCsvRecord(
 }
 
 function csvRows(source: string): { values: string[]; line: number }[] {
-  const firstLine = source.split(/\r?\n/, 1)[0] ?? "";
-  const delimiter = delimiterCount(firstLine, ";") > delimiterCount(firstLine, ",") ? ";" : ",";
-  const rows: { values: string[]; line: number }[] = [];
-  let values: string[] = [];
-  let value = "";
-  let quoted = false;
-  let line = 1;
-  let rowLine = 1;
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (quoted && character === '"' && source[index + 1] === '"') {
-      value += '"';
-      index += 1;
-      continue;
-    }
-    if (character === '"') {
-      quoted = !quoted;
-      continue;
-    }
-    if (!quoted && character === delimiter) {
-      values.push(value);
-      value = "";
-      continue;
-    }
-    if (!quoted && (character === "\n" || character === "\r")) {
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      values.push(value);
-      rows.push({ values, line: rowLine });
-      values = [];
-      value = "";
-      line += 1;
-      rowLine = line;
-      continue;
-    }
-    if (character === "\n") line += 1;
-    value += character;
+  const parsed = Papa.parse<string[]>(source, {
+    skipEmptyLines: false,
+    delimitersToGuess: [";", ",", "\t"],
+  });
+  if (parsed.errors.some((err) => err.type === "Quotes")) {
+    throw new Error("El CSV termina dentro de un campo entre comillas.");
   }
-  if (quoted) throw new Error("El CSV termina dentro de un campo entre comillas.");
-  if (value || values.length > 0) {
-    values.push(value);
-    rows.push({ values, line: rowLine });
+  const rows: { values: string[]; line: number }[] = [];
+  let currentLine = 1;
+  for (const values of parsed.data) {
+    if (values.length === 1 && values[0] === "") continue;
+    rows.push({ values, line: currentLine });
+    let cellNewlines = 1;
+    for (const v of values) {
+      if (v) {
+        for (let i = 0; i < v.length; i++) {
+          if (v[i] === "\n") cellNewlines++;
+        }
+      }
+    }
+    currentLine += cellNewlines;
   }
   return rows;
-}
-
-function delimiterCount(value: string, delimiter: string) {
-  let count = 0;
-  let quoted = false;
-  for (let index = 0; index < value.length; index += 1) {
-    if (value[index] === '"') quoted = !quoted;
-    else if (!quoted && value[index] === delimiter) count += 1;
-  }
-  return count;
 }
 
 function normalizeHeader(value: string) {

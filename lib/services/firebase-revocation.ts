@@ -24,7 +24,12 @@ function firebaseUid(userId: string) {
 }
 
 // Implements: REQ-SEC-01 — SEC-01: el corte se comprueba también en reglas y Callables.
-export async function revokeFirebaseAccess(userId: string, disabled = false, owner = false) {
+export async function revokeFirebaseAccess(
+  userId: string,
+  disabled = false,
+  invalidateStorageTokens = true,
+  owner = false
+) {
   if (userId.startsWith("dev:")) return;
   const uid = firebaseUid(userId);
   const revokedAt = Math.floor(Date.now() / 1000);
@@ -60,38 +65,40 @@ export async function revokeFirebaseAccess(userId: string, disabled = false, own
     if (!(disabled && result.success && result.data.error.message === "USER_NOT_FOUND"))
       throw new Error("Firebase no confirmó la revocación de la identidad.");
   }
-  if (owner) {
-    await invalidateCourseDownloadTokens();
-  } else {
-    const firestoreToken = await googleAccessToken();
-    const pageSchema = z.object({
-      documents: z.array(z.object({ name: z.string() })).optional(),
-      nextPageToken: z.string().optional(),
-    });
-    let pageToken = "";
-    do {
-      const query = new URLSearchParams({ pageSize: "100", ...(pageToken ? { pageToken } : {}) });
-      const response = await fetch(
-        `https://firestore.googleapis.com/v1/${documents}/enrollments/${encodeURIComponent(uid)}/sections?${query}`,
-        { headers: { Authorization: `Bearer ${firestoreToken}` } }
-      );
-      if (!response.ok) throw new Error("No se pudieron revocar los enlaces de esta cuenta.");
-      const page = pageSchema.parse(await response.json());
-      const prefix = `${documents}/enrollments/${uid}/sections/`;
-      for (const batch of chunkWrites(page.documents ?? [], 5)) {
-        await Promise.all(
-          batch.map(async (entry) => {
-            if (
-              !entry.name.startsWith(prefix) ||
-              !isValidPathSegment(entry.name.slice(prefix.length))
-            )
-              throw new Error("Matrícula inválida.");
-            await invalidateCourseDownloadTokens(entry.name.slice(prefix.length));
-          })
+  if (invalidateStorageTokens) {
+    if (owner) {
+      await invalidateCourseDownloadTokens();
+    } else {
+      const firestoreToken = await googleAccessToken();
+      const pageSchema = z.object({
+        documents: z.array(z.object({ name: z.string() })).optional(),
+        nextPageToken: z.string().optional(),
+      });
+      let pageToken = "";
+      do {
+        const query = new URLSearchParams({ pageSize: "100", ...(pageToken ? { pageToken } : {}) });
+        const response = await fetch(
+          `https://firestore.googleapis.com/v1/${documents}/enrollments/${encodeURIComponent(uid)}/sections?${query}`,
+          { headers: { Authorization: `Bearer ${firestoreToken}` } }
         );
-      }
-      pageToken = page.nextPageToken ?? "";
-    } while (pageToken);
+        if (!response.ok) throw new Error("No se pudieron revocar los enlaces de esta cuenta.");
+        const page = pageSchema.parse(await response.json());
+        const prefix = `${documents}/enrollments/${uid}/sections/`;
+        for (const batch of chunkWrites(page.documents ?? [], 5)) {
+          await Promise.all(
+            batch.map(async (entry) => {
+              if (
+                !entry.name.startsWith(prefix) ||
+                !isValidPathSegment(entry.name.slice(prefix.length))
+              )
+                throw new Error("Matrícula inválida.");
+              await invalidateCourseDownloadTokens(entry.name.slice(prefix.length));
+            })
+          );
+        }
+        pageToken = page.nextPageToken ?? "";
+      } while (pageToken);
+    }
   }
 }
 

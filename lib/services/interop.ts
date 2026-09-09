@@ -23,7 +23,7 @@ import {
 } from "../interop/config.ts";
 import { fail } from "../interop/errors.ts";
 import { oidcSchema, privateLtiKey, signLtiLaunch } from "../interop/lti.ts";
-import { packageManifestSchema } from "../interop/packages.ts";
+import { packageManifestSchema, type PackageManifest } from "../interop/packages.ts";
 import { validateScormData } from "../interop/scorm.ts";
 import { canonicalJson, validateStatement } from "../interop/xapi.ts";
 
@@ -40,26 +40,46 @@ export const hashToken = async (token: string) =>
     "hex"
   );
 
+const manifestCache = new Map<string, { raw: string; parsed: PackageManifest }>();
+
+function getCachedManifest(resourceId: string, manifestJson: string): PackageManifest {
+  const cached = manifestCache.get(resourceId);
+  if (cached && cached.raw === manifestJson) {
+    return cached.parsed;
+  }
+  const parsed = packageManifestSchema.parse(JSON.parse(manifestJson));
+  if (manifestCache.size >= 256) {
+    const oldestKey = manifestCache.keys().next().value;
+    if (oldestKey) manifestCache.delete(oldestKey);
+  }
+  manifestCache.set(resourceId, { raw: manifestJson, parsed });
+  return parsed;
+}
+
 export async function authorizeInteropSection(actor: PublicUser, sectionId: string, write = false) {
   if (!isSectionId(sectionId)) fail("La sección no existe.", 404);
-  const [section] = await getDb()
-    .select({ id: secciones.id, state: periodos.estado })
-    .from(secciones)
-    .innerJoin(periodos, eq(periodos.id, secciones.periodoId))
-    .where(eq(secciones.id, sectionId))
-    .limit(1);
+  const [[section], [enrollment]] = await Promise.all([
+    getDb()
+      .select({ id: secciones.id, state: periodos.estado })
+      .from(secciones)
+      .innerJoin(periodos, eq(periodos.id, secciones.periodoId))
+      .where(eq(secciones.id, sectionId))
+      .limit(1),
+    actor.role === "owner"
+      ? Promise.resolve([null])
+      : getDb()
+          .select({ role: matriculas.rolSeccion })
+          .from(matriculas)
+          .where(
+            and(
+              eq(matriculas.seccionId, sectionId),
+              eq(matriculas.usuarioId, actor.id),
+              eq(matriculas.estado, "activa")
+            )
+          )
+          .limit(1),
+  ]);
   if (!section) fail("La sección no existe.", 404);
-  const [enrollment] = await getDb()
-    .select({ role: matriculas.rolSeccion })
-    .from(matriculas)
-    .where(
-      and(
-        eq(matriculas.seccionId, sectionId),
-        eq(matriculas.usuarioId, actor.id),
-        eq(matriculas.estado, "activa")
-      )
-    )
-    .limit(1);
   const role: SectionRole | "owner" =
     actor.role === "owner"
       ? "owner"
@@ -397,7 +417,7 @@ export async function contentGrant(token: string, requestOrigin: string) {
   return {
     grant,
     resource,
-    manifest: packageManifestSchema.parse(JSON.parse(resource.manifestJson)),
+    manifest: getCachedManifest(resource.id, resource.manifestJson),
     actor,
   };
 }
