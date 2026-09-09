@@ -1,7 +1,7 @@
 "use client";
 
 // Implements: REQ-PUB-09, REQ-PUB-10, REQ-QMD-07
-import { useRef, useState, type DragEvent, type RefObject } from "react";
+import { useEffect, useRef, useState, type DragEvent, type RefObject } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -17,6 +17,7 @@ import {
   ImageSquare,
   Megaphone,
   Trash,
+  X,
   XCircle,
   type Icon,
 } from "@phosphor-icons/react";
@@ -263,5 +264,74 @@ export function PublishRestoredNotice({ onDismiss }: { onDismiss: () => void }) 
         <XCircle aria-hidden="true" size={17} />
       </button>
     </p>
+  );
+}
+
+export function PublishConfirmDialog({
+  title,
+  message,
+  note,
+  confirmLabel,
+  cancelLabel = "Cancelar",
+  isDestructive = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: React.ReactNode;
+  note?: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  isDestructive?: boolean;
+  busy?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+    }
+  }, []);
+
+  return (
+    <dialog
+      aria-labelledby="publish-dialog-title"
+      className="planner-dialog"
+      onCancel={onCancel}
+      onClose={onCancel}
+      ref={dialogRef}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onConfirm();
+        }}
+      >
+        <header>
+          <h2 id="publish-dialog-title">{title}</h2>
+          <button aria-label="Cerrar" onClick={onCancel} type="button">
+            <X aria-hidden="true" size={16} weight="bold" />
+          </button>
+        </header>
+        <div className="text-sm text-[oklch(0.48_0.03_250)]">{message}</div>
+        {note && <p className="text-xs text-[oklch(0.55_0.15_25)]">{note}</p>}
+        <footer>
+          <button className="planner-dialog-cancel" onClick={onCancel} type="button">
+            {cancelLabel}
+          </button>
+          <button
+            className={isDestructive ? "planner-dialog-delete" : "planner-dialog-save"}
+            disabled={busy}
+            style={isDestructive ? { marginRight: 0 } : undefined}
+            type="submit"
+          >
+            {confirmLabel}
+          </button>
+        </footer>
+      </form>
+    </dialog>
   );
 }

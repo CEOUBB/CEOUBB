@@ -94,6 +94,43 @@ export function isValidGrade(value: unknown): value is number {
   );
 }
 
+// Implements: REQ-EVAL-01, REQ-GRADE-01
+export function parseChileanGradeInput(value: unknown): number | null {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return null;
+    if (isValidGrade(value)) return round1(value);
+    if (Number.isInteger(value) && value >= 10 && value <= 70) {
+      return round1(value / 10);
+    }
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const normalized = trimmed.replace(",", ".");
+
+    if (/^\d{2}$/.test(normalized)) {
+      const intVal = Number.parseInt(normalized, 10);
+      if (intVal >= 10 && intVal <= 70) {
+        return round1(intVal / 10);
+      }
+      return null;
+    }
+
+    if (/^\d+\.\d+$/.test(normalized)) {
+      const num = Number.parseFloat(normalized);
+      if (isValidGrade(num)) {
+        return round1(num);
+      }
+    }
+
+    return null;
+  }
+
+  return null;
+}
+
 export function normalizeScores(value: unknown): GradeScores {
   if (!value || typeof value !== "object") return {};
   const scores: GradeScores = {};

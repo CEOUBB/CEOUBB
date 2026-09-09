@@ -25,12 +25,11 @@ import {
   GradeFeedback,
   GradeItem,
   GradeScores,
-  MAX_GRADE,
   MAX_GRADE_FEEDBACK_LENGTH,
-  MIN_GRADE,
   PASSING_GRADE,
   formatGrade,
   isValidGrade,
+  parseChileanGradeInput,
   requiredGrade,
   submissionModeOf,
   summarize,
@@ -184,10 +183,9 @@ function StudentGrades({
   const scores: GradeScores = {};
   for (const item of gradebook) {
     const rawSim = draft[item.id];
-    const simulated =
-      typeof rawSim === "string" && rawSim.trim() !== "" ? Number(rawSim) : Number.NaN;
+    const simulated = parseChileanGradeInput(rawSim);
     if (isValidGrade(officialScores[item.id])) scores[item.id] = officialScores[item.id];
-    else if (isValidGrade(simulated)) scores[item.id] = simulated;
+    else if (simulated !== null && isValidGrade(simulated)) scores[item.id] = simulated;
   }
 
   const summary = summarize(gradebook, scores);
@@ -199,8 +197,8 @@ function StudentGrades({
     if (readOnly) return;
     const next: GradeScores = {};
     for (const [id, value] of Object.entries(draft)) {
-      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-      if (isValidGrade(score)) next[id] = score;
+      const score = parseChileanGradeInput(value);
+      if (score !== null && isValidGrade(score)) next[id] = score;
     }
     await saveSimulation(course.id, next).catch((cause) =>
       note(cause instanceof Error ? cause.message : "No se pudo guardar la simulación.", "bad")
@@ -221,12 +219,12 @@ function StudentGrades({
     <input
       aria-label={`Nota simulada de ${item.name}`}
       disabled={readOnly || isValidGrade(officialScores[item.id])}
-      max={MAX_GRADE}
-      min={MIN_GRADE}
+      inputMode="decimal"
       onBlur={persist}
       onChange={(event) => setDraft((current) => ({ ...current, [item.id]: event.target.value }))}
-      step="0.1"
-      type="number"
+      placeholder="Ej: 5,5"
+      title="Escribe una nota para simular tu promedio"
+      type="text"
       value={draft[item.id] ?? ""}
     />
   );
@@ -462,16 +460,20 @@ function TargetLine({
   label: string;
   target: ReturnType<typeof requiredGrade>;
 }) {
+  const isSecured = target.state === "secured";
   const copy =
     target.state === "closed"
       ? "Ya no quedan evaluaciones pendientes."
-      : target.state === "secured"
-        ? "Asegurado con las notas actuales."
+      : isSecured
+        ? "¡Aprobación asegurada! Con tus notas actuales ya no es posible reprobar."
         : target.state === "impossible"
           ? `Ya no es alcanzable: necesitarías ${formatGrade(target.grade)}.`
           : `Necesitas ${formatGrade(target.grade)} en promedio en lo que queda.`;
   return (
-    <div className={`grades-target ${target.state}`}>
+    <div
+      className={`grades-target ${target.state}${isSecured ? " data-secured" : ""}`}
+      data-secured={isSecured ? "true" : undefined}
+    >
       <dt>{label}</dt>
       <dd>{copy}</dd>
     </div>
@@ -536,16 +538,33 @@ function TeacherGrades({
   };
 
   const handleSetScore = useCallback(
-    async (userId: string, itemId: string, value: string, currentScores: GradeScores) => {
-      if (readOnly) return note("Este ramo está archivado y no admite cambios.", "bad");
-      const score = typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+    async (
+      userId: string,
+      itemId: string,
+      value: string,
+      currentScores: GradeScores
+    ): Promise<boolean> => {
+      if (readOnly) {
+        note("Este ramo está archivado y no admite cambios.", "bad");
+        return false;
+      }
+      const trimmed = typeof value === "string" ? value.trim() : "";
+      const score = parseChileanGradeInput(value);
       const next = { ...currentScores };
-      if (isValidGrade(score)) next[itemId] = score;
-      else delete next[itemId];
+      if (score !== null && isValidGrade(score)) {
+        next[itemId] = score;
+      } else if (trimmed === "") {
+        delete next[itemId];
+      } else {
+        note("La nota debe estar entre 1,0 y 7,0.", "bad");
+        return false;
+      }
       try {
         await saveStudentScores(course.id, userId, next);
+        return true;
       } catch (cause) {
         note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
+        return false;
       }
     },
     [course.id, note, readOnly]
@@ -759,60 +778,120 @@ const TeacherStudentRow = React.memo(function TeacherStudentRow({
   scores: GradeScores;
   onEditFeedback: (student: ClassroomStudent, item: GradeItem, feedback: string) => void;
   onViewHistory: (student: ClassroomStudent, item: GradeItem) => void;
-  onSetScore: (userId: string, itemId: string, value: string, currentScores: GradeScores) => void;
+  onSetScore: (
+    userId: string,
+    itemId: string,
+    value: string,
+    currentScores: GradeScores
+  ) => Promise<boolean> | boolean | void;
   readOnly: boolean;
 }) {
   const summary = summarize(gradebook, scores);
+  const [cellStatus, setCellStatus] = useState<
+    Record<string, "idle" | "saving" | "saved" | "error">
+  >({});
+  const timerRefs = useRef<Record<string, NodeJS.Timeout | number>>({});
+
+  useEffect(() => {
+    const timers = timerRefs.current;
+    return () => {
+      for (const id of Object.keys(timers)) {
+        if (timers[id]) clearTimeout(timers[id]);
+      }
+    };
+  }, []);
+
+  const handleCellBlur = async (itemId: string, rawValue: string) => {
+    const currentScore = scores[itemId];
+    const initialFormatted = isValidGrade(currentScore) ? formatGrade(currentScore) : "";
+    const initialRaw = isValidGrade(currentScore) ? String(currentScore) : "";
+    const trimmed = rawValue.trim();
+
+    if (!isValidGrade(currentScore) && trimmed === "") return;
+    if (trimmed === initialFormatted || trimmed === initialRaw) return;
+
+    const parsed = parseChileanGradeInput(rawValue);
+    if (isValidGrade(currentScore) && parsed === currentScore) return;
+
+    if (timerRefs.current[itemId]) {
+      clearTimeout(timerRefs.current[itemId]);
+    }
+    setCellStatus((prev) => ({ ...prev, [itemId]: "saving" }));
+
+    try {
+      const result = await onSetScore(student.userId, itemId, rawValue, scores);
+      if (result === false) {
+        setCellStatus((prev) => ({ ...prev, [itemId]: "error" }));
+        return;
+      }
+      setCellStatus((prev) => ({ ...prev, [itemId]: "saved" }));
+      timerRefs.current[itemId] = setTimeout(() => {
+        setCellStatus((prev) => ({ ...prev, [itemId]: "idle" }));
+      }, 1500);
+    } catch {
+      setCellStatus((prev) => ({ ...prev, [itemId]: "error" }));
+    }
+  };
+
   return (
     <div className="grades-matrix-row">
       <span>
         <b>{student.name}</b>
         <small>{student.email}</small>
       </span>
-      {gradebook.map((item) => (
-        <span className="grade-cell" key={item.id}>
-          <input
-            aria-label={`${item.name} de ${student.name}`}
-            disabled={readOnly}
-            defaultValue={isValidGrade(scores[item.id]) ? scores[item.id] : ""}
-            key={`${item.id}-${scores[item.id] ?? ""}`}
-            max={MAX_GRADE}
-            min={MIN_GRADE}
-            onBlur={(event) => onSetScore(student.userId, item.id, event.target.value, scores)}
-            step="0.1"
-            type="number"
-          />
-          <button
-            aria-label={`${feedback[item.id] ? "Editar" : "Agregar"} retroalimentación de ${item.name} para ${student.name}`}
-            className={`grade-feedback-action${feedback[item.id] ? " has-feedback" : ""}`}
-            disabled={!isValidGrade(scores[item.id])}
-            onClick={() => onEditFeedback(student, item, feedback[item.id] ?? "")}
-            title={
-              isValidGrade(scores[item.id])
-                ? feedback[item.id]
-                  ? "Editar retroalimentación"
-                  : "Agregar retroalimentación"
-                : "Guarda primero una nota oficial"
-            }
-            type="button"
-          >
-            <ChatCenteredText
-              aria-hidden="true"
-              size={16}
-              weight={feedback[item.id] ? "fill" : "regular"}
+      {gradebook.map((item) => {
+        const status = cellStatus[item.id] ?? "idle";
+        return (
+          <span className="grade-cell" data-cell-status={status} key={item.id}>
+            <input
+              aria-label={`${item.name} de ${student.name}`}
+              className={status !== "idle" ? `grade-cell-input-${status}` : undefined}
+              data-status={status}
+              defaultValue={isValidGrade(scores[item.id]) ? formatGrade(scores[item.id]) : ""}
+              disabled={readOnly}
+              inputMode="decimal"
+              key={`${item.id}-${scores[item.id] ?? ""}`}
+              onBlur={(event) => handleCellBlur(item.id, event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+              placeholder="Ej: 5,5"
+              type="text"
             />
-          </button>
-          <button
-            className="grade-history-action"
-            type="button"
-            aria-label={`Ver historial de ${item.name} para ${student.name}`}
-            onClick={() => onViewHistory(student, item)}
-          >
-            <ClockCounterClockwise aria-hidden="true" size={15} />
-            Historial
-          </button>
-        </span>
-      ))}
+            <button
+              aria-label={`${feedback[item.id] ? "Editar" : "Agregar"} retroalimentación de ${item.name} para ${student.name}`}
+              className={`grade-feedback-action${feedback[item.id] ? " has-feedback" : ""}`}
+              disabled={!isValidGrade(scores[item.id])}
+              onClick={() => onEditFeedback(student, item, feedback[item.id] ?? "")}
+              title={
+                isValidGrade(scores[item.id])
+                  ? feedback[item.id]
+                    ? "Editar retroalimentación"
+                    : "Agregar retroalimentación"
+                  : "Guarda primero una nota oficial"
+              }
+              type="button"
+            >
+              <ChatCenteredText
+                aria-hidden="true"
+                size={16}
+                weight={feedback[item.id] ? "fill" : "regular"}
+              />
+            </button>
+            <button
+              className="grade-history-action"
+              type="button"
+              aria-label={`Ver historial de ${item.name} para ${student.name}`}
+              onClick={() => onViewHistory(student, item)}
+            >
+              <ClockCounterClockwise aria-hidden="true" size={15} />
+              Historial
+            </button>
+          </span>
+        );
+      })}
       <span className="grades-official num">
         {summary.average === null ? "sin nota" : formatGrade(summary.average)}
       </span>

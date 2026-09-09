@@ -8734,6 +8734,21 @@ mark,
   box-shadow: var(--shadow-focus);
 }
 
+.grades-matrix-row input[data-status="saving"] {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+.grades-matrix-row input[data-status="saved"] {
+  border-color: #047857;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #047857 30%, transparent);
+}
+
+.grades-matrix-row input[data-status="error"] {
+  border-color: var(--shield-red-deep);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shield-red) 30%, transparent);
+}
+
 .grades-row input:disabled {
   background: var(--canvas-soft);
   color: var(--text-faint);
@@ -8942,8 +8957,16 @@ mark,
   line-height: 1.4;
   color: var(--text-body);
 }
-.grades-target.secured dd {
+.grades-target.secured dd,
+.grades-target[data-secured="true"] dd {
   color: #047857;
+  font-weight: 600;
+}
+.grades-target[data-secured="true"] {
+  background: color-mix(in srgb, #047857 7%, transparent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 3px solid #047857;
 }
 .grades-target.impossible dd {
   color: var(--shield-red-deep);

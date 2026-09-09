@@ -25,6 +25,7 @@ export function BlockDialog({
   const [values, setValues] = useState(draft);
   const [problem, setProblem] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     // `showModal()` sobre un diálogo ya modal lanza `InvalidStateError`, y en
@@ -32,6 +33,11 @@ export function BlockDialog({
     if (dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
     titleRef.current?.focus();
   }, []);
+
+  const handleClose = () => {
+    setConfirmingDelete(false);
+    onClose();
+  };
 
   const set = <Key extends keyof BlockDraft>(key: Key, value: BlockDraft[Key]) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -43,7 +49,7 @@ export function BlockDialog({
     setBusy(true);
     try {
       await savePersonalEvent({ ...values, courseId: values.courseId || null });
-      onClose();
+      handleClose();
     } catch (cause) {
       setProblem(cause instanceof Error ? cause.message : "No se pudo guardar el bloque.");
     } finally {
@@ -52,12 +58,16 @@ export function BlockDialog({
   };
 
   const remove = async () => {
-    if (!values.id || !window.confirm(`¿Eliminar “${values.title}”?`)) return;
+    if (!values.id) return;
+    setBusy(true);
     try {
       await deletePersonalEvent(values.id);
-      onClose();
+      handleClose();
     } catch {
+      setConfirmingDelete(false);
       onFail("No se pudo eliminar el bloque.");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -65,14 +75,14 @@ export function BlockDialog({
     <dialog
       aria-labelledby="planner-dialog-title"
       className="planner-dialog"
-      onCancel={onClose}
-      onClose={onClose}
+      onCancel={handleClose}
+      onClose={handleClose}
       ref={dialogRef}
     >
       <form onSubmit={submit}>
         <header>
           <h2 id="planner-dialog-title">{values.id ? "Editar bloque" : "Nuevo bloque"}</h2>
-          <button aria-label="Cerrar" onClick={onClose} type="button">
+          <button aria-label="Cerrar" onClick={handleClose} type="button">
             <X aria-hidden="true" size={16} weight="bold" />
           </button>
         </header>
@@ -162,12 +172,37 @@ export function BlockDialog({
           </p>
         )}
         <footer>
-          {values.id && (
-            <button className="planner-dialog-delete" onClick={remove} type="button">
-              <TrashSimple aria-hidden="true" size={15} /> Eliminar
-            </button>
-          )}
-          <button className="planner-dialog-cancel" onClick={onClose} type="button">
+          {values.id &&
+            (!confirmingDelete ? (
+              <button
+                className="planner-dialog-delete"
+                onClick={() => setConfirmingDelete(true)}
+                type="button"
+              >
+                <TrashSimple aria-hidden="true" size={15} /> Eliminar
+              </button>
+            ) : (
+              <div className="mr-auto inline-flex items-center gap-1.5">
+                <span className="text-xs font-medium text-[oklch(0.48_0.03_250)]">¿Confirmar?</span>
+                <button
+                  className="planner-dialog-delete"
+                  disabled={busy}
+                  onClick={remove}
+                  style={{ marginRight: 0 }}
+                  type="button"
+                >
+                  <TrashSimple aria-hidden="true" size={15} /> Sí, eliminar
+                </button>
+                <button
+                  className="planner-dialog-cancel"
+                  onClick={() => setConfirmingDelete(false)}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ))}
+          <button className="planner-dialog-cancel" onClick={handleClose} type="button">
             Cancelar
           </button>
           <button className="planner-dialog-save" disabled={busy} type="submit">

@@ -96,6 +96,7 @@ export function PostsSection({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
 
@@ -242,20 +243,45 @@ export function PostsSection({
                       )}
                       {canManage && (
                         <span className="content-actions">
-                          <button
-                            aria-label={`Modificar aviso "${post.title}"`}
-                            onClick={() => setEditingId(post.id)}
-                            type="button"
-                          >
-                            Modificar
-                          </button>
-                          <button
-                            aria-label={`Eliminar aviso "${post.title}"`}
-                            onClick={() => deletePost(post)}
-                            type="button"
-                          >
-                            Eliminar
-                          </button>
+                          {deletingId === post.id ? (
+                            <>
+                              <button
+                                aria-label={`Confirmar eliminación de "${post.title}"`}
+                                className="font-medium !text-[oklch(0.55_0.22_25)] !border-[rgba(227,27,35,0.3)] bg-[rgba(227,27,35,0.06)]"
+                                onClick={() => {
+                                  setDeletingId(null);
+                                  deletePost(post);
+                                }}
+                                type="button"
+                              >
+                                ¿Eliminar aviso?
+                              </button>
+                              <button
+                                aria-label="Cancelar eliminación"
+                                onClick={() => setDeletingId(null)}
+                                type="button"
+                              >
+                                Cancelar
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                aria-label={`Modificar aviso "${post.title}"`}
+                                onClick={() => setEditingId(post.id)}
+                                type="button"
+                              >
+                                Modificar
+                              </button>
+                              <button
+                                aria-label={`Eliminar aviso "${post.title}"`}
+                                onClick={() => setDeletingId(post.id)}
+                                type="button"
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
                         </span>
                       )}
                     </footer>

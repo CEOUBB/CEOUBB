@@ -608,7 +608,7 @@ export function useSubmissionUpload(
 // Implements: REQ-TEAM-03, REQ-TEAM-04
 function SubmissionReceiptDetails({ receipt }: { receipt: StudentSubmission }) {
   const isTeam = receipt.memberIds.length > 1;
-  const uploader = receipt.submittedByName.trim();
+  const uploader = receipt.submittedByName?.trim() ?? "";
   if (!isTeam && !receipt.sha256) return null;
   return (
     <small className="grades-receipt-trace text-xs text-[oklch(0.48_0.03_250)] mt-0.5">
@@ -730,6 +730,10 @@ export function SubmissionSlot({
   if (receipt) {
     return (
       <div className="grades-receipt flex flex-col gap-1 text-left min-w-0">
+        <span className="receipt-confirmed-badge inline-flex w-fit max-w-full items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-[oklch(0.7_0.17_155_/_0.12)] text-[oklch(0.42_0.16_155)] border border-[oklch(0.7_0.17_155_/_0.25)]">
+          <CheckCircle className="h-3.5 w-3.5 shrink-0" weight="fill" />
+          <span className="truncate">Entrega confirmada y resguardada</span>
+        </span>
         <div className="flex items-center gap-1.5 text-[13px] font-medium text-[oklch(0.2_0.03_260)] max-w-full truncate">
           <CheckCircle className="h-4 w-4 shrink-0 text-[oklch(0.7_0.17_155)]" weight="fill" />
           {renderFileIcon(receipt.fileName, receipt.contentType, {
