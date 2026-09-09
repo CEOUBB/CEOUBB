@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TrashSimple, X } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import type { CourseActivity, CourseGradebook } from "../../../lib/firebase-classroom-client";
 import {
@@ -164,9 +165,21 @@ export function CalendarView({
     });
   };
 
+  const [blockPendingDelete, setBlockPendingDelete] = useState<PlannerItem | null>(null);
+
   const removeBlock = (item: PlannerItem) => {
-    if (!window.confirm(`¿Eliminar “${item.title}”?`)) return;
-    deletePersonalEvent(item.id).catch(() => setAlert("No se pudo eliminar el bloque."));
+    setBlockPendingDelete(item);
+  };
+
+  const confirmRemoveBlock = async () => {
+    if (!blockPendingDelete) return;
+    const target = blockPendingDelete;
+    setBlockPendingDelete(null);
+    try {
+      await deletePersonalEvent(target.id);
+    } catch {
+      setAlert("No se pudo eliminar el bloque.");
+    }
   };
 
   const firstFreeHour = Math.min(
@@ -261,6 +274,48 @@ export function CalendarView({
           onClose={() => setDraft(null)}
           onFail={setAlert}
         />
+      )}
+
+      {blockPendingDelete && (
+        <dialog
+          aria-labelledby="delete-dialog-title"
+          className="planner-dialog publication-confirm-dialog"
+          onCancel={() => setBlockPendingDelete(null)}
+          onClose={() => setBlockPendingDelete(null)}
+          ref={(dialog) => {
+            if (dialog && !dialog.open) dialog.showModal();
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void confirmRemoveBlock();
+            }}
+          >
+            <header>
+              <h2 id="delete-dialog-title">¿Eliminar bloque?</h2>
+              <button aria-label="Cerrar" onClick={() => setBlockPendingDelete(null)} type="button">
+                <X aria-hidden="true" size={16} weight="bold" />
+              </button>
+            </header>
+            <p className="confirmation-message">
+              ¿Eliminar “<strong>{blockPendingDelete.title}</strong>”? Esta acción no se puede
+              deshacer.
+            </p>
+            <footer>
+              <button
+                className="planner-dialog-cancel"
+                onClick={() => setBlockPendingDelete(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button className="confirmation-danger" type="submit">
+                <TrashSimple aria-hidden="true" size={15} /> Eliminar
+              </button>
+            </footer>
+          </form>
+        </dialog>
       )}
     </section>
   );

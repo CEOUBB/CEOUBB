@@ -31,6 +31,7 @@ import { RichPostEditor } from "./RichPostEditor";
 import {
   AttachmentField,
   PresetStage,
+  PublishConfirmDialog,
   PublishRestoredNotice,
   usePostAttachments,
 } from "./PublishPanels";
@@ -206,6 +207,9 @@ export function PublishView({
   );
   const [restoredVisible, setRestoredVisible] = useState(restoredDraft !== null);
   const [saving, setSaving] = useState(false);
+  const [showPushConfirm, setShowPushConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const skipPushConfirmRef = useRef(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   /* El primer pase del efecto es el montaje: no hay cambios que anunciar. */
@@ -280,19 +284,13 @@ export function PublishView({
     interrumpe a nadie ni pide confirmación.
   */
   // Implements: REQ-PUB-06
-  const confirmPush = () => {
-    const audience =
-      studentTotal > 0
-        ? `${studentTotal} estudiante${studentTotal === 1 ? "" : "s"}`
-        : "quienes estén inscritos";
-    return window.confirm(
-      `Vas a publicar y alertar a ${audience} de ${course.name}. La notificación llega a Android y Web, y no se puede retirar.`
-    );
-  };
-
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (notificationMode === "push" && !confirmPush()) return;
+    if (notificationMode === "push" && !skipPushConfirmRef.current) {
+      setShowPushConfirm(true);
+      return;
+    }
+    skipPushConfirmRef.current = false;
     setSaving(true);
     try {
       if (await publish(event, attachments)) {
@@ -304,12 +302,23 @@ export function PublishView({
     }
   };
 
+  const handleConfirmPush = () => {
+    setShowPushConfirm(false);
+    skipPushConfirmRef.current = true;
+    formRef.current?.requestSubmit();
+  };
+
   const discard = () => {
-    if (
-      (title.trim() || body.trim()) &&
-      !window.confirm("¿Descartar esta publicación y volver al ramo?")
-    )
+    if (title.trim() || body.trim()) {
+      setShowDiscardConfirm(true);
       return;
+    }
+    clearPublicationDraft(browserStorage(), course.id);
+    onClose();
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
     clearPublicationDraft(browserStorage(), course.id);
     onClose();
   };
@@ -325,99 +334,140 @@ export function PublishView({
       : "Publicar en silencio";
 
   return (
-    <form
-      className="publish-studio"
-      data-requirement="Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11"
-      onSubmit={submit}
-      ref={formRef}
-    >
-      <input
-        name="kind"
-        type="hidden"
-        value={
-          createPublicationDraft({
-            contentType,
-            editorMode,
-            folder: "",
-            notificationMode,
-          }).kind
-        }
-      />
-      <input name="editorMode" type="hidden" value={editorMode} />
-      {/* Carpeta, fecha de entrega y enlace externo no se exponen en el
+    <>
+      <form
+        className="publish-studio"
+        data-requirement="Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11"
+        onSubmit={submit}
+        ref={formRef}
+      >
+        <input
+          name="kind"
+          type="hidden"
+          value={
+            createPublicationDraft({
+              contentType,
+              editorMode,
+              folder: "",
+              notificationMode,
+            }).kind
+          }
+        />
+        <input name="editorMode" type="hidden" value={editorMode} />
+        {/* Carpeta, fecha de entrega y enlace externo no se exponen en el
           inspector por decisión de producto: viajan vacíos para conservar el
           contrato del formulario que lee `publish`. */}
-      <input name="folder" type="hidden" value="" />
-      <input name="dueDate" type="hidden" value="" />
-      <input name="linkUrl" type="hidden" value="" />
+        <input name="folder" type="hidden" value="" />
+        <input name="dueDate" type="hidden" value="" />
+        <input name="linkUrl" type="hidden" value="" />
 
-      <PublishBar
-        contentType={contentType}
-        courseName={course.name}
-        draftState={draftState}
-        onDiscard={discard}
-        savedLabel={savedLabel}
-        saving={saving}
-        submitLabel={submitLabel}
-      />
+        <PublishBar
+          contentType={contentType}
+          courseName={course.name}
+          draftState={draftState}
+          onDiscard={discard}
+          savedLabel={savedLabel}
+          saving={saving}
+          submitLabel={submitLabel}
+        />
 
-      {/* El resultado de publicar se lee junto al botón que lo dispara, no al
+        {/* El resultado de publicar se lee junto al botón que lo dispara, no al
           final de una columna que en el teléfono queda a una pantalla de scroll. */}
-      {status.text && (
-        <p className={`publish-status tool-status ${status.tone}`} role="status">
-          {status.text}
-        </p>
+        {status.text && (
+          <p className={`publish-status tool-status ${status.tone}`} role="status">
+            {status.text}
+          </p>
+        )}
+
+        {restoredVisible && <PublishRestoredNotice onDismiss={() => setRestoredVisible(false)} />}
+
+        <div className="publish-body">
+          <label className="publish-title-field">
+            <span className="sr-only">Título de la publicación</span>
+            <input
+              autoComplete="off"
+              maxLength={140}
+              name="title"
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Título de la publicación"
+              ref={titleRef}
+              required
+              value={title}
+            />
+          </label>
+
+          <div className="publish-grid">
+            <div className="publish-canvas">
+              <RichPostEditor
+                editorMode={editorMode}
+                label="Cuerpo de la publicación"
+                name="body"
+                onChange={setBody}
+                onEditorModeChange={changeEditorMode}
+                required
+                value={body}
+              />
+              <p className="publish-reading num" role="status">
+                {stats.words.toLocaleString("es-CL")} palabras · cerca de {stats.minutes} min de
+                lectura
+              </p>
+            </div>
+
+            <aside aria-label="Ajustes de la publicación" className="publish-inspector">
+              <AlertField notificationMode={notificationMode} onChange={setNotificationMode} />
+
+              <AttachmentField
+                attachments={attachments}
+                error={attachmentError}
+                fileRef={fileRef}
+                onAttach={(files) => void attachFiles(files)}
+                onRemove={removeAttachment}
+                uploading={uploading}
+              />
+            </aside>
+          </div>
+        </div>
+      </form>
+
+      {showPushConfirm && (
+        <PublishConfirmDialog
+          busy={saving}
+          cancelLabel="Revisar publicación"
+          confirmLabel={saving ? "Publicando…" : "Publicar y alertar"}
+          message={
+            <p>
+              Vas a publicar y alertar a{" "}
+              <strong>
+                {studentTotal > 0
+                  ? `${studentTotal} estudiante${studentTotal === 1 ? "" : "s"}`
+                  : "quienes estén inscritos"}
+              </strong>{" "}
+              de <strong>{course.name}</strong>.
+            </p>
+          }
+          note="La notificación llega a Android y Web, y no se puede retirar."
+          onCancel={() => setShowPushConfirm(false)}
+          onConfirm={handleConfirmPush}
+          title="Confirmar notificación al curso"
+        />
       )}
 
-      {restoredVisible && <PublishRestoredNotice onDismiss={() => setRestoredVisible(false)} />}
-
-      <div className="publish-body">
-        <label className="publish-title-field">
-          <span className="sr-only">Título de la publicación</span>
-          <input
-            autoComplete="off"
-            maxLength={140}
-            name="title"
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Título de la publicación"
-            ref={titleRef}
-            required
-            value={title}
-          />
-        </label>
-
-        <div className="publish-grid">
-          <div className="publish-canvas">
-            <RichPostEditor
-              editorMode={editorMode}
-              label="Cuerpo de la publicación"
-              name="body"
-              onChange={setBody}
-              onEditorModeChange={changeEditorMode}
-              required
-              value={body}
-            />
-            <p className="publish-reading num" role="status">
-              {stats.words.toLocaleString("es-CL")} palabras · cerca de {stats.minutes} min de
-              lectura
+      {showDiscardConfirm && (
+        <PublishConfirmDialog
+          cancelLabel="Seguir editando"
+          confirmLabel="Descartar"
+          isDestructive
+          message={
+            <p>
+              ¿Descartar esta publicación y volver al ramo? Los cambios no guardados se perderán.
             </p>
-          </div>
-
-          <aside aria-label="Ajustes de la publicación" className="publish-inspector">
-            <AlertField notificationMode={notificationMode} onChange={setNotificationMode} />
-
-            <AttachmentField
-              attachments={attachments}
-              error={attachmentError}
-              fileRef={fileRef}
-              onAttach={(files) => void attachFiles(files)}
-              onRemove={removeAttachment}
-              uploading={uploading}
-            />
-          </aside>
-        </div>
-      </div>
-    </form>
+          }
+          onCancel={() => setShowDiscardConfirm(false)}
+          onConfirm={handleConfirmDiscard}
+          title="¿Descartar publicación?"
+        />
+      )}
+    </>
   );
 }
 

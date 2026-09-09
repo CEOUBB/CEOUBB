@@ -231,6 +231,7 @@ export function TeacherCoursesView({
             onClick={() => dispatch({ type: "SET_CREATING", creating: true })}
             type="button"
           >
+            <Plus aria-hidden="true" size={17} weight="bold" />
             Crear mi primer ramo
           </button>
         </div>

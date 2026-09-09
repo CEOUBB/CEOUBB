@@ -181,3 +181,19 @@ test("REQ-SEC-18: Content-Disposition headers sanitize dynamic parameters agains
     "Interop resource route handler must sanitize resource.id before interpolating in Content-Disposition"
   );
 });
+
+// Implements: REQ-SEC-19
+test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and unauthorized 403 checks", () => {
+  const routePath = path.resolve("app/api/sections/[sectionId]/projections/reconcile/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /if\s*\(!actor\)[\s\S]*?Response\.json\(\{\s*error:\s*["']Sesión no válida\.["']\s*\},\s*\{\s*status:\s*401\s*\}\)/,
+    "Reconcile route must return 401 for unauthenticated requests"
+  );
+  assert.match(
+    routeContent,
+    /if\s*\(actor\.role\s*!==\s*["']teacher["']\s*&&\s*actor\.role\s*!==\s*["']owner["']\)/,
+    "Reconcile route must return 403 for non-teacher/non-owner roles"
+  );
+});

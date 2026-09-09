@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { AccountRole } from "./access-policy";
 
@@ -51,7 +52,12 @@ export function isDevOrPreviewAuthAllowed(
   // 2. En staging o previews públicas, dev-login requiere clave secreta si está configurada
   const requiredDevSecret = process.env.DEV_AUTH_SECRET;
   if (requiredDevSecret) {
-    if (!devAuthHeader || devAuthHeader !== requiredDevSecret) {
+    if (!devAuthHeader) {
+      return false;
+    }
+    const secretHash = createHash("sha256").update(requiredDevSecret).digest();
+    const providedHash = createHash("sha256").update(devAuthHeader).digest();
+    if (!timingSafeEqual(providedHash, secretHash)) {
       return false;
     }
   }
