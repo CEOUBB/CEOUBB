@@ -28,7 +28,7 @@ export function clear(){rows.clear();notify();}
 export function count(){return rows.size;}
 export const currentUser=async()=>({uid:'demo'});
 export const firestore=async()=>({db:{},sdk:{
- collection:(_db,...path)=>path.join('/'), doc:(parent,id)=>({id:id??'event-'+String(++sequence).padStart(4,'0')}),
+ collection:(_db,...path)=>path.join('/'), doc:(parent,...path)=>({id:path.at(-1)??'event-'+String(++sequence).padStart(4,'0')}),
  where:(field,op,value)=>({type:'where',field,op,value}), orderBy:()=>({type:'order'}), documentId:()=> '__name__',
  limit:value=>({type:'limit',value}), startAfter:value=>({type:'cursor',value}),query:(...args)=>args.slice(1),serverTimestamp:()=>0,
  onSnapshot:(q,next)=>{const l={q,next};listeners.add(l);queueMicrotask(()=>emit(l));return()=>listeners.delete(l);},
@@ -76,7 +76,8 @@ createRoot(document.getElementById('root')).render(<LazyMotion features={domAnim
   bundle = result.outputFiles[0].text;
 });
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, info) => {
+  await page.clock.setFixedTime(new Date("2026-09-15T13:30:00Z"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const styles = await page.evaluate(() => ({
@@ -97,19 +98,57 @@ test.beforeEach(async ({ page }) => {
   await page.addStyleTag({ content: await readFile("app/campus.css", "utf8") });
   await page.getByLabel("Ir a una fecha").fill("2026-09-15");
   await expect(page.getByText("Sincronizando bloques…")).toHaveCount(0);
+  const controlHeights = await page
+    .locator(
+      ".planner-controls > :is(.planner-view-switch, .planner-step, .planner-create), .planner-jump input"
+    )
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
+  expect(controlHeights).toEqual([44, 44, 44, 44]);
+  const touchToggle = page.getByRole("button", { name: "Selección táctil desactivada" });
+  if (info.project.use.hasTouch) await expect(touchToggle).toBeVisible();
+  else await expect(touchToggle).toBeHidden();
+});
+
+test("bloque compacto de clase: superficie plana, foco y estado completado", async ({
+  page,
+}, info) => {
+  await page.getByRole("button", { name: "Nuevo bloque", exact: true }).click();
+  await page.getByLabel("Título", { exact: true }).fill("Clase de EDO");
+  await page.getByRole("combobox", { name: "Ramo", exact: true }).selectOption("edo");
+  await page.getByRole("combobox", { name: "Tipo", exact: true }).selectOption("clase");
+  await page.getByLabel("Desde", { exact: true }).fill("10:00");
+  await page.getByLabel("Hasta", { exact: true }).fill("11:00");
+  await page.getByRole("button", { name: "Guardar bloque" }).click();
+  const block = page.locator(".planner-block");
+  await expect(block).toHaveAttribute("data-live", "true");
+  await expect(block).toHaveCSS("border-left-width", "1px");
+  await expect(block).toHaveCSS("border-right-width", "1px");
+  await expect(block).toHaveCSS("box-shadow", "none");
+  await expect(block).toHaveCSS("background-image", "none");
+  if (!info.project.use.hasTouch) await block.hover();
+  await expect(block).toHaveCSS("box-shadow", "none");
+  await block.locator(".planner-block-open").focus();
+  await expect(block.locator(".planner-block-open")).toBeFocused();
+  await page
+    .locator(".planner")
+    .screenshot({ path: `test-results/ceo72-refined-${info.project.name}.png` });
+  await block.getByRole("button", { name: "Marcar “Clase de EDO” como hecho" }).click();
+  await expect(block).toHaveAttribute("data-done", "true");
+  await expect(block).toHaveCSS("border-left-width", "1px");
 });
 
 test("gesto táctil nativo crea un intervalo y conserva desplazamiento fuera del modo selección", async ({
   page,
 }) => {
   await expect(page.locator(".planner-slot").first()).toHaveCSS("touch-action", "auto");
+  const session = await page.context().newCDPSession(page);
+  await session.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
   await page.getByRole("button", { name: "Selección táctil desactivada" }).click();
   const slot = page.locator('.planner-col[data-day="2026-09-15"] .planner-slot').nth(1);
   await slot.scrollIntoViewIfNeeded();
   await expect(slot).toHaveCSS("touch-action", "none");
   const box = await slot.boundingBox();
   if (!box) throw new Error("Falta hora táctil");
-  const session = await page.context().newCDPSession(page);
   const x = box.x + box.width / 2;
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
@@ -167,6 +206,29 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   await expect(page.locator("#count")).toHaveText("3");
   await page.getByRole("button", { name: "Cambio remoto", exact: true }).click();
   await expect(page.locator(".planner-day-agenda")).toContainText("Cambio desde otro dispositivo");
+  if (info.project.use.isMobile) {
+    await expect(
+      page.locator('.planner-month-day[aria-pressed="true"] .planner-month-count')
+    ).toHaveText("4 act.");
+    for (const [date, weekEnd, nextWeek, title] of [
+      ["2026-09-15", "2026-09-20", "2026-09-21", "Informe de laboratorio"],
+      ["2026-09-22", "2026-09-27", "2026-09-28", "Clase de EDO"],
+    ]) {
+      await page.getByRole("button", { name: new RegExp(`^${date},`) }).click();
+      await expect(page.locator(".planner-day-agenda")).toContainText(title);
+      const agenda = await page.locator(".planner-day-agenda").boundingBox();
+      const before = await page
+        .getByRole("button", { name: new RegExp(`^${weekEnd},`) })
+        .boundingBox();
+      const after = await page
+        .getByRole("button", { name: new RegExp(`^${nextWeek},`) })
+        .boundingBox();
+      if (!agenda || !before || !after) throw new Error("Falta la agenda entre semanas");
+      expect(agenda.y).toBe(before.y + before.height);
+      expect(after.y).toBe(agenda.y + agenda.height);
+    }
+    await page.getByRole("button", { name: /^2026-09-15,/ }).click();
+  }
   await page.screenshot({
     path: `test-results/ceo72-month-${info.project.name}.png`,
     fullPage: true,
@@ -174,6 +236,20 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
   ).toBeTruthy();
+  if (info.project.use.isMobile) {
+    await page.setViewportSize({ width: 320, height: 851 });
+    expect(
+      await page
+        .locator(".planner-day-agenda strong")
+        .evaluateAll((nodes) => nodes.every((node) => node.scrollWidth <= node.clientWidth))
+    ).toBeTruthy();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    ).toBeTruthy();
+    await page
+      .locator(".planner-month-layout")
+      .screenshot({ path: "test-results/ceo72-month-320.png" });
+  }
   await page.getByRole("button", { name: "Simular fallo" }).click();
   await page.getByRole("button", { name: "Añadir bloque" }).click();
   await page.getByLabel("Título", { exact: true }).fill("No debe guardarse");
@@ -223,6 +299,10 @@ test("crear y mover por puntero, teclado y cancelación", async ({ page }, info)
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByLabel("Fecha", { exact: true }).fill("2026-09-16");
   await page.getByRole("button", { name: "Guardar bloque" }).click();
+  await expect(page.locator('.planner-col[data-day="2026-09-16"] .planner-block')).toContainText(
+    "Preparar certamen"
+  );
+  await expect(page.locator('.planner-col[data-day="2026-09-15"] .planner-block')).toHaveCount(0);
   await slot.scrollIntoViewIfNeeded();
   const cancelBounds = await slot.boundingBox();
   if (!cancelBounds) throw new Error("Falta hora para cancelar");

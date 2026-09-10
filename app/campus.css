@@ -754,6 +754,23 @@
 .app-shell .planner-jump {
   display: block;
 }
+.planner-controls :is(.planner-view-switch, .planner-step, .planner-jump input, .planner-create) {
+  height: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.planner-controls :is(.planner-view-switch, .planner-step) button {
+  height: 100%;
+  min-height: 0;
+  min-width: 42px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.planner-controls .planner-view-switch button {
+  flex: 1;
+}
 .planner-view-switch button,
 .planner-gesture-bar button {
   min-height: 44px;
@@ -798,6 +815,15 @@
   flex-shrink: 0;
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
+}
+.planner-gesture-bar .planner-touch-toggle {
+  display: none;
+}
+@media (any-pointer: coarse) {
+  .planner-gesture-bar .planner-touch-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 .planner-grid[data-touch-select] .planner-slot,
 .planner-block-move {
@@ -938,6 +964,11 @@
 .planner-day-agenda h2 {
   font: 700 18px/1.4 var(--font-display);
 }
+.planner-day-agenda .planner-create {
+  flex-shrink: 0;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
 .planner-day-agenda ul {
   list-style: none;
   padding: 0;
@@ -966,9 +997,20 @@
   color: var(--text-secondary);
 }
 @media (max-width: 700px) {
+  .planner-month-layout {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--border-hairline);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface-card);
+  }
+  .planner-month {
+    display: contents;
+  }
   .planner-month-day {
-    min-height: 88px;
-    padding: 6px;
+    min-height: 64px;
+    padding: 6px 4px;
     gap: 4px;
   }
   .planner-month-weekday {
@@ -976,28 +1018,33 @@
     text-align: center;
   }
   .planner-month-events {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 3px;
-  }
-  .planner-month-event > span:last-child:not(.planner-month-dot),
-  .planner-month-more {
     display: none;
   }
   .planner-month-count {
     display: inline;
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1.3;
   }
   .planner-gesture-bar {
     flex-direction: column;
     align-items: start;
     gap: 8px;
   }
+  .planner-day-agenda {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin: 0;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border-hairline);
+  }
   .planner-day-agenda header {
     align-items: start;
+    gap: 8px;
   }
   .planner-day-agenda li button {
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 4px 12px;
+    overflow-wrap: anywhere;
   }
   .planner-day-agenda li button > span:last-child {
     grid-column: 2;

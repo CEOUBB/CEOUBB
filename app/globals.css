@@ -7722,30 +7722,18 @@ mark,
   gap: 5px;
   overflow: hidden;
   padding: 5px 7px;
-  background: color-mix(in srgb, var(--course-tone) 13%, white);
-  border: 1px solid color-mix(in srgb, var(--course-tone) 38%, white);
-  border-left: 3.5px solid var(--course-tone);
-  border-radius: var(--radius-md);
-  box-shadow: rgba(15, 23, 42, 0.05) 0 1px 2px;
-  transition:
-    box-shadow var(--transition-fast),
-    border-color var(--transition-fast);
+  background: color-mix(in oklch, var(--course-tone) 10%, var(--surface-card));
+  border: 1px solid color-mix(in oklch, var(--course-tone) 18%, var(--border-hairline));
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
 }
 
 .planner-block:hover {
-  box-shadow: var(--shadow-1);
-  border-color: color-mix(in srgb, var(--course-tone) 62%, white);
-  border-left-color: var(--course-tone);
+  border-color: color-mix(in oklch, var(--course-tone) 40%, var(--border-hairline));
 }
 
 .planner-block[data-live="true"] {
-  border-left-color: var(--color-emerald, oklch(0.7 0.17 155));
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, oklch(0.7 0.17 155) 12%, white),
-    color-mix(in srgb, var(--course-tone) 10%, white) 35%
-  );
-  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.15);
+  background: color-mix(in oklch, var(--course-tone) 14%, var(--surface-card));
 }
 /* El apagado del bloque hecho vive en el texto, no en el artículo: la entrada y
    la salida animan `opacity` en línea y se pisarían entre sí. La marca queda
@@ -7849,47 +7837,12 @@ mark,
   flex-wrap: wrap;
 }
 
-.live-pulse {
-  display: inline-flex;
-  align-items: center;
-  gap: 3.5px;
+.planner-live-status {
   font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  color: oklch(0.5 0.12 160);
-  background: color-mix(in srgb, oklch(0.7 0.17 155) 14%, var(--surface, #ffffff));
-  border: 1px solid color-mix(in srgb, oklch(0.7 0.17 155) 32%, transparent);
-  padding: 1.5px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-secondary);
   white-space: nowrap;
-}
-
-.pulse-dot {
-  width: 5.5px;
-  height: 5.5px;
-  background: oklch(0.7 0.17 155);
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px color-mix(in srgb, oklch(0.7 0.17 155) 35%, transparent);
-  animation: live-pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes live-pulse-glow {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.25);
-    opacity: 0.6;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pulse-dot {
-    animation: none;
-  }
 }
 
 .planner-block-open strong,
@@ -7917,12 +7870,6 @@ mark,
   .planner-block-open small {
     display: none;
   }
-  .live-pulse span:last-child {
-    display: none;
-  }
-  .live-pulse {
-    padding: 2px;
-  }
 }
 
 /* Un bloque de dos horas tiene sitio de sobra: el título deja de truncarse y el
@@ -7938,7 +7885,7 @@ mark,
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 3;
+  z-index: 1;
   height: 0;
   border-top: 2px solid var(--shield-red);
   pointer-events: none;

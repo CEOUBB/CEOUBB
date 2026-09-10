@@ -49,6 +49,7 @@ export function PlannerGrid({
           cambiar fecha y hora con teclado.
         </p>
         <button
+          className="planner-touch-toggle"
           type="button"
           aria-pressed={drag.touchSelect}
           onClick={() => {

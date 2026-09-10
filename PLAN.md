@@ -1,5 +1,13 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: refinamiento visual y comentarios de PR #183, 2026-09-10
+
+- Cabecera con altura uniforme de 44 px, texto de 13 px y radios de 8 px. Selector táctil condicionado a `any-pointer: coarse`, incluidos equipos híbridos.
+- Bloques con borde uniforme de 1 px y superficie tonal, sin franja lateral, sombras ni pulso. La línea de hora actual queda bajo los bloques para no cruzar su texto.
+- Mes móvil con contador explícito de actividades y agenda completa a todo el ancho debajo de la semana seleccionada. Cambia de posición al elegir otra fecha; títulos y ramos se ajustan en varias líneas, también a 320 px.
+- PR Review Agent: `date: input.date` ya se persiste; confirmado además con una aserción de cambio de columna tras editar fecha. React Doctor: se reutiliza el Map de referencias; permanece sólo el aviso de tamaño de CalendarView, sin supresiones.
+- Cobertura ampliada a ocho recorridos de calendario con medidas reales de controles, ratón/tacto, estados de bloques compactos y posición de la agenda móvil. Se corrige el SDK sintético para admitir la sobrecarga de `doc` con ruta completa usada al completar eventos. Tests sellados originales intactos.
+
 ## Handoff: CEO-72, calendario mensual y planificación semanal, 2026-09-10
 
 - **Entrega:** selector Mes/Semana, cuadrícula mensual completa con evaluaciones y entregas, agenda del día y navegación por teclado. Clases y estudio con repetición semanal hasta una fecha (máximo 26 semanas), guardadas en un batch; cada sesión se edita de forma independiente.

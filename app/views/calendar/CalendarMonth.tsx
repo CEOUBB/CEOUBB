@@ -30,7 +30,7 @@ export function CalendarMonth({
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const selectedItems = items.filter((item) => item.date === selected);
   return (
-    <>
+    <div className="planner-month-layout">
       <div className="planner-month" aria-label="Calendario mensual">
         {days.slice(0, 7).map((day) => (
           <div className="planner-month-weekday" key={day}>
@@ -51,7 +51,8 @@ export function CalendarMonth({
               data-outside={day.slice(0, 7) !== anchor.slice(0, 7) || undefined}
               aria-current={day === today ? "date" : undefined}
               aria-pressed={day === selected}
-              aria-label={`${day}, ${events.length} actividades${events.some((item) => item.kind === "evaluation") ? ", evaluación" : ""}${events.some((item) => item.kind === "deadline") ? ", entrega" : ""}`}
+              aria-controls="planner-day-agenda"
+              aria-label={`${day}, ${events.length} ${events.length === 1 ? "actividad" : "actividades"}${events.some((item) => item.kind === "evaluation") ? ", evaluación" : ""}${events.some((item) => item.kind === "deadline") ? ", entrega" : ""}`}
               tabIndex={day === selected ? 0 : -1}
               onClick={() => onSelect(day)}
               onKeyDown={(event) => {
@@ -61,9 +62,10 @@ export function CalendarMonth({
                 if (delta === undefined) return;
                 event.preventDefault();
                 const next = shiftDate(day, delta);
-                if (days.includes(next)) {
+                const target = buttons.current.get(next);
+                if (target) {
                   onSelect(next);
-                  buttons.current.get(next)?.focus();
+                  target.focus();
                 }
               }}
             >
@@ -94,14 +96,19 @@ export function CalendarMonth({
               </span>
               {events.length > 0 && (
                 <span className="planner-month-count" aria-hidden="true">
-                  {events.length}
+                  {events.length} act.
                 </span>
               )}
             </button>
           );
         })}
       </div>
-      <section className="planner-day-agenda" aria-label="Actividades del día seleccionado">
+      <section
+        id="planner-day-agenda"
+        className="planner-day-agenda"
+        aria-label="Actividades del día seleccionado"
+        style={{ gridRow: Math.floor(days.indexOf(selected) / 7) + 3 }}
+      >
         <header>
           <h2 className="num">
             {new Date(`${selected}T12:00:00Z`).toLocaleDateString("es-CL", {
@@ -143,6 +150,6 @@ export function CalendarMonth({
           </ul>
         )}
       </section>
-    </>
+    </div>
   );
 }

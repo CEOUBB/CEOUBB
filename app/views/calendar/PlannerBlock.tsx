@@ -134,9 +134,8 @@ export function PlannerBlockArticle({
         <div className="planner-block-title-row">
           <strong>{block.title}</strong>
           {isLive && (
-            <span aria-label="En curso" className="live-pulse" role="status">
-              <span aria-hidden="true" className="pulse-dot" />
-              <span>En curso</span>
+            <span className="planner-live-status" role="status">
+              En curso
             </span>
           )}
         </div>
