@@ -1,5 +1,13 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: CEO-72, calendario mensual y planificación semanal, 2026-09-10
+
+- **Entrega:** selector Mes/Semana, cuadrícula mensual completa con evaluaciones y entregas, agenda del día y navegación por teclado. Clases y estudio con repetición semanal hasta una fecha (máximo 26 semanas), guardadas en un batch; cada sesión se edita de forma independiente.
+- **Interacción:** selección de intervalos de 15 minutos y movimiento con Pointer Events, ratón, lápiz o tacto. Modo táctil explícito para preservar el scroll; Escape cancela; formulario alternativo para cambiar fecha/hora con teclado.
+- **Datos:** esquema privado existente `users/{uid}/calendar_events`, sin migración ni cambio de reglas. Listeners con páginas de 200 documentos y cursor fecha/id, limpieza de suscripciones al navegar y mensajes de carga/error.
+- **Verificación:** build de producción, 610 pruebas unitarias, 25 pruebas de HTML y seis recorridos Playwright con componentes y adaptador reales (SDK sintético). Doce pruebas de reglas aprobadas mediante Firebase CLI instalada; el wrapper `check:rules` falló al preparar `pnpm dlx` por scripts de instalación bloqueados. React Doctor: 89/100, un aviso de tamaño de CalendarView; sin supresiones. Integridad de tests anteriores preservada; se añade únicamente el sello de la nueva suite.
+- **Diseño:** impeccable y deliberate, revisión independiente **ship**; decisiones y límites en `docs/design/ceo-72-calendario.md`. No se escribieron datos remotos ni se desplegaron reglas; la prueba de transporte no acredita dispositivos físicos sincronizados.
+
 ## Handoff: erradicación total de integraciones, bots, scripts y crons de Discord, 2026-09-09
 
 - **Motivación y contexto institucional:** Preparación del código fuente para presentación oficial ante funcionarios y técnicos de la Universidad del Bío-Bío. Las integraciones y bots de Discord se concibieron exclusivamente para acelerar el desarrollo iterativo temprano entre mantenedores y no forman parte del producto ni de los canales institucionales.

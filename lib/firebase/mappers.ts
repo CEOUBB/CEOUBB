@@ -158,7 +158,9 @@ export function toPersonalEvent(document: QueryDocumentSnapshot<DocumentData>): 
 
 export function personalKind(value: unknown): PersonalEventKind {
   const normalized = String(value ?? "").toLowerCase();
-  return normalized === "personal" || normalized === "task" ? normalized : "study";
+  return normalized === "personal" || normalized === "task" || normalized === "clase"
+    ? normalized
+    : "study";
 }
 
 export function postKind(value: string): ClassroomPostKind {

@@ -66,5 +66,6 @@
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
   "tests/team-submissions.test.ts": "03c03aed0671bdf94d7c9f61a334a7d00ae70465a3052f0b893566ca8d18d61b",
   "tests/user-profile-magic-bytes.test.ts": "64306f23f09d61483b675d3469c196b7edcbfe41e61461727d4b2b4211b9abb8",
-  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25"
+  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25",
+  "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c"
 }

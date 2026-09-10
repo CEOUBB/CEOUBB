@@ -2,10 +2,13 @@
 
 import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
-import { isIsoDate, shiftDate } from "../../../lib/planner";
+import { isIsoDate, shiftDate, shiftMonth } from "../../../lib/planner";
 import { dayOf, weekRangeLabel, weekdayOf } from "../../../lib/portal-utils";
 
 interface CalendarHeaderProps {
+  view: "week" | "month";
+  anchor: string;
+  setView: (view: "week" | "month") => void;
   days: string[];
   dueCount: number;
   blockCount: number;
@@ -18,6 +21,9 @@ interface CalendarHeaderProps {
 }
 
 export function CalendarHeader({
+  view,
+  anchor,
+  setView,
   days,
   dueCount,
   blockCount,
@@ -33,10 +39,18 @@ export function CalendarHeader({
       <div className="planner-lead">
         <h1>Calendario</h1>
         <p>
-          <span>{weekRangeLabel(days[0], days[6])}</span>
+          <span className="num">
+            {view === "month"
+              ? new Date(`${anchor}T12:00:00Z`).toLocaleDateString("es-CL", {
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })
+              : weekRangeLabel(days[0], days[6])}
+          </span>
           <span>·</span>
           <span>
-            <b>{dueCount}</b> {dueCount === 1 ? "entrega" : "entregas"}
+            <b className="num">{dueCount}</b> {dueCount === 1 ? "vencimiento" : "vencimientos"}
           </span>
           <span>·</span>
           <span>
@@ -45,10 +59,20 @@ export function CalendarHeader({
         </p>
       </div>
       <div className="planner-controls">
+        <div className="planner-view-switch" role="group" aria-label="Vista del calendario">
+          <button type="button" aria-pressed={view === "week"} onClick={() => setView("week")}>
+            Semana
+          </button>
+          <button type="button" aria-pressed={view === "month"} onClick={() => setView("month")}>
+            Mes
+          </button>
+        </div>
         <div className="planner-step">
           <button
-            aria-label="Semana anterior"
-            onClick={() => goWeek(shiftDate(days[0], -7))}
+            aria-label={view === "month" ? "Mes anterior" : "Semana anterior"}
+            onClick={() =>
+              goWeek(view === "month" ? shiftMonth(anchor, -1) : shiftDate(days[0], -7))
+            }
             type="button"
           >
             <CaretLeft aria-hidden="true" size={16} weight="bold" />
@@ -64,8 +88,8 @@ export function CalendarHeader({
             Hoy
           </button>
           <button
-            aria-label="Semana siguiente"
-            onClick={() => goWeek(shiftDate(days[0], 7))}
+            aria-label={view === "month" ? "Mes siguiente" : "Semana siguiente"}
+            onClick={() => goWeek(view === "month" ? shiftMonth(anchor, 1) : shiftDate(days[0], 7))}
             type="button"
           >
             <CaretRight aria-hidden="true" size={16} weight="bold" />
@@ -76,7 +100,7 @@ export function CalendarHeader({
           <input
             onChange={(event) => isIsoDate(event.target.value) && goWeek(event.target.value)}
             type="date"
-            value={days[0]}
+            value={anchor}
           />
         </label>
         <button
