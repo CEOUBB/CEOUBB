@@ -705,7 +705,11 @@ export function CommunicationsCenter({
           <h1>Avisos y mensajes</h1>
           <p>Revisa lo nuevo en tus ramos y conversa en privado con el equipo docente.</p>
         </div>
-        <div className="communications-summary" aria-label={`${unread} elementos no leídos`} role="status">
+        <div
+          className="communications-summary"
+          aria-label={`${unread} elementos no leídos`}
+          role="status"
+        >
           <Checks aria-hidden="true" size={20} />
           <small>
             {unread === 0 ? (
