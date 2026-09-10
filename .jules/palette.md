@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Communications / CommunicationsCenter
+
+- **Finding:** In `app/views/CommunicationsCenter.tsx`, the unread communications summary indicator container (`<div className="communications-summary" aria-label={`${unread} elementos no leídos`}>`) lacked an explicit WAI-ARIA role (`role="status"`), causing browsers and assistive technologies to ignore the `aria-label` on non-interactive generic elements (WCAG 2.2 SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added `role="status"` to `<div className="communications-summary">` so screen readers properly recognize and report the live unread count.
+- **Design System Constraint:** Preserved existing layout and utility classes without visual or CSS alterations.
+- **Future Rule:** Ensure generic status indicator containers utilizing `aria-label` explicitly declare `role="status"` or `role="img"`.
+
 ## [2026-03-31] - Views / TeacherCoursesView
 
 - **Finding:** In `TeacherCoursesView.tsx`, the primary button in the empty state ("Crear mi primer ramo") lacked a visual vector icon and decorative Phosphor icons in action buttons with visible text lacked explicit `aria-hidden="true"` attributes, causing screen readers to announce redundant child vector elements (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
