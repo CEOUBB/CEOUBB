@@ -183,6 +183,25 @@ test("gesto táctil nativo crea un intervalo y conserva desplazamiento fuera del
 });
 
 test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ page }, info) => {
+  await page.locator(".planner-view-switch").screenshot({
+    path: `test-results/ceo72-view-switch-${info.project.name}.png`,
+  });
+  const segments = await page.locator(".planner-view-switch button").evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const label = document.createRange();
+      label.selectNodeContents(button);
+      const style = getComputedStyle(button);
+      return {
+        width: button.getBoundingClientRect().width,
+        required:
+          label.getBoundingClientRect().width +
+          parseFloat(style.paddingLeft) +
+          parseFloat(style.paddingRight),
+      };
+    })
+  );
+  for (const segment of segments) expect(segment.width).toBeGreaterThanOrEqual(segment.required);
+  expect(Math.round(segments[0].width)).toBe(Math.round(segments[1].width));
   await page.getByRole("button", { name: "Mes", exact: true }).click();
   await expect(page.locator(".planner-month-day")).toHaveCount(35);
   await expect(page.locator(".planner-day-agenda")).toContainText("Certamen 1");

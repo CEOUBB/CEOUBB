@@ -2,6 +2,7 @@
 
 ## Handoff: refinamiento visual y comentarios de PR #183, 2026-09-10
 
+- Corrección posterior del selector Semana/Mes: columnas iguales dimensionadas por la etiqueta más larga, con 8 px de espacio interior. La comprobación de ancho reproduce el defecto anterior (61,48 px disponibles frente a 73,41 px necesarios) y verifica que ambas etiquetas caben completas.
 - Cabecera con altura uniforme de 44 px, texto de 13 px y radios de 8 px. Selector táctil condicionado a `any-pointer: coarse`, incluidos equipos híbridos.
 - Bloques con borde uniforme de 1 px y superficie tonal, sin franja lateral, sombras ni pulso. La línea de hora actual queda bajo los bloques para no cruzar su texto.
 - Mes móvil con contador explícito de actividades y agenda completa a todo el ancho debajo de la semana seleccionada. Cambia de posición al elegir otra fecha; títulos y ramos se ajustan en varias líneas, también a 320 px.

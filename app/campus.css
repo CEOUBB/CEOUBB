@@ -558,10 +558,6 @@
     min-width: 0;
     justify-content: center;
   }
-  .planner-view-switch button {
-    flex: 1;
-    padding-inline: 8px;
-  }
   .planner-jump input {
     width: 100%;
     min-width: 0;
@@ -746,7 +742,8 @@
   }
 }
 .planner-view-switch {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
   overflow: hidden;
@@ -769,7 +766,7 @@
   font-weight: 500;
 }
 .planner-controls .planner-view-switch button {
-  flex: 1;
+  padding-inline: 8px;
 }
 .planner-view-switch button,
 .planner-gesture-bar button {
