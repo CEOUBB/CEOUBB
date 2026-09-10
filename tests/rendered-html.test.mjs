@@ -292,7 +292,7 @@ test("logout destroys the session server side", async () => {
 });
 
 test("restricts account administration to the owner role", async () => {
-  assert.equal((await request("/api/admin/users")).status, 403);
+  assert.equal((await request("/api/admin/users")).status, 401);
   assert.equal((await request("/api/admin/users", { cookie: await signIn(STUDENT) })).status, 403);
   assert.equal((await request("/api/admin/users", { cookie: await signIn(TEACHER) })).status, 403);
 

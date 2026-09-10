@@ -44,7 +44,8 @@ const privateHeaders = {
 // Implements: REQ-PERF-03, REQ-PERF-04, REQ-SEC-06, REQ-API-02
 export async function GET(request: Request) {
   const actor = await getSessionUser(request);
-  if (!actor || actor.role !== "owner")
+  if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
+  if (actor.role !== "owner")
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
   const url = new URL(request.url);
@@ -109,7 +110,8 @@ export async function GET(request: Request) {
 // Implements: REQ-SEC-01, REQ-API-01, REQ-API-02, REQ-SEC-10, REQ-SEC-15
 export async function PATCH(request: Request) {
   const actor = await getSessionUser(request);
-  if (!actor || actor.role !== "owner")
+  if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
+  if (actor.role !== "owner")
     return Response.json({ error: "Acceso restringido." }, { status: 403 });
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");

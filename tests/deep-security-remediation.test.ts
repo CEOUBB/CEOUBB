@@ -197,3 +197,19 @@ test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and 
     "Reconcile route must return 403 for non-teacher/non-owner roles"
   );
 });
+
+// Implements: REQ-SEC-20
+test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthorized 403 checks", () => {
+  const routePath = path.resolve("app/api/admin/users/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /if\s*\(!actor\)[\s\S]*?Response\.json\(\{\s*error:\s*["']Sesión no válida\.["']\s*\},\s*\{\s*status:\s*401\s*\}\)/,
+    "Admin users route must return 401 for unauthenticated requests"
+  );
+  assert.match(
+    routeContent,
+    /if\s*\(actor\.role\s*!==\s*["']owner["']\)/,
+    "Admin users route must return 403 for non-owner roles"
+  );
+});
