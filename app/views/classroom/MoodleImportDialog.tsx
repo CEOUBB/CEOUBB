@@ -77,7 +77,7 @@ export function MoodleImportDialog({ course }: { course: Course }) {
         onClick={() => dialogRef.current?.showModal()}
         type="button"
       >
-        <FileArrowUp size={18} />
+        <FileArrowUp aria-hidden="true" size={18} />
         Importar Moodle
       </button>
       <dialog
@@ -95,14 +95,14 @@ export function MoodleImportDialog({ course }: { course: Course }) {
             <p>Revisa el respaldo antes de restaurarlo en {course.name}.</p>
           </div>
           <button aria-label="Cerrar" disabled={running} onClick={close} type="button">
-            <X size={20} />
+            <X aria-hidden="true" size={20} />
           </button>
         </div>
 
         <div className="moodle-import-dialog__body">
           {!report && (
             <label className="moodle-import-file" htmlFor={inputId}>
-              <FileArrowUp size={26} />
+              <FileArrowUp aria-hidden="true" size={26} />
               <span>
                 <strong>Seleccionar respaldo .mbz o nómina .csv</strong>
                 <small>Se analiza en este dispositivo antes de publicar cualquier contenido.</small>
@@ -186,7 +186,11 @@ export function MoodleImportDialog({ course }: { course: Course }) {
                 <strong>{progress.message}</strong>
                 <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
               </div>
-              <progress max={totalSteps} value={currentStep} />
+              <progress
+                aria-label="Progreso de la importación Moodle"
+                max={totalSteps}
+                value={currentStep}
+              />
             </div>
           )}
 
@@ -207,7 +211,7 @@ export function MoodleImportDialog({ course }: { course: Course }) {
                 onClick={() => downloadReport(report)}
                 type="button"
               >
-                <DownloadSimple size={18} />
+                <DownloadSimple aria-hidden="true" size={18} />
                 Descargar reporte JSON
               </button>
             </div>
