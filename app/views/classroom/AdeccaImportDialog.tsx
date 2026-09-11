@@ -159,7 +159,7 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
         onClick={() => dialogRef.current?.showModal()}
         type="button"
       >
-        <FileArrowUp size={18} />
+        <FileArrowUp aria-hidden="true" size={18} />
         Importar ADECCA
       </button>
       <dialog
@@ -192,14 +192,14 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
             onClick={close}
             type="button"
           >
-            <X size={20} />
+            <X aria-hidden="true" size={20} />
           </button>
         </div>
 
         <div className="moodle-import-dialog__body">
           {!report && (
             <label className="moodle-import-file" htmlFor={inputId}>
-              <FileArrowUp size={26} />
+              <FileArrowUp aria-hidden="true" size={26} />
               <span>
                 <strong>Seleccionar paquete .zip, manifiesto .json o nómina .csv</strong>
                 <small>
@@ -387,7 +387,7 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
                 ref={resultActionRef}
                 type="button"
               >
-                <DownloadSimple size={18} />
+                <DownloadSimple aria-hidden="true" size={18} />
                 Descargar reporte JSON
               </button>
             </div>
@@ -410,7 +410,7 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
           </button>
           {report ? (
             <button className="primary-button" onClick={restart} type="button">
-              <ArrowCounterClockwise size={18} />
+              <ArrowCounterClockwise aria-hidden="true" size={18} />
               Importar otro paquete
             </button>
           ) : (

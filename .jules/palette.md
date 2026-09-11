@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / MoodleImportDialog & AdeccaImportDialog
+
+- **Finding:** Decorative Phosphor SVG icons (`<FileArrowUp>`, `<X>`, `<DownloadSimple>`, `<ArrowCounterClockwise>`) inside trigger buttons, file upload dropzones, and report download controls lacked explicit `aria-hidden="true"`, while the import `<progress>` bar in `MoodleImportDialog.tsx` lacked an accessible name (`aria-label`) during active import operations (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor vector icons inside interactive buttons and labels, and added `aria-label="Progreso de la importación Moodle"` to the progress element.
+- **Design System Constraint:** Retained existing dialog structure and utility button classes without altering layout geometry or adding new dependencies.
+- **Future Rule:** Ensure modal import dialogs declare `aria-label` on HTML `<progress>` elements and mark embedded decorative SVG vector icons with `aria-hidden="true"`.
+
 ## [2026-03-31] - Communications / CommunicationsCenter
 
 - **Finding:** In `app/views/CommunicationsCenter.tsx`, the unread communications summary indicator container (`<div className="communications-summary" aria-label={`${unread} elementos no leídos`}>`) lacked an explicit WAI-ARIA role (`role="status"`), causing browsers and assistive technologies to ignore the `aria-label` on non-interactive generic elements (WCAG 2.2 SC 4.1.2 Name, Role, Value).
