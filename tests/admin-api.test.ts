@@ -27,7 +27,10 @@ function evaluateRoleChangeGuard(
   payload: RoleChangePayload,
   targetUser: TargetUser
 ): GuardDecision {
-  if (!actor || actor.role !== "owner") {
+  if (!actor) {
+    return { allowed: false, status: 401, error: "Sesión no válida." };
+  }
+  if (actor.role !== "owner") {
     return { allowed: false, status: 403, error: "Acceso restringido." };
   }
   if (!payload.userId || !["teacher", "student"].includes(payload.role ?? "")) {
@@ -47,7 +50,7 @@ function evaluateRoleChangeGuard(
   return { allowed: true, status: 200 };
 }
 
-test("rejects unauthenticated or non-owner callers with 403", () => {
+test("rejects unauthenticated caller with 401 and non-owner callers with 403", () => {
   const validPayload = { userId: "user-456", role: "teacher" };
   const target: TargetUser = {
     id: "user-456",
@@ -58,8 +61,8 @@ test("rejects unauthenticated or non-owner callers with 403", () => {
   // Caller is unauthenticated
   const unauthResult = evaluateRoleChangeGuard(null, validPayload, target);
   assert.equal(unauthResult.allowed, false);
-  assert.equal(unauthResult.status, 403);
-  assert.equal(unauthResult.error, "Acceso restringido.");
+  assert.equal(unauthResult.status, 401);
+  assert.equal(unauthResult.error, "Sesión no válida.");
 
   // Caller is a student
   const studentResult = evaluateRoleChangeGuard(
@@ -181,6 +184,7 @@ test("admin users endpoint source strictly enforces every guard contract", async
 
   // Authentication & owner role enforcement
   assert.match(source, /getSessionUser\(request\)/, "must authenticate session");
+  assert.match(source, /status: 401/, "must return 401 on unauthenticated");
   assert.match(source, /actor\.role !== "owner"/, "must restrict to owner role");
   assert.match(source, /status: 403/, "must return 403 on non-owner");
 
