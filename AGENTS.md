@@ -14,6 +14,8 @@ Centro de Estudio UBB is an independent Learning Management System (LMS) designe
 - **Scale-First Architecture:** Every data and interface decision must be evaluated against the complete institutional scale, not against a single-cohort pilot.
 - **Independence Disclaimer Guardrail:** Preserve independent platform disclaimers across the UI; app store badges remain non-clickable placeholders until a formal institutional agreement exists.
 - **Strict Language Policy for Commits & PRs:** All commit messages, Pull Request titles, and PR descriptions MUST BE WRITTEN STRICTLY IN SPANISH following Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
+- **AI Documentation Language Policy:** All internal agent documentation, architectural notes, specifications, instructions, plans, and guidance files (`AGENTS.md`, `PLAN.md`, `docs/**/*.md`, `.agents/**`) MUST BE WRITTEN EXCLUSIVELY IN ENGLISH.
+- **Safe Autonomous Execution & Persistence (Model Autonomy):** The local verification environment operates with isolated/disposable fixtures and has no production access. Agents are granted explicit authorization to execute read tools, local compilers, linters, formatters, and test suites iteratively. Agents must NOT stop prematurely for micro-step confirmations: investigate failures, refactor the code, and rerun the affected tests autonomously until passing cleanly.
 
 ---
 
@@ -69,19 +71,31 @@ Access to course data is granted **if and only if** an active enrollment project
 
 ---
 
-## 4. Modular Context Rules (.agents/rules/*.mdc)
+## 4. Contextual Routing & Modular Rules (.agents/rules/*.mdc)
 
-To optimize semantic density and prevent context contamination, the following glob-scoped modular rules apply:
+To preserve context budget and prevent token compaction, avoid reading architectural files or rule sets unconditionally. Modern models do not require full codebase ingestion for isolated changes. Consult supporting documents and modular rules strictly when touching their respective domains:
 
-- `.agents/rules/001-database-turso.mdc`: Drizzle transactions, mandatory `.limit()` clauses, and database pagination.
-- `.agents/rules/002-access-security.mdc`: Four-mirror security synchronization and dual-store mutations (Turso + Firestore) in user administration.
-- `.agents/rules/003-ui-components.mdc`: OKLCH tokens from `DESIGN.md`, typography pairings (`Merriweather` vs `Manrope`), spring physics, and zero inline SVG icons.
-- `.agents/rules/004-mobile-capacitor.mdc`: Capacitor bridge, dynamic safe areas, and silent no-op degradation on the web.
-- `.agents/rules/005-api-webhooks.mdc`: Next.js API route handlers, Zod schema validation, and structured JSON error responses.
+- `.agents/rules/001-database-turso.mdc`: Consult ONLY when modifying schemas, migrations, or database queries (`db/**`, `drizzle/**`).
+- `.agents/rules/002-access-security.mdc`: Consult ONLY when modifying auth flows, security rules, or user roles (`lib/access-policy.ts`, `firebase/*.rules`).
+- `.agents/rules/003-ui-components.mdc`: Consult ONLY when creating or refactoring UI components or motion (`components/**`, `app/views/**`, `DESIGN.md`).
+- `.agents/rules/004-mobile-capacitor.mdc`: Consult ONLY when modifying mobile bridge, native wrappers, or safe-area layouts (`capacitor.config.*`, `android/**`).
+- `.agents/rules/005-api-webhooks.mdc`: Consult ONLY when authoring Next.js API route handlers (`app/api/**`).
+- `lib/grades.ts`: Consult ONLY when modifying grade scales, rounding, or weighted evaluation arithmetic.
+- **No Unconditional Reading:** Do NOT read full architectural specs, schema files, or database maps for atomic changes (e.g. typos, copy updates, localized CSS tweaks, isolated bugfixes).
 
 ---
 
-## 5. Strict Negative Constraints ("Do NOTs")
+## 5. Skills Architecture & Progressive Disclosure
+
+When authoring, refining, or consuming skills (`.agents/skills/`), agents and contributors must enforce the following architectural patterns:
+
+1. **Narrow & Explicit Triggers:** Descriptions in skill YAML frontmatter must be concise and specify explicit activation boundaries (both when to use AND when NOT to use). Avoid broad topic catch-alls (e.g., "use when working with databases" or "use for any UI component") that dilute selection accuracy and trigger context bloat.
+2. **Progressive Disclosure:** Root `SKILL.md` documents must serve as lightweight routers/dispatchers pointing to specialized references (`references/*.md`) or executable scripts. Monolithic instructions should never be loaded into context in a single pass when not needed for the task.
+3. **Outcome-Driven Guidance over Procedural Recipes:** Rely on model reasoning and high-level boundaries rather than rigid, line-by-line procedural itineraries. Provide clear input/output contracts, invariants, and canonical examples instead of micro-managing execution steps.
+
+---
+
+## 6. Strict Negative Constraints ("Do NOTs")
 
 1. **NO PLACEHOLDERS OR TRUNCATED CODE:** Generating code blocks with `// TODO`, `/* rest of code */`, or partial diffs is strictly prohibited. Every emitted block must be fully functional and compilable.
 2. **NO TEST WEAKENING (TEST-LOCKING):** Agents are strictly forbidden from weakening assertions, deleting tests, adding `.skip()`, or widening thresholds in `tests/` to force builds to pass.
@@ -100,7 +114,7 @@ To optimize semantic density and prevent context contamination, the following gl
 
 ---
 
-## 6. Gold Standard References (GSR)
+## 7. Gold Standard References (GSR)
 
 When implementing or refactoring entities, clone the architectural patterns of these canonical files:
 
@@ -110,9 +124,9 @@ When implementing or refactoring entities, clone the architectural patterns of t
 
 ---
 
-## 7. Fast-Verification Harness & Definition of Done (DoD)
+## 8. Fast-Verification Harness & Definition of Done (DoD)
 
-### 7.1 Local Verification Pipeline
+### 8.1 Local Verification Pipeline
 
 ```bash
 pnpm run format              # 0. Code formatting with Prettier (mandatory before commit/push)
@@ -122,16 +136,17 @@ pnpm run verify:invariants   # 3. Security Invariants + Firebase Rules Validatio
 pnpm test                    # 4. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
 
-### 7.2 Contractual Definition of Done (DoD)
+### 8.2 Contractual Definition of Done (DoD)
 
-A task is considered complete ONLY when:
+A task is considered complete ONLY when verified end-to-end. Do not stop at a preliminary implementation:
 
+0. **Autonomous Verification Loop:** The agent has autonomously run formatting (`pnpm run format`), resolved any lint or typecheck errors, and confirmed that relevant test suites pass in green before declaring the task completed.
 1. Every requirement `REQ-XX` from the specification carries its code-level traceability marker `// Implements: REQ-XX`.
 2. `pnpm run typecheck`, `pnpm run lint`, and `pnpm run format:check` terminate with exit code `0` (zero errors, zero warnings, clean Prettier style). Agents must execute `pnpm run format` prior to committing any file.
 3. All unit and integration tests pass with zero test assertions modified or weakened in `tests/`.
 4. Security policies and trans-store synchronization remain fully intact.
 5. Database queries implement strict limits and bounded pagination.
-6. `PLAN.md` is updated with structured handoff notes.
+6. `PLAN.md` is updated with structured handoff notes when applicable.
 7. Commit messages and Pull Request titles are written **strictly in Spanish** with Conventional Commits.
 
 <!-- BEGIN:nextjs-agent-rules -->
