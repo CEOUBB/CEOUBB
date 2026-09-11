@@ -54,6 +54,18 @@ Access to course data is granted **if and only if** an active enrollment project
 - **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
 - **Native Asset Isolation:** All academic features are served remotely from the authoritative web portal. Do not regenerate duplicated asset trees under `android/`.
 
+### 2.4 Architectural Landmarks & Source Locations
+
+To navigate non-obvious structural seams efficiently without burning context on full repository scans:
+
+- **Role Policy & Auth SSOT:** `lib/access-policy.ts` (mirrored in `firebase/firestore.rules` and `firebase/storage.rules`).
+- **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
+- **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.
+- **Pure Grade Arithmetic:** `lib/grades.ts` (Chilean 1.0–7.0 scale, rounding, weighting).
+- **Domain Views vs Shared UI:** Primary dashboards and feature screens reside in `app/views/` (e.g. `CoursesDashboard.tsx`, `CalendarAgendaView.tsx`), while reusable UI primitives reside in `components/`.
+- **Server API & Route Handlers:** Secure endpoints live in `app/api/` (Zod validation, session auth, transactional mutations).
+- **Mobile Bridge:** Native Android host in `android/`, Capacitor runtime integration in `lib/mobile-bridge.ts` & `lib/native-files.ts`.
+
 ---
 
 ## 3. Canonical Infrastructure Identifiers
