@@ -346,7 +346,10 @@ function QuizCorrectionView({
   result: QuizResult;
   onBack: () => void;
 }) {
-  const byQuestion = new Map(quiz.questions.map((question) => [question.id, question]));
+  const byQuestion = new Map<string, (typeof quiz.questions)[number]>();
+  for (const question of quiz.questions) {
+    byQuestion.set(question.id, question);
+  }
   const correct = result.corrections.filter((item) => item.correct).length;
   return (
     <section className="quiz-results">
