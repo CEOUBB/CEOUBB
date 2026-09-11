@@ -522,7 +522,11 @@ export async function saveXapiStatements(
       .map((s) => s.id)
       .filter((id): id is string => typeof id === "string" && id.length > 0);
     const existingRows = ids.length
-      ? await tx.select().from(interopStatements).where(inArray(interopStatements.id, ids))
+      ? await tx
+          .select()
+          .from(interopStatements)
+          .where(inArray(interopStatements.id, ids))
+          .limit(ids.length)
       : [];
     const existingMap = new Map(existingRows.map((r) => [r.id, r]));
     const toInsert: { statement: (typeof parsed)[number]; inputJson: string }[] = [];

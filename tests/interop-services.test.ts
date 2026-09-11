@@ -535,4 +535,17 @@ test("REQ-IO-01–11 servicios, contratos HTTP y migración sobre libSQL", async
       status(429)
     );
   });
+
+  await t.test("todas las consultas select en interop.ts llevan un .limit() explícito", async () => {
+    const source = await readFile(
+      new URL("../lib/services/interop.ts", import.meta.url),
+      "utf8"
+    );
+    const queries = source.split(".select(").slice(1);
+    assert.ok(queries.length > 0, "no se encontraron consultas select en interop.ts");
+    for (const query of queries) {
+      const statement = query.slice(0, query.indexOf(";"));
+      assert.ok(statement.includes(".limit("), `se detectó una consulta sin límite: .select(${statement}`);
+    }
+  });
 });
