@@ -16,6 +16,7 @@ Centro de Estudio UBB is an independent Learning Management System (LMS) designe
 - **Strict Language Policy for Commits & PRs:** All commit messages, Pull Request titles, and PR descriptions MUST BE WRITTEN STRICTLY IN SPANISH following Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - **AI Documentation Language Policy:** All internal agent documentation, architectural notes, specifications, instructions, plans, and guidance files (`AGENTS.md`, `PLAN.md`, `docs/**/*.md`, `.agents/**`) MUST BE WRITTEN EXCLUSIVELY IN ENGLISH.
 - **Safe Autonomous Execution & Persistence (Model Autonomy):** The local verification environment operates with isolated/disposable fixtures and has no production access. Agents are granted explicit authorization to execute read tools, local compilers, linters, formatters, and test suites iteratively. Agents must NOT stop prematurely for micro-step confirmations: investigate failures, refactor the code, and rerun the affected tests autonomously until passing cleanly.
+- **Living Governance & Co-Evolution:** `AGENTS.md` is a living system directive. Whenever an architectural invariant, security policy, canonical infrastructure identifier, or structural landmark is modified, added, or retired, agents and contributors MUST synchronize and update `AGENTS.md` in the exact same commit or pull request. Do NOT modify this document for routine feature work or localized component fixes.
 
 ---
 
@@ -160,6 +161,7 @@ A task is considered complete ONLY when verified end-to-end. Do not stop at a pr
 5. Database queries implement strict limits and bounded pagination.
 6. `PLAN.md` is updated with structured handoff notes when applicable.
 7. Commit messages and Pull Request titles are written **strictly in Spanish** with Conventional Commits.
+8. If the task modifies or impacts architectural invariants, infrastructure identifiers, or structural landmarks, `AGENTS.md` has been updated in the same pull request to maintain documentation co-evolution.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
