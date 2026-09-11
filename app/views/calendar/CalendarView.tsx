@@ -8,6 +8,7 @@ import {
   deletePersonalEvent,
   setPersonalEventCompleted,
   watchPersonalEvents,
+  savePersonalEvent,
 } from "../../../lib/firebase-classroom-client";
 import {
   DAY_END_HOUR,
@@ -17,6 +18,7 @@ import {
   plannerItems,
   timeOfMinutes,
   weekDates,
+  monthDates,
 } from "../../../lib/planner";
 import type { PersonalEvent, PlannerItem } from "../../../lib/planner";
 import {
@@ -31,6 +33,7 @@ import { BlockDialog } from "./BlockDialog";
 import { CalendarDayBar, CalendarFilters, CalendarHeader } from "./CalendarHeader";
 import { PlannerGrid } from "./PlannerGrid";
 import { PlannerRibbon } from "./PlannerRibbon";
+import { CalendarMonth } from "./CalendarMonth";
 
 export function CalendarView({
   courses,
@@ -45,38 +48,46 @@ export function CalendarView({
 }) {
   const today = getSantiagoDateISO();
   const [anchor, setAnchor] = useState(today);
+  const [view, setView] = useState<"week" | "month">("week");
   const [personal, setPersonal] = useState<PersonalEvent[]>([]);
   const [loadedWeek, setLoadedWeek] = useState("");
   const [hidden, setHidden] = useState<string[]>([]);
   const [draft, setDraft] = useState<BlockDraft | null>(null);
   const [alert, setAlert] = useState("");
+  const [notice, setNotice] = useState("");
   const [pickedDay, setPickedDay] = useState(today);
   const [nowMinutes, setNowMinutes] = useState(() => getSantiagoMinutes());
 
   const [dir, setDir] = useState<number | null>(null);
 
-  const days = useMemo(() => weekDates(anchor), [anchor]);
+  const days = useMemo(
+    () => (view === "month" ? monthDates(anchor) : weekDates(anchor)),
+    [anchor, view]
+  );
+  const rangeKey = `${days[0]}/${days.at(-1)}`;
   const focusDay = days.includes(pickedDay) ? pickedDay : days.includes(today) ? today : days[0];
 
   const goWeek = (date: string) => {
     setDir(date > days[0] ? 1 : date < days[0] ? -1 : 0);
     setAnchor(date);
+    setPickedDay(date);
+    setAlert("");
   };
 
   useEffect(
     () =>
       watchPersonalEvents(
         days[0],
-        days[6],
+        days[days.length - 1],
         (events) => {
           setPersonal(events);
-          setLoadedWeek(days[0]);
+          setLoadedWeek(rangeKey);
         },
         setAlert
       ),
-    [days]
+    [days, rangeKey]
   );
-  const weekLoaded = loadedWeek === days[0];
+  const weekLoaded = loadedWeek === rangeKey;
 
   const openGrid = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
@@ -94,11 +105,11 @@ export function CalendarView({
         courses,
         gradebooks,
         deadlines: activity.filter((post) => post.dueDate),
-        personal,
+        personal: weekLoaded ? personal : [],
         from: days[0],
-        to: days[6],
+        to: days[days.length - 1],
       }),
-    [courses, gradebooks, activity, personal, days]
+    [courses, gradebooks, activity, personal, days, weekLoaded]
   );
 
   const hiddenCourses = useMemo(() => new Set(hidden), [hidden]);
@@ -129,13 +140,13 @@ export function CalendarView({
       current.includes(courseId) ? current.filter((id) => id !== courseId) : [...current, courseId]
     );
 
-  const newBlock = (date: string, hour: number) =>
+  const newBlock = (date: string, hour: number, endHour = Math.min(hour + 1, DAY_END_HOUR)) =>
     setDraft({
       title: "",
       detail: "",
       date,
       startTime: timeOfMinutes(hour * 60),
-      endTime: timeOfMinutes(Math.min(hour + 1, DAY_END_HOUR) * 60),
+      endTime: timeOfMinutes(endHour * 60),
       courseId: "",
       kind: "study",
     });
@@ -149,8 +160,33 @@ export function CalendarView({
       startTime: item.startTime ?? timeOfMinutes(DAY_START_MINUTES),
       endTime: item.endTime ?? timeOfMinutes(DAY_START_MINUTES + 60),
       courseId: item.courseId ?? "",
-      kind: item.kind === "personal" || item.kind === "task" ? item.kind : "study",
+      kind:
+        item.kind === "personal" || item.kind === "task" || item.kind === "clase"
+          ? item.kind
+          : "study",
     });
+
+  const moveBlock = async (item: PlannerItem, date: string, startTime: string, endTime: string) => {
+    if (item.source !== "user_personal") return;
+    try {
+      await savePersonalEvent({
+        id: item.id,
+        title: item.title,
+        detail: item.detail,
+        date,
+        startTime,
+        endTime,
+        courseId: item.courseId,
+        kind:
+          item.kind === "personal" || item.kind === "task" || item.kind === "clase"
+            ? item.kind
+            : "study",
+      });
+      setNotice(`Bloque movido al ${date}, ${startTime}–${endTime}.`);
+    } catch (cause) {
+      setAlert(cause instanceof Error ? cause.message : "No se pudo mover el bloque.");
+    }
+  };
 
   const toggleDone = (item: PlannerItem) => {
     const next = !item.completed;
@@ -190,6 +226,13 @@ export function CalendarView({
   return (
     <section className="planner">
       <CalendarHeader
+        view={view}
+        anchor={anchor}
+        setView={(next) => {
+          setAnchor(focusDay);
+          setPickedDay(focusDay);
+          setView(next);
+        }}
         blockCount={blockCount}
         days={days}
         dueCount={dueCount}
@@ -212,60 +255,96 @@ export function CalendarView({
           {alert}
         </p>
       )}
+      <p className="sr-only" role="status">
+        {notice}
+      </p>
 
-      <CalendarDayBar days={days} focusDay={focusDay} setPickedDay={setPickedDay} today={today} />
+      {!weekLoaded && !alert && (
+        <p className="planner-help" role="status">
+          Sincronizando bloques…
+        </p>
+      )}
 
-      <div
-        className="planner-frame"
-        data-moved={dir === null ? undefined : "true"}
-        style={
-          {
-            "--planner-rows": SLOT_HOURS.length,
-            "--planner-dir": String(dir ?? 0),
-          } as React.CSSProperties
-        }
-      >
-        <div className="planner-head" key={days[0]}>
-          <span className="planner-zone">GMT−4</span>
-          {days.map((day) => (
-            <div
-              className="planner-headday"
-              data-focus={day === focusDay ? "true" : undefined}
-              data-today={day === today ? "true" : undefined}
-              key={day}
-            >
-              <small>{weekdayOf(day)}</small>
-              <b>{dayOf(day)}</b>
-            </div>
-          ))}
-        </div>
-
-        {dueCount > 0 && (
-          <PlannerRibbon
-            byDay={byDay}
-            courseById={courseById}
+      {view === "month" ? (
+        <CalendarMonth
+          days={days}
+          anchor={anchor}
+          today={today}
+          selected={focusDay}
+          items={visible}
+          onSelect={setPickedDay}
+          onCreate={newBlock}
+          onOpen={(item) => {
+            if (item.source === "user_personal") editBlock(item);
+            else {
+              const course = item.courseId ? courseById.get(item.courseId) : undefined;
+              if (course) openCourse(course);
+            }
+          }}
+        />
+      ) : (
+        <>
+          <CalendarDayBar
             days={days}
             focusDay={focusDay}
-            openCourse={openCourse}
+            setPickedDay={setPickedDay}
+            today={today}
           />
-        )}
 
-        <PlannerGrid
-          blockCount={blockCount}
-          byDay={byDay}
-          days={days}
-          firstFreeHour={firstFreeHour}
-          focusDay={focusDay}
-          nowMinutes={nowMinutes}
-          onEditBlock={editBlock}
-          onNewBlock={newBlock}
-          onOpenGrid={openGrid}
-          onRemoveBlock={removeBlock}
-          onToggleDone={toggleDone}
-          today={today}
-          weekLoaded={weekLoaded}
-        />
-      </div>
+          <div
+            className="planner-frame"
+            data-moved={dir === null ? undefined : "true"}
+            style={
+              {
+                "--planner-rows": SLOT_HOURS.length,
+                "--planner-dir": String(dir ?? 0),
+              } as React.CSSProperties
+            }
+          >
+            <div className="planner-head" key={days[0]}>
+              <span className="planner-zone">GMT−4</span>
+              {days.map((day) => (
+                <div
+                  className="planner-headday"
+                  data-focus={day === focusDay ? "true" : undefined}
+                  data-today={day === today ? "true" : undefined}
+                  key={day}
+                >
+                  <small>{weekdayOf(day)}</small>
+                  <b>{dayOf(day)}</b>
+                </div>
+              ))}
+            </div>
+
+            {dueCount > 0 && (
+              <PlannerRibbon
+                byDay={byDay}
+                courseById={courseById}
+                days={days}
+                focusDay={focusDay}
+                openCourse={openCourse}
+              />
+            )}
+
+            <PlannerGrid
+              blockCount={blockCount}
+              byDay={byDay}
+              days={days}
+              firstFreeHour={firstFreeHour}
+              focusDay={focusDay}
+              nowMinutes={nowMinutes}
+              onEditBlock={editBlock}
+              onMoveBlock={moveBlock}
+              onNewBlock={newBlock}
+              onOpenGrid={openGrid}
+              onRemoveBlock={removeBlock}
+              onToggleDone={toggleDone}
+              today={today}
+              weekLoaded={weekLoaded}
+            />
+          </div>
+        </>
+      )}
 
       {draft && (
         <BlockDialog

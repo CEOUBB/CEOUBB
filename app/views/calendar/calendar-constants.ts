@@ -16,6 +16,7 @@ export const KIND_LABEL: Record<PersonalEventKind, string> = {
   study: "Estudio",
   personal: "Personal",
   task: "Tarea",
+  clase: "Clase",
 };
 
 export type BlockDraft = {
@@ -27,6 +28,7 @@ export type BlockDraft = {
   endTime: string;
   courseId: string;
   kind: PersonalEventKind;
+  repeatUntil?: string;
 };
 
 export function offsetOf(minutes: number): string {

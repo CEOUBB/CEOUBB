@@ -2,7 +2,8 @@
 
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import { Check, X } from "@phosphor-icons/react";
+import { ArrowsOutCardinal, Check, X } from "@phosphor-icons/react";
+import type { PointerEvent } from "react";
 import type { PersonalEventKind, PlacedBlock, PlannerItem } from "../../../lib/planner";
 import { ease, instantTransition } from "../../../lib/portal-utils";
 import { KIND_LABEL, MINUTE_SPAN, offsetOf } from "./calendar-constants";
@@ -85,12 +86,16 @@ export function PlannerBlockArticle({
   onToggleDone,
   onEdit,
   onRemove,
+  onMoveStart,
+  onMoveClick,
 }: {
   block: PlacedBlock;
   isLive?: boolean;
   onToggleDone: (block: PlannerItem) => void;
   onEdit: (block: PlannerItem) => void;
   onRemove: (block: PlannerItem) => void;
+  onMoveStart?: (event: PointerEvent<HTMLButtonElement>, block: PlannerItem) => void;
+  onMoveClick?: (block: PlannerItem, keyboard: boolean) => void;
 }) {
   const shouldReduceMotion = useReducedMotion();
   const motionProps = getArticleAnimation(shouldReduceMotion);
@@ -129,9 +134,8 @@ export function PlannerBlockArticle({
         <div className="planner-block-title-row">
           <strong>{block.title}</strong>
           {isLive && (
-            <span aria-label="En curso" className="live-pulse" role="status">
-              <span aria-hidden="true" className="pulse-dot" />
-              <span>En curso</span>
+            <span className="planner-live-status" role="status">
+              En curso
             </span>
           )}
         </div>
@@ -140,6 +144,17 @@ export function PlannerBlockArticle({
           {getBlockSubtitle(block)}
         </small>
       </button>
+      {block.source === "user_personal" && (
+        <button
+          type="button"
+          className="planner-block-move"
+          aria-label={`Mover “${block.title}”`}
+          onPointerDown={(event) => onMoveStart?.(event, block)}
+          onClick={(event) => onMoveClick?.(block, event.detail === 0)}
+        >
+          <ArrowsOutCardinal aria-hidden="true" size={14} />
+        </button>
+      )}
       {block.source === "user_personal" && (
         <button
           aria-label={`Eliminar “${block.title}”`}

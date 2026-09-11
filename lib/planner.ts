@@ -10,7 +10,7 @@ export const DAY_END_MINUTES = DAY_END_HOUR * 60;
 /** Tono de los bloques personales sin ramo asociado (ink-500 del sistema). */
 export const PERSONAL_TONE = "#57657a";
 
-export type PersonalEventKind = "study" | "personal" | "task";
+export type PersonalEventKind = "study" | "personal" | "task" | "clase";
 
 export type PersonalEvent = {
   id: string;
@@ -57,7 +57,10 @@ const TIME_PATTERN = /^(\d{1,2}):(\d{2})/;
 
 export function isIsoDate(value: unknown): value is string {
   return (
-    typeof value === "string" && ISO_DATE.test(value) && !Number.isNaN(atNoon(value).getTime())
+    typeof value === "string" &&
+    ISO_DATE.test(value) &&
+    !Number.isNaN(atNoon(value).getTime()) &&
+    atNoon(value).toISOString().slice(0, 10) === value
   );
 }
 
@@ -77,6 +80,53 @@ export function weekDates(anchor: string): string[] {
   const weekday = atNoon(anchor).getUTCDay();
   const start = shiftDate(anchor, -(weekday === 0 ? 6 : weekday - 1));
   return Array.from({ length: 7 }, (_, index) => shiftDate(start, index));
+}
+
+// Implements: REQ-CEO72-01
+export function monthDates(anchor: string): string[] {
+  const first = `${anchor.slice(0, 7)}-01`;
+  const last = shiftDate(shiftMonth(first, 1), -1);
+  const start = weekDates(first)[0];
+  const end = weekDates(last)[6];
+  const count = Math.round((atNoon(end).getTime() - atNoon(start).getTime()) / 86400000) + 1;
+  return Array.from({ length: count }, (_, index) => shiftDate(start, index));
+}
+
+export function shiftMonth(anchor: string, months: number): string {
+  const date = atNoon(`${anchor.slice(0, 7)}-01`);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return date.toISOString().slice(0, 10);
+}
+
+// Implements: REQ-CEO72-02 — sesiones independientes, máximo 27 por semestre.
+export function weeklyDates(date: string, until?: string): string[] {
+  if (!isIsoDate(date)) throw new Error("Elige una fecha válida.");
+  if (until === undefined) return [date];
+  if (!isIsoDate(until) || until < date || until > shiftDate(date, 182)) {
+    throw new Error(
+      "La repetición debe terminar entre la fecha inicial y las próximas 26 semanas."
+    );
+  }
+  const dates: string[] = [];
+  for (let next = date; next <= until; next = shiftDate(next, 7)) dates.push(next);
+  return dates;
+}
+
+// Implements: REQ-CEO72-03 — selección en pasos de 15 minutos, dentro del horario.
+export function gridMinutes(y: number, top: number, height: number): number {
+  return Math.max(
+    DAY_START_MINUTES,
+    Math.min(
+      DAY_END_MINUTES - 15,
+      DAY_START_MINUTES +
+        Math.floor((((y - top) / height) * (DAY_END_MINUTES - DAY_START_MINUTES)) / 15) * 15
+    )
+  );
+}
+
+export function movedBlockTimes(start: number, duration: number) {
+  const bounded = Math.max(DAY_START_MINUTES, Math.min(DAY_END_MINUTES - duration, start));
+  return { startTime: timeOfMinutes(bounded), endTime: timeOfMinutes(bounded + duration) };
 }
 
 export function normalizeTime(value: unknown): string | null {

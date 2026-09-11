@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TrashSimple, X } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import { deletePersonalEvent, savePersonalEvent } from "../../../lib/firebase-classroom-client";
-import { validateBlock } from "../../../lib/planner";
+import { isIsoDate, shiftDate, validateBlock } from "../../../lib/planner";
 import type { PersonalEventKind } from "../../../lib/planner";
 import { KIND_LABEL } from "./calendar-constants";
 import type { BlockDraft } from "./calendar-constants";
@@ -44,6 +44,7 @@ export function BlockDialog({
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy) return;
     const invalid = validateBlock(values);
     if (invalid) return setProblem(invalid);
     setBusy(true);
@@ -157,6 +158,45 @@ export function BlockDialog({
             />
           </label>
         </div>
+        {!values.id && (
+          <div className="planner-dialog-row">
+            <label>
+              Repetición
+              <select
+                disabled={!isIsoDate(values.date)}
+                value={values.repeatUntil !== undefined ? "weekly" : "once"}
+                onChange={(event) =>
+                  set(
+                    "repeatUntil",
+                    event.target.value === "weekly" ? shiftDate(values.date, 105) : undefined
+                  )
+                }
+              >
+                <option value="once">Una sola vez</option>
+                <option value="weekly">Cada semana</option>
+              </select>
+            </label>
+            {values.repeatUntil !== undefined && (
+              <label>
+                Repetir hasta
+                <input
+                  type="date"
+                  required
+                  min={values.date}
+                  max={isIsoDate(values.date) ? shiftDate(values.date, 182) : undefined}
+                  value={values.repeatUntil}
+                  onChange={(event) => set("repeatUntil", event.target.value)}
+                />
+              </label>
+            )}
+          </div>
+        )}
+        {values.repeatUntil !== undefined && (
+          <p className="planner-help">
+            Se crea una sesión por semana. Después puedes editar, mover o eliminar cada sesión por
+            separado.
+          </p>
+        )}
         <label>
           Detalle opcional
           <textarea

@@ -1,5 +1,5 @@
 import { firestore, currentUser } from "./sdk.ts";
-import { normalizeTime, validateBlock } from "../planner.ts";
+import { normalizeTime, validateBlock, weeklyDates } from "../planner.ts";
 import type { PersonalEvent, PersonalEventKind } from "../planner.ts";
 import { personalKind, toPersonalEvent } from "./mappers.ts";
 
@@ -12,6 +12,7 @@ export type PersonalEventInput = {
   endTime: string;
   courseId: string | null;
   kind: PersonalEventKind;
+  repeatUntil?: string;
 };
 
 /**
@@ -40,32 +41,55 @@ export function watchPersonalEvents(
   onError: (message: string) => void
 ) {
   let active = true;
-  let stop: () => void = () => undefined;
+  const stops: (() => void)[] = [];
 
   Promise.all([firestore(), currentUser()])
     .then(([{ sdk, db }, user]) => {
       if (!active) return;
-      stop = sdk.onSnapshot(
-        sdk.query(
-          sdk.collection(db, "users", user.uid, "calendar_events"),
-          sdk.where("date", ">=", fromDate),
-          sdk.where("date", "<=", toDate)
-        ),
-        (snapshot) => onChange(snapshot.docs.map(toPersonalEvent)),
-        (cause) => onError(personalEventError(cause, "leer"))
-      );
+      const pages: PersonalEvent[][] = [];
+      // Implements: REQ-CEO72-04 — páginas reactivas con cursor estable.
+      const subscribe = (
+        page: number,
+        cursor?: import("firebase/firestore").QueryDocumentSnapshot
+      ) => {
+        stops[page] = sdk.onSnapshot(
+          sdk.query(
+            sdk.collection(db, "users", user.uid, "calendar_events"),
+            sdk.where("date", ">=", fromDate),
+            sdk.where("date", "<=", toDate),
+            sdk.orderBy("date"),
+            sdk.orderBy(sdk.documentId()),
+            ...(cursor ? [sdk.startAfter(cursor)] : []),
+            sdk.limit(200)
+          ),
+          (snapshot) => {
+            if (!active) return;
+            stops.splice(page + 1).forEach((stop) => stop());
+            pages.splice(page, pages.length - page, snapshot.docs.map(toPersonalEvent));
+            if (snapshot.size === 200) subscribe(page + 1, snapshot.docs.at(-1));
+            else onChange(pages.flat());
+          },
+          (cause) => {
+            if (active) onError(personalEventError(cause, "leer"));
+          }
+        );
+      };
+      subscribe(0);
     })
-    .catch((cause) => onError(personalEventError(cause, "leer")));
+    .catch((cause) => {
+      if (active) onError(personalEventError(cause, "leer"));
+    });
 
   return () => {
     active = false;
-    stop();
+    stops.forEach((stop) => stop());
   };
 }
 
 export async function savePersonalEvent(input: PersonalEventInput) {
   const problem = validateBlock(input);
   if (problem) throw new Error(problem);
+  const dates = weeklyDates(input.date, input.id ? undefined : input.repeatUntil);
   const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
   const values = {
     userId: user.uid,
@@ -84,12 +108,15 @@ export async function savePersonalEvent(input: PersonalEventInput) {
       await sdk.updateDoc(sdk.doc(events, input.id), values);
       return input.id;
     }
-    const created = await sdk.addDoc(events, {
-      ...values,
-      completed: false,
-      createdAt: sdk.serverTimestamp(),
+    // Implements: REQ-CEO72-02 — todo el horario se guarda atómicamente.
+    const batch = sdk.writeBatch(db);
+    const refs = dates.map((date) => {
+      const ref = sdk.doc(events);
+      batch.set(ref, { ...values, date, completed: false, createdAt: sdk.serverTimestamp() });
+      return ref;
     });
-    return created.id;
+    await batch.commit();
+    return refs[0].id;
   } catch (cause) {
     throw new Error(personalEventError(cause, "guardar"), { cause });
   }

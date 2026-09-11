@@ -1,5 +1,22 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: refinamiento visual y comentarios de PR #183, 2026-09-10
+
+- Corrección posterior del selector Semana/Mes: columnas iguales dimensionadas por la etiqueta más larga, con 8 px de espacio interior. La comprobación de ancho reproduce el defecto anterior (61,48 px disponibles frente a 73,41 px necesarios) y verifica que ambas etiquetas caben completas.
+- Cabecera con altura uniforme de 44 px, texto de 13 px y radios de 8 px. Selector táctil condicionado a `any-pointer: coarse`, incluidos equipos híbridos.
+- Bloques con borde uniforme de 1 px y superficie tonal, sin franja lateral, sombras ni pulso. La línea de hora actual queda bajo los bloques para no cruzar su texto.
+- Mes móvil con contador explícito de actividades y agenda completa a todo el ancho debajo de la semana seleccionada. Cambia de posición al elegir otra fecha; títulos y ramos se ajustan en varias líneas, también a 320 px.
+- PR Review Agent: `date: input.date` ya se persiste; confirmado además con una aserción de cambio de columna tras editar fecha. React Doctor: se reutiliza el Map de referencias; permanece sólo el aviso de tamaño de CalendarView, sin supresiones.
+- Cobertura ampliada a ocho recorridos de calendario con medidas reales de controles, ratón/tacto, estados de bloques compactos y posición de la agenda móvil. Se corrige el SDK sintético para admitir la sobrecarga de `doc` con ruta completa usada al completar eventos. Tests sellados originales intactos.
+
+## Handoff: CEO-72, calendario mensual y planificación semanal, 2026-09-10
+
+- **Entrega:** selector Mes/Semana, cuadrícula mensual completa con evaluaciones y entregas, agenda del día y navegación por teclado. Clases y estudio con repetición semanal hasta una fecha (máximo 26 semanas), guardadas en un batch; cada sesión se edita de forma independiente.
+- **Interacción:** selección de intervalos de 15 minutos y movimiento con Pointer Events, ratón, lápiz o tacto. Modo táctil explícito para preservar el scroll; Escape cancela; formulario alternativo para cambiar fecha/hora con teclado.
+- **Datos:** esquema privado existente `users/{uid}/calendar_events`, sin migración ni cambio de reglas. Listeners con páginas de 200 documentos y cursor fecha/id, limpieza de suscripciones al navegar y mensajes de carga/error.
+- **Verificación:** build de producción, 610 pruebas unitarias, 25 pruebas de HTML y seis recorridos Playwright con componentes y adaptador reales (SDK sintético). Doce pruebas de reglas aprobadas mediante Firebase CLI instalada; el wrapper `check:rules` falló al preparar `pnpm dlx` por scripts de instalación bloqueados. React Doctor: 89/100, un aviso de tamaño de CalendarView; sin supresiones. Integridad de tests anteriores preservada; se añade únicamente el sello de la nueva suite.
+- **Diseño:** impeccable y deliberate, revisión independiente **ship**; decisiones y límites en `docs/design/ceo-72-calendario.md`. No se escribieron datos remotos ni se desplegaron reglas; la prueba de transporte no acredita dispositivos físicos sincronizados.
+
 ## Handoff: erradicación total de integraciones, bots, scripts y crons de Discord, 2026-09-09
 
 - **Motivación y contexto institucional:** Preparación del código fuente para presentación oficial ante funcionarios y técnicos de la Universidad del Bío-Bío. Las integraciones y bots de Discord se concibieron exclusivamente para acelerar el desarrollo iterativo temprano entre mantenedores y no forman parte del producto ni de los canales institucionales.
