@@ -67,3 +67,10 @@
 - **Attempted / Identified Solution:** Consolidación de la agregación de contadores en bucles `for..of` directos de pasada única de $O(N)$ tiempo y $O(1)$ espacio adicional.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales en la derivación de contadores de la vista previa del docente, manteniendo 100% la equivalencia funcional.
 - **Future Rule:** Evitar llamadas encadenadas o múltiples a `.filter(...).length` cuando se computan múltiples contadores escalares a partir de los mismos datos de entrada.
+
+## 2026-09-11 - Construcción de Map de preguntas en `QuizCorrectionView` (`app/views/classroom/StudentQuizzes.tsx`)
+
+- **Finding:** `QuizCorrectionView` utilizaba `new Map(quiz.questions.map((question) => [question.id, question]))`, asignando arreglos de tuplas intermedias `[id, question]` en la vista de resultados de cuestionarios.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byQuestion.set(question.id, question)`.
+- **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos de tuplas por elemento en la visualización de corrección de cuestionarios manteniendo exactitud funcional.
+- **Future Rule:** Construir mapas de búsqueda a partir de arreglos en vistas usando bucles `for..of` e invocar `.set()` directamente sin asignación de tuplas intermedio.
