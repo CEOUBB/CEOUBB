@@ -84,7 +84,12 @@
       "name": "ceoubb-preview",
       "workers_dev": true,
       "preview_urls": true,
-      "routes": [],
+      "routes": [
+        {
+          "pattern": "staging.ceoubb.com",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "NEXT_PUBLIC_CEOUBB_ENVIRONMENT": "preview",
         "CEOUBB_ENVIRONMENT": "preview",
