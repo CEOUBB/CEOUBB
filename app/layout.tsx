@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { AppToaster } from "../components/AppToaster";
 import "./globals.css";
 import "./mobile-shell.css";
 import "./campus.css";
@@ -85,6 +87,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// Implements: REQ-TOAST-01, REQ-URL-01
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
@@ -99,7 +102,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
       </head>
-      <body>{children}</body>
+      <body>
+        <NuqsAdapter>
+          {children}
+          <AppToaster />
+        </NuqsAdapter>
+      </body>
     </html>
   );
 }

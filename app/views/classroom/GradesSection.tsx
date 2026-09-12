@@ -47,6 +47,8 @@ import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
 import { TeamSubmissionPicker } from "./TeamSubmissionPicker";
 import { SubmissionSlot, useOwnSubmissions, useSubmissionUpload } from "./SubmissionSlot";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { toast } from "../../../lib/toast";
 
 const GradeHistoryDialog = dynamic(
   () => import("./GradeHistoryDialog").then((module) => module.GradeHistoryDialog),
@@ -493,6 +495,7 @@ function GradeFeedbackNote({ feedback }: { feedback: string | undefined }) {
 }
 
 // Implements: REQ-PAG-01, REQ-PAG-02, REQ-PAG-03
+// Implements: REQ-TOAST-01, REQ-TOAST-02, REQ-VIRT-01, REQ-VIRT-02
 function TeacherGrades({
   course,
   classroom,
@@ -536,6 +539,14 @@ function TeacherGrades({
     setCurrentPage(1);
   };
 
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: paginated.items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+  });
+
   const handleSetScore = useCallback(
     async (
       userId: string,
@@ -559,7 +570,12 @@ function TeacherGrades({
         return false;
       }
       try {
-        await saveStudentScores(course.id, userId, next);
+        await toast.promise(saveStudentScores(course.id, userId, next), {
+          loading: "Guardando nota...",
+          success: "Nota guardada correctamente",
+          error: (cause) =>
+            cause instanceof Error ? cause.message : "No fue posible guardar la nota.",
+        });
         return true;
       } catch (cause) {
         note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
@@ -592,17 +608,16 @@ function TeacherGrades({
     setFeedbackBusy(true);
     setFeedbackError("");
     try {
-      await saveGradeFeedback(
-        course.id,
-        feedbackEditor.student.userId,
-        feedbackEditor.item.id,
-        value
-      );
-      note(
-        value.trim()
-          ? `Retroalimentación de ${feedbackEditor.item.name} guardada.`
-          : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
-        "ok"
+      await toast.promise(
+        saveGradeFeedback(course.id, feedbackEditor.student.userId, feedbackEditor.item.id, value),
+        {
+          loading: "Guardando retroalimentación...",
+          success: value.trim()
+            ? `Retroalimentación de ${feedbackEditor.item.name} guardada.`
+            : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
+          error: (cause) =>
+            cause instanceof Error ? cause.message : "No fue posible guardar la retroalimentación.",
+        }
       );
       return true;
     } catch (cause) {
@@ -697,19 +712,55 @@ function TeacherGrades({
                 No se encontraron estudiantes que coincidan con “{deferredQuery}”.
               </p>
             )}
-            {paginated.items.map((student) => (
-              <TeacherStudentRow
-                gradebook={gradebook}
-                feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
-                key={student.userId}
-                onEditFeedback={openFeedback}
-                onViewHistory={openHistory}
-                onSetScore={handleSetScore}
-                scores={classScores[student.userId] ?? EMPTY_SCORES}
-                student={student}
-                readOnly={readOnly}
-              />
-            ))}
+            {paginated.items.length > 0 && (
+              <div
+                ref={parentRef}
+                style={{
+                  maxHeight: "680px",
+                  overflowY: "auto",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
+                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const student = paginated.items[virtualRow.index];
+                    if (!student) return null;
+                    return (
+                      <div
+                        key={student.userId}
+                        data-index={virtualRow.index}
+                        ref={rowVirtualizer.measureElement}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                      >
+                        <TeacherStudentRow
+                          gradebook={gradebook}
+                          feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
+                          key={student.userId}
+                          onEditFeedback={openFeedback}
+                          onViewHistory={openHistory}
+                          onSetScore={handleSetScore}
+                          scores={classScores[student.userId] ?? EMPTY_SCORES}
+                          student={student}
+                          readOnly={readOnly}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           {filteredStudents.length > 0 && (
             <nav aria-label="Paginación de libro de notas" className="classroom-pagination">

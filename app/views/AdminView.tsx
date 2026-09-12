@@ -1,7 +1,10 @@
 "use client";
 
 import { Archive, CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryState, parseAsInteger } from "nuqs";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { toast } from "../../lib/toast";
 import {
   archiveAcademicPeriod,
   loadAcademicPeriods,
@@ -10,18 +13,32 @@ import {
 } from "../../lib/portal-utils";
 import type { AcademicPeriodSummary, User } from "../../lib/portal-utils";
 
-// Implements: REQ-PERF-05
+// Implements: REQ-PERF-05, REQ-TOAST-01, REQ-URL-01, REQ-VIRT-01
 export function AdminView() {
   const [accounts, setAccounts] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useQueryState("page", {
+    ...parseAsInteger.withDefault(1),
+    shallow: true,
+  });
   const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useQueryState("q", {
+    defaultValue: "",
+    shallow: true,
+    throttleMs: 300,
+  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [periods, setPeriods] = useState<AcademicPeriodSummary[]>([]);
   const [periodsLoading, setPeriodsLoading] = useState(true);
   const [archivingPeriod, setArchivingPeriod] = useState("");
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: accounts.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 56,
+    overscan: 5,
+  });
 
   const fetchAccounts = useCallback(async (targetPage: number, query: string) => {
     setLoading(true);
@@ -95,7 +112,12 @@ export function AdminView() {
     setArchivingPeriod(period.id);
     setMessage("");
     try {
-      await archiveAcademicPeriod(period.id);
+      await toast.promise(archiveAcademicPeriod(period.id), {
+        loading: `Archivando ${period.nombre}...`,
+        success: `Período ${period.nombre} archivado. Sus ramos quedaron en modo lectura.`,
+        error: (cause) =>
+          cause instanceof Error ? cause.message : "No fue posible archivar el período.",
+      });
       setPeriods(await loadAcademicPeriods());
       setMessage(`Período ${period.nombre} archivado. Sus ramos quedaron en modo lectura.`);
     } catch (cause) {
@@ -114,14 +136,20 @@ export function AdminView() {
       });
       if (response.ok) {
         // Dual-store sync: /api/admin/users ejecuta la mutación transaccional en Turso y Firestore; updateRemoteUserRole en cliente fue descartado para evitar escrituras redundantes.
-        setMessage("Rol actualizado exitosamente en Turso y Firestore.");
+        const successMsg = "Rol actualizado exitosamente en Turso y Firestore.";
+        toast.success(successMsg);
+        setMessage(successMsg);
         await fetchAccounts(page, searchQuery);
       } else {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setMessage(data.error ?? "No fue posible actualizar el rol.");
+        const errMsg = data.error ?? "No fue posible actualizar el rol.";
+        toast.error(errMsg);
+        setMessage(errMsg);
       }
     } catch {
-      setMessage("No fue posible conectar con el servidor de administración.");
+      const errMsg = "No fue posible conectar con el servidor de administración.";
+      toast.error(errMsg);
+      setMessage(errMsg);
     }
   };
 
@@ -224,29 +252,65 @@ export function AdminView() {
               : "Todavía no hay cuentas institucionales registradas."}
           </p>
         )}
-        {accounts.map((account) => (
-          <div className="admin-row" key={account.id}>
-            <span>
-              <b>{account.name}</b>
-              <small>{account.email}</small>
-            </span>
-            <span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span>
-            <span>
-              {account.role !== "owner" && (
-                <select
-                  aria-label={`Cambiar rango de ${account.name}`}
-                  value={account.role}
-                  onChange={(event) =>
-                    changeRole(account.id, event.target.value as "teacher" | "student")
-                  }
-                >
-                  <option value="student">Estudiante</option>
-                  <option value="teacher">Profesor UBB</option>
-                </select>
-              )}
-            </span>
+        {accounts.length > 0 && (
+          <div
+            ref={parentRef}
+            style={{
+              maxHeight: "560px",
+              overflowY: "auto",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const account = accounts[virtualRow.index];
+                if (!account) return null;
+                return (
+                  <div
+                    key={account.id}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <div className="admin-row">
+                      <span>
+                        <b>{account.name}</b>
+                        <small>{account.email}</small>
+                      </span>
+                      <span className={`role-chip ${account.role}`}>{roleLabel(account.role)}</span>
+                      <span>
+                        {account.role !== "owner" && (
+                          <select
+                            aria-label={`Cambiar rango de ${account.name}`}
+                            value={account.role}
+                            onChange={(event) =>
+                              changeRole(account.id, event.target.value as "teacher" | "student")
+                            }
+                          >
+                            <option value="student">Estudiante</option>
+                            <option value="teacher">Profesor UBB</option>
+                          </select>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        ))}
+        )}
       </div>
 
       {totalPages > 1 && (
@@ -254,7 +318,7 @@ export function AdminView() {
           <button
             type="button"
             className="admin-page-btn"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage((p) => Math.max(1, (p ?? 1) - 1))}
             disabled={page <= 1 || loading}
             aria-label="Página anterior"
           >
@@ -267,7 +331,7 @@ export function AdminView() {
           <button
             type="button"
             className="admin-page-btn"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage((p) => Math.min(totalPages, (p ?? 1) + 1))}
             disabled={page >= totalPages || loading}
             aria-label="Página siguiente"
           >
