@@ -22,7 +22,7 @@
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
   "tests/dashboard-agenda.test.ts": "ec8458d9b61aac7b1027f62af60eacc7b75775df268c6b34764b99dc73ea85b5",
   "tests/deep-security-remediation.test.ts": "55b160450a5932b8a71e007b5af7ff6da7ada278f7931f14228312b87c542349",
-  "tests/dev-auth.test.ts": "6f31c85fcff116d46f60519c4b5ff66903417e964753b8f358d5c12fb9cc395a",
+  "tests/dev-auth.test.ts": "30a4416e643bedf0a74664d3773b575ad93f4958cc30e9a26dbac46802f699d6",
   "tests/fast-boot-session.test.ts": "71a7834df050fa85c0ab168389de27657b4411e55b10d5beafe589798ae6a84c",
   "tests/final-grade-records.test.ts": "4fbbd7b05aef53e8445ba8dbcbd5d30719d88f01aac6ca7718887c70022fd213",
   "tests/firebase-mappers.test.ts": "5cbc80506cd06854792a7172fa583427672b93c0a3df51b67b6978467b1ad6d4",
@@ -44,6 +44,7 @@
   "tests/multimodal-editor.test.ts": "17cdd9286de752b02ec021cb13057d99dad3ad35bd103045d5a5a3d9b14fac9b",
   "tests/native-services.test.ts": "4fdf7689c9d438346fc12ddef9b561ac9415d90a6730cdc9da730505428c947e",
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
+  "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "982a991ba338bb6208c49c17297b1cf9b01d54102306978446f0c3ff0eed5fd3",
   "tests/preview-demo-seed.test.ts": "7222cb2aa3434353ce1c5034b2af14e09a54498e56acbc78182d19d5bbe66b6b",
@@ -66,6 +67,5 @@
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
   "tests/team-submissions.test.ts": "03c03aed0671bdf94d7c9f61a334a7d00ae70465a3052f0b893566ca8d18d61b",
   "tests/user-profile-magic-bytes.test.ts": "64306f23f09d61483b675d3469c196b7edcbfe41e61461727d4b2b4211b9abb8",
-  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25",
-  "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c"
+  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25"
 }

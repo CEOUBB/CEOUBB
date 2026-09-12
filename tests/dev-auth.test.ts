@@ -8,6 +8,7 @@ process.env.TURSO_DATABASE_URL = "file::memory:?cache=shared";
 
 const { getDb } = await import("../db/index.ts");
 const { POST } = await import("../app/api/auth/dev-login/route.ts");
+const { DELETE: DELETE_ME } = await import("../app/api/auth/me/route.ts");
 
 const env = process.env as Record<string, string | undefined>;
 
@@ -205,6 +206,20 @@ test("REQ-AUTH-06: Endpoint /api/auth/dev-login responde 404 en entorno producti
     env.VERCEL_ENV = previousVercelEnv;
     env.NODE_ENV = previousNodeEnv;
   }
+});
+
+test("REQ-SEC-14: DELETE /api/auth/me rechaza solicitudes de origen distinto con 403", async () => {
+  const request = new Request("http://localhost:3000/api/auth/me", {
+    method: "DELETE",
+    headers: {
+      Origin: "https://sitio-malicioso.com",
+    },
+  });
+
+  const response = await DELETE_ME(request);
+  assert.equal(response.status, 403);
+  const data = await response.json();
+  assert.equal(data.error, "Origen no autorizado.");
 });
 
 test("REQ-AUTH-04: Endpoint /api/auth/dev-login rechaza payloads inválidos con 400", async () => {

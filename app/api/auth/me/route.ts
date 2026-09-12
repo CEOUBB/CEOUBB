@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../../db";
+import { getDb } from "../../../../db/index.ts";
 import {
   assistantAssignments,
   gradeAuditLogs,
@@ -8,18 +8,18 @@ import {
   sessions,
   solicitudesSoporte,
   users,
-} from "../../../../db/schema";
-import { interopResources, interopTools } from "../../../../db/interop-schema";
-import { destroySession, getSessionUser } from "../../../../lib/auth";
+} from "../../../../db/schema.ts";
+import { interopResources, interopTools } from "../../../../db/interop-schema.ts";
+import { destroySession, getSessionUser } from "../../../../lib/auth.ts";
 import {
   deleteFirebaseAccountData,
   revokeFirebaseAccess,
-} from "../../../../lib/services/firebase-revocation";
+} from "../../../../lib/services/firebase-revocation.ts";
 import {
   MAX_PAGE_SIZE,
   listUserSections,
   listUserSectionMemberships,
-} from "../../../../lib/services/academic-catalog";
+} from "../../../../lib/services/academic-catalog.ts";
 
 const UNAUTHORIZED = 401;
 
@@ -59,8 +59,13 @@ export async function GET(request: Request) {
   });
 }
 
-// Implements: REQ-DATA-01, REQ-API-02, REQ-SEC-13
+// Implements: REQ-DATA-01, REQ-API-02, REQ-SEC-13, REQ-SEC-14
 export async function DELETE(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
   const user = await getSessionUser(request);
   if (!user) return Response.json({ error: "Inicia sesión." }, { status: UNAUTHORIZED });
   if (user.role === "owner") {
