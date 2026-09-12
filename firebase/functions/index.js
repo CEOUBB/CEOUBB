@@ -59,9 +59,9 @@ async function assertSectionWritable(db, courseId) {
   }
 }
 
-async function assertActiveAuthentication(request, db) {
+async function assertActiveAuthentication(request, db, role) {
   const marker = await db.collection("authRevocations").doc(request.auth.uid).get();
-  if (!authenticationIsActive(request.auth, marker.exists ? marker.data() : null)) {
+  if (!authenticationIsActive(request.auth, marker.exists ? marker.data() : null, role)) {
     throw new HttpsError("unauthenticated", "Vuelve a autenticarte con tu cuenta institucional.");
   }
 }
@@ -70,11 +70,11 @@ async function authorizedGradeActor(request, db, courseId) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
-  await assertActiveAuthentication(request, db);
-  await assertSectionWritable(db, courseId);
   const actor = actorFromAuth(request.auth);
   const profile = await db.collection("users").doc(actor.actorUid).get();
   const role = profile.exists ? profile.get("role") : "";
+  await assertActiveAuthentication(request, db, role);
+  await assertSectionWritable(db, courseId);
   let enrolled = false;
   if (role === "teacher") {
     const enrollment = await db
@@ -129,11 +129,11 @@ async function authorizedQuizPublisher(request, db, courseId) {
   if (!request.auth || request.auth.token.email_verified !== true) {
     throw new HttpsError("unauthenticated", "Debes iniciar sesión con una cuenta verificada.");
   }
-  await assertActiveAuthentication(request, db);
-  await assertSectionWritable(db, courseId);
   const actor = actorFromAuth(request.auth);
   const profile = await db.collection("users").doc(actor.actorUid).get();
   const role = profile.exists ? profile.get("role") : "";
+  await assertActiveAuthentication(request, db, role);
+  await assertSectionWritable(db, courseId);
   if (role === "owner") return actor;
   const enrollment = await db
     .collection("enrollments")
