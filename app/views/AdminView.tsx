@@ -219,7 +219,6 @@ export function AdminView() {
     parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
   );
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [periods, setPeriods] = useState<AcademicPeriodSummary[]>([]);
   const [periodsLoading, setPeriodsLoading] = useState(true);
   const [archivingPeriod, setArchivingPeriod] = useState("");
@@ -297,7 +296,6 @@ export function AdminView() {
     )
       return;
     setArchivingPeriod(period.id);
-    setMessage("");
     try {
       await toast.promise(archiveAcademicPeriod(period.id), {
         loading: `Archivando ${period.nombre}...`,
@@ -306,9 +304,8 @@ export function AdminView() {
           cause instanceof Error ? cause.message : "No fue posible archivar el período.",
       });
       setPeriods(await loadAcademicPeriods());
-      setMessage(`Período ${period.nombre} archivado. Sus ramos quedaron en modo lectura.`);
-    } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : "No fue posible archivar el período.");
+    } catch {
+      // Error manejado visualmente por el toast.promise
     } finally {
       setArchivingPeriod("");
     }
@@ -323,20 +320,17 @@ export function AdminView() {
       });
       if (response.ok) {
         // Dual-store sync: /api/admin/users ejecuta la mutación transaccional en Turso y Firestore; updateRemoteUserRole en cliente fue descartado para evitar escrituras redundantes.
-        const successMsg = "Rol actualizado exitosamente en Turso y Firestore.";
+        const successMsg = "Rol actualizado exitosamente en la base de datos.";
         toast.success(successMsg);
-        setMessage(successMsg);
         await fetchAccounts(page, searchQuery);
       } else {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
         const errMsg = data.error ?? "No fue posible actualizar el rol.";
         toast.error(errMsg);
-        setMessage(errMsg);
       }
     } catch {
       const errMsg = "No fue posible conectar con el servidor de administración.";
       toast.error(errMsg);
-      setMessage(errMsg);
     }
   };
 
@@ -406,15 +400,6 @@ export function AdminView() {
         page={page}
         totalPages={totalPages}
       />
-
-      {message && (
-        <p
-          className={`tool-status ${message.startsWith("Rol actualizado") || message.startsWith("Período") ? "ok" : "bad"}`}
-          role="status"
-        >
-          {message}
-        </p>
-      )}
     </section>
   );
 }

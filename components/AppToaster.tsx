@@ -7,7 +7,7 @@ import { CheckCircle, CircleNotch, Info, WarningCircle } from "@phosphor-icons/r
 export function AppToaster() {
   return (
     <SonnerToaster
-      position="bottom-right"
+      position="bottom-center"
       richColors
       closeButton
       duration={3500}
