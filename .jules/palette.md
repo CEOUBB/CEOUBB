@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Calendar / CalendarHeader & CalendarMonth
+
+- **Finding:** In `CalendarHeader.tsx`, the date jump input lacked an explicit `aria-label`, and in `CalendarMonth.tsx`, the "Añadir bloque" action button lacked a visual icon consistent with `CalendarHeader.tsx` while day agenda event buttons lacked structured item-specific labels for screen readers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
+- **Applied / Evaluated Pattern:** Added `aria-label="Ir a una fecha"` to the date picker input, added `<Plus aria-hidden="true" size={15} weight="bold" />` to the agenda create button, and added structured `aria-label={`Ver detalles de "${item.title}", ${timeStr}, ${context}${status}`}` to agenda item buttons.
+- **Design System Constraint:** Reused existing `@phosphor-icons/react` icon component props and existing utility classes without visual or layout modifications.
+- **Future Rule:** Ensure calendar jump controls expose explicit ARIA labels and selected agenda items declare structured activity context in `aria-label`.
+
 ## [2026-03-31] - Classroom / MoodleImportDialog & AdeccaImportDialog
 
 - **Finding:** Decorative Phosphor SVG icons (`<FileArrowUp>`, `<X>`, `<DownloadSimple>`, `<ArrowCounterClockwise>`) inside trigger buttons, file upload dropzones, and report download controls lacked explicit `aria-hidden="true"`, while the import `<progress>` bar in `MoodleImportDialog.tsx` lacked an accessible name (`aria-label`) during active import operations (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).

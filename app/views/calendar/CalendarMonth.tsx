@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { CalendarCheck, ClipboardText } from "@phosphor-icons/react";
+import { CalendarCheck, ClipboardText, Plus } from "@phosphor-icons/react";
 import type { PlannerItem } from "../../../lib/planner";
 import { shiftDate } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
@@ -119,34 +119,48 @@ export function CalendarMonth({
             })}
           </h2>
           <button className="planner-create" type="button" onClick={() => onCreate(selected, 9)}>
-            Añadir bloque
+            <Plus aria-hidden="true" size={15} weight="bold" /> Añadir bloque
           </button>
         </header>
         {selectedItems.length === 0 ? (
           <p>No hay actividades para este día.</p>
         ) : (
           <ul>
-            {selectedItems.map((item) => (
-              <li key={item.id}>
-                <button type="button" onClick={() => onOpen(item)}>
-                  <span className="num">
-                    {item.startTime
-                      ? `${item.startTime}–${item.endTime}`
-                      : item.kind === "evaluation"
-                        ? "Evaluación"
-                        : "Entrega"}
-                  </span>
-                  <strong>{item.title}</strong>
-                  <span>
-                    {item.courseName ??
-                      (item.kind in KIND_LABEL
-                        ? KIND_LABEL[item.kind as keyof typeof KIND_LABEL]
-                        : item.detail)}
-                    {item.completed ? " · Completado" : ""}
-                  </span>
-                </button>
-              </li>
-            ))}
+            {selectedItems.map((item) => {
+              const context =
+                item.courseName ??
+                (item.kind in KIND_LABEL
+                  ? KIND_LABEL[item.kind as keyof typeof KIND_LABEL]
+                  : item.detail);
+              const status = item.completed ? " · Completado" : "";
+              const timeStr = item.startTime
+                ? `${item.startTime} a ${item.endTime}`
+                : item.kind === "evaluation"
+                  ? "Evaluación"
+                  : "Entrega";
+              return (
+                <li key={item.id}>
+                  <button
+                    aria-label={`Ver detalles de "${item.title}", ${timeStr}, ${context}${status}`}
+                    type="button"
+                    onClick={() => onOpen(item)}
+                  >
+                    <span className="num">
+                      {item.startTime
+                        ? `${item.startTime}–${item.endTime}`
+                        : item.kind === "evaluation"
+                          ? "Evaluación"
+                          : "Entrega"}
+                    </span>
+                    <strong>{item.title}</strong>
+                    <span>
+                      {context}
+                      {status}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
