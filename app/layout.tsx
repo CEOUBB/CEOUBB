@@ -46,10 +46,9 @@ export const metadata: Metadata = {
     "aula virtual UBB",
     "Universidad del Bío-Bío",
     "LMS UBB",
-    "Ingeniería Mecánica UBB",
-    "Estática",
-    "Termodinámica Aplicada",
-    "MATLAB",
+    "plataforma académica",
+    "estudiantes UBB",
+    "docentes UBB",
   ],
   robots: { index: true, follow: true },
   openGraph: {

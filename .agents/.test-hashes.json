@@ -53,7 +53,7 @@
   "tests/publication-workflow.test.ts": "282b9ce29f75bb9049de52b2c3e0780b45d8ba476ff778eecbcd430842779936",
   "tests/quiz-engine.test.ts": "66389e5cf1305ac1274a24f8a595f8846af75503e9c9bd5f7e1a9673dfaf2b30",
   "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
-  "tests/rendered-html.test.mjs": "87f2b8905265cc80b467a51f7fb482adb0cd07c592e9904f2e011b2da54d3faf",
+  "tests/rendered-html.test.mjs": "c0bc6d6f9cd8c347f9063f3c44eb40b2a6789147a026227edc5cafb923f950f2",
   "tests/rich-text.test.ts": "68cba98f0d88bf4e3674658ee80f67757bff69401cd06a8b44187b3f7e399f75",
   "tests/security-audit-081.test.ts": "c631e5d90c895d1a7693e7b1dd7899d870d9c18dd572049dc1587ec1e49a5b7c",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",

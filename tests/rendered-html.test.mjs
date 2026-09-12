@@ -126,7 +126,7 @@ test("renders Centro de Estudio UBB", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /Centro de Estudio UBB/i);
-  assert.match(html, /Ingeniería Mecánica/i);
+  assert.match(html, /Aula Virtual UBB/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
