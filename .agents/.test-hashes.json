@@ -40,7 +40,7 @@
   "tests/live-class.test.ts": "8d9c82c6babfe0cc763f8600e2847aa2c1a5ef5b89ff559804d9a955c0139088",
   "tests/mobile-bridge.test.ts": "6905d8daef23c5aba912d3d97a5640e4fdf327c1ded98908fe6e6bcb98928161",
   "tests/mobile-performance-budget.test.ts": "fe0bce447e8844f7714db9430ac11cb986ee5ab1c3b0c985fe600c3248bed00a",
-  "tests/modern-stack.test.ts": "806ab4d3c52f2d746f6128ea50cf1e74134668e7c17ce8134f8509abe1ae2d42",
+  "tests/modern-stack.test.ts": "17ce34a81cdd6a39e49d37570870e9a755c6407b15f7101c6c3f8d99e48ef560",
   "tests/moodle-import.test.ts": "87187ae0bb908aa3e8cfa867aa5ac7fe9c160d719fa82b3dc57e7f190b7ecacd",
   "tests/multimodal-editor.test.ts": "17cdd9286de752b02ec021cb13057d99dad3ad35bd103045d5a5a3d9b14fac9b",
   "tests/native-services.test.ts": "4fdf7689c9d438346fc12ddef9b561ac9415d90a6730cdc9da730505428c947e",

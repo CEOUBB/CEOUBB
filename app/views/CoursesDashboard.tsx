@@ -30,6 +30,142 @@ import {
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
 
+function DashboardAgenda({
+  next,
+  nextCourse,
+  onCalendar,
+  openCourse,
+}: {
+  next: CalendarEntry | null | undefined;
+  nextCourse: Course | null | undefined;
+  onCalendar: () => void;
+  openCourse: (course: Course) => void;
+}) {
+  return (
+    <section className="dashboard-section dashboard-agenda">
+      <div className="section-title">
+        <h2>En tu agenda</h2>
+        <CalendarBlank size={20} aria-hidden="true" />
+      </div>
+      {next ? (
+        <article
+          className="next-eval"
+          style={{ "--course-tone": next.tone } as React.CSSProperties}
+        >
+          <time className="next-eval-date" dateTime={next.date}>
+            <span className="next-eval-weekday">{weekdayOf(next.date)}</span>
+            <span className="next-eval-day num">{dayOf(next.date)}</span>
+            <span className="next-eval-month">{shortDate(next.date).slice(3)}</span>
+          </time>
+          <h3 className="next-eval-title">{next.detail}</h3>
+          <p className="next-eval-meta">
+            <span className="next-eval-course">
+              <span aria-hidden="true" className="next-eval-dot" />
+              {next.course}
+            </span>
+            {nextCourse && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="num">{nextCourse.code}</span>
+                <span aria-hidden="true">·</span>
+                <span>
+                  Sección <span className="num">{nextCourse.section}</span>
+                </span>
+              </>
+            )}
+          </p>
+          <span className="next-eval-count num" data-urgency={evaluationUrgency(next.date)}>
+            {countdown(next.date)}
+          </span>
+          {nextCourse && (
+            <button
+              aria-label={`Ir al ramo ${nextCourse.name}`}
+              className="next-eval-action"
+              onClick={() => openCourse(nextCourse)}
+              type="button"
+            >
+              Ir al ramo <ArrowRight aria-hidden="true" size={15} />
+            </button>
+          )}
+        </article>
+      ) : (
+        <div className="agenda-clear">
+          <h3>Espacio para organizarte</h3>
+          <p>No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.</p>
+          <button className="empty-state-action" onClick={onCalendar} type="button">
+            Abrir calendario <ArrowRight size={16} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ArchivedCoursesSection({
+  archivedCourses,
+  archivedHasMore,
+  archivedLoading,
+  onLoadMoreArchived,
+  openCourse,
+}: {
+  archivedCourses: Course[];
+  archivedHasMore: boolean;
+  archivedLoading: boolean;
+  onLoadMoreArchived: () => void;
+  openCourse: (course: Course) => void;
+}) {
+  if (archivedCourses.length === 0) return null;
+
+  return (
+    <details className="archived-courses">
+      <summary>
+        <span>
+          <Archive aria-hidden="true" size={20} weight="fill" />
+          <strong>Ramos archivados</strong>
+        </span>
+        <small className="num">
+          {archivedCourses.length} {archivedCourses.length === 1 ? "ramo" : "ramos"}
+        </small>
+      </summary>
+      <div className="archived-course-list">
+        {archivedCourses.map((course) => (
+          <article className="archived-course-row" key={course.id}>
+            <span
+              aria-hidden="true"
+              className="archived-course-tone"
+              style={{ "--course-tone": course.tone } as React.CSSProperties}
+            />
+            <div>
+              <strong>{course.name}</strong>
+              <small>
+                <span className="num">{course.code}</span> · {course.period} · Sección{" "}
+                <span className="num">{course.section}</span>
+              </small>
+            </div>
+            <button
+              aria-label={`Abrir en solo lectura el ramo ${course.name}`}
+              onClick={() => openCourse(course)}
+              type="button"
+            >
+              Abrir en solo lectura <ArrowRight aria-hidden="true" size={15} />
+            </button>
+          </article>
+        ))}
+      </div>
+      {archivedHasMore && (
+        <button
+          className="secondary-button archived-load-more"
+          disabled={archivedLoading}
+          onClick={onLoadMoreArchived}
+          type="button"
+        >
+          {archivedLoading ? "Cargando historial…" : "Cargar más ramos"}
+        </button>
+      )}
+    </details>
+  );
+}
+
 // Implements: REQ-URL-01, REQ-URL-02
 export function CoursesDashboard({
   user,
@@ -58,12 +194,14 @@ export function CoursesDashboard({
   openCourse: (course: Course) => void;
   onLoadMoreArchived: () => void;
 }) {
-  const [filtro] = useQueryState("filtro", parseAsStringLiteral(courseStates).withDefault("todos"));
-  const [busqueda, setBusqueda] = useQueryState("busqueda", {
-    defaultValue: "",
-    shallow: true,
-    throttleMs: 300,
-  });
+  const [filtro] = useQueryState(
+    "filtro",
+    parseAsStringLiteral(courseStates).withDefault("todos").withOptions({ shallow: true })
+  );
+  const [busqueda, setBusqueda] = useQueryState(
+    "busqueda",
+    parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
+  );
 
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
@@ -238,113 +376,20 @@ export function CoursesDashboard({
             ))}
           </m.div>
         </section>
-        <section className="dashboard-section dashboard-agenda">
-          <div className="section-title">
-            <h2>En tu agenda</h2>
-            <CalendarBlank size={20} aria-hidden="true" />
-          </div>
-          {next ? (
-            <article
-              className="next-eval"
-              style={{ "--course-tone": next.tone } as React.CSSProperties}
-            >
-              <time className="next-eval-date" dateTime={next.date}>
-                <span className="next-eval-weekday">{weekdayOf(next.date)}</span>
-                <span className="next-eval-day num">{dayOf(next.date)}</span>
-                <span className="next-eval-month">{shortDate(next.date).slice(3)}</span>
-              </time>
-              <h3 className="next-eval-title">{next.detail}</h3>
-              <p className="next-eval-meta">
-                <span className="next-eval-course">
-                  <span aria-hidden="true" className="next-eval-dot" />
-                  {next.course}
-                </span>
-                {nextCourse && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span className="num">{nextCourse.code}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>
-                      Sección <span className="num">{nextCourse.section}</span>
-                    </span>
-                  </>
-                )}
-              </p>
-              <span className="next-eval-count num" data-urgency={evaluationUrgency(next.date)}>
-                {countdown(next.date)}
-              </span>
-              {nextCourse && (
-                <button
-                  aria-label={`Ir al ramo ${nextCourse.name}`}
-                  className="next-eval-action"
-                  onClick={() => openCourse(nextCourse)}
-                  type="button"
-                >
-                  Ir al ramo <ArrowRight aria-hidden="true" size={15} />
-                </button>
-              )}
-            </article>
-          ) : (
-            <div className="agenda-clear">
-              <h3>Espacio para organizarte</h3>
-              <p>
-                No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.
-              </p>
-              <button className="empty-state-action" onClick={onCalendar} type="button">
-                Abrir calendario <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-          )}
-        </section>
+        <DashboardAgenda
+          next={next}
+          nextCourse={nextCourse}
+          onCalendar={onCalendar}
+          openCourse={openCourse}
+        />
       </div>
-      {archivedCourses.length > 0 && (
-        <details className="archived-courses">
-          <summary>
-            <span>
-              <Archive aria-hidden="true" size={20} weight="fill" />
-              <strong>Ramos archivados</strong>
-            </span>
-            <small className="num">
-              {archivedCourses.length} {archivedCourses.length === 1 ? "ramo" : "ramos"}
-            </small>
-          </summary>
-          <div className="archived-course-list">
-            {archivedCourses.map((course) => (
-              <article className="archived-course-row" key={course.id}>
-                <span
-                  aria-hidden="true"
-                  className="archived-course-tone"
-                  style={{ "--course-tone": course.tone } as React.CSSProperties}
-                />
-                <div>
-                  <strong>{course.name}</strong>
-                  <small>
-                    <span className="num">{course.code}</span> · {course.period} · Sección{" "}
-                    <span className="num">{course.section}</span>
-                  </small>
-                </div>
-                <button
-                  aria-label={`Abrir en solo lectura el ramo ${course.name}`}
-                  onClick={() => openCourse(course)}
-                  type="button"
-                >
-                  Abrir en solo lectura <ArrowRight aria-hidden="true" size={15} />
-                </button>
-              </article>
-            ))}
-          </div>
-          {archivedHasMore && (
-            <button
-              className="secondary-button archived-load-more"
-              disabled={archivedLoading}
-              onClick={onLoadMoreArchived}
-              type="button"
-            >
-              {archivedLoading ? "Cargando historial…" : "Cargar más ramos"}
-            </button>
-          )}
-        </details>
-      )}
+      <ArchivedCoursesSection
+        archivedCourses={archivedCourses}
+        archivedHasMore={archivedHasMore}
+        archivedLoading={archivedLoading}
+        onLoadMoreArchived={onLoadMoreArchived}
+        openCourse={openCourse}
+      />
     </>
   );
 }

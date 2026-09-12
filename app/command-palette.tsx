@@ -2,7 +2,7 @@
 
 // Implements: REQ-CMD-01, REQ-CMD-02, REQ-CMD-03
 import { Command } from "cmdk";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import {
   type ReactNode,
@@ -67,16 +67,28 @@ export function CommandPalette({
   const [internalOpen, setInternalOpen] = useState(false);
   const controlled = controlledOpen !== undefined;
   const open = controlled ? controlledOpen : internalOpen;
+
+  const [query, setQuery] = useState("");
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setQuery("");
+    }
+  }
+
   const setOpen = useCallback(
     (v: boolean) => {
       if (!controlled) setInternalOpen(v);
       onOpenChange?.(v);
-      if (!v) onClose?.();
+      if (!v) {
+        setQuery("");
+        onClose?.();
+      }
     },
     [controlled, onClose, onOpenChange]
   );
 
-  const [query, setQuery] = useState("");
   const mounted = useSyncExternalStore(subscribeToMount, clientSnapshot, serverSnapshot);
   const reduce = useReducedMotion();
   const canTouch = useTouchCapable();
@@ -109,10 +121,7 @@ export function CommandPalette({
   }, [shortcut]);
 
   useEffect(() => {
-    if (!open) {
-      setQuery("");
-      return;
-    }
+    if (!open) return;
     const root = document.documentElement;
     const previousRootOverflow = root.style.overflow;
     const previousBodyOverflow = document.body.style.overflow;
@@ -144,7 +153,7 @@ export function CommandPalette({
       {open ? (
         <PresenceGate key="backdrop">
           {({ gate }) => (
-            <motion.button
+            <m.button
               type="button"
               aria-label="Cerrar búsqueda"
               initial={{ opacity: 0 }}
@@ -169,7 +178,7 @@ export function CommandPalette({
               inert={!isPresent}
               className="pointer-events-none fixed inset-x-4 bottom-4 top-[12vh] z-[100] flex items-start justify-center"
             >
-              <motion.div
+              <m.div
                 role="none"
                 initial={{
                   opacity: 0,
@@ -268,7 +277,7 @@ export function CommandPalette({
                     ))}
                   </Command.List>
                 </Command>
-              </motion.div>
+              </m.div>
             </div>
           )}
         </PresenceGate>

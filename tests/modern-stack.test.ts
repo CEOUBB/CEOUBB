@@ -7,9 +7,11 @@ import {
   serializeAdminSearchParams,
   teacherCoursesSearchParams,
   teacherCoursesSearchParamsCache,
+  serializeTeacherCoursesSearchParams,
   teacherTabs,
   coursesSearchParams,
   coursesSearchParamsCache,
+  serializeCoursesSearchParams,
   courseStates,
 } from "../lib/search-params.ts";
 import { toast } from "../lib/toast.ts";
@@ -65,4 +67,30 @@ test("toast.note: mapea 'ok', 'bad' e 'info' a sus correspondientes alertas", ()
     toast.note("Información del período", "info");
     toast.note(""); // Silencioso ante string vacío
   });
+});
+
+test("nuqs: definiciones y serializadores de búsqueda institucional", () => {
+  assert.ok(adminSearchParams.page);
+  assert.ok(adminSearchParams.q);
+  assert.ok(teacherCoursesSearchParams.tab);
+  assert.ok(teacherCoursesSearchParams.courseId);
+  assert.ok(coursesSearchParams.periodo);
+  assert.ok(coursesSearchParams.filtro);
+  assert.ok(coursesSearchParams.busqueda);
+
+  const teacherQuery = serializeTeacherCoursesSearchParams({
+    tab: "evaluations",
+    courseId: "INF-101",
+  });
+  assert.ok(teacherQuery.includes("tab=evaluations"));
+  assert.ok(teacherQuery.includes("courseId=INF-101"));
+
+  const coursesQuery = serializeCoursesSearchParams({
+    periodo: "2026-1",
+    filtro: "activo",
+    busqueda: "calculo",
+  });
+  assert.ok(coursesQuery.includes("periodo=2026-1"));
+  assert.ok(coursesQuery.includes("filtro=activo"));
+  assert.ok(coursesQuery.includes("busqueda=calculo"));
 });

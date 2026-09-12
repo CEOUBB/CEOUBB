@@ -149,9 +149,6 @@ importers:
       remark-rehype:
         specifier: ^11.1.2
         version: 11.1.2
-      sonner:
-        specifier: ^2.0.8
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -240,6 +237,9 @@ importers:
       simple-git-hooks:
         specifier: ^2.14.0
         version: 2.14.0
+      sonner:
+        specifier: ^2.0.8
+        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3

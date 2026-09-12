@@ -286,7 +286,7 @@ export default function ContactForm() {
   const montadoEn = useRef<number>(0);
   const enviandoAhora = useRef(false);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileToken = useRef<string>("");
 
   useEffect(() => {
     montadoEn.current = performance.now();
@@ -344,7 +344,7 @@ export default function ContactForm() {
           ...analisis.data,
           sitioWeb: senuelo.current?.value ?? "",
           duracionMs: Math.round(performance.now() - montadoEn.current),
-          turnstileToken: turnstileToken || undefined,
+          turnstileToken: turnstileToken.current || undefined,
         }),
       });
 
@@ -444,9 +444,15 @@ export default function ContactForm() {
       {siteKey ? (
         <div className="policy-field">
           <Turnstile
-            onError={() => setTurnstileToken("")}
-            onExpire={() => setTurnstileToken("")}
-            onSuccess={(token) => setTurnstileToken(token)}
+            onError={() => {
+              turnstileToken.current = "";
+            }}
+            onExpire={() => {
+              turnstileToken.current = "";
+            }}
+            onSuccess={(token) => {
+              turnstileToken.current = token;
+            }}
             options={{ theme: "auto", size: "flexible" }}
             siteKey={siteKey}
           />
