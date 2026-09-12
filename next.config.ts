@@ -21,7 +21,7 @@ const scriptSrc =
     ? `'self' 'unsafe-inline' https://apis.google.com ${capacitorBridgeOrigins}`
     : `'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400 ${capacitorBridgeOrigins}`;
 const remoteConnectSrc =
-  "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io";
+  "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.cloudfunctions.net";
 const connectSrc =
   process.env.NODE_ENV === "production"
     ? `'self' ${remoteConnectSrc} ${capacitorBridgeOrigins}`
