@@ -74,3 +74,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byQuestion.set(question.id, question)`.
 - **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos de tuplas por elemento en la visualización de corrección de cuestionarios manteniendo exactitud funcional.
 - **Future Rule:** Construir mapas de búsqueda a partir de arreglos en vistas usando bucles `for..of` e invocar `.set()` directamente sin asignación de tuplas intermedio.
+
+## 2026-09-12 - Construcción de Map de cursos y días en `CalendarView` (`app/views/calendar/CalendarView.tsx`)
+
+- **Finding:** `CalendarView` instanciaba mapas de cursos y días indexados (`courseById` y `byDay`) mediante `new Map(courses.map(...))` y `new Map(days.map(...))`, creando arreglos temporales de tuplas `[clave, valor]` en cada actualización de filtros o días visibles.
+- **Attempted / Identified Solution:** Sustitución por bucles `for..of` directos con `map.set(...)` en los bloques `useMemo` correspondientes.
+- **Outcome / Learning:** Se eliminó la asignación intermedia de tuplas por elemento en la vista del calendario del usuario, reduciendo el trabajo del recolector de basura durante la navegación de fechas.
+- **Future Rule:** En componentes React de vistas principales con re-renderizado frecuente, construir objetos Map dentro de `useMemo` iterando de forma imperativa con `for..of` y `map.set`.
