@@ -40,10 +40,12 @@
   "tests/live-class.test.ts": "8d9c82c6babfe0cc763f8600e2847aa2c1a5ef5b89ff559804d9a955c0139088",
   "tests/mobile-bridge.test.ts": "6905d8daef23c5aba912d3d97a5640e4fdf327c1ded98908fe6e6bcb98928161",
   "tests/mobile-performance-budget.test.ts": "fe0bce447e8844f7714db9430ac11cb986ee5ab1c3b0c985fe600c3248bed00a",
+  "tests/modern-stack.test.ts": "17ce34a81cdd6a39e49d37570870e9a755c6407b15f7101c6c3f8d99e48ef560",
   "tests/moodle-import.test.ts": "87187ae0bb908aa3e8cfa867aa5ac7fe9c160d719fa82b3dc57e7f190b7ecacd",
   "tests/multimodal-editor.test.ts": "17cdd9286de752b02ec021cb13057d99dad3ad35bd103045d5a5a3d9b14fac9b",
   "tests/native-services.test.ts": "4fdf7689c9d438346fc12ddef9b561ac9415d90a6730cdc9da730505428c947e",
   "tests/participants.test.ts": "f0c2d446445d3cb8b83d66646086f3adc73449a33af59bfe0a580d5c23854fce",
+  "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "982a991ba338bb6208c49c17297b1cf9b01d54102306978446f0c3ff0eed5fd3",
   "tests/preview-demo-seed.test.ts": "7222cb2aa3434353ce1c5034b2af14e09a54498e56acbc78182d19d5bbe66b6b",
@@ -51,7 +53,7 @@
   "tests/publication-workflow.test.ts": "282b9ce29f75bb9049de52b2c3e0780b45d8ba476ff778eecbcd430842779936",
   "tests/quiz-engine.test.ts": "66389e5cf1305ac1274a24f8a595f8846af75503e9c9bd5f7e1a9673dfaf2b30",
   "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
-  "tests/rendered-html.test.mjs": "87f2b8905265cc80b467a51f7fb482adb0cd07c592e9904f2e011b2da54d3faf",
+  "tests/rendered-html.test.mjs": "c0bc6d6f9cd8c347f9063f3c44eb40b2a6789147a026227edc5cafb923f950f2",
   "tests/rich-text.test.ts": "68cba98f0d88bf4e3674658ee80f67757bff69401cd06a8b44187b3f7e399f75",
   "tests/security-audit-081.test.ts": "c631e5d90c895d1a7693e7b1dd7899d870d9c18dd572049dc1587ec1e49a5b7c",
   "tests/semester-archival.test.ts": "f04ac2267e1fbb6e11e4404dc1a56df51e85b10b33b2acb841ebd901057e5545",
@@ -66,6 +68,5 @@
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
   "tests/team-submissions.test.ts": "03c03aed0671bdf94d7c9f61a334a7d00ae70465a3052f0b893566ca8d18d61b",
   "tests/user-profile-magic-bytes.test.ts": "64306f23f09d61483b675d3469c196b7edcbfe41e61461727d4b2b4211b9abb8",
-  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25",
-  "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c"
+  "tests/user-settings.test.ts": "bd0dc435b8bf0f951525d5ebd538a3c4c2b0a97df075c04432eabc810242bb25"
 }

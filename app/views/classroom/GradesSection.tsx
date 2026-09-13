@@ -47,6 +47,8 @@ import { FinalGradeRecordsPanel } from "./FinalGradeRecordsPanel";
 import { TeamSubmissionPicker } from "./TeamSubmissionPicker";
 import { SubmissionSlot, useOwnSubmissions, useSubmissionUpload } from "./SubmissionSlot";
 import type { GradeHistorySelection } from "./GradeHistoryDialog";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { toast } from "../../../lib/toast";
 
 const GradeHistoryDialog = dynamic(
   () => import("./GradeHistoryDialog").then((module) => module.GradeHistoryDialog),
@@ -492,7 +494,170 @@ function GradeFeedbackNote({ feedback }: { feedback: string | undefined }) {
   );
 }
 
+function TeacherGradesSearchToolbar({
+  query,
+  onQueryChange,
+  pageSize,
+  onPageSizeChange,
+}: {
+  query: string;
+  onQueryChange: (value: string) => void;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
+}) {
+  return (
+    <search className="classroom-list-toolbar">
+      <div className="classroom-search-box">
+        <MagnifyingGlass aria-hidden="true" size={16} />
+        <input
+          aria-label="Buscar estudiante por nombre o correo"
+          id="teacher-grades-search"
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Buscar por nombre o correo…"
+          type="search"
+          value={query}
+        />
+        {query && (
+          <button
+            aria-label="Limpiar búsqueda"
+            className="search-clear-btn"
+            onClick={() => onQueryChange("")}
+            type="button"
+          >
+            <X aria-hidden="true" size={14} />
+          </button>
+        )}
+      </div>
+      <div className="classroom-page-size">
+        <label htmlFor="teacher-grades-page-size">Mostrar:</label>
+        <select
+          id="teacher-grades-page-size"
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          value={pageSize}
+        >
+          <option value={25}>25 por página</option>
+          <option value={50}>50 por página</option>
+          <option value={100}>100 por página</option>
+        </select>
+      </div>
+    </search>
+  );
+}
+
+function TeacherGradesMatrix({
+  gradebook,
+  students,
+  filteredStudents,
+  paginatedItems,
+  deferredQuery,
+  classFeedback,
+  classScores,
+  readOnly,
+  onEditFeedback,
+  onViewHistory,
+  onSetScore,
+}: {
+  gradebook: GradeItem[];
+  students: ClassroomStudent[];
+  filteredStudents: ClassroomStudent[];
+  paginatedItems: ClassroomStudent[];
+  deferredQuery: string;
+  classFeedback: Record<string, Record<string, string>>;
+  classScores: Record<string, GradeScores>;
+  readOnly: boolean;
+  onEditFeedback: (student: ClassroomStudent, item: GradeItem, feedback: string) => void;
+  onViewHistory: (student: ClassroomStudent, item: GradeItem) => void;
+  onSetScore: (
+    userId: string,
+    itemId: string,
+    value: string,
+    currentScores: GradeScores
+  ) => Promise<boolean>;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: paginatedItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+  });
+
+  return (
+    <div className="grades-matrix" id="teacher-grades-matrix">
+      <div className="grades-matrix-head">
+        <span>Estudiante</span>
+        {gradebook.map((item) => (
+          <span className="grade-column" key={item.id}>
+            {item.name}
+          </span>
+        ))}
+        <span>Promedio</span>
+      </div>
+      {students.length === 0 && (
+        <p className="empty-row">
+          Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
+        </p>
+      )}
+      {students.length > 0 && filteredStudents.length === 0 && (
+        <p className="empty-row" role="status">
+          No se encontraron estudiantes que coincidan con “{deferredQuery}”.
+        </p>
+      )}
+      {paginatedItems.length > 0 && (
+        <div
+          ref={parentRef}
+          style={{
+            maxHeight: "680px",
+            overflowY: "auto",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const student = paginatedItems[virtualRow.index];
+              if (!student) return null;
+              return (
+                <div
+                  key={student.userId}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <TeacherStudentRow
+                    gradebook={gradebook}
+                    feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
+                    key={student.userId}
+                    onEditFeedback={onEditFeedback}
+                    onViewHistory={onViewHistory}
+                    onSetScore={onSetScore}
+                    scores={classScores[student.userId] ?? EMPTY_SCORES}
+                    student={student}
+                    readOnly={readOnly}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Implements: REQ-PAG-01, REQ-PAG-02, REQ-PAG-03
+// Implements: REQ-TOAST-01, REQ-TOAST-02, REQ-VIRT-01, REQ-VIRT-02
 function TeacherGrades({
   course,
   classroom,
@@ -559,7 +724,12 @@ function TeacherGrades({
         return false;
       }
       try {
-        await saveStudentScores(course.id, userId, next);
+        await toast.promise(saveStudentScores(course.id, userId, next), {
+          loading: "Guardando nota...",
+          success: "Nota guardada correctamente",
+          error: (cause) =>
+            cause instanceof Error ? cause.message : "No fue posible guardar la nota.",
+        });
         return true;
       } catch (cause) {
         note(cause instanceof Error ? cause.message : "No fue posible guardar la nota.", "bad");
@@ -592,17 +762,16 @@ function TeacherGrades({
     setFeedbackBusy(true);
     setFeedbackError("");
     try {
-      await saveGradeFeedback(
-        course.id,
-        feedbackEditor.student.userId,
-        feedbackEditor.item.id,
-        value
-      );
-      note(
-        value.trim()
-          ? `Retroalimentación de ${feedbackEditor.item.name} guardada.`
-          : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
-        "ok"
+      await toast.promise(
+        saveGradeFeedback(course.id, feedbackEditor.student.userId, feedbackEditor.item.id, value),
+        {
+          loading: "Guardando retroalimentación...",
+          success: value.trim()
+            ? `Retroalimentación de ${feedbackEditor.item.name} guardada.`
+            : `Retroalimentación de ${feedbackEditor.item.name} retirada.`,
+          error: (cause) =>
+            cause instanceof Error ? cause.message : "No fue posible guardar la retroalimentación.",
+        }
       );
       return true;
     } catch (cause) {
@@ -640,77 +809,27 @@ function TeacherGrades({
       {gradebook.length > 0 && (
         <>
           {students.length > 0 && (
-            <search className="classroom-list-toolbar">
-              <div className="classroom-search-box">
-                <MagnifyingGlass aria-hidden="true" size={16} />
-                <input
-                  aria-label="Buscar estudiante por nombre o correo"
-                  id="teacher-grades-search"
-                  onChange={(event) => handleQueryChange(event.target.value)}
-                  placeholder="Buscar por nombre o correo…"
-                  type="search"
-                  value={query}
-                />
-                {query && (
-                  <button
-                    aria-label="Limpiar búsqueda"
-                    className="search-clear-btn"
-                    onClick={() => handleQueryChange("")}
-                    type="button"
-                  >
-                    <X aria-hidden="true" size={14} />
-                  </button>
-                )}
-              </div>
-              <div className="classroom-page-size">
-                <label htmlFor="teacher-grades-page-size">Mostrar:</label>
-                <select
-                  id="teacher-grades-page-size"
-                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
-                  value={pageSize}
-                >
-                  <option value={25}>25 por página</option>
-                  <option value={50}>50 por página</option>
-                  <option value={100}>100 por página</option>
-                </select>
-              </div>
-            </search>
+            <TeacherGradesSearchToolbar
+              onPageSizeChange={handlePageSizeChange}
+              onQueryChange={handleQueryChange}
+              pageSize={pageSize}
+              query={query}
+            />
           )}
 
-          <div className="grades-matrix" id="teacher-grades-matrix">
-            <div className="grades-matrix-head">
-              <span>Estudiante</span>
-              {gradebook.map((item) => (
-                <span className="grade-column" key={item.id}>
-                  {item.name}
-                </span>
-              ))}
-              <span>Promedio</span>
-            </div>
-            {students.length === 0 && (
-              <p className="empty-row">
-                Los estudiantes aparecerán cuando entren al aula con su cuenta institucional.
-              </p>
-            )}
-            {students.length > 0 && filteredStudents.length === 0 && (
-              <p className="empty-row" role="status">
-                No se encontraron estudiantes que coincidan con “{deferredQuery}”.
-              </p>
-            )}
-            {paginated.items.map((student) => (
-              <TeacherStudentRow
-                gradebook={gradebook}
-                feedback={classFeedback[student.userId] ?? EMPTY_FEEDBACK}
-                key={student.userId}
-                onEditFeedback={openFeedback}
-                onViewHistory={openHistory}
-                onSetScore={handleSetScore}
-                scores={classScores[student.userId] ?? EMPTY_SCORES}
-                student={student}
-                readOnly={readOnly}
-              />
-            ))}
-          </div>
+          <TeacherGradesMatrix
+            classFeedback={classFeedback}
+            classScores={classScores}
+            deferredQuery={deferredQuery}
+            filteredStudents={filteredStudents}
+            gradebook={gradebook}
+            onEditFeedback={openFeedback}
+            onSetScore={handleSetScore}
+            onViewHistory={openHistory}
+            paginatedItems={paginated.items}
+            readOnly={readOnly}
+            students={students}
+          />
           {filteredStudents.length > 0 && (
             <nav aria-label="Paginación de libro de notas" className="classroom-pagination">
               <span className="pagination-summary num">

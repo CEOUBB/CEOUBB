@@ -24,8 +24,9 @@ import {
   type SectionRole,
 } from "../../../lib/section-roles";
 import { emptyClassroom, type Note, type Tab } from "./classroom-utils";
+import { toast } from "../../../lib/toast";
 
-// Implements: REQ-ASST-01, REQ-ASST-03, REQ-ASST-04, REQ-ASST-05
+// Implements: REQ-ASST-01, REQ-ASST-03, REQ-ASST-04, REQ-ASST-05, REQ-TOAST-01
 export function useClassroomHandlers(course: Course, user: User, sectionRole: SectionRole | null) {
   const [tab, setTab] = useState<Tab>("home");
   const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
@@ -35,6 +36,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
   const [copiedCourseReference, setCopiedCourseReference] = useState(false);
   const note = useCallback((text: string, tone: Note["tone"] = "info") => {
     setStatus({ text, tone });
+    toast.note(text, tone);
     if (tone === "ok" && text) {
       window.setTimeout(() => {
         setStatus((prev) => (prev.text === text ? { text: "", tone: "info" } : prev));

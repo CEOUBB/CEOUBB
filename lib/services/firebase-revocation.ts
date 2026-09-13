@@ -108,6 +108,9 @@ export async function firebaseCredentialIsActive(idToken: string, uid: string) {
     JSON.parse(Buffer.from(idToken.split(".")[1] ?? "", "base64url").toString("utf8"))
   );
   if (claims.sub !== uid) return false;
+  const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
+  const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "";
+  if (!clientEmail || !privateKey) return true;
   const token = await googleAccessToken();
   const response = await fetch(
     `https://firestore.googleapis.com/v1/${documents}/authRevocations/${encodeURIComponent(firebaseUid(uid))}`,

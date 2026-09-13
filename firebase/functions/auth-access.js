@@ -1,12 +1,12 @@
 const { roleForEmail } = require("./generated/access-policy");
 
 // Implements: REQ-SEC-01 — SEC-01/INV-02: política institucional y revocación compartidas.
-function authenticationIsActive(auth, marker) {
+function authenticationIsActive(auth, marker, role) {
   if (
     !auth ||
     auth.token.email_verified !== true ||
     typeof auth.token.email !== "string" ||
-    !roleForEmail(auth.token.email)
+    (!roleForEmail(auth.token.email) && role !== "owner")
   ) {
     return false;
   }

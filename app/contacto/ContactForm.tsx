@@ -1,8 +1,9 @@
 "use client";
 
-// Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01, REQ-QMD-07
+// Implements: REQ-HELP-03, REQ-HELP-04, REQ-HELP-05, REQ-SUP-03, REQ-QMD-01, REQ-QMD-07, REQ-TURN-01, REQ-TURN-02, REQ-TURN-03
 import { CheckCircle, Info, PaperPlaneTilt, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { roleForEmail } from "../../lib/access-policy.ts";
 import {
   CATEGORIAS_SOPORTE,
@@ -12,7 +13,6 @@ import {
   erroresPorCampo,
   solicitudSoporteSchema,
 } from "../../lib/support-request.ts";
-import { useTurnstile } from "./useTurnstile.ts";
 
 const CORREO_INSTITUCIONAL = "contacto@ceoubb.com";
 
@@ -286,7 +286,7 @@ export default function ContactForm() {
   const montadoEn = useRef<number>(0);
   const enviandoAhora = useRef(false);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const { turnstileToken, turnstileContainerRef } = useTurnstile(siteKey);
+  const turnstileToken = useRef<string>("");
 
   useEffect(() => {
     montadoEn.current = performance.now();
@@ -443,7 +443,19 @@ export default function ContactForm() {
 
       {siteKey ? (
         <div className="policy-field">
-          <div ref={turnstileContainerRef} />
+          <Turnstile
+            onError={() => {
+              turnstileToken.current = "";
+            }}
+            onExpire={() => {
+              turnstileToken.current = "";
+            }}
+            onSuccess={(token) => {
+              turnstileToken.current = token;
+            }}
+            options={{ theme: "auto", size: "flexible" }}
+            siteKey={siteKey}
+          />
         </div>
       ) : null}
 

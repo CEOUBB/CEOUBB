@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useReducer, useState, type FormEvent } from "react";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
+import { teacherTabs } from "../../lib/search-params";
 import {
   ArrowRight,
   BookOpenText,
@@ -131,6 +133,7 @@ function teacherCoursesReducer(
 }
 
 // Implements: REQ-QMD-01
+// Implements: REQ-URL-01
 export function TeacherCoursesView({
   openCourse,
   onCoursesChanged,
@@ -138,8 +141,18 @@ export function TeacherCoursesView({
   openCourse: (course: ManagedCourse) => void;
   onCoursesChanged: () => Promise<void>;
 }) {
+  const [urlTab, setUrlTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(teacherTabs).withDefault("data")
+  );
   const [state, dispatch] = useReducer(teacherCoursesReducer, INITIAL_STATE);
-  const { courses, catalog, selectedId, tab, creating, loading, status } = state;
+  const { courses, catalog, selectedId, creating, loading, status } = state;
+  const tab = urlTab;
+
+  const handleTabChange = (nextTab: ManagerTab) => {
+    setUrlTab(nextTab);
+    dispatch({ type: "SET_TAB", tab: nextTab });
+  };
 
   const reload = async (preferredId?: string) => {
     const workspace = await loadTeacherWorkspace();
@@ -286,21 +299,18 @@ export function TeacherCoursesView({
                 role="tablist"
                 aria-label="Configuración del ramo"
               >
-                <ManagerTabButton
-                  active={tab === "data"}
-                  onClick={() => dispatch({ type: "SET_TAB", tab: "data" })}
-                >
+                <ManagerTabButton active={tab === "data"} onClick={() => handleTabChange("data")}>
                   Datos del ramo
                 </ManagerTabButton>
                 <ManagerTabButton
                   active={tab === "evaluations"}
-                  onClick={() => dispatch({ type: "SET_TAB", tab: "evaluations" })}
+                  onClick={() => handleTabChange("evaluations")}
                 >
                   Evaluaciones
                 </ManagerTabButton>
                 <ManagerTabButton
                   active={tab === "assistants"}
-                  onClick={() => dispatch({ type: "SET_TAB", tab: "assistants" })}
+                  onClick={() => handleTabChange("assistants")}
                 >
                   Ayudantes
                 </ManagerTabButton>
