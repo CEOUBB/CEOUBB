@@ -691,6 +691,7 @@ function AccountPanel({
               ) : (
                 <button
                   aria-describedby={describedBy(sessionsError && "settings-sessions-error")}
+                  aria-label={`Cerrar sesión iniciada el ${formatSessionDate(session.createdAt)}`}
                   className="settings-revoke"
                   disabled={revoking === session.id}
                   onClick={() => void onSessionRevoke(session.id)}
