@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Settings / AccountPanel
+
+- **Finding:** In `app/views/SettingsView.tsx`, repeated active session revocation buttons rendered generic text ("Cerrar todas las sesiones") without session-specific date context, causing screen reader ambiguity across session list items (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added explicit `aria-label={`Cerrar sesión iniciada el ${formatSessionDate(session.createdAt)}`}` to the session revocation button.
+- **Design System Constraint:** Preserved existing button styling and layout without custom CSS or structural alterations.
+- **Future Rule:** Ensure repeated session action buttons include creation timestamp context in `aria-label` for screen readers.
+
 ## [2026-03-31] - Calendar / CalendarHeader & CalendarMonth
 
 - **Finding:** In `CalendarHeader.tsx`, the date jump input lacked an explicit `aria-label`, and in `CalendarMonth.tsx`, the "Añadir bloque" action button lacked a visual icon consistent with `CalendarHeader.tsx` while day agenda event buttons lacked structured item-specific labels for screen readers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
