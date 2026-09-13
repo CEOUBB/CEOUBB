@@ -98,6 +98,7 @@ export function CalendarHeader({
         <label className="planner-jump">
           <span className="sr-only">Ir a una fecha</span>
           <input
+            aria-label="Ir a una fecha"
             onChange={(event) => isIsoDate(event.target.value) && goWeek(event.target.value)}
             type="date"
             value={anchor}
