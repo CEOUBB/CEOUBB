@@ -113,18 +113,24 @@ export function CalendarView({
   );
 
   const hiddenCourses = useMemo(() => new Set(hidden), [hidden]);
-  const courseById = useMemo(
-    () => new Map(courses.map((course) => [course.id, course])),
-    [courses]
-  );
+  const courseById = useMemo(() => {
+    const map = new Map<string, Course>();
+    for (const course of courses) {
+      map.set(course.id, course);
+    }
+    return map;
+  }, [courses]);
   const visible = useMemo(
     () => items.filter((item) => !item.courseId || !hiddenCourses.has(item.courseId)),
     [items, hiddenCourses]
   );
-  const byDay = useMemo(
-    () => new Map(days.map((day) => [day, dayItems(visible, day)])),
-    [days, visible]
-  );
+  const byDay = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof dayItems>>();
+    for (const day of days) {
+      map.set(day, dayItems(visible, day));
+    }
+    return map;
+  }, [days, visible]);
   const { dueCount, blockCount } = useMemo(() => {
     let due = 0;
     let block = 0;
