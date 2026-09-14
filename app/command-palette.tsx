@@ -4,16 +4,8 @@
 import { Command } from "cmdk";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createPortal } from "react-dom";
+import { type ReactNode, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { browser, createPortal } from "react-dom";
 import { EASE_OUT } from "@/lib/ease";
 import { useTouchCapable } from "@/lib/hooks/use-touch-capable";
 import { PresenceGate } from "@/lib/presence-gate";
@@ -51,10 +43,6 @@ const PANEL_SPRING = {
   mass: 0.5,
 } as const;
 
-const subscribeToMount = () => () => {};
-const clientSnapshot = () => true;
-const serverSnapshot = () => false;
-
 export function CommandPalette({
   items,
   shortcut = "k",
@@ -64,6 +52,9 @@ export function CommandPalette({
   onOpenChange,
   onClose,
 }: CommandPaletteProps) {
+  // Implements: REQ-BROWSER-01
+  use(browser());
+
   const [internalOpen, setInternalOpen] = useState(false);
   const controlled = controlledOpen !== undefined;
   const open = controlled ? controlledOpen : internalOpen;
@@ -89,7 +80,6 @@ export function CommandPalette({
     [controlled, onClose, onOpenChange]
   );
 
-  const mounted = useSyncExternalStore(subscribeToMount, clientSnapshot, serverSnapshot);
   const reduce = useReducedMotion();
   const canTouch = useTouchCapable();
 
@@ -146,7 +136,7 @@ export function CommandPalette({
     return Array.from(map.entries());
   }, [items]);
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence initial={false}>

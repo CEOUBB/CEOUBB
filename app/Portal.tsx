@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { Suspense, useCallback, use, useState } from "react";
+import { browser, createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { ChalkboardTeacher, GraduationCap } from "@phosphor-icons/react";
@@ -16,6 +17,20 @@ import { rememberPhoto, type SessionState, type User } from "../lib/portal-utils
 import { parseSectionMemberships } from "../lib/section-roles";
 
 export { LoadingScreen };
+
+// Implements: REQ-BROWSER-01
+export function ClientPortal({
+  children,
+  container,
+}: {
+  children: React.ReactNode;
+  container?: Element | DocumentFragment | null;
+}) {
+  use(browser());
+  const target = container ?? (typeof document !== "undefined" ? document.body : null);
+  if (!target) return null;
+  return createPortal(children, target);
+}
 
 // Section partition: partitionAcademicCourses and current.map((item) => item.id)
 // Academic courses loader: loadMyCourses
@@ -85,13 +100,11 @@ export function AccessScreen({
     }
   };
 
-  const isClientNonProd = useSyncExternalStore(
-    () => () => {},
-    () =>
-      typeof window !== "undefined" &&
-      !["ceoubb.com", "www.ceoubb.com"].includes(window.location.hostname),
-    () => false
-  );
+  // Implements: REQ-BROWSER-01
+  use(browser());
+  const isClientNonProd =
+    typeof window !== "undefined" &&
+    !["ceoubb.com", "www.ceoubb.com"].includes(window.location.hostname);
 
   const quickAuthActive =
     isQuickAuthAvailable ||
@@ -287,11 +300,13 @@ export function Portal({
   if (core.checking) return <LoadingScreen />;
   if (!core.user) {
     return (
-      <AccessScreen
-        isQuickAuthAvailable={isQuickAuthAvailable}
-        onSignedIn={core.finishSignedIn}
-        onSignedInWithSession={core.finishSignedInWithSession}
-      />
+      <Suspense fallback={<LoadingScreen />}>
+        <AccessScreen
+          isQuickAuthAvailable={isQuickAuthAvailable}
+          onSignedIn={core.finishSignedIn}
+          onSignedInWithSession={core.finishSignedInWithSession}
+        />
+      </Suspense>
     );
   }
 
@@ -375,7 +390,9 @@ export function Portal({
             unreadCommunications={unreadCommunications}
             user={user}
           />
-          <CommandPalette items={paletteItems} onOpenChange={setSearchOpen} open={searchOpen} />
+          <Suspense fallback={null}>
+            <CommandPalette items={paletteItems} onOpenChange={setSearchOpen} open={searchOpen} />
+          </Suspense>
           <PortalSidebar
             courses={courses}
             open={sidebarOpen}

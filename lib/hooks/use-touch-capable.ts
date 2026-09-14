@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, use, useState } from "react";
+import { browser } from "react-dom";
 
 /**
  * Returns true on devices that can be touched, whatever else they claim.
+ *
+ * Implements: REQ-BROWSER-01
  */
 export function useTouchCapable() {
-  const [canTouch, setCanTouch] = useState(false);
+  use(browser());
+  const [canTouch, setCanTouch] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const mq = window.matchMedia?.("(any-pointer: coarse)");
+    return (
+      Boolean(mq?.matches) || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0)
+    );
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
