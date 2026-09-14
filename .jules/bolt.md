@@ -81,3 +81,10 @@
 - **Attempted / Identified Solution:** Sustitución por bucles `for..of` directos con `map.set(...)` en los bloques `useMemo` correspondientes.
 - **Outcome / Learning:** Se eliminó la asignación intermedia de tuplas por elemento en la vista del calendario del usuario, reduciendo el trabajo del recolector de basura durante la navegación de fechas.
 - **Future Rule:** En componentes React de vistas principales con re-renderizado frecuente, construir objetos Map dentro de `useMemo` iterando de forma imperativa con `for..of` y `map.set`.
+
+## 2026-09-15 - Construcción de Map de entregas propias en `useOwnSubmissions` (`app/views/classroom/SubmissionSlot.tsx`)
+
+- **Finding:** `useOwnSubmissions` construía el objeto `Map` indexado por `evalId` utilizando `new Map(rows.map((item) => [item.evalId, item]))`, asignando arreglos temporales de tuplas `[evalId, item]` por cada entrega registrada.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byEvalId.set(item.evalId, item)` en el bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por entrega en el buzón de entregas del estudiante, reduciendo la recolección de basura durante cambios de estado.
+- **Future Rule:** Evitar `new Map(array.map(...))` en hooks personalizados de suscripción a datos e iterar imperativamente para indexar colecciones.
