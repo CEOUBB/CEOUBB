@@ -1161,6 +1161,67 @@ img {
   text-underline-offset: 2px;
 }
 
+/* ── Subrayado animado direccional (Animated Underline) ───── */
+
+.animated-underline {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.animated-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: var(--underline-offset, -2px);
+  width: 100%;
+  height: var(--underline-thickness, 2px);
+  background-color: var(--underline-color, currentColor);
+  border-radius: var(--underline-radius, 2px);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--underline-duration, 180ms) var(--ease-spring);
+  pointer-events: none;
+}
+
+/* Entrada direccional por la izquierda */
+.animated-underline:hover::after,
+.animated-underline:focus-visible::after,
+.animated-underline-link:hover .animated-underline::after,
+.animated-underline-link:focus-visible .animated-underline::after,
+.course-action:hover .animated-underline::after,
+.course-action:focus-visible .animated-underline::after,
+.next-eval-action:hover .animated-underline::after,
+.next-eval-action:focus-visible .animated-underline::after,
+button:hover > .animated-underline::after,
+a:hover > .animated-underline::after,
+.group:hover .animated-underline::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.animated-underline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs, 6px);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.animated-underline-prefix,
+.animated-underline-suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-underline::after {
+    transition: none;
+  }
+}
+
 /* ── Pie institucional compartido ─────────────────────────── */
 
 .site-footer {
@@ -1195,10 +1256,41 @@ img {
   transition: color var(--transition-fast);
 }
 
-.site-footer-nav a:hover {
+.site-footer-nav a:hover,
+.site-footer-nav a:focus-visible {
   color: var(--color-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+}
+
+.site-footer-nav a:not(:has(.animated-underline)) {
+  position: relative;
+  display: inline-block;
+}
+
+.site-footer-nav a:not(:has(.animated-underline))::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--duration-fast, 180ms) var(--ease-spring);
+  pointer-events: none;
+}
+
+.site-footer-nav a:not(:has(.animated-underline)):hover::after,
+.site-footer-nav a:not(:has(.animated-underline)):focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer-nav a:not(:has(.animated-underline))::after {
+    transition: none;
+  }
 }
 
 .site-footer-note {
@@ -2763,7 +2855,7 @@ input[role="combobox"]:focus-visible {
   transition: background var(--transition-fast);
 }
 
-.course-action:hover {
+.course-action:hover:not(:has(.animated-underline)) {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
