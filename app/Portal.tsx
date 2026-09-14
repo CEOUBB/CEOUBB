@@ -26,7 +26,7 @@ export function ClientPortal({
   children: React.ReactNode;
   container?: Element | DocumentFragment | null;
 }) {
-  use(browser());
+  use(browser("ClientPortal requires DOM environment"));
   const target = container ?? (typeof document !== "undefined" ? document.body : null);
   if (!target) return null;
   return createPortal(children, target);
@@ -34,6 +34,59 @@ export function ClientPortal({
 
 // Section partition: partitionAcademicCourses and current.map((item) => item.id)
 // Academic courses loader: loadMyCourses
+
+// Implements: REQ-BROWSER-01
+function DevQuickAuthActions({
+  isQuickAuthAvailable,
+  working,
+  onDevAccess,
+}: {
+  isQuickAuthAvailable?: boolean;
+  working: boolean;
+  onDevAccess: (role: "student" | "teacher") => void;
+}) {
+  use(browser("Dev auth shortcuts are browser-only"));
+  const isClientNonProd =
+    typeof window !== "undefined" &&
+    !["ceoubb.com", "www.ceoubb.com"].includes(window.location.hostname);
+
+  const quickAuthActive =
+    isQuickAuthAvailable ||
+    isClientNonProd ||
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview" ||
+    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "staging";
+
+  if (!quickAuthActive) return null;
+
+  return (
+    <div className="dev-auth-container" role="region" aria-label="Accesos rápidos de testing">
+      <div className="dev-auth-divider">
+        <span>Accesos rápidos de prueba</span>
+      </div>
+      <div className="dev-auth-actions">
+        <button
+          className="dev-auth-button dev-auth-button-student"
+          disabled={working}
+          onClick={() => onDevAccess("student")}
+          type="button"
+        >
+          <GraduationCap aria-hidden="true" size={18} weight="bold" />
+          <span>Entrar como estudiante</span>
+        </button>
+        <button
+          className="dev-auth-button dev-auth-button-teacher"
+          disabled={working}
+          onClick={() => onDevAccess("teacher")}
+          type="button"
+        >
+          <ChalkboardTeacher aria-hidden="true" size={18} weight="bold" />
+          <span>Entrar como docente</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Implements: REQ-AUTH-01, REQ-QMD-01
 export function AccessScreen({
@@ -99,19 +152,6 @@ export function AccessScreen({
       setWorking(false);
     }
   };
-
-  // Implements: REQ-BROWSER-01
-  use(browser());
-  const isClientNonProd =
-    typeof window !== "undefined" &&
-    !["ceoubb.com", "www.ceoubb.com"].includes(window.location.hostname);
-
-  const quickAuthActive =
-    isQuickAuthAvailable ||
-    isClientNonProd ||
-    process.env.NODE_ENV === "development" ||
-    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "preview" ||
-    process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT === "staging";
 
   const devAccess = async (role: "student" | "teacher") => {
     setError("");
@@ -206,37 +246,13 @@ export function AccessScreen({
               )}
               {working ? "Verificando cuenta…" : "Continuar con Google"}
             </button>
-            {quickAuthActive && (
-              <div
-                className="dev-auth-container"
-                role="region"
-                aria-label="Accesos rápidos de testing"
-              >
-                <div className="dev-auth-divider">
-                  <span>Accesos rápidos de prueba</span>
-                </div>
-                <div className="dev-auth-actions">
-                  <button
-                    className="dev-auth-button dev-auth-button-student"
-                    disabled={working}
-                    onClick={() => devAccess("student")}
-                    type="button"
-                  >
-                    <GraduationCap aria-hidden="true" size={18} weight="bold" />
-                    <span>Entrar como estudiante</span>
-                  </button>
-                  <button
-                    className="dev-auth-button dev-auth-button-teacher"
-                    disabled={working}
-                    onClick={() => devAccess("teacher")}
-                    type="button"
-                  >
-                    <ChalkboardTeacher aria-hidden="true" size={18} weight="bold" />
-                    <span>Entrar como docente</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <Suspense fallback={null}>
+              <DevQuickAuthActions
+                isQuickAuthAvailable={isQuickAuthAvailable}
+                working={working}
+                onDevAccess={devAccess}
+              />
+            </Suspense>
             {error && (
               <p className="form-error" role="alert">
                 {error}
@@ -300,13 +316,11 @@ export function Portal({
   if (core.checking) return <LoadingScreen />;
   if (!core.user) {
     return (
-      <Suspense fallback={<LoadingScreen />}>
-        <AccessScreen
-          isQuickAuthAvailable={isQuickAuthAvailable}
-          onSignedIn={core.finishSignedIn}
-          onSignedInWithSession={core.finishSignedInWithSession}
-        />
-      </Suspense>
+      <AccessScreen
+        isQuickAuthAvailable={isQuickAuthAvailable}
+        onSignedIn={core.finishSignedIn}
+        onSignedInWithSession={core.finishSignedInWithSession}
+      />
     );
   }
 

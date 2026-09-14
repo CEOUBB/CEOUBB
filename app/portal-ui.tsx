@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ViewTransition } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
@@ -65,17 +65,20 @@ export function Avatar({
   );
 }
 
+// Implements: REQ-SKEL-VT-01
 export function Screen({ children }: { children: React.ReactNode }) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <m.div
-      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-      transition={shouldReduceMotion ? instantTransition : springDefault}
-    >
-      {children}
-    </m.div>
+    <ViewTransition default="none" update="auto">
+      <m.div
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+        transition={shouldReduceMotion ? instantTransition : springDefault}
+      >
+        {children}
+      </m.div>
+    </ViewTransition>
   );
 }
