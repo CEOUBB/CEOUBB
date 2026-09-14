@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / ViewSkeletons
+
+- **Finding:** In `app/views/ViewSkeletons.tsx`, decorative Phosphor SVG vector icons (`<CaretLeft>`, `<CaretRight>`, `<Plus>`) inside disabled skeleton placeholder buttons lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within button elements (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to embedded Phosphor SVG icon components within disabled skeleton button controls.
+- **Design System Constraint:** Reused existing Phosphor icon props (`size`) without modifying skeleton layout geometry or styling properties.
+- **Future Rule:** Ensure decorative vector icons inside placeholder or skeleton interactive elements explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Settings / AccountPanel
 
 - **Finding:** In `app/views/SettingsView.tsx`, repeated active session revocation buttons rendered generic text ("Cerrar todas las sesiones") without session-specific date context, causing screen reader ambiguity across session list items (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
