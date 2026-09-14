@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AnimatedUnderlineLink } from "@/components/motion/animated-underline-link";
 
 /*
   Implements: REQ-HELP-09
@@ -24,9 +24,9 @@ export function SiteFooter() {
       <div className="site-footer-inner">
         <nav aria-label="Documentos institucionales y legales" className="site-footer-nav">
           {ENLACES.map((enlace) => (
-            <Link href={enlace.href} key={enlace.href}>
+            <AnimatedUnderlineLink href={enlace.href} key={enlace.href}>
               {enlace.texto}
-            </Link>
+            </AnimatedUnderlineLink>
           ))}
         </nav>
         <p className="site-footer-note">

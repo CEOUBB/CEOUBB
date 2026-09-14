@@ -3,6 +3,7 @@
 import React from "react";
 import { ArrowRight, BookOpen } from "@phosphor-icons/react";
 import * as m from "motion/react-m";
+import { AnimatedUnderline } from "@/components/motion/animated-underline-link";
 import type { Course } from "../../lib/courses";
 import type { CalendarEntry } from "../../lib/portal-utils";
 import { instantTransition, rise, shortDate, springDefault } from "../../lib/portal-utils";
@@ -71,7 +72,8 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
           onClick={() => onOpen(course)}
           type="button"
         >
-          Entrar al aula <ArrowRight aria-hidden="true" size={15} />
+          <AnimatedUnderline>Entrar al aula</AnimatedUnderline>{" "}
+          <ArrowRight aria-hidden="true" size={15} />
         </button>
       </div>
     </m.article>
