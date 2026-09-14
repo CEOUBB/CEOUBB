@@ -504,7 +504,11 @@ export function useOwnSubmissions(courseId: string) {
   );
   return useMemo(() => {
     const rows = state.courseId === courseId ? state.items : [];
-    return new Map(rows.map((item) => [item.evalId, item]));
+    const byEvalId = new Map<string, StudentSubmission>();
+    for (const item of rows) {
+      byEvalId.set(item.evalId, item);
+    }
+    return byEvalId;
   }, [courseId, state]);
 }
 
