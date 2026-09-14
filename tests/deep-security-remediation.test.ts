@@ -213,3 +213,14 @@ test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthoriz
     "Admin users route must return 403 for non-owner roles"
   );
 });
+
+// Implements: REQ-SEC-21
+test("REQ-SEC-21: grade history route validates sectionId presence and max length", () => {
+  const routePath = path.resolve("app/api/sections/[sectionId]/grade-history/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /sectionId\.length > 100/,
+    "Grade history route must check sectionId length bounds"
+  );
+});
