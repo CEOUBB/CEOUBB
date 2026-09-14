@@ -110,13 +110,13 @@ export function CalendarSkeleton() {
         <div className="planner-controls" aria-hidden="true" inert>
           <div className="planner-step">
             <button type="button" disabled aria-label="Semana anterior">
-              <CaretLeft size={16} />
+              <CaretLeft aria-hidden="true" size={16} />
             </button>
             <button type="button" disabled className="planner-now-button">
               Hoy
             </button>
             <button type="button" disabled aria-label="Semana siguiente">
-              <CaretRight size={16} />
+              <CaretRight aria-hidden="true" size={16} />
             </button>
           </div>
           <label className="planner-jump">
@@ -124,7 +124,7 @@ export function CalendarSkeleton() {
             <input type="date" value={days[0]} disabled />
           </label>
           <button type="button" disabled className="planner-create">
-            <Plus size={15} /> Nuevo bloque
+            <Plus aria-hidden="true" size={15} /> Nuevo bloque
           </button>
         </div>
       </header>
@@ -570,7 +570,7 @@ export function TeacherCoursesSkeleton() {
           aria-hidden="true"
           tabIndex={-1}
         >
-          <Plus size={17} /> Crear ramo
+          <Plus aria-hidden="true" size={17} /> Crear ramo
         </button>
       </header>
       <TeacherCoursesBodySkeleton />
