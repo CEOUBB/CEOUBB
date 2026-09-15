@@ -4,8 +4,7 @@
 import { Command } from "cmdk";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
-import { type ReactNode, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { browser } from "react-dom";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/ease";
 import { useTouchCapable } from "@/lib/hooks/use-touch-capable";
 import { PresenceGate } from "@/lib/presence-gate";
@@ -53,9 +52,6 @@ export function CommandPalette({
   onOpenChange,
   onClose,
 }: CommandPaletteProps) {
-  // Implements: REQ-BROWSER-01
-  use(browser());
-
   const [internalOpen, setInternalOpen] = useState(false);
   const controlled = controlledOpen !== undefined;
   const open = controlled ? controlledOpen : internalOpen;
