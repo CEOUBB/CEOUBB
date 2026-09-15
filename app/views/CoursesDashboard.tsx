@@ -166,12 +166,70 @@ function ArchivedCoursesSection({
   );
 }
 
-// Implements: REQ-URL-01, REQ-URL-02
+// Implements: REQ-URL-01, REQ-URL-02, REQ-A11Y-01
 const COURSE_FILTER_TABS: Array<{ key: CourseState; label: string }> = [
   { key: "todos", label: "Todos" },
   { key: "activo", label: "Activos" },
   { key: "archivado", label: "Archivados" },
 ];
+
+function CourseFilterTabs({
+  filtro,
+  onTabChange,
+}: {
+  filtro: CourseState;
+  onTabChange: (newTab: CourseState) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Filtrar ramos"
+      aria-orientation="horizontal"
+      onKeyDown={(event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        const currentIndex = COURSE_FILTER_TABS.findIndex((t) => t.key === filtro);
+        let nextIndex = currentIndex;
+        if (event.key === "Home") nextIndex = 0;
+        else if (event.key === "End") nextIndex = COURSE_FILTER_TABS.length - 1;
+        else if (event.key === "ArrowRight")
+          nextIndex = (currentIndex + 1) % COURSE_FILTER_TABS.length;
+        else if (event.key === "ArrowLeft")
+          nextIndex = (currentIndex - 1 + COURSE_FILTER_TABS.length) % COURSE_FILTER_TABS.length;
+        const nextTab = COURSE_FILTER_TABS[nextIndex];
+        if (nextTab) {
+          onTabChange(nextTab.key);
+          const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+          buttons[nextIndex]?.focus();
+        }
+      }}
+      className="mb-3 flex items-center gap-1.5 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 p-1 backdrop-blur-sm w-fit"
+    >
+      {COURSE_FILTER_TABS.map((tab) => {
+        const isSelected = filtro === tab.key;
+        return (
+          <button
+            key={tab.key}
+            id={`courses-tab-${tab.key}`}
+            role="tab"
+            aria-selected={isSelected}
+            aria-controls="courses-tabpanel"
+            tabIndex={isSelected ? 0 : -1}
+            type="button"
+            onClick={() => onTabChange(tab.key)}
+            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+              isSelected
+                ? "bg-[oklch(0.2_0.03_260)] text-white shadow-xs"
+                : "text-[oklch(0.45_0.03_250)] hover:bg-[oklch(0.92_0.006_60/0.5)] hover:text-[oklch(0.2_0.03_260)]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function CoursesDashboard({
   user,
@@ -331,54 +389,7 @@ export function CoursesDashboard({
               {displayedCourses.length} {displayedCourses.length === 1 ? "sección" : "secciones"}
             </span>
           </div>
-          <div
-            role="tablist"
-            aria-label="Filtrar ramos"
-            aria-orientation="horizontal"
-            tabIndex={-1}
-            onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-              event.preventDefault();
-              const currentIndex = COURSE_FILTER_TABS.findIndex((t) => t.key === filtro);
-              let nextIndex = currentIndex;
-              if (event.key === "Home") nextIndex = 0;
-              else if (event.key === "End") nextIndex = COURSE_FILTER_TABS.length - 1;
-              else if (event.key === "ArrowRight")
-                nextIndex = (currentIndex + 1) % COURSE_FILTER_TABS.length;
-              else if (event.key === "ArrowLeft")
-                nextIndex =
-                  (currentIndex - 1 + COURSE_FILTER_TABS.length) % COURSE_FILTER_TABS.length;
-              const nextTab = COURSE_FILTER_TABS[nextIndex];
-              if (nextTab) {
-                handleTabChange(nextTab.key);
-                const buttons =
-                  event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-                buttons[nextIndex]?.focus();
-              }
-            }}
-            className="mb-3 flex items-center gap-1.5 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 p-1 backdrop-blur-sm w-fit"
-          >
-            {COURSE_FILTER_TABS.map((tab) => {
-              const isSelected = filtro === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  role="tab"
-                  aria-selected={isSelected}
-                  tabIndex={isSelected ? 0 : -1}
-                  type="button"
-                  onClick={() => handleTabChange(tab.key)}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
-                    isSelected
-                      ? "bg-[oklch(0.2_0.03_260)] text-white shadow-xs"
-                      : "text-[oklch(0.45_0.03_250)] hover:bg-[oklch(0.92_0.006_60/0.5)] hover:text-[oklch(0.2_0.03_260)]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          <CourseFilterTabs filtro={filtro} onTabChange={handleTabChange} />
           {courses.length > 2 && (
             <div className="mb-3 flex items-center gap-2 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 px-3 py-1.5 backdrop-blur-sm">
               <MagnifyingGlass
@@ -408,6 +419,9 @@ export function CoursesDashboard({
           )}
           <m.div
             key={filtro}
+            id="courses-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`courses-tab-${filtro}`}
             animate="show"
             className="course-grid"
             initial={shouldReduceMotion ? "show" : "hidden"}
