@@ -88,3 +88,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byEvalId.set(item.evalId, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por entrega en el buzón de entregas del estudiante, reduciendo la recolección de basura durante cambios de estado.
 - **Future Rule:** Evitar `new Map(array.map(...))` en hooks personalizados de suscripción a datos e iterar imperativamente para indexar colecciones.
+
+## 2026-09-16 - Construcción de Map de cursos en `CommunicationsCenter` (`app/views/CommunicationsCenter.tsx`)
+
+- **Finding:** `buildConversationTargets` y `CommunicationsCenter` construían mapas de búsqueda de cursos usando `new Map(courses.map((course) => [course.id, course]))`, asignando tuplas intermedias `[course.id, course]` en cada cálculo de destinatarios de mensajería.
+- **Attempted / Identified Solution:** Sustitución por bucles `for..of` directos invocando `courseMap.set(course.id, course)` tanto en la función de utilidad como en el bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación temporal de tuplas por elemento en el centro de comunicaciones del usuario, reduciendo la recolección de basura.
+- **Future Rule:** Indexar colecciones de cursos en vistas de interacción continua iterando imperativamente con `for..of` y `map.set`.
