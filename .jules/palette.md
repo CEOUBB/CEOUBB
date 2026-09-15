@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / CoursesDashboard
+
+- **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to `<ArrowRight>` inside the empty state action button in `CoursesDashboard.tsx`.
+- **Design System Constraint:** Reused existing Phosphor icon props (`size={15}`) without changing visual button layout or styles.
+- **Future Rule:** Ensure decorative vector arrows inside empty state action buttons explicitly declare `aria-hidden="true"`.
+
 ## [2026-03-31] - Views / ViewSkeletons
 
 - **Finding:** In `app/views/ViewSkeletons.tsx`, decorative Phosphor SVG vector icons (`<CaretLeft>`, `<CaretRight>`, `<Plus>`) inside disabled skeleton placeholder buttons lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within button elements (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
