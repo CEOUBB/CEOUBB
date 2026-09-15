@@ -185,6 +185,7 @@ function CourseFilterTabs({
       role="tablist"
       aria-label="Filtrar ramos"
       aria-orientation="horizontal"
+      tabIndex={-1}
       onKeyDown={(event) => {
         if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
         event.preventDefault();
