@@ -15026,3 +15026,73 @@ mark,
     transform: none !important;
   }
 }
+
+/* ==========================================================================
+   React 19.3 Native View Transitions & Directional Navigation
+   Implements: REQ-VT-01, REQ-VT-02
+   ========================================================================== */
+
+::view-transition-group(*) {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(*) {
+  animation-duration: 180ms;
+}
+
+::view-transition-new(*) {
+  animation-duration: 200ms;
+}
+
+/* Directional View Transitions with addTransitionType('next' | 'previous') */
+html:active-view-transition-type(next) ::view-transition-old(*) {
+  animation-name: vt-slide-out-to-left;
+}
+html:active-view-transition-type(next) ::view-transition-new(*) {
+  animation-name: vt-slide-in-from-right;
+}
+
+html:active-view-transition-type(previous) ::view-transition-old(*) {
+  animation-name: vt-slide-out-to-right;
+}
+html:active-view-transition-type(previous) ::view-transition-new(*) {
+  animation-name: vt-slide-in-from-left;
+}
+
+@keyframes vt-slide-out-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes vt-slide-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes vt-slide-out-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes vt-slide-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    animation-duration: 0ms !important;
+  }
+}

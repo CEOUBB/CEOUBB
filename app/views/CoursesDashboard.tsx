@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useMemo } from "react";
+import { useCallback, useMemo, startTransition, ViewTransition, addTransitionType } from "react";
 import { useQueryState, parseAsString, parseAsStringLiteral } from "nuqs";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
@@ -232,6 +232,7 @@ function CourseFilterTabs({
   );
 }
 
+// Implements: REQ-URL-01, REQ-URL-02
 export function CoursesDashboard({
   user,
   courses,
@@ -274,10 +275,20 @@ export function CoursesDashboard({
   const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useReducedMotion();
 
+  // Implements: REQ-VT-01, REQ-VT-02
   const handleTabChange = useCallback(
     (newTab: CourseState) => {
       if (newTab === filtro) return;
+      const currentIndex = courseStates.indexOf(filtro);
+      const nextIndex = courseStates.indexOf(newTab);
+      const direction = nextIndex > currentIndex ? "next" : "previous";
+
       startTransition(() => {
+        try {
+          addTransitionType(direction);
+        } catch {
+          // Gracefully fallback if addTransitionType is not supported
+        }
         void setFiltro(newTab);
       });
     },
@@ -418,50 +429,57 @@ export function CoursesDashboard({
               )}
             </div>
           )}
-          <m.div
-            key={filtro}
-            id="courses-tabpanel"
-            role="tabpanel"
-            aria-labelledby={`courses-tab-${filtro}`}
-            animate="show"
-            className="course-grid"
-            initial={shouldReduceMotion ? "show" : "hidden"}
-            variants={shouldReduceMotion ? undefined : stagger}
-          >
-            {courses.length === 0 && (
-              <div className="course-empty-state">
-                <EmptyState
-                  icon={ChalkboardTeacher}
-                  title={
-                    manageCourses
-                      ? "Todavía no administras ningún ramo"
-                      : "No tienes ramos vigentes en este período"
-                  }
-                  description={
-                    manageCourses
-                      ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
-                      : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
-                  }
-                  action={
-                    manageCourses ? (
-                      <button className="empty-state-action" onClick={manageCourses} type="button">
-                        Administrar ramos <ArrowRight size={15} />
-                      </button>
-                    ) : undefined
-                  }
+          {/* Implements: REQ-VT-01, REQ-VT-02 */}
+          <ViewTransition default="none" update="auto">
+            <m.div
+              key={filtro}
+              id="courses-tabpanel"
+              role="tabpanel"
+              aria-labelledby={`courses-tab-${filtro}`}
+              animate="show"
+              className="course-grid"
+              initial={shouldReduceMotion ? "show" : "hidden"}
+              variants={shouldReduceMotion ? undefined : stagger}
+            >
+              {courses.length === 0 && (
+                <div className="course-empty-state">
+                  <EmptyState
+                    icon={ChalkboardTeacher}
+                    title={
+                      manageCourses
+                        ? "Todavía no administras ningún ramo"
+                        : "No tienes ramos vigentes en este período"
+                    }
+                    description={
+                      manageCourses
+                        ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
+                        : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
+                    }
+                    action={
+                      manageCourses ? (
+                        <button
+                          className="empty-state-action"
+                          onClick={manageCourses}
+                          type="button"
+                        >
+                          Administrar ramos <ArrowRight size={15} />
+                        </button>
+                      ) : undefined
+                    }
+                  />
+                </div>
+              )}
+              {displayedCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  summary={activitySummaryByCourse.get(course.id)}
+                  shouldReduceMotion={Boolean(shouldReduceMotion)}
+                  onOpen={handleOpenCourse}
                 />
-              </div>
-            )}
-            {displayedCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                summary={activitySummaryByCourse.get(course.id)}
-                shouldReduceMotion={Boolean(shouldReduceMotion)}
-                onOpen={handleOpenCourse}
-              />
-            ))}
-          </m.div>
+              ))}
+            </m.div>
+          </ViewTransition>
         </section>
         <DashboardAgenda
           next={next}
