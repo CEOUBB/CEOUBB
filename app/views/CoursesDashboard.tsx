@@ -358,7 +358,7 @@ export function CoursesDashboard({
                   action={
                     manageCourses ? (
                       <button className="empty-state-action" onClick={manageCourses} type="button">
-                        Administrar ramos <ArrowRight size={15} />
+                        Administrar ramos <ArrowRight size={15} aria-hidden="true" />
                       </button>
                     ) : undefined
                   }
