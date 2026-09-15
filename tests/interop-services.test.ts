@@ -34,6 +34,7 @@ import {
   launchInteropResource,
   linkLtiResource,
   listInteropResources,
+  listInteropTools,
   loadInteropProgress,
   registerTool,
   saveInteropProgress,
@@ -46,6 +47,7 @@ import {
 } from "../app/api/courses/[sectionId]/interop/route.ts";
 import { GET as authorizeRoute } from "../app/api/interop/lti/authorize/route.ts";
 import { GET as contentRoute } from "../app/api/interop/content/[grant]/[...path]/route.ts";
+import { GET as listToolsRoute } from "../app/api/interop/tools/route.ts";
 
 const owner: PublicUser = {
   id: "owner",
@@ -207,6 +209,36 @@ test("REQ-IO-01–11 servicios, contratos HTTP y migración sobre libSQL", async
     );
     await db.update(periodos).set({ estado: "abierto" }).where(eq(periodos.id, "p"));
   });
+  await t.test("listInteropTools exige rol owner y valida cursor UUID", async () => {
+    await assert.rejects(() => listInteropTools(teacher), status(403));
+    await assert.rejects(() => listInteropTools(student), status(403));
+    await assert.rejects(() => listInteropTools(owner, "not-a-uuid"), status(400));
+    const tools = await listInteropTools(owner);
+    assert.ok(Array.isArray(tools.items));
+    assert.equal(tools.items.length, 1);
+    assert.equal(tools.items[0].id, tool.id);
+
+    const nonOwnerRequest = new Request("https://portal.test/api/interop/tools", {
+      headers: { cookie },
+    });
+    const nonOwnerRes = await listToolsRoute(nonOwnerRequest);
+    assert.equal(nonOwnerRes.status, 403);
+
+    const ownerCookie = (await createSession(owner.id)).split(";")[0];
+    const invalidCursorRequest = new Request(
+      "https://portal.test/api/interop/tools?cursor=invalid-cursor",
+      { headers: { cookie: ownerCookie } }
+    );
+    const invalidRes = await listToolsRoute(invalidCursorRequest);
+    assert.equal(invalidRes.status, 400);
+
+    const validRequest = new Request("https://portal.test/api/interop/tools", {
+      headers: { cookie: ownerCookie },
+    });
+    const validRes = await listToolsRoute(validRequest);
+    assert.equal(validRes.status, 200);
+  });
+
   await t.test("registro owner, HTTPS y destinos exactos", async () => {
     await assert.rejects(() => registerTool(teacher, toolInput), status(403));
     await assert.rejects(() => registerTool(owner, { ...toolInput, loginUrl: "http://tool.test" }));
