@@ -462,7 +462,7 @@ export function CoursesDashboard({
                           onClick={manageCourses}
                           type="button"
                         >
-                          Administrar ramos <ArrowRight size={15} />
+                          Administrar ramos <ArrowRight aria-hidden="true" size={15} />
                         </button>
                       ) : undefined
                     }
