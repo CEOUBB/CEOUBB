@@ -13,6 +13,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { courseStates, type CourseState } from "../../lib/search-params";
+import { AnimatedUnderline } from "@/components/motion/animated-underline-link";
 import { CourseCard } from "./CourseCard";
 import { EmptyState } from "./classroom/EmptyState";
 import { Course, PERIOD } from "../../lib/courses";
@@ -84,7 +85,8 @@ function DashboardAgenda({
               onClick={() => openCourse(nextCourse)}
               type="button"
             >
-              Ir al ramo <ArrowRight aria-hidden="true" size={15} />
+              <AnimatedUnderline>Ir al ramo</AnimatedUnderline>{" "}
+              <ArrowRight aria-hidden="true" size={15} />
             </button>
           )}
         </article>
