@@ -262,7 +262,10 @@ function QuizRunner({
     []
   );
 
-  const answered = quiz.questions.filter((question) => hasAnswer(answers[question.id])).length;
+  let answered = 0;
+  for (const question of quiz.questions) {
+    if (hasAnswer(answers[question.id])) answered += 1;
+  }
   const percentage = quiz.questions.length > 0 ? (100 * answered) / quiz.questions.length : 0;
 
   return (
@@ -350,7 +353,10 @@ function QuizCorrectionView({
   for (const question of quiz.questions) {
     byQuestion.set(question.id, question);
   }
-  const correct = result.corrections.filter((item) => item.correct).length;
+  let correct = 0;
+  for (const item of result.corrections) {
+    if (item.correct) correct += 1;
+  }
   return (
     <section className="quiz-results">
       <button className="quiz-back-button" onClick={onBack} type="button">
