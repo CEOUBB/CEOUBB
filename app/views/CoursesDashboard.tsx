@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, startTransition, ViewTransition, addTransitionType } from "react";
-import { useQueryState, parseAsString, parseAsStringLiteral } from "nuqs";
+import { useCallback, useMemo } from "react";
+import { useQueryState, parseAsString } from "nuqs";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import {
@@ -12,7 +12,6 @@ import {
   MagnifyingGlass,
   X,
 } from "@phosphor-icons/react";
-import { courseStates, type CourseState } from "../../lib/search-params";
 import { AnimatedUnderline } from "@/components/motion/animated-underline-link";
 import { CourseCard } from "./CourseCard";
 import { EmptyState } from "./classroom/EmptyState";
@@ -168,72 +167,6 @@ function ArchivedCoursesSection({
   );
 }
 
-// Implements: REQ-URL-01, REQ-URL-02, REQ-A11Y-01
-const COURSE_FILTER_TABS: Array<{ key: CourseState; label: string }> = [
-  { key: "todos", label: "Todos" },
-  { key: "activo", label: "Activos" },
-  { key: "archivado", label: "Archivados" },
-];
-
-function CourseFilterTabs({
-  filtro,
-  onTabChange,
-}: {
-  filtro: CourseState;
-  onTabChange: (newTab: CourseState) => void;
-}) {
-  return (
-    <div
-      role="tablist"
-      aria-label="Filtrar ramos"
-      aria-orientation="horizontal"
-      tabIndex={-1}
-      onKeyDown={(event) => {
-        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        const currentIndex = COURSE_FILTER_TABS.findIndex((t) => t.key === filtro);
-        let nextIndex = currentIndex;
-        if (event.key === "Home") nextIndex = 0;
-        else if (event.key === "End") nextIndex = COURSE_FILTER_TABS.length - 1;
-        else if (event.key === "ArrowRight")
-          nextIndex = (currentIndex + 1) % COURSE_FILTER_TABS.length;
-        else if (event.key === "ArrowLeft")
-          nextIndex = (currentIndex - 1 + COURSE_FILTER_TABS.length) % COURSE_FILTER_TABS.length;
-        const nextTab = COURSE_FILTER_TABS[nextIndex];
-        if (nextTab) {
-          onTabChange(nextTab.key);
-          const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-          buttons[nextIndex]?.focus();
-        }
-      }}
-      className="mb-3 flex items-center gap-1.5 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 p-1 backdrop-blur-sm w-fit"
-    >
-      {COURSE_FILTER_TABS.map((tab) => {
-        const isSelected = filtro === tab.key;
-        return (
-          <button
-            key={tab.key}
-            id={`courses-tab-${tab.key}`}
-            role="tab"
-            aria-selected={isSelected}
-            aria-controls="courses-tabpanel"
-            tabIndex={isSelected ? 0 : -1}
-            type="button"
-            onClick={() => onTabChange(tab.key)}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
-              isSelected
-                ? "bg-[oklch(0.2_0.03_260)] text-white shadow-xs"
-                : "text-[oklch(0.45_0.03_250)] hover:bg-[oklch(0.92_0.006_60/0.5)] hover:text-[oklch(0.2_0.03_260)]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // Implements: REQ-URL-01, REQ-URL-02
 export function CoursesDashboard({
   user,
@@ -262,10 +195,6 @@ export function CoursesDashboard({
   openCourse: (course: Course) => void;
   onLoadMoreArchived: () => void;
 }) {
-  const [filtro, setFiltro] = useQueryState(
-    "filtro",
-    parseAsStringLiteral(courseStates).withDefault("todos").withOptions({ shallow: true })
-  );
   const [busqueda, setBusqueda] = useQueryState(
     "busqueda",
     parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
@@ -277,35 +206,8 @@ export function CoursesDashboard({
   const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useReducedMotion();
 
-  // Implements: REQ-VT-01, REQ-VT-02
-  const handleTabChange = useCallback(
-    (newTab: CourseState) => {
-      if (newTab === filtro) return;
-      const currentIndex = courseStates.indexOf(filtro);
-      const nextIndex = courseStates.indexOf(newTab);
-      const direction = nextIndex > currentIndex ? "next" : "previous";
-
-      startTransition(() => {
-        try {
-          addTransitionType(direction);
-        } catch {
-          // Gracefully fallback if addTransitionType is not supported
-        }
-        void setFiltro(newTab);
-      });
-    },
-    [filtro, setFiltro]
-  );
-
   const displayedCourses = useMemo(() => {
-    let list: Course[];
-    if (filtro === "archivado") {
-      list = archivedCourses;
-    } else if (filtro === "activo") {
-      list = courses.filter((c) => c.periodStatus !== "archivado" && !c.readOnly);
-    } else {
-      list = courses;
-    }
+    let list = courses;
     if (busqueda.trim()) {
       const q = busqueda.toLowerCase().trim();
       list = list.filter(
@@ -316,7 +218,7 @@ export function CoursesDashboard({
       );
     }
     return list;
-  }, [courses, archivedCourses, filtro, busqueda]);
+  }, [courses, busqueda]);
 
   const handleOpenCourse = useCallback(
     (courseToOpen: Course) => {
@@ -403,7 +305,6 @@ export function CoursesDashboard({
               {displayedCourses.length} {displayedCourses.length === 1 ? "sección" : "secciones"}
             </span>
           </div>
-          <CourseFilterTabs filtro={filtro} onTabChange={handleTabChange} />
           {courses.length > 2 && (
             <div className="mb-3 flex items-center gap-2 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 px-3 py-1.5 backdrop-blur-sm">
               <MagnifyingGlass
@@ -431,57 +332,46 @@ export function CoursesDashboard({
               )}
             </div>
           )}
-          {/* Implements: REQ-VT-01, REQ-VT-02 */}
-          <ViewTransition default="none" update="auto">
-            <m.div
-              key={filtro}
-              id="courses-tabpanel"
-              role="tabpanel"
-              aria-labelledby={`courses-tab-${filtro}`}
-              animate="show"
-              className="course-grid"
-              initial={shouldReduceMotion ? "show" : "hidden"}
-              variants={shouldReduceMotion ? undefined : stagger}
-            >
-              {courses.length === 0 && (
-                <div className="course-empty-state">
-                  <EmptyState
-                    icon={ChalkboardTeacher}
-                    title={
-                      manageCourses
-                        ? "Todavía no administras ningún ramo"
-                        : "No tienes ramos vigentes en este período"
-                    }
-                    description={
-                      manageCourses
-                        ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
-                        : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
-                    }
-                    action={
-                      manageCourses ? (
-                        <button
-                          className="empty-state-action"
-                          onClick={manageCourses}
-                          type="button"
-                        >
-                          Administrar ramos <ArrowRight aria-hidden="true" size={15} />
-                        </button>
-                      ) : undefined
-                    }
-                  />
-                </div>
-              )}
-              {displayedCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  summary={activitySummaryByCourse.get(course.id)}
-                  shouldReduceMotion={Boolean(shouldReduceMotion)}
-                  onOpen={handleOpenCourse}
+          <m.div
+            animate="show"
+            className="course-grid"
+            initial={shouldReduceMotion ? "show" : "hidden"}
+            variants={shouldReduceMotion ? undefined : stagger}
+          >
+            {courses.length === 0 && (
+              <div className="course-empty-state">
+                <EmptyState
+                  icon={ChalkboardTeacher}
+                  title={
+                    manageCourses
+                      ? "Todavía no administras ningún ramo"
+                      : "No tienes ramos vigentes en este período"
+                  }
+                  description={
+                    manageCourses
+                      ? "Crea una sección para preparar su aula, publicar material y abrir el libro de notas."
+                      : "Tus secciones aparecerán aquí en cuanto tu matrícula quede activa."
+                  }
+                  action={
+                    manageCourses ? (
+                      <button className="empty-state-action" onClick={manageCourses} type="button">
+                        Administrar ramos <ArrowRight aria-hidden="true" size={15} />
+                      </button>
+                    ) : undefined
+                  }
                 />
-              ))}
-            </m.div>
-          </ViewTransition>
+              </div>
+            )}
+            {displayedCourses.map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                summary={activitySummaryByCourse.get(course.id)}
+                shouldReduceMotion={Boolean(shouldReduceMotion)}
+                onOpen={handleOpenCourse}
+              />
+            ))}
+          </m.div>
         </section>
         <DashboardAgenda
           next={next}
