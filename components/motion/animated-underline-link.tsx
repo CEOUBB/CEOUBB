@@ -96,6 +96,14 @@ export function AnimatedUnderlineLink({
     );
   }
 
+  if (as === "a") {
+    return (
+      <a className={rootClassName} href={href} rel={rel} target={target} {...props}>
+        {innerContent}
+      </a>
+    );
+  }
+
   if (as === "span" || !href) {
     const spanProps = props as React.HTMLAttributes<HTMLSpanElement>;
     return (

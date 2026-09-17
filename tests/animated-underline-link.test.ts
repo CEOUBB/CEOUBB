@@ -19,6 +19,7 @@ test("REQ-MOTION-LINK-01: AnimatedUnderline y AnimatedUnderlineLink están decla
   assert.match(componentSource, /animated-underline-prefix/);
   assert.match(componentSource, /animated-underline-suffix/);
   assert.match(componentSource, /className=\{.*animated-underline/);
+  assert.match(componentSource, /if\s*\(as === "a"\)/);
 });
 
 test("REQ-MOTION-LINK-02: estilos canónicos de subrayado direccional y accesibilidad en globals.css", async () => {

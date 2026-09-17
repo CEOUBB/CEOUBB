@@ -7,7 +7,7 @@
   "tests/accessibility.test.ts": "cbb575ec2b3c2a675c263539606f384678930bcace24f4deeb736077a89cbecf",
   "tests/adecca-import.test.ts": "174fe1c5b97cc9de4beb8056ff937c5e2972b69e40a05d20c0904d2e91139034",
   "tests/admin-api.test.ts": "1fe92e73423cafeec68f8abc1e09b20c7d55f6f41ebf4c58b4cf4fd4a91a4137",
-  "tests/animated-underline-link.test.ts": "400e43624a2691715e2e4d8dfe8ac652325ee5d7b68f7ba821084eb6b78600b1",
+  "tests/animated-underline-link.test.ts": "3e127488bd2419a479eedf55553ae4cf10e11d51cc297e59dda24974bcb4a8ea",
   "tests/app-check.test.ts": "fd5b41d9159c72e8c656acd98b10e62cdb0b7846883c132386258a9e7a15f9dc",
   "tests/assistant-role.test.ts": "7a36f4a53e914c222b5c5d11da0a74906770b7b6dc810dd9619a76c7a67393fd",
   "tests/backend-remediation.test.ts": "85a886d6a3ad6cc06800a8f40ffb2d5c80a559f85584e4ae61597ebce8f3d79b",
