@@ -126,7 +126,10 @@ function buildConversationTargets(
   memberships: readonly SectionMembership[],
   threads: readonly MessageThreadSummary[]
 ): ConversationTarget[] {
-  const courseMap = new Map(courses.map((course) => [course.id, course]));
+  const courseMap = new Map<string, Course>();
+  for (const course of courses) {
+    courseMap.set(course.id, course);
+  }
   const userId = firebaseUserId(user.id);
   const targets: ConversationTarget[] = [];
 
@@ -539,7 +542,13 @@ export function CommunicationsCenter({
   const messagesEnd = useRef<HTMLDivElement>(null);
   const currentUserId = firebaseUserId(user.id);
   const reads = useMemo(() => readCursorMap(cursors), [cursors]);
-  const courseMap = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses]);
+  const courseMap = useMemo(() => {
+    const map = new Map<string, Course>();
+    for (const course of courses) {
+      map.set(course.id, course);
+    }
+    return map;
+  }, [courses]);
   const targets = useMemo(
     () => buildConversationTargets(user, courses, memberships, threads),
     [user, courses, memberships, threads]
