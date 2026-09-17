@@ -11,8 +11,11 @@ export async function GET(request: Request) {
 
   // 2. Requerir sesión de owner en preview / staging para evitar agotamiento de cuota
   const user = await getSessionUser(request);
-  if (!user || user.role !== "owner") {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.role !== "owner") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
