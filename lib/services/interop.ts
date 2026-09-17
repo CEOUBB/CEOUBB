@@ -139,7 +139,11 @@ function toolView(row: typeof interopTools.$inferSelect) {
     enabled: row.enabled,
   };
 }
-export async function listInteropTools(cursor?: string) {
+export async function listInteropTools(actor: PublicUser, cursor?: string) {
+  if (actor.role !== "owner") fail("Sólo administración puede consultar herramientas.", 403);
+  if (cursor && !z.string().uuid().safeParse(cursor).success) {
+    fail("El cursor de paginación es inválido.");
+  }
   const rows = await getDb()
     .select()
     .from(interopTools)
