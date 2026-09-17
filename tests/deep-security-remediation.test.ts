@@ -41,13 +41,26 @@ test("REQ-SEC-08: firestore.rules prevents cross-student submission update IDOR"
 });
 
 // Implements: REQ-SEC-11
-test("REQ-SEC-11: sentry server config limits includeLocalVariables to development", () => {
+test("REQ-SEC-11: sentry server config limits includeLocalVariables to development and route separates 401 and 403 checks", () => {
   const sentryServerPath = path.resolve("sentry.server.config.ts");
   const sentryContent = fs.readFileSync(sentryServerPath, "utf8");
   assert.match(
     sentryContent,
     /includeLocalVariables:\s*process\.env\.NODE_ENV\s*===\s*["']development["']/,
     "sentry server config must not include local variables in production"
+  );
+
+  const routePath = path.resolve("app/api/sentry-test/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /if\s*\(!user\)[\s\S]*?Response\.json\(\{\s*error:\s*["']Unauthorized["']\s*\},\s*\{\s*status:\s*401\s*\}\)/,
+    "Sentry test route must return 401 for unauthenticated requests"
+  );
+  assert.match(
+    routeContent,
+    /if\s*\(user\.role\s*!==\s*["']owner["']\)[\s\S]*?Response\.json\(\{\s*error:\s*["']Forbidden["']\s*\},\s*\{\s*status:\s*403\s*\}\)/,
+    "Sentry test route must return 403 for non-owner roles"
   );
 });
 
