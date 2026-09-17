@@ -199,7 +199,11 @@ export function GradebookSettingsEditor({
           {saving ? "Guardando…" : "Guardar esquema"}
         </button>
       </div>
-      <p aria-live="polite" className={`tool-status ${status.tone}`}>
+      <p
+        aria-live="polite"
+        className={`tool-status ${status.tone}`}
+        role={status.tone === "bad" ? "alert" : "status"}
+      >
         {status.text}
       </p>
     </div>
