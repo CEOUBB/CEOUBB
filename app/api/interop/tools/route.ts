@@ -8,10 +8,10 @@ import {
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
-    await sessionActor(request);
-    return json(
-      await listInteropTools(new URL(request.url).searchParams.get("cursor") || undefined)
-    );
+    const actor = await sessionActor(request);
+    const cursorParam = new URL(request.url).searchParams.get("cursor") || undefined;
+    const cursor = cursorParam ? z.string().uuid().parse(cursorParam) : undefined;
+    return json(await listInteropTools(actor, cursor));
   } catch (error) {
     return interopFailure(error);
   }

@@ -106,6 +106,9 @@ test("REQ-CFG-04: la ruta de preferencias rechaza con 422 y no persiste", () => 
   assert.ok(route.indexOf("writePreferencesToFirestore(") > validationIndex);
   assert.match(route, /status: 422/);
   assert.match(route, /getSessionUser\(request\)/);
+  assert.match(route, /request\.headers\.get\("origin"\)/);
+  assert.match(route, /content-length/);
+  assert.match(route, /headers: privateHeaders/);
 });
 
 test("REQ-AUTH-08: el listado de sesiones es acotado, indexado y sin vencidas", () => {
@@ -183,7 +186,7 @@ test("REQ-CFG-04: el aviso de publicación se envía por token, nunca a un topic
 
 test("REQ-CFG-04: la resolución de destinatarios se mantiene acotada por lote", () => {
   const fn = source("firebase/functions/index.js");
-  // Una lectura por estudiante, no dos: token y permiso viajan en el mismo documento.
+  // Una lectura por estudiante, no dos: token and permiso viajan en el mismo documento.
   assert.match(fn, /fieldMask: \["fcmToken", "pushChannels"\]/);
   assert.match(fn, /\.select\(\)\s*\n\s*\.get\(\)/);
   assert.match(fn, /const PROFILE_BATCH = 300;/);
