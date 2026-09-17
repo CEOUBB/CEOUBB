@@ -88,3 +88,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byEvalId.set(item.evalId, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por entrega en el buzón de entregas del estudiante, reduciendo la recolección de basura durante cambios de estado.
 - **Future Rule:** Evitar `new Map(array.map(...))` en hooks personalizados de suscripción a datos e iterar imperativamente para indexar colecciones.
+
+## 2026-09-18 - Conteo de preguntas respondidas y respuestas correctas en `StudentQuizzes` (`app/views/classroom/StudentQuizzes.tsx`)
+
+- **Finding:** `QuizRunner` y `QuizCorrectionView` ejecutaban `.filter(...).length` para contar preguntas respondidas y respuestas correctas, asignando arreglos temporales $O(N)$ en cada tick del temporizador (1000 ms) y en cada re-renderizado.
+- **Attempted / Identified Solution:** Reemplazo de `.filter(...).length` por bucles `for..of` directos con acumulador escalar $O(1)$ de espacio.
+- **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por segundo durante la rendición de cuestionarios por parte del estudiante.
+- **Future Rule:** Usar bucles escalares acumuladores `for..of` en lugar de `.filter(...).length` en componentes con temporizadores o renderizados frecuentes.
