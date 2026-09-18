@@ -29,6 +29,7 @@ import { toast } from "../../../lib/toast";
 // Implements: REQ-ASST-01, REQ-ASST-03, REQ-ASST-04, REQ-ASST-05, REQ-TOAST-01
 export function useClassroomHandlers(course: Course, user: User, sectionRole: SectionRole | null) {
   const [tab, setTab] = useState<Tab>("home");
+  const [retry, setRetry] = useState(0);
   const [classroom, setClassroom] = useState<ClassroomState>(emptyClassroom);
   const [status, setStatus] = useState<Note>({ text: "", tone: "info" });
   const [liveClassStatus, setLiveClassStatus] = useState<Note>({ text: "", tone: "info" });
@@ -62,7 +63,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
         (patch) => setClassroom((current) => ({ ...current, ...patch })),
         (message) => note(message, "bad")
       ),
-    [course.id, canTeach, note]
+    [course.id, canTeach, note, retry]
   );
 
   useEffect(() => {
@@ -242,6 +243,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     tab,
     setTab,
     classroom,
+    retryClassroom: () => setRetry((value) => value + 1),
     status,
     liveClassStatus,
     liveClassInvalid,

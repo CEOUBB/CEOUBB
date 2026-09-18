@@ -72,6 +72,7 @@ export function ClassroomView({
     tab,
     setTab,
     classroom,
+    retryClassroom,
     status,
     liveClassStatus,
     liveClassInvalid,
@@ -206,8 +207,15 @@ export function ClassroomView({
               )}
               {canManageContent && (
                 <>
-                  {canTeach && <MoodleImportDialog course={course} />}
-                  {canTeach && <AdeccaImportDialog course={course} />}
+                  {canTeach && (
+                    <details className="classroom-imports">
+                      <summary>Importar contenidos</summary>
+                      <div className="classroom-import-actions">
+                        {canTeach && <MoodleImportDialog course={course} />}
+                        {canTeach && <AdeccaImportDialog course={course} />}
+                      </div>
+                    </details>
+                  )}
                   <button className="publication-cta" onClick={startPublication} type="button">
                     <Plus size={17} weight="bold" aria-hidden="true" />
                     Nueva publicación
@@ -273,7 +281,7 @@ export function ClassroomView({
                         course={course}
                         canTeach={canTeach}
                         readOnly={readOnly}
-                        students={students}
+                        showParticipants={() => setTab("people")}
                         courseReference={courseReference}
                         copiedCourseReference={copiedCourseReference}
                         copyCourseReference={copyCourseReference}
@@ -289,6 +297,7 @@ export function ClassroomView({
                 )}
                 {tab === "grades" && (
                   <GradesSection
+                    retry={retryClassroom}
                     course={course}
                     classroom={classroom}
                     user={user}

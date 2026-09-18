@@ -199,6 +199,9 @@ function CommunicationsPanels({
   textarea,
   sending,
   showMessages,
+  ready,
+  connectionError,
+  messageError,
 }: {
   mode: CommunicationsMode;
   activity: CourseActivity[];
@@ -219,6 +222,9 @@ function CommunicationsPanels({
   textarea: RefObject<HTMLTextAreaElement | null>;
   sending: boolean;
   showMessages: () => void;
+  ready: boolean;
+  connectionError: string;
+  messageError: string;
 }) {
   const [search, setSearch] = useState("");
   const visibleTargets = targets.filter((target) =>
@@ -240,13 +246,31 @@ function CommunicationsPanels({
             <h2>Novedades de tus ramos</h2>
             <p>Avisos, materiales y evaluaciones publicados por el equipo docente.</p>
           </div>
-          <span className="num">{activity.length} publicaciones</span>
+          <span className="num">
+            {ready && !connectionError ? `${activity.length} publicaciones` : "Sin actualizar"}
+          </span>
         </header>
         {activity.length === 0 ? (
           <div className="communications-empty">
-            <CheckCircle aria-hidden="true" size={48} weight="light" />
-            <h2>Todo al día</h2>
-            <p>Los avisos de tus ramos aparecerán aquí cuando el equipo docente publique.</p>
+            {connectionError || !ready ? (
+              <Bell aria-hidden="true" size={48} weight="light" />
+            ) : (
+              <CheckCircle aria-hidden="true" size={48} weight="light" />
+            )}
+            <h2>
+              {connectionError
+                ? "Avisos no disponibles"
+                : !ready
+                  ? "Cargando avisos…"
+                  : "Todo al día"}
+            </h2>
+            <p>
+              {connectionError
+                ? "No pudimos comprobar las novedades. Reintenta para ver los avisos de tus secciones."
+                : !ready
+                  ? "Estamos comprobando las novedades de tus secciones."
+                  : "Los avisos de tus ramos aparecerán aquí cuando el equipo docente publique."}
+            </p>
             <button className="communications-empty-action" onClick={showMessages} type="button">
               Ir a mensajes <ArrowRight aria-hidden="true" size={18} />
             </button>
@@ -341,8 +365,18 @@ function CommunicationsPanels({
         {targets.length === 0 ? (
           <div className="communications-empty compact">
             <ChatCircleText aria-hidden="true" size={48} weight="light" />
-            <h3>Sin conversaciones</h3>
-            <p>Aparecerán al contar con una matrícula activa o una consulta estudiantil.</p>
+            <h3>
+              {connectionError
+                ? "Conversaciones no disponibles"
+                : !ready
+                  ? "Cargando conversaciones…"
+                  : "Sin conversaciones"}
+            </h3>
+            <p>
+              {connectionError || !ready
+                ? "Espera a que se actualice la lista o reintenta la conexión."
+                : "Aparecerán al contar con una matrícula activa o una consulta estudiantil."}
+            </p>
           </div>
         ) : (
           <ol className="conversation-list">
@@ -437,6 +471,11 @@ function CommunicationsPanels({
             <div aria-busy={loadingMessages} aria-live="polite" className="message-history">
               {loadingMessages ? (
                 <ConversationSkeleton />
+              ) : messages.length === 0 && messageError ? (
+                <div className="message-empty">
+                  <h3>No se pudo cargar la conversación</h3>
+                  <p>Reintenta la conexión. Tu borrador se conserva.</p>
+                </div>
               ) : messages.length === 0 ? (
                 <div className="message-empty">
                   <ChatCircleText aria-hidden="true" size={40} weight="light" />
@@ -519,6 +558,8 @@ export function CommunicationsCenter({
   threads,
   cursors,
   connectionError,
+  ready = true,
+  retry,
   focusThread = "",
   openCourse,
 }: {
@@ -529,6 +570,8 @@ export function CommunicationsCenter({
   threads: MessageThreadSummary[];
   cursors: CommunicationReadCursor[];
   connectionError: string;
+  ready?: boolean;
+  retry?: () => void;
   focusThread?: string;
   openCourse: (course: Course) => void;
 }) {
@@ -539,6 +582,7 @@ export function CommunicationsCenter({
     serverCommunicationsLayout
   );
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const [messageRetry, setMessageRetry] = useState(0);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const currentUserId = firebaseUserId(user.id);
   const reads = useMemo(() => readCursorMap(cursors), [cursors]);
@@ -585,13 +629,13 @@ export function CommunicationsCenter({
       activeCourseId,
       activeThreadId,
       (next) => {
-        updateUi({ messages: next, loadingMessages: false });
+        updateUi({ messages: next, loadingMessages: false, messageError: "" });
       },
       (error) => {
         updateUi({ messageError: error, loadingMessages: false });
       }
     );
-  }, [activeCourseId, activeThreadId]);
+  }, [activeCourseId, activeThreadId, messageRetry]);
 
   useEffect(() => {
     const history = messagesEnd.current?.parentElement;
@@ -716,12 +760,26 @@ export function CommunicationsCenter({
         </div>
         <div
           className="communications-summary"
-          aria-label={`${unread} elementos no leídos`}
+          aria-label={
+            connectionError
+              ? "Comunicaciones sin sincronizar"
+              : !ready
+                ? "Sincronizando comunicaciones"
+                : `${unread} elementos no leídos`
+          }
           role="status"
         >
-          <Checks aria-hidden="true" size={20} />
+          {connectionError || !ready ? (
+            <Bell aria-hidden="true" size={20} />
+          ) : (
+            <Checks aria-hidden="true" size={20} />
+          )}
           <small>
-            {unread === 0 ? (
+            {connectionError ? (
+              "Sin sincronizar"
+            ) : !ready ? (
+              "Sincronizando…"
+            ) : unread === 0 ? (
               "No tienes pendientes"
             ) : (
               <>
@@ -803,7 +861,7 @@ export function CommunicationsCenter({
               )}
             </button>
           </div>
-          {unread > 0 && (
+          {ready && !connectionError && unread > 0 && (
             <button
               className="communications-read-all"
               onClick={() => void markAll()}
@@ -824,12 +882,34 @@ export function CommunicationsCenter({
             {ui.feedback}
           </p>
           {(connectionError || ui.messageError) && (
-            <p className="communications-error" role="alert">
-              {ui.messageError || connectionError}
-            </p>
+            <div className="communications-error" role="alert">
+              <p>{ui.messageError || connectionError}</p>
+              {ui.messageError && activeTarget ? (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => {
+                    updateUi({ messageError: "", loadingMessages: true });
+                    setMessageRetry((value) => value + 1);
+                  }}
+                >
+                  Reintentar conversación
+                </button>
+              ) : (
+                connectionError &&
+                retry && (
+                  <button className="secondary-button" onClick={retry} type="button">
+                    Reintentar conexión
+                  </button>
+                )
+              )}
+            </div>
           )}
 
           <CommunicationsPanels
+            ready={ready}
+            connectionError={connectionError}
+            messageError={ui.messageError}
             activeTarget={activeTarget}
             activity={activity}
             body={ui.body}

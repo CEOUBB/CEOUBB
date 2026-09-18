@@ -24,6 +24,8 @@ export function QuizzesSection({
 }) {
   const [quizzes, setQuizzes] = useState<QuizDefinition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
   const noteRef = useRef(note);
 
   useEffect(() => {
@@ -37,36 +39,63 @@ export function QuizzesSection({
         canTeach,
         (next) => {
           setQuizzes(next);
+          setError("");
           setLoading(false);
         },
         (message) => {
+          setError(message);
           noteRef.current(message, "bad");
           setLoading(false);
         }
       ),
-    [canTeach, course.id]
+    [canTeach, course.id, retry]
   );
+
+  const unavailable = error && (
+    <div className="grades-load-status" role="status">
+      <h2>No se pudieron actualizar los cuestionarios</h2>
+      <p>{error} No podemos confirmar si hay nuevos controles disponibles.</p>
+      <button
+        className="secondary-button"
+        type="button"
+        onClick={() => {
+          setLoading(true);
+          setError("");
+          setRetry((value) => value + 1);
+        }}
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+  if (error && quizzes.length === 0) return unavailable;
 
   if (canTeach) {
     return (
-      <TeacherQuizzes
-        classroom={classroom}
+      <>
+        {unavailable}
+        <TeacherQuizzes
+          classroom={classroom}
+          course={course}
+          loading={loading}
+          note={note}
+          quizzes={quizzes}
+          readOnly={readOnly || Boolean(error) || loading}
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      {unavailable}
+      <StudentQuizzes
         course={course}
         loading={loading}
         note={note}
         quizzes={quizzes}
-        readOnly={readOnly}
+        readOnly={readOnly || Boolean(error) || loading}
       />
-    );
-  }
-  return (
-    <StudentQuizzes
-      course={course}
-      loading={loading}
-      note={note}
-      quizzes={quizzes}
-      readOnly={readOnly}
-    />
+    </>
   );
 }
 

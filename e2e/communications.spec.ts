@@ -68,8 +68,8 @@ for (const width of [1918, 1440, 900, 390]) {
     expect(login.ok()).toBeTruthy();
     await page.goto("/");
     await page.getByRole("button", { name: "Entrar al aula de Termodinámica I" }).waitFor();
-    await page.keyboard.press("Control+k");
-    await page.getByRole("combobox", { name: "Buscar ramos y vistas" }).fill("Avisos");
+    await page.getByRole("button", { name: "Buscar ramos y vistas", exact: true }).click();
+    await page.getByRole("combobox", { name: "Buscar en Centro de Estudio UBB" }).fill("Avisos");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: "Novedades de tus ramos" })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
@@ -107,7 +107,9 @@ for (const width of [1918, 1440, 900, 390]) {
     await expect(body).toHaveValue("Simular error");
     await body.fill("Gracias, ahora entiendo cómo plantear el equilibrio.");
     await send.click();
-    await expect(center.getByRole("status")).toContainText("Mensaje enviado");
+    await expect(center.locator('.communications-feedback[role="status"]')).toContainText(
+      "Mensaje enviado"
+    );
     await expect(body).toHaveValue("");
     await expect(body).toBeFocused();
     await expect(center.locator(".message-bubble").last()).toContainText("Gracias, ahora entiendo");

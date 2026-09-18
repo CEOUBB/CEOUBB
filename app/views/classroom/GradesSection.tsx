@@ -77,6 +77,7 @@ export function GradesSection({
   readOnly,
   note,
   status,
+  retry,
 }: {
   course: Course;
   classroom: ClassroomState;
@@ -86,34 +87,61 @@ export function GradesSection({
   readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
   status: Note;
+  retry: () => void;
 }) {
-  const { gradebook, exemption } = classroom;
+  const { gradebook, exemption, gradebookStatus } = classroom;
+  const ready = gradebookStatus === "ready";
+  const unavailable = !ready && (
+    <div className="grades-load-status" role="status">
+      <p>
+        {gradebookStatus === "error"
+          ? "No se pudo cargar la ponderación. Reintenta para consultar o editar las evaluaciones."
+          : "Cargando la ponderación del ramo…"}
+      </p>
+      {gradebookStatus === "error" && (
+        <button className="secondary-button" onClick={retry} type="button">
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
+  if (!ready && gradebook.length === 0) return unavailable;
   if (canTeach)
     return (
-      <TeacherGrades
-        key={course.id}
-        course={course}
-        classroom={classroom}
-        note={note}
-        readOnly={readOnly}
-        status={status}
-      />
+      <>
+        {unavailable}
+        <fieldset className="grades-content" disabled={!ready}>
+          <TeacherGrades
+            key={course.id}
+            course={course}
+            classroom={classroom}
+            note={note}
+            readOnly={readOnly || !ready}
+            status={status}
+          />
+        </fieldset>
+      </>
     );
   if (canReadHistory)
     return <GradeHistoryLookup key={course.id} sectionId={course.id} gradebook={gradebook} />;
   return (
-    <StudentGrades
-      course={course}
-      user={user}
-      gradebook={gradebook}
-      exemption={exemption}
-      officialFeedback={classroom.officialFeedback}
-      officialScores={classroom.officialScores}
-      simulation={classroom.simulation}
-      readOnly={readOnly}
-      note={note}
-      status={status}
-    />
+    <>
+      {unavailable}
+      <fieldset className="grades-content" disabled={!ready}>
+        <StudentGrades
+          course={course}
+          user={user}
+          gradebook={gradebook}
+          exemption={exemption}
+          officialFeedback={classroom.officialFeedback}
+          officialScores={classroom.officialScores}
+          simulation={classroom.simulation}
+          readOnly={readOnly || !ready}
+          note={note}
+          status={status}
+        />
+      </fieldset>
+    </>
   );
 }
 
@@ -791,6 +819,7 @@ function TeacherGrades({
         <h2>Ponderación del ramo</h2>
       </div>
       <GradebookSettingsEditor
+        disabled={readOnly || classroom.gradebookStatus !== "ready"}
         courseId={course.id}
         exemption={exemption}
         gradebook={gradebook}

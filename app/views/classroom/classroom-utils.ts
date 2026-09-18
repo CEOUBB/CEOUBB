@@ -35,6 +35,7 @@ export const emptyClassroom: ClassroomState = {
   files: [],
   students: [],
   gradebook: [],
+  gradebookStatus: "loading",
   exemption: null,
   officialScores: {},
   officialFeedback: {},

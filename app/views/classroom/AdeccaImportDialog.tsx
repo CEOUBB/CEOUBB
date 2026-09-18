@@ -51,6 +51,7 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
   const [report, setReport] = useState<AdeccaImportReport | null>(null);
   const [error, setError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [fileName, setFileName] = useState("");
   const running = Boolean(progress && progress.phase !== "complete");
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
 
   async function selectFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    setFileName(file?.name ?? "");
     const operation = operationRef.current + 1;
     operationRef.current = operation;
     setPrepared(null);
@@ -215,6 +217,9 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
                 ref={fileInputRef}
                 type="file"
               />
+              <span className="moodle-import-file-name">
+                {fileName || "Ningún archivo seleccionado"}
+              </span>
             </label>
           )}
 

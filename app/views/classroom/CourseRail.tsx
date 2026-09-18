@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import { Check, CopySimple, Info } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import type { LiveClassLink } from "../../../lib/live-class";
-import { studentCount, type Note } from "./classroom-utils";
+import { type Note } from "./classroom-utils";
 import { LiveClassEditor } from "./LiveClassSection";
 
 /*
@@ -18,7 +18,7 @@ export function CourseRail({
   course,
   canTeach,
   readOnly,
-  students,
+  showParticipants,
   courseReference,
   copiedCourseReference,
   copyCourseReference,
@@ -32,7 +32,7 @@ export function CourseRail({
   course: Course;
   canTeach: boolean;
   readOnly: boolean;
-  students: readonly unknown[];
+  showParticipants: () => void;
   courseReference: string;
   copiedCourseReference: boolean;
   copyCourseReference: () => void;
@@ -60,17 +60,14 @@ export function CourseRail({
               <small>Cuenta docente institucional</small>
             </dd>
           </div>
-          {/*
-            La nómina sólo se sincroniza para quien enseña la sección. El
-            estudiante veía aquí un avance por unidades declarado a mano; su
-            avance real está en Notas y esta ficha no lo duplica.
-          */}
           {/* Implements: REQ-EVAL-04 */}
           {canTeach && (
             <div>
-              <dt>Estudiantes</dt>
+              <dt>Matrícula de la sección</dt>
               <dd>
-                <b>{studentCount(students.length)}</b>
+                <button className="course-reference" onClick={showParticipants} type="button">
+                  Ver participantes
+                </button>
               </dd>
             </div>
           )}

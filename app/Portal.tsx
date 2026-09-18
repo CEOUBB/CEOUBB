@@ -339,6 +339,8 @@ export function Portal({
     memberships,
     communications,
     communicationError,
+    communicationsReady,
+    retryCommunications,
     screen,
     preview,
     coursesSheet,
@@ -431,6 +433,8 @@ export function Portal({
             archivedLoading={archivedLoading}
             communicationCursors={communications.cursors}
             communicationError={communicationError}
+            communicationsReady={communicationsReady}
+            retryCommunications={retryCommunications}
             communicationThreads={communications.threads}
             courses={courses}
             focusThread={focusThread}

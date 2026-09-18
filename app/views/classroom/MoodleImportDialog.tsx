@@ -31,10 +31,12 @@ export function MoodleImportDialog({ course }: { course: Course }) {
   const [report, setReport] = useState<MoodleImportReport | null>(null);
   const [error, setError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [fileName, setFileName] = useState("");
   const running = Boolean(progress && progress.phase !== "complete");
 
   async function selectFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    setFileName(file?.name ?? "");
     setPrepared(null);
     setReport(null);
     setError("");
@@ -109,11 +111,14 @@ export function MoodleImportDialog({ course }: { course: Course }) {
               </span>
               <input
                 accept=".mbz,.csv,application/gzip,application/zip,text/csv"
-                disabled={running}
+                disabled={running || analyzing}
                 id={inputId}
                 onChange={selectFile}
                 type="file"
               />
+              <span className="moodle-import-file-name">
+                {fileName || "Ningún archivo seleccionado"}
+              </span>
             </label>
           )}
 
