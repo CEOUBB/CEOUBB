@@ -102,3 +102,10 @@
 - **Attempted / Identified Solution:** Reemplazo de `.filter(...).length` por bucles `for..of` directos con acumulador escalar $O(1)$ de espacio.
 - **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por segundo durante la rendición de cuestionarios por parte del estudiante.
 - **Future Rule:** Usar bucles escalares acumuladores `for..of` en lugar de `.filter(...).length` en componentes con temporizadores o renderizados frecuentes.
+
+## 2026-09-19 - Construcción de Map de evaluaciones en `TeacherQuizzes` (`app/views/classroom/TeacherQuizzes.tsx`)
+
+- **Finding:** `QuizCatalogList` construía el mapa de búsqueda de ítems del libro de notas mediante `new Map(gradebook.map((item) => [item.id, item]))`, asignando tuplas intermedias `[id, item]` y un arreglo temporal por cada renderizado o cambio de libreta.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo en el bloque `useMemo` iterando con `map.set(item.id, item)`.
+- **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por elemento en la gestión de cuestionarios del docente, reduciendo la recolección de basura.
+- **Future Rule:** Construir objetos Map en `useMemo` iterando imperativamente con `for..of` e invocando `map.set()` para evitar asignar arreglos de tuplas intermedias.
