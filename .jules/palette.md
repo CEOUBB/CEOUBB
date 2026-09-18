@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / EvaluationTeamsEditor
+
+- **Finding:** In `EvaluationTeamsEditor.tsx`, team deletion buttons rendered generic text ("Quitar equipo") across repeated team cards without team-specific context, creating screen reader ambiguity when multiple teams were displayed (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added explicit `aria-label={`Quitar ${team.name || "equipo"}`}` to the team deletion button.
+- **Design System Constraint:** Preserved existing button class (`remove-row`) and iconography (`<X aria-hidden="true" size={14} />`) without layout or styling changes.
+- **Future Rule:** Ensure team deletion action buttons in team configuration editors expose team name context via `aria-label`.
+
 ## [2026-03-31] - Views / CoursesDashboard
 
 - **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
