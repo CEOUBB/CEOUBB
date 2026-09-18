@@ -5,7 +5,7 @@ import { PolicyHead } from "../policy-head";
 export const metadata = {
   title: "Declaración de accesibilidad · Centro de Estudio UBB",
   description:
-    "Conformidad WCAG 2.2 nivel AA, alcance, método de evaluación y canal de contacto de Centro de Estudio UBB.",
+    "Objetivo WCAG 2.2 nivel AA, estado de evaluación y canal de accesibilidad de Centro de Estudio UBB.",
 };
 
 export default function AccessibilityPage() {
@@ -18,7 +18,8 @@ export default function AccessibilityPage() {
 
       <article id="contenido-principal" tabIndex={-1}>
         <p className="privacy-date">
-          Declaración emitida el <time dateTime="2026-08-23">23 de agosto de 2026</time>
+          Declaración emitida el <time dateTime="2026-08-23">23 de agosto de 2026</time>.
+          Actualizada el <time dateTime="2026-09-18">18 de septiembre de 2026</time>
         </p>
         <h1>Declaración de accesibilidad</h1>
         <p>
@@ -50,12 +51,12 @@ export default function AccessibilityPage() {
 
         <h2 id="estado">1. Estado y alcance de conformidad</h2>
         <p>
-          Las páginas incluidas cumplen plenamente las{" "}
+          Nuestro objetivo es cumplir las{" "}
           <a href="https://www.w3.org/TR/WCAG22/">Web Content Accessibility Guidelines 2.2</a> del
-          W3C en Nivel AA. En esta norma, conformidad completa significa satisfacer todos los
-          criterios de nivel A y AA aplicables, sin excepciones dentro de las páginas declaradas.
+          W3C en Nivel AA. La evaluación integral sigue en curso: aún no afirmamos conformidad
+          completa de todas las páginas y estados de la plataforma.
         </p>
-        <p>La afirmación de conformidad cubre las siguientes páginas y estados propios:</p>
+        <p>El alcance previsto de la evaluación comprende estas páginas y estados propios:</p>
         <ul>
           <li>
             <code>https://ceoubb.com/</code>, incluida la pantalla de acceso y las vistas
@@ -88,25 +89,29 @@ export default function AccessibilityPage() {
         <p>
           El sitio está diseñado para las dos versiones vigentes más recientes de Chrome, Edge,
           Firefox y Safari, y para tecnologías de asistencia modernas como NVDA, VoiceOver y
-          TalkBack. Para su conformidad depende de HTML, CSS, JavaScript, WAI-ARIA y SVG.
+          TalkBack. Utiliza HTML, CSS, JavaScript, WAI-ARIA y SVG. La compatibilidad completa con
+          cada combinación de navegador y lector de pantalla está pendiente de validación.
         </p>
 
         <h2 id="evaluacion">4. Método de evaluación</h2>
         <p>
-          La conformidad se determinó mediante autoevaluación técnica: reglas JSX de accesibilidad,
-          pruebas de regresión, revisión del árbol accesible, navegación sólo con teclado,
-          inspección de contraste y foco, reflujo a 320 píxeles, ampliación de texto al 200 %,
-          espaciado personalizado y emulación de movimiento reducido. La evaluación se repetirá
-          después de cambios sustanciales y, como mínimo, una vez al año.
+          Realizamos una autoevaluación técnica con reglas de accesibilidad, pruebas de regresión y
+          revisiones visuales. La revisión del 18 de septiembre cubrió vistas seleccionadas en
+          escritorio y móvil, con comprobaciones automatizadas y de reflujo a 320 píxeles. Estas
+          comprobaciones no equivalen a una certificación. Queda por completar la validación de
+          todos los flujos con teclado, lectores de pantalla, ampliación de texto al 200 %,
+          espaciado personalizado y movimiento reducido. Repetiremos la evaluación después de
+          cambios sustanciales y, como mínimo, una vez al año.
         </p>
 
         <h2 id="limitaciones">5. Limitaciones y recursos externos</h2>
         <p>
-          No conocemos incumplimientos dentro de las páginas incluidas. Los servicios externos que
-          se abren desde un enlace (por ejemplo ChatGPT) y los archivos descargables aportados por
-          docentes o terceros no forman parte de esta afirmación, porque CEOUBB no controla su
-          accesibilidad. Si uno de esos recursos impide realizar una actividad, solicita una
-          alternativa accesible mediante el canal indicado a continuación.
+          La cobertura de pruebas aún no incluye todos los estados de carga, error, edición y
+          confirmación de los flujos académicos. Por eso no garantizamos que no existan barreras.
+          Los servicios externos que se abren desde un enlace (por ejemplo ChatGPT) y los archivos
+          descargables aportados por docentes o terceros no forman parte de esta evaluación, porque
+          CEOUBB no controla su accesibilidad. Si uno de esos recursos impide realizar una
+          actividad, solicita una alternativa accesible mediante el canal indicado a continuación.
         </p>
         <p>
           Esta es una plataforma estudiantil independiente y no es un servicio oficial de la

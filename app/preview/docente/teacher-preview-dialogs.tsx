@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   CheckCircle,
-  Eye,
   FileText,
   FloppyDisk,
   Info,
@@ -444,18 +443,25 @@ export function StudentPreviewDialog({ state, submissionId, onClose }: StudentPr
       onCancel={onClose}
       aria-labelledby="student-preview-title"
     >
-      <header className={styles.dialogHead}>
+      <header className={styles.studentTopbar}>
         <div>
-          <h2 id="student-preview-title">Así lo verá el estudiante</h2>
-          <p>Sólo lectura · nada de esto se guarda</p>
+          <h2 id="student-preview-title">Vista del estudiante</h2>
+          <p>Datos de ejemplo · solo lectura</p>
         </div>
         <button type="button" aria-label="Cerrar Vista estudiante" onClick={onClose}>
           <X size={18} aria-hidden="true" />
         </button>
       </header>
 
-      <div className={styles.studentBody}>
-        <section className={`panel-navy ${styles.studentHero}`}>
+      {/* The independently scrolling preview needs keyboard focus (WCAG 2.1.1). */}
+      <div
+        className={styles.studentBody}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard access to the scroll region.
+        tabIndex={0}
+        role="region"
+        aria-label="Vista del aula del estudiante"
+      >
+        <section className={styles.studentHero}>
           <span>
             {state.section.code} · {state.section.section}
           </span>
@@ -464,35 +470,34 @@ export function StudentPreviewDialog({ state, submissionId, onClose }: StudentPr
         </section>
 
         <div className={styles.studentContent}>
-          <section className={styles.card} aria-labelledby="student-module-title">
-            <div className="section-title compact-title">
-              <h2 id="student-module-title">Unidad actual</h2>
-              <span className="grades-note">Contenido publicado por el equipo docente</span>
-            </div>
-            <div>
+          <section className={styles.studentActivities} aria-labelledby="student-module-title">
+            <h2 id="student-module-title">Actividades del ramo</h2>
+            <p className={styles.studentSectionNote}>Publicadas por el equipo docente.</p>
+            <ol className={styles.studentList}>
               {visibleActivities.map((item) => (
-                <div className={styles.studentRow} key={item.id}>
+                <li className={styles.studentRow} key={item.id}>
                   <span className={styles.studentIcon} aria-hidden="true">
                     <FileText size={19} />
                   </span>
                   <div>
                     <strong>{item.title}</strong>
                     <small>{item.unit}</small>
+                    <time dateTime={item.dueAt} className="num">
+                      Entrega · {formatDateTime(item.dueAt)}
+                    </time>
                   </div>
-                  <span>{formatDateTime(item.dueAt)}</span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </section>
 
           {activity && (
-            <section className={styles.card} aria-labelledby="student-result-title">
-              <div className="section-title compact-title">
-                <h2 id="student-result-title">{activity.title}</h2>
-                <span className="grades-note">
-                  {submission?.studentAlias ?? "Estudiante ficticio"}
-                </span>
-              </div>
+            <section className={styles.studentResult} aria-labelledby="student-result-title">
+              <h2 id="student-result-title">Calificación</h2>
+              <p className={styles.studentSectionNote}>
+                {submission?.studentAlias ?? "Estudiante ficticio"}
+              </p>
+              <h3>{activity.title}</h3>
               {review ? (
                 <div className={styles.publishedGrade}>
                   <CheckCircle size={22} weight="fill" aria-hidden="true" />
@@ -503,25 +508,23 @@ export function StudentPreviewDialog({ state, submissionId, onClose }: StudentPr
                   </div>
                 </div>
               ) : (
-                <p className={styles.safetyNote}>
-                  <Lock size={18} weight="fill" aria-hidden="true" />
-                  La nota y la retroalimentación aparecerán aquí cuando el docente las publique.
-                </p>
+                <div className={styles.studentPending}>
+                  <Lock size={20} aria-hidden="true" />
+                  <div>
+                    <strong>Calificación pendiente de publicar</strong>
+                    <p>La nota y los comentarios aparecerán aquí cuando el docente los publique.</p>
+                  </div>
+                </div>
               )}
             </section>
           )}
         </div>
       </div>
 
-      <footer className={styles.dialogFoot}>
-        <span>
-          <Eye size={16} aria-hidden="true" /> Vista de sólo lectura del aula del estudiante.
-        </span>
-        <div>
-          <button className="secondary-button" type="button" onClick={onClose}>
-            Volver al espacio docente
-          </button>
-        </div>
+      <footer className={styles.studentFooter}>
+        <button type="button" onClick={onClose}>
+          Volver al espacio docente
+        </button>
       </footer>
     </dialog>
   );

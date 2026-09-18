@@ -21,7 +21,9 @@ export function GradebookSettingsEditor({
   gradebook,
   exemption,
   students,
+  disabled = false,
 }: {
+  disabled?: boolean;
   courseId: string;
   gradebook: GradeItem[];
   exemption: number | null;
@@ -71,7 +73,7 @@ export function GradebookSettingsEditor({
   };
 
   const save = async () => {
-    if (saving) return;
+    if (saving || disabled) return;
     const target = exemptionValue.trim() ? Number(exemptionValue) : null;
     const validation = gradeSchemeError(items, target);
     if (validation) {
@@ -96,7 +98,7 @@ export function GradebookSettingsEditor({
   };
 
   return (
-    <div className="grades-editor">
+    <fieldset className="grades-editor" disabled={disabled || saving}>
       {items.length === 0 && <p className="empty-row">Agrega la primera evaluación del ramo.</p>}
       {items.map((item) => {
         const mode = submissionModeOf(item);
@@ -206,6 +208,6 @@ export function GradebookSettingsEditor({
       >
         {status.text}
       </p>
-    </div>
+    </fieldset>
   );
 }

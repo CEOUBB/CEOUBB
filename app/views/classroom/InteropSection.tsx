@@ -11,6 +11,7 @@ import {
   type ChangeEvent,
 } from "react";
 import { ArrowSquareOut, DownloadSimple, PlugsConnected, X } from "@phosphor-icons/react";
+import Link from "next/link";
 import { z } from "zod";
 import { InteropListSkeleton } from "../ViewSkeletons";
 import {
@@ -46,6 +47,7 @@ interface InteropState {
 }
 
 type InteropAction =
+  | { type: "LOAD_START" }
   | {
       type: "LOAD_SUCCESS";
       resources: InteropResource[];
@@ -68,6 +70,8 @@ const initialInteropState: InteropState = {
 
 function interopReducer(state: InteropState, action: InteropAction): InteropState {
   switch (action.type) {
+    case "LOAD_START":
+      return { ...state, loading: true };
     case "LOAD_SUCCESS":
       return {
         ...state,
@@ -120,6 +124,7 @@ export function InteropSection({
 
   const refresh = useCallback(
     (signal?: AbortSignal) => {
+      dispatch({ type: "LOAD_START" });
       return Promise.all([
         interopRequest(base, resourcePageSchema, { signal }),
         canTeach
@@ -245,7 +250,7 @@ export function InteropSection({
     pantalla abría con dos paneles de administración y dejaba la lista real de
     recursos al final, debajo de un registro LTI que sólo usa administración.
   */
-  const canAuthor = canTeach && !readOnly;
+  const canAuthor = canTeach && !readOnly && !state.loading && !state.error;
 
   return (
     <section className="interop-workspace" aria-label="Herramientas y objetos de aprendizaje">
@@ -257,9 +262,24 @@ export function InteropSection({
       </p>
       {state.error && (
         <div className="interop-alert" role="alert">
-          <p>{state.error}</p>
-          <button className="secondary-button" onClick={() => void refresh()} type="button">
-            Reintentar
+          <div>
+            <strong>No se pudieron cargar los recursos externos</strong>
+            <p>
+              El contenido no se ha eliminado. Reintenta y, si el problema continúa,{" "}
+              <Link href="/contacto">contacta a soporte</Link> indicando el ramo.
+            </p>
+            <details>
+              <summary>Detalle técnico</summary>
+              <p>{state.error}</p>
+            </details>
+          </div>
+          <button
+            className="secondary-button"
+            disabled={state.loading}
+            onClick={() => void refresh()}
+            type="button"
+          >
+            {state.loading ? "Reintentando…" : "Reintentar"}
           </button>
         </div>
       )}
@@ -268,7 +288,7 @@ export function InteropSection({
           Procesando recurso…
         </p>
       )}
-      {state.loading ? (
+      {state.loading && state.resources.length === 0 ? (
         <InteropListSkeleton />
       ) : state.resources.length === 0 && !state.error ? (
         <EmptyState

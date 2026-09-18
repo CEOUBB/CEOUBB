@@ -33,29 +33,11 @@
 /* La marca de preview viaja en el rastro de contexto, no en una barra propia:
    el aviso tiene que seguir al docente por todas las vistas sin inventar un
    cromo que el portal no usa. */
-.previewChip {
+.previewNote {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 1px solid color-mix(in srgb, var(--shield-gold) 42%, white);
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--shield-gold) 14%, white);
-  color: var(--academic-bronze);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.125px;
+  color: var(--text-muted);
+  font-size: 13px;
   white-space: nowrap;
-}
-
-.previewChip i {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--shield-gold);
-  font-style: normal;
 }
 
 /* Mismo peso visual que `.header-search`: la acción vive en la cabecera sin
@@ -1116,54 +1098,106 @@
   accent-color: var(--color-primary);
 }
 
-/* Vista estudiante: la banda navy y las tarjetas de aula del portal, en modo
-   sólo lectura, para que el docente compare contra lo que ya conoce. */
+/* The preview separates course content from the teacher's viewing controls. */
 :global(.planner-dialog).studentDialog {
-  width: min(720px, calc(100vw - 32px));
+  width: min(980px, calc(100vw - 48px));
   padding: 0;
   overflow: hidden;
+}
+:global(.planner-dialog[open]).studentDialog {
   display: flex;
   flex-direction: column;
+}
+:global(.planner-dialog) .studentTopbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+:global(.planner-dialog) .studentTopbar h2 {
+  font-family: var(--font-core);
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.studentTopbar p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+:global(.planner-dialog) .studentTopbar button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
 }
 .studentBody {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--canvas-soft);
+  background: var(--surface-card);
 }
 .studentHero {
-  border-radius: 0;
-  padding: var(--space-lg);
+  padding: 24px 32px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-body);
 }
 .studentHero h3 {
+  margin: 6px 0;
+  color: var(--text-body);
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
 .studentHero p {
   font-size: 14px;
+  color: var(--text-muted);
 }
 .studentHero span {
   display: block;
-  font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--shield-sky);
+  font-variant-numeric: var(--num);
+  color: var(--text-muted);
 }
 .studentContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.85fr);
+  gap: 32px;
+  padding: 28px 32px 32px;
 }
-
+.studentActivities,
+.studentResult {
+  min-width: 0;
+}
+:global(.planner-dialog) .studentContent h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.35;
+  margin: 0;
+}
+.studentSectionNote {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.studentList {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
 .studentRow {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 16px 0;
   border-top: 1px solid var(--border-hairline);
 }
 
@@ -1174,45 +1208,99 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .studentRow strong {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.45;
 }
 .studentRow small,
-.studentRow > span:last-child {
+.studentRow time {
   font-size: 13px;
+  line-height: 1.5;
   color: var(--text-muted);
   font-variant-numeric: var(--num);
+}
+.studentRow time {
+  margin-top: 4px;
+  color: var(--text-secondary);
 }
 
 .studentIcon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-wash);
+  width: 32px;
+  height: 32px;
   color: var(--color-primary);
 }
-
+.studentResult {
+  padding-left: 24px;
+  border-left: 1px solid var(--border-hairline);
+}
+.studentResult h3 {
+  margin: 24px 0 16px;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.studentPending {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  background: var(--canvas-soft);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.studentPending svg {
+  color: var(--text-muted);
+}
+.studentPending strong {
+  font-weight: 600;
+}
+.studentPending p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+:global(.planner-dialog) .studentFooter {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 12px 24px calc(12px + var(--safe-bottom, 0px));
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+}
+:global(.planner-dialog) .studentFooter button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  color: var(--text-body);
+  font-size: 13px;
+  font-weight: 600;
+}
+.studentFooter button:hover {
+  background: var(--canvas-soft);
+}
+.studentFooter button:active {
+  background: var(--color-primary-wash);
+}
 .publishedGrade {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-sm);
   padding: var(--space-md);
-  border: 1px solid rgba(16, 185, 129, 0.28);
-  border-radius: var(--radius-md);
-  background: rgba(16, 185, 129, 0.09);
-  color: #065f46;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  color: var(--text-body);
 }
 
 .publishedGrade small {
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
 }
 .publishedGrade strong {
   display: block;
@@ -1220,18 +1308,18 @@
   font-size: 34px;
   font-weight: 700;
   line-height: 1.1;
-  color: #047857;
+  color: var(--academic-emerald-deep);
   font-variant-numeric: var(--num);
 }
 .publishedGrade p {
   margin-top: 6px;
   font-size: 15px;
   line-height: 1.55;
-  color: #14543f;
+  color: var(--text-secondary);
 }
 .publishedGrade > svg {
   margin-top: 3px;
-  color: #047857;
+  color: var(--academic-emerald-deep);
 }
 
 /* ── Responsivo ───────────────────────────────────────────── */
@@ -1245,10 +1333,9 @@
   }
 }
 
-/* La coletilla de la píldora cede antes que el rastro de contexto: el rótulo de
-   la vista no debe recortarse para que quepa el aviso completo. */
+/* Keep the current view readable before expanding the demonstration notice. */
 @media (max-width: 1200px) {
-  .previewChip span {
+  .previewNote span {
     display: none;
   }
 }
@@ -1270,6 +1357,36 @@
 }
 
 @media (max-width: 767px) {
+  :global(.planner-dialog).studentDialog {
+    width: 100%;
+  }
+
+  .previewContextLabel {
+    display: none;
+  }
+  :global(.planner-dialog) .studentTopbar {
+    padding: 12px 16px;
+  }
+  .studentHero {
+    padding: 20px;
+  }
+  .studentContent {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px 20px;
+  }
+  .studentResult {
+    padding: 24px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-hairline);
+  }
+  :global(.planner-dialog) .studentFooter {
+    padding-inline: 16px;
+  }
+  .studentFooter button {
+    width: 100%;
+  }
+
   .pulse {
     grid-template-columns: minmax(0, 1fr);
   }
