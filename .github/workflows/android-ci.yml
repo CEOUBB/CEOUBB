@@ -31,9 +31,9 @@ concurrency:
 
 jobs:
   build-android:
-    name: Build & Lint Android APK (Capacitor)
+    name: Build, Lint & Test Android (Capacitor)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,10 +60,43 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync Capacitor Android
+        env:
+          # Implements: REQ-ANDROID-TEST-05 — no deployed portal in emulator tests.
+          CAPACITOR_SERVER_URL: http://127.0.0.1:1
         run: pnpm exec cap sync android
 
-      - name: Assemble Debug APK & Lint
+      - name: Assemble APKs, lint and run JVM tests
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug lintDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug lintDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run instrumented tests on Android 36
+        uses: reactivecircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808 # v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb shell cmd connectivity airplane-mode enable
+            adb shell svc wifi disable
+            adb shell svc data disable
+            cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload Android test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          if-no-files-found: warn
+          path: |
+            android/app/build/reports/
+            android/app/build/test-results/
+            android/app/build/outputs/androidTest-results/
