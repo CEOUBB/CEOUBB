@@ -149,6 +149,12 @@ pnpm run verify:invariants   # 3. Security Invariants + Firebase Rules Validatio
 pnpm test                    # 4. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
 
+For Android changes, run `:app:testDebugUnitTest`, `:app:lintDebug`, and
+`:app:connectedDebugAndroidTest` through the Gradle wrapper. Native regression
+tests live in `android/app/src/test/` and `android/app/src/androidTest/`.
+Follow `android/TESTING.md` to sync the loopback portal override and isolate the
+emulator before instrumentation; restore the production configuration afterward.
+
 ### 8.2 Contractual Definition of Done (DoD)
 
 A task is considered complete ONLY when verified end-to-end. Do not stop at a preliminary implementation:
