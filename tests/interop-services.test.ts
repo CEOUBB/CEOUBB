@@ -546,6 +546,7 @@ test("REQ-IO-01–11 servicios, contratos HTTP y migración sobre libSQL", async
     assert.equal((await contentGrant(grantToken, "https://contenido.test")).actor.id, student.id);
   });
   await t.test("lista con cursor y límite institucional", async () => {
+    await assert.rejects(() => listInteropResources(student, section, "invalid cursor!"), status(400));
     const rows = Array.from({ length: 97 }, (_, i) => ({
       id: "paging-" + String(i).padStart(3, "0"),
       sectionId: section,
