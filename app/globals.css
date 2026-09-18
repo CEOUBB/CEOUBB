@@ -2185,7 +2185,7 @@ input[role="combobox"]:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  min-height: 34px;
+  min-height: 44px;
   padding: 4px 14px;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
@@ -3194,6 +3194,50 @@ input[role="combobox"]:focus-visible {
   line-height: 1.4;
   font-variant-numeric: var(--num);
 }
+.classroom-imports {
+  position: relative;
+}
+
+.classroom-imports summary {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.classroom-imports summary:hover,
+.classroom-imports[open] summary {
+  background: var(--color-primary-wash);
+}
+
+.classroom-imports summary:active {
+  background: var(--canvas-soft);
+}
+
+.classroom-import-actions {
+  position: absolute;
+  inset: calc(100% + 8px) 0 auto auto;
+  z-index: 10;
+  display: grid;
+  min-width: 200px;
+  padding: 8px;
+  gap: 4px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.classroom-import-actions > button {
+  min-height: 44px;
+  justify-content: flex-start;
+}
+
+.admin-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
 .classroom-meta {
   display: flex;
   flex-wrap: wrap;
@@ -9116,6 +9160,23 @@ mark,
   color: var(--text-faint);
 }
 
+.grades-content {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.grades-load-status {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 16px;
+  color: var(--text-body);
+  background: var(--canvas-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+}
+
 .grades-editor {
   display: flex;
   flex-direction: column;
@@ -10989,6 +11050,7 @@ mark,
     flex: 1 0 100%;
   }
   .classroom-meta > .review-cta,
+  .classroom-meta > .classroom-imports,
   .classroom-meta > .moodle-import-trigger {
     flex: 1 1 160px;
     min-width: 0;
@@ -12143,6 +12205,8 @@ mark,
 }
 
 .moodle-import-file {
+  position: relative;
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -12161,8 +12225,30 @@ mark,
 }
 
 .moodle-import-file input {
-  margin-inline-start: auto;
-  max-width: 220px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.moodle-import-file:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.moodle-import-file:has(input:disabled) {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.moodle-import-file-name {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .moodle-import-preview {

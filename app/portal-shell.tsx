@@ -489,6 +489,8 @@ export function PortalMainView({
   activity,
   communicationCursors,
   communicationError,
+  communicationsReady,
+  retryCommunications,
   communicationThreads,
   focusThread,
   gradebooks,
@@ -514,6 +516,8 @@ export function PortalMainView({
   activity: CourseActivity[];
   communicationCursors: CommunicationReadCursor[];
   communicationError: string;
+  communicationsReady: boolean;
+  retryCommunications: () => void;
   communicationThreads: MessageThreadSummary[];
   focusThread: string;
   onLogout: () => void;
@@ -584,6 +588,8 @@ export function PortalMainView({
                 <CommunicationsCenter
                   activity={activity}
                   connectionError={communicationError}
+                  ready={communicationsReady}
+                  retry={retryCommunications}
                   courses={courses}
                   cursors={communicationCursors}
                   focusThread={focusThread}
