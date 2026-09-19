@@ -404,4 +404,12 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
     async () => reconcileSectionProjections(authorizedTeacher, "440299-2026-2-1"),
     (cause) => cause instanceof Error && cause.message.includes("FIREBASE_SERVICE_ACCOUNT_EMAIL")
   );
+
+  await assert.rejects(
+    async () => reconcileSectionProjections(authorizedTeacher, "../invalid_section_id"),
+    (cause) =>
+      cause instanceof EnrollmentImportError &&
+      cause.code === "invalid_request" &&
+      cause.status === 400
+  );
 });
