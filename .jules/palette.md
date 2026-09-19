@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / EvaluationTeamsEditor
+
+- **Finding:** In `app/views/classroom/EvaluationTeamsEditor.tsx`, team card removal action buttons (`<button className="remove-row">`) rendered generic visible text ("Quitar equipo") without team-specific ARIA context, causing screen reader ambiguity when multiple evaluation teams exist in the editor (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added `aria-label={`Quitar el equipo ${team.name || "equipo"}`}` to the team removal button in `EvaluationTeamsEditor.tsx`.
+- **Design System Constraint:** Retained existing button utility classes (`remove-row`) and embedded Phosphor icon (`<X aria-hidden="true" size={14} />`) without visual or layout modifications.
+- **Future Rule:** Ensure repeated team management action buttons in evaluation editors include team name context in `aria-label` attributes for screen reader clarity.
+
 ## [2026-03-31] - Views / CoursesDashboard
 
 - **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).

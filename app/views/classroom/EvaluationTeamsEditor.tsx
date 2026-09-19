@@ -101,6 +101,7 @@ export function EvaluationTeamsEditor({
               />
             </label>
             <button
+              aria-label={`Quitar el equipo ${team.name || "equipo"}`}
               className="remove-row"
               onClick={() => onChange(teams.filter((candidate) => candidate.id !== team.id))}
               type="button"
