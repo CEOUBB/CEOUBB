@@ -102,3 +102,10 @@
 - **Attempted / Identified Solution:** Reemplazo de `.filter(...).length` por bucles `for..of` directos con acumulador escalar $O(1)$ de espacio.
 - **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por segundo durante la rendición de cuestionarios por parte del estudiante.
 - **Future Rule:** Usar bucles escalares acumuladores `for..of` en lugar de `.filter(...).length` en componentes con temporizadores o renderizados frecuentes.
+
+## 2026-09-19 - Conteo de notificaciones no leídas en `NotificationList` (`app/notification-panel.tsx`)
+
+- **Finding:** `NotificationList` calculaba `items.filter((item) => item.unread).length` en cada renderizado, creando un arreglo temporal $O(N)$ y realizando una pasada redundante sobre las notificaciones en paralelo a la agrupación por fechas en `useMemo`.
+- **Attempted / Identified Solution:** Integración del conteo de notificaciones no leídas dentro de la iteración `for..of` existente en `groupNotifications` memoizada.
+- **Outcome / Learning:** Se eliminó la asignación de memoria de arreglos temporales por renderizado en el panel de notificaciones y se consolidaron dos pasadas en una sola.
+- **Future Rule:** Consolidar el cálculo de propiedades escalares (como conteos no leídos o activos) dentro de funciones de agrupación o transformación memoizadas.
