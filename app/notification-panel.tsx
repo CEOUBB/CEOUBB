@@ -317,9 +317,9 @@ function NotificationAvatar({ item }: { item: NotificationItem }) {
       }}
     >
       {isThread ? (
-        <EnvelopeSimple size={15} weight="bold" />
+        <EnvelopeSimple aria-hidden="true" size={15} weight="bold" />
       ) : item.excerpt.includes("aviso") ? (
-        <MegaphoneSimple size={15} weight="bold" />
+        <MegaphoneSimple aria-hidden="true" size={15} weight="bold" />
       ) : (
         initial
       )}
@@ -434,7 +434,7 @@ export function NotificationList({
         <NotificationSkeleton />
       ) : items.length === 0 ? (
         <div className="notification-empty flex flex-col items-center justify-center gap-2 py-10 text-center text-sm text-[oklch(0.48_0.03_250)]">
-          <BellSlash size={32} className="text-[oklch(0.48_0.03_250)]" />
+          <BellSlash aria-hidden="true" size={32} className="text-[oklch(0.48_0.03_250)]" />
           <p>No tienes notificaciones nuevas</p>
         </div>
       ) : (
