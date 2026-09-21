@@ -197,7 +197,7 @@ export function PlannerGrid({
                 onClick={() => onNewBlock(focusDay, firstFreeHour)}
                 type="button"
               >
-                <Plus size={15} weight="bold" /> Crear el primer bloque
+                <Plus aria-hidden="true" size={15} weight="bold" /> Crear el primer bloque
               </button>
             </div>
           </div>
