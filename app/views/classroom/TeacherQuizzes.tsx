@@ -300,10 +300,13 @@ function QuizCatalogList({
   loading: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
 }) {
-  const gradeItemsById = useMemo(
-    () => new Map(gradebook.map((item) => [item.id, item])),
-    [gradebook]
-  );
+  const gradeItemsById = useMemo(() => {
+    const byId = new Map<string, (typeof gradebook)[number]>();
+    for (const item of gradebook) {
+      byId.set(item.id, item);
+    }
+    return byId;
+  }, [gradebook]);
 
   return (
     <div className="quiz-catalog">
