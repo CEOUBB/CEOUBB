@@ -28,7 +28,7 @@
 
 ## 2026-09-03 - Optimización de renderizado académico en `renderAcademicContentToHtml` (`lib/academic-content.ts`)
 
-- **Finding:** `normalizeDisplayMath` dividía y procesaba por líneas cualquier texto académico mediante `split("\n")` y múltiples expresiones regulares en cada renderizado, aun cuando el texto no contenía bloques de ecuaciones `$$`. Adicionalmente, el objeto `academicProcessors` instanciaba dos canalizaciones idénticas de Unified.
+- **Finding:** `normalizeDisplayMath` dividía y procesaba por líneas cualquier texto académico mediante `split("\n")` y múltiples expresiones regulares en cada renderizado, aun cuando el texto no содержаía bloques de ecuaciones `$$`. Adicionalmente, el objeto `academicProcessors` instanciaba dos canalizaciones idénticas de Unified.
 - **Attempted / Identified Solution:** Cortocircuito escalar $O(1)$ `if (!content.includes("$$")) return content;` al inicio de `normalizeDisplayMath` y reutilización de una única instancia `academicProcessor` entre formatos.
 - **Outcome / Learning:** Se eliminó la división de cadenas y asignaciones de arreglos $O(N)$ por renderizado para contenido de prosa general, además de reducir el consumo de memoria al cargar el módulo.
 - **Future Rule:** Cortocircuitar transformaciones de texto basadas en arreglos o expresiones regulares usando comprobaciones escalares simples (`includes`, `indexOf`) antes de efectuar operaciones de segmentación.
@@ -102,3 +102,10 @@
 - **Attempted / Identified Solution:** Reemplazo de `.filter(...).length` por bucles `for..of` directos con acumulador escalar $O(1)$ de espacio.
 - **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por segundo durante la rendición de cuestionarios por parte del estudiante.
 - **Future Rule:** Usar bucles escalares acumuladores `for..of` en lugar de `.filter(...).length` en componentes con temporizadores o renderizados frecuentes.
+
+## 2026-09-20 - Construcción de Map de ítems del libro de notas en `QuizCatalogList` (`app/views/classroom/TeacherQuizzes.tsx`)
+
+- **Finding:** `QuizCatalogList` construía el objeto `Map` indexado por `item.id` usando `new Map(gradebook.map((item) => [item.id, item]))`, asignando arreglos temporales de tuplas `[id, item]` por cada evaluación en el libro de notas.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `map.set(item.id, item)` en el bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por ítem en el listado de cuestionarios docentes, reduciendo la recolección de basura durante re-renderizados de la vista.
+- **Future Rule:** Evitar `new Map(array.map(...))` en bloques `useMemo` de componentes de gestión de catálogo o aula e iterar imperativamente con `for..of` e invocar `.set()` directamente.
