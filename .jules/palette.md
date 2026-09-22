@@ -14,6 +14,13 @@
 - **Design System Constraint:** Reused existing Phosphor icon props (`size={15}`, `weight="bold"`) without changing visual button layout or styles.
 - **Future Rule:** Ensure decorative vector icons inside calendar empty state buttons explicitly declare `aria-hidden="true"`.
 
+## [2026-03-31] - Components / AppToaster
+
+- **Finding:** In `components/AppToaster.tsx`, decorative Phosphor SVG vector icons (`<CheckCircle>`, `<Info>`, `<WarningCircle>`, `<CircleNotch>`) rendered in Sonner toast notifications lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within toast message containers (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor icon instances inside the `icons` prop of `SonnerToaster`.
+- **Design System Constraint:** Reused existing Phosphor icon props (`size`, `weight`, `className`) without altering Sonner toast layout or custom toast styles.
+- **Future Rule:** Ensure decorative status icons rendered inside notification toasts explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Views / CoursesDashboard
 
 - **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).

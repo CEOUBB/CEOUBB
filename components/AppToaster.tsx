@@ -12,11 +12,30 @@ export function AppToaster() {
       closeButton
       duration={3500}
       icons={{
-        success: <CheckCircle size={18} weight="fill" className="text-emerald-600" />,
-        info: <Info size={18} weight="fill" className="text-[oklch(0.48_0.18_255)]" />,
-        warning: <WarningCircle size={18} weight="fill" className="text-amber-600" />,
-        error: <WarningCircle size={18} weight="fill" className="text-rose-600" />,
-        loading: <CircleNotch size={18} className="animate-spin text-[oklch(0.48_0.18_255)]" />,
+        success: (
+          <CheckCircle size={18} weight="fill" className="text-emerald-600" aria-hidden="true" />
+        ),
+        info: (
+          <Info
+            size={18}
+            weight="fill"
+            className="text-[oklch(0.48_0.18_255)]"
+            aria-hidden="true"
+          />
+        ),
+        warning: (
+          <WarningCircle size={18} weight="fill" className="text-amber-600" aria-hidden="true" />
+        ),
+        error: (
+          <WarningCircle size={18} weight="fill" className="text-rose-600" aria-hidden="true" />
+        ),
+        loading: (
+          <CircleNotch
+            size={18}
+            className="animate-spin text-[oklch(0.48_0.18_255)]"
+            aria-hidden="true"
+          />
+        ),
       }}
       toastOptions={{
         className: "ceoubb-toast",
