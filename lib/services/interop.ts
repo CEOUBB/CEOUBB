@@ -205,6 +205,12 @@ export async function linkLtiResource(actor: PublicUser, sectionId: string, inpu
 }
 export async function listInteropResources(actor: PublicUser, sectionId: string, cursor?: string) {
   await authorizeInteropSection(actor, sectionId);
+  if (
+    cursor &&
+    (typeof cursor !== "string" || cursor.length > 100 || !/^[a-zA-Z0-9_-]+$/.test(cursor))
+  ) {
+    fail("El cursor de paginación es inválido.", 400);
+  }
   const rows = await getDb()
     .select({
       id: interopResources.id,
