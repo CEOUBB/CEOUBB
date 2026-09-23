@@ -66,7 +66,7 @@
   "tests/support-mail.test.ts": "acddc7fd1f6cc1a2f654853ab30c39167f410555bb868c20f305a2492b0ec78e",
   "tests/support-pages.test.ts": "d3efd4acbea06ae20cf118a866a0270bd22b49c58983a9ddc1170d358022fa09",
   "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
-  "tests/teacher-course-management.test.ts": "fd0b1b5f8495764586344565da6593fec398581954f3ae31991ee39b141723fe",
+  "tests/teacher-course-management.test.ts": "a96f89e03b9495e360dfa5db50ee20b3c1d01eb35bfbb1b196da758d8b9d254b",
   "tests/teacher-workspace-preview.test.ts": "e696dc10529789f739142ab9b44c77a4fe2bd4af3c9fcf9c76aea88ecb8a37cb",
   "tests/team-submissions.test.ts": "03c03aed0671bdf94d7c9f61a334a7d00ae70465a3052f0b893566ca8d18d61b",
   "tests/user-profile-magic-bytes.test.ts": "64306f23f09d61483b675d3469c196b7edcbfe41e61461727d4b2b4211b9abb8",
