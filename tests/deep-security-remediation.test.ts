@@ -196,7 +196,7 @@ test("REQ-SEC-18: Content-Disposition headers sanitize dynamic parameters agains
 });
 
 // Implements: REQ-SEC-19
-test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and unauthorized 403 checks", () => {
+test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and unauthorized 403 checks and validates origin and body length", () => {
   const routePath = path.resolve("app/api/sections/[sectionId]/projections/reconcile/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
@@ -208,6 +208,16 @@ test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and 
     routeContent,
     /if\s*\(actor\.role\s*!==\s*["']teacher["']\s*&&\s*actor\.role\s*!==\s*["']owner["']\)/,
     "Reconcile route must return 403 for non-teacher/non-owner roles"
+  );
+  assert.match(
+    routeContent,
+    /origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Reconcile route must validate request origin header against request URL origin"
+  );
+  assert.match(
+    routeContent,
+    /contentLength\s*>\s*16384/,
+    "Reconcile route must validate content length bounds"
   );
 });
 
