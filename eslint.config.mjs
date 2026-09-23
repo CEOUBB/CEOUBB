@@ -10,6 +10,10 @@ import tseslint from "typescript-eslint";
 const eslintConfig = defineConfig([
   globalIgnores([
     ".next/**",
+    ".qa/**",
+    "qa-results/**",
+    "playwright-report/**",
+    "test-results/**",
     ".open-next/**",
     "cloudflare-env.d.ts",
     "dist/**",

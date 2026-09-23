@@ -1,0 +1,136 @@
+name: Agent QA
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Verification scope
+        type: choice
+        default: full
+        options: [full, area, staging]
+      area:
+        description: Catalog area when mode is area
+        type: string
+        default: ""
+      reference_path:
+        description: Optional reviewed reference directory present in the checkout
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-qa-${{ github.event.pull_request.number || github.ref }}-${{ inputs.mode || github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  reject_staging_ref:
+    name: Require the trusted staging revision
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'staging' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: |
+          echo "Staging verification must be dispatched from main."
+          exit 1
+
+  local:
+    name: Local application and state catalog
+    if: github.event_name != 'workflow_dispatch' || inputs.mode != 'staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install locked web and Functions dependencies
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm --dir firebase/functions install --frozen-lockfile --ignore-scripts
+      - name: Install browser engines
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-agent-qa-emulators-${{ hashFiles('firebase/firebase.json', 'pnpm-lock.yaml') }}
+      - name: Verify the QA safety and reporting contracts
+        run: pnpm qa:check
+      # Implements: REQ-QA-08, REQ-QA-10, REQ-QA-11
+      - name: Run affected checks or the complete catalog
+        env:
+          QA_EVENT: ${{ github.event_name }}
+          QA_BASE_BRANCH: ${{ github.base_ref }}
+          QA_REQUESTED_MODE: ${{ inputs.mode }}
+          QA_REQUESTED_AREA: ${{ inputs.area }}
+          QA_REFERENCE_PATH: ${{ inputs.reference_path }}
+        shell: bash
+        run: |
+          args=(--screenshots)
+          if [ "$QA_EVENT" = "pull_request" ]; then
+            args+=(--base "origin/$QA_BASE_BRANCH")
+          elif [ "$QA_REQUESTED_MODE" = "area" ]; then
+            test -n "$QA_REQUESTED_AREA" || { echo "An area is required."; exit 1; }
+            args+=(--area "$QA_REQUESTED_AREA")
+          else
+            args+=(--all)
+          fi
+          if [ -n "$QA_REFERENCE_PATH" ]; then
+            test -d "$QA_REFERENCE_PATH" || { echo "Reviewed reference directory is missing."; exit 1; }
+            args+=(--reference "$QA_REFERENCE_PATH")
+          fi
+          pnpm qa "${args[@]}"
+      - name: Retain reports, screenshots and failing traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-qa-local-${{ github.run_id }}-${{ github.run_attempt }}
+          path: qa-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+  staging:
+    name: Explicit staging smoke and provider evidence
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'staging' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Verify configured synthetic staging identity
+        env:
+          QA_STAGING_URL: https://staging.ceoubb.com
+          QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
+          QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
+          QA_STAGING_API_KEY: ${{ secrets.QA_STAGING_API_KEY }}
+        run: pnpm qa --staging
+      - name: Retain staging evidence even when verification is incomplete
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-qa-staging-${{ github.run_id }}-${{ github.run_attempt }}
+          path: qa-results/
+          retention-days: 14
+          if-no-files-found: warn

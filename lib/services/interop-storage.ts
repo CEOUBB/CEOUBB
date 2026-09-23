@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
 import { getDb } from "../../db/index.ts";
 import { interopResources } from "../../db/schema.ts";
 import type { PublicUser } from "../auth.ts";
@@ -10,14 +11,16 @@ import { authorizeInteropSection, insertInteropResource } from "./interop.ts";
 
 const bucket = process.env.FIREBASE_STORAGE_BUCKET || "centro-de-estudio-ubb.firebasestorage.app";
 const objectUrl = (path: string) =>
-  "https://storage.googleapis.com/storage/v1/b/" +
+  firebaseRestOrigins().storage +
+  "/storage/v1/b/" +
   encodeURIComponent(bucket) +
   "/o/" +
   encodeURIComponent(path);
 
 async function uploadObject(path: string, bytes: Uint8Array, contentType: string, token: string) {
   const url =
-    "https://storage.googleapis.com/upload/storage/v1/b/" +
+    firebaseRestOrigins().storage +
+    "/upload/storage/v1/b/" +
     encodeURIComponent(bucket) +
     "/o?uploadType=media&ifGenerationMatch=0&name=" +
     encodeURIComponent(path);

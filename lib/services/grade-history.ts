@@ -6,6 +6,7 @@ import {
   type GradeHistoryQuery,
 } from "../grade-history.ts";
 import { FIREBASE_PROJECT_ID, googleAccessToken } from "./enrollment-projection.ts";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
 
 const firestoreValue = z.union([
   z.object({ stringValue: z.string() }).transform((value) => value.stringValue),
@@ -78,7 +79,7 @@ export async function readGradeHistoryPage(
   const root = documentRoot(dependencies.projectId, query.sectionId);
   const token = await dependencies.token();
   const response = await dependencies.fetch(
-    `https://firestore.googleapis.com/v1/${root}:runQuery`,
+    `${firebaseRestOrigins().firestore}/v1/${root}:runQuery`,
     {
       method: "POST",
       cache: "no-store",

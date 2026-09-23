@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QA xAPI</title>
+  </head>
+  <body>
+    <main>
+      <h1>QA xAPI</h1>
+      <p>Actividad sintética reproducible.</p>
+      <button type="button" id="complete">Completar actividad</button>
+      <p role="status" id="status">Actividad pendiente</p>
+    </main>
+    <script>
+      document.getElementById("complete").addEventListener("click", async () => {
+        const query = new URLSearchParams(location.search);
+        try {
+          const response = await fetch(query.get("endpoint") + "statements", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: query.get("auth"),
+              "X-Experience-API-Version": "1.0.3",
+            },
+            body: JSON.stringify({
+              actor: JSON.parse(query.get("actor")),
+              verb: { id: "http://adlnet.gov/expapi/verbs/completed" },
+              object: { id: query.get("activity_id") },
+              context: { registration: query.get("registration") },
+              result: { completion: true, success: true, score: { scaled: 1 } },
+            }),
+          });
+          document.getElementById("status").textContent = response.ok
+            ? "Actividad completada"
+            : "No se pudo guardar";
+        } catch {
+          document.getElementById("status").textContent = "No se pudo guardar";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import {
+  connectAuthEmulator,
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -12,6 +13,7 @@ import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { ACCESS_REJECTION_MESSAGE, roleForEmail } from "./access-policy.ts";
 import { firebaseConfigFromEnvironment } from "./firebase-config.ts";
+import { qaClientRuntime } from "./qa-runtime.ts";
 
 declare global {
   interface Window {
@@ -27,6 +29,7 @@ let appCheckInitialized = false;
 
 export function ensureAppCheck() {
   if (typeof window === "undefined" || appCheckInitialized) return;
+  if (qaClientRuntime()) return;
 
   // En previews transitorias (*.workers.dev), reCAPTCHA Enterprise no admite orígenes comodín en public suffixes
   if (
@@ -50,6 +53,36 @@ export function ensureAppCheck() {
     isTokenAutoRefreshEnabled: true,
   });
 }
+
+// Implements: REQ-QA-02, REQ-QA-03
+const qa = qaClientRuntime();
+if (qa) {
+  const auth = getAuth(firebaseApp);
+  if (!auth.emulatorConfig) connectAuthEmulator(auth, qa.auth.origin, { disableWarnings: true });
+}
+
+// Keep production's initial bundle small; callers wait before using any lazy SDK.
+export const firebaseEmulatorsReady = qa
+  ? Promise.all([
+      import("firebase/firestore").then((sdk) => {
+        sdk.connectFirestoreEmulator(
+          sdk.getFirestore(firebaseApp),
+          qa.firestore.host,
+          qa.firestore.port
+        );
+      }),
+      import("firebase/storage").then((sdk) => {
+        sdk.connectStorageEmulator(sdk.getStorage(firebaseApp), qa.storage.host, qa.storage.port);
+      }),
+      import("firebase/functions").then((sdk) => {
+        sdk.connectFunctionsEmulator(
+          sdk.getFunctions(firebaseApp, "southamerica-west1"),
+          qa.functions.host,
+          qa.functions.port
+        );
+      }),
+    ])
+  : Promise.resolve();
 
 function institutionalProvider() {
   const provider = new GoogleAuthProvider();
@@ -81,6 +114,7 @@ async function abandonSession() {
 
 async function isRegisteredOwner(uid: string): Promise<boolean> {
   try {
+    await firebaseEmulatorsReady;
     const { doc, getDoc, getFirestore } = await import("firebase/firestore");
     const db = getFirestore(firebaseApp);
     const snap = await getDoc(doc(db, "users", uid));

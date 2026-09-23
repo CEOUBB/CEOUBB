@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
 import {
   FIREBASE_PROJECT_ID,
   STORAGE_SCOPE,
@@ -82,7 +83,7 @@ export function avatarStoragePath(uid: string, contentType: string): string {
 }
 
 export function avatarPublicUrl(storagePath: string): string {
-  return `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(storagePath)}?alt=media`;
+  return `${firebaseRestOrigins().storageDownload}/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(storagePath)}?alt=media`;
 }
 
 /**
@@ -145,7 +146,7 @@ export async function uploadAvatarObject(
 ): Promise<void> {
   const token = await googleAccessToken(STORAGE_SCOPE);
   const response = await fetch(
-    `https://storage.googleapis.com/upload/storage/v1/b/${STORAGE_BUCKET}/o?uploadType=media&name=${encodeURIComponent(storagePath)}`,
+    `${firebaseRestOrigins().storage}/upload/storage/v1/b/${STORAGE_BUCKET}/o?uploadType=media&name=${encodeURIComponent(storagePath)}`,
     {
       method: "POST",
       headers: { "Content-Type": contentType, Authorization: `Bearer ${token}` },
@@ -159,7 +160,7 @@ export async function uploadAvatarObject(
 export async function deleteAvatarObject(storagePath: string): Promise<void> {
   const token = await googleAccessToken(STORAGE_SCOPE);
   const response = await fetch(
-    `https://storage.googleapis.com/storage/v1/b/${STORAGE_BUCKET}/o/${encodeURIComponent(storagePath)}`,
+    `${firebaseRestOrigins().storage}/storage/v1/b/${STORAGE_BUCKET}/o/${encodeURIComponent(storagePath)}`,
     { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
   );
   // 404 significa que ya no existe: el objetivo de borrar está cumplido igual.
@@ -257,7 +258,7 @@ export async function readPreferencesFromFirestore(userId: string): Promise<User
   try {
     const token = await googleAccessToken();
     const response = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}/settings/preferences`,
+      `${firebaseRestOrigins().firestore}/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}/settings/preferences`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (response.status === 404 || !response.ok) return defaults;

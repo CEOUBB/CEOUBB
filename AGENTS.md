@@ -169,6 +169,14 @@ A task is considered complete ONLY when verified end-to-end. Do not stop at a pr
 7. Commit messages and Pull Request titles are written **strictly in Spanish** with Conventional Commits.
 8. If the task modifies or impacts architectural invariants, infrastructure identifiers, or structural landmarks, `AGENTS.md` has been updated in the same pull request to maintain documentation co-evolution.
 
+### 8.3 On-demand Agent QA
+
+After changing application behavior, run `pnpm qa` for affected areas and critical journeys. Use `pnpm qa --list --json` to discover scenarios, `--scenario <id>` or `--area <area>` during development, `--explore --scenario <id>` for interactive inspection, and `--all --screenshots` for the complete registered matrix. Follow [the agent QA guide](docs/testing/agent-qa.md) for prerequisites, staging, evidence, and scenario maintenance.
+
+New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
+
+Preserve the guarded disposable runtime, ordinary Firebase/session exchange, original authorization rules, and protected tests. Use dedicated staging identities only with explicit `--staging`; never use production targets. Existing formatting, lint, typecheck, unit, invariant, hash, build, and integration gates remain required separately. Report existing application defects with reproduction evidence; repair them in separate tasks unless the user expands scope.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

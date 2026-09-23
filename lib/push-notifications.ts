@@ -3,7 +3,7 @@
 import type { PermissionState } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { getAuth, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { firebaseApp } from "./firebase-client";
+import { firebaseApp, firebaseEmulatorsReady } from "./firebase-client";
 import { isNativeShell } from "./mobile-bridge";
 
 /*
@@ -50,6 +50,7 @@ function currentUser() {
  */
 async function persistToken(fcmToken: string): Promise<void> {
   if (!fcmToken) return;
+  await firebaseEmulatorsReady;
   const [sdk, user] = await Promise.all([import("firebase/firestore"), currentUser()]);
   const db = sdk.getFirestore(firebaseApp);
   await sdk.setDoc(sdk.doc(db, "users", user.uid), { fcmToken }, { merge: true });
@@ -61,6 +62,7 @@ async function persistToken(fcmToken: string): Promise<void> {
  */
 // Implements: REQ-CFG-04
 async function clearToken(): Promise<void> {
+  await firebaseEmulatorsReady;
   const [sdk, user] = await Promise.all([import("firebase/firestore"), currentUser()]);
   const db = sdk.getFirestore(firebaseApp);
   await sdk.setDoc(sdk.doc(db, "users", user.uid), { fcmToken: "" }, { merge: true });

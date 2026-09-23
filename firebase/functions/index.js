@@ -988,6 +988,24 @@ exports.notifyStudentsOnCoursePost = onDocumentCreated(
       },
     };
 
+    // Implements: REQ-QA-02, REQ-QA-11
+    // Messaging has no emulator: record the local contract without contacting FCM.
+    if (process.env.CEOUBB_QA === "1") {
+      if (
+        process.env.FUNCTIONS_EMULATOR !== "true" ||
+        !/^demo-ceoubb-qa(?:-[a-z0-9]+)*$/.test(process.env.GCLOUD_PROJECT ?? "")
+      )
+        throw new Error("QA_CONFIG_INVALID: FCM capture requires the local demo emulator.");
+      await db.collection("_qa_outbox").doc(postId).set({
+        provider: "fcm",
+        courseId,
+        message,
+        recipientCount: refsByToken.size,
+        deliveryVerified: false,
+      });
+      return;
+    }
+
     const messaging = getMessaging();
     const batches = chunk([...refsByToken.keys()], MULTICAST_BATCH);
     const outcomes = await Promise.all(

@@ -1,5 +1,6 @@
 import { getAuth, onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
-import { firebaseApp } from "../firebase-client.ts";
+import { firebaseApp, firebaseEmulatorsReady } from "../firebase-client.ts";
+import { qaClientRuntime } from "../qa-runtime.ts";
 import { type AccountRole, roleForEmail } from "../access-policy.ts";
 
 const auth = getAuth(firebaseApp);
@@ -18,31 +19,38 @@ let functionsHandle: Promise<{
 }> | null = null;
 
 export function firestore() {
-  firestoreHandle ??= import("firebase/firestore").then((sdk) => ({
-    sdk,
-    db: sdk.getFirestore(firebaseApp),
-  }));
+  firestoreHandle ??= firebaseEmulatorsReady
+    .then(() => import("firebase/firestore"))
+    .then((sdk) => ({
+      sdk,
+      db: sdk.getFirestore(firebaseApp),
+    }));
   return firestoreHandle;
 }
 
 export function cloudStorage() {
-  storageHandle ??= import("firebase/storage").then((sdk) => ({
-    sdk,
-    storage: sdk.getStorage(firebaseApp),
-  }));
+  storageHandle ??= firebaseEmulatorsReady
+    .then(() => import("firebase/storage"))
+    .then((sdk) => ({
+      sdk,
+      storage: sdk.getStorage(firebaseApp),
+    }));
   return storageHandle;
 }
 
 // Implements: REQ-AUDIT-01, REQ-AUDIT-07
 export function cloudFunctions() {
-  functionsHandle ??= import("firebase/functions").then((sdk) => ({
-    sdk,
-    functions: sdk.getFunctions(firebaseApp, "southamerica-west1"),
-  }));
+  functionsHandle ??= firebaseEmulatorsReady
+    .then(() => import("firebase/functions"))
+    .then((sdk) => ({
+      sdk,
+      functions: sdk.getFunctions(firebaseApp, "southamerica-west1"),
+    }));
   return functionsHandle;
 }
 
 export function isDevOrLocalEnvironment(): boolean {
+  if (qaClientRuntime()) return false;
   if (typeof window === "undefined") {
     return process.env.NODE_ENV === "development";
   }

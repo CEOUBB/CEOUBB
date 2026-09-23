@@ -1,5 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: On-demand Agent QA pipeline (OpenSpec agent-qa-pipeline), 2026-09-22
+
+- **Capability:** `operations/agent-qa` providing reproducible web verification, synthetic institutional accounts, isolated Firebase emulators, and report generation via `pnpm qa`.
+- **Implementation:**
+  1. _Runtime & Emulators:_ Guarded loopback emulator connectivity in `lib/firebase-client.ts`, `lib/firebase-config.ts`, `lib/firebase/sdk.ts`, `lib/firebase-endpoints.ts`, and `lib/qa-runtime.ts` ensuring zero mutation of production or staging.
+  2. _CLI & Launcher:_ `pnpm qa` supporting `--area`, `--scenario`, `--explore`, `--all`, `--screenshots`, and `--staging` (`scripts/qa.mjs`, `scripts/qa/`).
+  3. _Scenarios & Visual Matrix:_ Complete semantic state inventory, Chromium (320/390/768/1440px), Firefox, WebKit, and accessibility assertions (`qa/` catalog, fixtures, browser scenarios, contracts).
+  4. _CI & Governance:_ PR and nightly workflow `.github/workflows/agent-qa.yml`, documentation `docs/testing/agent-qa.md`, and AGENTS.md §8.3 protocol update.
+- **Verification:** `typecheck`, `verify:invariants` (35/35), `qa:check` (16/16), `test:unit` (627/627), `lint` (0 errors), `format:check` (clean Prettier), and `openspec validate agent-qa-pipeline --strict`.
+
 ## Handoff: refinamiento visual y comentarios de PR #183, 2026-09-10
 
 - Corrección posterior del selector Semana/Mes: columnas iguales dimensionadas por la etiqueta más larga, con 8 px de espacio interior. La comprobación de ancho reproduce el defecto anterior (61,48 px disponibles frente a 73,41 px necesarios) y verifica que ambas etiquetas caben completas.

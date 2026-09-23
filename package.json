@@ -14,6 +14,8 @@
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:a11y": "node --experimental-strip-types --test tests/accessibility.test.ts",
     "test:e2e": "playwright test",
+    "qa": "node --experimental-strip-types scripts/qa.mjs",
+    "qa:check": "node --experimental-strip-types --test qa/*.test.mjs qa/*.test.ts",
     "verify:fast": "tsc --noEmit && node scripts/run-unit-tests.mjs && node scripts/verify-test-hashes.mjs --check && openspec validate --specs",
     "verify:invariants": "node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/academic-model.test.ts",
     "typecheck": "tsc --noEmit",

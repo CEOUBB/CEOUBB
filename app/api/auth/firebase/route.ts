@@ -9,6 +9,7 @@ import {
 import { createSession, publicUser } from "../../../../lib/auth";
 import { firebaseCredentialIsActive } from "../../../../lib/services/firebase-revocation";
 import { firebaseConfigFromEnvironment } from "../../../../lib/firebase-config";
+import { firebaseRestOrigins } from "../../../../lib/firebase-endpoints";
 import { claimPendingEnrollments } from "../../../../lib/services/bulk-enrollment";
 import { claimPendingAdeccaEnrollments } from "../../../../lib/services/adecca-import";
 import { claimPendingMoodleEnrollments } from "../../../../lib/services/moodle-import";
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     const { idToken } = parseResult.data;
 
     const verification = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      `${firebaseRestOrigins().auth}/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
