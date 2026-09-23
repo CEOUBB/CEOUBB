@@ -81,6 +81,8 @@ export async function seedQa() {
   const runtime = resolveQaRuntime();
   if (!runtime) throw new Error("QA_SEED_REFUSED: enable the guarded local QA runtime first.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
+  await client.execute("PRAGMA journal_mode = WAL;");
+  await client.execute("PRAGMA busy_timeout = 5000;");
   const app = initializeApp(
     { projectId: runtime.projectId, storageBucket: `${runtime.projectId}.firebasestorage.app` },
     `qa-seed-${crypto.randomUUID()}`
@@ -401,7 +403,26 @@ export async function cleanupQaSessions(role: QaRole) {
     throw new Error("QA_SESSIONS_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
-    await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
+    await client.execute("PRAGMA busy_timeout = 5000;");
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
+        break;
+      } catch (err: unknown) {
+        if (
+          attempt < 4 &&
+          typeof err === "object" &&
+          err !== null &&
+          "message" in err &&
+          typeof (err as { message: unknown }).message === "string" &&
+          (err as { message: string }).message.includes("SQLITE_BUSY")
+        ) {
+          await new Promise((r) => setTimeout(r, 100 * Math.pow(2, attempt)));
+          continue;
+        }
+        throw err;
+      }
+    }
   } finally {
     client.close();
   }
@@ -412,6 +433,7 @@ export async function qaSupportRequests(remove = false) {
     throw new Error("QA_SUPPORT_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
+    await client.execute("PRAGMA busy_timeout = 5000;");
     const db = drizzle(client);
     const rows = await db
       .select({
