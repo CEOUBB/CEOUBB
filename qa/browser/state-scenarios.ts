@@ -336,28 +336,32 @@ export async function stateScenario(
     return true;
   }
 
-  await page.goto("/sentry-example-page");
-  await expect(page.getByRole("heading", { name: "Verificación Sentry (CEOUBB)" })).toBeVisible();
-  if (id === "public.sentry-client-error") {
-    await page.getByRole("button", { name: /Disparar Error de Cliente/ }).click();
-    await expect(page.getByText(/^Error de cliente enviado\. Event ID:/)).toBeVisible();
-  } else if (id !== "public.sentry") {
-    if (id === "public.sentry-server-error") await controlledError(page, "**/api/sentry-test");
-    const release =
-      id === "public.sentry-server-loading"
-        ? await holdRequest(page, "**/api/sentry-test")
-        : undefined;
-    try {
-      await page.getByRole("button", { name: /Enviar Error de Servidor/ }).click();
-      if (release) {
-        await expect(
-          page.getByRole("button", { name: "Enviando error…", exact: true })
-        ).toBeDisabled();
-        await capture("loading");
-      } else await expect(page.getByText(/Error al contactar la API: HTTP 503/)).toBeVisible();
-    } finally {
-      await release?.();
+  if (id.startsWith("public.sentry")) {
+    await page.goto("/sentry-example-page");
+    await expect(page.getByRole("heading", { name: "Verificación Sentry (CEOUBB)" })).toBeVisible();
+    if (id === "public.sentry-client-error") {
+      await page.getByRole("button", { name: /Disparar Error de Cliente/ }).click();
+      await expect(page.getByText(/^Error de cliente enviado\. Event ID:/)).toBeVisible();
+    } else if (id !== "public.sentry") {
+      if (id === "public.sentry-server-error") await controlledError(page, "**/api/sentry-test");
+      const release =
+        id === "public.sentry-server-loading"
+          ? await holdRequest(page, "**/api/sentry-test")
+          : undefined;
+      try {
+        await page.getByRole("button", { name: /Enviar Error de Servidor/ }).click();
+        if (release) {
+          await expect(
+            page.getByRole("button", { name: "Enviando error…", exact: true })
+          ).toBeDisabled();
+          await capture("loading");
+        } else await expect(page.getByText(/Error al contactar la API: HTTP 503/)).toBeVisible();
+      } finally {
+        await release?.();
+      }
     }
+    return true;
   }
-  return true;
+
+  return false;
 }

@@ -151,6 +151,8 @@ export async function firestoreDocument(path: string) {
     `http://${host}/v1/projects/${project}/databases/(default)/documents/${path}`,
     { headers: { Authorization: "Bearer owner" } }
   );
+  if (!response.ok)
+    throw new Error(`QA_FIRESTORE_DOCUMENT_FAILED: HTTP ${response.status} for ${path}`);
   expect(response.status, `Persisted document ${path}`).toBe(200);
   return response.json();
 }
@@ -195,6 +197,8 @@ async function removeQaDocuments(
       },
     }),
   });
+  if (!response.ok)
+    throw new Error(`QA_FIRESTORE_QUERY_FAILED: HTTP ${response.status} for ${parentPath}`);
   expect(response.status).toBe(200);
   const records = z
     .array(z.object({ document: z.object({ name: z.string() }).optional() }))
@@ -208,6 +212,8 @@ async function removeQaDocuments(
     )
       throw new Error("QA cleanup refused a document outside the synthetic conversation.");
     const removed = await fetch(`http://${host}/v1/${path}`, { method: "DELETE", headers });
+    if (!removed.ok)
+      throw new Error(`QA_FIRESTORE_DELETE_FAILED: HTTP ${removed.status} for ${path}`);
     expect(removed.status).toBe(200);
   }
 }
