@@ -88,6 +88,10 @@ export function usePortalCore(initialSession?: SessionState) {
     communicationError,
   } = sessionState;
 
+  const [activitySync, setActivitySync] = useState({ key: "", ready: false, error: "" });
+  const [communicationRetry, setCommunicationRetry] = useState(0);
+  const retryCommunications = useCallback(() => setCommunicationRetry((value) => value + 1), []);
+
   const [navState, dispatchNav] = useReducer(navReducer, {
     screen: "courses",
     course: null,
@@ -274,15 +278,31 @@ export function usePortalCore(initialSession?: SessionState) {
       if (!alive) return;
       unsub = watchCourseActivity(
         sectionIds,
-        (act) => dispatchSession({ type: "SET_ACTIVITY", activity: act }),
-        () => {}
+        (act, ready) => {
+          if (!alive) return;
+          dispatchSession({ type: "SET_ACTIVITY", activity: act });
+          setActivitySync((current) => ({
+            ...current,
+            key: user.id + JSON.stringify(sectionIds),
+            ready: ready === true,
+          }));
+        },
+        (error) => {
+          if (alive)
+            setActivitySync((current) => ({
+              ...current,
+              key: user.id + JSON.stringify(sectionIds),
+              ready: false,
+              error,
+            }));
+        }
       );
     });
     return () => {
       alive = false;
       unsub?.();
     };
-  }, [user, sectionIds, isAppVisible]);
+  }, [user, sectionIds, isAppVisible, communicationRetry]);
 
   // Implements: REQ-PERF-08
   useEffect(() => {
@@ -297,7 +317,7 @@ export function usePortalCore(initialSession?: SessionState) {
         (state) => {
           dispatchSession({
             type: "SET_COMMUNICATIONS",
-            communications: { ...state, ready: true },
+            communications: state,
           });
         },
         (error) => {
@@ -309,7 +329,7 @@ export function usePortalCore(initialSession?: SessionState) {
       alive = false;
       unsub?.();
     };
-  }, [user, memberships, isAppVisible]);
+  }, [user, memberships, isAppVisible, communicationRetry]);
 
   // Implements: REQ-PERF-08
   useEffect(() => {
@@ -382,7 +402,13 @@ export function usePortalCore(initialSession?: SessionState) {
         : [],
     [activity, communications, courses, user]
   );
-  const notificationsLoading = memberships.length > 0 && !communications.ready;
+  const activityCurrent = activitySync.key === (user?.id ?? "") + JSON.stringify(sectionIds);
+  const communicationsReady =
+    (sectionIds.length === 0 || (activityCurrent && activitySync.ready)) &&
+    (memberships.length === 0 || communications.ready === true);
+  const combinedCommunicationError =
+    (activityCurrent ? activitySync.error : "") || communicationError;
+  const notificationsLoading = !combinedCommunicationError && !communicationsReady;
 
   const enterCourse = useCallback(
     (next: Course) => {
@@ -574,7 +600,9 @@ export function usePortalCore(initialSession?: SessionState) {
       gradebooks,
       memberships,
       communications,
-      communicationError,
+      communicationError: combinedCommunicationError,
+      communicationsReady,
+      retryCommunications,
       screen,
       course,
       preview,
@@ -621,7 +649,9 @@ export function usePortalCore(initialSession?: SessionState) {
       gradebooks,
       memberships,
       communications,
-      communicationError,
+      combinedCommunicationError,
+      communicationsReady,
+      retryCommunications,
       screen,
       course,
       preview,

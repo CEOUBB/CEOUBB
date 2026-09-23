@@ -159,16 +159,16 @@ function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: bool
         className="grid h-6 w-6 place-items-center"
       >
         {status === "success" ? (
-          <CheckCircle className="h-4 w-4 text-[oklch(0.7_0.17_155)]" weight="fill" />
+          <CheckCircle className="h-4 w-4 text-[var(--academic-emerald)]" weight="fill" />
         ) : status === "error" ? (
-          <WarningCircle className="h-4 w-4 text-[oklch(0.55_0.22_25)]" weight="fill" />
+          <WarningCircle className="h-4 w-4 text-[var(--shield-red)]" weight="fill" />
         ) : status === "uploading" ? (
           <CircleNotch
-            className={`h-4 w-4 text-[oklch(0.48_0.18_255)] ${reduce ? "" : "animate-spin"}`}
+            className={`h-4 w-4 text-[var(--color-primary)] ${reduce ? "" : "animate-spin"}`}
             weight="bold"
           />
         ) : (
-          <File className="h-4 w-4 text-[oklch(0.48_0.03_250)]" />
+          <File className="h-4 w-4 text-[var(--text-muted)]" />
         )}
         <span className="sr-only">
           {status === "success"
@@ -208,11 +208,11 @@ function FileUploadRow({
       animate={{ opacity: 1, transform: "translateY(0px)" }}
       exit={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(-6px)" }}
       transition={ROW_TRANSITION}
-      className={`relative overflow-hidden rounded-xl border border-[oklch(0.9_0.012_250)] bg-white p-3 shadow-sm ${classNames?.item ?? ""}`}
+      className={`relative overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-card)] p-3 shadow-sm ${classNames?.item ?? ""}`}
     >
       <div className="flex items-center gap-3">
         <div
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[oklch(0.975_0.005_240)] text-[oklch(0.48_0.18_255)] ${classNames?.leading ?? ""}`}
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--canvas-soft)] text-[var(--color-primary)] ${classNames?.leading ?? ""}`}
         >
           {renderFileIcon(item.name, item.type, {
             className: "h-5 w-5",
@@ -225,12 +225,12 @@ function FileUploadRow({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p
-                className={`truncate text-sm font-medium text-[oklch(0.2_0.03_260)] ${classNames?.name ?? ""}`}
+                className={`truncate text-sm font-medium text-[var(--text-body)] ${classNames?.name ?? ""}`}
               >
                 {item.name}
               </p>
               <p
-                className={`mt-0.5 text-xs text-[oklch(0.48_0.03_250)] num ${classNames?.meta ?? ""}`}
+                className={`mt-0.5 text-xs text-[var(--text-muted)] num ${classNames?.meta ?? ""}`}
               >
                 {formatBytes(item.size)}
                 {item.sha256 && ` · SHA-256: ${item.sha256.slice(0, 12)}`}
@@ -245,7 +245,7 @@ function FileUploadRow({
                   type="button"
                   onClick={() => onRetry(item)}
                   aria-label={`Reintentar ${item.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-full text-[oklch(0.48_0.03_250)] transition-colors hover:bg-[oklch(0.975_0.005_240)] hover:text-[oklch(0.2_0.03_260)] active:scale-95"
+                  className="grid h-7 w-7 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--canvas-soft)] hover:text-[var(--text-body)] active:scale-95"
                 >
                   <ArrowClockwise className="h-3.5 w-3.5" />
                 </button>
@@ -254,7 +254,7 @@ function FileUploadRow({
                 type="button"
                 onClick={() => onRemove(item)}
                 aria-label={`Eliminar ${item.name}`}
-                className="grid h-7 w-7 place-items-center rounded-full text-[oklch(0.48_0.03_250)] transition-colors hover:bg-[oklch(0.975_0.005_240)] hover:text-[oklch(0.55_0.22_25)] active:scale-95"
+                className="grid h-7 w-7 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--canvas-soft)] hover:text-[var(--shield-red)] active:scale-95"
               >
                 <Trash className="h-3.5 w-3.5" />
               </button>
@@ -268,11 +268,13 @@ function FileUploadRow({
               aria-valuemax={100}
               aria-valuenow={Math.round(progress)}
               aria-label={`Progreso de ${item.name}`}
-              className={`mt-2 h-1.5 overflow-hidden rounded-full bg-[oklch(0.975_0.005_240)] ${classNames?.progress ?? ""}`}
+              className={`mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--canvas-soft)] ${classNames?.progress ?? ""}`}
             >
               <motion.div
                 className={`h-full rounded-full ${
-                  status === "success" ? "bg-[oklch(0.7_0.17_155)]" : "bg-[oklch(0.48_0.18_255)]"
+                  status === "success"
+                    ? "bg-[var(--academic-emerald)]"
+                    : "bg-[var(--color-primary)]"
                 }`}
                 style={{
                   transformOrigin: "left",
@@ -419,7 +421,7 @@ export function FileUpload({
           setDragging(false);
           addFiles(Array.from(event.dataTransfer.files));
         }}
-        className={`group relative flex w-full overflow-hidden rounded-2xl border border-dashed border-[oklch(0.9_0.012_250)] bg-white outline-none transition-[border-color,background-color,transform] duration-150 active:scale-[0.99] hover:border-[oklch(0.48_0.18_255)] hover:bg-[oklch(0.975_0.005_240)] focus-visible:ring-2 focus-visible:ring-[oklch(0.48_0.18_255)] data-[dragging=true]:border-[oklch(0.48_0.18_255)] data-[dragging=true]:bg-[rgba(0,85,184,0.07)] disabled:pointer-events-none disabled:opacity-55 ${
+        className={`group relative flex w-full overflow-hidden rounded-2xl border border-dashed border-[var(--border-hairline)] bg-[var(--surface-card)] outline-none transition-[border-color,background-color,transform] duration-150 active:scale-[0.99] hover:border-[var(--color-primary)] hover:bg-[var(--canvas-soft)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] data-[dragging=true]:border-[var(--color-primary)] data-[dragging=true]:bg-[var(--color-primary-wash)] disabled:pointer-events-none disabled:opacity-55 ${
           centered
             ? "min-h-44 flex-col items-center justify-center gap-3 p-6 text-center"
             : "items-center gap-3.5 p-4 text-left"
@@ -427,9 +429,9 @@ export function FileUpload({
       >
         <motion.span
           aria-hidden="true"
-          className={`grid shrink-0 place-items-center bg-[oklch(0.975_0.005_240)] text-[oklch(0.48_0.18_255)] ${
+          className={`grid shrink-0 place-items-center bg-[var(--canvas-soft)] text-[var(--color-primary)] ${
             centered
-              ? "h-14 w-14 rounded-2xl border border-[oklch(0.9_0.012_250)]"
+              ? "h-14 w-14 rounded-2xl border border-[var(--border-hairline)]"
               : "h-11 w-11 rounded-xl"
           }`}
           animate={
@@ -446,14 +448,14 @@ export function FileUpload({
 
         <span className={`min-w-0 ${centered ? "max-w-xs" : "flex-1"}`}>
           <span
-            className={`block font-semibold text-[oklch(0.2_0.03_260)] ${
+            className={`block font-semibold text-[var(--text-body)] ${
               centered ? "text-base" : "text-sm"
             }`}
           >
             {maxReached ? "Límite de entrega alcanzado" : title}
           </span>
           <span
-            className={`block text-xs text-[oklch(0.48_0.03_250)] ${
+            className={`block text-xs text-[var(--text-muted)] ${
               centered ? "mt-1 leading-5" : "mt-0.5"
             }`}
           >
@@ -462,7 +464,7 @@ export function FileUpload({
         </span>
 
         <span
-          className={`shrink-0 rounded-lg border border-[oklch(0.9_0.012_250)] bg-white text-xs font-semibold text-[oklch(0.2_0.03_260)] transition-colors group-hover:bg-[oklch(0.975_0.005_240)] ${
+          className={`shrink-0 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--text-body)] transition-colors group-hover:bg-[var(--canvas-soft)] ${
             centered ? "mt-1 px-4 py-2" : "px-3 py-1.5"
           }`}
         >
@@ -615,7 +617,7 @@ function SubmissionReceiptDetails({ receipt }: { receipt: StudentSubmission }) {
   const uploader = receipt.submittedByName?.trim() ?? "";
   if (!isTeam && !receipt.sha256) return null;
   return (
-    <small className="grades-receipt-trace text-xs text-[oklch(0.48_0.03_250)] mt-0.5">
+    <small className="grades-receipt-trace text-xs text-[var(--text-muted)] mt-0.5">
       {isTeam && (
         <span>
           Equipo de <span className="num">{receipt.memberIds.length}</span>
@@ -624,7 +626,7 @@ function SubmissionReceiptDetails({ receipt }: { receipt: StudentSubmission }) {
       )}
       {receipt.sha256 && (
         <code
-          className="num font-mono text-[11px] bg-[oklch(0.975_0.005_240)] px-1 py-0.5 rounded border border-[oklch(0.9_0.012_250)]"
+          className="num font-mono text-[11px] bg-[var(--canvas-soft)] px-1 py-0.5 rounded border border-[var(--border-hairline)]"
           title={`SHA-256: ${receipt.sha256}`}
         >
           {receipt.sha256.slice(0, 12)}
@@ -705,9 +707,9 @@ export function SubmissionSlot({
         aria-valuenow={percent}
         aria-label={`Subiendo entrega ${percent}%`}
       >
-        <div className="grades-upload-track h-2 w-full overflow-hidden rounded-full bg-[oklch(0.975_0.005_240)] border border-[oklch(0.9_0.012_250)]">
+        <div className="grades-upload-track h-2 w-full overflow-hidden rounded-full bg-[var(--canvas-soft)] border border-[var(--border-hairline)]">
           <motion.div
-            className="grades-upload-fill h-full rounded-full bg-[oklch(0.48_0.18_255)]"
+            className="grades-upload-fill h-full rounded-full bg-[var(--color-primary)]"
             style={{
               transformOrigin: "left",
               transform: shouldReduceMotion ? `scaleX(${progressRatio})` : undefined,
@@ -717,15 +719,15 @@ export function SubmissionSlot({
             transition={{ duration: 0.2, ease: EASE_OUT }}
           />
         </div>
-        <div className="flex items-center justify-between text-xs text-[oklch(0.48_0.03_250)]">
+        <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <CircleNotch
-              className="h-3 w-3 animate-spin text-[oklch(0.48_0.18_255)]"
+              className="h-3 w-3 animate-spin text-[var(--color-primary)]"
               weight="bold"
             />
             <span>Subiendo</span>
           </span>
-          <span className="num font-semibold text-[oklch(0.2_0.03_260)]">{percent}%</span>
+          <span className="num font-semibold text-[var(--text-body)]">{percent}%</span>
         </div>
       </div>
     );
@@ -738,9 +740,9 @@ export function SubmissionSlot({
           <CheckCircle aria-hidden="true" size={16} weight="fill" />
           <span>Entrega recibida</span>
         </span>
-        <div className="flex items-center gap-1.5 text-[13px] font-medium text-[oklch(0.2_0.03_260)] max-w-full truncate">
+        <div className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--text-body)] max-w-full truncate">
           {renderFileIcon(receipt.fileName, receipt.contentType, {
-            className: "h-4 w-4 shrink-0 text-[oklch(0.48_0.18_255)]",
+            className: "h-4 w-4 shrink-0 text-[var(--color-primary)]",
             weight: "duotone",
             "aria-hidden": true,
           })}
@@ -748,14 +750,14 @@ export function SubmissionSlot({
             {receipt.fileName}
           </span>
         </div>
-        <small className="num text-xs text-[oklch(0.48_0.03_250)]">
+        <small className="num text-xs text-[var(--text-muted)]">
           {formatBytes(receipt.size)} · {formatDay(receipt.createdAt.slice(0, 10))}
         </small>
         <SubmissionReceiptDetails receipt={receipt} />
         {!readOnly && (
           <button
             aria-label={`Reemplazar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
-            className="grades-attach mt-1 inline-flex items-center gap-1 text-xs font-medium text-[oklch(0.48_0.18_255)] hover:underline"
+            className="grades-attach mt-1 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] hover:underline"
             onClick={() => onPick(item)}
             type="button"
           >
@@ -769,13 +771,13 @@ export function SubmissionSlot({
 
   if (readOnly)
     return (
-      <span className="grades-closed text-xs text-[oklch(0.48_0.03_250)]">Sin nuevas entregas</span>
+      <span className="grades-closed text-xs text-[var(--text-muted)]">Sin nuevas entregas</span>
     );
 
   return (
     <button
       aria-label={`Adjuntar la entrega ${teamLabel} de ${item.name}`.replace("  ", " ")}
-      className="grades-attach group relative inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.9_0.012_250)] bg-white px-3 py-1.5 text-xs font-medium text-[oklch(0.2_0.03_260)] transition-[color,background-color,border-color,transform] duration-150 hover:border-[oklch(0.48_0.18_255)] hover:bg-[oklch(0.975_0.005_240)] active:scale-95 data-[dragging=true]:border-[oklch(0.48_0.18_255)] data-[dragging=true]:bg-[rgba(0,85,184,0.07)]"
+      className="grades-attach group relative inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 py-1.5 text-xs font-medium text-[var(--text-body)] transition-[color,background-color,border-color,transform] duration-150 hover:border-[var(--color-primary)] hover:bg-[var(--canvas-soft)] active:scale-95 data-[dragging=true]:border-[var(--color-primary)] data-[dragging=true]:bg-[var(--color-primary-wash)]"
       data-dragging={dragging}
       onClick={() => onPick(item)}
       onDragEnter={handleDragEnter}
@@ -787,18 +789,18 @@ export function SubmissionSlot({
       {dragging ? (
         <UploadSimple
           aria-hidden="true"
-          className="h-3.5 w-3.5 text-[oklch(0.48_0.18_255)] animate-bounce"
+          className="h-3.5 w-3.5 text-[var(--color-primary)]"
           weight="bold"
         />
       ) : mode === "individual" ? (
         <Paperclip
           aria-hidden="true"
-          className="h-3.5 w-3.5 text-[oklch(0.48_0.03_250)] group-hover:text-[oklch(0.48_0.18_255)]"
+          className="h-3.5 w-3.5 text-[var(--text-muted)] group-hover:text-[var(--color-primary)]"
         />
       ) : (
         <UsersThree
           aria-hidden="true"
-          className="h-3.5 w-3.5 text-[oklch(0.48_0.03_250)] group-hover:text-[oklch(0.48_0.18_255)]"
+          className="h-3.5 w-3.5 text-[var(--text-muted)] group-hover:text-[var(--color-primary)]"
           weight="fill"
         />
       )}

@@ -119,10 +119,11 @@ export function TeacherWorkspacePreview() {
           <span aria-hidden="true" className="header-context-sep">
             /
           </span>
-          <span className="header-context-label">Espacio docente</span>
-          <span className={styles.previewChip}>
-            <i aria-hidden="true" />
-            Vista previa<span> · datos de ejemplo · nada se guardará</span>
+          <span className={`header-context-label ${styles.previewContextLabel}`}>
+            Espacio docente
+          </span>
+          <span className={styles.previewNote} title="Datos de ejemplo; ningún cambio se guarda.">
+            Demostración<span> · datos de ejemplo</span>
           </span>
         </p>
         <div className="header-actions">

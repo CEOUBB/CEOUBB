@@ -173,6 +173,7 @@ export type ClassroomState = {
   files: ClassroomFile[];
   students: ClassroomStudent[];
   gradebook: GradeItem[];
+  gradebookStatus: "loading" | "ready" | "error";
   exemption: number | null;
   officialScores: GradeScores;
   officialFeedback: GradeFeedback;
@@ -200,6 +201,8 @@ export function watchClassroom(
 ) {
   let active = true;
   const stops: (() => void)[] = [];
+
+  onChange({ gradebookStatus: "loading" });
 
   const syncDevPosts = () => {
     if (!active) return;
@@ -261,20 +264,21 @@ export function watchClassroom(
             if (isDevOrLocalEnvironment() && state.gradebook.length === 0) {
               const devGb = readDevGradebook(courseId);
               if (devGb && devGb.gradebook.length > 0) {
-                onChange(devGb);
+                onChange({ ...devGb, gradebookStatus: "ready" });
                 return;
               }
             }
-            onChange(state);
+            onChange({ ...state, gradebookStatus: "ready" });
           },
           () => {
             if (isDevOrLocalEnvironment()) {
               const devGb = readDevGradebook(courseId);
               if (devGb) {
-                onChange(devGb);
+                onChange({ ...devGb, gradebookStatus: "ready" });
                 return;
               }
             }
+            onChange({ gradebookStatus: "error" });
             onError("No se pudo cargar la ponderación del curso.");
           }
         )
@@ -426,9 +430,11 @@ export function watchClassroom(
       («Missing or insufficient permissions»). Al aula sólo debe salir una
       frase en español que diga qué pasó y qué hacer.
     */
-    .catch(() =>
-      onError("No se pudo cargar el contenido del ramo. Revisa tu conexión y vuelve a intentarlo.")
-    );
+    .catch(() => {
+      if (!active) return;
+      onChange({ gradebookStatus: "error" });
+      onError("No se pudo cargar el contenido del ramo. Revisa tu conexión y vuelve a intentarlo.");
+    });
 
   return () => {
     active = false;
@@ -486,13 +492,24 @@ export function mergeActivity(bySection: Map<string, CourseActivity[]>): CourseA
 // Implements: REQ-PERF-01
 export function watchCourseActivity(
   enrolledSectionIds: readonly string[],
-  onChange: (items: CourseActivity[]) => void,
+  onChange: (items: CourseActivity[], ready?: boolean) => void,
   onError: (message: string) => void
 ) {
   let active = true;
   const stops: (() => void)[] = [];
   const sections = watchableSections(enrolledSectionIds);
   const bySection = new Map<string, CourseActivity[]>();
+  const loaded = new Set<string>();
+  const failures = new Set<string>();
+  const emit = () => {
+    if (!active) return;
+    onChange(mergeActivity(bySection), loaded.size === sections.length && failures.size === 0);
+    onError(
+      failures.size
+        ? "No se pudieron actualizar los avisos de tus secciones. Reintenta para comprobar si hay novedades."
+        : ""
+    );
+  };
 
   const syncDevActivities = () => {
     if (!active || typeof window === "undefined") return;
@@ -512,7 +529,7 @@ export function watchCourseActivity(
         );
       }
     }
-    onChange(mergeActivity(bySection));
+    emit();
   };
 
   if (isDevOrLocalEnvironment()) {
@@ -523,7 +540,7 @@ export function watchCourseActivity(
   }
 
   if (sections.length === 0) {
-    onChange([]);
+    onChange([], true);
     return () => undefined;
   }
 
@@ -539,6 +556,8 @@ export function watchCourseActivity(
               sdk.limit(ACTIVITY_LIMIT_PER_SECTION)
             ),
             (snapshot) => {
+              loaded.add(courseId);
+              failures.delete(courseId);
               const remote = snapshot.docs.map((document) => ({
                 id: document.id,
                 courseId,
@@ -555,21 +574,18 @@ export function watchCourseActivity(
               } else {
                 bySection.set(courseId, remote);
               }
-              onChange(mergeActivity(bySection));
+              emit();
             },
             () => {
-              if (!isDevOrLocalEnvironment()) {
-                onError("No se pudo sincronizar la actividad de los cursos.");
-              }
+              failures.add(courseId);
+              emit();
             }
           )
         );
       }
     })
     .catch(() => {
-      if (!isDevOrLocalEnvironment()) {
-        onError("No se pudo conectar Firebase.");
-      }
+      if (active) onError("No se pudieron cargar los avisos. Revisa tu conexión y reintenta.");
     });
 
   return () => {

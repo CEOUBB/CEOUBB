@@ -76,16 +76,33 @@ export function watchCommunications(
   const stops: (() => void)[] = [];
   const threadsBySection = new Map<string, MessageThreadSummary[]>();
   let cursors: CommunicationReadCursor[] = [];
+  let cursorsReady = false;
+  const errors = new Map<string, string>();
   const membershipBySection = new Map(
     memberships.map((membership) => [membership.sectionId, membership])
   );
   const sections = watchableSections(memberships.map((membership) => membership.sectionId));
   const emit = () => {
     if (!active) return;
-    onChange({ threads: mergeMessageThreads(threadsBySection), cursors });
+    onChange({
+      threads: mergeMessageThreads(threadsBySection),
+      cursors,
+      ready: cursorsReady && threadsBySection.size === sections.length && errors.size === 0,
+    });
+    const message = errors.values().next().value ?? "";
+    onError(
+      message === "No tienes permiso para acceder a esta conversación."
+        ? "No se pudieron cargar las comunicaciones de tus secciones. Reintenta o contacta a soporte."
+        : message
+    );
   };
 
-  onChange({ threads: [], cursors: [] });
+  const fail = (key: string, message: string) => {
+    errors.set(key, message);
+    emit();
+  };
+
+  onChange({ threads: [], cursors: [], ready: false });
 
   Promise.all([firestore(), syncProfile()])
     .then(([{ sdk, db }, user]) => {
@@ -98,11 +115,13 @@ export function watchCommunications(
             sdk.limit(MAX_READ_CURSORS)
           ),
           (snapshot) => {
+            cursorsReady = true;
+            errors.delete("reads");
             cursors = snapshot.docs.map(toCursor);
             emit();
           },
           (cause) =>
-            onError(communicationError(cause, "No se pudo sincronizar el estado de lectura."))
+            fail("reads", communicationError(cause, "No se pudo sincronizar el estado de lectura."))
         )
       );
 
@@ -118,6 +137,7 @@ export function watchCommunications(
                 sdk.limit(MAX_THREAD_SUMMARIES_PER_SECTION)
               ),
               (snapshot) => {
+                errors.delete(courseId);
                 threadsBySection.set(
                   courseId,
                   snapshot.docs.map((document) => toThread(document, courseId))
@@ -125,7 +145,10 @@ export function watchCommunications(
                 emit();
               },
               (cause) =>
-                onError(communicationError(cause, "No se pudieron sincronizar los mensajes."))
+                fail(
+                  courseId,
+                  communicationError(cause, "No se pudieron sincronizar los mensajes.")
+                )
             )
           );
         } else {
@@ -133,6 +156,7 @@ export function watchCommunications(
             sdk.onSnapshot(
               sdk.doc(db, "courses", courseId, "messageThreads", user.uid),
               (snapshot) => {
+                errors.delete(courseId);
                 threadsBySection.set(
                   courseId,
                   snapshot.exists() ? [toThread(snapshot, courseId)] : []
@@ -140,15 +164,22 @@ export function watchCommunications(
                 emit();
               },
               (cause) =>
-                onError(communicationError(cause, "No se pudieron sincronizar los mensajes."))
+                fail(
+                  courseId,
+                  communicationError(cause, "No se pudieron sincronizar los mensajes.")
+                )
             )
           );
         }
       }
     })
-    .catch((cause) =>
-      onError(communicationError(cause, "No se pudo conectar el centro de comunicaciones."))
-    );
+    .catch((cause) => {
+      if (active)
+        fail(
+          "connection",
+          communicationError(cause, "No se pudo conectar el centro de comunicaciones.")
+        );
+    });
 
   return () => {
     active = false;

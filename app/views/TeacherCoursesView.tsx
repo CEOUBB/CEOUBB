@@ -622,19 +622,40 @@ function CourseEvaluations({ course }: { course: ManagedCourse }) {
     exemption: null,
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let stop: (() => void) | undefined;
     let active = true;
-    import("../../lib/firebase-classroom-client").then(({ watchGradebook }) => {
-      if (!active) return;
-      stop = watchGradebook(course.id, setState, setError);
-    });
+    import("../../lib/firebase-classroom-client")
+      .then(({ watchGradebook }) => {
+        if (!active) return;
+        stop = watchGradebook(
+          course.id,
+          (next) => {
+            if (!active) return;
+            setState(next);
+            setLoading(false);
+            setError("");
+          },
+          (message) => {
+            if (!active) return;
+            setError(message);
+            setLoading(false);
+          }
+        );
+      })
+      .catch(() => {
+        if (!active) return;
+        setError("No se pudo conectar con las evaluaciones. Reintenta para continuar.");
+        setLoading(false);
+      });
     return () => {
       active = false;
       stop?.();
     };
-  }, [course.id]);
+  }, [course.id, retry]);
 
   const current =
     state.courseId === course.id ? state : { courseId: course.id, items: [], exemption: null };
@@ -648,14 +669,31 @@ function CourseEvaluations({ course }: { course: ManagedCourse }) {
           <p>Define el esquema completo; la suma debe ser exactamente 100%.</p>
         </div>
       </div>
-      <GradebookSettingsEditor
-        courseId={course.id}
-        exemption={current.exemption}
-        gradebook={current.items}
-      />
-      <p aria-live="polite" className="teacher-inline-error">
-        {error}
-      </p>
+      {loading && <p role="status">Cargando la ponderación del ramo…</p>}
+      {error && (
+        <div className="grades-load-status" role="status">
+          <p>{error} Tus evaluaciones no se han modificado.</p>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              setError("");
+              setRetry((value) => value + 1);
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+      {state.courseId === course.id && (
+        <GradebookSettingsEditor
+          courseId={course.id}
+          exemption={current.exemption}
+          gradebook={current.items}
+          disabled={loading || Boolean(error)}
+        />
+      )}
     </section>
   );
 }
