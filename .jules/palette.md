@@ -7,6 +7,13 @@
 - **Design System Constraint:** Reused existing component structure and styling without altering visual design, CSS rules, or component state logic.
 - **Future Rule:** Ensure team removal buttons expose explicit team names in `aria-label` and feedback messages with `aria-live` declare explicit `role="status"` or `role="alert"`.
 
+## [2026-03-31] - Calendar / PlannerGrid
+
+- **Finding:** In `PlannerGrid.tsx`, the primary empty state action button ("Crear el primer bloque") contained a decorative Phosphor SVG vector icon (`<Plus>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to `<Plus>` inside the empty state create button in `PlannerGrid.tsx`.
+- **Design System Constraint:** Reused existing Phosphor icon props (`size={15}`, `weight="bold"`) without changing visual button layout or styles.
+- **Future Rule:** Ensure decorative vector icons inside calendar empty state buttons explicitly declare `aria-hidden="true"`.
+
 ## [2026-03-31] - Views / CoursesDashboard
 
 - **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
