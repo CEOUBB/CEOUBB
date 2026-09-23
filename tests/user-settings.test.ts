@@ -131,6 +131,8 @@ test("REQ-AUTH-08: revocar una sesión ajena responde 403 y no borra", () => {
   assert.ok(guardIndex > 0, "falta la guardia de pertenencia antes del borrado");
   assert.ok(del.indexOf("db.delete(sessions)") > guardIndex);
   assert.match(del, /eq\(sessions\.userId, actor\.id\)/);
+  assert.match(del, /request\.headers\.get\("origin"\)/);
+  assert.match(del, /content-length/);
 });
 
 test("REQ-CFG-04: las reglas dejan las preferencias de sólo lectura para el cliente", () => {

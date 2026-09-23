@@ -64,14 +64,37 @@ export async function GET(request: Request) {
   usuario: un identificador que no esté entre ellas responde error de
   autorización sin revelar si existe en otra cuenta.
 */
-// Implements: REQ-AUTH-08 REQ-CFG-07
+// Implements: REQ-AUTH-08 REQ-CFG-07 REQ-SEC-01
 export async function DELETE(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader !== null) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > 16384) {
+      return Response.json(
+        { error: "El cuerpo de la solicitud es demasiado extenso." },
+        { status: 413 }
+      );
+    }
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
 
   let payload: unknown;
   try {
-    payload = await request.json();
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, "utf8") > 16384) {
+      return Response.json(
+        { error: "El cuerpo de la solicitud es demasiado extenso." },
+        { status: 413 }
+      );
+    }
+    payload = JSON.parse(rawBody);
   } catch {
     return Response.json({ error: "El cuerpo de la petición no es JSON." }, { status: 400 });
   }
