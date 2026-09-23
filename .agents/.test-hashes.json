@@ -11,7 +11,7 @@
   "tests/app-check.test.ts": "fd5b41d9159c72e8c656acd98b10e62cdb0b7846883c132386258a9e7a15f9dc",
   "tests/assistant-role.test.ts": "7a36f4a53e914c222b5c5d11da0a74906770b7b6dc810dd9619a76c7a67393fd",
   "tests/backend-remediation.test.ts": "85a886d6a3ad6cc06800a8f40ffb2d5c80a559f85584e4ae61597ebce8f3d79b",
-  "tests/bulk-enrollment.test.ts": "b2cdbe056ec4538d20a4e7f9dbc8fc8984eded58b0e6725b093c7b0ca5b4f570",
+  "tests/bulk-enrollment.test.ts": "2b30683d2d52ef02f6360b3e0ee8b9c345f8d318d27a10e41099192faac99ea9",
   "tests/capacitor-config.test.ts": "07de1de77d9d44cd4f758e99aaf8e5e40145c21aa4d9e161fb5ecebecf50af69",
   "tests/capacity-load-test.test.ts": "13b377ab59f2643b31b8879a6a838428a4a370c25b766de37e9d5555d3048360",
   "tests/chilean-grades-parsing.test.ts": "e2d36b81c204db07443c92c8df85136164e30bd0e4249cfda2c658c8efbf3612",
