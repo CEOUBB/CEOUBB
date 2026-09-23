@@ -292,6 +292,7 @@ export function usePortalCore(initialSession?: SessionState) {
             setActivitySync((current) => ({
               ...current,
               key: user.id + JSON.stringify(sectionIds),
+              ready: false,
               error,
             }));
         }
