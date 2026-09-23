@@ -212,7 +212,7 @@ test("REQ-SEC-19: projections reconcile route separates unauthenticated 401 and 
 });
 
 // Implements: REQ-SEC-20
-test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthorized 403 checks", () => {
+test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthorized 403 checks and validates origin header", () => {
   const routePath = path.resolve("app/api/admin/users/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
@@ -224,6 +224,11 @@ test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthoriz
     routeContent,
     /if\s*\(actor\.role\s*!==\s*["']owner["']\)/,
     "Admin users route must return 403 for non-owner roles"
+  );
+  assert.match(
+    routeContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Admin users PATCH route must validate origin header against request URL origin"
   );
 });
 
