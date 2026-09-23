@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / EvaluationTeamsEditor & GradebookSettingsEditor
+
+- **Finding:** In `EvaluationTeamsEditor.tsx`, repeated team deletion buttons rendered generic text ("Quitar equipo") without team name context, causing screen reader ambiguity across team cards (WCAG 2.2 SC 2.4.4 & SC 4.1.2). In `GradebookSettingsEditor.tsx`, status feedback messages using `aria-live="polite"` lacked an explicit ARIA role (`role="status"` / `role="alert"`), preventing consistent screen reader announcements during scheme validation or updates (WCAG 2.2 SC 4.1.2 & SC 3.2.2).
+- **Applied / Evaluated Pattern:** Added `aria-label={`Quitar ${team.name || "equipo"}`}` to the team removal button in `EvaluationTeamsEditor.tsx`, and added `role={status.tone === "bad" ? "alert" : "status"}` to the status feedback paragraph in `GradebookSettingsEditor.tsx`.
+- **Design System Constraint:** Reused existing component structure and styling without altering visual design, CSS rules, or component state logic.
+- **Future Rule:** Ensure team removal buttons expose explicit team names in `aria-label` and feedback messages with `aria-live` declare explicit `role="status"` or `role="alert"`.
+
 ## [2026-03-31] - Views / CoursesDashboard
 
 - **Finding:** In `app/views/CoursesDashboard.tsx`, the empty state action button ("Administrar ramos") contained a decorative Phosphor SVG vector icon (`<ArrowRight>`) without `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within an interactive button trigger with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
