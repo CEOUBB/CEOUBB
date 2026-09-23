@@ -6,6 +6,10 @@ dist
 build
 coverage
 .cache
+.qa
+qa-results
+playwright-report
+test-results
 .wrangler
 .vinext
 graphify-out

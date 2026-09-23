@@ -1,0 +1,9 @@
+{
+  "moodle_backup.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><moodle_backup><information><name>qa-course.mbz</name><moodle_version>2025041400</moodle_version><moodle_release>5.0</moodle_release><original_wwwroot>https://qa-moodle.invalid</original_wwwroot><original_course_id>qa-source-moodle</original_course_id><original_course_fullname>Curso Moodle QA</original_course_fullname><original_course_shortname>QA-MOODLE</original_course_shortname><contents><activities><activity><moduleid>10</moduleid><sectionid>2</sectionid><modulename>label</modulename><title>Aviso importado Moodle QA</title><directory>activities/label_10</directory></activity></activities><sections><section><sectionid>2</sectionid><title>Unidad importada QA</title><directory>sections/section_2</directory></section></sections></contents></information></moodle_backup>",
+  "course/course.xml": "<course id=\"qa-source-moodle\" contextid=\"100\"><shortname>QA-MOODLE</shortname><fullname>Curso Moodle QA</fullname><summary>Contenido sintético reproducible.</summary><startdate>1788220800</startdate></course>",
+  "sections/section_2/section.xml": "<section id=\"2\"><number>1</number><name>Unidad importada QA</name><summary>Contenido importado</summary><sequence>10</sequence><visible>1</visible></section>",
+  "activities/label_10/module.xml": "<module id=\"10\"><visible>1</visible><added>1788220800</added></module>",
+  "activities/label_10/label.xml": "<activity id=\"310\" moduleid=\"10\" modulename=\"label\" contextid=\"210\"><label id=\"310\"><name>Aviso importado Moodle QA</name><intro>Contenido sintético de importación reproducible.</intro></label></activity>",
+  "files.xml": "<files></files>",
+  "users.xml": "<users></users>"
+}

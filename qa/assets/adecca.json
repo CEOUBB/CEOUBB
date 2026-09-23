@@ -1,0 +1,23 @@
+{
+  "format": "ceoubb-adecca-package",
+  "version": 1,
+  "source": {
+    "courseId": "qa-source-adecca",
+    "courseName": "Curso ADECCA QA",
+    "courseShortName": "QA-ADECCA",
+    "adeccaVersion": "synthetic-1"
+  },
+  "items": [
+    {
+      "sourceId": "qa-adecca-notice",
+      "title": "Aviso importado ADECCA QA",
+      "kind": "notice",
+      "folder": "Unidad importada QA",
+      "body": "Contenido sintético de importación reproducible.",
+      "visible": true
+    }
+  ],
+  "participants": [
+    { "sourceUserId": "qa-student", "email": "qa.student@alumnos.ubiobio.cl", "role": "student" }
+  ]
+}

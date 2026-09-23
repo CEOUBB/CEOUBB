@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QA SCORM</title>
+  </head>
+  <body>
+    <main>
+      <h1>QA SCORM</h1>
+      <p>Actividad sintética reproducible.</p>
+      <button type="button" id="complete">Completar actividad</button>
+      <p role="status" id="status">Actividad pendiente</p>
+    </main>
+    <script>
+      document.getElementById("complete").addEventListener("click", () => {
+        const api = parent.API;
+        const saved =
+          api.LMSInitialize("") === "true" &&
+          api.LMSSetValue("cmi.core.lesson_status", "completed") === "true" &&
+          api.LMSSetValue("cmi.core.score.raw", "100") === "true" &&
+          api.LMSCommit("") === "true";
+        document.getElementById("status").textContent = saved
+          ? "Actividad completada"
+          : "No se pudo guardar";
+      });
+    </script>
+  </body>
+</html>

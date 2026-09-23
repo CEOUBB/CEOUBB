@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 import { contentOrigin } from "./lib/interop/config";
+import { qaDistDir, resolveQaRuntime } from "./lib/qa-runtime";
+
+const qa = resolveQaRuntime();
+const qaOutput = qaDistDir();
+const qaOrigins = qa
+  ? [qa.auth, qa.firestore, qa.storage, qa.functions].map((service) => service.origin).join(" ")
+  : "";
 
 const learningContentOrigin = (() => {
   try {
@@ -22,8 +29,9 @@ const scriptSrc =
     : `'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com http://localhost:8400 ${capacitorBridgeOrigins}`;
 const remoteConnectSrc =
   "https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://accounts.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.cloudfunctions.net";
-const connectSrc =
-  process.env.NODE_ENV === "production"
+const connectSrc = qa
+  ? `'self' ${qaOrigins} ws://localhost:* ws://127.0.0.1:*`
+  : process.env.NODE_ENV === "production"
     ? `'self' ${remoteConnectSrc} ${capacitorBridgeOrigins}`
     : `'self' ws://localhost:* ws://127.0.0.1:* http://localhost:8400 ${remoteConnectSrc} ${capacitorBridgeOrigins}`;
 
@@ -31,20 +39,27 @@ const contentSecurityPolicy = [
   `default-src 'self' ${capacitorBridgeOrigins}`,
   `script-src ${scriptSrc} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://challenges.cloudflare.com https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com",
+  `img-src 'self' data: blob: ${qa ? qa.storage.origin : "https://*.firebasestorage.app https://*.googleusercontent.com https://accounts.google.com https://lh3.googleusercontent.com https://*.googleapis.com"}`,
   "font-src 'self' data:",
   `connect-src ${connectSrc} blob: https://www.google.com/recaptcha/ https://cloudflareinsights.com`,
-  `frame-src ${learningContentOrigin ? learningContentOrigin + " " : ""}https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com`,
+  `frame-src ${qa ? qa.auth.origin + " " : ""}${learningContentOrigin ? learningContentOrigin + " " : ""}https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://challenges.cloudflare.com`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
+  ...(qa ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  ...(qa ? { skipProxyUrlNormalize: true, devIndicators: false as const } : {}),
+  ...(qaOutput
+    ? {
+        distDir: qaOutput,
+        typescript: { tsconfigPath: qaOutput.replace(/\/next$/, "/tsconfig.json") },
+      }
+    : {}),
   experimental: {
     optimizePackageImports: [
       "@phosphor-icons/react",

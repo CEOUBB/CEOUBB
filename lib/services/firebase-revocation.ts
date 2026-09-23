@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
+import { resolveQaRuntime } from "../qa-runtime.ts";
 import {
   commitFirestoreWrites,
   FIREBASE_PROJECT_ID,
@@ -47,7 +49,7 @@ export async function revokeFirebaseAccess(
   ]);
   const token = await googleAccessToken("https://www.googleapis.com/auth/identitytoolkit");
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/accounts:update`,
+    `${firebaseRestOrigins().auth}/v1/projects/${FIREBASE_PROJECT_ID}/accounts:update`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -78,7 +80,7 @@ export async function revokeFirebaseAccess(
       do {
         const query = new URLSearchParams({ pageSize: "100", ...(pageToken ? { pageToken } : {}) });
         const response = await fetch(
-          `https://firestore.googleapis.com/v1/${documents}/enrollments/${encodeURIComponent(uid)}/sections?${query}`,
+          `${firebaseRestOrigins().firestore}/v1/${documents}/enrollments/${encodeURIComponent(uid)}/sections?${query}`,
           { headers: { Authorization: `Bearer ${firestoreToken}` } }
         );
         if (!response.ok) throw new Error("No se pudieron revocar los enlaces de esta cuenta.");
@@ -110,10 +112,10 @@ export async function firebaseCredentialIsActive(idToken: string, uid: string) {
   if (claims.sub !== uid) return false;
   const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
   const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "";
-  if (!clientEmail || !privateKey) return true;
+  if ((!clientEmail || !privateKey) && !resolveQaRuntime()) return true;
   const token = await googleAccessToken();
   const response = await fetch(
-    `https://firestore.googleapis.com/v1/${documents}/authRevocations/${encodeURIComponent(firebaseUid(uid))}`,
+    `${firebaseRestOrigins().firestore}/v1/${documents}/authRevocations/${encodeURIComponent(firebaseUid(uid))}`,
     {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
@@ -144,7 +146,7 @@ export async function deleteFirebaseAccountData(userId: string) {
     do {
       const query = new URLSearchParams({ pageSize: "100", ...(pageToken ? { pageToken } : {}) });
       const response = await fetch(
-        `https://firestore.googleapis.com/v1/${documents}/${collection}?${query}`,
+        `${firebaseRestOrigins().firestore}/v1/${documents}/${collection}?${query}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("No se pudo limpiar el acceso Firebase.");
@@ -164,7 +166,7 @@ export async function deleteFirebaseAccountData(userId: string) {
   // Se conserva authRevocations como lápida: un ID token anterior nunca recrea el perfil.
   const authToken = await googleAccessToken("https://www.googleapis.com/auth/identitytoolkit");
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/accounts:delete`,
+    `${firebaseRestOrigins().auth}/v1/projects/${FIREBASE_PROJECT_ID}/accounts:delete`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },

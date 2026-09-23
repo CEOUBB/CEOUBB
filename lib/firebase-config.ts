@@ -1,3 +1,5 @@
+import { resolveQaClientRuntime } from "./qa-runtime.ts";
+
 export type FirebaseClientConfig = {
   apiKey: string;
   authDomain: string;
@@ -19,6 +21,11 @@ export const PRODUCTION_FIREBASE_CONFIG: FirebaseClientConfig = Object.freeze({
 });
 
 type FirebaseEnvironment = {
+  NEXT_PUBLIC_CEOUBB_QA?: string;
+  NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST?: string;
+  NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST?: string;
+  NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST?: string;
+  NEXT_PUBLIC_FUNCTIONS_EMULATOR_HOST?: string;
   CEOUBB_ENVIRONMENT?: string;
   NEXT_PUBLIC_CEOUBB_ENVIRONMENT?: string;
   NEXT_PUBLIC_FIREBASE_API_KEY?: string;
@@ -30,6 +37,7 @@ type FirebaseEnvironment = {
 };
 
 export function resolveFirebaseConfig(environment: FirebaseEnvironment): FirebaseClientConfig {
+  const qa = resolveQaClientRuntime(environment);
   const selected = {
     apiKey: environment.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() ?? "",
     authDomain: environment.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() ?? "",
@@ -46,6 +54,15 @@ export function resolveFirebaseConfig(environment: FirebaseEnvironment): Firebas
     .trim()
     .toLowerCase();
   const configuredValues = Object.values(selected).filter(Boolean).length;
+
+  if (qa) {
+    if (configuredValues !== Object.keys(selected).length || selected.authDomain !== "localhost") {
+      throw new Error(
+        "QA_CONFIG_INVALID: complete local Firebase client configuration is required."
+      );
+    }
+    return selected;
+  }
 
   if (
     (!environmentName || environmentName === "production" || environmentName === "preview") &&
@@ -80,6 +97,12 @@ export function resolveFirebaseConfig(environment: FirebaseEnvironment): Firebas
 
 export function firebaseConfigFromEnvironment(): FirebaseClientConfig {
   return resolveFirebaseConfig({
+    NEXT_PUBLIC_CEOUBB_QA: process.env.NEXT_PUBLIC_CEOUBB_QA,
+    NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST,
+    NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST,
+    NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST:
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST,
+    NEXT_PUBLIC_FUNCTIONS_EMULATOR_HOST: process.env.NEXT_PUBLIC_FUNCTIONS_EMULATOR_HOST,
     CEOUBB_ENVIRONMENT: process.env.NEXT_PUBLIC_CEOUBB_ENVIRONMENT,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

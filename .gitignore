@@ -14,6 +14,10 @@
 /coverage
 /.capacity/
 /reports/
+/.qa/
+/qa-results/
+/playwright-report/
+/test-results/
 
 # typescript
 *.tsbuildinfo

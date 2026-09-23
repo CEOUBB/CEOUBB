@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
 import type { PublicUser } from "../auth.ts";
 import { fail } from "../interop/errors.ts";
 import { exportQtiBank } from "../interop/qti.ts";
@@ -51,7 +52,8 @@ async function readField(
   token: string
 ) {
   const url =
-    "https://firestore.googleapis.com/v1/projects/" +
+    firebaseRestOrigins().firestore +
+    "/v1/projects/" +
     FIREBASE_PROJECT_ID +
     "/databases/(default)/documents/courses/" +
     sectionId +

@@ -1,5 +1,7 @@
 import { createSign } from "node:crypto";
 import { z } from "zod";
+import { firebaseRestOrigins } from "../firebase-endpoints.ts";
+import { resolveQaRuntime } from "../qa-runtime.ts";
 import { SECTION_ROLES, firebaseUidOf, type SectionRole } from "../section-roles.ts";
 export type { SectionRole };
 
@@ -14,7 +16,8 @@ export type { SectionRole };
 */
 // Implements: REQ-ACAD-02
 
-export const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "centro-de-estudio-ubb";
+export const FIREBASE_PROJECT_ID =
+  resolveQaRuntime()?.projectId ?? (process.env.FIREBASE_PROJECT_ID || "centro-de-estudio-ubb");
 
 /** Firestore acepta 500 escrituras por commit; 400 deja margen ante reintentos. */
 export const MAX_WRITES_PER_COMMIT = 400;
@@ -208,7 +211,7 @@ export async function projectUserRoleToFirestore(
 ): Promise<void> {
   const clientEmail = process.env.FIREBASE_SERVICE_ACCOUNT_EMAIL ?? "";
   const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "";
-  if (!clientEmail || !privateKey) {
+  if ((!clientEmail || !privateKey) && !resolveQaRuntime()) {
     return;
   }
 
@@ -257,7 +260,7 @@ export async function invalidateCourseDownloadTokens(sectionId?: string, dryRun 
     process.env.FIREBASE_STORAGE_BUCKET ||
     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
     `${FIREBASE_PROJECT_ID}.firebasestorage.app`;
-  const base = `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o`;
+  const base = `${firebaseRestOrigins().storage}/storage/v1/b/${encodeURIComponent(bucket)}/o`;
   const token = await googleAccessToken(STORAGE_SCOPE);
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   const prefix = sectionId ? `courses/${sectionId}/` : "courses/";
@@ -326,7 +329,7 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
   if (!isValidPathSegment(sectionId) || writes.length > MAX_WRITES_PER_COMMIT)
     throw new Error("Lote de sección inválido.");
   const token = await accessToken();
-  const base = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+  const base = `${firebaseRestOrigins().firestore}/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const begin = await fetch(`${base}:beginTransaction`, {
     method: "POST",
@@ -397,7 +400,7 @@ export async function projectAcademicPeriodToFirestore(
 
 async function commit(writes: FirestoreWrite[], token: string) {
   const response = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:commit`,
+    `${firebaseRestOrigins().firestore}/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:commit`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -423,6 +426,8 @@ const cachedTokens = new Map<string, { value: string; expiresAt: number }>();
   datastore no sirve para subir un objeto.
 */
 export async function googleAccessToken(scope: string = DATASTORE_SCOPE): Promise<string> {
+  // Firebase emulators accept this administrative token only at the guarded local origins.
+  if (resolveQaRuntime()) return "owner";
   const now = Math.floor(Date.now() / 1000);
   const cachedToken = cachedTokens.get(scope);
   if (cachedToken && cachedToken.expiresAt > now + 60) return cachedToken.value;
