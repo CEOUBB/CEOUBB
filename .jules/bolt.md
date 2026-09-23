@@ -109,3 +109,10 @@
 - **Attempted / Identified Solution:** Consolidación del cálculo de `unreadCount` en la misma pasada $O(N)$ de `groupNotifications` dentro del `useMemo` de `NotificationList`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales y la segunda pasada redundante en la lista de notificaciones.
 - **Future Rule:** Incorporar acumuladores escalares adicionales (como conteos de estado) en las funciones de agrupamiento o memoización existentes sobre arreglos.
+
+## 2026-09-21 - Construcción del Map de ítems de notas en `QuizCatalogList` (`app/views/classroom/TeacherQuizzes.tsx`)
+
+- **Finding:** `QuizCatalogList` instanciaba el mapa de ítems de notas usando `new Map(gradebook.map((item) => [item.id, item]))`, asignando arreglos de tuplas intermedias `[id, item]` en la vista docente de cuestionarios.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
+- **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
