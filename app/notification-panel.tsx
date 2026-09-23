@@ -32,6 +32,7 @@ function groupNotifications(items: readonly NotificationItem[]): {
   today: NotificationItem[];
   thisWeek: NotificationItem[];
   older: NotificationItem[];
+  unreadCount: number;
 } {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -40,8 +41,12 @@ function groupNotifications(items: readonly NotificationItem[]): {
   const today: NotificationItem[] = [];
   const thisWeek: NotificationItem[] = [];
   const older: NotificationItem[] = [];
+  let unreadCount = 0;
 
   for (const item of items) {
+    if (item.unread) {
+      unreadCount++;
+    }
     const time = new Date(item.createdAt).getTime();
     if (Number.isNaN(time)) {
       older.push(item);
@@ -54,7 +59,7 @@ function groupNotifications(items: readonly NotificationItem[]): {
     }
   }
 
-  return { today, thisWeek, older };
+  return { today, thisWeek, older, unreadCount };
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -392,8 +397,8 @@ export function NotificationList({
   onMarkAll: () => void;
   onSeeAll: () => void;
 }) {
-  const unread = items.filter((item) => item.unread).length;
   const groups = useMemo(() => groupNotifications(items), [items]);
+  const unread = groups.unreadCount;
 
   return (
     <div className="notification-panel-body flex flex-col max-h-[min(70vh,540px)]">
