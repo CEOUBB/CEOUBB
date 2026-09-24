@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / SubmissionSlot
+
+- **Finding:** In `SubmissionSlot.tsx`, decorative Phosphor SVG vector icons inside `StatusIcon` (`<CheckCircle>`, `<WarningCircle>`, `<CircleNotch>`, `<File>`), `FileUploadRow` action triggers (`<ArrowClockwise>`, `<Trash>`), upload progress indicator (`<CircleNotch>`), and submission replace action (`<ArrowClockwise>`) lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes inside interactive triggers or alongside accessible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor SVG vector icons in `StatusIcon`, `FileUploadRow` action buttons, upload progress indicator, and submission replace action button in `app/views/classroom/SubmissionSlot.tsx`.
+- **Design System Constraint:** Reused existing Phosphor icon props and Tailwind/CSS utility classes without modifying layout geometry or component behavior.
+- **Future Rule:** Ensure decorative vector icons in file upload status badges, item action triggers, and progress indicators explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / EvaluationTeamsEditor & GradebookSettingsEditor
 
 - **Finding:** In `EvaluationTeamsEditor.tsx`, repeated team deletion buttons rendered generic text ("Quitar equipo") without team name context, causing screen reader ambiguity across team cards (WCAG 2.2 SC 2.4.4 & SC 4.1.2). In `GradebookSettingsEditor.tsx`, status feedback messages using `aria-live="polite"` lacked an explicit ARIA role (`role="status"` / `role="alert"`), preventing consistent screen reader announcements during scheme validation or updates (WCAG 2.2 SC 4.1.2 & SC 3.2.2).
