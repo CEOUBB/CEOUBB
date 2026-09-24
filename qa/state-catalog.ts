@@ -85,7 +85,11 @@ export const QA_STATE_SCENARIOS: readonly QaScenario[] = [
     state(
       `grades.history-${name}`,
       "grades",
-      ["app/views/classroom/GradeHistoryDialog.tsx", "lib/grade-history.ts"],
+      [
+        "app/views/classroom/GradeHistoryDialog.tsx",
+        "lib/grade-history.ts",
+        "app/api/sections/[sectionId]/grade-history/route.ts",
+      ],
       "teacher",
       name === "error" ? "error" : "loading",
       true
