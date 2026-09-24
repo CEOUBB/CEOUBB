@@ -1,10 +1,10 @@
 # Centro de Estudio UBB (CEOUBB)
 
 [![CI / CD](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml/badge.svg)](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)](https://nextjs.org/)
-[![React 19](https://img.shields.io/badge/React-19.2.8-blue?logo=react)](https://react.dev/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.5-black?logo=next.js)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React-19.3.0-blue?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Capacitor Runtime](https://img.shields.io/badge/Capacitor-8.5.0-119EFF?logo=capacitor)](https://capacitorjs.com/)
+[![Capacitor Runtime](https://img.shields.io/badge/Capacitor-8.5.2-119EFF?logo=capacitor)](https://capacitorjs.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-southamerica--west1-FFCA28?logo=firebase)](https://firebase.google.com/)
 [![Turso / libSQL](https://img.shields.io/badge/Turso-libSQL-00eb84?logo=turso)](https://turso.tech/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -86,29 +86,41 @@ flowchart TD
 ├── .agents/              # Reglas modulares y habilidades de ingeniería para agentes de IA
 ├── .github/              # Flujos de trabajo de CI/CD (GitHub Actions)
 ├── android/              # Proyecto nativo Android (Capacitor Gradle, minSdk 26, targetSdk 36)
-├── app/                  # Rutas Next.js App Router, vistas modulares (app/views/) y APIs
+├── app/                  # Rutas Next.js App Router, vistas de dominio (app/views/) y APIs
 ├── capacitor/            # Configuración nativa y documento offline de contingencia (capacitor/www/)
+├── components/           # Primitivas y componentes de interfaz reutilizables
 ├── db/                   # Esquema relacional Turso, esquemas de interoperabilidad y Drizzle ORM
 ├── docs/                 # Documentación técnica, institucional, operativa y legal
 │   ├── adr/              # Registros de Decisiones de Arquitectura (ADRs)
 │   ├── architecture/     # Diagramas y especificaciones de arquitectura del sistema
+│   ├── design/           # Guías y referencias del sistema de diseño
 │   ├── institutional/    # Auditoría Moodle/Adecca y dossier de adopción
 │   ├── legal/            # Convenios de tratamiento, retención y privacidad (Ley 19.628 / 21.719)
+│   ├── nextjs/           # Directivas de arquitectura para Next.js App Router
 │   ├── operations/       # Líneas base de capacidad, costos y App Check
-│   └── specs/            # Especificaciones formales del sistema
+│   ├── security/         # Auditorías y políticas de endurecimiento de seguridad
+│   ├── specs/            # Especificaciones formales del sistema
+│   └── testing/          # Guías de verificación y arnés Agent QA (agent-qa.md)
 ├── drizzle/              # Migraciones de esquema SQL autogeneradas
+├── e2e/                  # Pruebas de integración End-to-End con Playwright
 ├── firebase/             # Reglas declarativas (firestore.rules, storage.rules) y Cloud Functions
+├── ios/                  # Scaffold nativo iOS de Capacitor
 ├── lib/                  # Servicios de dominio, access-policy.ts, grades.ts y clientes SDK
+├── load-tests/           # Escenarios de pruebas de carga y concurrencia institucional
 ├── openspec/             # Especificaciones ejecutables OpenSpec (SDD)
 ├── public/               # Assets estáticos, marcas, tipografías KaTeX y Service Worker PWA
+├── qa/                   # Catálogo, escenarios y validadores del arnés determinístico Agent QA
 ├── scripts/              # Utilidades de verificación criptográfica, herramientas de prueba y seeders
 ├── tests/                # Suites de pruebas unitarias, integración, seguridad y accesibilidad
+├── types/                # Definiciones globales de tipos TypeScript
 ├── AGENTS.md             # Protocolo de gobernanza para agentes de IA e invariantes de sistema
 ├── capacitor.config.ts   # Configuración de runtime y plugins de Capacitor
 ├── CONTRIBUTING.md       # Flujo de contribución, ramas y Conventional Commits
 ├── DESIGN.md             # Sistema de diseño, paleta institucional OKLCH y tipografías
+├── GATES.md              # Compuertas de calidad y criterios de aceptación de entrega
 ├── LICENSE               # Licencia de software libre (MIT)
 ├── PLAN.md               # Estado de entrega, tareas activas y backlog técnico
+├── PRODUCT.md            # Visión estratégica y mapa de capacidades del producto
 └── SECURITY.md           # Política de seguridad y reporte confidencial de vulnerabilidades
 ```
 
@@ -137,28 +149,33 @@ cp .env.example .env.local
 
 ### Matriz de Configuración
 
-| Variable                                   | Requerida  | Descripción                                                   | Valor por Defecto / Ejemplo                 |
-| :----------------------------------------- | :--------: | :------------------------------------------------------------ | :------------------------------------------ |
-| `TURSO_DATABASE_URL`                       |     Sí     | URL de conexión libSQL/Turso                                  | `file:local.db` (Desarrollo local)          |
-| `TURSO_AUTH_TOKEN`                         | Producción | Token de autenticación de base de datos Turso                 | `eyJhbGci...`                               |
-| `INTEROP_PLATFORM_ORIGIN`                  |  Opcional  | Origen base para interoperabilidad académica y LTI 1.3        | `https://ceoubb.com`                        |
-| `INTEROP_CONTENT_ORIGIN`                   |  Opcional  | Origen de contenidos estáticos e incrustados                  | `https://ceoubb.com`                        |
-| `LTI_PRIVATE_JWK`                          |  Opcional  | Llave privada JWK para firmas de tokens LTI                   | `{"kty":"RSA",...}`                         |
-| `LTI_PREVIOUS_PUBLIC_JWKS`                 |  Opcional  | Llaves públicas previas para rotación de firmas LTI           | `[]`                                        |
-| `NEXT_PUBLIC_CEOUBB_ENVIRONMENT`           |     Sí     | Entorno de ejecución (`development`, `staging`, `production`) | `production`                                |
-| `NEXT_PUBLIC_FIREBASE_API_KEY`             |     Sí     | Clave de API pública de Firebase Client SDK                   | `AIzaSy...`                                 |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`         |     Sí     | Dominio de autenticación Firebase                             | `centro-de-estudio-ubb.firebaseapp.com`     |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`          |     Sí     | Identificador del proyecto Firebase                           | `centro-de-estudio-ubb`                     |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`      |     Sí     | Bucket de almacenamiento Cloud Storage                        | `centro-de-estudio-ubb.firebasestorage.app` |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` |     Sí     | Sender ID para notificaciones push FCM                        | `411177916202`                              |
-| `NEXT_PUBLIC_FIREBASE_APP_ID`              |     Sí     | Identificador de aplicación Web Firebase                      | `1:411177916202:web:...`                    |
-| `FIREBASE_PROJECT_ID`                      |     Sí     | ID de proyecto para operaciones de servidor                   | `centro-de-estudio-ubb`                     |
-| `FIREBASE_SERVICE_ACCOUNT_EMAIL`           |  Servidor  | Correo de cuenta de servicio administrativa de Firebase       | `firebase-adminsdk@...`                     |
-| `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`     |  Servidor  | Clave privada RSA de la cuenta de servicio                    | Clave privada RSA en formato PEM            |
-| `GEMINI_API_KEY`                           |  Opcional  | Clave para servicios de IA y resúmenes académicos             | `AIzaSy...`                                 |
-| `NEXT_PUBLIC_SENTRY_DSN`                   |  Opcional  | DSN para monitoreo de errores en cliente                      | `https://...@sentry.io/...`                 |
-| `SENTRY_DSN`                               |  Opcional  | DSN para captura de excepciones en servidor                   | `https://...@sentry.io/...`                 |
-| `CAPACITOR_SERVER_URL`                     | Desarrollo | Override para conectar la app móvil al servidor local/staging | `http://192.168.1.7:3000`                   |
+| Variable                                   | Requerida  | Descripción                                                              | Valor por Defecto / Ejemplo                 |
+| :----------------------------------------- | :--------: | :----------------------------------------------------------------------- | :------------------------------------------ |
+| `TURSO_DATABASE_URL`                       |     Sí     | URL de conexión libSQL/Turso                                             | `file:local.db` (Desarrollo local)          |
+| `TURSO_AUTH_TOKEN`                         | Producción | Token de autenticación de base de datos Turso                            | `eyJhbGci...`                               |
+| `INTEROP_PLATFORM_ORIGIN`                  |  Opcional  | Origen base para interoperabilidad académica y LTI 1.3                   | `https://ceoubb.com`                        |
+| `INTEROP_CONTENT_ORIGIN`                   |  Opcional  | Origen de contenidos estáticos e incrustados                             | `https://ceoubb.com`                        |
+| `LTI_PRIVATE_JWK`                          |  Opcional  | Llave privada JWK para firmas de tokens LTI                              | `{"kty":"RSA",...}`                         |
+| `LTI_PREVIOUS_PUBLIC_JWKS`                 |  Opcional  | Llaves públicas previas para rotación de firmas LTI                      | `[]`                                        |
+| `NEXT_PUBLIC_CEOUBB_ENVIRONMENT`           |     Sí     | Entorno de ejecución (`development`, `preview`, `staging`, `production`) | `production`                                |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`             |     Sí     | Clave de API pública de Firebase Client SDK                              | `AIzaSy...`                                 |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`         |     Sí     | Dominio de autenticación Firebase                                        | `centro-de-estudio-ubb.firebaseapp.com`     |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`          |     Sí     | Identificador del proyecto Firebase                                      | `centro-de-estudio-ubb`                     |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`      |     Sí     | Bucket de almacenamiento Cloud Storage                                   | `centro-de-estudio-ubb.firebasestorage.app` |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` |     Sí     | Sender ID para notificaciones push FCM                                   | `411177916202`                              |
+| `NEXT_PUBLIC_FIREBASE_APP_ID`              |     Sí     | Identificador de aplicación Web Firebase                                 | `1:411177916202:web:...`                    |
+| `FIREBASE_PROJECT_ID`                      |     Sí     | ID de proyecto para operaciones de servidor                              | `centro-de-estudio-ubb`                     |
+| `FIREBASE_SERVICE_ACCOUNT_EMAIL`           |  Servidor  | Correo de cuenta de servicio administrativa de Firebase                  | `firebase-adminsdk@...`                     |
+| `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`     |  Servidor  | Clave privada RSA de la cuenta de servicio                               | Clave privada RSA en formato PEM            |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`           |  Opcional  | Clave pública de Cloudflare Turnstile para formularios de contacto       | `0x4AAAAAAA...`                             |
+| `TURNSTILE_SECRET_KEY`                     | Producción | Clave secreta de Cloudflare Turnstile para verificación en servidor      | `0x4AAAAAAA...`                             |
+| `SOPORTE_IP_PEPPER`                        | Producción | Secreto criptográfico para hash de direcciones IP en soporte             | Cadena aleatoria de alta entropía           |
+| `CRON_SECRET`                              | Producción | Token de autorización para tareas programadas de retención (`/api/cron`) | Cadena aleatoria de alta entropía           |
+| `DEV_AUTH_SECRET`                          | Desarrollo | Secreto opcional para habilitar autenticación de prueba local/staging    | Cadena aleatoria local                      |
+| `GEMINI_API_KEY`                           |  Opcional  | Clave para servicios de IA y resúmenes académicos                        | `AIzaSy...`                                 |
+| `NEXT_PUBLIC_SENTRY_DSN`                   |  Opcional  | DSN para monitoreo de errores en cliente                                 | `https://...@sentry.io/...`                 |
+| `SENTRY_DSN`                               |  Opcional  | DSN para captura de excepciones en servidor                              | `https://...@sentry.io/...`                 |
+| `CAPACITOR_SERVER_URL`                     | Desarrollo | Override para conectar la app móvil al servidor local/staging            | `http://192.168.1.7:3000`                   |
 
 ---
 
@@ -245,24 +262,41 @@ pnpm run check:rules
 pnpm dlx firebase-tools@latest deploy --project centro-de-estudio-ubb --only firestore:rules,storage
 ```
 
+### Semillas de Entorno y Pruebas de Capacidad
+
+```bash
+# Poblar datos de prueba en entornos de Staging o Preview Demo
+pnpm run staging:seed
+pnpm run preview:seed
+
+# Ejecutar preflight, preparación de fixtures y reporte de capacidad institucional
+pnpm run capacity:preflight
+pnpm run capacity:prepare
+pnpm run capacity:telemetry
+pnpm run capacity:report
+```
+
 ---
 
 ## 8. Compuertas de Calidad y Pruebas
 
 El repositorio implementa un sistema de verificación estricto con validación criptográfica SHA-256 (_Test-Locking_) que prohíbe el debilitamiento o salto de pruebas:
 
-| Comando                      | SLA de Tiempo | Alcance                                                                                  |
-| :--------------------------- | :-----------: | :--------------------------------------------------------------------------------------- |
-| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck (`tsc`) + Tests unitarios + Guardián SHA-256 (68 suites) + OpenSpec (31 specs) |
-| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso        |
-| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local                |
-| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + 65 suites de prueba + smoke tests HTML             |
-| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                            |
-| `pnpm run typecheck`         |   `< 2.0s`    | Comprobación estricta de tipos TypeScript sin emitir artefactos                          |
-| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9                                              |
-| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                           |
-| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor               |
-| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                |
+| Comando                      | SLA de Tiempo | Alcance                                                                                                      |
+| :--------------------------- | :-----------: | :----------------------------------------------------------------------------------------------------------- |
+| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck (`tsc`) + Tests unitarios (`69` suites) + Guardián SHA-256 (`72` archivos) + OpenSpec (`31` specs) |
+| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso                            |
+| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local                                    |
+| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + `69` suites unitarias + smoke tests HTML (`rendered-html.test.mjs`)    |
+| `pnpm qa`                    |   Variable    | Arnés determinístico Agent QA con verificación funcional, visual y de accesibilidad por escenario            |
+| `pnpm run qa:check`          |   `< 3.0s`    | Pruebas unitarias del motor y catálogo de escenarios de Agent QA (`qa/*.test.*`)                             |
+| `pnpm run test:e2e`          |   Variable    | Suite de pruebas End-to-End en navegador real con Playwright                                                 |
+| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                                                |
+| `pnpm run typecheck`         |   `< 2.0s`    | Comprobación estricta de tipos TypeScript sin emitir artefactos                                              |
+| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9                                                                  |
+| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                                               |
+| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor                                   |
+| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                                    |
 
 ---
 
@@ -271,10 +305,12 @@ El repositorio implementa un sistema de verificación estricto con validación c
 Para profundizar en las decisiones de diseño y normativas del proyecto:
 
 - **[Gobernanza de IA e Invariantes (`AGENTS.md`)](AGENTS.md):** Protocolo vinculante sobre derivación de roles, aislamiento de secciones y restricciones negativas.
+- **[Compuertas de Verificación (`GATES.md`)](GATES.md):** Definición de criterios de aceptación y controles de calidad previos al despliegue.
+- **[Guía de Agent QA (`docs/testing/agent-qa.md`)](docs/testing/agent-qa.md):** Manual de ejecución, escenarios por rol y evidencia del arnés de QA determinístico.
 - **[Sistema de Diseño (`DESIGN.md`)](DESIGN.md):** Especificación de tokens OKLCH, pairing tipográfico `Merriweather` / `Manrope` y física de animaciones.
 - **[Registros de Decisiones de Arquitectura (`docs/adr/`)](docs/adr/):**
   - [ADR-0001: Separación de Responsabilidades Turso / Firestore](docs/adr/0001-turso-firestore-split.md)
-  - [ADR-0002: Adopción del Runtime Capacitor 7 Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)
+  - [ADR-0002: Adopción del Runtime Capacitor Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)
   - [ADR-0003: Derivación de Roles por Dominio Institucional](docs/adr/0003-domain-role-derivation.md)
   - [ADR-0004: Test-Locking, Checksums SHA-256 y Calidad Determinística](docs/adr/0004-test-locking-and-deterministic-qa.md)
 - **[Dossier de Adopción Institucional (`docs/institutional/`)](docs/institutional/moodle-adecca-comparison.md):** Comparativa técnica y benchmark frente a Moodle UBB y Adecca UBB.
