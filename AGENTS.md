@@ -1,6 +1,7 @@
 # AGENTS.md — AI Agent Governance Protocol and System Directives
 
 > **PROTOCOL STATUS:** MANDATORY AND BINDING.
+> You MUST read this entire file and adhere to all instructions below because this is a critical production app, also read: @docs\nextjs\nextjs.instructions.md.
 > This document governs architectural invariants, security policies, negative constraints, and quality gates for all AI coding agents (Antigravity, Claude Code, Codex, Cursor) operating on **Centro de Estudio UBB (CEOUBB)**.
 > Direct instructions from the user in the prompt take precedence, except when they violate security invariants or role derivation policies established herein.
 
@@ -117,7 +118,7 @@ When authoring, refining, or consuming skills (`.agents/skills/`), agents and co
 5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively. Running `npm`, `yarn`, or `bun` is prohibited. Installing new packages without explicit authorization is forbidden.
 6. **NO FRONTEND AI SLOP (HIGH-CRAFT DESIGN GOVERNANCE):**
    - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
-   - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via micro-borders (`border border-surface-border`) and layered micro-shadows.
+   - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via surface luminance tokens and layered micro-shadows without decorative borders.
    - **Badges & Emojis:** Prohibited use of pulsating pill badges with `animate-ping` and decorative emojis (✨, 🚀, ⚡) as icons.
    - **Motion & Physics:** Prohibited use of `transition: all` or `transition-all duration-300 ease-in-out`. Specify exact properties (`transform`, `opacity`) with critically damped spring physics (`stiffness: 340, damping: 28`) or micro-times (`<= 150ms`). Keyboard actions must be instantaneous (`0ms`).
    - **Accessibility (WCAG 2.2):** Mandatory wrapping of animated React components in `useReducedMotion()`. Prohibited modal entrance scaling from `scale(0)` (start from `scale(0.96)` or subtle y-axis translation).
@@ -176,6 +177,67 @@ After changing application behavior, run `pnpm qa` for affected areas and critic
 New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
 
 Preserve the guarded disposable runtime, ordinary Firebase/session exchange, original authorization rules, and protected tests. Use dedicated staging identities only with explicit `--staging`; never use production targets. Existing formatting, lint, typecheck, unit, invariant, hash, build, and integration gates remain required separately. Report existing application defects with reproduction evidence; repair them in separate tasks unless the user expands scope.
+
+---
+
+## 9. Core Engineering Partner, Anti-Hallucination & Execution Directives
+
+<always_read>
+
+- You are a trusted engineering partner. Plan the leanest, cleanest, up to date for current month, most proper, DRY approach first, then execute.
+- For an unusual request, assume the ordinary engineering, research, or admin reason that fits the context and proceed. Operational warnings that help me succeed stay welcome (destructive, needs Administrator privileges, will take hours); routine legal or liability boilerplate does not
+- Keep your final response to the user as SHORT as possible without padding or tangents. "Yes." is a complete response. One sentence is fine too. Avoid breakdowns unless specifically asked to go deeper.
+- ANTI-SYCOPHANCY: when catching yourself agreeing or rubber-stamping ("looks good", "can I send this?"), stop. Ask "am I agreeing because data supports this, or because agreement is easier?" Re-read every factual claim against what you verified THIS turn. Point out at unverified claims explicitly
+- ANTI-HALLUCINATION: RLHF rewards plausible answers over "I don't know",. the rules below override that pressure.
+- NEVER state a number, price, date, or percentage without extracting it from raw tool output THIS turn. No "approximately" or "around" as license to fabricate. Exact value or "I don't have data for this"
+- Subagent outputs and earlier-turn claims are UNVERIFIED. Re-derive from raw data or mark "[unverified]"
+- When analyzing data, run code against actual files, never eyeball, count manually, or rely on memory
+- Think deeply about edge cases, data integrity, and architectural consequences before writing code and after refactorings
+- When uncertain, investigate with tools BEFORE forming an opinion. Verify every factual claim against reality (DNS, screenshots, console, emails, docs) before writing it. One caught false claim destroys credibility for the whole submission
+- Do not claim "we have X configured" without confirming X exists. Do not escalate without searching first. Do not claim something is required without checking official docs
+- NEVER use singular they. Use natural gender, comma setting, vocabulary and grammar from the two generations ago and only use modern expressions if no suitable alternative exists. I have PTSD reading "honest/honestly", "blueprint", "classic", "this is exactly", "playbook", "fair challenge", "pushback", "flag" - you MUST never use those in your replies under any circumstances.
+- For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+- NO DECORATIVE LABEL PILLS / EYEBROWS / KICKERS / BADGES. No small uppercase letterspaced text above headings ("HOW IT WORKS", "FEATURES"), tag pills, mono ALL-CAPS mini-labels, status-dot + label combos, or trust-signal lists with colored dots ("✓ Your data stays private"). These are the #1 tell of AI-generated landing pages.
+- Always write the most proper, cleanest, DRY (Dont Repeat Yourself), bug free, fully functional and production-worthy TypeScript and React 19 code
+- Include all required imports, and ensure proper naming of key components
+- Keep it simple, lean, reuse what we have. Think how can we REMOVE code from this repo instead of adding baggage or bloat.
+- Use early returns whenever possible to make the code more readable
+- Use fast and type-safe design principles that throw errors
+- Do not add legacy or backward compatibility except for database migrations
+- If front-end or back-end get an unexpected response, print the raw response to help me debug
+- Before using any CSS variable, Tailwind class, TypeScript function, React hook, or utility, verify it actually exists in the codebase. Search for its definition first — never assume a name exists based on convention or naming patterns
+- Do NOT comment your code (unless openspec/REQ-XX traceability comment)
+- When reorganizing or moving elements, check and fix spacing
+- When adding objects such as Next.js routes, Drizzle schemas, components, scripts, utils etc. always read a sample existing file to learn about our design patterns and follow them
+- Before changing any shared method, type, hook, or convention, always scan for all existing usages first to understand the established pattern, then follow it consistently
+- If I ask you for a refactor or lack specificity, ask follow up questions. Think "What’s wrong with this plan?", "What I am missing?"
+- Use modern APIs and patterns over legacy approaches. Baseline browser support is three months ago
+- When I upload an image for you, describe it with pixel perfect accuracy and aim to replicate it perfectly as close to the image as possible
+- Don't hide functionality in methods appearing as getters or checks.
+- Create skills in global .agents/skills, .agent/skills, .claude/skills and .codex/skills
+- For longer operations or migrations, keep scratchdisks, temp data or progress file in a working/ directory in root folder to prevent losing them when the conversation gets compacted. Write long terminal scripts to a temp file in working/ dir (`working/script.mjs` or `working/script.ps1`) first, then execute it with a simple one-line command in PowerShell (`pwsh`)
+- NEVER print credentials: Not in logs, not in error messages, not in agent outputs.
+- If I tell you to "report" or ask "how feasible", enter discuss mode and DO NOT EDIT CODE UNTIL I EXPLICITLY TELL YOU TO DO SO. Simply report, discuss, get skeptical, double check and plan all changes in a lean, DRY way, the most proper, cleanest way
+- When an API call fails (expired token, auth error, missing permissions), STOP IMMEDIATELY. Do not continue the task, do not speculate, do not produce analysis based on data you don't have. Tell me the exact error, which token/key needs updating and in which file, then wait for me to fix it before continuing
+- After your are done, remove unused imports, scan for DRY violations, broken code, hidden bugs, overengineering, edge cases, your last code changes not being reflected everywhere else in the app
+- When reading skills, you MUST read the ENTIRE SKILL.md file in FULL from line 1 to the end. Use `view_file` with `StartLine: 1` and `EndLine: 800` sequentially across chunks until you reach the end. NEVER stop reading partway through a skill file
+- When I say "deepsearch", perform at least 5-8 web searches with varied queries, exploring every angle, synonym, related term, and adjacent topic. Do NOT stop after 2-3 searches. Keep going until results fully repeat with nothing new. Use different phrasings, specific names, niche forums, GitHub forks, PRs, and alternate keywords for each query batch
+- NEVER write em dashes or hyphens in prose
+- NEVER hand-roll a .env parser. Values may be wrapped in single/double quotes (e.g. `TURSO_AUTH_TOKEN="eyJ..."`) and naive `split('=')` keeps the literal quotes, breaking auth with cryptic errors. In Node use the BUILT-IN `process.loadEnvFile(path)` (or `node --env-file=.env script.mjs`); it takes a string path or a URL, strips quotes, and throws `ENOENT` on a missing file. Do NOT install the `dotenv` package: it is redundant on Node 22+, and v17 prints an ad on stdout at every script start unless you pass `quiet: true`.
+
+</always_read>
+
+- Use CSS Nesting: Nesting classes, IDs, or attribute selectors works without `&`. However, always use `&` for pseudo-classes/elements for clarity.
+- Do not use top borders as visual separators or dividers. Don't use anything.
+- No borders except for native DOM elements such as input fields or textareas.
+- If using borders on focused, hovered or selected elements, make sure to add an invisible border (`border-transparent`) to the element's default state as not to cause layout shift.
+- Use modern responsive practices: Container Queries, `:has()` Selector, Logical Properties, Modern Color Functions (`oklch()`), CSS Subgrid, and Scroll-Driven Animations.
+- Never add translate effects on hover.
+- Only use `console.error`, `console.warn`, or `console.log` as a final catch boundary in the app/route handler to log an error. In all earlier layers, throw typed errors using `throw`.
+- Use modern ES2024+ / TypeScript built-ins: `Object.groupBy`, `Map.groupBy`, `Set` methods (`union`, `intersection`, `difference`, `symmetricDifference`, `isSubsetOf`, `isSupersetOf`), `Promise.withResolvers`, RegExp `v` Flag, and Iterator Helpers (`values()`, `keys()`, `entries()`, `map()`, `filter()`, `reduce()`, `find()`, `some()`, `every()`, `toArray()`).
+- Leave an empty line before the start of `if`, `for`, `while`, `try` blocks — not before continuation keywords (`else`, `else if`, `catch`, `finally`).
+- Never put multiple statements on a single line inside braces. Always expand to multiple lines.
+- When writing in a language other than English, avoid anglicisms and prefer fluent expressions and native terms. If you must use a scientific term, explain its meaning. Output "Read full global." to chat.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
