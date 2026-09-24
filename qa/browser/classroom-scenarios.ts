@@ -460,10 +460,6 @@ export async function classroomScenario(
       }
     } else {
       const system = id.includes("moodle") ? "Moodle" : "ADECCA";
-      const summary = page.locator(".classroom-imports summary");
-      if (await summary.isVisible()) {
-        await summary.click();
-      }
       await page.getByRole("button", { name: new RegExp(`Importar.*${system}`) }).click();
       const dialog = page.getByRole("dialog", { name: `Importar desde ${system} UBB` });
       await expect(dialog).toBeVisible();
