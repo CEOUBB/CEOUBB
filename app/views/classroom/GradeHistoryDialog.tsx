@@ -84,7 +84,7 @@ export function DiffTable({
                 const diff = Math.round(((newVal ?? 0) - (prevVal ?? 0)) * 10) / 10;
                 if (diff > 0) {
                   deltaNode = (
-                    <span className="inline-flex items-center rounded-full bg-[oklch(0.7_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.7_0.17_155)] num">
+                    <span className="inline-flex items-center rounded-full bg-[oklch(0.42_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.42_0.17_155)] num">
                       +{diff.toFixed(1)}
                     </span>
                   );
@@ -103,7 +103,7 @@ export function DiffTable({
                 }
               } else if (!hasPrevious && hasNew && newVal !== null) {
                 deltaNode = (
-                  <span className="inline-flex items-center rounded-full bg-[oklch(0.7_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.7_0.17_155)] num">
+                  <span className="inline-flex items-center rounded-full bg-[oklch(0.42_0.17_155_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.42_0.17_155)] num">
                     +{formatGrade(newVal)}
                   </span>
                 );
@@ -168,13 +168,13 @@ export function DiffTable({
                   <td
                     className="px-3 py-2.5 text-center align-middle"
                     style={{
-                      background: hasNew ? "oklch(0.7 0.17 155 / 0.06)" : undefined,
+                      background: hasNew ? "oklch(0.42 0.17 155 / 0.06)" : undefined,
                     }}
                   >
                     {newVal !== null ? (
                       <span
                         className="num text-sm font-semibold transition-colors"
-                        style={{ color: "oklch(0.7 0.17 155)" }}
+                        style={{ color: "oklch(0.42 0.17 155)" }}
                       >
                         {formatGrade(newVal)}
                       </span>

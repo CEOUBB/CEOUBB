@@ -89,6 +89,14 @@
     "vaul": "^1.1.2",
     "zod": "^4.6.5"
   },
+  "pnpm": {
+    "overrides": {
+      "html-encoding-sniffer": "3.0.0",
+      "jose": "5.9.6",
+      "jsdom": "25.0.1",
+      "whatwg-url": "13.0.0"
+    }
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@capacitor/android": "^8.5.2",

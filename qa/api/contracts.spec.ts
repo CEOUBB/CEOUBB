@@ -691,7 +691,7 @@ test("api.interop.lti-protocol @api @area:interop", async ({ actor, request, bas
     ).toBe(200);
     expect(
       (await student.api.post(`/api/courses/${QA_SECTIONS.active}/interop/${QA_IDS.lti}`)).status()
-    ).toBe(403);
+    ).toBe(404);
   } finally {
     expect(
       (
