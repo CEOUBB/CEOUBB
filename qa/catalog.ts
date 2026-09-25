@@ -72,6 +72,7 @@ const publications = [
 const grades = [
   "app/views/classroom/GradesSection.tsx",
   "app/views/classroom/GradebookSettingsEditor.tsx",
+  "app/views/classroom/EvaluationTeamsEditor.tsx",
   "lib/firebase/grades.ts",
   "lib/grades.ts",
 ];
