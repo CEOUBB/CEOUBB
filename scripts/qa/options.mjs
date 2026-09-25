@@ -101,7 +101,9 @@ export function selectScenarios(catalog, options, changed) {
         : "complete-catalog";
   } else {
     const code = changed.filter(
-      (file) => !/^(docs\/|openspec\/|\.agents\/skills\/)/.test(file) && !/\.md$/.test(file)
+      (file) =>
+        !/^(docs\/|openspec\/|\.agents\/|\.github\/|\.jules\/|tests\/)/.test(file) &&
+        !/\.(md|mdc)$/.test(file)
     );
     const matches = (entry, file) =>
       entry.sources.some((source) =>

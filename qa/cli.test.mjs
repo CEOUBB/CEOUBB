@@ -35,6 +35,10 @@ test("affected selection includes critical journeys and falls back for unknown/s
   assert.equal(selectScenarios(scenarios, {}, ["app/new-feature.tsx"]).ids.length, 3);
   assert.equal(selectScenarios(scenarios, {}, ["lib/auth.ts"]).ids.length, 3);
   assert.equal(selectScenarios(scenarios, {}, ["docs/example.md"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".agents/.test-hashes.json"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, ["tests/grades.test.ts"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".github/workflows/ci.yml"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".jules/bolt.md"]).ids.length, 1);
   assert.equal(selectScenarios(scenarios, {}, null).ids.length, 3);
 });
 

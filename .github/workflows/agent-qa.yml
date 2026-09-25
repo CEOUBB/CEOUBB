@@ -43,7 +43,7 @@ jobs:
     name: Local application and state catalog
     if: github.event_name != 'workflow_dispatch' || inputs.mode != 'staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,7 +63,12 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm --dir firebase/functions install --frozen-lockfile --ignore-scripts
       - name: Install browser engines
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm exec playwright install --with-deps chromium
+          else
+            pnpm exec playwright install --with-deps chromium firefox webkit
+          fi
       - uses: actions/cache@v4
         with:
           path: ~/.cache/firebase/emulators
@@ -82,7 +87,7 @@ jobs:
         run: |
           args=(--screenshots)
           if [ "$QA_EVENT" = "pull_request" ]; then
-            args+=(--base "origin/$QA_BASE_BRANCH")
+            args+=(--base "origin/$QA_BASE_BRANCH" --browser chromium-1440)
           elif [ "$QA_REQUESTED_MODE" = "area" ]; then
             test -n "$QA_REQUESTED_AREA" || { echo "An area is required."; exit 1; }
             args+=(--area "$QA_REQUESTED_AREA")

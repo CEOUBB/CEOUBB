@@ -74,6 +74,6 @@ This smoke proves the deployed password/session/data path. Google OAuth, real Tu
 
 ## CI
 
-`.github/workflows/agent-qa.yml` runs affected and critical checks for each PR, and the full screenshot matrix nightly at 07:00 UTC. Manual dispatch supports full, area, or staging scope. An optional `reference_path` must already contain reviewed references in the checkout. Reports and screenshots are retained for 14 days, including failed runs.
+`.github/workflows/agent-qa.yml` runs affected and critical checks for each PR scoped to the reference `chromium-1440` desktop browser for rapid verification, while the full multi-viewport browser matrix runs nightly at 07:00 UTC. Manual dispatch supports full, area, or staging scope. An optional `reference_path` must already contain reviewed references in the checkout. Reports and screenshots are retained for 14 days, including failed runs.
 
 PR jobs use read-only repository permissions, disposable data, and no staging secrets. Staging dispatch runs only from `main`, uses the protected `Staging` environment, and requires configured synthetic credentials. Existing CI quality gates continue independently; neither workflow tolerates functional or accessibility failures.
