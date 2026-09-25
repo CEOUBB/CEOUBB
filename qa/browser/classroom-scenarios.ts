@@ -461,7 +461,10 @@ export async function classroomScenario(
     } else {
       const system = id.includes("moodle") ? "Moodle" : "ADECCA";
       const details = page.locator("details.classroom-imports");
-      if ((await details.count()) > 0 && !(await details.getAttribute("open"))) {
+      if (
+        (await details.count()) > 0 &&
+        !(await details.evaluate((el: HTMLDetailsElement) => el.open))
+      ) {
         await details.locator("summary").click();
       }
       await page.getByRole("button", { name: new RegExp(`Importar.*${system}`) }).click();
