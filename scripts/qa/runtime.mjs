@@ -67,6 +67,7 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
     NEXT_TELEMETRY_DISABLED: "1",
     FIREBASE_CLI_DISABLE_UPDATE_CHECK: "true",
     FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true",
+    METADATA_SERVER_DETECTION: "none",
     GCLOUD_PROJECT: project,
     GOOGLE_CLOUD_PROJECT: project,
     CEOUBB_QA: "1",
