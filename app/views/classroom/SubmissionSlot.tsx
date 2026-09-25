@@ -159,9 +159,17 @@ function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: bool
         className="grid h-6 w-6 place-items-center"
       >
         {status === "success" ? (
-          <CheckCircle aria-hidden="true" className="h-4 w-4 text-[var(--academic-emerald)]" weight="fill" />
+          <CheckCircle
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--academic-emerald)]"
+            weight="fill"
+          />
         ) : status === "error" ? (
-          <WarningCircle aria-hidden="true" className="h-4 w-4 text-[var(--shield-red)]" weight="fill" />
+          <WarningCircle
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--shield-red)]"
+            weight="fill"
+          />
         ) : status === "uploading" ? (
           <CircleNotch
             aria-hidden="true"
