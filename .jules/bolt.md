@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-09-23 - Construcción del Map de estudiantes en `EvaluationTeamsEditor` (`app/views/classroom/EvaluationTeamsEditor.tsx`)
+
+- **Finding:** `EvaluationTeamsEditor` instanciaba el mapa de nombres de estudiantes usando `new Map(students.map((student) => [student.userId, student.name]))`, asignando un arreglo de tuplas intermedias `[userId, name]` por cada estudiante en la nómina del aula.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `map.set(student.userId, student.name)` en el bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación de memoria intermedia por elemento al abrir o gestionar la nómina de equipos de trabajo de una evaluación.
+- **Future Rule:** Evitar `new Map(array.map(...))` en componentes de React con nóminas o listados de usuarios, prefiriendo la iteración `for..of` imperativa dentro de `useMemo`.
