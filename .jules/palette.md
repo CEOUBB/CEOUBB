@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / FinalGradeRecordsPanel
+
+- **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
+- **Applied / Evaluated Pattern:** Replaced custom pagination buttons in `FinalGradeRecordTable` with the shared `PaginationActions` component from `./PaginationActions.tsx`.
+- **Design System Constraint:** Reused the existing component primitive and styling without creating structural DOM drift or introducing new dependencies.
+- **Future Rule:** Always use the shared `PaginationActions` component for list pagination in classroom views to guarantee consistent ARIA attributes and decorative vector icons.
+
 ## [2026-03-31] - Classroom / EvaluationTeamsEditor & GradebookSettingsEditor
 
 - **Finding:** In `EvaluationTeamsEditor.tsx`, repeated team deletion buttons rendered generic text ("Quitar equipo") without team name context, causing screen reader ambiguity across team cards (WCAG 2.2 SC 2.4.4 & SC 4.1.2). In `GradebookSettingsEditor.tsx`, status feedback messages using `aria-live="polite"` lacked an explicit ARIA role (`role="status"` / `role="alert"`), preventing consistent screen reader announcements during scheme validation or updates (WCAG 2.2 SC 4.1.2 & SC 3.2.2).
