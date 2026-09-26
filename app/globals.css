@@ -15283,3 +15283,13 @@ html:active-view-transition-type(previous) ::view-transition-new(*) {
 [data-sonner-toast][data-type="success"] [data-title] {
   color: oklch(0.35 0.14 150);
 }
+
+[data-sonner-toast][data-type="error"] {
+  --error-text: oklch(0.42 0.2 25);
+  color: oklch(0.42 0.2 25);
+}
+
+[data-sonner-toast][data-type="error"] [data-title],
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: oklch(0.42 0.2 25);
+}

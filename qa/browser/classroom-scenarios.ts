@@ -366,12 +366,23 @@ export async function classroomScenario(
       await expect(
         page.getByText("No hay cuestionarios disponibles", { exact: true })
       ).toBeVisible();
-    else if (["quizzes.teacher", "quizzes.import"].includes(id)) {
-      await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+    else if (["quizzes.teacher", "quizzes.import", "quizzes.teacher-loading"].includes(id)) {
+      await expect(
+        page
+          .getByRole("status", { name: "Cargando cuestionarios…" })
+          .or(page.getByLabel("Nombre del cuestionario"))
+      ).toBeVisible();
       if (id === "quizzes.import") {
         await page.locator('.quiz-dropzone input[type="file"]').setInputFiles(QA_ASSETS.questions);
         await expect(page.getByText("Pregunta importada QA", { exact: true })).toBeVisible();
       }
+    } else if (id === "quizzes.student-loading") {
+      const quiz = page
+        .locator(".quiz-student-card")
+        .filter({ hasText: "Cuestionario de práctica QA" });
+      await expect(
+        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz)
+      ).toBeVisible();
     } else {
       const quiz = page
         .locator(".quiz-student-card")

@@ -1,7 +1,7 @@
 import { expect, type Page, type Route } from "@playwright/test";
 import type { QaScenario } from "../catalog.ts";
 import { QA_STATE_SCENARIOS } from "../state-catalog.ts";
-import { QA_IDS, QA_NOW, QA_SECTIONS } from "../fixtures.ts";
+import { QA_IDS, QA_SECTIONS } from "../fixtures.ts";
 import { qaPdf, resetQaFixtures } from "../../scripts/qa/seed.ts";
 import {
   accountMenu,
@@ -328,10 +328,7 @@ export async function stateScenario(
         await expect(
           dialog.getByRole("button", { name: "Retroalimentación guardada", exact: true })
         ).toBeDisabled();
-        // Freeze the two-second success state after the real callable resolves.
-        await page.clock.pauseAt(new Date(QA_NOW));
         await capture("success");
-        await page.clock.resume();
       }
       await expect
         .poll(
@@ -348,7 +345,6 @@ export async function stateScenario(
       await capture("persisted");
     } finally {
       await release?.();
-      if (id === "grades.feedback-success") await page.clock.resume();
       await resetQaFixtures();
     }
     return true;

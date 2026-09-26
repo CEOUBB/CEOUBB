@@ -354,8 +354,8 @@ function StudentGrades({
             onCancel={() => setTeamPicker(null)}
             onConfirm={(memberIds) => {
               const item = teamPicker;
-              setTeamPicker(null);
               upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+              setTeamPicker(null);
             }}
             sectionId={course.id}
             selfUid={selfUid}
@@ -423,8 +423,8 @@ function StudentGrades({
           onCancel={() => setTeamPicker(null)}
           onConfirm={(memberIds) => {
             const item = teamPicker;
-            setTeamPicker(null);
             upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
+            setTeamPicker(null);
           }}
           sectionId={course.id}
           selfUid={selfUid}
@@ -1102,7 +1102,7 @@ function FeedbackDialog({
       window.setTimeout(() => {
         setSaved(false);
         onClose();
-      }, 2000);
+      }, 3500);
     }
   };
 

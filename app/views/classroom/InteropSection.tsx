@@ -266,7 +266,10 @@ export function InteropSection({
             <strong>No se pudieron cargar los recursos externos</strong>
             <p>
               El contenido no se ha eliminado. Reintenta y, si el problema continúa,{" "}
-              <Link href="/contacto">contacta a soporte</Link> indicando el ramo.
+              <Link className="underline underline-offset-2" href="/contacto">
+                contacta a soporte
+              </Link>{" "}
+              indicando el ramo.
             </p>
             <details>
               <summary>Detalle técnico</summary>
