@@ -52,7 +52,7 @@
   "tests/portal-utils.test.ts": "982a991ba338bb6208c49c17297b1cf9b01d54102306978446f0c3ff0eed5fd3",
   "tests/preview-demo-seed.test.ts": "7222cb2aa3434353ce1c5034b2af14e09a54498e56acbc78182d19d5bbe66b6b",
   "tests/privacy-terms.test.ts": "6224da71dce0d578425a4777816bc9d76f54e31ec8348c2bf80081afa355cbcc",
-  "tests/publication-workflow.test.ts": "282b9ce29f75bb9049de52b2c3e0780b45d8ba476ff778eecbcd430842779936",
+  "tests/publication-workflow.test.ts": "43d5017df593502508e66134cacfbb06d0aadfc16da78ba8605d8411fbddd22d",
   "tests/quiz-engine.test.ts": "66389e5cf1305ac1274a24f8a595f8846af75503e9c9bd5f7e1a9673dfaf2b30",
   "tests/quizzes.test.ts": "49c8b531c30d5b33f895e8ffd36d414c73e6c45ef0392e5b62228ecbf84ae54b",
   "tests/rendered-html.test.mjs": "c0bc6d6f9cd8c347f9063f3c44eb40b2a6789147a026227edc5cafb923f950f2",

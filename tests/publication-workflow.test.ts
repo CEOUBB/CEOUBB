@@ -274,7 +274,7 @@ test("REQ-PUB-06/07 writes the alert choice and skips FCM only for explicit fals
   );
 
   assert.match(posts, /notifyStudents: input\.notifyStudents/);
-  assert.match(functions, /if \(post\.notifyStudents === false\) return;/);
+  assert.match(functions, /if \(post\?\.notifyStudents === false\) return;/);
   assert.match(
     handlers,
     /const notifyStudents = String\(form\.get\("notificationMode"\)\) !== "silent"/
