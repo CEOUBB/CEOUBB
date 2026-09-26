@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / FinalGradeRecordsPanel
+
+- **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
+- **Applied / Evaluated Pattern:** Replaced custom pagination buttons in `FinalGradeRecordTable` with the shared `PaginationActions` component from `./PaginationActions.tsx`.
+- **Design System Constraint:** Reused the existing component primitive and styling without creating structural DOM drift or introducing new dependencies.
+- **Future Rule:** Always use the shared `PaginationActions` component for list pagination in classroom views to guarantee consistent ARIA attributes and decorative vector icons.
+
 ## [2026-03-31] - Classroom / SubmissionSlot
 
 - **Finding:** In `app/views/classroom/SubmissionSlot.tsx`, decorative Phosphor SVG vector icons (`<CheckCircle>`, `<WarningCircle>`, `<CircleNotch>`, `<File>`, `<ArrowClockwise>`, `<Trash>`) inside upload status indicators and action buttons lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
