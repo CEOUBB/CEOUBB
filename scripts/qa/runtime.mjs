@@ -378,7 +378,6 @@ export async function startRuntime(root, runId, output, signal) {
     const emulator = start(
       firebase.executable,
       [
-        "--no-experimental-strip-types",
         ...firebase.args,
         "emulators:start",
         "--project",
@@ -448,14 +447,7 @@ export async function startRuntime(root, runId, output, signal) {
             "playwright.qa.config.ts",
             ...args,
           ],
-          {
-            ...environment,
-            ...testEnvironment,
-            NODE_OPTIONS: (process.env.NODE_OPTIONS ?? "").replace(
-              /--experimental-strip-types/g,
-              ""
-            ),
-          },
+          { ...environment, ...testEnvironment },
           root
         );
         children.push(child);
