@@ -519,7 +519,7 @@ export function PeopleSection({
       )}
 
       {filteredTotal === 0 && !loading ? (
-        <div className="participant-empty">
+        <div className="participant-empty" id="participant-groups">
           <UsersThree size={28} aria-hidden="true" />
           <strong>Sin coincidencias</strong>
           <p>Prueba otro nombre, correo o filtro de rol.</p>

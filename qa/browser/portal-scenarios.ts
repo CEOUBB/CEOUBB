@@ -30,7 +30,9 @@ export async function portalScenario(
       "public.preview": "/preview/docente",
       "public.not-found": "/qa-missing-page",
     };
-    await page.goto(routes[id]);
+    const route = routes[id] ?? (id.startsWith("public.contact-") ? "/contacto" : undefined);
+    if (!route) return false;
+    await page.goto(route);
     if (id === "auth.login")
       await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
     else if (id === "public.preview") await expect(page.locator(".app-header")).toBeVisible();

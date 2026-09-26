@@ -129,7 +129,7 @@ export function CalendarSkeleton() {
         </div>
       </header>
 
-      <div aria-label="Cargando filtros" className="planner-filters">
+      <div aria-label="Cargando filtros" className="planner-filters" role="group">
         {SKELETON_FILTER_COURSES.map((idx) => (
           <span
             className="sk"
@@ -181,7 +181,13 @@ export function CalendarSkeleton() {
           ))}
         </div>
 
-        <div className="planner-grid">
+        <div
+          aria-label="Horario semanal"
+          className="planner-grid"
+          role="region"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- El horario desplazable necesita foco para usar las flechas del teclado.
+          tabIndex={0}
+        >
           <div aria-hidden="true" className="planner-hours">
             {SKELETON_HOURS.map((hour) => (
               <span className="num" key={hour} style={{ top: hourOffset(hour) }}>
@@ -1077,65 +1083,66 @@ export function QuizListSkeleton({ teacher = false }: { teacher?: boolean } = {}
 // Implements: REQ-INTEROP-01
 export function InteropListSkeleton() {
   return (
-    <ul
-      aria-busy="true"
-      aria-label="Cargando recursos externos…"
-      className="interop-resource-list"
-      role="status"
-    >
-      {[0, 1, 2].map((row) => (
-        <li
-          key={`interop-${row}`}
-          style={{ "--sk-delay": `${60 + row * 45}ms` } as React.CSSProperties}
-        >
-          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
-            <span className="sk sk-quiet" style={{ width: "72px", height: "11px" }} />
-            <span
-              className="sk"
-              style={{ width: `${188 + ((row * 43) % 120)}px`, height: "16px" }}
-            />
-          </div>
-          <div className="interop-actions">
-            <span
-              className="sk"
-              style={{ width: "132px", height: "44px", borderRadius: "var(--radius-md)" }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div aria-busy="true" aria-label="Cargando recursos externos…" role="status">
+      <ul className="interop-resource-list">
+        {[0, 1, 2].map((row) => (
+          <li
+            key={`interop-${row}`}
+            style={{ "--sk-delay": `${60 + row * 45}ms` } as React.CSSProperties}
+          >
+            <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+              <span className="sk sk-quiet" style={{ width: "72px", height: "11px" }} />
+              <span
+                className="sk"
+                style={{ width: `${188 + ((row * 43) % 120)}px`, height: "16px" }}
+              />
+            </div>
+            <div className="interop-actions">
+              <span
+                className="sk"
+                style={{ width: "132px", height: "44px", borderRadius: "var(--radius-md)" }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 // Implements: REQ-COMM-04
 export function ConversationSkeleton() {
   return (
-    <ol aria-busy="true" aria-label="Cargando conversación…" className="message-list" role="status">
-      {[
-        { own: false, width: "62%", lines: 2 },
-        { own: true, width: "48%", lines: 1 },
-        { own: false, width: "70%", lines: 2 },
-      ].map((bubble, index) => (
-        <li className={bubble.own ? "own" : undefined} key={`message-${index}`}>
-          <span
-            className="message-bubble"
-            style={
-              {
-                display: "grid",
-                gap: "8px",
-                width: bubble.width,
-                "--sk-delay": `${60 + index * 60}ms`,
-              } as React.CSSProperties
-            }
-          >
-            <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
-            <span className="sk" style={{ width: "100%", height: "13px" }} />
-            {bubble.lines === 2 && <span className="sk" style={{ width: "68%", height: "13px" }} />}
-            <span className="sk sk-quiet" style={{ width: "62px", height: "10px" }} />
-          </span>
-        </li>
-      ))}
-    </ol>
+    <div aria-busy="true" aria-label="Cargando conversación…" role="status">
+      <ol className="message-list">
+        {[
+          { own: false, width: "62%", lines: 2 },
+          { own: true, width: "48%", lines: 1 },
+          { own: false, width: "70%", lines: 2 },
+        ].map((bubble, index) => (
+          <li className={bubble.own ? "own" : undefined} key={`message-${index}`}>
+            <span
+              className="message-bubble"
+              style={
+                {
+                  display: "grid",
+                  gap: "8px",
+                  width: bubble.width,
+                  "--sk-delay": `${60 + index * 60}ms`,
+                } as React.CSSProperties
+              }
+            >
+              <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
+              <span className="sk" style={{ width: "100%", height: "13px" }} />
+              {bubble.lines === 2 && (
+                <span className="sk" style={{ width: "68%", height: "13px" }} />
+              )}
+              <span className="sk sk-quiet" style={{ width: "62px", height: "10px" }} />
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

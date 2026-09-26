@@ -11,6 +11,9 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 
   return (
     <html lang="es">
+      <head>
+        <title>Error del sistema — Centro de Estudio UBB</title>
+      </head>
       <body>
         <NextError statusCode={0} />
       </body>

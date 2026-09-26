@@ -60,9 +60,23 @@ async function loadingSkeleton(page: Page, id: string, capture: Capture) {
 }
 
 async function callableFailure(route: Route) {
+  if (route.request().method() === "OPTIONS") {
+    await route.fulfill({
+      status: 204,
+      headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "POST, OPTIONS",
+        "access-control-allow-headers": "*",
+      },
+    });
+    return;
+  }
   await route.fulfill({
     status: 503,
     contentType: "application/json",
+    headers: {
+      "access-control-allow-origin": "*",
+    },
     body: JSON.stringify({
       error: { status: "UNAVAILABLE", message: "QA controlled save failure" },
     }),
@@ -98,6 +112,30 @@ async function selectSubmission(page: Page) {
     mimeType: "application/pdf",
     buffer: qaPdf(),
   });
+}
+
+async function fillContactForm(
+  page: Page,
+  overrides: Partial<{
+    email: string;
+    nombre: string;
+    asunto: string;
+    mensaje: string;
+    categoria: string;
+  }> = {}
+) {
+  await page.goto("/contacto");
+  await expect(page.getByRole("heading", { name: "Contacto y soporte" })).toBeVisible();
+  await page.locator("#soporte-nombre").fill(overrides.nombre ?? "Estudiante QA");
+  await page.locator("#soporte-email").fill(overrides.email ?? "estudiante.qa@alumnos.ubiobio.cl");
+  await page.locator("#soporte-categoria").selectOption(overrides.categoria ?? "acceso");
+  await page.locator("#soporte-asunto").fill(overrides.asunto ?? "Consulta sobre verificación QA");
+  await page
+    .locator("#soporte-mensaje")
+    .fill(
+      overrides.mensaje ??
+        "Mensaje detallado para verificar el flujo de soporte en pruebas automatizadas."
+    );
 }
 
 // Implements: REQ-QA-03, REQ-QA-04, REQ-QA-05
@@ -173,6 +211,42 @@ export async function stateScenario(
       await score.press("Tab");
       await expect(score).toHaveAttribute("aria-invalid", "true");
       await expect(score).toHaveAttribute("data-status", "error");
+      return true;
+    }
+    if (id.startsWith("grades.history-")) {
+      const release =
+        id === "grades.history-loading" ? await holdRequest(page, "**/grade-history*") : undefined;
+      if (id === "grades.history-error") {
+        await page.route("**/grade-history*", (route) =>
+          route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ error: "No se pudo cargar el historial." }),
+          })
+        );
+      }
+      try {
+        await page
+          .getByRole("button", {
+            name: "Ver historial de Informe individual QA para Estudiante QA",
+            exact: true,
+          })
+          .click();
+        const historyDialog = page.getByRole("dialog", {
+          name: "Historial de cambios",
+          exact: true,
+        });
+        await expect(historyDialog).toBeVisible();
+        if (id === "grades.history-loading") {
+          await capture("loading");
+        } else {
+          await expect(historyDialog.getByRole("alert")).toBeVisible();
+          await capture("error");
+        }
+      } finally {
+        await release?.();
+        await resetQaFixtures();
+      }
       return true;
     }
     const dialog = await openFeedback(page);
@@ -253,6 +327,29 @@ export async function stateScenario(
         "No fue posible obtener el archivo"
       );
       await expect(page.getByText("Enlace no disponible", { exact: true })).toBeVisible();
+      return true;
+    }
+    if (id === "submissions.file-loading" || id === "submissions.viewer-loading") {
+      const release =
+        id === "submissions.file-loading"
+          ? await holdRequest(page, endpoint)
+          : await holdRequest(page, "**/pdf.worker*");
+      try {
+        await page.getByRole("button", { name: "Corregir entregas", exact: true }).click();
+        await page.getByLabel("Evaluación por corregir").selectOption(QA_IDS.report);
+        await page
+          .getByRole("complementary", { name: "Cola de entregas" })
+          .getByRole("button")
+          .filter({ hasText: "Estudiante QA" })
+          .click();
+        if (id === "submissions.file-loading") {
+          await expect(page.locator(".review-doc-loading")).toBeVisible();
+        }
+        await capture("loading");
+      } finally {
+        await release();
+        await resetQaFixtures();
+      }
       return true;
     }
     await classroomTab(page, "Notas");
@@ -361,6 +458,92 @@ export async function stateScenario(
       }
     }
     return true;
+  }
+
+  if (id.startsWith("public.contact-")) {
+    if (id === "public.contact-domain-warning") {
+      await fillContactForm(page, { email: "usuario@gmail.com" });
+      await expect(page.locator("#aviso-email")).toBeVisible();
+      await capture("form");
+      return true;
+    }
+    if (id === "public.contact-sending") {
+      const release = await holdRequest(page, "**/api/soporte");
+      try {
+        await fillContactForm(page);
+        await page
+          .locator("form")
+          .getByRole("button", { name: /Enviar mensaje/ })
+          .click();
+        await expect(
+          page.locator("form").getByRole("button", { name: /Enviando…/ })
+        ).toBeDisabled();
+        await capture("loading");
+      } finally {
+        await release();
+      }
+      return true;
+    }
+    if (id === "public.contact-server-error") {
+      await controlledError(page, "**/api/soporte");
+      await fillContactForm(page);
+      await page
+        .locator("form")
+        .getByRole("button", { name: /Enviar mensaje/ })
+        .click();
+      await expect(page.locator(".policy-form-error")).toBeVisible();
+      await capture("error");
+      return true;
+    }
+    if (id === "public.contact-network-error") {
+      await page.route("**/api/soporte", (route) => route.abort());
+      await fillContactForm(page);
+      await page
+        .locator("form")
+        .getByRole("button", { name: /Enviar mensaje/ })
+        .click();
+      await expect(page.locator(".policy-form-error")).toBeVisible();
+      await capture("error");
+      return true;
+    }
+    if (id === "public.contact-server-validation") {
+      await page.route("**/api/soporte", (route) =>
+        route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "Datos no válidos.",
+            campos: { mensaje: "El mensaje no cumple los requisitos." },
+          }),
+        })
+      );
+      await fillContactForm(page);
+      await page
+        .locator("form")
+        .getByRole("button", { name: /Enviar mensaje/ })
+        .click();
+      await expect(page.locator("#error-mensaje")).toBeVisible();
+      await capture("error");
+      return true;
+    }
+    if (id === "public.contact-delivered" || id === "public.contact-deferred") {
+      const isDelivered = id === "public.contact-delivered";
+      await page.route("**/api/soporte", (route) =>
+        route.fulfill({
+          status: isDelivered ? 201 : 202,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true, deferred: !isDelivered }),
+        })
+      );
+      await fillContactForm(page);
+      await page
+        .locator("form")
+        .getByRole("button", { name: /Enviar mensaje/ })
+        .click();
+      await expect(page.locator(".policy-confirm")).toBeVisible();
+      await capture("success");
+      return true;
+    }
   }
 
   return false;

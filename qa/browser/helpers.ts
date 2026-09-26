@@ -132,6 +132,10 @@ export async function holdRequest(page: Page, path: string) {
     release = resolve;
   });
   const handler = async (route: Route) => {
+    if (route.request().method() === "OPTIONS") {
+      await route.continue().catch(() => undefined);
+      return;
+    }
     await pending;
     await route.continue().catch(() => undefined);
   };

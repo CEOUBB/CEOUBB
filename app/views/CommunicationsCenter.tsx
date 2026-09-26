@@ -381,11 +381,13 @@ function CommunicationsPanels({
         ) : (
           <ol className="conversation-list">
             {visibleTargets.length === 0 && (
-              <li className="conversation-no-results" role="status">
-                No hay conversaciones para «{search}».{" "}
-                <button type="button" onClick={() => setSearch("")}>
-                  Limpiar búsqueda
-                </button>
+              <li className="conversation-no-results">
+                <span role="status">
+                  No hay conversaciones para «{search}».{" "}
+                  <button type="button" onClick={() => setSearch("")}>
+                    Limpiar búsqueda
+                  </button>
+                </span>
               </li>
             )}
             {visibleTargets.map((target) => {

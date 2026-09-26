@@ -190,6 +190,7 @@ export function CommandPalette({
                         className="shrink-0 text-[oklch(0.48_0.03_250)]"
                       />
                       <Command.Input
+                        autoFocus
                         value={query}
                         onValueChange={setQuery}
                         placeholder={placeholder}
