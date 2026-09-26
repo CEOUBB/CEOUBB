@@ -154,12 +154,9 @@ export async function listInteropTools(actor: PublicUser, cursor?: string) {
   return { items, nextCursor: rows.length > 50 ? items.at(-1)!.id : null };
 }
 async function activeTool(id: string) {
-  const [row] = await getDb()
-    .select()
-    .from(interopTools)
-    .where(and(eq(interopTools.id, id), eq(interopTools.enabled, true)))
-    .limit(1);
-  if (!row) fail("La herramienta está deshabilitada o no existe.", 404);
+  const [row] = await getDb().select().from(interopTools).where(eq(interopTools.id, id)).limit(1);
+  if (!row) fail("La herramienta no existe.", 404);
+  if (!row.enabled) fail("La herramienta está deshabilitada.", 403);
   return toolView(row);
 }
 export async function insertInteropResource(row: typeof interopResources.$inferInsert) {

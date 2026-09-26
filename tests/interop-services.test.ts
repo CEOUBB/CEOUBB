@@ -330,7 +330,7 @@ test("REQ-IO-01–11 servicios, contratos HTTP y migración sobre libSQL", async
     await setToolEnabled(owner, tool.id, false);
     await assert.rejects(
       () => launchInteropResource(student, section, resourceId, sessionHash),
-      status(404)
+      status(403)
     );
     await setToolEnabled(owner, tool.id, true);
   });
