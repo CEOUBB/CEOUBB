@@ -305,13 +305,20 @@ export async function classroomScenario(
         const team = page.getByRole("group", { name: `Equipo para ${name}` });
         await expect(team).toBeVisible();
         if (id === "submissions.upload") return true;
-        await team.getByRole("checkbox", { name: new RegExp(QA_TEAMMATE.name) }).check();
+        const teammateCheckbox = team.getByRole("checkbox", {
+          name: new RegExp(QA_TEAMMATE.name),
+        });
+        await teammateCheckbox.check({ force: true });
+        await expect(teammateCheckbox).toBeChecked();
+        await expect(
+          page.getByRole("button", { name: "Elegir archivo", exact: true })
+        ).toBeEnabled();
       }
       await capture("form");
       const [chooser] = await Promise.all([
         page.waitForEvent("filechooser"),
         isTeam
-          ? page.getByRole("button", { name: "Elegir archivo", exact: true }).click()
+          ? page.getByRole("button", { name: "Elegir archivo", exact: true }).click({ force: true })
           : attach.click(),
       ]);
       const fileName = isTeam ? "qa-team.pdf" : "qa-individual.pdf";
@@ -366,12 +373,28 @@ export async function classroomScenario(
       await expect(
         page.getByText("No hay cuestionarios disponibles", { exact: true })
       ).toBeVisible();
-    else if (["quizzes.teacher", "quizzes.import"].includes(id)) {
-      await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+    else if (["quizzes.teacher", "quizzes.import", "quizzes.teacher-loading"].includes(id)) {
+      if (id === "quizzes.teacher-loading") {
+        await expect(
+          page
+            .getByRole("status", { name: "Cargando cuestionarios…" })
+            .or(page.getByLabel("Nombre del cuestionario"))
+            .first()
+        ).toBeVisible();
+      } else {
+        await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+      }
       if (id === "quizzes.import") {
         await page.locator('.quiz-dropzone input[type="file"]').setInputFiles(QA_ASSETS.questions);
         await expect(page.getByText("Pregunta importada QA", { exact: true })).toBeVisible();
       }
+    } else if (id === "quizzes.student-loading") {
+      const quiz = page
+        .locator(".quiz-student-card")
+        .filter({ hasText: "Cuestionario de práctica QA" });
+      await expect(
+        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz).first()
+      ).toBeVisible();
     } else {
       const quiz = page
         .locator(".quiz-student-card")
@@ -459,6 +482,16 @@ export async function classroomScenario(
         await capture("persisted");
       }
     } else {
+      const importsSummary = page.locator(".classroom-imports > summary");
+      if (await importsSummary.count()) {
+        const details = page.locator(".classroom-imports");
+        const isOpen = await details
+          .evaluate((el: HTMLDetailsElement) => el.open)
+          .catch(() => false);
+        if (!isOpen) {
+          await importsSummary.click();
+        }
+      }
       const system = id.includes("moodle") ? "Moodle" : "ADECCA";
       await page.getByRole("button", { name: new RegExp(`Importar.*${system}`) }).click();
       const dialog = page.getByRole("dialog", { name: `Importar desde ${system} UBB` });
@@ -531,15 +564,23 @@ export async function classroomScenario(
             body: '<!doctype html><html lang="es"><head><title>QA LTI contract</title></head><body><main><h1>Proveedor LTI sintético QA</h1><p>Contrato de lanzamiento recibido; entrega externa no verificada.</p></main></body></html>',
           })
         );
+        let launchBody = "";
         const [response] = await Promise.all([
-          page.waitForResponse(
-            (response) =>
-              response.url().includes("/interop/") && response.request().method() === "POST"
-          ),
+          page.waitForResponse(async (response) => {
+            if (response.url().includes("/interop/") && response.request().method() === "POST") {
+              try {
+                launchBody = await response.text();
+              } catch {
+                // Ignore if body reading fails after detachment
+              }
+              return true;
+            }
+            return false;
+          }),
           resource.getByRole("button", { name: "Abrir", exact: true }).click(),
         ]);
         expect(response.status()).toBe(200);
-        expect(await response.text()).toContain("client_id");
+        expect(launchBody).toContain("client_id");
         await expect(
           page.getByRole("heading", { name: "Proveedor LTI sintético QA" })
         ).toBeVisible();

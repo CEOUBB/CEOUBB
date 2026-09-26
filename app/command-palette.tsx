@@ -85,10 +85,49 @@ export function CommandPalette({
     openRef.current = open;
   }, [open]);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+
   const setOpenRef = useRef(setOpen);
   useEffect(() => {
     setOpenRef.current = setOpen;
   }, [setOpen]);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const listEl = listRef.current;
+    if (!listEl) return;
+    const updateRole = () => {
+      const emptyEl = listEl.querySelector("[cmdk-empty]");
+      const isEmpty = Boolean(emptyEl && !emptyEl.hasAttribute("hidden"));
+      const currentRole = listEl.getAttribute("role");
+      if (isEmpty) {
+        if (currentRole === "listbox") {
+          listEl.removeAttribute("role");
+        }
+      } else {
+        if (currentRole !== "listbox") {
+          listEl.setAttribute("role", "listbox");
+        }
+      }
+    };
+    updateRole();
+    const observer = new MutationObserver(updateRole);
+    observer.observe(listEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["hidden", "role"],
+    });
+    return () => observer.disconnect();
+  }, [open]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -190,6 +229,7 @@ export function CommandPalette({
                         className="shrink-0 text-[oklch(0.48_0.03_250)]"
                       />
                       <Command.Input
+                        ref={inputRef}
                         value={query}
                         onValueChange={setQuery}
                         placeholder={placeholder}
@@ -211,7 +251,10 @@ export function CommandPalette({
                       </button>
                     </div>
 
-                    <Command.List className="max-h-[60vh] overflow-y-auto overscroll-contain p-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:oklch(0.92_0.006_60)_transparent]">
+                    <Command.List
+                      ref={listRef}
+                      className="max-h-[60vh] overflow-y-auto overscroll-contain p-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:oklch(0.92_0.006_60)_transparent]"
+                    >
                       <Command.Empty className="p-8 text-center text-sm text-[oklch(0.48_0.03_250)] leading-relaxed">
                         {emptyMessage}
                       </Command.Empty>

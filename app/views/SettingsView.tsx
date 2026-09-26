@@ -158,7 +158,7 @@ function SettingsSwitch({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="settings-switch" htmlFor={id}>
+    <label className="settings-switch">
       <input
         aria-describedby={description}
         checked={checked}
@@ -735,7 +735,7 @@ export function SettingsView({
 }) {
   const [status, setStatus] = useState("");
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
-  const [preferencesBusy, setPreferencesBusy] = useState(false);
+  const [preferencesBusy, setPreferencesBusy] = useState(true);
   const [preferencesError, setPreferencesError] = useState("");
 
   /*
@@ -756,6 +756,9 @@ export function SettingsView({
             "No se pudieron leer tus preferencias. Se muestran los valores por defecto."
           );
         }
+      })
+      .finally(() => {
+        if (alive) setPreferencesBusy(false);
       });
     return () => {
       alive = false;

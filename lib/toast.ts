@@ -37,7 +37,7 @@ export const toast = {
       finally?: () => void | Promise<void>;
     }
   ) {
-    return sonnerToast.promise(promise, data);
+    return sonnerToast.promise(promise, data).unwrap();
   },
 
   /**

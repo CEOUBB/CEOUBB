@@ -443,22 +443,21 @@ export async function loadAdminUsers(
   limit = 50,
   query = ""
 ): Promise<AdminUsersResponse> {
-  try {
-    const response = await fetch(
-      `/api/admin/users?page=${page}&limit=${limit}&q=${encodeURIComponent(query)}`,
-      { cache: "no-store" }
-    );
-    if (!response.ok) return { users: [], total: 0, page, totalPages: 1 };
-    const data = (await response.json()) as AdminUsersResponse;
-    return {
-      users: data.users ?? [],
-      total: Number(data.total ?? 0),
-      page: Number(data.page ?? page),
-      totalPages: Number(data.totalPages ?? 1),
-    };
-  } catch {
-    return { users: [], total: 0, page, totalPages: 1 };
+  const response = await fetch(
+    `/api/admin/users?page=${page}&limit=${limit}&q=${encodeURIComponent(query)}`,
+    { cache: "no-store" }
+  );
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "No fue posible cargar las cuentas de usuario.");
   }
+  const data = (await response.json()) as AdminUsersResponse;
+  return {
+    users: data.users ?? [],
+    total: Number(data.total ?? 0),
+    page: Number(data.page ?? page),
+    totalPages: Number(data.totalPages ?? 1),
+  };
 }
 
 export function fileExtension(value: string): string {

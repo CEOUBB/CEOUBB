@@ -37,9 +37,18 @@ export function parseArgs(args) {
       base: { type: "string" },
       browser: { type: "string" },
       reference: { type: "string" },
+      shard: { type: "string" },
     },
   });
   if (positionals.length) throw new Error(`Unexpected arguments: ${positionals.join(" ")}`);
+  if (values.shard) {
+    const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(values.shard);
+    if (!match) throw new Error("--shard must be formatted as index/total, e.g. 1/4");
+    const [_, currentStr, totalStr] = match;
+    const current = Number(currentStr);
+    const total = Number(totalStr);
+    if (current > total) throw new Error("--shard index cannot be greater than total");
+  }
   if ([values.all, values.area, values.scenario].filter(Boolean).length > 1)
     throw new Error("--all, --area and --scenario cannot be used together.");
   if (values["update-snapshots"] && !values.screenshots)
@@ -101,7 +110,9 @@ export function selectScenarios(catalog, options, changed) {
         : "complete-catalog";
   } else {
     const code = changed.filter(
-      (file) => !/^(docs\/|openspec\/|\.agents\/skills\/)/.test(file) && !/\.md$/.test(file)
+      (file) =>
+        !/^(docs\/|openspec\/|\.agents\/|\.github\/|\.jules\/|tests\/)/.test(file) &&
+        !/\.(md|mdc)$/.test(file)
     );
     const matches = (entry, file) =>
       entry.sources.some((source) =>
@@ -117,6 +128,14 @@ export function selectScenarios(catalog, options, changed) {
       : catalog.filter((entry) => entry.critical || code.some((file) => matches(entry, file)));
     reason = fallback ? "shared-or-unmapped-change-full-fallback" : "affected-plus-critical";
   }
-  if (!selected.length) throw new Error("No scenarios match the selection. Use pnpm qa --list.");
+  if (options.shard) {
+    const [currentStr, totalStr] = options.shard.split("/");
+    const current = Number(currentStr);
+    const total = Number(totalStr);
+    selected = selected.filter((_, idx) => idx % total === current - 1);
+    reason += ` (shard ${current}/${total})`;
+  }
+  if (!selected.length && !options.shard)
+    throw new Error("No scenarios match the selection. Use pnpm qa --list.");
   return { ids: selected.map((entry) => entry.id), scenarios: selected, reason, changed };
 }

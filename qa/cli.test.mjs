@@ -24,7 +24,21 @@ test("explicit selection is discoverable and rejects typos and empty matches", (
   assert.throws(() => parseArgs(["--unknown"]), /Unknown option/);
   assert.throws(() => parseArgs(["--scenario"]), /value/);
   assert.throws(() => parseArgs(["--all", "--area", "quizzes"]), /together/);
+  assert.equal(parseArgs(["--shard", "1/4"]).shard, "1/4");
+  assert.throws(() => parseArgs(["--shard", "invalid"]), /format/);
+  assert.throws(() => parseArgs(["--shard", "5/4"]), /greater than total/);
   assert.throws(() => selectScenarios(scenarios, { scenario: "typo" }, []), /No scenarios/);
+});
+
+test("shard partitioning divides scenarios deterministically", () => {
+  assert.deepEqual(selectScenarios(scenarios, { shard: "1/2", list: true }, []).ids, [
+    "login-ready",
+    "calendar-ready",
+  ]);
+  assert.deepEqual(selectScenarios(scenarios, { shard: "2/2", list: true }, []).ids, [
+    "quiz-ready",
+  ]);
+  assert.equal(selectScenarios(scenarios, { shard: "4/4", list: true }, []).ids.length, 0);
 });
 
 test("affected selection includes critical journeys and falls back for unknown/shared source", () => {
@@ -35,6 +49,10 @@ test("affected selection includes critical journeys and falls back for unknown/s
   assert.equal(selectScenarios(scenarios, {}, ["app/new-feature.tsx"]).ids.length, 3);
   assert.equal(selectScenarios(scenarios, {}, ["lib/auth.ts"]).ids.length, 3);
   assert.equal(selectScenarios(scenarios, {}, ["docs/example.md"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".agents/.test-hashes.json"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, ["tests/grades.test.ts"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".github/workflows/ci.yml"]).ids.length, 1);
+  assert.equal(selectScenarios(scenarios, {}, [".jules/bolt.md"]).ids.length, 1);
   assert.equal(selectScenarios(scenarios, {}, null).ids.length, 3);
 });
 

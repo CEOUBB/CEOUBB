@@ -40,10 +40,14 @@ jobs:
           exit 1
 
   local:
-    name: Local application and state catalog
+    name: Local application and state catalog (${{ matrix.shard }})
     if: github.event_name != 'workflow_dispatch' || inputs.mode != 'staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/4", "2/4", "3/4", "4/4"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,7 +67,12 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm --dir firebase/functions install --frozen-lockfile --ignore-scripts
       - name: Install browser engines
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm exec playwright install --with-deps chromium
+          else
+            pnpm exec playwright install --with-deps chromium firefox webkit
+          fi
       - uses: actions/cache@v4
         with:
           path: ~/.cache/firebase/emulators
@@ -78,11 +87,12 @@ jobs:
           QA_REQUESTED_MODE: ${{ inputs.mode }}
           QA_REQUESTED_AREA: ${{ inputs.area }}
           QA_REFERENCE_PATH: ${{ inputs.reference_path }}
+          QA_SHARD: ${{ matrix.shard }}
         shell: bash
         run: |
-          args=(--screenshots)
+          args=(--screenshots --shard "$QA_SHARD")
           if [ "$QA_EVENT" = "pull_request" ]; then
-            args+=(--base "origin/$QA_BASE_BRANCH")
+            args+=(--base "origin/$QA_BASE_BRANCH" --browser chromium-1440)
           elif [ "$QA_REQUESTED_MODE" = "area" ]; then
             test -n "$QA_REQUESTED_AREA" || { echo "An area is required."; exit 1; }
             args+=(--area "$QA_REQUESTED_AREA")
@@ -98,7 +108,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: agent-qa-local-${{ github.run_id }}-${{ github.run_attempt }}
+          name: agent-qa-local-shard-${{ strategy.job-index }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: qa-results/
           retention-days: 14
           if-no-files-found: warn

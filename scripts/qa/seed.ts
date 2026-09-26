@@ -76,13 +76,62 @@ export function qaPdf(): Buffer {
   return Buffer.from(pdf);
 }
 
+function isSqliteBusyError(err: unknown): boolean {
+  let curr = err;
+  for (let depth = 0; depth < 5 && curr; depth++) {
+    if (typeof curr === "object" && curr !== null) {
+      if ("message" in curr && typeof (curr as { message: unknown }).message === "string") {
+        const msg = (curr as { message: string }).message;
+        if (
+          msg.includes("SQLITE_BUSY") ||
+          msg.includes("database is locked") ||
+          msg.includes("database table is locked") ||
+          msg.includes("busy")
+        ) {
+          return true;
+        }
+      }
+      if ("code" in curr && typeof (curr as { code: unknown }).code === "string") {
+        const code = (curr as { code: string }).code;
+        if (code === "SQLITE_BUSY" || code.includes("BUSY") || code.includes("LOCKED")) {
+          return true;
+        }
+      }
+      if ("cause" in curr) {
+        curr = (curr as { cause: unknown }).cause;
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  return false;
+}
+
+export async function withSqliteRetry<T>(operation: () => Promise<T>, maxRetries = 15): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (err: unknown) {
+      if (attempt < maxRetries - 1 && isSqliteBusyError(err)) {
+        const jitter = Math.floor(Math.random() * 200);
+        await new Promise((r) => setTimeout(r, 100 * Math.pow(1.4, attempt) + jitter));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Sqlite retry exhausted");
+}
+
 // Implements: REQ-QA-02, REQ-QA-03, REQ-QA-05
 export async function seedQa() {
   const runtime = resolveQaRuntime();
   if (!runtime) throw new Error("QA_SEED_REFUSED: enable the guarded local QA runtime first.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   await client.execute("PRAGMA journal_mode = WAL;");
-  await client.execute("PRAGMA busy_timeout = 5000;");
+  await client.execute("PRAGMA busy_timeout = 30000;");
   const app = initializeApp(
     { projectId: runtime.projectId, storageBucket: `${runtime.projectId}.firebasestorage.app` },
     `qa-seed-${crypto.randomUUID()}`
@@ -114,186 +163,190 @@ export async function seedQa() {
       })
     );
     const db = drizzle(client);
-    await migrate(db, { migrationsFolder: resolve("drizzle") });
+    await withSqliteRetry(async () => {
+      await migrate(db, { migrationsFolder: resolve("drizzle") });
+    });
     await client.execute("PRAGMA foreign_keys = ON");
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(matriculasPendientes)
-        .where(
-          and(
-            eq(matriculasPendientes.seccionId, QA_SECTIONS.active),
-            eq(matriculasPendientes.email, "qa.pending@alumnos.ubiobio.cl")
-          )
-        );
-      await tx
-        .delete(moodleImports)
-        .where(
-          and(
-            eq(moodleImports.seccionId, QA_SECTIONS.active),
-            eq(moodleImports.fingerprint, moodle.preview.source.fingerprint)
-          )
-        );
-      await tx
-        .delete(adeccaImports)
-        .where(
-          and(
-            eq(adeccaImports.seccionId, QA_SECTIONS.active),
-            eq(adeccaImports.fingerprint, adecca.preview.source.fingerprint)
-          )
-        );
-      for (const user of QA_USER_FIXTURES) {
+    await withSqliteRetry(async () => {
+      await db.transaction(async (tx) => {
         await tx
-          .insert(users)
-          .values({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            createdAt: QA_NOW,
-          })
-          .onConflictDoUpdate({
-            target: users.id,
-            set: { name: user.name, email: user.email, role: user.role, photoUrl: null },
-          });
-      }
-      await tx
-        .insert(facultades)
-        .values({ id: "qa-faculty", nombre: "Facultad QA", sede: "Concepcion" })
-        .onConflictDoNothing();
-      await tx
-        .insert(departamentos)
-        .values({ id: "qa-department", facultadId: "qa-faculty", nombre: "Departamento QA" })
-        .onConflictDoNothing();
-      await tx
-        .insert(carreras)
-        .values({
-          id: "qa-career",
-          departamentoId: "qa-department",
-          codigo: "QA01",
-          nombre: "Ingeniería QA",
-        })
-        .onConflictDoNothing();
-      await tx
-        .insert(periodos)
-        .values([
-          {
-            id: "qa-period-current",
-            nombre: "Semestre QA vigente",
-            fechaInicio: "2026-08-01",
-            fechaFin: "2026-12-31",
-            estado: "abierto",
-          },
-          {
-            id: "qa-period-archived",
-            nombre: "Semestre QA archivado",
-            fechaInicio: "2026-03-01",
-            fechaFin: "2026-07-31",
-            estado: "archivado",
-          },
-        ])
-        .onConflictDoNothing();
-      for (const key of Object.keys(QA_SECTIONS) as (keyof typeof QA_SECTIONS)[]) {
+          .delete(matriculasPendientes)
+          .where(
+            and(
+              eq(matriculasPendientes.seccionId, QA_SECTIONS.active),
+              eq(matriculasPendientes.email, "qa.pending@alumnos.ubiobio.cl")
+            )
+          );
         await tx
-          .insert(asignaturas)
+          .delete(moodleImports)
+          .where(
+            and(
+              eq(moodleImports.seccionId, QA_SECTIONS.active),
+              eq(moodleImports.fingerprint, moodle.preview.source.fingerprint)
+            )
+          );
+        await tx
+          .delete(adeccaImports)
+          .where(
+            and(
+              eq(adeccaImports.seccionId, QA_SECTIONS.active),
+              eq(adeccaImports.fingerprint, adecca.preview.source.fingerprint)
+            )
+          );
+        for (const user of QA_USER_FIXTURES) {
+          await tx
+            .insert(users)
+            .values({
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              createdAt: QA_NOW,
+            })
+            .onConflictDoUpdate({
+              target: users.id,
+              set: { name: user.name, email: user.email, role: user.role, photoUrl: null },
+            });
+        }
+        await tx
+          .insert(facultades)
+          .values({ id: "qa-faculty", nombre: "Facultad QA", sede: "Concepcion" })
+          .onConflictDoNothing();
+        await tx
+          .insert(departamentos)
+          .values({ id: "qa-department", facultadId: "qa-faculty", nombre: "Departamento QA" })
+          .onConflictDoNothing();
+        await tx
+          .insert(carreras)
           .values({
-            id: `qa-subject-${key}`,
-            codigo: `QA-${key.toUpperCase()}`,
-            nombre: QA_SECTION_NAMES[key],
-            creditosSct: 6,
+            id: "qa-career",
             departamentoId: "qa-department",
+            codigo: "QA01",
+            nombre: "Ingeniería QA",
           })
           .onConflictDoNothing();
         await tx
-          .insert(secciones)
-          .values({
-            id: QA_SECTIONS[key],
-            asignaturaId: `qa-subject-${key}`,
-            periodoId: key === "archived" ? "qa-period-archived" : "qa-period-current",
-            numeroSeccion: 1,
-            docenteId: key === "other" ? QA_USERS.owner.id : QA_USERS.teacher.id,
-            createdAt: QA_NOW,
-          })
+          .insert(periodos)
+          .values([
+            {
+              id: "qa-period-current",
+              nombre: "Semestre QA vigente",
+              fechaInicio: "2026-08-01",
+              fechaFin: "2026-12-31",
+              estado: "abierto",
+            },
+            {
+              id: "qa-period-archived",
+              nombre: "Semestre QA archivado",
+              fechaInicio: "2026-03-01",
+              fechaFin: "2026-07-31",
+              estado: "archivado",
+            },
+          ])
           .onConflictDoNothing();
-        const profile = {
-          seccionId: QA_SECTIONS[key],
-          title: QA_SECTION_NAMES[key],
-          description: "Curso sintético para verificación local reproducible.",
-          modality: "presencial" as const,
-          room: "QA-101",
-          tone: "sky" as const,
-          updatedAt: QA_NOW,
-        };
+        for (const key of Object.keys(QA_SECTIONS) as (keyof typeof QA_SECTIONS)[]) {
+          await tx
+            .insert(asignaturas)
+            .values({
+              id: `qa-subject-${key}`,
+              codigo: `QA-${key.toUpperCase()}`,
+              nombre: QA_SECTION_NAMES[key],
+              creditosSct: 6,
+              departamentoId: "qa-department",
+            })
+            .onConflictDoNothing();
+          await tx
+            .insert(secciones)
+            .values({
+              id: QA_SECTIONS[key],
+              asignaturaId: `qa-subject-${key}`,
+              periodoId: key === "archived" ? "qa-period-archived" : "qa-period-current",
+              numeroSeccion: 1,
+              docenteId: key === "other" ? QA_USERS.owner.id : QA_USERS.teacher.id,
+              createdAt: QA_NOW,
+            })
+            .onConflictDoNothing();
+          const profile = {
+            seccionId: QA_SECTIONS[key],
+            title: QA_SECTION_NAMES[key],
+            description: "Curso sintético para verificación local reproducible.",
+            modality: "presencial" as const,
+            room: "QA-101",
+            tone: "sky" as const,
+            updatedAt: QA_NOW,
+          };
+          await tx
+            .insert(sectionProfiles)
+            .values(profile)
+            .onConflictDoUpdate({ target: sectionProfiles.seccionId, set: profile });
+        }
+        for (const enrollment of QA_ENROLLMENTS) {
+          await tx
+            .insert(matriculas)
+            .values(enrollment)
+            .onConflictDoUpdate({
+              target: matriculas.id,
+              set: { rolSeccion: enrollment.rolSeccion, estado: enrollment.estado },
+            });
+        }
         await tx
-          .insert(sectionProfiles)
-          .values(profile)
-          .onConflictDoUpdate({ target: sectionProfiles.seccionId, set: profile });
-      }
-      for (const enrollment of QA_ENROLLMENTS) {
-        await tx
-          .insert(matriculas)
-          .values(enrollment)
-          .onConflictDoUpdate({
-            target: matriculas.id,
-            set: { rolSeccion: enrollment.rolSeccion, estado: enrollment.estado },
-          });
-      }
-      await tx
-        .insert(assistantAssignments)
-        .values({
-          id: "qa-assistant-assignment",
-          seccionId: QA_SECTIONS.active,
-          usuarioId: QA_USERS.assistant.id,
-          previousRole: "student",
-          previousStatus: "activa",
-          createdBy: QA_USERS.teacher.id,
-          createdAt: QA_NOW,
-        })
-        .onConflictDoNothing();
-      await tx
-        .insert(interopTools)
-        .values({
-          id: QA_IDS.ltiTool,
-          name: "QA LTI",
-          clientId: "qa-lti-client",
-          deploymentId: "qa-lti-deployment",
-          loginUrl: "https://qa-tool.invalid/login",
-          redirectUrisJson: JSON.stringify(["https://qa-tool.invalid/launch"]),
-          targetUrisJson: JSON.stringify(["https://qa-tool.invalid/activity"]),
-          enabled: true,
-          createdBy: QA_USERS.owner.id,
-          createdAt: QA_NOW,
-        })
-        .onConflictDoNothing();
-      await tx
-        .insert(interopResources)
-        .values({
-          id: QA_IDS.lti,
-          sectionId: QA_SECTIONS.active,
-          title: "QA LTI",
-          kind: "lti",
-          toolId: QA_IDS.ltiTool,
-          targetUrl: "https://qa-tool.invalid/activity",
-          fingerprint: "qa-lti",
-          createdBy: QA_USERS.teacher.id,
-          createdAt: QA_NOW,
-        })
-        .onConflictDoNothing();
-      for (const item of packages) {
-        await tx
-          .insert(interopResources)
+          .insert(assistantAssignments)
           .values({
-            id: item.id,
-            sectionId: QA_SECTIONS.active,
-            title: item.manifest.title,
-            kind: item.manifest.kind,
-            manifestJson: JSON.stringify(item.manifest),
-            storagePrefix: item.prefix,
-            fingerprint: createHash("sha256").update(item.bytes).digest("hex"),
+            id: "qa-assistant-assignment",
+            seccionId: QA_SECTIONS.active,
+            usuarioId: QA_USERS.assistant.id,
+            previousRole: "student",
+            previousStatus: "activa",
             createdBy: QA_USERS.teacher.id,
             createdAt: QA_NOW,
           })
           .onConflictDoNothing();
-      }
+        await tx
+          .insert(interopTools)
+          .values({
+            id: QA_IDS.ltiTool,
+            name: "QA LTI",
+            clientId: "qa-lti-client",
+            deploymentId: "qa-lti-deployment",
+            loginUrl: "https://qa-tool.invalid/login",
+            redirectUrisJson: JSON.stringify(["https://qa-tool.invalid/launch"]),
+            targetUrisJson: JSON.stringify(["https://qa-tool.invalid/activity"]),
+            enabled: true,
+            createdBy: QA_USERS.owner.id,
+            createdAt: QA_NOW,
+          })
+          .onConflictDoNothing();
+        await tx
+          .insert(interopResources)
+          .values({
+            id: QA_IDS.lti,
+            sectionId: QA_SECTIONS.active,
+            title: "QA LTI",
+            kind: "lti",
+            toolId: QA_IDS.ltiTool,
+            targetUrl: "https://qa-tool.invalid/activity",
+            fingerprint: "qa-lti",
+            createdBy: QA_USERS.teacher.id,
+            createdAt: QA_NOW,
+          })
+          .onConflictDoNothing();
+        for (const item of packages) {
+          await tx
+            .insert(interopResources)
+            .values({
+              id: item.id,
+              sectionId: QA_SECTIONS.active,
+              title: item.manifest.title,
+              kind: item.manifest.kind,
+              manifestJson: JSON.stringify(item.manifest),
+              storagePrefix: item.prefix,
+              fingerprint: createHash("sha256").update(item.bytes).digest("hex"),
+              createdBy: QA_USERS.teacher.id,
+              createdAt: QA_NOW,
+            })
+            .onConflictDoNothing();
+        }
+      });
     });
 
     const auth = getAuth(app);
@@ -403,26 +456,11 @@ export async function cleanupQaSessions(role: QaRole) {
     throw new Error("QA_SESSIONS_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
-    await client.execute("PRAGMA busy_timeout = 5000;");
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
-        break;
-      } catch (err: unknown) {
-        if (
-          attempt < 4 &&
-          typeof err === "object" &&
-          err !== null &&
-          "message" in err &&
-          typeof (err as { message: unknown }).message === "string" &&
-          (err as { message: string }).message.includes("SQLITE_BUSY")
-        ) {
-          await new Promise((r) => setTimeout(r, 100 * Math.pow(2, attempt)));
-          continue;
-        }
-        throw err;
-      }
-    }
+    await withSqliteRetry(async () => {
+      await client.execute("PRAGMA journal_mode = WAL;");
+      await client.execute("PRAGMA busy_timeout = 30000;");
+      await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
+    });
   } finally {
     client.close();
   }
@@ -433,20 +471,25 @@ export async function qaSupportRequests(remove = false) {
     throw new Error("QA_SUPPORT_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
-    await client.execute("PRAGMA busy_timeout = 5000;");
-    const db = drizzle(client);
-    const rows = await db
-      .select({
-        id: solicitudesSoporte.id,
-        email: solicitudesSoporte.email,
-        estado: solicitudesSoporte.estado,
-      })
-      .from(solicitudesSoporte)
-      .where(eq(solicitudesSoporte.asunto, QA_SUPPORT_SUBJECT))
-      .limit(2);
-    if (remove)
-      await db.delete(solicitudesSoporte).where(eq(solicitudesSoporte.asunto, QA_SUPPORT_SUBJECT));
-    return rows;
+    return await withSqliteRetry(async () => {
+      await client.execute("PRAGMA journal_mode = WAL;");
+      await client.execute("PRAGMA busy_timeout = 30000;");
+      const db = drizzle(client);
+      const rows = await db
+        .select({
+          id: solicitudesSoporte.id,
+          email: solicitudesSoporte.email,
+          estado: solicitudesSoporte.estado,
+        })
+        .from(solicitudesSoporte)
+        .where(eq(solicitudesSoporte.asunto, QA_SUPPORT_SUBJECT))
+        .limit(2);
+      if (remove)
+        await db
+          .delete(solicitudesSoporte)
+          .where(eq(solicitudesSoporte.asunto, QA_SUPPORT_SUBJECT));
+      return rows;
+    });
   } finally {
     client.close();
   }

@@ -59,11 +59,12 @@ export async function login(
   // Confirm the browser SDK restored the emulator identity and its real Firestore
   // subscription before taking stable checkpoints of the authenticated shell.
   const sectionName = QA_SECTION_NAMES[role === "outsider" ? "other" : "active"];
+  const expectedPosts = role === "outsider" ? "3 publicaciones" : "4 publicaciones";
   await expect(
     page
       .locator(".course-card")
       .filter({ hasText: sectionName })
-      .getByText("4 publicaciones", { exact: true })
+      .getByText(expectedPosts, { exact: true })
   ).toBeVisible();
 }
 
@@ -132,6 +133,10 @@ export async function holdRequest(page: Page, path: string) {
     release = resolve;
   });
   const handler = async (route: Route) => {
+    if (route.request().method() === "OPTIONS") {
+      await route.continue().catch(() => undefined);
+      return;
+    }
     await pending;
     await route.continue().catch(() => undefined);
   };
