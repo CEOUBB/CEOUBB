@@ -27,6 +27,7 @@ Linux CI additionally uses `playwright install --with-deps`. The launcher uses t
 | `pnpm qa --base origin/main`                                               | Select changed areas against an explicit Git base.                                                                           |
 | `pnpm qa --screenshots --reference /absolute/reviewed/reference-directory` | Compare compatible reviewed references.                                                                                      |
 | `pnpm qa --staging`                                                        | Run the separate live staging smoke and report remaining external evidence.                                                  |
+| `pnpm qa --shard 1/4`                                                      | Run one deterministic shard of the selected scenarios in parallel execution.                                                 |
 
 Chromium runs at widths 320, 390, 768, and 1440. Critical scenarios also run in Firefox and WebKit. Selecting one `--browser` narrows evidence and must be disclosed; it does not establish complete-matrix coverage. The `api` project exercises application endpoints and authorization separately from browser checkpoints.
 
