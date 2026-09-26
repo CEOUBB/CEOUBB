@@ -158,7 +158,7 @@ function SettingsSwitch({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="settings-switch" htmlFor={id}>
+    <label className="settings-switch">
       <input
         aria-describedby={description}
         checked={checked}

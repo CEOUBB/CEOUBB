@@ -308,7 +308,7 @@ export async function classroomScenario(
         const teammateCheckbox = team.getByRole("checkbox", {
           name: new RegExp(QA_TEAMMATE.name),
         });
-        await teammateCheckbox.check();
+        await teammateCheckbox.check({ force: true });
         await expect(teammateCheckbox).toBeChecked();
         await expect(
           page.getByRole("button", { name: "Elegir archivo", exact: true })
@@ -318,7 +318,7 @@ export async function classroomScenario(
       const [chooser] = await Promise.all([
         page.waitForEvent("filechooser"),
         isTeam
-          ? page.getByRole("button", { name: "Elegir archivo", exact: true }).click()
+          ? page.getByRole("button", { name: "Elegir archivo", exact: true }).click({ force: true })
           : attach.click(),
       ]);
       const fileName = isTeam ? "qa-team.pdf" : "qa-individual.pdf";

@@ -35,6 +35,13 @@
   font-size: 14px;
 }
 
+.interop-alert a {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .interop-player h2 {
   margin: 0 0 var(--space-xs);
 }

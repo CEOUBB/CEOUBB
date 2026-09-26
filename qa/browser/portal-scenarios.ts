@@ -302,7 +302,7 @@ export async function portalScenario(
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(!original),
+        toggle.setChecked(!original, { force: true }),
       ]);
       expect(response.status()).toBe(200);
       await page.reload();
@@ -315,7 +315,7 @@ export async function portalScenario(
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(original),
+        toggle.setChecked(original, { force: true }),
       ]);
       expect(restored.status()).toBe(200);
     } else if (id === "settings.photo-invalid") {

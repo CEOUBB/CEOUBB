@@ -355,7 +355,7 @@ function StudentGrades({
             onConfirm={(memberIds) => {
               const item = teamPicker;
               upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
-              setTeamPicker(null);
+              setTimeout(() => setTeamPicker(null), 0);
             }}
             sectionId={course.id}
             selfUid={selfUid}
@@ -424,7 +424,7 @@ function StudentGrades({
           onConfirm={(memberIds) => {
             const item = teamPicker;
             upload.pick(item.id, { teamId: crypto.randomUUID(), memberIds });
-            setTeamPicker(null);
+            setTimeout(() => setTeamPicker(null), 0);
           }}
           sectionId={course.id}
           selfUid={selfUid}
