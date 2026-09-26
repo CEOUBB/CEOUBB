@@ -243,12 +243,17 @@ test("REQ-SEC-20: admin users route separates unauthenticated 401 and unauthoriz
 });
 
 // Implements: REQ-SEC-21
-test("REQ-SEC-21: grade history route validates sectionId presence and max length", () => {
+test("REQ-SEC-21: grade history route validates sectionId presence, format and max length", () => {
   const routePath = path.resolve("app/api/sections/[sectionId]/grade-history/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
     routeContent,
     /sectionId\.length > 100/,
     "Grade history route must check sectionId length bounds"
+  );
+  assert.match(
+    routeContent,
+    /isSectionId\(sectionId\)/,
+    "Grade history route must validate sectionId with isSectionId"
   );
 });

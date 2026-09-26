@@ -6,10 +6,6 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { and, eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/libsql/migrator";
-import { deleteApp, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-import { getStorage } from "firebase-admin/storage";
 import { zipSync } from "fflate";
 import {
   asignaturas,
@@ -80,6 +76,10 @@ export function qaPdf(): Buffer {
 export async function seedQa() {
   const runtime = resolveQaRuntime();
   if (!runtime) throw new Error("QA_SEED_REFUSED: enable the guarded local QA runtime first.");
+  const { deleteApp, initializeApp } = await import("firebase-admin/app");
+  const { getAuth } = await import("firebase-admin/auth");
+  const { getFirestore } = await import("firebase-admin/firestore");
+  const { getStorage } = await import("firebase-admin/storage");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   await client.execute("PRAGMA journal_mode = WAL;");
   await client.execute("PRAGMA busy_timeout = 5000;");
