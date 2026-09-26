@@ -148,7 +148,7 @@ export function TeamSubmissionPicker({
               const checked = selectedIds.has(entry.id);
               return (
                 <li key={entry.id}>
-                  <label className="team-picker-member">
+                  <label className="team-picker-member" htmlFor={`team-member-${entry.id}`}>
                     <input
                       checked={checked}
                       disabled={!checked && remaining <= 0}

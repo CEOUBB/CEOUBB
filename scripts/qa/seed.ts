@@ -76,21 +76,47 @@ export function qaPdf(): Buffer {
   return Buffer.from(pdf);
 }
 
-export async function withSqliteRetry<T>(operation: () => Promise<T>, maxRetries = 8): Promise<T> {
+function isSqliteBusyError(err: unknown): boolean {
+  let curr = err;
+  for (let depth = 0; depth < 5 && curr; depth++) {
+    if (typeof curr === "object" && curr !== null) {
+      if ("message" in curr && typeof (curr as { message: unknown }).message === "string") {
+        const msg = (curr as { message: string }).message;
+        if (
+          msg.includes("SQLITE_BUSY") ||
+          msg.includes("database is locked") ||
+          msg.includes("database table is locked") ||
+          msg.includes("busy")
+        ) {
+          return true;
+        }
+      }
+      if ("code" in curr && typeof (curr as { code: unknown }).code === "string") {
+        const code = (curr as { code: string }).code;
+        if (code === "SQLITE_BUSY" || code.includes("BUSY") || code.includes("LOCKED")) {
+          return true;
+        }
+      }
+      if ("cause" in curr) {
+        curr = (curr as { cause: unknown }).cause;
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  return false;
+}
+
+export async function withSqliteRetry<T>(operation: () => Promise<T>, maxRetries = 15): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await operation();
     } catch (err: unknown) {
-      const isBusy =
-        typeof err === "object" &&
-        err !== null &&
-        "message" in err &&
-        typeof (err as { message: unknown }).message === "string" &&
-        ((err as { message: string }).message.includes("SQLITE_BUSY") ||
-          (err as { message: string }).message.includes("database is locked"));
-      if (attempt < maxRetries - 1 && isBusy) {
+      if (attempt < maxRetries - 1 && isSqliteBusyError(err)) {
         const jitter = Math.floor(Math.random() * 200);
-        await new Promise((r) => setTimeout(r, 150 * Math.pow(1.5, attempt) + jitter));
+        await new Promise((r) => setTimeout(r, 100 * Math.pow(1.4, attempt) + jitter));
         continue;
       }
       throw err;
@@ -430,8 +456,9 @@ export async function cleanupQaSessions(role: QaRole) {
     throw new Error("QA_SESSIONS_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
-    await client.execute("PRAGMA busy_timeout = 30000;");
     await withSqliteRetry(async () => {
+      await client.execute("PRAGMA journal_mode = WAL;");
+      await client.execute("PRAGMA busy_timeout = 30000;");
       await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
     });
   } finally {
@@ -444,9 +471,10 @@ export async function qaSupportRequests(remove = false) {
     throw new Error("QA_SUPPORT_REFUSED: a guarded local runtime is required.");
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
-    await client.execute("PRAGMA busy_timeout = 30000;");
-    const db = drizzle(client);
     return await withSqliteRetry(async () => {
+      await client.execute("PRAGMA journal_mode = WAL;");
+      await client.execute("PRAGMA busy_timeout = 30000;");
+      const db = drizzle(client);
       const rows = await db
         .select({
           id: solicitudesSoporte.id,

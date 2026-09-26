@@ -305,7 +305,14 @@ export async function classroomScenario(
         const team = page.getByRole("group", { name: `Equipo para ${name}` });
         await expect(team).toBeVisible();
         if (id === "submissions.upload") return true;
-        await team.getByRole("checkbox", { name: new RegExp(QA_TEAMMATE.name) }).check();
+        const teammateCheckbox = team.getByRole("checkbox", {
+          name: new RegExp(QA_TEAMMATE.name),
+        });
+        await teammateCheckbox.check();
+        await expect(teammateCheckbox).toBeChecked();
+        await expect(
+          page.getByRole("button", { name: "Elegir archivo", exact: true })
+        ).toBeEnabled();
       }
       await capture("form");
       const [chooser] = await Promise.all([
@@ -367,11 +374,16 @@ export async function classroomScenario(
         page.getByText("No hay cuestionarios disponibles", { exact: true })
       ).toBeVisible();
     else if (["quizzes.teacher", "quizzes.import", "quizzes.teacher-loading"].includes(id)) {
-      await expect(
-        page
-          .getByRole("status", { name: "Cargando cuestionarios…" })
-          .or(page.getByLabel("Nombre del cuestionario"))
-      ).toBeVisible();
+      if (id === "quizzes.teacher-loading") {
+        await expect(
+          page
+            .getByRole("status", { name: "Cargando cuestionarios…" })
+            .or(page.getByLabel("Nombre del cuestionario"))
+            .first()
+        ).toBeVisible();
+      } else {
+        await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+      }
       if (id === "quizzes.import") {
         await page.locator('.quiz-dropzone input[type="file"]').setInputFiles(QA_ASSETS.questions);
         await expect(page.getByText("Pregunta importada QA", { exact: true })).toBeVisible();
@@ -381,7 +393,7 @@ export async function classroomScenario(
         .locator(".quiz-student-card")
         .filter({ hasText: "Cuestionario de práctica QA" });
       await expect(
-        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz)
+        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz).first()
       ).toBeVisible();
     } else {
       const quiz = page
