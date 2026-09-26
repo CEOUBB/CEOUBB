@@ -127,7 +127,7 @@ export function InteropSection({
       dispatch({ type: "LOAD_START" });
       return Promise.all([
         interopRequest(base, resourcePageSchema, { signal }),
-        canTeach
+        isOwner
           ? interopRequest("/api/interop/tools", toolPageSchema, { signal })
           : Promise.resolve({ items: [], nextCursor: null }),
       ])
@@ -150,7 +150,7 @@ export function InteropSection({
           }
         });
     },
-    [base, canTeach]
+    [base, isOwner]
   );
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export function InteropSection({
   };
 
   const loadMoreTools = async () => {
-    if (!state.toolCursor) return;
+    if (!isOwner || !state.toolCursor) return;
     performAction(async () => {
       const page = await interopRequest(
         "/api/interop/tools?cursor=" + encodeURIComponent(state.toolCursor!),
@@ -238,7 +238,7 @@ export function InteropSection({
         </p>
         <iframe
           referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-forms allow-popups"
+          sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
           src={player.url}
           title={player.title}
         />

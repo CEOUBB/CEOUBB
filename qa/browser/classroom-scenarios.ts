@@ -459,6 +459,16 @@ export async function classroomScenario(
         await capture("persisted");
       }
     } else {
+      const importsSummary = page.locator(".classroom-imports > summary");
+      if (await importsSummary.count()) {
+        const details = page.locator(".classroom-imports");
+        const isOpen = await details
+          .evaluate((el: HTMLDetailsElement) => el.open)
+          .catch(() => false);
+        if (!isOpen) {
+          await importsSummary.click();
+        }
+      }
       const system = id.includes("moodle") ? "Moodle" : "ADECCA";
       await page.getByRole("button", { name: new RegExp(`Importar.*${system}`) }).click();
       const dialog = page.getByRole("dialog", { name: `Importar desde ${system} UBB` });
@@ -531,15 +541,23 @@ export async function classroomScenario(
             body: '<!doctype html><html lang="es"><head><title>QA LTI contract</title></head><body><main><h1>Proveedor LTI sintético QA</h1><p>Contrato de lanzamiento recibido; entrega externa no verificada.</p></main></body></html>',
           })
         );
+        let launchBody = "";
         const [response] = await Promise.all([
-          page.waitForResponse(
-            (response) =>
-              response.url().includes("/interop/") && response.request().method() === "POST"
-          ),
+          page.waitForResponse(async (response) => {
+            if (response.url().includes("/interop/") && response.request().method() === "POST") {
+              try {
+                launchBody = await response.text();
+              } catch {
+                // Ignore if body reading fails after detachment
+              }
+              return true;
+            }
+            return false;
+          }),
           resource.getByRole("button", { name: "Abrir", exact: true }).click(),
         ]);
         expect(response.status()).toBe(200);
-        expect(await response.text()).toContain("client_id");
+        expect(launchBody).toContain("client_id");
         await expect(
           page.getByRole("heading", { name: "Proveedor LTI sintético QA" })
         ).toBeVisible();

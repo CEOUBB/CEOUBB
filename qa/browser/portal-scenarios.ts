@@ -151,7 +151,8 @@ export async function portalScenario(
           await page.getByLabel("Mensaje", { exact: true }).fill(text);
           await capture("form");
           await page.getByRole("button", { name: /Enviar mensaje|Enviar/ }).click();
-          await expect(page.getByText(text, { exact: true })).toBeVisible();
+          const activePanel = page.getByRole("region", { name: "Conversación seleccionada" });
+          await expect(activePanel.getByText(text, { exact: true })).toBeVisible();
           await page.reload();
           await navigate(page, "Avisos y mensajes");
           await page.getByRole("tab", { name: /Mensajes/ }).click();
@@ -160,7 +161,8 @@ export async function portalScenario(
             .locator("li button")
             .first()
             .click();
-          await expect(page.getByText(text, { exact: true })).toBeVisible();
+          const reloadedPanel = page.getByRole("region", { name: "Conversación seleccionada" });
+          await expect(reloadedPanel.getByText(text, { exact: true })).toBeVisible();
           await capture("persisted");
           await removeQaMessage(text);
           await resetQaFixtures();

@@ -151,6 +151,59 @@ export async function stateScenario(
     return true;
   }
 
+  if (id === "auth.loading") {
+    const release = await holdRequest(page, "**/api/auth/me*");
+    try {
+      await page.reload();
+      await expect(page.locator(".boot-shell")).toBeVisible();
+      await expect(page.locator(".boot-shell")).toHaveAttribute("aria-busy", "true");
+      await expect(page.getByText("Abriendo Centro de Estudio UBB…")).toBeVisible();
+      await capture("loading");
+    } finally {
+      await release();
+    }
+    return true;
+  }
+
+  if (id.startsWith("interop.")) {
+    await course(page);
+    if (id === "interop.loading") {
+      const release = await holdRequest(page, "**/api/courses/*/interop*");
+      try {
+        await classroomTab(page, "Recursos externos");
+        const skeleton = page.getByRole("status", { name: "Cargando recursos externos…" });
+        await expect(skeleton).toBeVisible();
+        await expect(skeleton).toHaveAttribute("aria-busy", "true");
+        await capture("loading");
+      } finally {
+        await release();
+      }
+      return true;
+    }
+    if (id === "interop.load-error") {
+      const pattern = "**/api/courses/*/interop*";
+      const handler = (route: Route) =>
+        route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "QA controlled service failure" }),
+        });
+      await page.route(pattern, handler);
+      try {
+        await classroomTab(page, "Recursos externos");
+        await expect(page.locator(".interop-alert")).toBeVisible();
+        await capture("error");
+        await page.unroute(pattern, handler);
+        await page.locator(".interop-alert").getByRole("button", { name: "Reintentar" }).click();
+        await expect(page.locator(".interop-resource-list li").first()).toBeVisible();
+        await capture("recovered");
+      } finally {
+        await page.unroute(pattern, handler).catch(() => undefined);
+      }
+      return true;
+    }
+  }
+
   if (id === "calendar.delete-dialog") {
     await navigate(page, "Calendario");
     await page.getByRole("button", { name: "Eliminar “Preparar informe QA”", exact: true }).click();

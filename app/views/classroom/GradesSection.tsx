@@ -335,7 +335,11 @@ function StudentGrades({
               <SubmissionSlot
                 item={detail}
                 onPick={startSubmission}
-                percent={upload.state?.evalId === detail.id ? upload.state.percent : null}
+                percent={
+                  upload.state?.evalId === detail.id && upload.state.status === "uploading"
+                    ? upload.state.percent
+                    : null
+                }
                 readOnly={readOnly}
                 receipt={submissions.get(detail.id)}
               />
@@ -390,7 +394,11 @@ function StudentGrades({
               <SubmissionSlot
                 item={item}
                 onPick={startSubmission}
-                percent={upload.state?.evalId === item.id ? upload.state.percent : null}
+                percent={
+                  upload.state?.evalId === item.id && upload.state.status === "uploading"
+                    ? upload.state.percent
+                    : null
+                }
                 readOnly={readOnly}
                 receipt={submissions.get(item.id)}
               />

@@ -59,11 +59,12 @@ export async function login(
   // Confirm the browser SDK restored the emulator identity and its real Firestore
   // subscription before taking stable checkpoints of the authenticated shell.
   const sectionName = QA_SECTION_NAMES[role === "outsider" ? "other" : "active"];
+  const expectedPosts = role === "outsider" ? "3 publicaciones" : "4 publicaciones";
   await expect(
     page
       .locator(".course-card")
       .filter({ hasText: sectionName })
-      .getByText("4 publicaciones", { exact: true })
+      .getByText(expectedPosts, { exact: true })
   ).toBeVisible();
 }
 

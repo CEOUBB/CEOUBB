@@ -85,6 +85,15 @@ export function CommandPalette({
     openRef.current = open;
   }, [open]);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+
   const setOpenRef = useRef(setOpen);
   useEffect(() => {
     setOpenRef.current = setOpen;
@@ -190,6 +199,7 @@ export function CommandPalette({
                         className="shrink-0 text-[oklch(0.48_0.03_250)]"
                       />
                       <Command.Input
+                        ref={inputRef}
                         value={query}
                         onValueChange={setQuery}
                         placeholder={placeholder}
