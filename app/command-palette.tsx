@@ -190,7 +190,6 @@ export function CommandPalette({
                         className="shrink-0 text-[oklch(0.48_0.03_250)]"
                       />
                       <Command.Input
-                        autoFocus
                         value={query}
                         onValueChange={setQuery}
                         placeholder={placeholder}
@@ -213,7 +212,11 @@ export function CommandPalette({
                     </div>
 
                     <Command.List className="max-h-[60vh] overflow-y-auto overscroll-contain p-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:oklch(0.92_0.006_60)_transparent]">
-                      <Command.Empty className="p-8 text-center text-sm text-[oklch(0.48_0.03_250)] leading-relaxed">
+                      <Command.Empty
+                        role="option"
+                        aria-selected="false"
+                        className="p-8 text-center text-sm text-[oklch(0.48_0.03_250)] leading-relaxed"
+                      >
                         {emptyMessage}
                       </Command.Empty>
 

@@ -128,7 +128,7 @@ async function fillContactForm(
   await expect(page.getByRole("heading", { name: "Contacto y soporte" })).toBeVisible();
   await page.locator("#soporte-nombre").fill(overrides.nombre ?? "Estudiante QA");
   await page.locator("#soporte-email").fill(overrides.email ?? "estudiante.qa@alumnos.ubiobio.cl");
-  await page.locator("#soporte-categoria").selectOption(overrides.categoria ?? "acceso");
+  await page.locator("#soporte-categoria").selectOption(overrides.categoria ?? "soporte-tecnico");
   await page.locator("#soporte-asunto").fill(overrides.asunto ?? "Consulta sobre verificación QA");
   await page
     .locator("#soporte-mensaje")
