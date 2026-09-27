@@ -159,16 +159,25 @@ function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: bool
         className="grid h-6 w-6 place-items-center"
       >
         {status === "success" ? (
-          <CheckCircle className="h-4 w-4 text-[var(--academic-emerald)]" weight="fill" />
+          <CheckCircle
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--academic-emerald)]"
+            weight="fill"
+          />
         ) : status === "error" ? (
-          <WarningCircle className="h-4 w-4 text-[var(--shield-red)]" weight="fill" />
+          <WarningCircle
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--shield-red)]"
+            weight="fill"
+          />
         ) : status === "uploading" ? (
           <CircleNotch
+            aria-hidden="true"
             className={`h-4 w-4 text-[var(--color-primary)] ${reduce ? "" : "animate-spin"}`}
             weight="bold"
           />
         ) : (
-          <File className="h-4 w-4 text-[var(--text-muted)]" />
+          <File aria-hidden="true" className="h-4 w-4 text-[var(--text-muted)]" />
         )}
         <span className="sr-only">
           {status === "success"
@@ -247,7 +256,7 @@ function FileUploadRow({
                   aria-label={`Reintentar ${item.name}`}
                   className="grid h-7 w-7 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--canvas-soft)] hover:text-[var(--text-body)] active:scale-95"
                 >
-                  <ArrowClockwise className="h-3.5 w-3.5" />
+                  <ArrowClockwise aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
               ) : null}
               <button
@@ -256,7 +265,7 @@ function FileUploadRow({
                 aria-label={`Eliminar ${item.name}`}
                 className="grid h-7 w-7 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--canvas-soft)] hover:text-[var(--shield-red)] active:scale-95"
               >
-                <Trash className="h-3.5 w-3.5" />
+                <Trash aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -722,6 +731,7 @@ export function SubmissionSlot({
         <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <CircleNotch
+              aria-hidden="true"
               className="h-3 w-3 animate-spin text-[var(--color-primary)]"
               weight="bold"
             />
@@ -761,7 +771,7 @@ export function SubmissionSlot({
             onClick={() => onPick(item)}
             type="button"
           >
-            <ArrowClockwise className="h-3.5 w-3.5" />
+            <ArrowClockwise aria-hidden="true" className="h-3.5 w-3.5" />
             Reemplazar
           </button>
         )}
