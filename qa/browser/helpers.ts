@@ -111,10 +111,10 @@ export async function course(page: Page, kind: "active" | "empty" | "archived" =
     await expect(async () => {
       if (await heading.isVisible()) return;
       const enter = page.getByRole("button", { name: "Entrar al aula", exact: true });
+      if (!(await enter.isVisible())) await enterCard.click();
+      await expect(heading.or(enter).first()).toBeVisible();
       if (await enter.isVisible()) {
         await enter.click();
-      } else {
-        await enterCard.click();
       }
       await expect(heading).toBeVisible();
     }).toPass({ timeout: 45_000, intervals: [500, 1000, 2000] });

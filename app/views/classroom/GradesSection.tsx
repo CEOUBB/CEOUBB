@@ -202,6 +202,7 @@ function StudentGrades({
       }
       return upload.pick(item.id, { teamId: team.id, memberIds: team.memberIds });
     }
+    setDetail(null);
     setTeamPicker(item);
   };
   const draft =

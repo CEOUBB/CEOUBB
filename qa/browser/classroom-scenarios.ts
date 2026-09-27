@@ -21,6 +21,7 @@ const PRESETS: Record<string, string> = {
 async function studentGradeDetail(page: Page, name: string) {
   // Mobile grades use a detail sheet; desktop exposes the same controls in the table.
   const sheetList = page.locator(".grades-view .sheet-list");
+  await expect(sheetList.or(page.locator(".grades-view .grades-table"))).toBeVisible();
   if (await sheetList.isVisible()) {
     const row = sheetList.locator(".sheet-row").filter({ hasText: name }).first();
     await row.click();
@@ -330,6 +331,7 @@ export async function classroomScenario(
       ]);
       const fileName = isTeam ? "qa-team.pdf" : "qa-individual.pdf";
       await chooser.setFiles({ name: fileName, mimeType: "application/pdf", buffer: qaPdf() });
+      if (isTeam) await studentGradeDetail(page, name);
       await expect(page.getByText(fileName, { exact: true })).toBeVisible({ timeout: 45_000 });
       const evalId = isTeam ? QA_IDS.team : QA_IDS.report;
       const receipt = await firestoreDocument(
