@@ -251,4 +251,9 @@ test("REQ-SEC-21: grade history route validates sectionId presence and max lengt
     /sectionId\.length > 100/,
     "Grade history route must check sectionId length bounds"
   );
+  assert.match(
+    routeContent,
+    /isSectionId\(sectionId\)/,
+    "Grade history route must validate sectionId format with isSectionId"
+  );
 });

@@ -23,7 +23,7 @@
   "tests/content-disposition-sanitization.test.ts": "1f94707dc69771ad40480e3101ac489d346e70449ae8313ccd1c688fbbd0d6bf",
   "tests/courses.test.ts": "546ea091c1755ba3339a45c4ba3f2a299ce33fa6fb61229354448d6199a91039",
   "tests/dashboard-agenda.test.ts": "ec8458d9b61aac7b1027f62af60eacc7b75775df268c6b34764b99dc73ea85b5",
-  "tests/deep-security-remediation.test.ts": "d83815e6387fe342a3e68b36937ef974eafa09d22f29c575df3d003c027604e6",
+  "tests/deep-security-remediation.test.ts": "e932c12a0dfd762790440d93eb6b2014d36feb2e6004568c2b3581a10ef7b05f",
   "tests/dev-auth.test.ts": "30a4416e643bedf0a74664d3773b575ad93f4958cc30e9a26dbac46802f699d6",
   "tests/fast-boot-session.test.ts": "71a7834df050fa85c0ab168389de27657b4411e55b10d5beafe589798ae6a84c",
   "tests/final-grade-records.test.ts": "4fbbd7b05aef53e8445ba8dbcbd5d30719d88f01aac6ca7718887c70022fd213",
