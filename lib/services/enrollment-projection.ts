@@ -330,10 +330,11 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
     throw new Error("Lote de sección inválido.");
   const token = await accessToken();
   const base = `${firebaseRestOrigins().firestore}/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  const authHeaders = { Authorization: `Bearer ${token}` };
+  const jsonHeaders = { "Content-Type": "application/json", ...authHeaders };
   const begin = await fetch(`${base}:beginTransaction`, {
     method: "POST",
-    headers,
+    headers: jsonHeaders,
     body: JSON.stringify({ options: { readWrite: {} } }),
   });
   if (!begin.ok) throw new Error("No se pudo iniciar la comprobación del período.");
@@ -342,7 +343,7 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
     const query = new URLSearchParams({ transaction });
     const section = await fetch(
       `${base}/academicSections/${encodeURIComponent(sectionId)}?${query}`,
-      { headers }
+      { headers: authHeaders }
     );
     if (!section.ok) throw new Error("La sección no está sincronizada.");
     const { fields } = z
@@ -354,7 +355,7 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
       .parse(await section.json());
     const period = await fetch(
       `${base}/academicPeriods/${encodeURIComponent(fields.periodoId.stringValue)}?${query}`,
-      { headers }
+      { headers: authHeaders }
     );
     if (!period.ok) throw new Error("El período no está sincronizado.");
     const data = z
@@ -363,14 +364,14 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
     if (!data.success) throw new Error("El período de esta sección está cerrado.");
     const response = await fetch(`${base}:commit`, {
       method: "POST",
-      headers,
+      headers: jsonHeaders,
       body: JSON.stringify({ writes, transaction }),
     });
     if (!response.ok) throw new Error("El período cambió durante la importación. Reintenta.");
   } catch (cause) {
     await fetch(`${base}:rollback`, {
       method: "POST",
-      headers,
+      headers: jsonHeaders,
       body: JSON.stringify({ transaction }),
     }).catch(() => undefined);
     throw cause;
