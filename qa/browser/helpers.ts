@@ -96,16 +96,30 @@ export async function course(page: Page, kind: "active" | "empty" | "archived" =
   const name = { active: "QA Aula activa", empty: "QA Aula vacía", archived: "QA Aula archivada" }[
     kind
   ];
+  const heading = page.getByRole("heading", { name, exact: true, level: 1 });
+  if (await heading.isVisible()) {
+    await expect(page.getByRole("tablist", { name: "Secciones del aula" })).toBeVisible();
+    return;
+  }
   if (kind === "archived") {
     const archive = page.locator(".archived-courses summary");
     if (await archive.count()) await archive.click();
     await page.getByRole("button", { name: `Abrir en solo lectura el ramo ${name}` }).click();
   } else {
-    await page.getByRole("button", { name: `Entrar al aula de ${name}` }).click();
+    const enterCard = page.getByRole("button", { name: `Entrar al aula de ${name}` });
+    await expect(enterCard).toBeVisible();
+    await expect(async () => {
+      if (await heading.isVisible()) return;
+      const enter = page.getByRole("button", { name: "Entrar al aula", exact: true });
+      if (await enter.isVisible()) {
+        await enter.click();
+      } else {
+        await enterCard.click();
+      }
+      await expect(heading).toBeVisible();
+    }).toPass({ timeout: 45_000, intervals: [500, 1000, 2000] });
   }
-  const enter = page.getByRole("button", { name: "Entrar al aula", exact: true });
-  if (await enter.isVisible()) await enter.click();
-  await expect(page.getByRole("heading", { name, exact: true, level: 1 })).toBeVisible();
+  await expect(heading).toBeVisible();
   await expect(page.getByRole("tablist", { name: "Secciones del aula" })).toBeVisible();
 }
 

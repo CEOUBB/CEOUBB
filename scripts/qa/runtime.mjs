@@ -44,7 +44,7 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
   /** @type {Record<string, string | undefined>} */
   const environment = {};
   const osKeys =
-    /^(PATH|PATHEXT|SYSTEMROOT|WINDIR|COMSPEC|TEMP|TMP|TMPDIR|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|PNPM_HOME|COREPACK_HOME|JAVA_HOME|PROGRAMFILES|PROGRAMFILES\(X86\)|SYSTEMDRIVE|PROCESSOR_ARCHITECTURE|NUMBER_OF_PROCESSORS|CI|GITHUB_ACTIONS|TERM|LANG|LC_ALL)$/i;
+    /^(PATH|PATHEXT|SYSTEMROOT|WINDIR|COMSPEC|TEMP|TMP|TMPDIR|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|PNPM_HOME|COREPACK_HOME|JAVA_HOME|PROGRAMFILES|PROGRAMFILES\(X86\)|SYSTEMDRIVE|PROCESSOR_ARCHITECTURE|NUMBER_OF_PROCESSORS|CI|GITHUB_ACTIONS|TERM|LANG|LC_ALL|FUNCTIONS_DISCOVERY_TIMEOUT)$/i;
   for (const [key, value] of Object.entries(inherited))
     if (osKeys.test(key) && value !== undefined) environment[key] = value;
   // Define dotenv keys as empty so Next cannot reload production credentials from this checkout.
@@ -68,6 +68,7 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
     FIREBASE_CLI_DISABLE_UPDATE_CHECK: "true",
     FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true",
     METADATA_SERVER_DETECTION: "none",
+    FUNCTIONS_DISCOVERY_TIMEOUT: inherited.FUNCTIONS_DISCOVERY_TIMEOUT ?? "60",
     GCLOUD_PROJECT: project,
     GOOGLE_CLOUD_PROJECT: project,
     CEOUBB_QA: "1",

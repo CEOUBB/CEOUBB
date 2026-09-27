@@ -47,6 +47,8 @@ export function parseArgs(args) {
     const [_, currentStr, totalStr] = match;
     const current = Number(currentStr);
     const total = Number(totalStr);
+    if (!Number.isSafeInteger(current) || !Number.isSafeInteger(total))
+      throw new Error("--shard index and total must be safe integers");
     if (current > total) throw new Error("--shard index cannot be greater than total");
   }
   if ([values.all, values.area, values.scenario].filter(Boolean).length > 1)
@@ -55,6 +57,7 @@ export function parseArgs(args) {
     throw new Error("--update-snapshots requires --screenshots and explicit visual review.");
   if (values.staging && (values.explore || values["update-snapshots"]))
     throw new Error("Staging cannot be used together with exploration or reference updates.");
+  if (values.staging && values.shard) throw new Error("Staging cannot be split into shards.");
   if (values.explore && values.browser && !values.browser.startsWith("chromium-"))
     throw new Error("--explore requires a Chromium browser project for agent attachment.");
   return { ...values, area: aliases[values.area] ?? values.area };
@@ -128,6 +131,7 @@ export function selectScenarios(catalog, options, changed) {
       : catalog.filter((entry) => entry.critical || code.some((file) => matches(entry, file)));
     reason = fallback ? "shared-or-unmapped-change-full-fallback" : "affected-plus-critical";
   }
+  if (!selected.length) throw new Error("No scenarios match the selection. Use pnpm qa --list.");
   if (options.shard) {
     const [currentStr, totalStr] = options.shard.split("/");
     const current = Number(currentStr);
@@ -135,7 +139,5 @@ export function selectScenarios(catalog, options, changed) {
     selected = selected.filter((_, idx) => idx % total === current - 1);
     reason += ` (shard ${current}/${total})`;
   }
-  if (!selected.length && !options.shard)
-    throw new Error("No scenarios match the selection. Use pnpm qa --list.");
   return { ids: selected.map((entry) => entry.id), scenarios: selected, reason, changed };
 }

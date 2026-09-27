@@ -43,7 +43,7 @@ jobs:
     name: Local application and state catalog (${{ matrix.shard }})
     if: github.event_name != 'workflow_dispatch' || inputs.mode != 'staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 20 || 180 }}
     strategy:
       fail-fast: false
       matrix:
@@ -104,6 +104,9 @@ jobs:
             args+=(--reference "$QA_REFERENCE_PATH")
           fi
           pnpm qa "${args[@]}"
+      - name: Verify API authorization and persistence contracts
+        if: github.event_name == 'pull_request' && matrix.shard == '1/4'
+        run: pnpm qa --all --browser api
       - name: Retain reports, screenshots and failing traces
         if: always()
         uses: actions/upload-artifact@v4

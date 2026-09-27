@@ -27,7 +27,13 @@ test("explicit selection is discoverable and rejects typos and empty matches", (
   assert.equal(parseArgs(["--shard", "1/4"]).shard, "1/4");
   assert.throws(() => parseArgs(["--shard", "invalid"]), /format/);
   assert.throws(() => parseArgs(["--shard", "5/4"]), /greater than total/);
+  assert.throws(() => parseArgs(["--staging", "--shard", "1/4"]), /Staging cannot/);
+  assert.throws(() => parseArgs(["--shard", "1/9007199254740992"]), /safe integers/);
   assert.throws(() => selectScenarios(scenarios, { scenario: "typo" }, []), /No scenarios/);
+  assert.throws(
+    () => selectScenarios(scenarios, { scenario: "typo", shard: "1/4" }, []),
+    /No scenarios/
+  );
 });
 
 test("shard partitioning divides scenarios deterministically", () => {
