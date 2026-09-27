@@ -123,6 +123,17 @@ export async function course(page: Page, kind: "active" | "empty" | "archived" =
   await expect(page.getByRole("tablist", { name: "Secciones del aula" })).toBeVisible();
 }
 
+export async function studentGradeDetail(page: Page, name: string) {
+  if (await page.getByRole("dialog", { name, exact: true }).isVisible()) return;
+  const sheetList = page.locator(".grades-view .sheet-list");
+  await expect(sheetList.or(page.locator(".grades-view .grades-table"))).toBeVisible();
+  if (await sheetList.isVisible()) {
+    const row = sheetList.locator(".sheet-row").filter({ hasText: name }).first();
+    await row.click();
+    await expect(page.locator(".sheet-facts")).toBeVisible();
+  }
+}
+
 export async function classroomTab(page: Page, label: string) {
   const tab = page
     .getByRole("tablist", { name: "Secciones del aula" })

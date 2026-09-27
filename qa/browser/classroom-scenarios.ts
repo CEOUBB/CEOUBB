@@ -8,6 +8,7 @@ import {
   course,
   firestoreDocument,
   holdRequest,
+  studentGradeDetail,
 } from "./helpers.ts";
 import type { Capture } from "./portal-scenarios.ts";
 
@@ -17,17 +18,6 @@ const PRESETS: Record<string, string> = {
   guide: "Guía de estudio",
   blank: "En blanco",
 };
-
-async function studentGradeDetail(page: Page, name: string) {
-  // Mobile grades use a detail sheet; desktop exposes the same controls in the table.
-  const sheetList = page.locator(".grades-view .sheet-list");
-  await expect(sheetList.or(page.locator(".grades-view .grades-table"))).toBeVisible();
-  if (await sheetList.isVisible()) {
-    const row = sheetList.locator(".sheet-row").filter({ hasText: name }).first();
-    await row.click();
-    await expect(page.locator(".sheet-facts")).toBeVisible();
-  }
-}
 
 export async function classroomScenario(
   page: Page,

@@ -49,6 +49,8 @@ Distinguish `failed`, `environment-error`, `incomplete`, and `requires-external-
 
 Functional assertions and automated accessibility violations block verification. Screenshot differences are advisory and remain inspectable even when functionality passes. Missing or incompatible references must be reported. Inspect desktop and mobile captures before drawing UX conclusions; automated accessibility does not replace keyboard and assistive-technology review.
 
+WebKit reports cancelled Firestore transport requests as access-control errors while an outgoing document unloads ([Firebase SDK issue](https://github.com/firebase/firebase-js-sdk/issues/4527)). The runner records these separately in `webkit-navigation-cancellations` only between a main-frame navigation request and its document commit, for the exact local emulator host and Firestore Listen/Write channel paths. The same errors outside that interval, other endpoints, application exceptions, and persistence failures still block verification.
+
 References must match platform, browser, and viewport. Linux CI is the stable comparison environment. Obtain an explicitly reviewed reference directory before using `--reference`. `--screenshots --update-snapshots` records new references only after human review; agents must not accept baseline changes automatically, and CI never invokes this option.
 
 Application defects uncovered by this pipeline remain failing and reproducible. Fix application behavior in a separate task unless the user expands scope. Never weaken protected tests, disable assertions, hide failed scenarios, or loosen accessibility checks to produce a green report.

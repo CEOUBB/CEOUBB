@@ -13,6 +13,7 @@ import {
   login,
   navigate,
   settings,
+  studentGradeDetail,
 } from "./helpers.ts";
 import type { Capture } from "./portal-scenarios.ts";
 
@@ -101,8 +102,7 @@ function storageEndpoint() {
 
 async function selectSubmission(page: Page) {
   const name = "Informe individual QA";
-  const row = page.locator(".grades-view .sheet-row").filter({ hasText: name }).first();
-  if (await row.isVisible()) await row.click();
+  await studentGradeDetail(page, name);
   const attach = page.getByRole("button", {
     name: new RegExp(`(?:Adjuntar|Reemplazar) la entrega.*${name}`),
   });
@@ -449,11 +449,7 @@ export async function stateScenario(
       await page.reload();
       await course(page);
       await classroomTab(page, "Notas");
-      const row = page
-        .locator(".grades-view .sheet-row")
-        .filter({ hasText: "Informe individual QA" })
-        .first();
-      if (await row.isVisible()) await row.click();
+      await studentGradeDetail(page, "Informe individual QA");
       await expect(page.getByText("qa-individual.pdf", { exact: true })).toBeVisible();
       await capture(id === "submissions.upload-retry" ? "recovered" : "persisted");
     } finally {
