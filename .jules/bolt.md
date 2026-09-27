@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-09-22 - Auditoría de Rendimiento Global (NO_OP)
+
+- **Finding:** Se auditó el código de vistas y utilidades del portal buscando cuellos de botella algorítmicos o pasadas redundantes no justificadas. No se identificaron cuellos de botella críticos ni regresiones de complejidad $O(N^2)$ pendientes de optimización que cumplan con el umbral de alto impacto.
+- **Attempted / Identified Solution:** Se evaluó la optimización de instanciaciones de `Map` en componentes secundarios (`EvaluationTeamsEditor`), determinándose que al estar adecuadamente memoizadas con `useMemo` en listas pequeñas de UI, su refactorización representaría una micro-optimización especulativa sin impacto medible.
+- **Outcome / Learning:** Se descartó realizar cambios superficiales siguiendo la directiva de salida limpia (`NO_OP`) y priorización de legibilidad del código.
+- **Future Rule:** Evitar refactorizaciones especulativas sobre construcciones memoizadas con `useMemo` cuando la colección subyacente sea acotada y el patrón funcional sea claro e idiomático.
