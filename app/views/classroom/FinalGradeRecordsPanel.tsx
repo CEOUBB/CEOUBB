@@ -28,6 +28,7 @@ import {
   type ParticipantDirectoryEntry,
 } from "../../../lib/participants";
 import { paginateList, type Note } from "./classroom-utils";
+import { PaginationActions } from "./PaginationActions";
 
 function safeFileName(value: string): string {
   const normalized = value
@@ -172,27 +173,11 @@ function FinalGradeRecordTable({
           <span className="pagination-summary num">
             Mostrando {paginated.startIndex}–{paginated.endIndex} de {paginated.totalItems}
           </span>
-          <div className="pagination-actions">
-            <button
-              className="pagination-btn"
-              disabled={paginated.page <= 1}
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              type="button"
-            >
-              Anterior
-            </button>
-            <span className="pagination-indicator num">
-              Página {paginated.page} de {paginated.totalPages}
-            </span>
-            <button
-              className="pagination-btn"
-              disabled={paginated.page >= paginated.totalPages}
-              onClick={() => setCurrentPage((page) => Math.min(paginated.totalPages, page + 1))}
-              type="button"
-            >
-              Siguiente
-            </button>
-          </div>
+          <PaginationActions
+            page={paginated.page}
+            totalPages={paginated.totalPages}
+            onPageChange={setCurrentPage}
+          />
         </nav>
       )}
     </>
