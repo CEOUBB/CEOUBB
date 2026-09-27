@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / PostsSection
+
+- **Finding:** In `PostsSection.tsx`, decorative Phosphor SVG vector icons (`<ArrowRight>`, `<ArrowUpRight>`) inside the empty state publication creation button and external resource link lacked `aria-hidden="true"`, causing screen readers to process redundant child vector nodes within interactive triggers with visible text (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to `<ArrowRight>` inside the empty state create button and `<ArrowUpRight>` inside external resource links.
+- **Design System Constraint:** Reused existing Phosphor icon props (`size={15}`, `size={12}`) without modifying visual layout or styling.
+- **Future Rule:** Ensure decorative vector icons inside classroom post empty states and link triggers explicitly declare `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / EvaluationTeamsEditor & GradebookSettingsEditor
 
 - **Finding:** In `EvaluationTeamsEditor.tsx`, repeated team deletion buttons rendered generic text ("Quitar equipo") without team name context, causing screen reader ambiguity across team cards (WCAG 2.2 SC 2.4.4 & SC 4.1.2). In `GradebookSettingsEditor.tsx`, status feedback messages using `aria-live="polite"` lacked an explicit ARIA role (`role="status"` / `role="alert"`), preventing consistent screen reader announcements during scheme validation or updates (WCAG 2.2 SC 4.1.2 & SC 3.2.2).
