@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / SubmissionSlot & PostsSection
+
+- **Finding:** In `SubmissionSlot.tsx`, decorative status icons (`CheckCircle`, `WarningCircle`, `CircleNotch`, `File`) inside `StatusIcon` and action vector icons (`ArrowClockwise`, `Trash`) inside file upload rows and receipt slots lacked `aria-hidden="true"`, causing screen reader redundancy (WCAG 2.2 SC 4.1.2 & SC 1.1.1). In `PostsSection.tsx`, decorative vector arrows (`ArrowRight`, `ArrowUpRight`) inside empty state CTA buttons and external links lacked `aria-hidden="true"`.
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to decorative Phosphor SVG vector icons inside interactive buttons, links, and status wrappers that already provide accessible text or `aria-label`.
+- **Design System Constraint:** Reused existing Phosphor icon props and component layout without altering visual styling or DOM hierarchy.
+- **Future Rule:** Ensure all decorative Phosphor SVG vector icons nested within buttons, links, or status containers with visible text or `sr-only` text explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / EvaluationTeamsEditor & GradebookSettingsEditor
 
 - **Finding:** In `EvaluationTeamsEditor.tsx`, repeated team deletion buttons rendered generic text ("Quitar equipo") without team name context, causing screen reader ambiguity across team cards (WCAG 2.2 SC 2.4.4 & SC 4.1.2). In `GradebookSettingsEditor.tsx`, status feedback messages using `aria-live="polite"` lacked an explicit ARIA role (`role="status"` / `role="alert"`), preventing consistent screen reader announcements during scheme validation or updates (WCAG 2.2 SC 4.1.2 & SC 3.2.2).

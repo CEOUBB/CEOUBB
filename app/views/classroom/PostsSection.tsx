@@ -161,7 +161,7 @@ export function PostsSection({
           action={
             canManageContent ? (
               <button className="empty-state-action" onClick={startPublication} type="button">
-                Crear la primera publicación <ArrowRight size={15} />
+                Crear la primera publicación <ArrowRight aria-hidden="true" size={15} />
               </button>
             ) : undefined
           }
@@ -238,7 +238,7 @@ export function PostsSection({
                       )}
                       {safePostLink && (
                         <a href={safePostLink} target="_blank" rel="noopener noreferrer">
-                          Abrir recurso <ArrowUpRight size={12} />
+                          Abrir recurso <ArrowUpRight aria-hidden="true" size={12} />
                         </a>
                       )}
                       {canManage && deletingId !== post.id && (
