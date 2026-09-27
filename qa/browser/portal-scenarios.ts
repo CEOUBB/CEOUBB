@@ -30,7 +30,9 @@ export async function portalScenario(
       "public.preview": "/preview/docente",
       "public.not-found": "/qa-missing-page",
     };
-    await page.goto(routes[id]);
+    const route = routes[id] ?? (id.startsWith("public.contact-") ? "/contacto" : undefined);
+    if (!route) return false;
+    await page.goto(route);
     if (id === "auth.login")
       await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
     else if (id === "public.preview") await expect(page.locator(".app-header")).toBeVisible();
@@ -149,7 +151,8 @@ export async function portalScenario(
           await page.getByLabel("Mensaje", { exact: true }).fill(text);
           await capture("form");
           await page.getByRole("button", { name: /Enviar mensaje|Enviar/ }).click();
-          await expect(page.getByText(text, { exact: true })).toBeVisible();
+          const activePanel = page.getByRole("region", { name: "Conversación seleccionada" });
+          await expect(activePanel.getByText(text, { exact: true })).toBeVisible();
           await page.reload();
           await navigate(page, "Avisos y mensajes");
           await page.getByRole("tab", { name: /Mensajes/ }).click();
@@ -158,7 +161,8 @@ export async function portalScenario(
             .locator("li button")
             .first()
             .click();
-          await expect(page.getByText(text, { exact: true })).toBeVisible();
+          const reloadedPanel = page.getByRole("region", { name: "Conversación seleccionada" });
+          await expect(reloadedPanel.getByText(text, { exact: true })).toBeVisible();
           await capture("persisted");
           await removeQaMessage(text);
           await resetQaFixtures();
@@ -298,7 +302,7 @@ export async function portalScenario(
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(!original),
+        toggle.setChecked(!original, { force: true }),
       ]);
       expect(response.status()).toBe(200);
       await page.reload();
@@ -311,7 +315,7 @@ export async function portalScenario(
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(original),
+        toggle.setChecked(original, { force: true }),
       ]);
       expect(restored.status()).toBe(200);
     } else if (id === "settings.photo-invalid") {

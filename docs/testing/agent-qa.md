@@ -27,6 +27,7 @@ Linux CI additionally uses `playwright install --with-deps`. The launcher uses t
 | `pnpm qa --base origin/main`                                               | Select changed areas against an explicit Git base.                                                                           |
 | `pnpm qa --screenshots --reference /absolute/reviewed/reference-directory` | Compare compatible reviewed references.                                                                                      |
 | `pnpm qa --staging`                                                        | Run the separate live staging smoke and report remaining external evidence.                                                  |
+| `pnpm qa --shard 1/4`                                                      | Run one deterministic shard of the selected scenarios in parallel execution.                                                 |
 
 Chromium runs at widths 320, 390, 768, and 1440. Critical scenarios also run in Firefox and WebKit. Selecting one `--browser` narrows evidence and must be disclosed; it does not establish complete-matrix coverage. The `api` project exercises application endpoints and authorization separately from browser checkpoints.
 
@@ -47,6 +48,8 @@ Every run prints `qa-results/<run>/index.html`. Read it together with `summary.j
 Distinguish `failed`, `environment-error`, `incomplete`, and `requires-external-verification` from a pass. A registered scenario without its required executed checkpoint remains uncovered. A complete catalog invocation is a request for coverage; it is not a claim that every required state passed. Report uncovered surfaces and states explicitly, and extend the inventory when a shipped state is missing.
 
 Functional assertions and automated accessibility violations block verification. Screenshot differences are advisory and remain inspectable even when functionality passes. Missing or incompatible references must be reported. Inspect desktop and mobile captures before drawing UX conclusions; automated accessibility does not replace keyboard and assistive-technology review.
+
+WebKit reports cancelled Firestore transport requests as access-control errors while an outgoing document unloads ([Firebase SDK issue](https://github.com/firebase/firebase-js-sdk/issues/4527)). The runner records these separately in `webkit-navigation-cancellations` only between a main-frame navigation request and its document commit, for the exact local emulator host and Firestore Listen/Write channel paths. The same errors outside that interval, other endpoints, application exceptions, and persistence failures still block verification.
 
 References must match platform, browser, and viewport. Linux CI is the stable comparison environment. Obtain an explicitly reviewed reference directory before using `--reference`. `--screenshots --update-snapshots` records new references only after human review; agents must not accept baseline changes automatically, and CI never invokes this option.
 
@@ -74,6 +77,6 @@ This smoke proves the deployed password/session/data path. Google OAuth, real Tu
 
 ## CI
 
-`.github/workflows/agent-qa.yml` runs affected and critical checks for each PR, and the full screenshot matrix nightly at 07:00 UTC. Manual dispatch supports full, area, or staging scope. An optional `reference_path` must already contain reviewed references in the checkout. Reports and screenshots are retained for 14 days, including failed runs.
+`.github/workflows/agent-qa.yml` splits affected and critical scenarios across four isolated jobs for each PR, scoped to the reference `chromium-1440` desktop browser. The first job also runs the separate API authorization and persistence suite. PR jobs have a 20-minute limit; nightly and manual catalog jobs retain the 180-minute limit for the full browser matrix. The full multi-viewport browser matrix runs nightly at 07:00 UTC. Manual dispatch supports full, area, or staging scope. An optional `reference_path` must already contain reviewed references in the checkout. Reports and screenshots are retained for 14 days, including failed runs.
 
 PR jobs use read-only repository permissions, disposable data, and no staging secrets. Staging dispatch runs only from `main`, uses the protected `Staging` environment, and requires configured synthetic credentials. Existing CI quality gates continue independently; neither workflow tolerates functional or accessibility failures.

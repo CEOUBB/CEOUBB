@@ -94,14 +94,15 @@ export function TeamSubmissionPicker({
   const selectedIds = useMemo(() => new Set(selected), [selected]);
   const remaining = MAX_TEAM_MEMBERS - 1 - selected.length;
 
-  const toggle = (userId: string) => {
-    setSelected((current) =>
-      current.includes(userId)
-        ? current.filter((id) => id !== userId)
-        : current.length >= MAX_TEAM_MEMBERS - 1
-          ? current
-          : [...current, userId]
-    );
+  const setMemberSelected = (userId: string, nextChecked: boolean) => {
+    setSelected((current) => {
+      if (nextChecked) {
+        if (current.includes(userId)) return current;
+        if (current.length >= MAX_TEAM_MEMBERS - 1) return current;
+        return [...current, userId];
+      }
+      return current.filter((id) => id !== userId);
+    });
   };
 
   return (
@@ -147,12 +148,12 @@ export function TeamSubmissionPicker({
               const checked = selectedIds.has(entry.id);
               return (
                 <li key={entry.id}>
-                  <label htmlFor={`team-member-${entry.id}`}>
+                  <label className="team-picker-member">
                     <input
                       checked={checked}
                       disabled={!checked && remaining <= 0}
                       id={`team-member-${entry.id}`}
-                      onChange={() => toggle(entry.id)}
+                      onChange={(e) => setMemberSelected(entry.id, e.target.checked)}
                       type="checkbox"
                     />
                     <b>{entry.name}</b>

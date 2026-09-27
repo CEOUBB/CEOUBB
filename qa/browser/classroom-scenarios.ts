@@ -8,6 +8,7 @@ import {
   course,
   firestoreDocument,
   holdRequest,
+  studentGradeDetail,
 } from "./helpers.ts";
 import type { Capture } from "./portal-scenarios.ts";
 
@@ -17,12 +18,6 @@ const PRESETS: Record<string, string> = {
   guide: "Guía de estudio",
   blank: "En blanco",
 };
-
-async function studentGradeDetail(page: Page, name: string) {
-  // Mobile grades use a detail sheet; desktop exposes the same controls in the table.
-  const row = page.locator(".grades-view .sheet-row").filter({ hasText: name });
-  if (await row.first().isVisible()) await row.first().click();
-}
 
 export async function classroomScenario(
   page: Page,
@@ -305,9 +300,19 @@ export async function classroomScenario(
         const team = page.getByRole("group", { name: `Equipo para ${name}` });
         await expect(team).toBeVisible();
         if (id === "submissions.upload") return true;
-        await team.getByRole("checkbox", { name: new RegExp(QA_TEAMMATE.name) }).check();
+        await expect(team.getByRole("searchbox", { name: "Buscar compañero" })).toBeVisible();
+        await capture("form");
+        const teammateCheckbox = team.getByRole("checkbox", {
+          name: new RegExp(QA_TEAMMATE.name),
+        });
+        await teammateCheckbox.check();
+        await expect(teammateCheckbox).toBeChecked();
+        await expect(
+          page.getByRole("button", { name: "Elegir archivo", exact: true })
+        ).toBeEnabled();
+      } else {
+        await capture("form");
       }
-      await capture("form");
       const [chooser] = await Promise.all([
         page.waitForEvent("filechooser"),
         isTeam
@@ -316,7 +321,8 @@ export async function classroomScenario(
       ]);
       const fileName = isTeam ? "qa-team.pdf" : "qa-individual.pdf";
       await chooser.setFiles({ name: fileName, mimeType: "application/pdf", buffer: qaPdf() });
-      await expect(page.getByText(fileName, { exact: true })).toBeVisible();
+      if (isTeam) await studentGradeDetail(page, name);
+      await expect(page.getByText(fileName, { exact: true })).toBeVisible({ timeout: 45_000 });
       const evalId = isTeam ? QA_IDS.team : QA_IDS.report;
       const receipt = await firestoreDocument(
         `courses/${QA_SECTIONS.active}/submissions/${evalId}_qa-student`
@@ -334,7 +340,7 @@ export async function classroomScenario(
       await course(page);
       await classroomTab(page, "Notas");
       await studentGradeDetail(page, name);
-      await expect(page.getByText(fileName, { exact: true })).toBeVisible();
+      await expect(page.getByText(fileName, { exact: true })).toBeVisible({ timeout: 30_000 });
       await capture("persisted");
       await resetQaFixtures();
     } else {
@@ -366,12 +372,28 @@ export async function classroomScenario(
       await expect(
         page.getByText("No hay cuestionarios disponibles", { exact: true })
       ).toBeVisible();
-    else if (["quizzes.teacher", "quizzes.import"].includes(id)) {
-      await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+    else if (["quizzes.teacher", "quizzes.import", "quizzes.teacher-loading"].includes(id)) {
+      if (id === "quizzes.teacher-loading") {
+        await expect(
+          page
+            .getByRole("status", { name: "Cargando cuestionarios…" })
+            .or(page.getByLabel("Nombre del cuestionario"))
+            .first()
+        ).toBeVisible();
+      } else {
+        await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+      }
       if (id === "quizzes.import") {
         await page.locator('.quiz-dropzone input[type="file"]').setInputFiles(QA_ASSETS.questions);
         await expect(page.getByText("Pregunta importada QA", { exact: true })).toBeVisible();
       }
+    } else if (id === "quizzes.student-loading") {
+      const quiz = page
+        .locator(".quiz-student-card")
+        .filter({ hasText: "Cuestionario de práctica QA" });
+      await expect(
+        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz).first()
+      ).toBeVisible();
     } else {
       const quiz = page
         .locator(".quiz-student-card")
@@ -459,6 +481,16 @@ export async function classroomScenario(
         await capture("persisted");
       }
     } else {
+      const importsSummary = page.locator(".classroom-imports > summary");
+      if (await importsSummary.count()) {
+        const details = page.locator(".classroom-imports");
+        const isOpen = await details
+          .evaluate((el: HTMLDetailsElement) => el.open)
+          .catch(() => false);
+        if (!isOpen) {
+          await importsSummary.click();
+        }
+      }
       const system = id.includes("moodle") ? "Moodle" : "ADECCA";
       await page.getByRole("button", { name: new RegExp(`Importar.*${system}`) }).click();
       const dialog = page.getByRole("dialog", { name: `Importar desde ${system} UBB` });
@@ -481,9 +513,7 @@ export async function classroomScenario(
         await expect(submit).toBeEnabled();
         await capture("preview");
         await submit.click();
-        await expect(
-          dialog.getByRole("button", { name: "Cerrar", exact: true }).last()
-        ).toBeVisible();
+        await expect(dialog.getByText(/Importación completada/)).toBeVisible({ timeout: 60_000 });
         await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
         const title = `Aviso importado ${system} QA`;
         await expect(page.getByRole("heading", { name: title, exact: true })).toHaveCount(1);
@@ -527,19 +557,22 @@ export async function classroomScenario(
         // The genuine launch endpoint is checked without contacting a third-party provider.
         await page.context().route("https://qa-tool.invalid/**", (route) =>
           route.fulfill({
-            contentType: "text/html",
-            body: '<!doctype html><html lang="es"><head><title>QA LTI contract</title></head><body><main><h1>Proveedor LTI sintético QA</h1><p>Contrato de lanzamiento recibido; entrega externa no verificada.</p></main></body></html>',
+            contentType: "text/html; charset=utf-8",
+            body: '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>QA LTI contract</title></head><body><main><h1>Proveedor LTI sintético QA</h1><p>Contrato de lanzamiento recibido; entrega externa no verificada.</p></main></body></html>',
           })
         );
-        const [response] = await Promise.all([
+        const [response, launch] = await Promise.all([
           page.waitForResponse(
             (response) =>
               response.url().includes("/interop/") && response.request().method() === "POST"
           ),
+          page.waitForRequest("https://qa-tool.invalid/**"),
           resource.getByRole("button", { name: "Abrir", exact: true }).click(),
         ]);
         expect(response.status()).toBe(200);
-        expect(await response.text()).toContain("client_id");
+        const launchUrl = new URL(launch.url());
+        expect(launchUrl.searchParams.get("client_id")).toBe("qa-lti-client");
+        expect(launchUrl.searchParams.get("login_hint")).toMatch(/^[a-f0-9]{64}$/);
         await expect(
           page.getByRole("heading", { name: "Proveedor LTI sintético QA" })
         ).toBeVisible();

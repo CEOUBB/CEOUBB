@@ -236,6 +236,7 @@ export function AdminView() {
         setAccounts([]);
         setTotal(0);
         setTotalPages(1);
+        toast.error("No fue posible cargar las cuentas de usuario.");
       } finally {
         setLoading(false);
       }
@@ -261,6 +262,7 @@ export function AdminView() {
             setAccounts([]);
             setTotal(0);
             setTotalPages(1);
+            toast.error("No fue posible cargar las cuentas de usuario.");
           }
         })
         .finally(() => {

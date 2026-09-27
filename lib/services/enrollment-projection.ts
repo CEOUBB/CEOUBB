@@ -329,48 +329,70 @@ export async function commitOpenSectionWrites(sectionId: string, writes: Firesto
   if (!isValidPathSegment(sectionId) || writes.length > MAX_WRITES_PER_COMMIT)
     throw new Error("Lote de sección inválido.");
   const token = await accessToken();
-  const base = `${firebaseRestOrigins().firestore}/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  const documents = `projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+  const base = `${firebaseRestOrigins().firestore}/v1/${documents}`;
+  const jsonHeaders = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const begin = await fetch(`${base}:beginTransaction`, {
     method: "POST",
-    headers,
+    headers: jsonHeaders,
     body: JSON.stringify({ options: { readWrite: {} } }),
   });
   if (!begin.ok) throw new Error("No se pudo iniciar la comprobación del período.");
   const { transaction } = z.object({ transaction: z.string().min(1) }).parse(await begin.json());
   try {
-    const query = new URLSearchParams({ transaction });
-    const section = await fetch(
-      `${base}/academicSections/${encodeURIComponent(sectionId)}?${query}`,
-      { headers }
-    );
+    const section = await fetch(`${base}:batchGet`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        documents: [`${documents}/academicSections/${sectionId}`],
+        transaction,
+      }),
+    });
     if (!section.ok) throw new Error("La sección no está sincronizada.");
-    const { fields } = z
-      .object({
-        fields: z.object({
-          periodoId: z.object({ stringValue: z.string().refine(isValidPathSegment) }),
+    const [
+      {
+        found: { fields },
+      },
+    ] = z
+      .tuple([
+        z.object({
+          found: z.object({
+            fields: z.object({
+              periodoId: z.object({ stringValue: z.string().refine(isValidPathSegment) }),
+            }),
+          }),
         }),
-      })
+      ])
       .parse(await section.json());
-    const period = await fetch(
-      `${base}/academicPeriods/${encodeURIComponent(fields.periodoId.stringValue)}?${query}`,
-      { headers }
-    );
+    const period = await fetch(`${base}:batchGet`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        documents: [`${documents}/academicPeriods/${fields.periodoId.stringValue}`],
+        transaction,
+      }),
+    });
     if (!period.ok) throw new Error("El período no está sincronizado.");
     const data = z
-      .object({ fields: z.object({ status: z.object({ stringValue: z.literal("abierto") }) }) })
+      .tuple([
+        z.object({
+          found: z.object({
+            fields: z.object({ status: z.object({ stringValue: z.literal("abierto") }) }),
+          }),
+        }),
+      ])
       .safeParse(await period.json());
     if (!data.success) throw new Error("El período de esta sección está cerrado.");
     const response = await fetch(`${base}:commit`, {
       method: "POST",
-      headers,
+      headers: jsonHeaders,
       body: JSON.stringify({ writes, transaction }),
     });
     if (!response.ok) throw new Error("El período cambió durante la importación. Reintenta.");
   } catch (cause) {
     await fetch(`${base}:rollback`, {
       method: "POST",
-      headers,
+      headers: jsonHeaders,
       body: JSON.stringify({ transaction }),
     }).catch(() => undefined);
     throw cause;

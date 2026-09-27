@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { QA_SCENARIOS } from "../catalog.ts";
 import { QA_NOW } from "../fixtures.ts";
+import { isFirestoreNavigationCancellation } from "../browser-errors.ts";
 import { resetQaFixtures } from "../../scripts/qa/seed.ts";
 import { login, removeQaMutationDocuments } from "./helpers.ts";
 import { portalScenario } from "./portal-scenarios.ts";
@@ -14,9 +15,12 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
   test(`${scenario.id} @${scenario.area}${scenario.critical ? " @critical" : ""}`, async ({
     page,
     baseURL,
+    browserName,
   }, testInfo) => {
     if (!baseURL) throw new Error("QA_BASE_URL is required.");
     const errors: string[] = [];
+    const navigationCancellations: string[] = [];
+    let navigating = false;
     const mutates =
       scenario.id.endsWith("persistence") ||
       [
@@ -26,7 +30,26 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
         "interop.scorm",
         "interop.xapi",
       ].includes(scenario.id);
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("request", (request) => {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigating = true;
+    });
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) navigating = false;
+    });
+    page.on("pageerror", (error) => {
+      if (
+        isFirestoreNavigationCancellation(
+          error,
+          browserName,
+          navigating,
+          process.env.FIRESTORE_EMULATOR_HOST
+        )
+      ) {
+        navigationCancellations.push(error.message);
+        return;
+      }
+      errors.push(error.message);
+    });
     await page.clock.setFixedTime(new Date(QA_NOW));
     const executed = new Set<string>();
     const capture = async (id: string) => {
@@ -103,6 +126,12 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
       }
       throw error;
     } finally {
+      if (navigationCancellations.length) {
+        await testInfo.attach("webkit-navigation-cancellations", {
+          body: JSON.stringify(navigationCancellations),
+          contentType: "application/json",
+        });
+      }
       await testInfo.attach("checkpoint-coverage", {
         body: JSON.stringify({
           scenario: scenario.id,

@@ -267,7 +267,8 @@ export function usePortalCore(initialSession?: SessionState) {
   }, [user, memberships.length]);
 
   const isAppVisible = useAppVisibility();
-  const needsGradebooks = isAppVisible && (screen === "calendar" || course !== null);
+  const needsGradebooks =
+    isAppVisible && (screen === "calendar" || screen === "courses" || course !== null);
 
   // Implements: REQ-PERF-08
   useEffect(() => {

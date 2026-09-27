@@ -30,10 +30,18 @@ function xapiVersion(request: Request, grant: string) {
   const auth = request.headers.get("authorization");
   if (auth !== "Bearer " + grant) fail("La autorización xAPI no corresponde a esta sesión.", 401);
 }
+function requestOrigin(request: Request): string {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto =
+    request.headers.get("x-forwarded-proto") ||
+    (request.url.startsWith("https:") ? "https" : "http");
+  if (host) return `${proto}://${host}`;
+  return new URL(request.url).origin;
+}
 export async function GET(request: Request, context: Context) {
   try {
     const { grant, path } = await context.params;
-    const resolved = await contentGrant(grant, new URL(request.url).origin);
+    const resolved = await contentGrant(grant, requestOrigin(request));
     if (path.length === 1 && path[0] === "player") {
       const progress = await loadInteropProgress(resolved.resource.id, resolved.actor.id);
       return new Response(
@@ -71,7 +79,7 @@ export async function GET(request: Request, context: Context) {
 async function mutate(request: Request, context: Context) {
   try {
     const { grant, path } = await context.params;
-    const resolved = await contentGrant(grant, new URL(request.url).origin);
+    const resolved = await contentGrant(grant, requestOrigin(request));
     if (request.headers.get("origin") !== contentOrigin())
       fail("Origen de contenido no válido.", 403);
     if (path.join("/") === "progress" && request.method === "POST") {

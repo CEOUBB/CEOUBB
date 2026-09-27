@@ -199,6 +199,7 @@ test("QA launcher strips inherited and dotenv credentials and contains its run d
     );
     const values = new Map(Object.entries(child));
     assert.equal(values.get("PATH"), "synthetic-path");
+    assert.equal(values.get("FUNCTIONS_DISCOVERY_TIMEOUT"), "60");
     for (const key of ["NODE_OPTIONS", "FIREBASE_TOKEN"]) assert.equal(values.has(key), false);
     for (const key of [
       "GITHUB_TOKEN",

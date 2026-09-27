@@ -20,6 +20,7 @@ pnpm qa --base origin/main               Choose the change-comparison base
 pnpm qa --reference PATH --screenshots    Compare reviewed, platform-matched references
 pnpm qa --screenshots --update-snapshots  Explicitly record reviewed references
 pnpm qa --staging                        Verify configured staging test integrations
+pnpm qa --shard 1/4                      Run one shard of the selected scenarios
 
 Areas: ${QA_AREAS.join(", ")}
 Projects: chromium-320, chromium-390, chromium-768, chromium-1440, firefox-critical, webkit-critical, api
@@ -88,11 +89,16 @@ async function main() {
     screenshots: !!(options.screenshots || options.explore),
     mode: options.explore ? "explore" : "verify",
     reference: resolve(options.reference ?? ".qa/references"),
+    shard: options.shard ?? null,
   };
   await writeFile(join(output, "manifest.json"), JSON.stringify(manifest, null, 2));
   console.log(
     `[qa] ${selection.scenarios.length} scenarios selected (${selection.reason}). Evidence: ${output}`
   );
+  if (!selection.scenarios.length) {
+    console.log(`[qa] 0 scenarios selected for this shard. Nothing to run.`);
+    return;
+  }
   if (options.staging) {
     const { runStaging } = await import("./qa/staging.mjs");
     await runStaging(output, manifest);

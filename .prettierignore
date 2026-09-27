@@ -20,6 +20,8 @@ graphify-out
 .codex
 .impeccable
 .grepai
+working/
+screenshots/
 
 # Dependencias y bloqueos
 node_modules

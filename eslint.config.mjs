@@ -29,6 +29,8 @@ const eslintConfig = defineConfig([
     ".agents/**",
     "node_modules/**",
     "scripts/**",
+    "working/**",
+    "screenshots/**",
     "*.config.js",
     "*.config.mjs",
     "*.config.ts",

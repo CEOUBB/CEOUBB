@@ -181,15 +181,23 @@ test("SEC-03: matrícula docente y owner conservan lectura pero no importan en p
 test("SEC-03: Firestore rechaza cierre entre lectura y commit y libera la transacción", async (t) => {
   let conflict = true;
   let rolledBack = false;
+  let periodStatus = "abierto";
   t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     if (new URL(url).origin === "https://oauth2.googleapis.com")
       return Response.json({ access_token: "synthetic", expires_in: 3600 });
     if (url.endsWith(":beginTransaction")) return Response.json({ transaction: "transaction-id" });
-    if (url.includes("academicSections"))
-      return Response.json({ fields: { periodoId: { stringValue: "period-1" } } });
-    if (url.includes("academicPeriods"))
-      return Response.json({ fields: { status: { stringValue: "abierto" } } });
+    if (url.endsWith(":batchGet")) {
+      const body = JSON.parse(String(init?.body));
+      assert.equal(init?.method, "POST");
+      assert.equal(body.transaction, "transaction-id");
+      assert.equal(body.documents.length, 1);
+      if (body.documents[0].endsWith("/academicSections/section-1")) {
+        return Response.json([{ found: { fields: { periodoId: { stringValue: "period-1" } } } }]);
+      }
+      assert.match(body.documents[0], /\/academicPeriods\/period-1$/);
+      return Response.json([{ found: { fields: { status: { stringValue: periodStatus } } } }]);
+    }
     if (url.endsWith(":rollback")) {
       rolledBack = true;
       return Response.json({});
@@ -201,6 +209,10 @@ test("SEC-03: Firestore rechaza cierre entre lectura y commit y libera la transa
   assert.equal(rolledBack, true);
   conflict = false;
   await commitOpenSectionWrites("section-1", []);
+  periodStatus = "archivado";
+  rolledBack = false;
+  await assert.rejects(commitOpenSectionWrites("section-1", []), /cerrado/);
+  assert.equal(rolledBack, true);
 });
 
 test("SEC-06: revoca tokens antiguos por páginas y con precondición de versión", async (t) => {

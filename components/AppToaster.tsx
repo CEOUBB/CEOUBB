@@ -45,7 +45,8 @@ export function AppToaster() {
           borderColor: "oklch(0.92 0.006 60)",
           boxShadow:
             "0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)",
-        },
+          "--error-text": "oklch(0.42 0.2 25)",
+        } as React.CSSProperties,
       }}
     />
   );

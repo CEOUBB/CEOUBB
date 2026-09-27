@@ -469,7 +469,7 @@ export default function ContactForm() {
       {mensajeEstado ? (
         <p
           aria-live="polite"
-          className={estado === "error" ? "policy-status bad" : "policy-status"}
+          className={estado === "error" ? "policy-status bad policy-form-error" : "policy-status"}
         >
           {estado === "error" ? <WarningCircle aria-hidden="true" size={16} weight="fill" /> : null}
           {mensajeEstado}
