@@ -350,6 +350,7 @@ test("CEO-27 keeps routes authorized, lists bounded and the gradebook listener e
     assert.match(route, /getSessionUser\(request\)/);
   }
   assert.match(files.teacherCourses, /actor\.role !== "teacher" && actor\.role !== "owner"/);
+  assert.match(files.teacherCourses, /request\.headers\.get\("origin"\)/);
   assert.match(files.assistants, /await context\.params/);
   for (const query of files.service.split(".select(").slice(1)) {
     const statement = query.slice(0, query.indexOf(";"));
