@@ -6,6 +6,7 @@ import {
   privateHeaders,
   sessionActor,
 } from "../../../../../../lib/interop/http.ts";
+import { isSectionId } from "../../../../../../lib/section-roles.ts";
 import {
   getInteropResource,
   launchInteropResource,
@@ -17,6 +18,9 @@ export async function POST(request: Request, context: Context) {
   try {
     const actor = await sessionActor(request, true);
     const { sectionId, resourceId } = await context.params;
+    if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+      fail("La sección no es válida.", 400);
+    }
     const sessionHash = await currentSessionTokenHash(request);
     if (!sessionHash) fail("Inicia sesión para continuar.", 401);
     return json(await launchInteropResource(actor, sectionId, resourceId, sessionHash));
@@ -28,6 +32,9 @@ export async function GET(request: Request, context: Context) {
   try {
     const actor = await sessionActor(request);
     const { sectionId, resourceId } = await context.params;
+    if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+      fail("La sección no es válida.", 400);
+    }
     const { resource } = await getInteropResource(actor, sectionId, resourceId);
     if (resource.kind === "lti")
       fail("Las herramientas LTI no contienen un paquete descargable.", 400);
