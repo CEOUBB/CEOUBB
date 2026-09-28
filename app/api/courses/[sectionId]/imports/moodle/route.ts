@@ -1,4 +1,5 @@
 import { getSessionUser } from "../../../../../../lib/auth";
+import { isSectionId } from "../../../../../../lib/section-roles";
 import type {
   MoodleImportPost,
   MoodleImportReport,
@@ -91,6 +92,9 @@ async function sessionAndSection(request: Request, context: MoodleRouteContext) 
     throw new MoodleImportServiceError("Inicia sesión para continuar.", "UNAUTHENTICATED", 401);
   }
   const { sectionId } = await context.params;
+  if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+    throw new MoodleImportServiceError("La sección no es válida.", "INVALID_IMPORT_BATCH", 400);
+  }
   await authorizeMoodleImport(actor, sectionId, request.method !== "GET");
   return { actor, sectionId };
 }
