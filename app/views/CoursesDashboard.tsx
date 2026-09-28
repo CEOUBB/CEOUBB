@@ -327,7 +327,7 @@ export function CoursesDashboard({
                   onClick={() => setBusqueda("")}
                   className="text-[oklch(0.5_0.03_250)] hover:text-[oklch(0.2_0.03_260)]"
                 >
-                  <X size={14} />
+                  <X aria-hidden="true" size={14} />
                 </button>
               )}
             </div>
