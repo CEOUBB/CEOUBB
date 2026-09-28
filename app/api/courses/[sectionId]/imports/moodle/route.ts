@@ -93,11 +93,7 @@ async function sessionAndSection(request: Request, context: MoodleRouteContext) 
   }
   const { sectionId } = await context.params;
   if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
-    throw new MoodleImportServiceError(
-      "La sección no es válida.",
-      "INVALID_IMPORT_BATCH",
-      400
-    );
+    throw new MoodleImportServiceError("La sección no es válida.", "INVALID_IMPORT_BATCH", 400);
   }
   await authorizeMoodleImport(actor, sectionId, request.method !== "GET");
   return { actor, sectionId };

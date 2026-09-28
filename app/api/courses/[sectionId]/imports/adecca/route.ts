@@ -100,11 +100,7 @@ async function sessionAndSection(request: Request, context: AdeccaRouteContext) 
   }
   const { sectionId } = await context.params;
   if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
-    throw new AdeccaImportServiceError(
-      "La sección no es válida.",
-      "INVALID_IMPORT_BATCH",
-      400
-    );
+    throw new AdeccaImportServiceError("La sección no es válida.", "INVALID_IMPORT_BATCH", 400);
   }
   await authorizeAdeccaImport(actor, sectionId);
   return { actor, sectionId };
