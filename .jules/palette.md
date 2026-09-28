@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / CoursesDashboard Filter Clear
+
+- **Finding:** In `app/views/CoursesDashboard.tsx`, the course filter clear button rendered a decorative Phosphor SVG icon `<X size={14} />` without `aria-hidden="true"`, causing screen readers to process an unlabelled child vector node inside an interactive button that already has `aria-label="Limpiar filtro"` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` to `<X size={14} />` inside the clear search filter button.
+- **Design System Constraint:** Preserved existing button class names and icon sizing without modifying visual appearance or layout.
+- **Future Rule:** Ensure decorative vector icons inside clear buttons or icon-only triggers with explicit `aria-label` attributes explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
