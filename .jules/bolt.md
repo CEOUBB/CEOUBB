@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-09-23 - Indexación de elementos por fecha en `CalendarMonth` (`app/views/calendar/CalendarMonth.tsx`)
+
+- **Finding:** `CalendarMonth` realizaba filtrados lineales `items.filter((item) => item.date === ...)` en cada renderizado para el día seleccionado y para cada uno de los días del mes ($D$ días), generando una complejidad de $O(D \times N)$ y $D+1$ asignaciones de arreglos intermedios.
+- **Attempted / Identified Solution:** Construcción de un objeto `Map<string, PlannerItem[]>` indexado por fecha (`item.date`) mediante un bucle `for..of` dentro de `useMemo`, y búsqueda $O(1)$ con alternativa constante `EMPTY_ITEMS` reutilizable.
+- **Outcome / Learning:** Se redujo la complejidad de $O(D \times N)$ a $O(N + D)$ y se eliminaron $D+1$ asignaciones de arreglos temporales por renderizado en la vista mensual del calendario.
+- **Future Rule:** En vistas de grilla temporal con múltiples celdas, indizar los elementos por clave de fecha en un Map dentro de `useMemo` en lugar de filtrar el arreglo completo por cada celda.
