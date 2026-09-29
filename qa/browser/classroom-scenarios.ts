@@ -567,7 +567,7 @@ export async function classroomScenario(
               response.url().includes("/interop/") && response.request().method() === "POST"
           ),
           page.waitForRequest("https://qa-tool.invalid/**"),
-          resource.getByRole("button", { name: "Abrir", exact: true }).click(),
+          resource.getByRole("button", { name: `Abrir ${title}` }).click(),
         ]);
         expect(response.status()).toBe(200);
         const launchUrl = new URL(launch.url());
@@ -577,7 +577,7 @@ export async function classroomScenario(
           page.getByRole("heading", { name: "Proveedor LTI sintético QA" })
         ).toBeVisible();
       } else {
-        await resource.getByRole("button", { name: "Abrir", exact: true }).click();
+        await resource.getByRole("button", { name: `Abrir ${title}` }).click();
         await expect(page.getByRole("region", { name: title, exact: true })).toBeVisible();
         const frame = page.frameLocator(`iframe[title="${title}"]`).frameLocator("iframe#sco");
         await expect(frame.locator("body")).toContainText("QA");
