@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / InteropSection & InteropToolRegistration
+
+- **Finding:** In `InteropSection.tsx` and `InteropToolRegistration.tsx`, repeated action buttons ("Abrir", "Habilitar" / "Deshabilitar") across external learning resources and registered LTI tools lacked item-specific ARIA context, causing screen reader ambiguity across list items (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added explicit item-specific `aria-label` attributes (`aria-label={"Abrir " + resource.title}` and `aria-label={`${tool.enabled ? "Deshabilitar" : "Habilitar"} ${tool.name}`}`) to list item action buttons.
+- **Design System Constraint:** Reused existing button styling and DOM structure without custom CSS overrides or visual alterations.
+- **Future Rule:** Ensure interop resource launch and LTI tool management action buttons in classroom lists include item titles in `aria-label` for screen reader navigation.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).

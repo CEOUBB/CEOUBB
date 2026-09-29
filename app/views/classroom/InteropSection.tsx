@@ -327,6 +327,7 @@ export function InteropSection({
                 )}
                 <button
                   className="primary-button"
+                  aria-label={"Abrir " + resource.title}
                   disabled={busy || readOnly}
                   onClick={() => open(resource)}
                   type="button"
