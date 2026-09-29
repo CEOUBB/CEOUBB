@@ -28,10 +28,13 @@ export function EvaluationTeamsEditor({
 }) {
   const [query, setQuery] = useState("");
 
-  const nameById = useMemo(
-    () => new Map(students.map((student) => [student.userId, student.name])),
-    [students]
-  );
+  const nameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const student of students) {
+      map.set(student.userId, student.name);
+    }
+    return map;
+  }, [students]);
 
   const assigned = useMemo(() => new Set(teams.flatMap((team) => team.memberIds)), [teams]);
 
