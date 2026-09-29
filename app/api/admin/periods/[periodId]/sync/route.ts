@@ -8,6 +8,19 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ periodId: string }> }
 ) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > 16384) {
+    return Response.json(
+      { error: "El cuerpo de la solicitud es demasiado extenso." },
+      { status: 413 }
+    );
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
   if (actor.role !== "owner") {
