@@ -116,7 +116,7 @@ export default function FaqBrowser() {
             value={termino}
           />
         </div>
-        <p aria-live="polite" className="policy-count">
+        <p aria-live="polite" className="policy-count" role="status">
           {filtrando
             ? `${visibles} de ${TOTAL_PREGUNTAS} preguntas coinciden`
             : `${TOTAL_PREGUNTAS} preguntas publicadas`}

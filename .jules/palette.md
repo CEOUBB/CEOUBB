@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Support / ContactForm & FaqBrowser
+
+- **Finding:** In `ContactForm.tsx` and `FaqBrowser.tsx`, dynamic status update regions using `aria-live="polite"` (submission receipt confirmation, form status messages, character counters, and FAQ search result counts) on generic `<div>`, `<span>`, or `<p>` elements lacked explicit WAI-ARIA roles (`role="status"` or `role="alert"`), preventing consistent screen reader announcements during interactions (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 3.2.2 Predictability / Status Messages).
+- **Applied / Evaluated Pattern:** Added `role="status"` to `ContactReceipt`, character counter badges, and FAQ search result count `<p>`, and added `role={estado === "error" ? "alert" : "status"}` to form feedback status messages in `ContactForm.tsx`.
+- **Design System Constraint:** Preserved existing form layout, component structure, and utility classes without modifying visual styles or adding custom CSS.
+- **Future Rule:** Ensure dynamic status regions using `aria-live` on non-interactive elements explicitly declare WAI-ARIA roles (`role="status"` or `role="alert"`).
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
