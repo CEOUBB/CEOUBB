@@ -33,3 +33,25 @@ overrides:
   smol-toml: ">=1.6.1"
   "@tootallnate/once": ">=2.0.1"
   uuid: ">=11.1.1"
+packageExtensions:
+  "@typescript-eslint/eslint-plugin":
+    dependencies:
+      typescript: "6.0.3"
+  "@typescript-eslint/parser":
+    dependencies:
+      typescript: "6.0.3"
+  "@typescript-eslint/project-service":
+    dependencies:
+      typescript: "6.0.3"
+  "@typescript-eslint/type-utils":
+    dependencies:
+      typescript: "6.0.3"
+  "@typescript-eslint/typescript-estree":
+    dependencies:
+      typescript: "6.0.3"
+  "@typescript-eslint/utils":
+    dependencies:
+      typescript: "6.0.3"
+  typescript-eslint:
+    dependencies:
+      typescript: "6.0.3"
