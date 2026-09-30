@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useQueryState, parseAsString } from "nuqs";
-import { useReducedMotion } from "motion/react";
+import { useHydratedReducedMotion } from "../../lib/hooks/use-hydrated-reduced-motion";
 import * as m from "motion/react-m";
 import {
   Archive,
@@ -204,7 +204,7 @@ export function CoursesDashboard({
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
   const teaches = user.role === "teacher" || user.role === "owner";
-  const shouldReduceMotion = useReducedMotion();
+  const shouldReduceMotion = useHydratedReducedMotion();
 
   const displayedCourses = useMemo(() => {
     let list = courses;

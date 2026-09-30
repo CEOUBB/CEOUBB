@@ -90,7 +90,7 @@ export function DiffTable({
                   );
                 } else if (diff < 0) {
                   deltaNode = (
-                    <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
+                    <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.5_0.22_25)] num">
                       {diff.toFixed(1)}
                     </span>
                   );
@@ -109,7 +109,7 @@ export function DiffTable({
                 );
               } else if (hasPrevious && !hasNew && prevVal !== null) {
                 deltaNode = (
-                  <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
+                  <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.5_0.22_25)] num">
                     -{formatGrade(prevVal)}
                   </span>
                 );

@@ -95,9 +95,9 @@ jobs:
             args+=(--base "origin/$QA_BASE_BRANCH" --browser chromium-1440)
           elif [ "$QA_REQUESTED_MODE" = "area" ]; then
             test -n "$QA_REQUESTED_AREA" || { echo "An area is required."; exit 1; }
-            args+=(--area "$QA_REQUESTED_AREA")
+            args+=(--area "$QA_REQUESTED_AREA" --production)
           else
-            args+=(--all)
+            args+=(--all --production)
           fi
           if [ -n "$QA_REFERENCE_PATH" ]; then
             test -d "$QA_REFERENCE_PATH" || { echo "Reviewed reference directory is missing."; exit 1; }
@@ -106,7 +106,7 @@ jobs:
           pnpm qa "${args[@]}"
       - name: Verify API authorization and persistence contracts
         if: github.event_name == 'pull_request' && matrix.shard == '1/4'
-        run: pnpm qa --all --browser api
+        run: pnpm qa --all --browser api --production
       - name: Retain reports, screenshots and failing traces
         if: always()
         uses: actions/upload-artifact@v4

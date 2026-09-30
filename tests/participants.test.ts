@@ -136,7 +136,7 @@ test("REQ-PART-01 through REQ-PART-06 remain wired across API, query and interfa
       "utf8"
     ),
     readFile(new URL("../app/views/classroom/PeopleSection.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/campus-base.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(catalog, /function activeSectionRoleForUser[\s\S]*?\.limit\(1\)/);

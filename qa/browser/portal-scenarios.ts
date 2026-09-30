@@ -1,14 +1,16 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 import type { QaScenario } from "../catalog.ts";
 import {
   accountMenu,
   controlledError,
   course,
+  holdRequest,
   navigate,
   removeQaMessage,
   settings,
 } from "./helpers.ts";
 import { resetQaFixtures } from "../../scripts/qa/seed.ts";
+import { QA_GRADE_ITEMS, QA_IDS } from "../fixtures.ts";
 
 export type Capture = (id: string) => Promise<void>;
 
@@ -73,8 +75,10 @@ export async function portalScenario(
   }
   if (id.startsWith("shell.")) {
     if (id === "shell.sidebar") {
-      const toggle = page.getByRole("button", { name: /^(Abrir|Cerrar) el menú$/ });
-      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+      if (!(await page.locator(".mobile-nav").isVisible())) {
+        const toggle = page.getByRole("button", { name: /^(Abrir|Cerrar) el menú$/ });
+        if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+      }
       await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeVisible();
     } else if (id === "shell.account") await accountMenu(page);
     else if (id === "shell.notifications") {
@@ -115,6 +119,17 @@ export async function portalScenario(
       if (id === "courses.agenda") {
         // Gradebook subscriptions begin when the calendar opens; return to capture the populated agenda.
         await navigate(page, "Calendario");
+        await expect(page.getByRole("heading", { name: "Calendario", exact: true })).toBeVisible();
+        await expect(page.getByRole("group", { name: "Vista del calendario" })).toBeVisible();
+        const dayBar = page.getByRole("navigation", { name: "Día visible" });
+
+        if (await dayBar.isVisible()) {
+          const evaluation = QA_GRADE_ITEMS.find((item) => item.id === QA_IDS.report);
+
+          if (!evaluation?.date) throw new Error("QA evaluation date is missing");
+          const day = new Date(`${evaluation.date}T12:00:00Z`).getUTCDate();
+          await dayBar.getByRole("button", { name: new RegExp(` ${day}$`) }).click();
+        }
         await expect(page.getByText(/Informe individual QA/).first()).toBeVisible();
         await navigate(page, "Área personal");
       }
@@ -152,7 +167,10 @@ export async function portalScenario(
           await capture("form");
           await page.getByRole("button", { name: /Enviar mensaje|Enviar/ }).click();
           const activePanel = page.getByRole("region", { name: "Conversación seleccionada" });
-          await expect(activePanel.getByText(text, { exact: true })).toBeVisible();
+          await expect(page.locator(".communications-feedback")).toHaveText("Mensaje enviado.");
+          await expect(
+            activePanel.locator(".message-list").getByText(text, { exact: true })
+          ).toBeVisible();
           await page.reload();
           await navigate(page, "Avisos y mensajes");
           await page.getByRole("tab", { name: /Mensajes/ }).click();
@@ -162,7 +180,9 @@ export async function portalScenario(
             .first()
             .click();
           const reloadedPanel = page.getByRole("region", { name: "Conversación seleccionada" });
-          await expect(reloadedPanel.getByText(text, { exact: true })).toBeVisible();
+          await expect(
+            reloadedPanel.locator(".message-list").getByText(text, { exact: true })
+          ).toBeVisible();
           await capture("persisted");
           await removeQaMessage(text);
           await resetQaFixtures();
@@ -218,6 +238,24 @@ export async function portalScenario(
     return true;
   }
   if (id.startsWith("teacher.")) {
+    if (id === "teacher.data-loading") {
+      const release = await holdRequest(page, "**/api/teacher/courses?*");
+
+      try {
+        await navigate(page, "Administrar ramos");
+        const loading = page.getByRole("status", {
+          name: "Cargando secciones docentes",
+          exact: true,
+        });
+        await expect(loading).toBeVisible();
+        await expect(loading).toHaveAttribute("aria-busy", "true");
+        await capture("loading");
+      } finally {
+        await release();
+      }
+      return true;
+    }
+
     if (id === "teacher.error") await controlledError(page, "**/api/teacher/courses?*");
     await navigate(page, "Administrar ramos");
     await expect(
@@ -252,6 +290,82 @@ export async function portalScenario(
     return true;
   }
   if (id.startsWith("admin.")) {
+    if (id === "admin.periods-loading") {
+      const release = await holdRequest(page, "**/api/admin/periods?*");
+
+      try {
+        await navigate(page, "Administración");
+        await expect(
+          page.locator(".admin-periods").getByText("Cargando períodos…", { exact: true })
+        ).toBeVisible();
+        await capture("loading");
+      } finally {
+        await release();
+      }
+      return true;
+    }
+
+    if (id === "admin.archive-loading" || id === "admin.archive-error") {
+      const pattern = "**/api/admin/periods/*/archive";
+      let pending: Route | undefined;
+      const holdArchive = (route: Route) => {
+        pending = route;
+      };
+
+      if (id === "admin.archive-loading") await page.route(pattern, holdArchive);
+      else await controlledError(page, pattern);
+
+      try {
+        await navigate(page, "Administración");
+        const archive = page.getByRole("button", {
+          name: "Archivar el período Semestre QA vigente",
+          exact: true,
+        });
+        await expect(archive).toBeVisible();
+        page.once("dialog", (dialog) => dialog.accept());
+        await archive.click();
+
+        if (id === "admin.archive-loading") {
+          await expect.poll(() => pending !== undefined).toBe(true);
+          await expect(archive).toHaveText("Archivando…");
+          await expect(archive).toBeDisabled();
+          await capture("loading");
+        } else {
+          await expect(
+            page
+              .locator("[data-sonner-toast]")
+              .getByText("QA controlled service failure", { exact: true })
+          ).toBeVisible();
+          await expect(archive).toBeEnabled();
+          await capture("error");
+        }
+      } finally {
+        if (id === "admin.archive-loading") {
+          await pending?.abort();
+          await page.unroute(pattern, holdArchive);
+        }
+      }
+      return true;
+    }
+
+    if (id === "admin.role-error") {
+      await navigate(page, "Administración");
+      const role = page.getByRole("combobox", {
+        name: "Cambiar rango de Estudiante QA",
+        exact: true,
+      });
+      await expect(role).toBeVisible();
+      await controlledError(page, "**/api/admin/users");
+      await role.selectOption("teacher");
+      await expect(
+        page
+          .locator("[data-sonner-toast]")
+          .getByText("QA controlled service failure", { exact: true })
+      ).toBeVisible();
+      await capture("error");
+      return true;
+    }
+
     if (id === "admin.forbidden") {
       await accountMenu(page);
       await expect(
@@ -302,22 +416,25 @@ export async function portalScenario(
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(!original, { force: true }),
+        toggle.press("Space"),
       ]);
       expect(response.status()).toBe(200);
+      await expect(toggle).toBeChecked({ checked: !original });
       await page.reload();
       await settings(page);
       await expect(toggle).toBeChecked({ checked: !original });
       await capture("persisted");
+      await expect(toggle).toBeEnabled();
       const [restored] = await Promise.all([
         page.waitForResponse(
           (response) =>
             response.url().endsWith("/api/profile/preferences") &&
             response.request().method() === "PUT"
         ),
-        toggle.setChecked(original, { force: true }),
+        toggle.press("Space"),
       ]);
       expect(restored.status()).toBe(200);
+      await expect(toggle).toBeChecked({ checked: original });
     } else if (id === "settings.photo-invalid") {
       await page.locator("#settings-photo-file").setInputFiles({
         name: "invalid.png",

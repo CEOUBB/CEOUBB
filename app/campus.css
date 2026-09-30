@@ -1,6 +1,5 @@
 /* Campus académico. El acceso conserva íntegro su sistema visual. */
-.app-shell,
-.policy-page {
+.app-shell {
   --container-max: 1440px;
   --container-pad: clamp(24px, 3.2vw, 52px);
   --border-hairline: oklch(0.9 0.012 250);
@@ -109,8 +108,7 @@
 }
 .app-shell .page-head h1,
 .app-shell .page-head.lead h1,
-.app-shell .teacher-manager-hero h1,
-.policy-page h1 {
+.app-shell .teacher-manager-hero h1 {
   font-size: clamp(27px, 2.6vw, 36px);
   line-height: 1.22;
   letter-spacing: -0.035em;
@@ -475,55 +473,11 @@
 .app-shell .admin-row {
   padding-block: 18px;
 }
-.policy-page {
-  max-width: 1040px;
-  padding-top: 32px;
-}
-.policy-page > article {
-  padding: clamp(24px, 4vw, 48px);
-  border-radius: 12px;
-}
-.policy-page .policy-lead {
-  max-width: 66ch;
-  font-size: 17px;
-  line-height: 1.75;
-}
-.policy-page > article > p,
-.policy-page > article > ul {
-  max-width: 75ch;
-}
-.contact-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 32px;
-}
-.policy-page .contact-shortcuts a {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  padding: 10px 16px;
-  border: 1px solid var(--border-hairline);
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-}
-.policy-page .contact-shortcuts a:first-child {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--white);
-}
-.policy-page :is(h2, form) {
-  scroll-margin-top: 24px;
-}
-.app-shell ::selection,
-.policy-page ::selection {
+.app-shell ::selection {
   background: oklch(0.86 0.065 255);
   color: var(--ubb-midnight-navy);
 }
-.app-shell :is(button, a, input, select, textarea):focus-visible,
-.policy-page :is(button, a, input, select, textarea):focus-visible {
+.app-shell :is(button, a, input, select, textarea):focus-visible {
   transition: none;
 }
 @media (max-width: 1200px) {
@@ -573,8 +527,7 @@
     min-width: 0;
     white-space: nowrap;
   }
-  .app-shell,
-  .policy-page {
+  .app-shell {
     --container-pad: 20px;
   }
   .portal-main,
@@ -614,20 +567,10 @@
     flex-direction: column;
     gap: 20px;
   }
-  .policy-page {
-    padding: 20px 16px 40px;
-  }
-  .policy-page > article {
-    padding: 24px 20px;
-  }
-  .policy-page .policy-lead {
-    font-size: 16px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .app-shell,
-  .app-shell *,
-  .policy-page * {
+  .app-shell * {
     scroll-behavior: auto;
     transition-duration: 0ms;
     animation-duration: 0ms;
@@ -753,8 +696,10 @@
   border-radius: 8px;
   overflow: hidden;
 }
-.app-shell .planner-jump {
-  display: block;
+@media (min-width: 768px) {
+  .app-shell .planner-jump {
+    display: block;
+  }
 }
 .planner-controls :is(.planner-view-switch, .planner-step, .planner-jump input, .planner-create) {
   height: 44px;

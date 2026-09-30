@@ -1,5 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Current handoff: Loading performance implementation, 2026-09-29
+
+- Scope and measured evidence: [loading performance report](docs/performance/loading-performance-2026-09-29.md), OpenSpec `improve-loading-performance`.
+- Public access is static; validated private bootstrap runs under `/campus`. Personalized HTML, RSC and authentication responses must remain outside shared and offline caches.
+- Shared profile contracts, selective import tools, campus styles and local Sharp branding variants reduce public startup work. The compact Firestore activity reader remains disabled outside disposable QA until rules, trigger, bounded backfill and fresh parity verification are deployed and verified.
+- React Compiler and SQL placement changes remain conditional on measured interaction/provider evidence. No production deployment or migration was performed.
+- Verification: production build, protected unit contracts, invariants and affected E2E passed. The frozen complete production QA report records 778/783 passing; its conversation fixture was strengthened and all 29 followup browser/API cases passed. Initial Linux development QA passed 170/172 cases plus 23 production API cases; the live-class initial-state fixture was strengthened and all 37 followup browser/API cases passed. The explicitly authorized saved-text contrast correction passed all 77 production quiz-area browser/API cases with no missing checkpoints (`20260930T142234018Z-616278d8`), resolving the four historical contrast failures. Shared live-editor fixture readiness now covers all branches; its production followup passed 37/37 browser/API cases (`20260930T145153945Z-d99b5928`).
+- Matched local Lighthouse: public home LCP 6962.465 to 3428.465 ms at simulated slow 4G; 33332.457 to 14232.634 ms at simulated slow 3G. These are laboratory results; private provider latency, field INP and Chilean carrier/device behavior remain unverified.
+- Delivery: [PR #263](https://github.com/CEOUBB/CEOUBB/pull/263) is published and attached. Linux OpenNext packaging and actual preview anonymous/empty-cookie HTML/RSC cache checks passed; measured preview home LCP is 3594.410 ms for simulated slow 4G and 13681.166 ms for slow 3G. The saved-text scope blocker is resolved locally; repeat Linux CI on the corrected commit before merging. Dedicated institutional staging identities, authenticated Worker separation and real provider delivery remain external prerequisites.
+
 ## Handoff: TypeScript 7.0.2 and Bun 1.4.2 Hybrid Runtime Migration, 2026-09-30
 
 - **Capability:** `toolchain/ts7-bun-hybrid` establishing a high-performance local runtime using Bun 1.4.2 and native TypeScript 7.0.2 compiler while isolating typescript-eslint AST dependencies and preserving Node.js 22 for universal CI runners, Cloudflare Workers builds, Firebase emulators, and test runners.

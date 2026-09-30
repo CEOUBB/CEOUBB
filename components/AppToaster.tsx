@@ -39,6 +39,7 @@ export function AppToaster() {
       }}
       toastOptions={{
         className: "ceoubb-toast",
+        classNames: { closeButton: "ceoubb-toast-close" },
         style: {
           fontFamily: "var(--font-manrope), system-ui, sans-serif",
           borderRadius: "0.75rem",

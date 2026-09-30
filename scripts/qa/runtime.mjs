@@ -39,7 +39,15 @@ export async function freePort() {
 
 // Implements: REQ-QA-02, REQ-QA-09
 /** @param {Record<string, string | undefined>} inherited */
-export async function localEnvironment(root, runDir, ports, inherited = process.env) {
+export async function localEnvironment(
+  root,
+  runDir,
+  ports,
+  inherited = process.env,
+  mode = "development"
+) {
+  if (mode !== "development" && mode !== "production")
+    throw new Error("QA_CONFIG_INVALID: application mode must be development or production.");
   within(join(root, ".qa"), runDir);
   /** @type {Record<string, string | undefined>} */
   const environment = {};
@@ -53,6 +61,8 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
     ".env.local",
     ".env.development",
     ".env.development.local",
+    ".env.production",
+    ".env.production.local",
     ".env.example",
   ]) {
     const body = await readFile(join(root, file), "utf8").catch(() => "");
@@ -61,9 +71,10 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
   }
   const project = "demo-ceoubb-qa";
   const host = (port) => `127.0.0.1:${port}`;
+  const applicationOrigin = `http://${mode === "production" ? "localhost" : "127.0.0.1"}:${ports.app}`;
   const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
   Object.assign(environment, {
-    NODE_ENV: "development",
+    NODE_ENV: mode,
     NEXT_TELEMETRY_DISABLED: "1",
     FIREBASE_CLI_DISABLE_UPDATE_CHECK: "true",
     FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true",
@@ -75,6 +86,7 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
     NEXT_PUBLIC_CEOUBB_QA: "1",
     CEOUBB_ENVIRONMENT: "development",
     NEXT_PUBLIC_CEOUBB_ENVIRONMENT: "development",
+    NEXT_PUBLIC_CEOUBB_ACTIVITY_PROJECTION: "enabled",
     CEOUBB_QA_DIST_DIR: `${relative(root, runDir).replaceAll("\\", "/")}/next`,
     TURSO_DATABASE_URL: `file:${join(runDir, "local.db").replaceAll("\\", "/")}`,
     TURSO_AUTH_TOKEN: "",
@@ -103,13 +115,13 @@ export async function localEnvironment(root, runDir, ports, inherited = process.
     SENTRY_AUTH_TOKEN: "",
     GEMINI_API_KEY: "",
     DEV_AUTH_SECRET: "qa-local-only",
-    INTEROP_PLATFORM_ORIGIN: `http://${host(ports.app)}`,
-    INTEROP_CONTENT_ORIGIN: `http://localhost:${ports.app}`,
+    INTEROP_PLATFORM_ORIGIN: applicationOrigin,
+    INTEROP_CONTENT_ORIGIN: `http://${mode === "production" ? "127.0.0.1" : "localhost"}:${ports.app}`,
     LTI_PRIVATE_JWK: JSON.stringify({
       ...privateKey.export({ format: "jwk" }),
       kid: "qa-local-signing-key",
     }),
-    QA_BASE_URL: `http://${host(ports.app)}`,
+    QA_BASE_URL: applicationOrigin,
     NO_PROXY: "localhost,127.0.0.1,::1",
   });
   for (const key of [
@@ -151,7 +163,7 @@ export function exited(child) {
 
 // Implements: REQ-QA-02
 // Next always writes this file in the project root, even with a custom tsconfigPath.
-export async function preserveNextEnv(root, runDir) {
+export async function preserveNextEnv(root, runDir, mode = "development") {
   const file = join(root, "next-env.d.ts");
   const original = await readFile(file, "utf8").catch((error) => {
     if (error.code === "ENOENT") return null;
@@ -161,7 +173,7 @@ export async function preserveNextEnv(root, runDir) {
   if (original !== null) await writeFile(expectedFile, original);
   await require("next/dist/lib/typescript/writeAppTypeDeclarations").writeAppTypeDeclarations({
     baseDir: runDir,
-    distDir: `${relative(root, runDir).replaceAll("\\", "/")}/next/dev`,
+    distDir: `${relative(root, runDir).replaceAll("\\", "/")}/next${mode === "production" ? "" : "/dev"}`,
     imageImportsEnabled: true,
     hasPagesDir: false,
     hasAppDir: true,
@@ -171,7 +183,7 @@ export async function preserveNextEnv(root, runDir) {
   const generated = await readFile(expectedFile, "utf8");
   // Another QA run may finish first; never restore imports into its disposable directory.
   const restored = original?.replace(
-    /^(import ["'])\.\/\.qa\/[^/"']+\/next\/dev\/types\//gm,
+    /^(import ["'])\.\/\.qa\/[^/"']+\/next\/(?:dev\/)?types\//gm,
     "$1./.next/types/"
   );
   return async () => {
@@ -214,7 +226,7 @@ async function stop(child) {
   }
 }
 
-async function ready(url, children, timeout = 180_000, signal) {
+export async function ready(url, children, timeout = 180_000, signal, checkReady, fetchInit) {
   const until = Date.now() + timeout;
   while (Date.now() < until) {
     signal?.throwIfAborted();
@@ -225,9 +237,16 @@ async function ready(url, children, timeout = 180_000, signal) {
           new Error(`QA service exited (${child.exitCode ?? child.signalCode}); inspect its log.`)
         );
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
-      if (response.status < 500) return;
+      const requestTimeout = AbortSignal.timeout(
+        Math.max(1, Math.min(until - Date.now(), fetchInit?.method === "OPTIONS" ? timeout : 3000))
+      );
+      const response = await fetch(url, {
+        ...fetchInit,
+        signal: signal ? AbortSignal.any([signal, requestTimeout]) : requestTimeout,
+      });
+      if (response.status < 500 && (!checkReady || (await checkReady(response)))) return response;
     } catch {
+      signal?.throwIfAborted();
       /* Service is still starting. */
     }
     await pause(300);
@@ -257,7 +276,7 @@ function firebaseInvocation() {
 }
 
 // Implements: REQ-QA-02, REQ-QA-03, REQ-QA-05
-export async function startRuntime(root, runId, output, signal) {
+export async function startRuntime(root, runId, output, signal, mode = "development") {
   const runDir = within(join(root, ".qa"), join(root, ".qa", runId));
   await mkdir(join(root, ".qa"), { recursive: true });
   if (
@@ -313,7 +332,7 @@ export async function startRuntime(root, runId, output, signal) {
       allocated.add(port);
       ports[key] = port;
     }
-    const environment = await localEnvironment(root, runDir, ports);
+    const environment = await localEnvironment(root, runDir, ports, undefined, mode);
     await writeFile(join(runDir, "environment.json"), JSON.stringify(environment), { mode: 0o600 });
     const functions = join(runDir, "functions");
     if (!existsSync(join(root, "firebase/functions/node_modules/firebase-functions")))
@@ -400,7 +419,13 @@ export async function startRuntime(root, runId, output, signal) {
         `http://127.0.0.1:${ports[service]}${service === "storage" ? "/v0/b/demo-ceoubb-qa.firebasestorage.app/o?maxResults=1" : "/"}`,
         children,
         180_000,
-        signal
+        signal,
+        service === "functions"
+          ? async () =>
+              (await readFile(join(output, "emulators.log"), "utf8")).includes(
+                "All emulators ready"
+              )
+          : undefined
       );
     console.log("[qa] Seeding synthetic identities, sections and learning data...");
     signal?.throwIfAborted();
@@ -414,16 +439,64 @@ export async function startRuntime(root, runId, output, signal) {
     children.push(seed);
     if ((await exited(seed)) !== 0) throw new Error("QA seed failed; inspect seed.log.");
     signal?.throwIfAborted();
+    console.log("[qa] Waiting for callable workers...");
+    const runtime = resolveQaRuntime(environment);
+    const origin = new URL(environment.QA_BASE_URL);
+
+    if (
+      !runtime ||
+      origin.protocol !== "http:" ||
+      !["localhost", "127.0.0.1"].includes(origin.hostname) ||
+      origin.username ||
+      origin.password
+    )
+      throw new Error("QA_CONFIG_INVALID: callable readiness requires the owned loopback runtime.");
+    const callableDeadline = Date.now() + 180_000;
+
+    for (const callable of [
+      "publishQuiz",
+      "startQuizAttempt",
+      "submitQuizAttempt",
+      "saveAuditedStudentScores",
+      "saveAuditedGradeFeedback",
+      "registerTeamSubmission",
+      "saveAuditedGradebook",
+      "deleteMyAccount",
+    ])
+      await ready(
+        `${runtime.functions.origin}/${runtime.projectId}/southamerica-west1/${callable}`,
+        [emulator],
+        Math.max(0, callableDeadline - Date.now()),
+        signal,
+        (response) => response.status === 204,
+        {
+          method: "OPTIONS",
+          headers: { Origin: origin.origin, "Access-Control-Request-Method": "POST" },
+        }
+      );
     console.log("[qa] Starting the real web application...");
-    restoreNextEnv = await preserveNextEnv(root, runDir);
+    restoreNextEnv = await preserveNextEnv(root, runDir, mode);
     signal?.throwIfAborted();
+    if (mode === "production") {
+      const build = start(
+        process.execPath,
+        [require.resolve("next/dist/bin/next"), "build"],
+        environment,
+        root,
+        join(output, "build.log")
+      );
+      children.push(build);
+      if ((await exited(build)) !== 0) throw new Error("QA build failed; inspect build.log.");
+      signal?.throwIfAborted();
+    }
     const next = start(
       process.execPath,
       [
+        ...(mode === "production" ? ["--dns-result-order=ipv4first"] : []),
         require.resolve("next/dist/bin/next"),
-        "dev",
+        mode === "production" ? "start" : "dev",
         "--hostname",
-        "127.0.0.1",
+        mode === "production" ? "localhost" : "127.0.0.1",
         "--port",
         String(ports.app),
       ],

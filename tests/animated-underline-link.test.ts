@@ -23,7 +23,8 @@ test("REQ-MOTION-LINK-01: AnimatedUnderline y AnimatedUnderlineLink están decla
 });
 
 test("REQ-MOTION-LINK-02: estilos canónicos de subrayado direccional y accesibilidad en globals.css", async () => {
-  const globalsCss = await source("app/globals.css");
+  const globalsCss =
+    (await source("app/globals.css")) + "\n" + (await source("app/campus-base.css"));
 
   // Regla base del subrayado: scaleX(0) en reposo con origen a la derecha
   assert.match(globalsCss, /\.animated-underline\s*\{[^}]*position:\s*relative/);

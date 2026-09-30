@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -95,6 +95,9 @@ const FOCUSABLE_POPOVER_ITEMS = 'button:not([disabled]), a[href], [tabindex]:not
 */
 // Implements: REQ-NOTIF-09
 const PANEL_SPRING = { type: "spring", stiffness: 340, damping: 28 } as const;
+const subscribeShortcut = () => () => {};
+const shortcutSnapshot = () => (/mac|iphone|ipad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl K");
+const shortcutServerSnapshot = () => "Ctrl K";
 
 /*
   Un solo descarte para los dos desplegables del header: cierre por puntero
@@ -191,10 +194,12 @@ export function PortalHeader({
   unreadCommunications: number;
   toggleSidebar: () => void;
 }) {
-  const shortcut =
-    typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent)
-      ? "⌘K"
-      : "Ctrl K";
+  // Implements: REQ-PERF-LOAD-02
+  const shortcut = useSyncExternalStore(
+    subscribeShortcut,
+    shortcutSnapshot,
+    shortcutServerSnapshot
+  );
   const account = useRef<HTMLDetailsElement>(null);
   const notificationsMenu = useRef<HTMLDetailsElement>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);

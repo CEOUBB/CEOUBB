@@ -97,6 +97,8 @@ export function ClassroomView({
   const [composing, setComposing] = useState(false);
   // Implements: REQ-REV-04
   const [reviewing, setReviewing] = useState(false);
+  // Implements: REQ-PERF-LOAD-01
+  const [importsMounted, setImportsMounted] = useState(false);
 
   const handleTabKeyDown = (key: Tab, event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -208,12 +210,19 @@ export function ClassroomView({
               {canManageContent && (
                 <>
                   {canTeach && (
-                    <details className="classroom-imports">
+                    <details
+                      className="classroom-imports"
+                      onToggle={(event) => {
+                        if (event.currentTarget.open) setImportsMounted(true);
+                      }}
+                    >
                       <summary>Importar contenidos</summary>
-                      <div className="classroom-import-actions">
-                        {canTeach && <MoodleImportDialog course={course} />}
-                        {canTeach && <AdeccaImportDialog course={course} />}
-                      </div>
+                      {importsMounted && (
+                        <div className="classroom-import-actions">
+                          {canTeach && <MoodleImportDialog course={course} />}
+                          {canTeach && <AdeccaImportDialog course={course} />}
+                        </div>
+                      )}
                     </details>
                   )}
                   <button className="publication-cta" onClick={startPublication} type="button">
