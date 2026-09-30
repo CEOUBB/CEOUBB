@@ -78,6 +78,13 @@ export async function classroomScenario(
     } else if (id.startsWith("classroom.live")) {
       await page.locator(".live-class-editor summary").click();
       await expect(page.getByLabel("Enlace de la reunión")).toBeVisible();
+      await expect(page.getByRole("link", { name: "Entrar a la clase" })).toHaveAttribute(
+        "href",
+        "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+      );
+      await expect(page.getByLabel("Enlace de la reunión")).toHaveValue(
+        "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+      );
       if (id === "classroom.live-invalid") {
         await page.getByLabel("Enlace de la reunión").fill("https://example.invalid/not-a-meeting");
         await page.getByRole("button", { name: "Guardar enlace", exact: true }).click();
@@ -87,13 +94,6 @@ export async function classroomScenario(
         );
         await expect(page.locator("#live-class-feedback")).not.toBeEmpty();
       } else if (id === "classroom.live-persistence") {
-        await expect(page.getByRole("link", { name: "Entrar a la clase" })).toHaveAttribute(
-          "href",
-          "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
-        );
-        await expect(page.getByLabel("Enlace de la reunión")).toHaveValue(
-          "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
-        );
         const original = await page.getByLabel("Enlace de la reunión").inputValue();
         await page.getByLabel("Enlace de la reunión").fill("https://zoom.us/j/12345678901");
         await capture("form");

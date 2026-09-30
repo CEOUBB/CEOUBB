@@ -887,6 +887,37 @@
           "status": "passed"
         }
       ]
+    },
+    "savedContrastLinuxAttempt": {
+      "run": "https://github.com/CEOUBB/CEOUBB/actions/runs/36730354230",
+      "browser": {
+        "tests": 172,
+        "passed": 171,
+        "failed": 1
+      },
+      "failures": [
+        {
+          "scenario": "classroom.live-invalid",
+          "project": "chromium-1440",
+          "status": "failed"
+        }
+      ],
+      "productionApi": {
+        "tests": 23,
+        "passed": 23,
+        "failed": 0,
+        "uncoveredScenarios": 0
+      }
+    },
+    "liveEditorReadinessFollowup": {
+      "run": "20260930T145153945Z-d99b5928",
+      "status": "passed",
+      "totals": {
+        "tests": 37,
+        "passed": 37,
+        "failed": 0,
+        "uncoveredScenarios": 0
+      }
     }
   },
   "preview": {
