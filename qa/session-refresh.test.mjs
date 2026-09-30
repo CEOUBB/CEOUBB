@@ -3,7 +3,14 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import test from "node:test";
 import React, { act } from "react";
-import ts from "typescript";
+import { transformSync } from "esbuild";
+
+const transpile = (code, loader = "ts") =>
+  transformSync(code, {
+    loader,
+    format: "cjs",
+    ...(loader === "tsx" ? { jsx: "automatic" } : {}),
+  }).code.replace(/\bimport\(([^)]+)\)/g, "Promise.resolve().then(() => require($1))");
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = createRequire(require.resolve("isomorphic-dompurify"))("jsdom");
@@ -11,17 +18,14 @@ const { portalSessionReducer } = require("../app/portal-session.ts");
 const icons = new Proxy({}, { get: () => () => null });
 const navSource = await readFile(new URL("../app/portal-types.ts", import.meta.url), "utf8");
 const navModule = { exports: {} };
-new Function(
-  "require",
-  "module",
-  "exports",
-  ts.transpileModule(navSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
-)(() => icons, navModule, navModule.exports);
+new Function("require", "module", "exports", transpile(navSource, "ts"))(
+  () => icons,
+  navModule,
+  navModule.exports
+);
 const { navReducer } = navModule.exports;
 const source = await readFile(new URL("../app/usePortalCore.tsx", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
-}).outputText;
+const compiled = transpile(source, "tsx");
 
 // Implements: REQ-PERF-LOAD-02
 test("server refresh replaces retained client sessions and rejects old private responses", async () => {
@@ -259,13 +263,7 @@ test("server refresh replaces retained client sessions and rejects old private r
     );
     let reducedMotion = null;
     const motionModule = { exports: {} };
-    new Function(
-      "require",
-      "module",
-      "exports",
-      ts.transpileModule(hookSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } })
-        .outputText
-    )(
+    new Function("require", "module", "exports", transpile(hookSource, "ts"))(
       (specifier) =>
         specifier === "motion/react"
           ? { useReducedMotion: () => reducedMotion }
@@ -323,14 +321,11 @@ test("header platform shortcuts hydrate consistently and then show the Mac or Wi
     "./views/CoursesDashboard": icons,
     "./views/ViewSkeletons": icons,
   };
-  new Function(
-    "require",
-    "module",
-    "exports",
-    ts.transpileModule(headerSource, {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
-    }).outputText
-  )((specifier) => adapters[specifier] ?? require(specifier), headerModule, headerModule.exports);
+  new Function("require", "module", "exports", transpile(headerSource, "tsx"))(
+    (specifier) => adapters[specifier] ?? require(specifier),
+    headerModule,
+    headerModule.exports
+  );
   const { PortalHeader } = headerModule.exports;
   const { renderToString } = require("react-dom/server");
   const { hydrateRoot } = require("react-dom/client");
@@ -428,14 +423,11 @@ test("cached Google avatars hydrate from the server initials and preserve custom
     "../lib/hooks/use-hydrated-reduced-motion": {},
     "motion/react-m": {},
   };
-  new Function(
-    "require",
-    "module",
-    "exports",
-    ts.transpileModule(avatarSource, {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
-    }).outputText
-  )((specifier) => adapters[specifier] ?? require(specifier), avatarModule, avatarModule.exports);
+  new Function("require", "module", "exports", transpile(avatarSource, "tsx"))(
+    (specifier) => adapters[specifier] ?? require(specifier),
+    avatarModule,
+    avatarModule.exports
+  );
   const { Avatar } = avatarModule.exports;
   const { renderToString } = require("react-dom/server");
   const { hydrateRoot } = require("react-dom/client");

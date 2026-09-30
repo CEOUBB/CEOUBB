@@ -3,8 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import test from "node:test";
-import { build } from "esbuild";
-import ts from "typescript";
+import { build, transformSync } from "esbuild";
 
 const require = createRequire(import.meta.url);
 globalThis.AsyncLocalStorage = AsyncLocalStorage;
@@ -12,9 +11,7 @@ const { adapter } = require("next/dist/server/web/adapter.js");
 const { NextRequest } = require("next/server");
 const { SESSION_COOKIE } = require("../lib/session-cookie.ts");
 const source = await readFile(new URL("../proxy.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS },
-}).outputText;
+const compiled = transformSync(source, { loader: "ts", format: "cjs" }).code;
 const proxyModule = { exports: {} };
 const load = (specifier) => {
   if (specifier === "./lib/qa-runtime")

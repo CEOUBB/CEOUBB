@@ -4,15 +4,13 @@ import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
-import ts from "typescript";
+import { transformSync } from "esbuild";
 
 const require = createRequire(resolve("package.json"));
 const { resolveQaRuntime } = require("./lib/qa-runtime.ts");
 const { SESSION_COOKIE } = require("./lib/session-cookie.ts");
 const source = await readFile(resolve("lib/auth.ts"), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS },
-}).outputText;
+const compiled = transformSync(source, { loader: "ts", format: "cjs" }).code;
 const qa = {
   CEOUBB_QA: "1",
   NEXT_PUBLIC_CEOUBB_QA: "1",

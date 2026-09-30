@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
-import ts from "typescript";
 
 // Implements: REQ-PERF-LOAD-01
 test("shared preferences avoid server imports and closed classroom tools remain deferred", () => {
   const pending = [resolve("lib/user-preferences.ts")];
   const visited = new Set<string>();
+  const specifierRegex = /(?:import|export)\s+(?:[\s\S]*?from\s+)?["']([^"']+)["']/g;
 
   while (pending.length > 0) {
     const path = pending.pop();
@@ -15,18 +15,15 @@ test("shared preferences avoid server imports and closed classroom tools remain 
 
     if (visited.has(path)) continue;
     visited.add(path);
-    const source = ts.createSourceFile(path, readFileSync(path, "utf8"), ts.ScriptTarget.Latest);
+    const content = readFileSync(path, "utf8");
 
-    for (const statement of source.statements) {
-      if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue;
-      const specifier = statement.moduleSpecifier;
+    for (const match of content.matchAll(specifierRegex)) {
+      const specifier = match[1];
+      assert.doesNotMatch(specifier, /services\//);
+      assert.doesNotMatch(specifier, /^(node:)?crypto$/);
 
-      if (!specifier || !ts.isStringLiteral(specifier)) continue;
-      assert.doesNotMatch(specifier.text, /services\//);
-      assert.doesNotMatch(specifier.text, /^(node:)?crypto$/);
-
-      if (!specifier.text.startsWith(".")) continue;
-      const target = resolve(dirname(path), specifier.text);
+      if (!specifier.startsWith(".")) continue;
+      const target = resolve(dirname(path), specifier);
       pending.push([target, `${target}.ts`, `${target}.tsx`].find(existsSync) ?? target);
     }
   }
