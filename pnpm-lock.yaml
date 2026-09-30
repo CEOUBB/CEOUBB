@@ -22,7 +22,7 @@ overrides:
 
 packageExtensionsChecksum: sha256-Wk7cQ3x3M6/bIWp3FsS8TG1BljTDBOHQ5VkFLaZ1icI=
 
-pnpmfileChecksum: sha256-QPgQmvaW92iI3gEDKISwzFir6POuCvBB3tTdpJUNcSM=
+pnpmfileChecksum: sha256-imkeJrUOoFJ4PISvDzDmZIg2C6Ej360zW7s2052OXAU=
 
 patchedDependencies:
   '@opennextjs/cloudflare':
