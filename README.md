@@ -3,7 +3,8 @@
 [![CI / CD](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml/badge.svg)](https://github.com/CEOUBB/CEOUBB/actions/workflows/ci.yml)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3.5-black?logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.3.0-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.4.2-FBF0DF?logo=bun)](https://bun.sh/)
 [![Capacitor Runtime](https://img.shields.io/badge/Capacitor-8.5.2-119EFF?logo=capacitor)](https://capacitorjs.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-southamerica--west1-FFCA28?logo=firebase)](https://firebase.google.com/)
 [![Turso / libSQL](https://img.shields.io/badge/Turso-libSQL-00eb84?logo=turso)](https://turso.tech/)
@@ -130,12 +131,22 @@ flowchart TD
 
 Para compilar y ejecutar el proyecto en un entorno local, se requieren las siguientes herramientas:
 
-| Componente      | Versión Mínima Requerida         | Propósito                                                   |
-| :-------------- | :------------------------------- | :---------------------------------------------------------- |
-| **Node.js**     | `>= 22.13.0`                     | Runtime de ejecución backend y herramientas de compilación  |
-| **pnpm**        | `10.5.2` (ó `10.x` compatible)   | Gestor de paquetes determinístico obligatorio               |
-| **Java JDK**    | `Java 21` (Eclipse Temurin)      | Compilación nativa de la aplicación Android en Gradle       |
-| **Android SDK** | `API 36` / Build Tools `36.0.0+` | Compilación y emulación móvil de Capacitor (`targetSdk 36`) |
+| Componente      | Versión Mínima Requerida         | Propósito                                                                    |
+| :-------------- | :------------------------------- | :--------------------------------------------------------------------------- |
+| **Node.js**     | `>= 22.13.0`                     | Runtime para emuladores Firebase, Cloud Functions y fixtures de prueba Node  |
+| **Bun**         | `>= 1.4.2`                       | Runtime de ejecución local de alta velocidad (Next.js, base de datos, tests) |
+| **pnpm**        | `10.5.2` (ó `10.x` compatible)   | Gestor de paquetes determinístico obligatorio (`pnpm install`, `pnpm add`)   |
+| **Java JDK**    | `Java 21` (Eclipse Temurin)      | Compilación nativa de la aplicación Android en Gradle                        |
+| **Android SDK** | `API 36` / Build Tools `36.0.0+` | Compilación y emulación móvil de Capacitor (`targetSdk 36`)                  |
+
+### Arquitectura de Runtime Híbrida (TypeScript 7.0.2 & Bun 1.4.2)
+
+El proyecto opera bajo una arquitectura de ejecución híbrida orientada al máximo rendimiento y estabilidad:
+
+1. **TypeScript 7.0.2 (Compilador Nativo en Go):** Utilizado a través del binario nativo `tsc` para la comprobación estricta de tipos de toda la base de código en tiempo récord (< 300 ms). Impulsa `pnpm run typecheck`, `pnpm run verify:fast` y las compilaciones de producción.
+2. **Aislamiento de TypeScript 6.0.3 para ESLint (`pnpm.packageExtensions`):** Debido a que `@typescript-eslint` depende de las APIs internas de JavaScript de `typescript/lib/typescript.js` (no expuestas por el binario nativo de TS 7), `package.json` inyecta de forma aislada `typescript@6.0.3` a los paquetes del parser de ESLint. Esto preserva el análisis estático completo y las reglas de linting sin conflictos de versiones.
+3. **Bun 1.4.2 (Motor de Ejecución y Pruebas):** Runtime autoritativo local para el servidor de desarrollo (`bun --bun next dev`), compilación (`bun --bun next build`), scripts operacionales y migraciones de SQLite/Turso (`scripts/setup-local-db.mjs`), y arnés de pruebas unitarias (`bun test`).
+4. **Node.js 22 (`>= 22.13.0`):** Preservado para herramientas específicas del ecosistema Node, tales como el arnés de emuladores locales de Firebase (`firebase-tools`), validación de sintaxis en Cloud Functions (`node --check`) y fixtures de pruebas con semántica `node --test` (`qa/*.test.mjs`, `rendered-html.test.mjs`).
 
 ---
 
@@ -202,7 +213,11 @@ pnpm run db:seed:local
 ### 3. Servidor de Desarrollo Web
 
 ```bash
+# Iniciar con el script de pnpm (ejecuta next dev):
 pnpm run dev
+
+# O desarrollo local acelerado con Bun:
+pnpm run dev:bun # o bun --bun next dev
 ```
 
 La aplicación estará disponible en `http://localhost:3000`.
@@ -282,21 +297,21 @@ pnpm run capacity:report
 
 El repositorio implementa un sistema de verificación estricto con validación criptográfica SHA-256 (_Test-Locking_) que prohíbe el debilitamiento o salto de pruebas:
 
-| Comando                      | SLA de Tiempo | Alcance                                                                                                      |
-| :--------------------------- | :-----------: | :----------------------------------------------------------------------------------------------------------- |
-| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck (`tsc`) + Tests unitarios (`69` suites) + Guardián SHA-256 (`72` archivos) + OpenSpec (`31` specs) |
-| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso                            |
-| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local                                    |
-| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + `69` suites unitarias + smoke tests HTML (`rendered-html.test.mjs`)    |
-| `pnpm qa`                    |   Variable    | Arnés determinístico Agent QA con verificación funcional, visual y de accesibilidad por escenario            |
-| `pnpm run qa:check`          |   `< 3.0s`    | Pruebas unitarias del motor y catálogo de escenarios de Agent QA (`qa/*.test.*`)                             |
-| `pnpm run test:e2e`          |   Variable    | Suite de pruebas End-to-End en navegador real con Playwright                                                 |
-| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                                                |
-| `pnpm run typecheck`         |   `< 2.0s`    | Comprobación estricta de tipos TypeScript sin emitir artefactos                                              |
-| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9                                                                  |
-| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                                               |
-| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor                                   |
-| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                                    |
+| Comando                      | SLA de Tiempo | Alcance                                                                                                   |
+| :--------------------------- | :-----------: | :-------------------------------------------------------------------------------------------------------- |
+| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck nativo (`tsc 7.0.2`) + Tests unitarios (Node/Bun) + Guardián SHA-256 (`72` archivos) + OpenSpec |
+| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso (Node/Bun)              |
+| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local en Node                         |
+| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + suites unitarias + smoke tests HTML (`rendered-html.test.mjs`)      |
+| `pnpm qa`                    |   Variable    | Arnés determinístico Agent QA con verificación funcional, visual y de accesibilidad                       |
+| `pnpm run qa:check`          |   `< 3.0s`    | Pruebas unitarias de catálogo y motor Agent QA (`node --experimental-strip-types`)                        |
+| `pnpm run test:e2e`          |   Variable    | Suite de pruebas End-to-End en navegador real con Playwright                                              |
+| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                                             |
+| `pnpm run typecheck`         |   `< 300ms`   | Comprobación estricta de tipos con compilador nativo Go (`tsc 7.0.2`) sin emitir artefactos               |
+| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9 (parser AST de TypeScript 6.0.3 aislado)                      |
+| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                                            |
+| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor                                |
+| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                                 |
 
 ---
 
