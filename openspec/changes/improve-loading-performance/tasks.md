@@ -19,5 +19,5 @@
 - [x] Run formatting, lint, typecheck, fast verification, invariants, production build/integration and the complete registered production QA matrix; retain failed reports and existing lint warnings.
 - [ ] Resolve the four existing questionnaire saved-text contrast failures after explicit scope approval; repeat the affected scenario without weakening accessibility assertions.
 - [x] Compare production bundle/network evidence, matched slow 4G and slow 3G laboratory runs, and inspect public/campus desktop and mobile states.
-- [ ] Verify full Worker packaging and cache response isolation in Linux CI/preview; Windows packaging is blocked by symlink permissions.
-- [ ] Update architectural landmarks, record handoff and limitations, commit in Spanish, push and create/attach PR.
+- [x] Verify full Worker packaging and anonymous/empty-cookie cache headers in Linux CI/preview; retain the Windows symlink limitation and require real staging identities for authenticated Worker separation.
+- [x] Update architectural landmarks, record handoff and limitations, commit in Spanish, push and create/attach draft PR #263 while the existing contrast blocker awaits scope approval.

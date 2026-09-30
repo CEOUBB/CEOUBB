@@ -815,6 +815,349 @@
         "status": "failed"
       }
     ],
-    "privateProviders": "requires-external-verification"
+    "privateProviders": "requires-external-verification",
+    "initialLinuxCi": {
+      "run": "https://github.com/CEOUBB/CEOUBB/actions/runs/36688379993",
+      "browser": {
+        "tests": 172,
+        "passed": 170,
+        "failed": 2
+      },
+      "failures": [
+        {
+          "scenario": "classroom.live-persistence",
+          "title": "classroom.live-persistence @classroom @critical",
+          "project": "chromium-1440",
+          "status": "failed"
+        },
+        {
+          "scenario": "quizzes.submit-error",
+          "title": "quizzes.submit-error @quizzes",
+          "project": "chromium-1440",
+          "status": "failed"
+        }
+      ],
+      "productionApi": {
+        "tests": 23,
+        "passed": 23,
+        "failed": 0,
+        "uncoveredScenarios": 0
+      }
+    },
+    "ciReadinessFollowup": {
+      "runId": "20260930T083322280Z-be6c6493",
+      "totals": {
+        "tests": 37,
+        "passed": 37,
+        "failed": 0,
+        "uncoveredScenarios": 0
+      },
+      "status": "passed"
+    }
+  },
+  "preview": {
+    "scope": "Separate deployed preview experiment; not a matched before/after comparison, not authenticated provider validation",
+    "sourceHead": "19822172495fbe6cbf73b0d2e16b01f1a1d9d8d2",
+    "buildRun": "https://github.com/CEOUBB/CEOUBB/actions/runs/36688381019",
+    "workerVersion": "c001c108-d545-4fa6-85a9-bfa021e3faf3",
+    "rows": [
+      {
+        "profile": "home-4g",
+        "runs": [
+          {
+            "file": "home-4g-1.report.json",
+            "fetched": "2026-09-30T08:26:19.563Z",
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 2510.0280000000002,
+            "FCP": 1160.028,
+            "TBT": 53,
+            "CLS": 0.1296688905982174,
+            "TTFB": 710,
+            "JS": 201505,
+            "CSS": 18238,
+            "Total": 346508,
+            "Requests": 25,
+            "protocols": ["h2", "h3"]
+          },
+          {
+            "file": "home-4g-2.report.json",
+            "fetched": "2026-09-30T08:26:32.779Z",
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 3594.41,
+            "FCP": 1112.52,
+            "TBT": 34,
+            "CLS": 0,
+            "TTFB": 481,
+            "JS": 203914,
+            "CSS": 18375,
+            "Total": 349465,
+            "Requests": 25,
+            "protocols": ["h3"]
+          },
+          {
+            "file": "home-4g-3.report.json",
+            "fetched": "2026-09-30T08:26:45.594Z",
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 3723.6095,
+            "FCP": 1104.634,
+            "TBT": 29.5,
+            "CLS": 0,
+            "TTFB": 477,
+            "JS": 204064,
+            "CSS": 18379,
+            "Total": 349699,
+            "Requests": 25,
+            "protocols": ["h3"]
+          }
+        ],
+        "medians": {
+          "LCP": 3594.41,
+          "FCP": 1112.52,
+          "TBT": 34,
+          "CLS": 0,
+          "TTFB": 481,
+          "JS": 203914,
+          "CSS": 18375,
+          "Total": 349465,
+          "Requests": 25
+        }
+      },
+      {
+        "profile": "home-3g",
+        "runs": [
+          {
+            "file": "home-3g-1.report.json",
+            "fetched": "2026-09-30T08:26:58.494Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 13681.166000000001,
+            "FCP": 2194.296,
+            "TBT": 40.5,
+            "CLS": 0,
+            "TTFB": 947,
+            "JS": 203842,
+            "CSS": 18366,
+            "Total": 349413,
+            "Requests": 25,
+            "protocols": ["h3"]
+          },
+          {
+            "file": "home-3g-2.report.json",
+            "fetched": "2026-09-30T08:27:11.513Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 13365.079999999998,
+            "FCP": 2132.54,
+            "TBT": 28.5,
+            "CLS": 0,
+            "TTFB": 916,
+            "JS": 203838,
+            "CSS": 18398,
+            "Total": 349432,
+            "Requests": 25,
+            "protocols": ["h3"]
+          },
+          {
+            "file": "home-3g-3.report.json",
+            "fetched": "2026-09-30T08:27:24.457Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 13781.8095,
+            "FCP": 2156.658,
+            "TBT": 47.5,
+            "CLS": 0,
+            "TTFB": 928,
+            "JS": 203993,
+            "CSS": 18377,
+            "Total": 349549,
+            "Requests": 25,
+            "protocols": ["h3"]
+          }
+        ],
+        "medians": {
+          "LCP": 13681.166000000001,
+          "FCP": 2156.658,
+          "TBT": 40.5,
+          "CLS": 0,
+          "TTFB": 928,
+          "JS": 203842,
+          "CSS": 18377,
+          "Total": 349432,
+          "Requests": 25
+        }
+      }
+    ],
+    "http": {
+      "origin": "https://ceoubb-preview.nameless-sky-3eb5.workers.dev",
+      "scope": "Read only anonymous and empty-cookie requests; no authenticated identity or provider data validation",
+      "rows": [
+        {
+          "path": "/",
+          "variant": "anonymous",
+          "status": 200,
+          "observedHeadersMs": 354.6616,
+          "cacheControl": "s-maxage=31536000",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+          "contentType": "text/html; charset=utf-8",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d1975f99e2ae-GIG",
+          "decodedBodyBytes": 23990
+        },
+        {
+          "path": "/",
+          "variant": "anonymous",
+          "status": 200,
+          "observedHeadersMs": 114.43830000000003,
+          "cacheControl": "s-maxage=31536000",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+          "contentType": "text/html; charset=utf-8",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d1983fc2e2ae-GIG",
+          "decodedBodyBytes": 23990
+        },
+        {
+          "path": "/faq",
+          "variant": "anonymous",
+          "status": 200,
+          "observedHeadersMs": 108.24940000000004,
+          "cacheControl": "s-maxage=31536000",
+          "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+          "contentType": "text/html; charset=utf-8",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d198efd4e2ae-GIG",
+          "decodedBodyBytes": 67995
+        },
+        {
+          "path": "/_next/static/chunks/3vx28u44ucls1.css",
+          "variant": "anonymous",
+          "status": 200,
+          "observedHeadersMs": 109.82659999999998,
+          "cacheControl": "public, max-age=31536000, immutable",
+          "vary": null,
+          "contentType": "text/css",
+          "contentEncoding": "br",
+          "cacheStatus": "HIT",
+          "location": null,
+          "ray": "a431d199afece2ae-GIG",
+          "decodedBodyBytes": 82210
+        },
+        {
+          "path": "/",
+          "variant": "empty-session-cookie",
+          "status": 200,
+          "observedHeadersMs": 121.30579999999998,
+          "cacheControl": "private, no-store",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, *",
+          "contentType": "text/html; charset=utf-8",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d19a5fffe2ae-GIG",
+          "decodedBodyBytes": 25645
+        },
+        {
+          "path": "/campus",
+          "variant": "empty-session-cookie",
+          "status": 200,
+          "observedHeadersMs": 122.69309999999996,
+          "cacheControl": "private, no-store",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, *",
+          "contentType": "text/html; charset=utf-8",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d19b2822e2ae-GIG",
+          "decodedBodyBytes": 25665
+        },
+        {
+          "path": "/api/auth/me",
+          "variant": "empty-session-cookie",
+          "status": 200,
+          "observedHeadersMs": 93.35919999999999,
+          "cacheControl": "private, no-store",
+          "vary": "*",
+          "contentType": "application/json",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d19be839e2ae-GIG",
+          "decodedBodyBytes": 13
+        },
+        {
+          "path": "/?_rsc=_YfTnOtw-Fvq5Ybl",
+          "variant": "rsc",
+          "status": 200,
+          "observedHeadersMs": 99.97660000000019,
+          "cacheControl": "private, no-store",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, *",
+          "contentType": "text/x-component",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d19c784fe2ae-GIG",
+          "decodedBodyBytes": 7084
+        },
+        {
+          "path": "/campus?_rsc=_YfTnOtw-Fvq5Ybl",
+          "variant": "rsc",
+          "status": 200,
+          "observedHeadersMs": 121.73160000000007,
+          "cacheControl": "private, no-store",
+          "vary": "Cookie, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, *",
+          "contentType": "text/x-component",
+          "contentEncoding": "br",
+          "cacheStatus": null,
+          "location": null,
+          "ray": "a431d19d3869e2ae-GIG",
+          "decodedBodyBytes": 7091
+        }
+      ],
+      "passed": true
+    }
   }
 }

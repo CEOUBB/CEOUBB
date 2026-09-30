@@ -87,6 +87,13 @@ export async function classroomScenario(
         );
         await expect(page.locator("#live-class-feedback")).not.toBeEmpty();
       } else if (id === "classroom.live-persistence") {
+        await expect(page.getByRole("link", { name: "Entrar a la clase" })).toHaveAttribute(
+          "href",
+          "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+        );
+        await expect(page.getByLabel("Enlace de la reunión")).toHaveValue(
+          "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+        );
         const original = await page.getByLabel("Enlace de la reunión").inputValue();
         await page.getByLabel("Enlace de la reunión").fill("https://zoom.us/j/12345678901");
         await capture("form");
@@ -476,38 +483,26 @@ export async function classroomScenario(
           const draftPath = `courses/${QA_SECTIONS.active}/quizzes/${QA_IDS.quiz}/drafts/${QA_USERS.student.uid}`;
           const draftName = `projects/${runtime.projectId}/databases/(default)/documents/${draftPath}`;
           const writeUrl = `${runtime.firestore.origin}/google.firestore.v1.Firestore/Write/channel`;
-          const payloadSchema = z.object({ writes: z.array(z.unknown()) }).passthrough();
-          const answerSchema = z
-            .object({
-              update: z
-                .object({
-                  name: z.literal(draftName),
-                  fields: z
-                    .object({
-                      answers: z
-                        .object({
-                          mapValue: z
-                            .object({
-                              fields: z
-                                .object({
-                                  [QA_IDS.question]: z
-                                    .object({ stringValue: z.literal(QA_IDS.correctAnswer) })
-                                    .passthrough(),
-                                })
-                                .passthrough(),
-                            })
-                            .passthrough(),
-                        })
-                        .passthrough(),
-                    })
-                    .passthrough(),
-                })
-                .passthrough(),
-              updateMask: z
-                .object({ fieldPaths: z.tuple([z.literal(`answers.\`${QA_IDS.question}\``)]) })
-                .passthrough(),
-            })
-            .passthrough();
+          const payloadSchema = z.looseObject({ writes: z.array(z.unknown()) });
+          const answerSchema = z.looseObject({
+            update: z.looseObject({
+              name: z.literal(draftName),
+              fields: z.looseObject({
+                answers: z.looseObject({
+                  mapValue: z.looseObject({
+                    fields: z.looseObject({
+                      [QA_IDS.question]: z.looseObject({
+                        stringValue: z.literal(QA_IDS.correctAnswer),
+                      }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+            updateMask: z.looseObject({
+              fieldPaths: z.tuple([z.literal(`answers.\`${QA_IDS.question}\``)]),
+            }),
+          });
           const answerWrite = (request: Request, deny = false): string | null => {
             const url = new URL(request.url());
 
