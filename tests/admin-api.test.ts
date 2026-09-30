@@ -573,6 +573,8 @@ test("admin academic periods routes enforce periodId, limit and cursor sanitizat
   assert.match(archiveSource, /rawPeriodId/);
   assert.match(archiveSource, /\.slice\(0,\s*50\)/);
   assert.match(archiveSource, /Identificador de período no válido\./);
+  assert.match(archiveSource, /request\.headers\.get\("origin"\)/);
+  assert.match(archiveSource, /"Origen no autorizado\."/);
 
   const syncSource = await readFile(
     new URL("../app/api/admin/periods/[periodId]/sync/route.ts", import.meta.url),
@@ -581,6 +583,8 @@ test("admin academic periods routes enforce periodId, limit and cursor sanitizat
   assert.match(syncSource, /rawPeriodId/);
   assert.match(syncSource, /\.slice\(0,\s*50\)/);
   assert.match(syncSource, /Identificador de período no válido\./);
+  assert.match(syncSource, /request\.headers\.get\("origin"\)/);
+  assert.match(syncSource, /"Origen no autorizado\."/);
 
   const periodsSource = await readFile(
     new URL("../app/api/admin/periods/route.ts", import.meta.url),
