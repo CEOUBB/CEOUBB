@@ -87,17 +87,17 @@ docs(readme): actualizar instrucciones de compilación local
 Previo a la apertura de un Pull Request, es obligatorio ejecutar y validar satisfactoriamente el conjunto de compuertas de calidad:
 
 ```bash
-# Verificación rápida con candado criptográfico (<3s: Typecheck nativo tsc 7.0.2 + Bun test + Hash Guard)
+# Verificación rápida con candado criptográfico (<3s: Typecheck nativo tsc 7.0.2 + Tests unitarios + Hash Guard)
 pnpm run verify:fast
 
-# Verificación de invariantes de seguridad con Bun test (<500ms)
+# Verificación de invariantes de seguridad (<500ms)
 pnpm run verify:invariants
 
 # Verificación de formato y sintaxis
 pnpm run format:check
 pnpm run lint
 
-# Suite completa de integración y compilación productiva con Bun (Pre-flight)
+# Suite completa de integración y compilación productiva (Pre-flight)
 pnpm test
 ```
 

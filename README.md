@@ -213,11 +213,11 @@ pnpm run db:seed:local
 ### 3. Servidor de Desarrollo Web
 
 ```bash
-# Iniciar con el script de pnpm (ejecuta bun --bun next dev internamente):
+# Iniciar con el script de pnpm (ejecuta next dev):
 pnpm run dev
 
-# O invocación directa con Bun:
-bun --bun next dev
+# O desarrollo local acelerado con Bun:
+pnpm run dev:bun # o bun --bun next dev
 ```
 
 La aplicación estará disponible en `http://localhost:3000`.
@@ -297,21 +297,21 @@ pnpm run capacity:report
 
 El repositorio implementa un sistema de verificación estricto con validación criptográfica SHA-256 (_Test-Locking_) que prohíbe el debilitamiento o salto de pruebas:
 
-| Comando                      | SLA de Tiempo | Alcance                                                                                                        |
-| :--------------------------- | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck nativo (`tsc 7.0.2`) + Tests unitarios (`bun test`) + Guardián SHA-256 (`72` archivos) + OpenSpec    |
-| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso con `bun test`               |
-| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local en Node                              |
-| `pnpm test`                  |    `< 60s`    | Compilación completa (`bun --bun next build`) + suites unitarias + smoke tests HTML (`rendered-html.test.mjs`) |
-| `pnpm qa`                    |   Variable    | Arnés determinístico Agent QA con verificación funcional, visual y de accesibilidad ejecutado con Bun          |
-| `pnpm run qa:check`          |   `< 3.0s`    | Pruebas unitarias de catálogo en Bun (`qa/catalog.test.ts`) y motor Agent QA en Node (`qa/*.test.mjs`)         |
-| `pnpm run test:e2e`          |   Variable    | Suite de pruebas End-to-End en navegador real con Playwright                                                   |
-| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                                                  |
-| `pnpm run typecheck`         |   `< 300ms`   | Comprobación estricta de tipos con compilador nativo Go (`tsc 7.0.2`) sin emitir artefactos                    |
-| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9 (parser AST de TypeScript 6.0.3 aislado)                           |
-| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                                                 |
-| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor                                     |
-| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                                      |
+| Comando                      | SLA de Tiempo | Alcance                                                                                                   |
+| :--------------------------- | :-----------: | :-------------------------------------------------------------------------------------------------------- |
+| `pnpm run verify:fast`       |   `< 3.0s`    | Typecheck nativo (`tsc 7.0.2`) + Tests unitarios (Node/Bun) + Guardián SHA-256 (`72` archivos) + OpenSpec |
+| `pnpm run verify:invariants` |   `< 500ms`   | Reglas de acceso institucional (`access-policy`), notas (`grades`) y modelo Turso (Node/Bun)              |
+| `pnpm run check:rules`       |    `< 10s`    | Pruebas de reglas declarativas de Firestore y Storage bajo emulador local en Node                         |
+| `pnpm test`                  |    `< 60s`    | Compilación completa (`next build`) + suites unitarias + smoke tests HTML (`rendered-html.test.mjs`)      |
+| `pnpm qa`                    |   Variable    | Arnés determinístico Agent QA con verificación funcional, visual y de accesibilidad                       |
+| `pnpm run qa:check`          |   `< 3.0s`    | Pruebas unitarias de catálogo y motor Agent QA (`node --experimental-strip-types`)                        |
+| `pnpm run test:e2e`          |   Variable    | Suite de pruebas End-to-End en navegador real con Playwright                                              |
+| `pnpm run test:a11y`         |   `< 5.0s`    | Auditoría de accesibilidad WCAG 2.2 con Playwright y axe-core                                             |
+| `pnpm run typecheck`         |   `< 300ms`   | Comprobación estricta de tipos con compilador nativo Go (`tsc 7.0.2`) sin emitir artefactos               |
+| `pnpm run lint`              |   `< 2.0s`    | Auditoría de calidad de código con ESLint 9 (parser AST de TypeScript 6.0.3 aislado)                      |
+| `pnpm run format:check`      |   `< 1.0s`    | Comprobación de formato de código con Prettier                                                            |
+| `pnpm run doctor`            |   `< 2.0s`    | Auditoría estática de accesibilidad, performance y bundle con React Doctor                                |
+| `pnpm run specs:validate`    |   `< 1.0s`    | Validación de coherencia de especificaciones del sistema con OpenSpec CLI                                 |
 
 ---
 
