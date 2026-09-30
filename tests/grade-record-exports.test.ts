@@ -107,7 +107,7 @@ test("REQ-ACTA-02, REQ-ACTA-04 y REQ-ACTA-08 integran cierre, nómina completa y
   const [panel, grades, styles] = await Promise.all([
     readFile("app/views/classroom/FinalGradeRecordsPanel.tsx", "utf8"),
     readFile("app/views/classroom/GradesSection.tsx", "utf8"),
-    readFile("app/globals.css", "utf8"),
+    readFile("app/campus-base.css", "utf8"),
   ]);
   assert.match(panel, /loadCompleteStudentDirectory/);
   assert.match(panel, /saveStudentScores/);

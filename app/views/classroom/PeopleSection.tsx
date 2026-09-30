@@ -598,7 +598,10 @@ export function PeopleSection({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed bottom-6 inset-x-0 z-50 flex justify-center pointer-events-none px-4"
+            className="fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4"
+            style={{
+              bottom: "calc(var(--mobile-nav-height, 0px) + var(--safe-bottom, 0px) + 24px)",
+            }}
           >
             <div className="pointer-events-auto shadow-2xl">
               <ExpandableActionBar items={actionBarItems} size="md" expandOnHover />

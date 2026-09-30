@@ -39,9 +39,9 @@
     "capacity:disable-auth": "node scripts/capacity-auth-provider.mjs disable",
     "capacity:telemetry": "node scripts/collect-capacity-telemetry.mjs",
     "capacity:report": "node scripts/build-capacity-report.mjs",
-    "cloudflare:build": "opennextjs-cloudflare build",
+    "cloudflare:build": "opennextjs-cloudflare build && opennextjs-cloudflare populateCache local",
     "cloudflare:preview": "opennextjs-cloudflare preview",
-    "cloudflare:deploy": "opennextjs-cloudflare build && wrangler deploy --minify --keep-vars"
+    "cloudflare:deploy": "pnpm run cloudflare:build && wrangler deploy --minify --keep-vars"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.5.2",

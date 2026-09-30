@@ -269,6 +269,12 @@ service cloud.firestore {
       allow delete: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid) && sectionIsWritable(courseId);
     }
 
+    // Implements: REQ-PERF-LOAD-03
+    match /courses/{courseId}/activity/{postId} {
+      allow read: if isOwner() || isMember() && isEnrolled(courseId);
+      allow write: if false;
+    }
+
     match /courses/{courseId}/messageThreads/{threadId} {
       allow read: if threadParticipant(courseId, threadId);
       allow create: if validThreadCreate(courseId, threadId);

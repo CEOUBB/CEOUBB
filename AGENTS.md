@@ -51,6 +51,15 @@ Access to course data is granted **if and only if** an active enrollment project
 - **Course Identity:** A course is always a **Section** (_subject $\times$ academic period $\times$ section_), never a plain unstructured string.
 - **Grade Arithmetic:** `lib/grades.ts` is the single source of truth for the Chilean 1.0–7.0 scale and weighted average calculations.
 
+### 2.2.1 Activity Projection and Private Cache Isolation
+
+- `courses/{sectionId}/activity/{postId}` is a compact, server owned projection maintained by `firebase/functions/activity-projection.js`. Reads require the same owner or active institutional enrollment policy as posts; every client write is denied.
+- `NEXT_PUBLIC_CEOUBB_ACTIVITY_PROJECTION` defaults disabled. Enable the literal `enabled` only after deploying rules and the post write trigger, completing the bounded backfill, and verifying a full fresh parity scan. Dry runs and completed checkpoints restart full verification; only unfinished write checkpoints resume.
+- Anonymous `/` remains static. `proxy.ts` uses session cookie presence only to route to `/campus`; `app/campus/page.tsx` validates the session and loads authorized sections on the server. Cookie presence never grants access.
+- Deployed Cloudflare private HTML, RSC and auth responses require `private, no-store` and `Vary: *` to reject Cache Storage writes, including attempts by older service workers. The service worker precaches anonymous access with omitted credentials and never persists private HTML or RSC. Native Next App Pages replace middleware Vary at render time; local identity/no-store checks must be paired with the OpenNext adapter contract and real Worker HTTP verification.
+- Proxy `Vary` must preserve Cookie and Next's RSC/router negotiation fields: OpenNext's response adapter gives middleware headers precedence. Review the explicit field list when updating Next or OpenNext.
+- OpenNext uses the existing ASSETS binding only for deployment-time prerendered content. `scripts/check-public-cache.mjs` rejects private prerendering and ISR; introduce a writable adapter before adding revalidation or dynamic cached data.
+
 ### 2.3 Mobile Seam & Remote Architecture
 
 - **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
@@ -61,6 +70,8 @@ Access to course data is granted **if and only if** an active enrollment project
 To navigate non-obvious structural seams efficiently without burning context on full repository scans:
 
 - **Role Policy & Auth SSOT:** `lib/access-policy.ts` (mirrored in `firebase/firestore.rules` and `firebase/storage.rules`).
+- **Public Access and Private Bootstrap:** `app/access-screen.tsx`, `app/campus/page.tsx`, `proxy.ts`, and `lib/session-cookie.ts`; public styles live in `app/globals.css`, campus rules in `app/campus-base.css`, `app/mobile-shell.css`, and `app/campus.css`.
+- **Shared Profile Contracts:** `lib/user-profile-contract.ts`; server profile operations remain in `lib/services/user-profile.ts` and must not enter client import graphs.
 - **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
 - **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.
 - **Pure Grade Arithmetic:** `lib/grades.ts` (Chilean 1.0–7.0 scale, rounding, weighting).
@@ -173,6 +184,8 @@ A task is considered complete ONLY when verified end-to-end. Do not stop at a pr
 ### 8.3 On-demand Agent QA
 
 After changing application behavior, run `pnpm qa` for affected areas and critical journeys. Use `pnpm qa --list --json` to discover scenarios, `--scenario <id>` or `--area <area>` during development, `--explore --scenario <id>` for interactive inspection, and `--all --screenshots` for the complete registered matrix. Follow [the agent QA guide](docs/testing/agent-qa.md) for prerequisites, staging, evidence, and scenario maintenance.
+
+Use `--production` when verifying final HTML/RSC cache headers or a mixed browser/API matrix. This builds disposable local output against the same guarded emulators and file database; it does not authorize production targets. The local application uses `localhost`, with a separate loopback content origin. Only a complete validated disposable QA target may omit the session cookie's Secure attribute for HTTP loopback, accept distinct HTTP loopback interoperability origins, or simulate Turnstile without a secret. Ordinary production retains Secure cookies, HTTPS interoperability and missing-secret rejection. Development mode remains available for iteration and exploration.
 
 New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
 

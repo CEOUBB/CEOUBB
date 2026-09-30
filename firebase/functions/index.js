@@ -2,7 +2,8 @@ const { initializeApp } = require("firebase-admin/app");
 const { FieldValue, Timestamp, getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { setGlobalOptions } = require("firebase-functions/v2");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { projectCourseActivity } = require("./activity-projection");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { authenticationIsActive } = require("./auth-access");
 const {
@@ -943,6 +944,14 @@ async function pruneDeadTokens(db, refsByToken, tokens, responses) {
   await writer.close();
   return dead.length;
 }
+
+// Implements: REQ-PERF-LOAD-03
+exports.projectCoursePostActivity = onDocumentWritten(
+  { document: "courses/{courseId}/posts/{postId}", retry: true },
+  async (event) => {
+    await projectCourseActivity(getFirestore(), event.params.courseId, event.params.postId);
+  }
+);
 
 exports.notifyStudentsOnCoursePost = onDocumentCreated(
   "courses/{courseId}/posts/{postId}",

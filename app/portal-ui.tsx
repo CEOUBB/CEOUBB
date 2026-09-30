@@ -2,7 +2,7 @@
 
 import { useEffect, useState, ViewTransition } from "react";
 import Image from "next/image";
-import { useReducedMotion } from "motion/react";
+import { useHydratedReducedMotion } from "../lib/hooks/use-hydrated-reduced-motion";
 import * as m from "motion/react-m";
 import { watchGooglePhoto } from "../lib/firebase-client";
 import {
@@ -14,7 +14,7 @@ import {
 } from "../lib/portal-utils";
 
 function useGooglePhoto(email: string) {
-  const [photo, setPhoto] = useState<string | null>(() => cachedPhoto(email));
+  const [photo, setPhoto] = useState<string | null>(null);
   useEffect(
     () =>
       watchGooglePhoto((url) => {
@@ -67,7 +67,7 @@ export function Avatar({
 
 // Implements: REQ-SKEL-VT-01
 export function Screen({ children }: { children: React.ReactNode }) {
-  const shouldReduceMotion = useReducedMotion();
+  const shouldReduceMotion = useHydratedReducedMotion();
 
   return (
     <ViewTransition default="none" update="auto">

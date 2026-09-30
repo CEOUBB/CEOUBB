@@ -49,6 +49,14 @@ function scenario(
   return { id, area, sources, role, state, critical, checkpoints };
 }
 const shell = [
+  "app/access-screen.tsx",
+  "app/campus/page.tsx",
+  "app/campus-base.css",
+  "app/globals.css",
+  "app/campus.css",
+  "app/mobile-shell.css",
+  "proxy.ts",
+  "public/sw.js",
   "app/Portal.tsx",
   "app/portal-shell.tsx",
   "app/mobile-shell.tsx",
@@ -57,6 +65,8 @@ const shell = [
 ];
 const courses = ["app/views/CoursesDashboard.tsx", "app/views/CourseCard.tsx", "lib/courses.ts"];
 const classroom = [
+  "firebase/functions/activity-projection.js",
+  "firebase/firestore.rules",
   "app/Classroom.tsx",
   "app/views/classroom/ClassroomView.tsx",
   "app/views/classroom/PostsSection.tsx",

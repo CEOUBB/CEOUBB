@@ -209,7 +209,7 @@ function QuizRunner({
         timers.current.delete(questionId);
         const pending = pendingValues.current.get(questionId);
         pendingValues.current.delete(questionId);
-        if (pending !== undefined) void persist(questionId, pending);
+        if (pending !== undefined) void persist(questionId, pending).catch(() => undefined);
       }, 450)
     );
   };

@@ -1,5 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Current handoff: Loading performance implementation, 2026-09-29
+
+- Scope and measured evidence: [loading performance report](docs/performance/loading-performance-2026-09-29.md), OpenSpec `improve-loading-performance`.
+- Public access is static; validated private bootstrap runs under `/campus`. Personalized HTML, RSC and authentication responses must remain outside shared and offline caches.
+- Shared profile contracts, selective import tools, campus styles and local Sharp branding variants reduce public startup work. The compact Firestore activity reader remains disabled outside disposable QA until rules, trigger, bounded backfill and fresh parity verification are deployed and verified.
+- React Compiler and SQL placement changes remain conditional on measured interaction/provider evidence. No production deployment or migration was performed.
+- Verification: production build, protected unit contracts, invariants and affected E2E passed. The frozen complete production QA report records 778/783 passing; its conversation fixture was strengthened and all 29 followup browser/API cases passed. Four existing questionnaire saved-text contrast failures await explicit scope approval and block a ready delivery.
+- Matched local Lighthouse: public home LCP 6962.465 to 3428.465 ms at simulated slow 4G; 33332.457 to 14232.634 ms at simulated slow 3G. These are laboratory results; private provider latency, field INP and Chilean carrier/device behavior remain unverified.
+- Remaining delivery: publish a Spanish draft PR, verify Linux Worker packaging and actual preview HTML/RSC cache headers, then resolve the approved scope blocker before marking ready. Dedicated institutional staging credentials and real provider delivery remain external prerequisites.
+
 ## Handoff: On-demand Agent QA pipeline (OpenSpec agent-qa-pipeline), 2026-09-22
 
 - **Capability:** `operations/agent-qa` providing reproducible web verification, synthetic institutional accounts, isolated Firebase emulators, and report generation via `pnpm qa`.

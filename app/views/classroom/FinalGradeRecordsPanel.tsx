@@ -113,7 +113,13 @@ function FinalGradeRecordTable({
         </div>
       </dl>
 
-      <div className="final-grade-table-wrap">
+      <div
+        className="final-grade-table-wrap"
+        role="region"
+        aria-label="Acta de calificaciones"
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- La tabla desplazable necesita foco para usar las flechas del teclado.
+        tabIndex={0}
+      >
         <table className="final-grade-table">
           <thead>
             <tr>

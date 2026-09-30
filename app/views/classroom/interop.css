@@ -42,6 +42,10 @@
   text-underline-offset: 2px;
 }
 
+.interop-alert summary {
+  min-height: 24px;
+}
+
 .interop-player h2 {
   margin: 0 0 var(--space-xs);
 }

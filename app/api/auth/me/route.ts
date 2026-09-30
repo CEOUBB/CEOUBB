@@ -26,14 +26,17 @@ const UNAUTHORIZED = 401;
 // Implements: REQ-PERF-01, REQ-PERF-02
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
-  if (!user) return Response.json({ user: null });
+  if (!user)
+    return Response.json({ user: null }, { headers: { "Cache-Control": "private, no-store" } });
   const includeSections = new URL(request.url).searchParams.get("includeSections") === "1";
   if (!includeSections) {
     const memberships = await listUserSectionMemberships(user.id, { limit: MAX_PAGE_SIZE }).catch(
       () => []
     );
     const sectionIds = memberships.map((membership) => membership.sectionId);
-    return Response.json({ user, sectionIds, memberships });
+    const response = Response.json({ user, sectionIds, memberships });
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }
   const [current, archived] = await Promise.all([
     listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "current" }).catch(() => ({
@@ -50,13 +53,16 @@ export async function GET(request: Request) {
     role: section.rolSeccion,
   }));
   const sectionIds = current.items.map((section) => section.seccionId);
-  return Response.json({
-    user,
-    sectionIds,
-    memberships,
-    sections: [...current.items, ...archived.items],
-    archivedNextCursor: archived.nextCursor,
-  });
+  return Response.json(
+    {
+      user,
+      sectionIds,
+      memberships,
+      sections: [...current.items, ...archived.items],
+      archivedNextCursor: archived.nextCursor,
+    },
+    { headers: { "Cache-Control": "private, no-store" } }
+  );
 }
 
 // Implements: REQ-DATA-01, REQ-API-02, REQ-SEC-13, REQ-SEC-14

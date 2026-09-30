@@ -3,8 +3,6 @@ import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AppToaster } from "../components/AppToaster";
 import "./globals.css";
-import "./mobile-shell.css";
-import "./campus.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",

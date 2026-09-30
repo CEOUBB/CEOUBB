@@ -1,0 +1,820 @@
+{
+  "scope": "Anonymous local production pages; Lighthouse simulation, not Chilean field or private provider timings",
+  "versions": {
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "lighthouse": "13.5.0"
+  },
+  "baselineCommit": "a32b5102f211dd5953b6fb35ac198ceaa95af434",
+  "candidateBranch": "codex/optimizar-rendimiento-campus",
+  "normal": {
+    "rows": [
+      {
+        "variant": "before",
+        "route": "home",
+        "runs": [
+          {
+            "file": "home-1.report.json",
+            "LCP": 6962.4645,
+            "FCP": 1245.8215,
+            "TBT": 521,
+            "CLS": 0,
+            "TTFB": 473,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949034,
+            "Requests": 54,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "home-2.report.json",
+            "LCP": 7570.785750000002,
+            "FCP": 1259.9143,
+            "TBT": 471.9571499999993,
+            "CLS": 0,
+            "TTFB": 480,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949029,
+            "Requests": 54,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "home-3.report.json",
+            "LCP": 6960.320699999997,
+            "FCP": 1221.9348,
+            "TBT": 445,
+            "CLS": 0,
+            "TTFB": 461,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949029,
+            "Requests": 54,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 6962.4645,
+          "FCP": 1245.8215,
+          "TBT": 471.9571499999993,
+          "CLS": 0,
+          "TTFB": 473,
+          "JS": 672054,
+          "CSS": 63683,
+          "Total": 949029,
+          "Requests": 54
+        }
+      },
+      {
+        "variant": "before",
+        "route": "faq",
+        "runs": [
+          {
+            "file": "faq-1.report.json",
+            "LCP": 3354.9146,
+            "FCP": 1229.9573,
+            "TBT": 95,
+            "CLS": 0,
+            "TTFB": 465,
+            "JS": 654989,
+            "CSS": 63683,
+            "Total": 868772,
+            "Requests": 40,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "faq-2.report.json",
+            "LCP": 3305.9326,
+            "FCP": 1219.4663,
+            "TBT": 67,
+            "CLS": 0,
+            "TTFB": 460,
+            "JS": 654989,
+            "CSS": 63683,
+            "Total": 868772,
+            "Requests": 40,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "faq-3.report.json",
+            "LCP": 3351.4331999999995,
+            "FCP": 1231.2166,
+            "TBT": 89,
+            "CLS": 0,
+            "TTFB": 466,
+            "JS": 654989,
+            "CSS": 63683,
+            "Total": 868772,
+            "Requests": 40,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 3351.4331999999995,
+          "FCP": 1229.9573,
+          "TBT": 89,
+          "CLS": 0,
+          "TTFB": 465,
+          "JS": 654989,
+          "CSS": 63683,
+          "Total": 868772,
+          "Requests": 40
+        }
+      },
+      {
+        "variant": "before",
+        "route": "contacto",
+        "runs": [
+          {
+            "file": "contacto-1.report.json",
+            "LCP": 3295.4323999999997,
+            "FCP": 1232.2162,
+            "TBT": 145.4459499999998,
+            "CLS": 0,
+            "TTFB": 466,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 894043,
+            "Requests": 44,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "contacto-2.report.json",
+            "LCP": 3156.7418,
+            "FCP": 1240.8709,
+            "TBT": 196,
+            "CLS": 0,
+            "TTFB": 470,
+            "JS": 661483,
+            "CSS": 63683,
+            "Total": 883486,
+            "Requests": 43,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "contacto-3.report.json",
+            "LCP": 3691.7345,
+            "FCP": 1236.6938,
+            "TBT": 125,
+            "CLS": 0,
+            "TTFB": 468,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 894043,
+            "Requests": 44,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 3295.4323999999997,
+          "FCP": 1236.6938,
+          "TBT": 145.4459499999998,
+          "CLS": 0,
+          "TTFB": 468,
+          "JS": 672054,
+          "CSS": 63683,
+          "Total": 894043,
+          "Requests": 44
+        }
+      },
+      {
+        "variant": "after-final",
+        "route": "home",
+        "runs": [
+          {
+            "file": "home-1.report.json",
+            "LCP": 3491.5858,
+            "FCP": 950.2928999999999,
+            "TBT": 34.5,
+            "CLS": 0,
+            "TTFB": 475,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "home-2.report.json",
+            "LCP": 3425.2916000000005,
+            "FCP": 911.6458,
+            "TBT": 32,
+            "CLS": 0,
+            "TTFB": 456,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "home-3.report.json",
+            "LCP": 3428.4647999999997,
+            "FCP": 911.7324000000001,
+            "TBT": 30.5,
+            "CLS": 0,
+            "TTFB": 456,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 3428.4647999999997,
+          "FCP": 911.7324000000001,
+          "TBT": 32,
+          "CLS": 0,
+          "TTFB": 456,
+          "JS": 218147,
+          "CSS": 19825,
+          "Total": 377852,
+          "Requests": 25
+        }
+      },
+      {
+        "variant": "after-final",
+        "route": "faq",
+        "runs": [
+          {
+            "file": "faq-1.report.json",
+            "LCP": 3116.92145,
+            "FCP": 912.6143,
+            "TBT": 41.69284999999945,
+            "CLS": 0,
+            "TTFB": 456,
+            "JS": 196112,
+            "CSS": 19825,
+            "Total": 338283,
+            "Requests": 20,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "faq-2.report.json",
+            "LCP": 3108.2122,
+            "FCP": 909.4748,
+            "TBT": 22,
+            "CLS": 0,
+            "TTFB": 455,
+            "JS": 196112,
+            "CSS": 19825,
+            "Total": 338283,
+            "Requests": 20,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "faq-3.report.json",
+            "LCP": 3096.44195,
+            "FCP": 908.9612999999999,
+            "TBT": 16.5,
+            "CLS": 0,
+            "TTFB": 454,
+            "JS": 196112,
+            "CSS": 19825,
+            "Total": 338283,
+            "Requests": 20,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 3108.2122,
+          "FCP": 909.4748,
+          "TBT": 22,
+          "CLS": 0,
+          "TTFB": 455,
+          "JS": 196112,
+          "CSS": 19825,
+          "Total": 338283,
+          "Requests": 20
+        }
+      },
+      {
+        "variant": "after-final",
+        "route": "contacto",
+        "runs": [
+          {
+            "file": "contacto-1.report.json",
+            "LCP": 3346.9026249999997,
+            "FCP": 917.0554999999999,
+            "TBT": 68.02774999999951,
+            "CLS": 0,
+            "TTFB": 459,
+            "JS": 287506,
+            "CSS": 19825,
+            "Total": 427542,
+            "Requests": 21,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "contacto-2.report.json",
+            "LCP": 3325.6575,
+            "FCP": 909.3299999999999,
+            "TBT": 133.5,
+            "CLS": 0,
+            "TTFB": 455,
+            "JS": 287506,
+            "CSS": 19825,
+            "Total": 427542,
+            "Requests": 21,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          },
+          {
+            "file": "contacto-3.report.json",
+            "LCP": 3328.6717750000007,
+            "FCP": 910.4260999999999,
+            "TBT": 73.71304999999961,
+            "CLS": 0,
+            "TTFB": 455,
+            "JS": 287506,
+            "CSS": 19825,
+            "Total": 427542,
+            "Requests": 21,
+            "settings": {
+              "rttMs": 150,
+              "throughputKbps": 1638.4,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            }
+          }
+        ],
+        "medians": {
+          "LCP": 3328.6717750000007,
+          "FCP": 910.4260999999999,
+          "TBT": 73.71304999999961,
+          "CLS": 0,
+          "TTFB": 455,
+          "JS": 287506,
+          "CSS": 19825,
+          "Total": 427542,
+          "Requests": 21
+        }
+      }
+    ],
+    "changes": [
+      {
+        "route": "home",
+        "before": {
+          "LCP": 6962.4645,
+          "FCP": 1245.8215,
+          "TBT": 471.9571499999993,
+          "CLS": 0,
+          "TTFB": 473,
+          "JS": 672054,
+          "CSS": 63683,
+          "Total": 949029,
+          "Requests": 54
+        },
+        "after": {
+          "LCP": 3428.4647999999997,
+          "FCP": 911.7324000000001,
+          "TBT": 32,
+          "CLS": 0,
+          "TTFB": 456,
+          "JS": 218147,
+          "CSS": 19825,
+          "Total": 377852,
+          "Requests": 25
+        },
+        "relativeReductionPercent": {
+          "LCP": 50.75788465420542,
+          "FCP": 26.816771102441233,
+          "TBT": 93.21972344311341,
+          "CLS": null,
+          "TTFB": 3.5940803382663846,
+          "JS": 67.54025718171457,
+          "CSS": 68.86924296908123,
+          "Total": 60.18541056174258,
+          "Requests": 53.70370370370371
+        }
+      },
+      {
+        "route": "faq",
+        "before": {
+          "LCP": 3351.4331999999995,
+          "FCP": 1229.9573,
+          "TBT": 89,
+          "CLS": 0,
+          "TTFB": 465,
+          "JS": 654989,
+          "CSS": 63683,
+          "Total": 868772,
+          "Requests": 40
+        },
+        "after": {
+          "LCP": 3108.2122,
+          "FCP": 909.4748,
+          "TBT": 22,
+          "CLS": 0,
+          "TTFB": 455,
+          "JS": 196112,
+          "CSS": 19825,
+          "Total": 338283,
+          "Requests": 20
+        },
+        "relativeReductionPercent": {
+          "LCP": 7.257223566323792,
+          "FCP": 26.056392364190213,
+          "TBT": 75.28089887640449,
+          "CLS": null,
+          "TTFB": 2.1505376344086025,
+          "JS": 70.05873381079682,
+          "CSS": 68.86924296908123,
+          "Total": 61.061935697743486,
+          "Requests": 50
+        }
+      },
+      {
+        "route": "contacto",
+        "before": {
+          "LCP": 3295.4323999999997,
+          "FCP": 1236.6938,
+          "TBT": 145.4459499999998,
+          "CLS": 0,
+          "TTFB": 468,
+          "JS": 672054,
+          "CSS": 63683,
+          "Total": 894043,
+          "Requests": 44
+        },
+        "after": {
+          "LCP": 3328.6717750000007,
+          "FCP": 910.4260999999999,
+          "TBT": 73.71304999999961,
+          "CLS": 0,
+          "TTFB": 455,
+          "JS": 287506,
+          "CSS": 19825,
+          "Total": 427542,
+          "Requests": 21
+        },
+        "relativeReductionPercent": {
+          "LCP": -1.008649881575511,
+          "FCP": 26.382254038954517,
+          "TBT": 49.319283211392474,
+          "CLS": null,
+          "TTFB": 2.7777777777777777,
+          "JS": 57.219806741720156,
+          "CSS": 68.86924296908123,
+          "Total": 52.178810191456115,
+          "Requests": 52.27272727272727
+        }
+      }
+    ]
+  },
+  "slow": {
+    "rows": [
+      {
+        "variant": "before-3g-final",
+        "runs": [
+          {
+            "file": "home-1.report.json",
+            "fetched": "2026-09-30T07:50:36.482Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 33981.90505000001,
+            "FCP": 3374.5443,
+            "TBT": 184.5,
+            "CLS": 0,
+            "TTFB": 937,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949029,
+            "Requests": 54
+          },
+          {
+            "file": "home-2.report.json",
+            "fetched": "2026-09-30T07:50:50.147Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 33332.45730000001,
+            "FCP": 3310.8191,
+            "TBT": 262,
+            "CLS": 0,
+            "TTFB": 905,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949029,
+            "Requests": 54
+          },
+          {
+            "file": "home-3.report.json",
+            "fetched": "2026-09-30T07:51:02.985Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 33175.34624999999,
+            "FCP": 3311.265,
+            "TBT": 296.99999999999636,
+            "CLS": 0,
+            "TTFB": 906,
+            "JS": 672054,
+            "CSS": 63683,
+            "Total": 949029,
+            "Requests": 54
+          }
+        ],
+        "medians": {
+          "LCP": 33332.45730000001,
+          "FCP": 3311.265,
+          "TBT": 262,
+          "CLS": 0,
+          "TTFB": 906,
+          "JS": 672054,
+          "CSS": 63683,
+          "Total": 949029,
+          "Requests": 54
+        }
+      },
+      {
+        "variant": "after-3g-final",
+        "runs": [
+          {
+            "file": "home-1.report.json",
+            "fetched": "2026-09-30T07:48:14.116Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 14244.943074999997,
+            "FCP": 1811.9747000000002,
+            "TBT": 36.5,
+            "CLS": 0,
+            "TTFB": 906,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25
+          },
+          {
+            "file": "home-2.report.json",
+            "fetched": "2026-09-30T07:48:26.543Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 14232.63395,
+            "FCP": 1808.7262,
+            "TBT": 36,
+            "CLS": 0,
+            "TTFB": 904,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25
+          },
+          {
+            "file": "home-3.report.json",
+            "fetched": "2026-09-30T07:48:38.964Z",
+            "settings": {
+              "rttMs": 300,
+              "throughputKbps": 400,
+              "requestLatencyMs": 562.5,
+              "downloadThroughputKbps": 1474.5600000000002,
+              "uploadThroughputKbps": 675,
+              "cpuSlowdownMultiplier": 4
+            },
+            "LCP": 14220.705875,
+            "FCP": 1810.0915,
+            "TBT": 29,
+            "CLS": 0,
+            "TTFB": 905,
+            "JS": 218147,
+            "CSS": 19825,
+            "Total": 377852,
+            "Requests": 25
+          }
+        ],
+        "medians": {
+          "LCP": 14232.63395,
+          "FCP": 1810.0915,
+          "TBT": 36,
+          "CLS": 0,
+          "TTFB": 905,
+          "JS": 218147,
+          "CSS": 19825,
+          "Total": 377852,
+          "Requests": 25
+        }
+      }
+    ],
+    "before": {
+      "LCP": 33332.45730000001,
+      "FCP": 3311.265,
+      "TBT": 262,
+      "CLS": 0,
+      "TTFB": 906,
+      "JS": 672054,
+      "CSS": 63683,
+      "Total": 949029,
+      "Requests": 54
+    },
+    "after": {
+      "LCP": 14232.63395,
+      "FCP": 1810.0915,
+      "TBT": 36,
+      "CLS": 0,
+      "TTFB": 905,
+      "JS": 218147,
+      "CSS": 19825,
+      "Total": 377852,
+      "Requests": 25
+    },
+    "relativeReductionPercent": {
+      "LCP": 57.300975976949665,
+      "FCP": 45.33534766924423,
+      "TBT": 86.25954198473282,
+      "CLS": null,
+      "TTFB": 0.11037527593818984,
+      "JS": 67.54025718171457,
+      "CSS": 68.86924296908123,
+      "Total": 60.18541056174258,
+      "Requests": 53.70370370370371
+    }
+  },
+  "verification": {
+    "completeRun": "20260930T065057177Z-e77ffcd7",
+    "complete": {
+      "tests": 783,
+      "passed": 778,
+      "failed": 5,
+      "uncoveredScenarios": 1
+    },
+    "followupRun": "20260930T073903437Z-3aa1897e",
+    "followup": {
+      "tests": 29,
+      "passed": 29,
+      "failed": 0,
+      "uncoveredScenarios": 0
+    },
+    "remaining": [
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-320",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-390",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-768",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-1440",
+        "status": "failed"
+      }
+    ],
+    "privateProviders": "requires-external-verification"
+  }
+}
