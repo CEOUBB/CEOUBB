@@ -115,7 +115,7 @@ When authoring, refining, or consuming skills (`.agents/skills/`), agents and co
 2. **NO TEST WEAKENING (TEST-LOCKING):** Agents are strictly forbidden from weakening assertions, deleting tests, adding `.skip()`, or widening thresholds in `tests/` to force builds to pass.
 3. **NO ANY OR TYPE BYPASS:** Prohibited use of `any`, `@ts-ignore`, or unsafe type assertions (`as unknown as T`) without a deterministic validation parser (Zod).
 4. **NO UNBOUNDED QUERIES:** All database queries must include explicit `.limit()` clauses and indexed pagination cursors.
-5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively. Running `npm`, `yarn`, or `bun` is prohibited. Installing new packages without explicit authorization is forbidden.
+5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively as package manager (`pnpm install`, `pnpm add`). Running `npm` or `yarn` is prohibited. `bun` (>= 1.4.2) is the authoritative local runtime for Next.js (`bun --bun next dev`, `bun --bun next build`), local database scripts, and test execution (`bun test`), with `node` (>= 22.13.0) preserved for Node-specific verification scripts and Firebase emulator runners. Installing new packages without explicit authorization is forbidden.
 6. **NO FRONTEND AI SLOP (HIGH-CRAFT DESIGN GOVERNANCE):**
    - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
    - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via surface luminance tokens and layered micro-shadows without decorative borders.
@@ -145,8 +145,8 @@ When implementing or refactoring entities, clone the architectural patterns of t
 ```bash
 pnpm run format              # 0. Code formatting with Prettier (mandatory before commit/push)
 pnpm run format:check        # 1. Formatting verification (<1.0s)
-pnpm run verify:fast         # 2. Typecheck + Unit Tests + SHA-256 Test-Locking Check (<3.0s)
-pnpm run verify:invariants   # 3. Security Invariants + Firebase Rules Validation (<500ms)
+pnpm run verify:fast         # 2. Native Typecheck (tsc 7.0.2) + Unit Tests (Bun test) + SHA-256 Test-Locking Check (<3.0s)
+pnpm run verify:invariants   # 3. Security Invariants (Bun test) + Firebase Rules Validation (<500ms)
 pnpm test                    # 4. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
 

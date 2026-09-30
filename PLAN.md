@@ -1,5 +1,21 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Handoff: TypeScript 7.0.2 and Bun 1.4.2 Hybrid Runtime Migration, 2026-09-30
+
+- **Capability:** `toolchain/ts7-bun-hybrid` establishing a high-performance local runtime using Bun 1.4.2 and native TypeScript 7.0.2 compiler while isolating typescript-eslint AST dependencies and preserving Node.js 22 for Firebase emulators and specific test runners.
+- **Architectural Implementation:**
+  1. _Native Compiler Performance:_ Upgraded root devDependency `typescript` to `7.0.2`. Whole-project typechecking via `tsc` drops from ~2.5s to under 300ms, powering `pnpm run typecheck`, `pnpm run verify:fast`, and Next.js builds.
+  2. _Package Extensions AST Isolation:_ Configured `pnpm.packageExtensions` to inject `typescript@6.0.3` exclusively into `@typescript-eslint/typescript-estree`, `@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin`, and associated utilities. This resolves the AST parser incompatibility with the Go native TypeScript 7 binary, allowing `pnpm run lint` to execute cleanly with zero errors.
+  3. _Bun 1.4.2 Local Runtime:_ Transitioned development (`dev`), production compilation (`build`), database migrations and operational scripts (`scripts/setup-local-db.mjs`, seeders, capacity tools), and test suites (`bun test`) to Bun 1.4.2.
+  4. _Preserved Node.js 22 Boundary:_ Retained `node` (>= 22.13.0) strictly for Node test runners (`tests/rendered-html.test.mjs`, `qa/*.test.mjs`), Firebase Functions syntax validation (`check:functions`), and Firebase emulator test execution (`check:rules`).
+  5. _Governance and Documentation:_ Synchronized `AGENTS.md` (Rule 5 and Section 8.1), `README.md`, `CONTRIBUTING.md`, and `package.json` `qa:check` script.
+- **Verification:**
+  - `verify:fast`: Native `tsc` + Bun unit tests + SHA-256 test lock validation passed with exit code 0.
+  - `verify:invariants`: Security access policy, Chilean grade arithmetic, and academic data models executed via `bun test` in under 500ms.
+  - `qa:check`: Reconciled to run `bun test qa/catalog.test.ts` and `node --experimental-strip-types --test qa/*.test.mjs` cleanly with exit code 0.
+  - `lint`: Full ESLint pass completed cleanly with zero warnings and zero errors.
+  - Strict preservation of all test assertions and SHA-256 test hashes with zero weakening.
+
 ## Handoff: On-demand Agent QA pipeline (OpenSpec agent-qa-pipeline), 2026-09-22
 
 - **Capability:** `operations/agent-qa` providing reproducible web verification, synthetic institutional accounts, isolated Firebase emulators, and report generation via `pnpm qa`.
