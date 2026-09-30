@@ -793,28 +793,7 @@
       "failed": 0,
       "uncoveredScenarios": 0
     },
-    "remaining": [
-      {
-        "scenario": "quizzes.submit-error",
-        "project": "chromium-320",
-        "status": "failed"
-      },
-      {
-        "scenario": "quizzes.submit-error",
-        "project": "chromium-390",
-        "status": "failed"
-      },
-      {
-        "scenario": "quizzes.submit-error",
-        "project": "chromium-768",
-        "status": "failed"
-      },
-      {
-        "scenario": "quizzes.submit-error",
-        "project": "chromium-1440",
-        "status": "failed"
-      }
-    ],
+    "remaining": [],
     "privateProviders": "requires-external-verification",
     "initialLinuxCi": {
       "run": "https://github.com/CEOUBB/CEOUBB/actions/runs/36688379993",
@@ -853,6 +832,61 @@
         "uncoveredScenarios": 0
       },
       "status": "passed"
+    },
+    "historicalSavedContrastFailures": [
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-320",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-390",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-768",
+        "status": "failed"
+      },
+      {
+        "scenario": "quizzes.submit-error",
+        "project": "chromium-1440",
+        "status": "failed"
+      }
+    ],
+    "savedContrastFollowup": {
+      "run": "20260930T142234018Z-616278d8",
+      "applicationMode": "production",
+      "status": "passed",
+      "totals": {
+        "tests": 77,
+        "passed": 77,
+        "failed": 0,
+        "uncoveredScenarios": 0
+      },
+      "resolvedCases": [
+        {
+          "scenario": "quizzes.submit-error",
+          "project": "chromium-320",
+          "status": "passed"
+        },
+        {
+          "scenario": "quizzes.submit-error",
+          "project": "chromium-390",
+          "status": "passed"
+        },
+        {
+          "scenario": "quizzes.submit-error",
+          "project": "chromium-768",
+          "status": "passed"
+        },
+        {
+          "scenario": "quizzes.submit-error",
+          "project": "chromium-1440",
+          "status": "passed"
+        }
+      ]
     }
   },
   "preview": {

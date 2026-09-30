@@ -12314,7 +12314,7 @@ div.editor-latex-token {
 }
 
 .quiz-save-state.saved {
-  color: var(--academic-teal);
+  color: color-mix(in srgb, var(--academic-teal) 62%, #0f172a);
 }
 
 .quiz-save-state.error {
