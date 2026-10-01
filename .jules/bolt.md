@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-10-01 - Construcción de Map y Set en `EvaluationTeamsEditor` (`app/views/classroom/EvaluationTeamsEditor.tsx`)
+
+- **Finding:** `EvaluationTeamsEditor` construía `nameById` y `assigned` mediante `new Map(students.map(...))` y `new Set(teams.flatMap(...))`, generando arreglos e intermediarios de tuplas en cada edición o re-renderizado de equipos.
+- **Attempted / Identified Solution:** Reemplazo por bucles `for..of` directos utilizando `.set()` y `.add()` respectivamente dentro de los bloques `useMemo`.
+- **Outcome / Learning:** Se eliminaron las asignaciones de memoria intermedias de tuplas y arreglos aplanados en la edición de equipos de evaluación, preservando 100% la funcionalidad.
+- **Future Rule:** Evitar `flatMap` o `map` para construir instancias de `Set` o `Map` en `useMemo` de componentes interactivos, prefiriendo iteraciones imperativas `for..of`.
