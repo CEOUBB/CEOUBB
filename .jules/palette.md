@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / SubmissionReviewTray
+
+- **Finding:** In `SubmissionReviewTray.tsx`, submission queue row buttons lacked explicit item-specific context (student name, submission state, grade), and queue pagination/grading panel navigation controls used generic `aria-label` text ("Página anterior", "Anterior") without queue context (WCAG 2.2 SC 2.4.4 Link Purpose & SC 4.1.2 Name, Role, Value).
+- **Applied / Evaluated Pattern:** Added structured `aria-label={`Revisar entrega de ${row.name}, ${SUBMISSION_STATE_LABELS[row.state]}${row.grade !== null ? `, nota ${formatGrade(row.grade)}` : ""}`}` to queue row buttons, `aria-label="Página anterior de la cola"` / `aria-label="Página siguiente de la cola"` to queue pagination, and `aria-label="Estudiante anterior en la cola"` / `aria-label="Estudiante siguiente en la cola"` to grading panel move buttons.
+- **Design System Constraint:** Retained existing button structures and class names without modifying visual layouts or component props.
+- **Future Rule:** Ensure submission review lists and queue navigation buttons expose student name, submission state, grade, and queue context via structured `aria-label` attributes.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
