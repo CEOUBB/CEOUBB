@@ -257,3 +257,32 @@ test("REQ-SEC-21: grade history route validates sectionId presence and max lengt
     "Grade history route must validate sectionId format with isSectionId"
   );
 });
+
+// Implements: REQ-SEC-22
+test("REQ-SEC-22: ADECCA and Moodle import routes validate sectionId presence, max length and format using isSectionId", () => {
+  const adeccaPath = path.resolve("app/api/courses/[sectionId]/imports/adecca/route.ts");
+  const adeccaContent = fs.readFileSync(adeccaPath, "utf8");
+  assert.match(
+    adeccaContent,
+    /isSectionId\(sectionId\)/,
+    "ADECCA import route must validate sectionId with isSectionId"
+  );
+  assert.match(
+    adeccaContent,
+    /sectionId\.length > 100/,
+    "ADECCA import route must check sectionId length bounds"
+  );
+
+  const moodlePath = path.resolve("app/api/courses/[sectionId]/imports/moodle/route.ts");
+  const moodleContent = fs.readFileSync(moodlePath, "utf8");
+  assert.match(
+    moodleContent,
+    /isSectionId\(sectionId\)/,
+    "Moodle import route must validate sectionId with isSectionId"
+  );
+  assert.match(
+    moodleContent,
+    /sectionId\.length > 100/,
+    "Moodle import route must check sectionId length bounds"
+  );
+});
