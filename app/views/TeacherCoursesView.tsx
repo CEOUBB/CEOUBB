@@ -228,7 +228,7 @@ export function TeacherCoursesView({
         />
       )}
 
-      <p aria-live="polite" className="teacher-manager-status">
+      <p aria-live="polite" role="status" className="teacher-manager-status">
         {status}
       </p>
 
@@ -515,7 +515,9 @@ function CreateCourseForm({
         </label>
       </div>
       <div className="teacher-form-actions">
-        <p aria-live="polite">{status}</p>
+        <p aria-live="polite" role="status">
+          {status}
+        </p>
         <button className="secondary-button" onClick={onCancel} type="button">
           Cancelar
         </button>
@@ -606,7 +608,9 @@ function CourseDataForm({
         </label>
       </div>
       <div className="teacher-form-actions">
-        <p aria-live="polite">{status}</p>
+        <p aria-live="polite" role="status">
+          {status}
+        </p>
         <button className="primary-button" disabled={working} type="submit">
           {working ? "Guardando…" : "Guardar ficha"}
         </button>
@@ -825,7 +829,7 @@ function CourseAssistants({ course }: { course: ManagedCourse }) {
           ))
         )}
       </div>
-      <p aria-live="polite" className="teacher-manager-status">
+      <p aria-live="polite" role="status" className="teacher-manager-status">
         {status}
       </p>
     </section>
