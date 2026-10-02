@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Views / TeacherCoursesView
+
+- **Finding:** In `TeacherCoursesView.tsx`, status message feedback paragraphs using `aria-live="polite"` (`<p aria-live="polite">`) lacked explicit WAI-ARIA roles (`role="status"`), preventing consistent live announcements across screen readers and browsers during course creation, update, and assistant management operations (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 3.2.2 Predictable Operations).
+- **Applied / Evaluated Pattern:** Added `role="status"` to status feedback `<p>` elements using `aria-live="polite"`.
+- **Design System Constraint:** Reused existing component structure and classes (`teacher-manager-status`) without modifying visual styles, DOM hierarchy, or state logic.
+- **Future Rule:** Ensure dynamic status message elements utilizing `aria-live="polite"` explicitly declare `role="status"`.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
