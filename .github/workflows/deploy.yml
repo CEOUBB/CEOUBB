@@ -30,6 +30,7 @@ jobs:
     needs: staging
     if: always() && (github.event_name == 'pull_request' || needs.staging.result == 'success')
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Production' || 'Preview' }}
     timeout-minutes: 20
     steps:
       - name: Checkout repository
@@ -79,14 +80,15 @@ jobs:
         id: deploy-preview
         if: github.event_name == 'pull_request'
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            pnpm exec wrangler deploy --env preview --minify --keep-vars
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::La vista previa requiere CLOUDFLARE_PREVIEW_API_TOKEN con permisos exclusivos de vista previa."
+            exit 0
           fi
-          echo "deployment_url=https://ceoubb-preview.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT
-          echo "preview_url=https://ceoubb-preview.nameless-sky-3eb5.workers.dev" >> $GITHUB_OUTPUT
+          pnpm exec wrangler deploy --env preview --minify --keep-vars
+          echo "preview_url=https://staging.ceoubb.com" >> $GITHUB_OUTPUT
           echo "url=https://staging.ceoubb.com" >> $GITHUB_OUTPUT
 
       - name: Register GitHub Deployment Status

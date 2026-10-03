@@ -77,6 +77,15 @@ export async function portalScenario(
     await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
     const response = await page.request.get("/api/auth/me");
     expect((await response.json()).user ?? null).toBeNull();
+    await page.reload();
+    await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        Object.keys(localStorage).filter(
+          (key) => key.startsWith("firebase:authUser:") && localStorage.getItem(key) !== "null"
+        )
+      )
+    ).toEqual([]);
     return true;
   }
   if (id.startsWith("shell.")) {
