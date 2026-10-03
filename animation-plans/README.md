@@ -28,7 +28,7 @@ All selected plans are implemented. No dependency, authorization, academic calcu
 | `pnpm run verify:invariants`                              | 35 tests passed                                                                                           |
 | `pnpm test`                                               | Production build passed; 627 unit tests and 25 HTML integration tests passed                              |
 | `pnpm qa:check`                                           | 40 tests passed                                                                                           |
-| Installed React Doctor on changed files                   | 91/100; 3 existing full Motion import warnings; no errors                                                 |
+| Initial installed React Doctor on changed files           | 91/100; 3 existing full Motion import warnings; no errors. Follow-up triage below resolves these imports. |
 
 ### Browser evidence
 
@@ -58,3 +58,22 @@ Direct visual review covered the 320 px search palette, desktop keyboard-selecte
 | Import dialog appeared abruptly                           | Pointer/touch-only opacity and scale(0.98) entry at `app/campus-base.css:10911`                                | Occasional modal opening gets a centered, 150 ms entrance; keyboard, close and reduced motion remain immediate |
 
 Decision: **Approve the scoped motion change**. Remaining entrances use exact properties and the existing curve `cubic-bezier(0.16, 1, 0.3, 1)`. Native dialog close is immediate, and reopening by keyboard replaces pointer eligibility. No protected test changes or unrelated warning suppression are included.
+
+### React Doctor follow-up
+
+The PR's three `use-lazy-motion` comments describe real full `motion` imports in NotificationPanel, PeopleSection and SubmissionSlot. Comparing the imports with the PR base confirms they were already present; the "new issues" classification is inaccurate. The underlying optimization still applies because the full components preload their own features alongside the portal's LazyMotion provider.
+
+These consumers now use the existing `motion/react-m` namespace pattern. The shared provider supplies `domMax`, preserving the `layout` features used by the notification stack and upload rows. The bot's generic `domAnimation` replacement would omit those features. AnimatePresence, transition parameters, reduced-motion settings and interaction handlers are retained.
+
+The installed React Doctor reports no issues with `--scope changed --base origin/main --no-parallel --no-supply-chain --no-score`. No rules or diagnostics were suppressed. Its generic size-saving estimate is not a measured result for this application.
+
+Follow-up verification passed formatting, typecheck, all 627 unit tests, the 72 protected file hashes, 31 specifications, 35 invariant tests, 40 QA infrastructure tests, the production build and 25 HTML integration tests. Global lint still reports the same two existing TanStack Virtual warnings. An AST comparison against the previous PR commit verified that all motion JSX attributes, including transitions and interaction handlers, are unchanged in the migrated consumers.
+
+| Follow-up run                  | Production browser coverage                                                                                             | Result                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `20261003T031904627Z-445478ba` | `shell.motion` across all 6 browser projects plus the 23 API contracts                                                  | 29/29 passed; no missing checkpoints |
+| `20261003T032234725Z-beb24a34` | `imports.motion`, Chromium 1440, including participant action focus                                                     | 1/1 passed; no missing checkpoints   |
+| `20261003T032420384Z-5a99c521` | `shell.notifications`, Chromium 390                                                                                     | 1/1 passed; no missing checkpoints   |
+| `20261003T032520924Z-536ac4a0` | All 12 registered submission scenarios, Chromium 390, including loading, upload retry, persistence, review and feedback | 12/12 passed; no missing checkpoints |
+
+Direct visual review covered compact classroom navigation, desktop product reduction, the mobile notification panel and mobile upload progress. These checks cover the selected local journeys; they do not measure production bundle savings, frame rates or real provider delivery.

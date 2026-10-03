@@ -2,7 +2,7 @@
 
 import { Suspense, use, useEffect } from "react";
 import { browser, createPortal } from "react-dom";
-import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
+import { LazyMotion, MotionConfig, domMax } from "motion/react";
 import { usePortalCore } from "./usePortalCore";
 import { LoadingScreen } from "./LoadingScreen";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
@@ -117,7 +117,7 @@ export function Portal({
   // Mobile navigation tabs reference: label: "Avisos"
 
   return (
-    <LazyMotion key={user.id} features={domAnimation}>
+    <LazyMotion key={user.id} features={domMax}>
       <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "user"}>
         <a className="skip-link" href="#contenido-principal">
           Saltar al contenido principal

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ArrowClockwise,
@@ -151,7 +152,7 @@ function createFileUploadItem(file: File, index = 0): FileUploadItem {
 function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: boolean }) {
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <motion.span
+      <m.span
         key={status}
         initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(4px)" }}
         animate={{ opacity: 1, transform: "translateY(0px)" }}
@@ -189,7 +190,7 @@ function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: bool
                 ? "Subiendo"
                 : "En cola"}
         </span>
-      </motion.span>
+      </m.span>
     </AnimatePresence>
   );
 }
@@ -212,7 +213,7 @@ function FileUploadRow({
   const showProgress = status === "uploading" || status === "success";
 
   return (
-    <motion.li
+    <m.li
       layout={!reduce}
       initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(8px)" }}
       animate={{ opacity: 1, transform: "translateY(0px)" }}
@@ -280,7 +281,7 @@ function FileUploadRow({
               aria-label={`Progreso de ${item.name}`}
               className={`mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--canvas-soft)] ${classNames?.progress ?? ""}`}
             >
-              <motion.div
+              <m.div
                 className={`h-full rounded-full ${
                   status === "success"
                     ? "bg-[var(--academic-emerald)]"
@@ -298,7 +299,7 @@ function FileUploadRow({
           ) : null}
         </div>
       </div>
-    </motion.li>
+    </m.li>
   );
 }
 
@@ -437,7 +438,7 @@ export function FileUpload({
             : "items-center gap-3.5 p-4 text-left"
         } ${classNames?.dropzone ?? ""}`}
       >
-        <motion.span
+        <m.span
           aria-hidden="true"
           className={`grid shrink-0 place-items-center bg-[var(--canvas-soft)] text-[var(--color-primary)] ${
             centered
@@ -454,7 +455,7 @@ export function FileUpload({
           transition={FAST_TRANSITION}
         >
           <UploadSimple className={centered ? "h-6 w-6" : "h-5 w-5"} weight="bold" />
-        </motion.span>
+        </m.span>
 
         <span className={`min-w-0 ${centered ? "max-w-xs" : "flex-1"}`}>
           <span
@@ -718,7 +719,7 @@ export function SubmissionSlot({
         aria-label={`Subiendo entrega ${percent}%`}
       >
         <div className="grades-upload-track h-2 w-full overflow-hidden rounded-full bg-[var(--canvas-soft)] border border-[var(--border-hairline)]">
-          <motion.div
+          <m.div
             className="grades-upload-fill h-full rounded-full bg-[var(--color-primary)]"
             style={{
               transformOrigin: "left",

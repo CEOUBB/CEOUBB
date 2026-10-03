@@ -10,7 +10,8 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ExpandableActionBar,
@@ -592,7 +593,7 @@ export function PeopleSection({
 
       <AnimatePresence>
         {selectedIds.size > 0 && (
-          <motion.aside
+          <m.aside
             role="region"
             aria-label="Acciones de participantes seleccionados"
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
@@ -607,7 +608,7 @@ export function PeopleSection({
             <div className="pointer-events-auto shadow-2xl">
               <ExpandableActionBar items={actionBarItems} size="md" expandOnHover />
             </div>
-          </motion.aside>
+          </m.aside>
         )}
       </AnimatePresence>
     </section>
