@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / LiveClassSection
+
+- **Finding:** In `LiveClassSection.tsx`, decorative Phosphor SVG icons (`<VideoCamera>` and `<LinkSimple>`) inside icon wrapper elements (`.live-class-icon` and `.rail-card-icon`) lacked explicit `aria-hidden="true"` attributes, causing assistive technologies to process redundant child SVG nodes (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 1.1.1 Non-text Content).
+- **Applied / Evaluated Pattern:** Added `aria-hidden="true"` directly to decorative `<VideoCamera>` and `<LinkSimple>` SVG icon instances.
+- **Design System Constraint:** Reused existing Phosphor icon props without altering visual layout or component state logic.
+- **Future Rule:** Ensure decorative vector icons in side rail cards and banner headers explicitly specify `aria-hidden="true"`.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).

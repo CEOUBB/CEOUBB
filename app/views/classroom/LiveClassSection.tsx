@@ -18,7 +18,7 @@ export function LiveClassBanner({ liveClass }: { liveClass: LiveClassLink | null
   return (
     <section className="live-class-banner" aria-label="Clase en vivo">
       <span className="live-class-icon" aria-hidden="true">
-        <VideoCamera size={24} weight="fill" />
+        <VideoCamera size={24} weight="fill" aria-hidden="true" />
       </span>
       <div className="live-class-copy">
         <span>Clase en vivo</span>
@@ -56,7 +56,7 @@ export function LiveClassEditor({
     <details className="rail-card live-class-editor" open={invalid || undefined}>
       <summary>
         <span className="rail-card-icon" aria-hidden="true">
-          <LinkSimple size={16} weight="bold" />
+          <LinkSimple size={16} weight="bold" aria-hidden="true" />
         </span>
         <span className="rail-card-heading">
           <strong>Enlace de clase en vivo</strong>
