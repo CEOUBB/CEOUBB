@@ -62,7 +62,7 @@
   "tests/services.test.ts": "d8d70319e1c663e207474b2d5a585c836d4e6f68d1bf68692796d81c43c6fa90",
   "tests/staging-environment.test.ts": "e9bf2c2fd4d90602cf776c553498e084b6c8cfef6f8cd27f1124c4a443e9e5aa",
   "tests/submission-review.test.ts": "e0d61a4cd81f58c9486ddbef819868814ed850ef2e22f2b03ef14e81d51bf24b",
-  "tests/support-api.test.ts": "de1210244f9f500c786f059b0324f78fc2eba2c4fbbe862538ba22c4fc195c77",
+  "tests/support-api.test.ts": "7c9c02c43ee2daeb945693c25085d8c60c525af90bb8c3abe217bb643d27543e",
   "tests/support-mail.test.ts": "acddc7fd1f6cc1a2f654853ab30c39167f410555bb868c20f305a2492b0ec78e",
   "tests/support-pages.test.ts": "903451041279a824f990d04cf9e5f751773670fbc8ad8b377be28966bf7246e9",
   "tests/support-request.test.ts": "c8f1ce80e23428d4f1e5a281e475846eab26ffe343a45ae9e8bd584785028bb8",
