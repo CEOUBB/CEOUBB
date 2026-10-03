@@ -48,6 +48,8 @@ Personal calendar and avatar writes require institutional membership. A shared t
 
 Logout closes the portal cookie, web Firebase identity and native Firebase identity. Native push registration is retired before identity teardown; callbacks from an earlier registration cannot persist a token for another account. Production release workflows require production signing credentials and never publish debug APKs. Cloudflare preview deployments use a separate `CLOUDFLARE_PREVIEW_API_TOKEN`; production token scopes and environment protection still require provider-side verification.
 
+GitHub's `Production` environment requires approval by its designated release reviewer and accepts only `main` or `v*` tags. `Staging` accepts only `main`; `Preview` accepts only `refs/pull/*/merge`. Production deployment and signing credentials must reside in `Production`, outside repository-wide secret scope. Environment configuration does not establish that every credential has been migrated or that Cloudflare token permissions are isolated.
+
 ### 2.2 Data Partitioning & Persistence
 
 - **System of Record (SoR):** Turso/libSQL with Drizzle ORM stores the relational academic structure (`facultades`, `carreras`, `secciones`, `inscripciones`, `usuarios`).
