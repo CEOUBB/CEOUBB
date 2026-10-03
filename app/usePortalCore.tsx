@@ -499,20 +499,27 @@ export function usePortalCore(initialSession?: SessionState) {
   }, [notifications, persistRead]);
 
   const logout = useCallback(async () => {
-    let signedOut = false;
-
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      signedOut = response.ok;
-    } catch {
-      // Ignore network failure
-    }
-    forgetPhoto();
-    forgetPreferences();
-    dispatchSession({ type: "LOGOUT" });
-    dispatchNav({ type: "LOGOUT" });
+      const results = await Promise.allSettled([
+        import("../lib/firebase-client.ts").then(({ signOutOfFirebase }) => signOutOfFirebase()),
+        fetch("/api/auth/logout", { method: "POST" }).then((response) => {
+          if (!response.ok) throw new Error("No se pudo cerrar la sesión del portal.");
+        }),
+      ]);
 
-    if (signedOut) router.refresh();
+      if (results.some((result) => result.status === "rejected")) {
+        throw new Error("No se pudo cerrar la sesión.");
+      }
+
+      forgetPhoto();
+      forgetPreferences();
+      dispatchSession({ type: "LOGOUT" });
+      dispatchNav({ type: "LOGOUT" });
+      router.refresh();
+    } catch {
+      const { toast } = await import("../lib/toast.ts");
+      toast.error("No se pudo completar el cierre de sesión. Intenta nuevamente.");
+    }
   }, [router]);
 
   const finishSignedInWithSession = useCallback((session: SessionState) => {

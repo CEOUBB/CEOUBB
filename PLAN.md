@@ -1,6 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Loading performance implementation, 2026-09-29
+## Current handoff: Security remediation, 2026-10-03
+
+- Scope and per-finding evidence: [security remediation report](docs/security/remediation-2026-10-03.md).
+- Close portal and Firebase identities on logout; retire native push registration before identity teardown. Restrict personal namespaces, direct submission modality and shared downloads to the institutional, enrollment and exact receipt policies.
+- Deny archived communication and teacher management writes. Read academic period state inside callable write transactions and reuse the guarded ADECCA commit. Bound ZIP decompression output and preserve the existing OpenNext patch while updating affected dependencies.
+- Local verification passed: 627 unit tests, 25 HTML/HTTP integration tests, 35 invariants, 72 protected file hashes, 31 specification validations, 49 QA harness/regression checks and 18 emulator rule tests. Lint retains 2 existing warnings in unchanged files.
+- Production QA passed the complete 172-case desktop catalog and 23-case API matrix. Final production authentication/API verification passed 45 checks across the Chromium viewport projects, critical Firefox/WebKit authentication and API contracts. This does not establish the full product catalog in every browser.
+- External completion: protect and restrict GitHub environments, move production and signing secrets out of repository scope, configure an exclusively scoped preview token, and verify deployed rules/Functions plus real providers and native behavior. No deployment or production mutation was performed. The root registry retains the locally mitigated `braces` advisory; Functions audit reports none.
+
+## Handoff: Loading performance implementation, 2026-09-29
 
 - Scope and measured evidence: [loading performance report](docs/performance/loading-performance-2026-09-29.md), OpenSpec `improve-loading-performance`.
 - Public access is static; validated private bootstrap runs under `/campus`. Personalized HTML, RSC and authentication responses must remain outside shared and offline caches.

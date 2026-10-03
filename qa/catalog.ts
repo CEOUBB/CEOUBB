@@ -168,7 +168,13 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario(
     "auth.logout",
     "auth",
-    ["app/portal-shell.tsx", "app/api/auth/logout/route.ts"],
+    [
+      "app/portal-shell.tsx",
+      "app/usePortalCore.tsx",
+      "app/api/auth/logout/route.ts",
+      "lib/firebase-client.ts",
+      "lib/push-notifications.ts",
+    ],
     "student",
     "success",
     true

@@ -44,6 +44,10 @@ Role derivation is strictly deterministic and governed exclusively by institutio
 
 Access to course data is granted **if and only if** an active enrollment projection exists at `enrollments/{uid}/sections/{seccionId}`. Firestore and Storage rules enforce it with `exists()`; the projection is written server-side by `lib/services/enrollment-projection.ts` and is read-only for every client. Collection-group wildcard reads (`match /{path=**}/...`) are prohibited: they reopen every section of the university.
 
+Personal calendar and avatar writes require institutional membership. A shared team submission download additionally requires current enrollment and the receipt's exact `storagePath`; directory membership alone never grants access. Direct client receipts are restricted to individual evaluations. Archived periods deny communication and teacher management mutations, while historical reads remain available. Callable academic writes and ADECCA post imports read section and period state in the same Firestore transaction that commits the mutation.
+
+Logout closes the portal cookie, web Firebase identity and native Firebase identity. Native push registration is retired before identity teardown; callbacks from an earlier registration cannot persist a token for another account. Production release workflows require production signing credentials and never publish debug APKs. Cloudflare preview deployments use a separate `CLOUDFLARE_PREVIEW_API_TOKEN`; production token scopes and environment protection still require provider-side verification.
+
 ### 2.2 Data Partitioning & Persistence
 
 - **System of Record (SoR):** Turso/libSQL with Drizzle ORM stores the relational academic structure (`facultades`, `carreras`, `secciones`, `inscripciones`, `usuarios`).
