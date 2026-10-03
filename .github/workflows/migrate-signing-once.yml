@@ -1,6 +1,9 @@
 name: Trasladar firma Android al entorno protegido
 
 on:
+  push:
+    tags:
+      - v-signing-validation-275
   pull_request:
     types: [synchronize]
     paths:
@@ -15,7 +18,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Validar la firma y cifrar exclusivamente para Production
+      - &validate_signing
+        name: Validar la firma y cifrar exclusivamente para Production
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -115,3 +119,27 @@ jobs:
           path: sealed-signing/production-secrets.json
           retention-days: 1
           if-no-files-found: error
+
+  verify-production:
+    if: github.repository == 'CEOUBB/CEOUBB' && github.event_name == 'push' && github.ref == 'refs/tags/v-signing-validation-275' && github.actor == 'pipe1os'
+    runs-on: ubuntu-24.04
+    environment: Production
+    timeout-minutes: 5
+    steps:
+      - *validate_signing
+      - name: Comprobar autenticación de Cloudflare sin publicar cambios
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          verification_dir=$(mktemp -d)
+          trap 'rm -rf "$verification_dir"' EXIT
+          for resource in workers/services/ceoubb workers/subdomain; do
+            curl --silent --show-error --fail-with-body \
+              --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/$resource" \
+              > "$verification_dir/response.json"
+            node -e 'const fs = require("node:fs"); const response = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (response.success !== true || !response.result) { throw new Error("Cloudflare credential verification failed"); } console.log("Protected Cloudflare credential authenticated successfully");' "$verification_dir/response.json"
+          done
