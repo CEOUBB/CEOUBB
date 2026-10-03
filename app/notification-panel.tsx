@@ -1,7 +1,8 @@
 "use client";
 
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { motion, type Transition, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import type { Transition } from "motion/react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import type { NotificationItem } from "../lib/communications.ts";
 import { EASE_OUT, SPRING_LAYOUT, SPRING_PRESS, SPRING_SWAP } from "../lib/ease";
+import { useHydratedReducedMotion } from "../lib/hooks/use-hydrated-reduced-motion";
 
 const NOTIFICATION_DATE = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
@@ -110,7 +112,7 @@ export function ActionSwapText({
   children: ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   return (
     <span
       className={`relative -my-[0.08em] inline-block max-w-full whitespace-nowrap py-[0.08em] align-bottom ${className}`}
@@ -119,7 +121,7 @@ export function ActionSwapText({
       <span aria-hidden className="invisible inline-block whitespace-nowrap">
         {children}
       </span>
-      <motion.span
+      <m.span
         key={value}
         initial={reduce ? false : { opacity: 0, y: "90%", filter: "blur(3px)" }}
         animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: "0%", filter: "blur(0px)" }}
@@ -128,7 +130,7 @@ export function ActionSwapText({
         className="absolute left-0 top-[0.08em] inline-block max-w-full truncate"
       >
         {children}
-      </motion.span>
+      </m.span>
     </span>
   );
 }
@@ -146,7 +148,7 @@ export function NotificationStack({
   className = "",
   classNames,
 }: NotificationStackProps) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const isControlled = expanded !== undefined;
   const isExpanded = expanded ?? internalExpanded;
@@ -181,7 +183,7 @@ export function NotificationStack({
   return (
     <div className={`relative z-10 block w-full text-left text-[oklch(0.2_0.03_260)] ${className}`}>
       <div className="relative p-2">
-        <motion.span
+        <m.span
           aria-hidden="true"
           layout
           initial={false}
@@ -194,7 +196,7 @@ export function NotificationStack({
           {visibleItems.map((item, index) => {
             const isPrimary = index === 0;
             return (
-              <motion.div
+              <m.div
                 key={item.id}
                 layout="position"
                 initial={false}
@@ -229,12 +231,12 @@ export function NotificationStack({
                     </span>
                   ) : null}
                 </span>
-              </motion.div>
+              </m.div>
             );
           })}
         </div>
 
-        <motion.div
+        <m.div
           layout="position"
           transition={transition}
           className={`relative z-10 mt-2 flex min-h-8 items-center justify-between px-1 ${classNames?.footer ?? ""}`}
@@ -265,7 +267,7 @@ export function NotificationStack({
               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );
@@ -336,11 +338,10 @@ function NotificationRow({
 }) {
   return (
     <li>
-      <motion.button
+      <m.button
         className="notification-row group relative flex w-full items-center gap-3 border-b border-[oklch(0.9_0.012_250)] p-3 text-left transition-colors duration-150 hover:bg-[oklch(0.975_0.005_240)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.48_0.18_255)]"
         data-unread={item.unread ? "true" : "false"}
         onClick={() => onOpen(item)}
-        whileHover={{ x: 2 }}
         whileTap={{ scale: 0.99 }}
         transition={SPRING_PRESS}
         type="button"
@@ -368,7 +369,7 @@ function NotificationRow({
 
         {item.unread && (
           <span className="notification-dot" aria-label="Sin leer" role="img">
-            <motion.span
+            <m.span
               className="block h-full w-full rounded-full bg-[oklch(0.55_0.22_25)]"
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -378,7 +379,7 @@ function NotificationRow({
             />
           </span>
         )}
-      </motion.button>
+      </m.button>
     </li>
   );
 }
@@ -417,7 +418,7 @@ export function NotificationList({
           )}
         </div>
         {unread > 0 && (
-          <motion.button
+          <m.button
             className="notification-mark-all inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-[oklch(0.48_0.18_255)] hover:bg-[rgba(0,85,184,0.07)] transition-colors"
             onClick={onMarkAll}
             type="button"
@@ -426,7 +427,7 @@ export function NotificationList({
           >
             <Checks aria-hidden="true" size={15} />
             Marcar todas como leídas
-          </motion.button>
+          </m.button>
         )}
       </header>
 

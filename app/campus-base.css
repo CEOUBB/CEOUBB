@@ -532,7 +532,6 @@
   grid-template-columns: var(--rail-width) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas: "header header" "sidebar main";
-  transition: grid-template-columns var(--transition-base);
 }
 
 .app-shell[data-sidebar="closed"] {
@@ -1685,12 +1684,6 @@
 }
 .next-eval-action:hover {
   background: var(--color-primary-wash);
-}
-.next-eval-action svg {
-  transition: transform var(--transition-fast);
-}
-.next-eval:hover .next-eval-action svg {
-  transform: translateX(3px);
 }
 
 .section-title {
@@ -10915,6 +10908,20 @@ div.editor-latex-token {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+.moodle-import-dialog[data-motion="pointer"][open] {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    opacity var(--duration-fast) var(--ease-spring),
+    transform var(--duration-fast) var(--ease-spring);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
 .moodle-import-dialog::backdrop {
   background: rgb(0 43 92 / 36%);
 }
@@ -12238,10 +12245,12 @@ div.editor-latex-token {
 
 .quiz-runner-progress span {
   display: block;
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--color-primary);
-  transition: width var(--transition-base);
+  transform-origin: left;
+  transition: transform var(--duration-fast) var(--ease-spring);
 }
 
 .quiz-question-list {

@@ -299,7 +299,7 @@ function QuizRunner({
         aria-valuemax={quiz.questions.length}
         aria-label={`${answered} de ${quiz.questions.length} preguntas respondidas`}
       >
-        <span style={{ width: `${percentage}%` }} />
+        <span style={{ transform: `scaleX(${percentage / 100})` }} />
       </div>
       <div className="quiz-question-list">
         {quiz.questions.map((question, index) => (

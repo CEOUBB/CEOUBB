@@ -1272,6 +1272,23 @@ mark {
   }
 }
 
+html[data-reduced-motion="true"] {
+  &,
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  &::view-transition-group(*),
+  &::view-transition-old(*),
+  &::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* ── Contacto y preguntas frecuentes ──────────────────────── */
 
 /*

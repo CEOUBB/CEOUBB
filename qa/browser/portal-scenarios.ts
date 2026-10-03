@@ -11,6 +11,7 @@ import {
 } from "./helpers.ts";
 import { resetQaFixtures } from "../../scripts/qa/seed.ts";
 import { QA_GRADE_ITEMS, QA_IDS } from "../fixtures.ts";
+import { shellMotionScenario } from "./motion-scenarios.ts";
 
 export type Capture = (id: string) => Promise<void>;
 
@@ -20,6 +21,11 @@ export async function portalScenario(
   capture: Capture
 ): Promise<boolean> {
   const id = scenario.id;
+
+  if (id === "shell.motion") {
+    await shellMotionScenario(page, capture);
+    return true;
+  }
   if (id.startsWith("public.") || id === "auth.login") {
     const routes: Record<string, string> = {
       "auth.login": "/",

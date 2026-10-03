@@ -76,7 +76,13 @@ export function MoodleImportDialog({ course }: { course: Course }) {
     <>
       <button
         className="secondary-button moodle-import-trigger"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={(event) => {
+          const dialog = dialogRef.current;
+
+          if (!dialog) return;
+          dialog.dataset.motion = event.detail > 0 ? "pointer" : "instant";
+          dialog.showModal();
+        }}
         type="button"
       >
         <FileArrowUp aria-hidden="true" size={18} />
