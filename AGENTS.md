@@ -50,6 +50,8 @@ Logout closes the portal cookie, web Firebase identity and native Firebase ident
 
 GitHub's `Production` environment requires approval by its designated release reviewer and accepts only `main` or `v*` tags. `Staging` accepts only `main`; `Preview` accepts only `refs/pull/*/merge`. Production deployment and signing credentials must reside in `Production`, outside repository-wide secret scope. Environment configuration does not establish that every credential has been migrated or that Cloudflare token permissions are isolated.
 
+Preview CI updates only the existing `ceoubb-preview` Worker using its individual Editor token. Its `staging.ceoubb.com` custom domain is provisioned separately and must remain bound before publication; CI does not manage zone routes or the account subdomain. Preview `workers.dev` and version preview URLs remain disabled. Preview deployment links use `https://staging.ceoubb.com`.
+
 ### 2.2 Data Partitioning & Persistence
 
 - **System of Record (SoR):** Turso/libSQL with Drizzle ORM stores the relational academic structure (`facultades`, `carreras`, `secciones`, `inscripciones`, `usuarios`).

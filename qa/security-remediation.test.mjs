@@ -69,6 +69,47 @@ test("release scripts fail closed without signing credentials or a preview token
   }
 });
 
+test("preview publication reports the staging domain only after deployment succeeds", async () => {
+  const deploy = loadYaml(
+    await readFile(new URL("../.github/workflows/deploy.yml", import.meta.url), "utf8")
+  );
+  const preview = deploy.jobs.deploy.steps.find((step) => step.id === "deploy-preview");
+  const dir = await mkdtemp(join(tmpdir(), "ceoubb-preview-workflow-"));
+  const bash =
+    process.platform === "win32" ? join(process.env.ProgramFiles, "Git/bin/bash.exe") : "bash";
+  const output = join(dir, "output");
+  const environment = {
+    PATH: process.env.PATH,
+    SYSTEMROOT: process.env.SYSTEMROOT,
+    GITHUB_OUTPUT: output,
+    CLOUDFLARE_API_TOKEN: "fixture-preview-token",
+  };
+
+  try {
+    const failed = spawnSync(bash, ["-e", "-c", `pnpm() { return 12; }\n${preview.run}`], {
+      cwd: dir,
+      env: environment,
+      encoding: "utf8",
+    });
+    assert.equal(failed.error, undefined);
+    assert.equal(failed.status, 12);
+    await assert.rejects(access(output));
+    const published = spawnSync(bash, ["-e", "-c", `pnpm() { return 0; }\n${preview.run}`], {
+      cwd: dir,
+      env: environment,
+      encoding: "utf8",
+    });
+    assert.equal(published.error, undefined);
+    assert.equal(published.status, 0);
+    assert.equal(
+      await readFile(output, "utf8"),
+      "preview_url=https://staging.ceoubb.com\nurl=https://staging.ceoubb.com\n"
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("the patched brace parser and AST walkers bound nesting", () => {
   const braces = require("braces");
   const deep = "{".repeat(1024) + "a,b" + "}".repeat(1024);
