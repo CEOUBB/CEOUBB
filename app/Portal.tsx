@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, use } from "react";
+import { Suspense, use, useEffect } from "react";
 import { browser, createPortal } from "react-dom";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import { usePortalCore } from "./usePortalCore";
@@ -43,6 +43,19 @@ export function Portal({
   isQuickAuthAvailable?: boolean;
 } = {}) {
   const core = usePortalCore(initialSession);
+
+  // Implements: REQ-CFG-05
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (core.user && core.prefersReducedMotion) {
+      root.dataset.reducedMotion = "true";
+    }
+
+    return () => {
+      delete root.dataset.reducedMotion;
+    };
+  }, [core.user, core.prefersReducedMotion]);
 
   if (core.checking) return <LoadingScreen />;
   if (!core.user) {

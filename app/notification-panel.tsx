@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { motion, type Transition, useReducedMotion } from "motion/react";
+import { motion, type Transition } from "motion/react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import type { NotificationItem } from "../lib/communications.ts";
 import { EASE_OUT, SPRING_LAYOUT, SPRING_PRESS, SPRING_SWAP } from "../lib/ease";
+import { useHydratedReducedMotion } from "../lib/hooks/use-hydrated-reduced-motion";
 
 const NOTIFICATION_DATE = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
@@ -110,7 +111,7 @@ export function ActionSwapText({
   children: ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   return (
     <span
       className={`relative -my-[0.08em] inline-block max-w-full whitespace-nowrap py-[0.08em] align-bottom ${className}`}
@@ -146,7 +147,7 @@ export function NotificationStack({
   className = "",
   classNames,
 }: NotificationStackProps) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const isControlled = expanded !== undefined;
   const isExpanded = expanded ?? internalExpanded;
@@ -340,7 +341,6 @@ function NotificationRow({
         className="notification-row group relative flex w-full items-center gap-3 border-b border-[oklch(0.9_0.012_250)] p-3 text-left transition-colors duration-150 hover:bg-[oklch(0.975_0.005_240)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.48_0.18_255)]"
         data-unread={item.unread ? "true" : "false"}
         onClick={() => onOpen(item)}
-        whileHover={{ x: 2 }}
         whileTap={{ scale: 0.99 }}
         transition={SPRING_PRESS}
         type="button"

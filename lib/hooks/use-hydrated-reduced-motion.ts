@@ -1,13 +1,13 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { useReducedMotion } from "motion/react";
+import { useReducedMotionConfig } from "motion/react";
 
 const subscribe = () => () => {};
 const serverSnapshot = () => false;
 
-// Implements: REQ-PERF-LOAD-02
+// Implements: REQ-PERF-LOAD-02, REQ-CFG-05
 export function useHydratedReducedMotion(): boolean {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useReducedMotionConfig();
   return useSyncExternalStore(subscribe, () => reducedMotion === true, serverSnapshot);
 }

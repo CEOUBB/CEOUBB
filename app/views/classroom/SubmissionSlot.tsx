@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ArrowClockwise,
   CheckCircle,
@@ -204,7 +205,7 @@ function FileUploadRow({
   onRetry: (item: FileUploadItem) => void;
   classNames?: FileUploadClassNames;
 }) {
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useHydratedReducedMotion();
   const status = item.status ?? "queued";
   const progress = Math.max(0, Math.min(100, item.progress ?? 0));
   const progressRatio = progress / 100;
@@ -322,7 +323,7 @@ export function FileUpload({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useHydratedReducedMotion();
   const [internalValue, setInternalValue] = useState<FileUploadItem[]>(defaultValue ?? []);
   const isControlled = value !== undefined;
   const items = value ?? internalValue;
@@ -661,7 +662,7 @@ export function SubmissionSlot({
   readOnly: boolean;
   onDropFile?: (file: File, item: GradeItem) => void;
 }) {
-  const shouldReduceMotion = useReducedMotion() ?? false;
+  const shouldReduceMotion = useHydratedReducedMotion();
   const mode = submissionModeOf(item);
   const teamLabel = mode === "individual" ? "" : "en equipo";
   const [dragging, setDragging] = useState(false);
@@ -732,7 +733,7 @@ export function SubmissionSlot({
           <span className="flex items-center gap-1">
             <CircleNotch
               aria-hidden="true"
-              className="h-3 w-3 animate-spin text-[var(--color-primary)]"
+              className={`h-3 w-3 text-[var(--color-primary)] ${shouldReduceMotion ? "" : "animate-spin"}`}
               weight="bold"
             />
             <span>Subiendo</span>

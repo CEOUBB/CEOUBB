@@ -10,7 +10,8 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ExpandableActionBar,
   type ExpandableActionBarItem,
@@ -258,7 +259,7 @@ export function PeopleSection({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
