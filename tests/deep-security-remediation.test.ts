@@ -151,7 +151,7 @@ test("REQ-SEC-16: section participants route validates sectionId presence and ma
 });
 
 // Implements: REQ-SEC-17
-test("REQ-SEC-17: teacher course routes validate courseId presence, format and max length", () => {
+test("REQ-SEC-17: teacher course routes validate courseId presence, format and max length, origin, and request size", () => {
   const routePath = path.resolve("app/api/teacher/courses/[courseId]/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
@@ -163,6 +163,16 @@ test("REQ-SEC-17: teacher course routes validate courseId presence, format and m
     routeContent,
     /courseId\.length > 100/,
     "Teacher course PATCH route must check courseId length bounds"
+  );
+  assert.match(
+    routeContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Teacher course PATCH route must validate origin header against request URL origin"
+  );
+  assert.match(
+    routeContent,
+    /contentLength\s*>\s*65536/,
+    "Teacher course PATCH route must validate content length bounds"
   );
 
   const asstPath = path.resolve("app/api/teacher/courses/[courseId]/assistants/route.ts");
