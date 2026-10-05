@@ -360,9 +360,7 @@ export function ActivitiesPanel({
                   <div>
                     <dt>Entregas</dt>
                     <dd>
-                      {totalSubmissions
-                        ? `${totalSubmissions} registradas`
-                        : "Aún no abiertas"}
+                      {totalSubmissions ? `${totalSubmissions} registradas` : "Aún no abiertas"}
                     </dd>
                   </div>
                 </dl>
