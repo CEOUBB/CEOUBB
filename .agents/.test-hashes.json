@@ -6,7 +6,7 @@
   "tests/access-policy.test.ts": "fcd99b0c797b14f7a92a349fa782772d5b79d16a8407344dffc1b8ec9ac85a4a",
   "tests/accessibility.test.ts": "31aa8779b2e8e0de45a51847244a0a5e793c8e2932549a3f214a5d05fe09dd1c",
   "tests/adecca-import.test.ts": "174fe1c5b97cc9de4beb8056ff937c5e2972b69e40a05d20c0904d2e91139034",
-  "tests/admin-api.test.ts": "1fe92e73423cafeec68f8abc1e09b20c7d55f6f41ebf4c58b4cf4fd4a91a4137",
+  "tests/admin-api.test.ts": "765901912b653a12cad0aeaf033cfc7f2dcf3de8d6c4ddb96ae0cbe1ba992d13",
   "tests/animated-underline-link.test.ts": "58f1f6a3b0f7e2e036c70e380747b4523fee9114b82925fceb4dfdef8d0d4e5d",
   "tests/app-check.test.ts": "fd5b41d9159c72e8c656acd98b10e62cdb0b7846883c132386258a9e7a15f9dc",
   "tests/assistant-role.test.ts": "7a36f4a53e914c222b5c5d11da0a74906770b7b6dc810dd9619a76c7a67393fd",
