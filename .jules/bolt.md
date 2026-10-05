@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-09-23 - Indexación de estadísticas de entregas por actividad en `ActivitiesPanel` (`app/preview/docente/teacher-preview-panels.tsx`)
+
+- **Finding:** `ActivitiesPanel` realizaba dos pasadas `.filter(...)` sobre la lista completa de entregas `state.submissions` dentro del mapeo de cada actividad `filtered.map(...)`, generando una complejidad $O(A \times S)$ de asignaciones y filtrado lineal en cada render.
+- **Attempted / Identified Solution:** Indexación previa de `state.submissions` por `activityId` acumulando total y entregas pendientes (`submitted`, `late`, `review_draft`) en un `Map<string, { total: number; pending: number }>` dentro de `useMemo` mediante un bucle `for..of` $O(S)$.
+- **Outcome / Learning:** Se redujo la complejidad de filtrado de $O(A \times S)$ a $O(A + S)$ con búsquedas escalares $O(1)$ por actividad y cero asignaciones de arreglos intermedios durante el renderizado.
+- **Future Rule:** Agrupar e indexar métricas o contadores de subcolecciones derivadas por clave primaria o foránea en una sola pasada $O(N)$ antes de renderizar listas compuestas.

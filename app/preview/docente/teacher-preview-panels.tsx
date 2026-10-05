@@ -257,6 +257,26 @@ export function ActivitiesPanel({
       activity.title.toLocaleLowerCase("es-CL").includes(query.trim().toLocaleLowerCase("es-CL"))
   );
 
+  const submissionStatsByActivity = useMemo(() => {
+    const stats = new Map<string, { total: number; pending: number }>();
+    for (const submission of state.submissions) {
+      let entry = stats.get(submission.activityId);
+      if (!entry) {
+        entry = { total: 0, pending: 0 };
+        stats.set(submission.activityId, entry);
+      }
+      entry.total += 1;
+      if (
+        submission.state === "submitted" ||
+        submission.state === "late" ||
+        submission.state === "review_draft"
+      ) {
+        entry.pending += 1;
+      }
+    }
+    return stats;
+  }, [state.submissions]);
+
   return (
     <section>
       <header className="page-head">
@@ -302,12 +322,9 @@ export function ActivitiesPanel({
 
       <div className="post-list" style={{ marginTop: "var(--space-md)" }}>
         {filtered.map((activity) => {
-          const activitySubmissions = state.submissions.filter(
-            (submission) => submission.activityId === activity.id
-          );
-          const pending = activitySubmissions.filter((submission) =>
-            ["submitted", "late", "review_draft"].includes(submission.state)
-          ).length;
+          const stats = submissionStatsByActivity.get(activity.id);
+          const totalSubmissions = stats?.total ?? 0;
+          const pending = stats?.pending ?? 0;
           return (
             <article key={activity.id}>
               <span className={styles.pill} data-tone={activity.lifecycle}>
@@ -343,8 +360,8 @@ export function ActivitiesPanel({
                   <div>
                     <dt>Entregas</dt>
                     <dd>
-                      {activitySubmissions.length
-                        ? `${activitySubmissions.length} registradas`
+                      {totalSubmissions
+                        ? `${totalSubmissions} registradas`
                         : "Aún no abiertas"}
                     </dd>
                   </div>
