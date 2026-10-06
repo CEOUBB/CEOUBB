@@ -1154,6 +1154,10 @@ button.agenda-calendar-link:hover {
   font-weight: 600;
 }
 .notification-row {
+  & .notification-copy small,
+  & .notification-time {
+    color: var(--text-secondary);
+  }
   & > :first-child {
     grid-row: 1 / span 2;
   }

@@ -776,6 +776,14 @@ a:hover > .animated-underline::after {
   caret-color: var(--color-primary);
   accent-color: var(--color-primary);
 }
+:root:has(.app-shell) {
+  scroll-padding-top: calc(var(--header-offset) + 16px);
+}
+@media (max-width: 767px) {
+  :root:has(.app-shell[data-mobile="true"]) {
+    scroll-padding-bottom: calc(58px + var(--safe-bottom) + 16px);
+  }
+}
 
 /* ── Pie institucional compartido ─────────────────────────── */
 
