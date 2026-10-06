@@ -185,7 +185,6 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
       >
         <div className="moodle-import-dialog__header">
           <div>
-            <span className="eyebrow">Migración de curso</span>
             <h2 id={`${inputId}-title`}>Importar desde ADECCA UBB</h2>
             <p id={`${inputId}-description`}>
               Revisa un paquete local antes de incorporarlo en {course.name}.

@@ -190,7 +190,7 @@ export function ExpandableActionBar({
     >
       <div
         ref={trackRef}
-        className={`relative inline-flex max-w-full items-center overflow-hidden rounded-full border border-[oklch(0.92_0.006_60)] bg-white/95 shadow-2xl backdrop-blur-xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+        className={`relative inline-flex max-w-full items-center overflow-hidden rounded-full border border-(--border-hairline) bg-white/95 shadow-2xl backdrop-blur-xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
           SIZE_CLASS[size]
         } ${classNames?.track ?? ""}`.trim()}
       >
@@ -231,14 +231,14 @@ export function ExpandableActionBar({
                 item.onClick?.();
                 onAction?.(item);
               }}
-              className={`relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[oklch(0.36_0.03_255)] outline-none focus-visible:text-[oklch(0.2_0.03_260)] disabled:pointer-events-none disabled:opacity-40 ${
-                isHighlighted ? "text-[oklch(0.48_0.18_255)]" : ""
+              className={`relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-(--text-secondary) outline-none focus-visible:text-(--text-body) disabled:pointer-events-none disabled:opacity-40 ${
+                isHighlighted ? "text-(--color-primary)" : ""
               } ${ITEM_SIZE_CLASS[size]} ${classNames?.item ?? ""} ${
                 isActive ? (classNames?.activeItem ?? "") : ""
               }`.trim()}
             >
               {isHighlighted ? (
-                <span className="absolute inset-0 -z-10 rounded-full bg-[oklch(0.48_0.18_255/0.1)]" />
+                <span className="absolute inset-0 -z-10 rounded-full bg-(--color-primary-wash)" />
               ) : null}
 
               {renderItem ? (
@@ -271,7 +271,7 @@ export function ExpandableActionBar({
                     <span
                       aria-hidden={!isExpanded}
                       style={{ opacity: isExpanded ? 1 : 0 }}
-                      className={`hidden overflow-hidden whitespace-nowrap text-[10px] text-[oklch(0.52_0.03_250)] sm:inline-block font-mono ${
+                      className={`hidden overflow-hidden whitespace-nowrap text-[10px] text-(--text-faint) sm:inline-block font-mono ${
                         isExpanded ? "ml-1 max-w-[48px]" : "max-w-0"
                       } ${classNames?.shortcut ?? ""}`.trim()}
                     >
@@ -281,7 +281,7 @@ export function ExpandableActionBar({
 
                   {item.badge ? (
                     <span
-                      className={`ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[oklch(0.48_0.18_255)] px-1.5 text-[10px] font-semibold leading-none text-white ${
+                      className={`ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-(--color-primary) px-1.5 text-[10px] font-semibold leading-none text-white ${
                         !isExpanded ? "absolute right-0.5 top-0.5" : ""
                       } ${classNames?.badge ?? ""}`.trim()}
                     >

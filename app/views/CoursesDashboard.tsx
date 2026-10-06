@@ -30,14 +30,20 @@ import {
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
 
+const AGENDA_LATER_LIMIT = 3;
+
+type AgendaItem = { entry: CalendarEntry; course: Course };
+
 function DashboardAgenda({
   next,
   nextCourse,
+  later,
   onCalendar,
   openCourse,
 }: {
   next: CalendarEntry | null | undefined;
   nextCourse: Course | null | undefined;
+  later: AgendaItem[];
   onCalendar: () => void;
   openCourse: (course: Course) => void;
 }) {
@@ -45,7 +51,10 @@ function DashboardAgenda({
     <section className="dashboard-section dashboard-agenda">
       <div className="section-title">
         <h2>En tu agenda</h2>
-        <CalendarBlank size={20} aria-hidden="true" />
+        <button className="agenda-calendar-link" onClick={onCalendar} type="button">
+          <CalendarBlank size={16} aria-hidden="true" />
+          Calendario
+        </button>
       </div>
       {next ? (
         <article
@@ -93,10 +102,38 @@ function DashboardAgenda({
         <div className="agenda-clear">
           <h3>Espacio para organizarte</h3>
           <p>No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.</p>
-          <button className="empty-state-action" onClick={onCalendar} type="button">
-            Abrir calendario <ArrowRight size={16} aria-hidden="true" />
-          </button>
         </div>
+      )}
+      {later.length > 0 && (
+        <ol aria-label="Siguientes evaluaciones" className="agenda-later">
+          {later.map(({ entry, course }) => (
+            <li key={entry.key} style={{ "--course-tone": entry.tone } as React.CSSProperties}>
+              <button
+                aria-label={`${entry.detail}, ${course.name}, ${countdown(entry.date)}`}
+                onClick={() => openCourse(course)}
+                type="button"
+              >
+                <time className="agenda-later-date num" dateTime={entry.date}>
+                  <span>{weekdayOf(entry.date)}</span>
+                  <b>{dayOf(entry.date)}</b>
+                </time>
+                <span className="agenda-later-copy">
+                  <strong>{entry.detail}</strong>
+                  <small>
+                    <span aria-hidden="true" className="next-eval-dot" />
+                    {course.name}
+                  </small>
+                </span>
+                <span
+                  className="agenda-later-count num"
+                  data-urgency={evaluationUrgency(entry.date)}
+                >
+                  {countdown(entry.date)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   );
@@ -203,6 +240,17 @@ export function CoursesDashboard({
   const next = nextEntry(entries);
   const nextCourse = next && courses.find((course) => course.id === next.courseId);
   const todayISO = getSantiagoDateISO();
+  const later = useMemo(
+    () =>
+      entries
+        .filter((entry) => entry !== next && entry.date >= todayISO)
+        .flatMap((entry) => {
+          const course = courses.find((item) => item.id === entry.courseId);
+          return course ? [{ entry, course }] : [];
+        })
+        .slice(0, AGENDA_LATER_LIMIT),
+    [entries, next, courses, todayISO]
+  );
   const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useHydratedReducedMotion();
 
@@ -306,31 +354,21 @@ export function CoursesDashboard({
             </span>
           </div>
           {courses.length > 2 && (
-            <div className="mb-3 flex items-center gap-2 rounded-xl border border-[oklch(0.92_0.006_60)] bg-white/70 px-3 py-1.5 backdrop-blur-sm">
-              <MagnifyingGlass
-                aria-hidden="true"
-                size={15}
-                className="text-[oklch(0.5_0.03_250)]"
-              />
+            <label className="dashboard-filter">
+              <MagnifyingGlass aria-hidden="true" size={16} />
               <input
                 aria-label="Filtrar cursos"
-                className="w-full bg-transparent text-xs text-[oklch(0.2_0.03_260)] placeholder:text-[oklch(0.55_0.03_250)] outline-none border-0 ring-0 focus:outline-none focus:ring-0"
-                placeholder="Filtrar por ramo o código…"
+                placeholder="Filtrar por ramo o código"
                 type="search"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
               {busqueda && (
-                <button
-                  aria-label="Limpiar filtro"
-                  type="button"
-                  onClick={() => setBusqueda("")}
-                  className="text-[oklch(0.5_0.03_250)] hover:text-[oklch(0.2_0.03_260)]"
-                >
-                  <X size={14} />
+                <button aria-label="Limpiar filtro" type="button" onClick={() => setBusqueda("")}>
+                  <X aria-hidden="true" size={14} weight="bold" />
                 </button>
               )}
-            </div>
+            </label>
           )}
           <m.div
             animate="show"
@@ -374,6 +412,7 @@ export function CoursesDashboard({
           </m.div>
         </section>
         <DashboardAgenda
+          later={later}
           next={next}
           nextCourse={nextCourse}
           onCalendar={onCalendar}

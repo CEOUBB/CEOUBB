@@ -101,7 +101,7 @@ export function QuestionField({
   return (
     <fieldset className="quiz-question" disabled={disabled}>
       <legend>
-        <span>{String(index + 1).padStart(2, "0")}</span>
+        <span>{index + 1}</span>
         <span>
           <strong>{question.title}</strong>
           <small>
