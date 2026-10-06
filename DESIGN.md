@@ -187,7 +187,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 ### Primary
 
 - **Azul UBB** (`primary`): botones principales, enlaces de acción ("Entrar al aula", "Ver calendario"), foco, cursor de texto y controles nativos mediante `accent-color`. `primary-active` oscurece el hover.
-- **Velo azul** (`primary-wash`, `primary-tint`): selección clara en listas (Administrar ramos, día elegido del calendario), filas de notificación no leídas y su hover.
+- **Velo azul** (`primary-wash`, `primary-tint`): selección clara en listas (día elegido del calendario), filas de notificación no leídas y su hover.
 
 ### Secondary
 
@@ -240,7 +240,7 @@ El dashboard combina cursos y una columna de agenda de 320px con separación de 
 
 | Umbral       | Comportamiento construido                                                                                                   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Hasta 1200px | Agenda de 288px y separación de 28px; selector de Administrar ramos de 200px.                                               |
+| Hasta 1200px | Agenda de 288px y separación de 28px; lista de secciones de Administrar ramos de 208px.                                     |
 | Hasta 900px  | El riel pasa a superponerse con sombra de diálogo; dashboard y Administrar ramos en una columna.                            |
 | Hasta 767px  | El shell móvil oculta el riel y muestra navegación inferior de 58px más área segura.                                        |
 | Hasta 700px  | Padding de contenedor de 16px, comienzo a 20px, títulos de 28px, cabecera de aula y pestañas con radio `lg` en vez de `xl`. |
@@ -268,9 +268,9 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 
 ## Shapes
 
-Rectángulos suaves en escala corta: 5px para teclas y detalles, 7px para botones discretos, 10px para acciones, campos y destinos del riel, 14px para hojas y fichas, 20px para diálogos, la hoja de Administrar ramos y el conjunto del aula. El círculo completo queda para avatares, el día de hoy y los saltos del índice de recursos.
+Rectángulos suaves en escala corta: 5px para teclas y detalles, 7px para botones discretos, 10px para acciones, campos y destinos del riel, 14px para hojas y fichas, 20px para diálogos, la ficha abierta de Administrar ramos y el conjunto del aula. El círculo completo queda para avatares, el día de hoy y los saltos del índice de recursos.
 
-La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, el selector de Administrar ramos.
+La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, la marca de cada sección en la lista de Administrar ramos. Las muestras del selector de identidad visual repiten la forma en 16 por 12px.
 
 ## Components
 
@@ -308,6 +308,10 @@ Separador de archivador: pestaña de 24px con el código de asignatura en `tab-l
 ### Classroom Divider (signature)
 
 La cabecera del aula es el separador abierto: hoja en `--tone-wash` con radio de 20px sólo en la esquina superior derecha, pestaña de 26px con el código sobresaliendo arriba a la izquierda, breadcrumb e identidad en `--tone-ink`, título de 32px. Debajo, sin espacio, la tira blanca de pestañas del aula con radio inferior de 20px; pestañas de 50px y un indicador de 3px en el tono puro de la sección bajo la activa, cuyo icono toma `--tone-ink`.
+
+### Administrar ramos
+
+Es el archivador abierto del docente. La lista de secciones descansa sobre el escritorio como el riel: filas de 56px con la marca de separador en el tono de la sección, y la elegida como hoja blanca con sombra de hoja. La ficha del ramo repite el separador del aula: pestaña con el código, cabecera en `--tone-wash` con el nombre en 26px y período y sección en `--tone-ink`, y debajo, en la misma hoja, pestañas de 50px con el indicador de 3px en el tono puro. El formulario de creación es un separador nuevo cuya pestaña muestra en vivo el código escrito (o "Nuevo ramo") y cuyo tinte sigue el color elegido. La identidad visual se elige con seis muestras de color sobre relleno tranquilo; la elegida pasa a hoja de control con un anillo interior en su tono. Los campos usan una rejilla de seis columnas (tercio, dos tercios o fila completa) que en teléfonos pasa a una sola columna.
 
 ### Agenda
 

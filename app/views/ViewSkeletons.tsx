@@ -9,7 +9,6 @@ import {
   Bell,
   CaretLeft,
   CaretRight,
-  BookOpenText,
   LinkSimple,
   Plus,
   ChatCircleDots,
@@ -576,7 +575,7 @@ export function TeacherCoursesSkeleton() {
           aria-hidden="true"
           tabIndex={-1}
         >
-          <Plus aria-hidden="true" size={17} /> Crear ramo
+          <Plus aria-hidden="true" size={16} weight="bold" /> Crear ramo
         </button>
       </header>
       <TeacherCoursesBodySkeleton />
@@ -596,10 +595,7 @@ export function TeacherCoursesBodySkeleton() {
       <aside className="teacher-course-list">
         <div className="teacher-course-list-head">
           <span>Mis secciones</span>
-          <span
-            className="sk"
-            style={{ width: "25px", height: "25px", borderRadius: "var(--radius-full)" }}
-          />
+          <span className="sk sk-quiet" style={{ width: "10px", height: "12px" }} />
         </div>
         {[0, 1, 2].map((row) => (
           <span
@@ -607,7 +603,7 @@ export function TeacherCoursesBodySkeleton() {
             key={`teacher-course-${row}`}
             style={{ "--sk-delay": `${90 + row * 45}ms` } as React.CSSProperties}
           >
-            <span className="sk" style={{ width: "8px", height: "8px", borderRadius: "50%" }} />
+            <span className="sk" />
             <span style={{ display: "grid", gap: "6px", minWidth: 0, alignContent: "center" }}>
               <span
                 className="sk"
@@ -619,8 +615,14 @@ export function TeacherCoursesBodySkeleton() {
         ))}
       </aside>
 
-      <div className="teacher-course-workspace">
+      <div
+        className="teacher-course-workspace"
+        style={{ "--course-tone": "oklch(0.62 0.01 265)" } as React.CSSProperties}
+      >
         <div className="teacher-course-heading">
+          <span aria-hidden="true" className="classroom-tab">
+            <span className="sk" style={{ width: "52px", height: "10px" }} />
+          </span>
           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
             <span className="sk" style={{ width: "268px", height: "26px" }} />
             <span className="sk sk-quiet" style={{ width: "146px", height: "13px" }} />
@@ -644,33 +646,27 @@ export function TeacherCoursesBodySkeleton() {
         </div>
         <div className="teacher-config-panel">
           <div className="teacher-panel-intro">
-            <BookOpenText size={22} aria-hidden="true" />
-            <div>
-              <h3>Datos del ramo</h3>
-              <p>Esta información aparece en la portada y en la navegación de tus estudiantes.</p>
-            </div>
+            <h3>Datos del ramo</h3>
+            <p>Esta información aparece en la portada y en la navegación de tus estudiantes.</p>
           </div>
           <div className="teacher-form-grid" aria-hidden="true" inert>
             <label className="teacher-field-full">
               Nombre visible
               <input disabled />
             </label>
-            <label>
+            <label className="teacher-field-third">
               Modalidad
               <select disabled>
                 <option />
               </select>
             </label>
-            <label>
+            <label className="teacher-field-two-thirds">
               Sala o enlace
               <input disabled />
             </label>
-            <label>
-              Identidad visual
-              <select disabled>
-                <option />
-              </select>
-            </label>
+            <div className="teacher-tone-picker teacher-field-full">
+              <span className="sk sk-quiet" style={{ width: "100%", height: "40px" }} />
+            </div>
             <label className="teacher-field-full">
               Descripción
               <textarea disabled rows={5} />

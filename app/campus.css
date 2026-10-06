@@ -416,11 +416,7 @@
     .teams-editor-card,
     .final-grade-records,
     .communications-workspace,
-    .teacher-manager-loading,
     .teacher-manager-empty,
-    .teacher-course-list,
-    .teacher-course-workspace,
-    .teacher-create-form,
     .moodle-import-dialog,
     .settings-panel,
     .quiz-builder,
@@ -1112,9 +1108,18 @@ button.agenda-calendar-link:hover {
   letter-spacing: -0.015em;
 }
 
-.app-shell .grades-editor-row {
+.app-shell :is(.grades-editor-row, .grades-editor-foot) {
   padding-top: 0;
   border-top: 0;
+}
+.app-shell .grades-editor-foot {
+  margin-top: 8px;
+}
+.app-shell .grades-load-status {
+  padding: 16px 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--fill-quiet);
 }
 @media (min-width: 768px) {
   .classroom-layout .grades-editor-row {
@@ -1201,51 +1206,8 @@ button.agenda-calendar-link:hover {
   color: var(--text-muted);
 }
 
-/* ── Administración de ramos ─────────────────────────── */
-.app-shell .teacher-manager-hero {
-  background: transparent;
-  color: var(--text-body);
-  border-radius: 0;
-  box-shadow: none;
-}
 .teacher-manager-status:empty {
   display: none;
-}
-.app-shell .teacher-manager-layout {
-  gap: 24px;
-  grid-template-columns: 240px minmax(0, 1fr);
-}
-.app-shell .teacher-course-list {
-  padding: 8px;
-  border-radius: var(--radius-lg);
-}
-.app-shell .teacher-course-list > button {
-  grid-template-columns: 12px minmax(0, 1fr);
-  border: 0;
-  border-radius: var(--radius-md);
-  &:hover {
-    background: var(--fill-quiet);
-  }
-  &[aria-current="true"],
-  &[aria-pressed="true"],
-  &.active {
-    background: var(--color-primary-wash);
-    box-shadow: none;
-  }
-}
-.app-shell .teacher-course-mark {
-  width: 12px;
-  height: 9px;
-  border-radius: 3px 3px 1px 1px;
-  align-self: center;
-}
-.app-shell .teacher-course-workspace {
-  border-radius: var(--radius-xl);
-}
-.app-shell .teacher-course-heading h2 {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.022em;
 }
 
 /* ── Calendario, recursos y administración ───────────── */
@@ -1350,9 +1312,6 @@ button.agenda-calendar-link:hover {
     grid-template-columns: minmax(0, 1fr) 288px;
     gap: 28px;
   }
-  .app-shell .teacher-manager-layout {
-    grid-template-columns: 200px minmax(0, 1fr);
-  }
 }
 @media (max-width: 900px) {
   .app-shell {
@@ -1364,9 +1323,6 @@ button.agenda-calendar-link:hover {
   }
   .app-shell .classroom-top {
     padding: 22px 22px 20px;
-  }
-  .app-shell .teacher-manager-layout {
-    grid-template-columns: minmax(0, 1fr);
   }
   .dashboard-workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -1519,15 +1475,6 @@ button.agenda-calendar-link:hover {
   &::after {
     display: none;
   }
-}
-.teacher-course-row-skeleton {
-  grid-template-columns: 12px minmax(0, 1fr);
-}
-.teacher-course-row-skeleton > .sk {
-  width: 12px;
-  height: 9px;
-  border-radius: 3px 3px 1px 1px;
-  align-self: center;
 }
 [aria-busy="true"] .classroom-meta {
   max-width: 100%;
