@@ -1,67 +1,4 @@
-/*
-  Campus «Separadores». Cada sección es un separador de archivador con su color;
-  el escritorio es gris frío y las hojas blancas se elevan con sombra en capas.
-  Los tokens se declaran en la raíz mientras el campus está montado para que los
-  diálogos y hojas que viven en `body` hereden el mismo sistema. El acceso
-  público no monta `.app-shell` y conserva íntegro su sistema visual.
-*/
-:root:has(.app-shell) {
-  --font-core:
-    var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  --font-display: var(--font-core);
-
-  --ubb-royal-blue: oklch(0.5 0.19 258);
-  --ubb-royal-blue-active: oklch(0.43 0.17 258);
-  --ubb-midnight-navy: oklch(0.27 0.07 260);
-  --paper: oklch(0.966 0.004 265);
-  --hairline: oklch(0.2 0.01 265 / 0.09);
-
-  --ink-900: oklch(0.21 0.006 265);
-  --ink-700: oklch(0.38 0.008 265);
-  --ink-500: oklch(0.5 0.01 265);
-  --ink-400: oklch(0.53 0.01 265);
-
-  --color-primary-wash: oklch(0.5 0.19 258 / 0.08);
-  --color-primary-tint: oklch(0.5 0.19 258 / 0.13);
-  --border-control: oklch(0.64 0.01 265);
-
-  --fill-quiet: oklch(0.2 0.01 265 / 0.05);
-  --fill-quiet-strong: oklch(0.2 0.01 265 / 0.09);
-  --danger: oklch(0.52 0.2 27);
-  --danger-wash: oklch(0.52 0.2 27 / 0.09);
-
-  --radius-xs: 5px;
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-
-  --shadow-1:
-    0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 1px 2px oklch(0.2 0.01 265 / 0.06),
-    0 6px 16px -6px oklch(0.2 0.01 265 / 0.12);
-  --shadow-lift:
-    0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 2px 4px oklch(0.2 0.01 265 / 0.05),
-    0 10px 24px -6px oklch(0.2 0.01 265 / 0.12);
-  --shadow-2:
-    0 0 0 0.5px oklch(0.2 0.01 265 / 0.1), 0 6px 14px oklch(0.2 0.01 265 / 0.07),
-    0 24px 56px -12px oklch(0.2 0.01 265 / 0.24);
-  --shadow-control: 0 0 0 0.5px oklch(0.2 0.01 265 / 0.16), 0 1px 1.5px oklch(0.2 0.01 265 / 0.08);
-  --shadow-focus: 0 0 0 4px oklch(0.5 0.19 258 / 0.22);
-
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
-  --transition-fast: 140ms var(--ease-out-quint);
-  --transition-base: 200ms var(--ease-out-quint);
-  --transition-slow: 280ms var(--ease-out-quint);
-
-  --header-height: 56px;
-  --container-max: 1360px;
-  --container-pad: clamp(20px, 3vw, 44px);
-
-  background: var(--paper);
-  caret-color: var(--color-primary);
-  accent-color: var(--color-primary);
-}
+/* Campus «Separadores»: los tokens viven en globals.css; aquí, la composición del campus. */
 
 .app-shell [style*="--course-tone"] {
   --tone-wash: color-mix(in oklch, var(--course-tone) 15%, white);
@@ -742,13 +679,9 @@
 }
 .course-cover .fresh {
   margin-left: auto;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background: var(--surface-card);
   color: var(--tone-ink);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 650;
-  box-shadow: var(--shadow-control);
 }
 .app-shell .course-card .course-body {
   padding: 16px 18px 6px;

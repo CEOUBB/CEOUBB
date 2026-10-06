@@ -118,7 +118,7 @@ export function StudentQuizzes({
         <div className="quiz-student-list">
           {quizzes.map((quiz, index) => (
             <article className="quiz-student-card" key={quiz.id}>
-              <span className="quiz-sequence">{String(index + 1).padStart(2, "0")}</span>
+              <span className="quiz-sequence">{index + 1}</span>
               <div>
                 <span className="quiz-card-state">Disponible</span>
                 <h3>{quiz.title}</h3>

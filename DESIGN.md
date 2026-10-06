@@ -168,9 +168,9 @@ Cada sección del campus es un separador de archivador con su propio color. El e
 
 La densidad es de herramienta de trabajo: títulos de 32px, cuerpo de 14px, filas de 38 a 58px. Inter con eje óptico organiza todo el campus; el azul UBB queda reservado para acciones e indicadores de estado, y el color de sección nunca compite con él porque identifica, no ordena.
 
-**Alcance y fuente:** `app/campus.css` declara los tokens en `:root:has(.app-shell)`, de modo que diálogos y hojas montados en `body` heredan el sistema mientras el campus está activo; `app/campus-base.css` contiene la base de componentes que consume esos tokens y `app/mobile-shell.css` el comportamiento móvil. `app/layout.tsx` carga Inter con eje `opsz` y sin precarga. El código construido prevalece sobre las capturas en `.impeccable/review`.
+**Alcance y fuente:** `app/globals.css` declara los tokens en `:root:has(.app-shell, .policy-page, .public-page)`, de modo que el campus, las páginas públicas de ayuda y políticas, la página 404 y el error del sistema comparten el sistema, y los diálogos y hojas montados en `body` lo heredan. `app/campus.css` compone el campus; `app/campus-base.css` contiene la base de componentes que consume esos tokens y `app/mobile-shell.css` el comportamiento móvil. `app/layout.tsx` carga Inter con eje `opsz` y sin precarga. El código construido prevalece sobre las capturas en `.impeccable/review`.
 
-**La Regla del Acceso Intacto.** La pantalla pública de acceso (login) conserva su propio sistema independiente con Merriweather para títulos y Manrope para la interfaz, sus tokens base de `app/globals.css` y su composición. Este rediseño no la toca: nada de este documento se aplica fuera de `.app-shell`.
+**La Regla del Acceso Intacto.** La pantalla pública de acceso (login) conserva su propio sistema independiente con Merriweather para títulos y Manrope para la interfaz, sus tokens base de `app/globals.css` y su composición. Este rediseño no la toca: el acceso no monta `.app-shell`, `.policy-page` ni `.public-page`, así que ningún token de este documento lo alcanza.
 
 **Key Characteristics:**
 
@@ -313,6 +313,14 @@ La cabecera del aula es el separador abierto: hoja en `--tone-wash` con radio de
 
 La próxima evaluación es una hoja con hoja de fecha de 58px en el tono de su sección, día de 24px peso 700, cuenta regresiva (en `danger` si es hoy o pronto), título, curso y acción. Las siguientes van en una sola hoja de filas de 58px: fecha compacta, título truncado con curso y cuenta regresiva a la derecha. Sin evaluaciones, una hoja de estado vacío con un único acceso al calendario.
 
+### Páginas públicas y estados del sistema
+
+Ayuda, contacto, preguntas frecuentes y políticas son documentos de lectura: cabecera con la marca y "Volver al portal" como botón secundario, y una hoja de 48 por 56px de padding con títulos de 34px, párrafos de 16px con interlineado 1.65 y medida de 68ch. El índice de cláusulas es una rejilla tranquila sobre el escritorio con destinos de 32px. La página 404 y el error del sistema usan la misma silueta de separador: una hoja con la pestaña "Error 404" o "Error del sistema", título de 30px y dos acciones, la principal en azul.
+
+### Estados como texto
+
+Rol, estado de período, estado de corrección, tipo de recurso, tramo de beneficio y suma de ponderaciones se escriben como texto de 12.5 a 13px: neutro para lo descriptivo, verde para lo correcto o abierto, ámbar para lo pendiente y `danger` para lo vencido. No se dibujan como píldoras. Las acciones de contenido ("Modificar", "Eliminar") quedan visibles en cada publicación; "Eliminar" se separa 24px, va en `danger` y siempre pide confirmación en línea.
+
 ### Calendar
 
 Conmutador de vista sobre relleno tranquilo con la opción elegida como hoja de control. El mes es una hoja con retícula interna de línea fina; el día elegido lleva velo azul y anillo interior de 2px; el número del día de hoy es un círculo azul. Los bloques de horario llevan el tono de su sección.
@@ -321,7 +329,7 @@ Conmutador de vista sobre relleno tranquilo con la opción elegida como hoja de 
 
 ### Do:
 
-- **Do** declarar tokens nuevos del campus en `:root:has(.app-shell)` para que diálogos y hojas montados en `body` los hereden.
+- **Do** declarar tokens nuevos en el bloque `:root:has(.app-shell, .policy-page, .public-page)` de `app/globals.css` para que campus, páginas públicas y elementos montados en `body` los hereden.
 - **Do** pasar el color de sección como `--course-tone` y consumir sólo `--tone-wash`, `--tone-wash-strong`, `--tone-ink` o el tono puro.
 - **Do** elevar con `--shadow-1` y quitar el borde a toda superficie nueva; usar `--shadow-2` sólo para lo que flota.
 - **Do** usar cifras tabulares para datos y proporcionales para códigos y secciones.
@@ -331,7 +339,7 @@ Conmutador de vista sobre relleno tranquilo con la opción elegida como hoja de 
 
 ### Don't:
 
-- **Don't** aplicar este sistema a la pantalla de acceso ni a selectores raíz sin `.app-shell`; el login mantiene Merriweather, Manrope y su composición.
+- **Don't** aplicar este sistema a la pantalla de acceso ni a selectores raíz fuera de ese bloque; el login mantiene Merriweather, Manrope y su composición.
 - **Don't** usar azul UBB como color de sección ni como decoración.
 - **Don't** dibujar líneas divisorias entre cabecera, riel, pie o filas.
 - **Don't** poner rótulos pequeños en mayúsculas, píldoras de etiqueta ni textos sobre los títulos.

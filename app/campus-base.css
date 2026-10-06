@@ -7316,26 +7316,9 @@ div.editor-latex-token {
 
 .role-chip {
   justify-self: start;
-  padding: 4px 8px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.125px;
-  background: var(--canvas-soft);
   color: var(--text-secondary);
-}
-
-.role-chip.owner {
-  background: rgba(139, 92, 246, 0.14);
-  color: var(--academic-purple-deep);
-}
-.role-chip.teacher {
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
-}
-.role-chip.student {
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .admin-periods {
@@ -7402,23 +7385,18 @@ div.editor-latex-token {
 }
 
 .period-state {
-  padding: 4px 8px;
-  background: var(--canvas-soft);
-  border-radius: var(--radius-full);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .period-state.abierto {
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
+  color: oklch(0.42 0.11 155);
 }
 
 .period-state.cerrado {
-  background: rgba(245, 158, 11, 0.16);
-  color: #92400e;
+  color: oklch(0.47 0.11 65);
 }
 
 .period-archived-label {
@@ -7971,13 +7949,9 @@ div.editor-latex-token {
 
 .weight-total {
   margin-right: auto;
-  padding: 4px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(245, 158, 11, 0.15);
-  color: #92400e;
-  font-size: 12px;
+  color: oklch(0.47 0.11 65);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.125px;
 }
 
 /* ── Aula · entregas en equipo ─────────────────── */
@@ -8218,8 +8192,7 @@ div.editor-latex-token {
 }
 
 .weight-total.ok {
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
+  color: oklch(0.42 0.11 155);
 }
 
 .grades-matrix {
@@ -10457,10 +10430,9 @@ div.editor-latex-token {
 }
 
 .teacher-period-pill {
-  padding: 6px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-wash);
-  color: var(--ubb-royal-blue-active) !important;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -12038,10 +12010,15 @@ div.editor-latex-token {
 }
 
 .quiz-sequence {
-  color: color-mix(in srgb, var(--color-primary) 34%, var(--text-faint));
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 700;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--tone-wash, var(--fill-quiet));
+  color: var(--tone-ink, var(--text-secondary));
+  font-size: 16px;
+  font-weight: 650;
   font-variant-numeric: var(--num);
 }
 
@@ -12491,7 +12468,7 @@ div.editor-latex-token {
   }
 
   .quiz-sequence {
-    font-size: 22px;
+    font-size: 16px;
   }
 
   .quiz-student-card > button {
@@ -12727,35 +12704,27 @@ div.editor-latex-token {
 
 .review-state {
   justify-self: start;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.01em;
 }
 
 .review-state[data-state="submitted"] {
-  background: var(--color-primary-wash);
   color: var(--color-primary-active);
 }
 
 .review-state[data-state="graded"] {
-  background: color-mix(in srgb, var(--academic-emerald) 14%, var(--surface-card));
   color: var(--academic-emerald-deep);
 }
 
 .review-state[data-state="late"] {
-  background: color-mix(in srgb, var(--shield-gold) 18%, var(--surface-card));
   color: var(--academic-bronze);
 }
 
 .review-state[data-state="missing"] {
-  background: color-mix(in srgb, var(--shield-red) 12%, var(--surface-card));
   color: var(--shield-red-deep);
 }
 
 .review-state[data-state="review_draft"] {
-  background: color-mix(in srgb, var(--academic-purple) 13%, var(--surface-card));
   color: var(--academic-purple-deep);
 }
 

@@ -407,7 +407,6 @@ function CreateCourseForm({
     <form className="teacher-create-form" onSubmit={submit}>
       <div className="teacher-form-heading">
         <div>
-          <span>Nueva sección</span>
           <h2>Datos académicos esenciales</h2>
         </div>
         {period && <span className="teacher-period-pill">{period.label}</span>}

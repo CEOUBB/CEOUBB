@@ -715,6 +715,68 @@ a:hover > .animated-underline::after {
   }
 }
 
+/*
+  Sistema «Separadores». Se activa con el campus y las páginas públicas; el
+  acceso no los monta y conserva su sistema visual.
+*/
+:root:has(.app-shell, .policy-page, .public-page) {
+  --font-core:
+    var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-display: var(--font-core);
+
+  --ubb-royal-blue: oklch(0.5 0.19 258);
+  --ubb-royal-blue-active: oklch(0.43 0.17 258);
+  --ubb-midnight-navy: oklch(0.27 0.07 260);
+  --paper: oklch(0.966 0.004 265);
+  --hairline: oklch(0.2 0.01 265 / 0.09);
+
+  --ink-900: oklch(0.21 0.006 265);
+  --ink-700: oklch(0.38 0.008 265);
+  --ink-500: oklch(0.5 0.01 265);
+  --ink-400: oklch(0.53 0.01 265);
+
+  --color-primary-wash: oklch(0.5 0.19 258 / 0.08);
+  --color-primary-tint: oklch(0.5 0.19 258 / 0.13);
+  --border-control: oklch(0.64 0.01 265);
+
+  --fill-quiet: oklch(0.2 0.01 265 / 0.05);
+  --fill-quiet-strong: oklch(0.2 0.01 265 / 0.09);
+  --danger: oklch(0.52 0.2 27);
+  --danger-wash: oklch(0.52 0.2 27 / 0.09);
+
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-1:
+    0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 1px 2px oklch(0.2 0.01 265 / 0.06),
+    0 6px 16px -6px oklch(0.2 0.01 265 / 0.12);
+  --shadow-lift:
+    0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 2px 4px oklch(0.2 0.01 265 / 0.05),
+    0 10px 24px -6px oklch(0.2 0.01 265 / 0.12);
+  --shadow-2:
+    0 0 0 0.5px oklch(0.2 0.01 265 / 0.1), 0 6px 14px oklch(0.2 0.01 265 / 0.07),
+    0 24px 56px -12px oklch(0.2 0.01 265 / 0.24);
+  --shadow-control: 0 0 0 0.5px oklch(0.2 0.01 265 / 0.16), 0 1px 1.5px oklch(0.2 0.01 265 / 0.08);
+  --shadow-focus: 0 0 0 4px oklch(0.5 0.19 258 / 0.22);
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 140ms var(--ease-out-quint);
+  --transition-base: 200ms var(--ease-out-quint);
+  --transition-slow: 280ms var(--ease-out-quint);
+
+  --header-height: 56px;
+  --container-max: 1360px;
+  --container-pad: clamp(20px, 3vw, 44px);
+
+  background: var(--paper);
+  caret-color: var(--color-primary);
+  accent-color: var(--color-primary);
+}
+
 /* ── Pie institucional compartido ─────────────────────────── */
 
 .site-footer {
@@ -722,7 +784,6 @@ a:hover > .animated-underline::after {
   margin-top: var(--space-3xl);
   padding-top: var(--space-xl);
   padding-bottom: var(--space-2xl);
-  border-top: 1px solid var(--border-hairline);
   color: var(--text-muted);
 }
 
@@ -823,12 +884,13 @@ a:hover > .animated-underline::after {
   align-items: center;
   gap: var(--space-xs);
   padding: 8px 14px;
-  border: 1px solid var(--border-hairline);
+  border: 0;
+  box-shadow: var(--shadow-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-body);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.33;
   white-space: nowrap;
   transition:
@@ -836,15 +898,7 @@ a:hover > .animated-underline::after {
     border-color var(--transition-fast);
 }
 .policy-back:hover {
-  background: var(--canvas-soft);
-  border-color: var(--text-faint);
-}
-.policy-back svg {
-  flex: 0 0 auto;
-  transition: transform var(--transition-fast);
-}
-.policy-back:hover svg {
-  transform: translateX(-2px);
+  box-shadow: var(--shadow-lift);
 }
 @media (pointer: coarse) {
   .policy-back {
@@ -864,9 +918,10 @@ a:hover > .animated-underline::after {
 
 .policy-page article {
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
+  border: 0;
   border-radius: var(--radius-xl);
-  padding: var(--space-xxl);
+  box-shadow: var(--shadow-1);
+  padding: 48px 56px;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -879,21 +934,22 @@ a:hover > .animated-underline::after {
 }
 
 .policy-page h1 {
-  font-size: 40px;
+  font-size: 34px;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -1px;
+  line-height: 1.15;
+  letter-spacing: -0.026em;
+  text-wrap: balance;
 }
 .policy-page h2 {
   font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.125px;
-  margin-top: var(--space-xs);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.016em;
+  margin-top: var(--space-lg);
 }
 .policy-page p {
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.65;
   color: var(--text-secondary);
 }
 .policy-page h3 {
@@ -937,8 +993,7 @@ a:hover > .animated-underline::after {
   grid-template-columns: minmax(11rem, 15rem) 1fr;
   gap: var(--space-sm) var(--space-lg);
   margin: 0;
-  padding: var(--space-md) 0 0;
-  border-top: 1px solid var(--border-hairline);
+  padding: var(--space-xs) 0 0;
   font-size: 16px;
   line-height: 1.5;
 }
@@ -953,10 +1008,18 @@ a:hover > .animated-underline::after {
 .policy-page .policy-index {
   list-style: none;
   padding-left: 0;
-  gap: var(--space-xxs);
-  font-size: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 2px 16px;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  font-size: 14.5px;
 }
 .policy-page .policy-index a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   text-decoration: none;
   color: var(--text-secondary);
 }
@@ -1315,8 +1378,7 @@ html[data-reduced-motion="true"] {
   flex-direction: column;
   gap: var(--space-md);
   margin-top: var(--space-xs);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--border-hairline);
+  padding-top: var(--space-xs);
 }
 
 .policy-field {
@@ -1352,9 +1414,8 @@ html[data-reduced-motion="true"] {
 .policy-field textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--border-hairline);
-  /* Los controles de formulario van tensos a 4px. La píldora es del botón. */
-  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-body);
   font-family: var(--font-core);
@@ -1379,7 +1440,7 @@ html[data-reduced-motion="true"] {
 .policy-field input:hover,
 .policy-field select:hover,
 .policy-field textarea:hover {
-  border-color: var(--border-control);
+  border-color: var(--text-muted);
 }
 
 .policy-field input[aria-invalid="true"],
@@ -1460,14 +1521,14 @@ html[data-reduced-motion="true"] {
   justify-content: center;
   gap: var(--space-xs);
   min-height: 44px;
-  padding: 10px 24px;
+  padding: 0 20px;
   border: 1px solid transparent;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-family: var(--font-core);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.5;
   cursor: pointer;
   transition: background var(--transition-fast);
@@ -1529,7 +1590,7 @@ html[data-reduced-motion="true"] {
   gap: var(--space-sm);
   margin-top: var(--space-xs);
   padding: var(--space-lg);
-  border: 1px solid color-mix(in srgb, var(--academic-emerald) 45%, var(--border-hairline));
+  border: 0;
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--academic-emerald) 7%, var(--surface-card));
 }
@@ -1562,7 +1623,8 @@ html[data-reduced-motion="true"] {
 .policy-again {
   align-self: flex-start;
   padding: 8px 14px;
-  border: 1px solid var(--border-hairline);
+  border: 0;
+  box-shadow: var(--shadow-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-body);
@@ -1576,8 +1638,7 @@ html[data-reduced-motion="true"] {
 }
 
 .policy-again:hover {
-  background: var(--canvas-soft);
-  border-color: var(--text-faint);
+  box-shadow: var(--shadow-lift);
 }
 
 @media (pointer: coarse) {
@@ -1592,8 +1653,7 @@ html[data-reduced-motion="true"] {
   display: flex;
   flex-direction: column;
   gap: var(--space-xxs);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--border-hairline);
+  padding-top: var(--space-xs);
 }
 
 .policy-filter > label {
@@ -1618,8 +1678,8 @@ html[data-reduced-motion="true"] {
 .policy-filter input {
   width: 100%;
   padding: 10px 12px 10px 38px;
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-body);
   font-family: var(--font-core);
@@ -1629,7 +1689,7 @@ html[data-reduced-motion="true"] {
 }
 
 .policy-filter input:hover {
-  border-color: var(--border-control);
+  border-color: var(--text-muted);
 }
 
 .policy-filter input::placeholder {
@@ -1668,8 +1728,9 @@ html[data-reduced-motion="true"] {
 }
 
 .policy-disclosure {
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
   background: var(--surface-card);
   overflow: hidden;
 }
@@ -1712,7 +1773,6 @@ html[data-reduced-motion="true"] {
 }
 
 .policy-disclosure[open] > summary {
-  border-bottom: 1px solid var(--border-hairline);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -1768,8 +1828,8 @@ html[data-reduced-motion="true"] {
   align-items: flex-start;
   gap: var(--space-sm);
   padding: var(--space-lg);
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-md);
+  border: 0;
+  border-radius: var(--radius-lg);
   background: var(--canvas-soft);
 }
 
@@ -1917,87 +1977,161 @@ html:active-view-transition-type(previous) ::view-transition-new(*) {
   color: oklch(0.42 0.2 25);
 }
 
-/* Campus académico. El acceso conserva íntegro su sistema visual. */
+/* Páginas públicas en el sistema «Separadores»: documento legible sobre el escritorio. */
 .policy-page {
-  --container-max: 1440px;
-  --container-pad: clamp(24px, 3.2vw, 52px);
-  --border-hairline: oklch(0.9 0.012 250);
-  --shadow-1: 0 2px 3px oklch(0.24 0.03 255 / 0.025), 0 8px 24px oklch(0.24 0.03 255 / 0.04);
-  --transition-base: 150ms ease-out;
-  caret-color: var(--color-primary);
+  max-width: 880px;
+  padding-top: 24px;
 }
-.policy-page h1 {
-  font-size: clamp(27px, 2.6vw, 36px);
-  line-height: 1.22;
-  letter-spacing: -0.035em;
-}
-.policy-page {
-  max-width: 1040px;
-  padding-top: 32px;
-}
-.policy-page > article {
-  padding: clamp(24px, 4vw, 48px);
-  border-radius: 12px;
-}
-.policy-page .policy-lead {
-  max-width: 66ch;
-  font-size: 17px;
-  line-height: 1.75;
-}
-.policy-page > article > p,
-.policy-page > article > ul {
-  max-width: 75ch;
+.policy-page > article > :is(p, ul, dl, .policy-lead) {
+  max-width: 68ch;
 }
 .contact-shortcuts {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 32px;
+  gap: 10px;
+  margin: 8px 0 16px;
 }
 .policy-page .contact-shortcuts a {
   display: inline-flex;
-  min-height: 44px;
   align-items: center;
-  padding: 10px 16px;
-  border: 1px solid var(--border-hairline);
-  border-radius: 8px;
-  text-decoration: none;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-control);
+  color: var(--text-body);
   font-size: 14px;
   font-weight: 600;
+  text-decoration: none;
+  transition: box-shadow var(--transition-fast);
+}
+.policy-page .contact-shortcuts a:hover {
+  box-shadow: var(--shadow-lift);
 }
 .policy-page .contact-shortcuts a:first-child {
   background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--white);
+  color: var(--color-on-primary);
+  box-shadow: 0 1px 2px oklch(0.3 0.15 258 / 0.25);
+}
+.policy-page .contact-shortcuts a:first-child:hover {
+  background: var(--color-primary-active);
 }
 .policy-page :is(h2, form) {
   scroll-margin-top: 24px;
 }
 .policy-page ::selection {
-  background: oklch(0.86 0.065 255);
-  color: var(--ubb-midnight-navy);
+  background: oklch(0.5 0.19 258 / 0.2);
+  color: var(--ink-900);
 }
-.policy-page :is(button, a, input, select, textarea):focus-visible {
+.policy-page :focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
   transition: none;
 }
 @media (max-width: 700px) {
   .policy-page {
-    --container-pad: 20px;
-  }
-  .policy-page {
-    padding: 20px 16px 40px;
+    padding: 16px 16px 40px;
   }
   .policy-page > article {
-    padding: 24px 20px;
+    padding: 28px 20px;
+  }
+  .policy-page h1 {
+    font-size: 28px;
   }
   .policy-page .policy-lead {
     font-size: 16px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .policy-page * {
-    scroll-behavior: auto;
-    transition-duration: 0ms;
-    animation-duration: 0ms;
+
+/* Estados públicos (404 y error del sistema): una hoja con pestaña sobre el escritorio. */
+.public-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px var(--container-pad) 0;
+  background: var(--paper);
+  color: var(--text-body);
+}
+.public-status {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: 56px 0;
+  outline: none;
+}
+.public-status-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  padding: 40px;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) var(--radius-xl);
+  background: var(--surface-card);
+  filter: drop-shadow(0 0 0.5px oklch(0.2 0.01 265 / 0.24))
+    drop-shadow(0 6px 14px oklch(0.2 0.01 265 / 0.08));
+  & h1 {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.024em;
+  }
+  & p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+}
+.public-status-tab {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 10px 10px 0 0;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 100%;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at 100% 0, transparent 11.5px, var(--surface-card) 12px);
+  }
+}
+.public-status-code {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.public-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  & .policy-submit:hover {
+    background: var(--color-primary-active);
+    color: var(--color-on-primary);
+    text-decoration: none;
+  }
+}
+@media (max-width: 520px) {
+  .public-status-sheet {
+    padding: 28px 22px;
+  }
+  .public-status-actions > a {
+    flex: 1 1 100%;
+    justify-content: center;
   }
 }
