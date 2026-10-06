@@ -824,8 +824,6 @@
   padding: 12px 10px 4px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 
@@ -1269,14 +1267,13 @@
 .notification-row {
   position: relative;
   display: grid;
-  grid-template-columns: 3px 1fr auto;
-  align-items: center;
-  gap: var(--space-xs);
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 2px var(--space-sm);
   width: 100%;
   min-height: 44px;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-md);
   text-align: left;
-  border-bottom: 1px solid var(--border-hairline);
   transition: background var(--transition-fast);
 }
 .notification-row:hover {
@@ -1287,12 +1284,6 @@
 }
 .notification-row[data-unread="true"]:hover {
   background: var(--color-primary-tint);
-}
-
-.notification-band {
-  align-self: stretch;
-  min-height: 28px;
-  border-radius: var(--radius-full);
 }
 
 .notification-copy {
@@ -1363,18 +1354,11 @@
 }
 .notification-skeleton-row {
   display: grid;
-  grid-template-columns: 4px 32px minmax(0, 1fr) 40px;
+  grid-template-columns: 32px minmax(0, 1fr) 40px;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   min-height: 72px;
   padding: 12px;
-  border-bottom: 1px solid var(--border-hairline);
-}
-.notification-skeleton-band {
-  align-self: stretch;
-  min-height: 28px;
-  border-radius: var(--radius-full);
-  background: var(--border-hairline);
 }
 .notification-skeleton-lines {
   display: flex;
@@ -1765,33 +1749,6 @@
   gap: 6px;
   flex: 1;
   padding: 14px 20px 16px;
-}
-
-.course-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  min-height: 22px;
-}
-
-.course-code {
-  font-family: var(--font-mono);
-  font-variant-numeric: var(--num);
-  font-size: 12px;
-  letter-spacing: 0.4px;
-  color: var(--text-faint);
-}
-
-.course-head .fresh {
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
-  background: rgba(245, 158, 11, 0.16);
-  color: #92400e;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
 }
 
 .course-card h3 {
@@ -2465,13 +2422,6 @@
   gap: 2px;
   min-width: 0;
 }
-.live-class-copy > span {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
-}
 .live-class-copy strong {
   font-family: var(--font-display);
   font-size: 21px;
@@ -2646,8 +2596,6 @@
 .course-facts dt {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .course-facts dd {
@@ -2715,26 +2663,12 @@
 .post-kind {
   align-self: flex-start;
   padding: 4px 8px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--tone-wash, var(--color-primary-wash));
+  color: var(--tone-ink, var(--color-primary));
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
   white-space: nowrap;
-}
-
-.post-kind.guide {
-  background: rgba(13, 148, 136, 0.12);
-  color: color-mix(in srgb, var(--academic-teal) 62%, #0f172a);
-}
-.post-kind.assessment {
-  background: rgba(227, 27, 35, 0.1);
-  color: var(--shield-red-deep);
-}
-.post-kind.resource {
-  background: rgba(56, 189, 248, 0.16);
-  color: #0369a1;
 }
 
 .post-list h3 {
@@ -3157,8 +3091,6 @@
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .rich-editor-preview > p {
@@ -3385,8 +3317,6 @@
   color: var(--text-faint);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 .editor-slash-menu button {
@@ -3702,8 +3632,6 @@ div.editor-latex-token {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .editor-preview-heading span {
@@ -4529,8 +4457,8 @@ div.editor-latex-token {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
+  background: var(--tone-wash, var(--fill-quiet, var(--canvas-soft)));
+  color: var(--tone-ink, var(--text-secondary));
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast),
@@ -4812,8 +4740,6 @@ div.editor-latex-token {
   font-family: var(--font-core);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -5012,8 +4938,6 @@ div.editor-latex-token {
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 .publish-alerts > label {
@@ -6026,12 +5950,9 @@ div.editor-latex-token {
 
 .participant-you {
   flex: 0 0 auto;
-  padding: 1px 5px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-card);
-  color: var(--color-primary);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .participant-email {
@@ -6043,24 +5964,10 @@ div.editor-latex-token {
 }
 
 .participant-role {
-  padding: 4px 7px;
-  border-radius: var(--radius-full);
-  background: var(--canvas-soft);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
   white-space: nowrap;
-}
-
-.participant-role[data-role="teacher"],
-.participant-role[data-role="coordinator"] {
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
-}
-
-.participant-role[data-role="assistant"] {
-  background: color-mix(in srgb, var(--shield-gold) 16%, var(--surface-card));
-  color: var(--academic-bronze);
 }
 
 .participant-contact {
@@ -7311,20 +7218,15 @@ div.editor-latex-token {
    en portales, donde la condición es la misma para los cinco, no hay. */
 .res-tag {
   flex: none;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.015em;
   white-space: nowrap;
 }
 .res-tag.free {
-  background: oklch(0.945 0.045 155);
-  color: oklch(0.36 0.11 155);
+  color: oklch(0.42 0.11 155);
 }
 .res-tag.plan {
-  background: oklch(0.95 0.05 85);
-  color: oklch(0.4 0.1 70);
+  color: oklch(0.47 0.11 65);
 }
 
 .res-notes {
@@ -7960,8 +7862,6 @@ div.editor-latex-token {
 .grades-target dt {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .grades-target dd {
@@ -8036,8 +7936,6 @@ div.editor-latex-token {
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -8237,8 +8135,6 @@ div.editor-latex-token {
   max-width: 320px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -8606,8 +8502,6 @@ div.editor-latex-token {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .final-grade-statistics dd {
@@ -8949,14 +8843,22 @@ div.editor-latex-token {
 .announcement-copy {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  gap: 3px;
 }
 .announcement-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: 2px 6px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 13px;
+}
+.announcement-meta time {
+  flex-basis: 100%;
+}
+.announcement-meta > :not(time) + :not(time)::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--text-faint);
 }
 .announcement-meta strong {
   color: var(--text-secondary);
@@ -8967,10 +8869,6 @@ div.editor-latex-token {
   font-size: 16px;
   font-weight: 600;
   overflow-wrap: anywhere;
-}
-.announcement-copy time {
-  color: var(--text-muted);
-  font-size: 11px;
 }
 .announcement-end {
   display: flex;
@@ -10271,8 +10169,6 @@ div.editor-latex-token {
   color: var(--shield-sky);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 .teacher-manager-hero h1 {
@@ -10367,8 +10263,6 @@ div.editor-latex-token {
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .teacher-course-list-head b {
@@ -10455,10 +10349,8 @@ div.editor-latex-token {
 .teacher-course-heading span,
 .teacher-form-heading span {
   color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .teacher-course-heading h2,
@@ -11083,8 +10975,6 @@ div.editor-latex-token {
 .moodle-import-compatible h4 {
   color: var(--text-muted);
   font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .moodle-import-compatible > div {
@@ -11737,15 +11627,9 @@ div.editor-latex-token {
 .quiz-count {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  min-height: 28px;
-  padding: 4px 9px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-wash);
-  color: var(--color-primary);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: var(--num);
 }
 
@@ -12056,10 +11940,8 @@ div.editor-latex-token {
   align-items: center;
   gap: 4px;
   color: oklch(0.48 0.12 185);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .quiz-card h3,
@@ -12466,8 +12348,6 @@ div.editor-latex-token {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .quiz-corrections article p {

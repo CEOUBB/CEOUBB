@@ -279,7 +279,6 @@ function QuizRunner({
           <ArrowLeft size={18} aria-hidden="true" /> Salir
         </button>
         <div>
-          <span className="eyebrow">Rendición en curso</span>
           <h2>{quiz.title}</h2>
         </div>
         <div
@@ -364,7 +363,6 @@ function QuizCorrectionView({
       </button>
       <div className="quiz-result-hero">
         <div>
-          <span className="eyebrow">Corrección inmediata</span>
           <h2>{quiz.title}</h2>
           <p>
             Entregado el {formatDay(result.submittedAt)} · {correct} de {quiz.questions.length}{" "}

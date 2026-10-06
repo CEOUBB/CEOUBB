@@ -1,102 +1,106 @@
 ---
 name: CEOUBB Design System
-description: Campus académico con navegación clara, azul institucional para acciones y títulos Merriweather sobre una interfaz Manrope.
+description: Campus de separadores de archivador; escritorio gris frío, hojas blancas sin borde, Inter con tamaño óptico y azul UBB para acciones y estado.
 colors:
-  primary: "oklch(0.48 0.18 255)"
-  primary-active: "oklch(0.38 0.16 255)"
-  navy: "oklch(0.24 0.09 255)"
-  primary-wash: "rgba(0, 85, 184, 0.07)"
-  canvas: "oklch(0.975 0.005 240)"
-  canvas-soft: "oklch(0.975 0.005 240)"
+  primary: "oklch(0.5 0.19 258)"
+  primary-active: "oklch(0.43 0.17 258)"
+  primary-wash: "oklch(0.5 0.19 258 / 0.08)"
+  primary-tint: "oklch(0.5 0.19 258 / 0.13)"
+  canvas-soft: "oklch(0.966 0.004 265)"
   surface: "#ffffff"
-  ink: "oklch(0.2 0.03 260)"
-  ink-secondary: "oklch(0.36 0.03 255)"
-  ink-muted: "oklch(0.48 0.03 250)"
-  ink-faint: "oklch(0.52 0.03 250)"
-  base-hairline: "oklch(0.92 0.006 60)"
-  campus-hairline: "oklch(0.9 0.012 250)"
-  control-border: "#64748b"
-  rail-text: "oklch(0.36 0.03 255)"
-  rail-hover: "oklch(0.975 0.005 240)"
-  sky: "oklch(0.75 0.14 235)"
-  gold: "oklch(0.75 0.16 75)"
-  red: "oklch(0.55 0.22 25)"
-  red-deep: "oklch(0.42 0.2 25)"
-  emerald: "oklch(0.7 0.17 155)"
-  emerald-deep: "oklch(0.5 0.12 160)"
-  teal: "oklch(0.58 0.12 185)"
-  purple: "oklch(0.62 0.22 300)"
-  purple-deep: "oklch(0.35 0.2 300)"
-  pink: "oklch(0.65 0.22 350)"
-  bronze: "oklch(0.38 0.12 60)"
+  ink: "oklch(0.21 0.006 265)"
+  ink-secondary: "oklch(0.38 0.008 265)"
+  ink-muted: "oklch(0.5 0.01 265)"
+  ink-faint: "oklch(0.53 0.01 265)"
+  hairline: "oklch(0.2 0.01 265 / 0.09)"
+  control-border: "oklch(0.64 0.01 265)"
+  fill-quiet: "oklch(0.2 0.01 265 / 0.05)"
+  fill-quiet-strong: "oklch(0.2 0.01 265 / 0.09)"
+  danger: "oklch(0.52 0.2 27)"
+  danger-wash: "oklch(0.52 0.2 27 / 0.09)"
+  tone-sky: "#38bdf8"
+  tone-emerald: "#10b981"
+  tone-gold: "#f59e0b"
+  tone-red: "#e31b23"
+  tone-teal: "#0d9488"
+  tone-purple: "#8b5cf6"
 typography:
   page-title:
-    fontFamily: 'Merriweather, "Iowan Old Style", Georgia, serif'
-    fontSize: "clamp(27px, 2.6vw, 36px)"
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+    fontSize: "32px"
     fontWeight: 700
-    lineHeight: 1.22
-    letterSpacing: "-0.035em"
+    lineHeight: 1.15
+    letterSpacing: "-0.026em"
+    fontVariation: "opsz auto"
   section-title:
-    fontFamily: 'Merriweather, "Iowan Old Style", Georgia, serif'
-    fontSize: "21px"
-    fontWeight: 700
-    lineHeight: 1.35
-  course-title:
-    fontFamily: 'Merriweather, "Iowan Old Style", Georgia, serif'
-    fontSize: "24px"
-    fontWeight: 700
+    fontFamily: "Inter, sans-serif"
+    fontSize: "19px"
+    fontWeight: 650
     lineHeight: 1.3
-  body:
-    fontFamily: 'Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+    letterSpacing: "-0.015em"
+  card-title:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "18px"
+    fontWeight: 650
+    lineHeight: 1.3
+    letterSpacing: "-0.018em"
+  item-title:
+    fontFamily: "Inter, sans-serif"
     fontSize: "16px"
+    fontWeight: 650
+    lineHeight: 1.4
+    letterSpacing: "-0.012em"
+  body:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
-  page-description:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "14px"
-    lineHeight: 1.6
+  lead:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.5
   button:
-    fontFamily: "Manrope, sans-serif"
-    fontSize: "13px"
+    fontFamily: "Inter, sans-serif"
+    fontSize: "14px"
     fontWeight: 600
+    letterSpacing: "-0.005em"
   metadata:
-    fontFamily: "Manrope, sans-serif"
+    fontFamily: "Inter, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.45
+  tab-label:
+    fontFamily: "Inter, sans-serif"
     fontSize: "12px"
-    lineHeight: 1.6
+    fontWeight: 650
+    letterSpacing: "0.02em"
+    fontFeature: '"lnum", "pnum"'
 rounded:
-  xs: "4px"
-  sm: "5px"
-  md: "8px"
-  symbol: "10px"
-  lg: "12px"
-  xl: "16px"
+  xs: "5px"
+  sm: "7px"
+  md: "10px"
+  lg: "14px"
+  xl: "20px"
   full: "9999px"
 spacing:
   xxs: "4px"
   xs: "8px"
   sm: "12px"
   md: "16px"
-  lg: "24px"
-  xl: "28px"
-  xxl: "32px"
-  spacious: "48px"
-  section: "64px"
+  lg: "20px"
+  xl: "24px"
+  xxl: "28px"
+  page: "32px"
+  gutter: "36px"
 components:
-  app-header:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    height: "62px"
-  sidebar:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.rail-text}"
-    width: "248px"
-    padding: "24px 14px 18px"
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.surface}"
     typography: "{typography.button}"
     rounded: "{rounded.md}"
-    padding: "10px 22px"
+    padding: "0 18px"
+    height: "40px"
   button-primary-hover:
     backgroundColor: "{colors.primary-active}"
     textColor: "{colors.surface}"
@@ -105,118 +109,237 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.button}"
     rounded: "{rounded.md}"
-    padding: "10px 22px"
+    padding: "0 18px"
+    height: "40px"
+  button-quiet:
+    backgroundColor: "{colors.fill-quiet}"
+    textColor: "{colors.ink-secondary}"
+    rounded: "{rounded.sm}"
+  input:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+  header-search:
+    backgroundColor: "{colors.fill-quiet}"
+    textColor: "{colors.ink-muted}"
+    rounded: "{rounded.md}"
+    height: "36px"
+  side-item:
+    textColor: "{colors.ink-secondary}"
+    rounded: "{rounded.md}"
+    padding: "7px 10px"
+    height: "38px"
+  side-item-active:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+  sheet:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
   course-card:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    padding: "24px"
-  header-search:
-    backgroundColor: "{colors.canvas}"
-    rounded: "{rounded.md}"
-  classroom-tabs:
+    padding: "16px 18px 6px"
+  divider-tab:
+    typography: "{typography.tab-label}"
+    padding: "0 12px"
+    height: "24px"
+  classroom-top:
+    rounded: "{rounded.xl}"
+    padding: "24px 28px 22px"
+  course-tabs:
     backgroundColor: "{colors.surface}"
-    rounded: "{rounded.lg}"
-    padding: "0 20px"
+    rounded: "{rounded.xl}"
+    padding: "0 18px"
+    height: "50px"
+  agenda-later-row:
+    backgroundColor: "{colors.surface}"
+    padding: "8px 16px 8px 14px"
+    height: "58px"
 ---
 
 # Design System: CEOUBB
 
 ## Overview
 
-**Creative North Star: "Campus académico"**
+**Creative North Star: "Separadores de archivador"**
 
-Navegación clara, documentos blancos y jerarquía académica contenida. Merriweather identifica títulos y asignaturas; Manrope organiza navegación, formularios y metadatos. Cursos y agenda ocupan el área de trabajo con acciones explícitas para entrar al aula y administrar la sección.
+Cada sección del campus es un separador de archivador con su propio color. El escritorio es gris frío; sobre él descansan hojas blancas que se elevan con sombra en capas y sin bordes. El aula abierta es ese separador unido sin costura a su hoja: la pestaña con el código de la asignatura sobresale, la cabecera conserva el tinte del separador y la tira blanca de pestañas del aula cierra la pieza.
 
-**Alcance y fuente:** `app/globals.css` conserva los tokens base; `app/mobile-shell.css`, el comportamiento móvil; `app/campus.css`, importado después de ambos, aplica el rediseño al portal autenticado y páginas de ayuda y políticas. El frontmatter registra el campus y los tokens base compartidos, distinguiendo `base-hairline` de `campus-hairline`. Las capturas revisadas cubren dashboard a 1440px y 390px, gestión docente, aula, recursos y contacto; el código final prevalece sobre capturas anteriores.
+La densidad es de herramienta de trabajo: títulos de 32px, cuerpo de 14px, filas de 38 a 58px. Inter con eje óptico organiza todo el campus; el azul UBB queda reservado para acciones e indicadores de estado, y el color de sección nunca compite con él porque identifica, no ordena.
 
-**Regla del acceso intacto.** El login conserva exactamente su composición, colores, tipografía y comportamiento. No trasladar el rediseño a selectores raíz ni al acceso.
+**Alcance y fuente:** `app/campus.css` declara los tokens en `:root:has(.app-shell)`, de modo que diálogos y hojas montados en `body` heredan el sistema mientras el campus está activo; `app/campus-base.css` contiene la base de componentes que consume esos tokens y `app/mobile-shell.css` el comportamiento móvil. `app/layout.tsx` carga Inter con eje `opsz` y sin precarga. El código construido prevalece sobre las capturas en `.impeccable/review`.
+
+**La Regla del Acceso Intacto.** La pantalla pública de acceso (login) conserva su propio sistema independiente con Merriweather para títulos y Manrope para la interfaz, sus tokens base de `app/globals.css` y su composición. Este rediseño no la toca: nada de este documento se aplica fuera de `.app-shell`.
 
 **Key Characteristics:**
 
-- Cabecera y navegación lateral blancas, selección azul tenue y superficies de borde fino.
-- Controles rectangulares suaves y poco relieve.
-- Identidad académica visible: asignatura, período y sección.
-- Descargo de independencia conservado en el pie y las páginas de ayuda.
+- Escritorio gris frío (`canvas-soft`) y hojas blancas sin borde con sombra en capas.
+- Pestaña de separador en el tono de la sección sobre fichas de curso y cabecera de aula.
+- El tono de sección es idéntico como pestaña, marca del riel, bloque de calendario y chip de publicación.
+- Azul UBB sólo para acciones y estado; nunca como decoración ni como color de sección.
+- Inter con tamaño óptico; cifras tabulares para datos y proporcionales para identificadores.
 
 ## Colors
 
+Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto acotado de tonos de sección que pertenecen a los datos, no a la interfaz.
+
 ### Primary
 
-`primary` identifica acciones principales, enlaces y destinos activos; `primary-active` oscurece el hover y `primary-wash` marca selecciones claras. Los valores OKLCH son los del código, sin equivalencias hex aproximadas.
+- **Azul UBB** (`primary`): botones principales, enlaces de acción ("Entrar al aula", "Ver calendario"), foco, cursor de texto y controles nativos mediante `accent-color`. `primary-active` oscurece el hover.
+- **Velo azul** (`primary-wash`, `primary-tint`): selección clara en listas (Administrar ramos, día elegido del calendario), filas de notificación no leídas y su hover.
 
 ### Secondary
 
-El riel blanco combina `rail-text`, `rail-hover` y texto azul primario sobre `primary-wash` para la selección. El bloque de biblioteca del panel personal se retiró por petición del usuario.
+- **Tonos de sección** (`tone-sky`, `tone-emerald`, `tone-gold`, `tone-red`, `tone-teal`, `tone-purple`): el color académico que el docente elige para la sección. Llega como `--course-tone` en línea y se deriva en tres mezclas OKLCH: `--tone-wash` (15% con blanco) para pestaña, portada y cabecera de aula; `--tone-wash-strong` (26%); `--tone-ink` (52% con tinta casi negra) para texto e iconos sobre el tinte. El indicador de pestaña activa del aula y la marca del riel usan el tono puro.
 
 ### Neutral
 
-`canvas` sostiene el área de trabajo; `surface`, tarjetas, cabecera y campos. El token base `--canvas-soft`, registrado como `canvas-soft`, resuelve mediante `--paper` al fondo claro compartido por el cuerpo, el panel de acceso y superficies secundarias; conserva su valor global. La escala `ink` ordena texto y metadatos. `campus-hairline` sustituye localmente `--border-hairline`; el acceso conserva `base-hairline`. `control-border` permanece disponible para controles con borde más marcado.
+- **Escritorio gris frío** (`canvas-soft`): fondo de cabecera, riel y área de trabajo. En el campus `--paper` se redefine con este valor y `--canvas-soft` lo hereda; fuera del campus conserva su valor global.
+- **Hoja** (`surface`): fichas, paneles, listas, diálogos, campos y la tira de pestañas del aula.
+- **Tinta** (`ink`, `ink-secondary`, `ink-muted`, `ink-faint`): título y cuerpo, texto secundario, metadatos, separadores tipográficos y marcadores de posición.
+- **Rellenos tranquilos** (`fill-quiet`, `fill-quiet-strong`): buscador de cabecera, filtro de cursos, botones discretos, hover de filas y fondo del conmutador de vista.
+- **Línea fina** (`hairline`): sombra de 0.5px bajo la cabecera y sobre la navegación inferior; anillo de 0.5px dentro de las sombras de hoja. `control-border` delimita campos nativos.
+- **Peligro** (`danger`, `danger-wash`): eliminar, urgencia de evaluaciones de hoy o próximas y contador de notificaciones de la cabecera.
 
-### Academic accents
+### Named Rules
 
-Sky, gold, red, emerald, teal, purple, pink y bronze conservan categorías y estados existentes. El símbolo de curso consume `--course-tone`: mezcla 13% del tono con blanco para el fondo y 50% con la tinta principal para el icono. El color acompaña la identidad textual de sección.
+**La Regla del Azul que Actúa.** El azul aparece sólo donde hay una acción o un estado: botón, enlace, foco, selección, día de hoy, no leído. Si un elemento azul no se puede pulsar ni comunica estado, es un error.
+
+**La Regla del Tono Único.** Una sección tiene un solo tono y se ve igual en la pestaña de su ficha, en la marca del riel, en el bloque del calendario, en la cabecera del aula y en el chip de publicación. No introducir variaciones por superficie.
 
 ## Typography
 
-**Display Font:** Merriweather mediante `--font-display`, con respaldo Iowan Old Style y Georgia. **Body Font:** Manrope mediante `--font-core`. JetBrains Mono mediante `--font-mono` se reserva para identificadores y códigos. `app/layout.tsx` carga las tres familias.
+**Display Font:** Inter mediante `--font-inter`, con respaldo -apple-system, BlinkMacSystemFont, Segoe UI y Roboto. `--font-display` apunta a la misma familia dentro del campus.
+**Body Font:** Inter, la misma familia, con `font-optical-sizing: auto`.
 
-El frontmatter recoge la escala reutilizada. El título de aula usa `clamp(28px, 2.8vw, 36px)` con interlínea 1.25; la ficha docente, 26px; los títulos de apoyo de agenda, 18px con interlínea 1.4. La marca de cabecera usa 18px y baja a 15px hasta 700px. La introducción de políticas usa 17px con interlínea 1.75 y baja a 16px hasta 700px.
+**Character:** una sola familia que cambia de carácter con el tamaño gracias al eje óptico: compacta y firme en los títulos, abierta y legible en el texto de 13 y 14px. Los títulos llevan tracking negativo; los pesos intermedios (550, 650) separan jerarquías sin saltos bruscos.
 
-**Regla de la firma académica.** Mantener Merriweather en títulos y nombres de asignatura al ajustar densidad. Fechas, notas, contadores y tablas usan `--num: lining-nums tabular-nums` o `.num`.
+### Hierarchy
 
-El acceso conserva su escala independiente: marca `clamp(2rem, 4.6vw, 6rem)`, peso 600 con énfasis 700, interlínea 0.98; título de login `clamp(1.8rem, 3.1vw, 2.45rem)`, peso 700, interlínea 1.06. Estas medidas no son títulos del campus.
+- **Page title** (700, 32px, 1.15): "Mis cursos", títulos de página y nombre de la asignatura en el aula. Baja a 28px hasta 700px.
+- **Section title** (650, 19px, 1.3): encabezados de bloque del dashboard, columnas del aula y grupos de recursos.
+- **Card title** (650, 18px, 1.3): nombre del curso en la ficha y título de la próxima evaluación.
+- **Item title** (650, 16px, 1.4): publicaciones y estado vacío de agenda.
+- **Lead** (400, 15px, 1.5): descripción bajo el título de página, máximo 72ch.
+- **Body** (400, 14px, 1.5): navegación, docente, filas y formularios.
+- **Metadata** (400, 13px, 1.45): sección, período, actividad, breadcrumb.
+- **Tab label** (650, 12px, tracking 0.02em): código de asignatura en la pestaña del separador.
+
+### Named Rules
+
+**La Regla de las Dos Cifras.** Fechas, notas, contadores, horas y tablas usan `--num` (`lining-nums tabular-nums`) o `.num`. Los identificadores (código de asignatura, número de sección, período en el encabezado, campos de fecha) usan `lining-nums proportional-nums`: se leen como nombres, no como columnas.
+
+**La Regla de la Fecha de Calendario.** Las únicas mayúsculas del campus son las abreviaturas de día y mes dentro de las hojas de fecha de la agenda (11px y 10.5px, tracking 0.04em). Son el formato de una hoja de calendario, no rótulos sobre títulos.
 
 ## Layout
 
-Cabecera de mínimo 62px más `--safe-top`; riel de 248px que puede cerrarse. El contenido tiene máximo local de 1440px y padding horizontal `clamp(24px, 3.2vw, 52px)`. Portal y aula comienzan a 36px bajo la cabecera. La escala base de espacio permanece intacta; el campus también usa separaciones intermedias de 20px.
+Cabecera de 56px más área segura; riel de 256px a la izquierda, sobre el mismo gris que el escritorio y sin línea divisoria. El contenido tiene un máximo de 1360px con padding horizontal `clamp(20px, 3vw, 44px)`. Portal y aula comienzan 32px bajo la cabecera; los bloques del portal se separan 28px.
 
-| Umbral       | Comportamiento construido                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| Desde 901px  | Navegación lateral dentro de la cuadrícula.                                                                                     |
-| Hasta 1200px | Agenda de 270px, separación de 24px y cursos en una columna; selector docente de 190px.                                         |
-| Hasta 900px  | Riel superpuesto de 284px, limitado a 84vw; gestión docente en una columna.                                                     |
-| Hasta 767px  | El shell móvil oculta riel y menú y muestra navegación inferior de 58px más área segura. Reserva ese espacio bajo el contenido. |
-| Hasta 700px  | Cursos antes de agenda, una columna; padding local de contenedor y tarjetas de 20px; comienzo del contenido a 24px.             |
+El dashboard combina cursos y una columna de agenda de 320px con separación de 36px. Las fichas usan `auto-fill` con mínimo de 264px, separación de 20px entre columnas y 34px entre filas para dejar sitio a la pestaña que sobresale. La agenda abre con la próxima evaluación como hoja propia y sigue con la lista "Más adelante" en una sola hoja de filas.
 
-En escritorio amplio, el dashboard usa agenda de 300px y separación de 32px. Los cursos usan `auto-fit` con mínimo de 270px y separación de 20px. Gestión docente combina selector de 228px y formulario. Las pestañas de aula permiten desplazamiento horizontal. Algunas reglas móviles heredadas fijan padding de 16px directamente en la vista; el token local de 20px no es universal.
+| Umbral       | Comportamiento construido                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Hasta 1200px | Agenda de 288px y separación de 28px; selector de Administrar ramos de 200px.                                               |
+| Hasta 900px  | El riel pasa a superponerse con sombra de diálogo; dashboard y Administrar ramos en una columna.                            |
+| Hasta 767px  | El shell móvil oculta el riel y muestra navegación inferior de 58px más área segura.                                        |
+| Hasta 700px  | Padding de contenedor de 16px, comienzo a 20px, títulos de 28px, cabecera de aula y pestañas con radio `lg` en vez de `xl`. |
 
-Las políticas tienen máximo de 1040px, artículo con padding `clamp(24px, 4vw, 48px)`, texto limitado a 75ch e introducción de 66ch. Hasta 700px, exterior y artículo usan 16px y 20px de padding horizontal respectivamente.
+Desde 768px la cabecera es translúcida sobre el escritorio (`saturate(180%) blur(20px)`); por debajo es opaca. El calendario acota su cuadrícula semanal a `min(60dvh, 620px)` con barras de desplazamiento finas.
 
 ## Elevation & Depth
 
-Los bordes y la diferencia entre lienzo y superficie crean el relieve principal. El campus redefine `--shadow-1` como `0 2px 3px oklch(0.24 0.03 255 / 0.025), 0 8px 24px oklch(0.24 0.03 255 / 0.04)`. Las tarjetas de curso permanecen estables al pasar el cursor; su enlace de entrada se subraya y el foco interior marca el borde. Acciones principales y paneles docentes eliminan su sombra. Diálogos y riel superpuesto conservan `--shadow-2` global. La cabecera del campus es opaca y no usa backdrop blur.
+La profundidad viene de la diferencia entre escritorio y hoja más una sombra en capas que incluye un anillo de 0.5px en lugar de borde. Toda superficie elevada pierde el borde y gana `--shadow-1`; popovers, paleta de comandos y diálogos suben a `--shadow-2`. Las fichas de curso usan `drop-shadow` en lugar de `box-shadow` para que la sombra siga el contorno de la pestaña que sobresale.
+
+### Shadow Vocabulary
+
+- **Hoja** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 1px 2px oklch(0.2 0.01 265 / 0.06), 0 6px 16px -6px oklch(0.2 0.01 265 / 0.12)`): paneles, listas, publicaciones, tablas y el destino activo del riel.
+- **Hoja levantada** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 2px 4px oklch(0.2 0.01 265 / 0.05), 0 10px 24px -6px oklch(0.2 0.01 265 / 0.12)`): hover de botones secundarios y del menú de importación.
+- **Flotante** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.1), 0 6px 14px oklch(0.2 0.01 265 / 0.07), 0 24px 56px -12px oklch(0.2 0.01 265 / 0.24)`): popovers, paleta, diálogos y riel superpuesto.
+- **Control** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.16), 0 1px 1.5px oklch(0.2 0.01 265 / 0.08)`): botón secundario, tecla del buscador, opción elegida del conmutador.
+- **Separador** (`drop-shadow(0 0 0.5px oklch(0.2 0.01 265 / 0.24)) drop-shadow(0 4px 8px oklch(0.2 0.01 265 / 0.08))`, en hover `0 10px 18px` a 0.11): ficha de curso con su pestaña.
+- **Foco de campo** (`0 0 0 4px oklch(0.5 0.19 258 / 0.22)`): halo azul de campos enfocados junto con el borde azul.
+
+### Named Rules
+
+**La Regla de la Hoja sin Borde.** Una superficie elevada nunca lleva borde visible; su límite es el anillo de 0.5px de la sombra. Los únicos bordes son los de campos nativos y la retícula interna del calendario mensual.
+
+**La Regla sin Divisores.** Ni cabecera, ni riel, ni pie, ni filas de lista usan líneas divisorias; la separación se logra con espacio, con la diferencia entre escritorio y hoja o con la sombra de 0.5px de la cabecera.
 
 ## Shapes
 
-Acciones y navegación redondean a 8px; símbolos de curso a 10px; tarjetas de curso, agenda, cabecera y pestañas de aula a 12px. La ficha docente conserva 16px. Bordes de 1px delimitan superficies. Las píldoras permanecen en avatares, indicadores y algunos controles públicos, incluido el envío de contacto; las acciones principales del campus usan rectángulos suaves.
+Rectángulos suaves en escala corta: 5px para teclas y detalles, 7px para botones discretos, 10px para acciones, campos y destinos del riel, 14px para hojas y fichas, 20px para diálogos, la hoja de Administrar ramos y el conjunto del aula. El círculo completo queda para avatares, el día de hoy y los saltos del índice de recursos.
+
+La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, el selector de Administrar ramos.
 
 ## Components
 
-**Navegación:** destinos laterales de mínimo 44px con icono y etiqueta. Cabecera con marca, contexto, búsqueda, notificaciones y cuenta; buscador de radio 8px y mínimo 38px. La navegación inferior combina icono, etiqueta y un fondo azul tenue detrás del icono seleccionado.
+### Buttons
 
-**Acciones y foco:** botones principales y secundarios de mínimo 44px, texto de 13px y peso 600. Primario azul; secundario blanco con borde fino. Conservan presión a `scale(0.985)`. Foco global de 2px en azul separado 2px; foco del riel de 2px en azul separado 3px. Los controles enfocados dentro del campus y políticas eliminan la transición.
+- **Shape:** rectángulo suave (10px), 40px de alto, 44px con puntero grueso.
+- **Primary:** azul UBB con texto blanco, padding horizontal de 18px, sombra corta azulada e inserto de luz de 0.5px; hover a `primary-active`.
+- **Secondary:** hoja blanca con sombra de control; en hover sube a hoja levantada sin cambiar de color.
+- **Quiet:** relleno tranquilo con texto secundario y radio de 7px para paginación, filtros y acciones de contenido; la acción de eliminar es transparente en `danger` y se separa 24px de las demás.
+- **Press:** `scale(0.97)` con transición de 0ms; deshabilitado a opacidad 0.45. Las transiciones nombran propiedades concretas (fondo, sombra, color, transformación) con 140ms `cubic-bezier(0.22, 1, 0.36, 1)`.
 
-**Cursos y agenda:** símbolo de 44px, código, nombre Merriweather, docente, sección, actividad y entrada al aula. Padding de 24px, reducido a 20px en móvil, sin portada gráfica vacía. La agenda muestra próxima evaluación o estado vacío con un único acceso contextual al calendario. No repite iconos de agenda ni un botón de calendario en la cabecera.
+### Cards / Containers
 
-**Gestión docente:** selector con puntos de color de 8px y estado activo explícito; ficha con título y una sola línea de contexto para período y sección. Pestañas de 48px, campos con etiquetas visibles y guardado al pie. Los formularios conservan sus controles nativos y variantes existentes.
+- **Corner Style:** 14px.
+- **Background:** hoja blanca sobre escritorio gris.
+- **Shadow Strategy:** hoja; flotante para lo que se superpone (ver Elevation & Depth).
+- **Border:** ninguno.
+- **Internal Padding:** 20 a 22px en publicaciones, 18px en la próxima evaluación, 28px en estados vacíos del aula.
 
-**Aula:** cabecera blanca con breadcrumb, título, identidad y acciones. Cabecera y pestañas son superficies independientes con borde completo y radio 12px. Pestañas de mínimo 48px; publicaciones e información del ramo debajo. Las acciones docentes incluyen corrección, importación Moodle y nueva publicación según rol y estado.
+### Inputs / Fields
 
-**Calendario y comunicaciones:** cuadrícula de horario con desplazamiento acotado a `min(60dvh, 620px)` y región accesible por teclado, identificada como Horario semanal. Cabecera, franja de eventos y cuadrícula comparten `scrollbar-width: thin` y reserva estable para mantener alineadas sus columnas. Comunicaciones usa un riel de Avisos/Mensajes, listado con búsqueda y conversación amplia. El riel mide 170px (140px hasta 1200px) y pasa a pestañas horizontales hasta 1000px, con orientación ARIA sincronizada mediante snapshot SSR. Hasta 700px, la conversación ocupa el espacio entre cabecera y navegación inferior, con regreso visible y redactor siempre accesible; sólo el historial desplaza. Los estados vacíos conservan contexto y el acceso de avisos a mensajes. Selección azul tenue, iconos de sección y fechas tabulares distinguen destinos y actividad sin tarjetas de métricas.
+- **Style:** borde de 1px en `control-border`, fondo blanco, radio de 10px; el hover oscurece el borde.
+- **Focus:** borde azul y halo de 4px; los controles enfocados no animan. El filtro de cursos y el buscador de cabecera son rellenos tranquilos sin borde que pasan a hoja con halo al enfocarse.
 
-**Recursos y ayuda:** acceso móvil, índice y filas de enlaces de mínimo 84px con padding 18px. Contacto usa artículo de lectura y accesos directos de mínimo 44px, con el primero azul. El pie conserva ayuda, privacidad, términos, accesibilidad y descargo de independencia.
+### Navigation
 
-**Movimiento:** `--transition-base` local es `150ms ease-out`; las tarjetas transicionan solo borde y sombra durante 150ms. Botones heredan `--transition-fast` de 120ms con `cubic-bezier(0.2, 0, 0, 1)`. Movimiento reducido fija scroll automático y transiciones y animaciones a 0ms dentro del campus y sus páginas de políticas. Los componentes React animados deben respetar `useReducedMotion()`.
+- **Riel:** destinos de 38px, 14px peso 500, iconos de 22px en tinta tenue. El destino activo es una hoja blanca con sombra de hoja, peso 600 e icono azul. Los cursos del riel sustituyen el icono por la marca de separador en su tono.
+- **Cabecera:** marca de 15px peso 650, contexto, buscador de 36px, notificaciones y cuenta con hover de relleno tranquilo.
+- **Móvil:** navegación inferior de 58px más área segura; el destino activo es azul con un velo azul tras el icono.
+
+### Course Card (signature)
+
+Separador de archivador: pestaña de 24px con el código de asignatura en `tab-label` y cifras proporcionales; franja de portada de 52px en `--tone-wash` reservada para la portada docente; cuerpo con nombre en `card-title`, docente, sección y período en metadatos, actividad y próxima fecha en cifras tabulares; acción "Entrar al aula" azul a todo el ancho con flecha. El hover sólo profundiza la sombra.
+
+### Classroom Divider (signature)
+
+La cabecera del aula es el separador abierto: hoja en `--tone-wash` con radio de 20px sólo en la esquina superior derecha, pestaña de 26px con el código sobresaliendo arriba a la izquierda, breadcrumb e identidad en `--tone-ink`, título de 32px. Debajo, sin espacio, la tira blanca de pestañas del aula con radio inferior de 20px; pestañas de 50px y un indicador de 3px en el tono puro de la sección bajo la activa, cuyo icono toma `--tone-ink`.
+
+### Agenda
+
+La próxima evaluación es una hoja con hoja de fecha de 58px en el tono de su sección, día de 24px peso 700, cuenta regresiva (en `danger` si es hoy o pronto), título, curso y acción. Las siguientes van en una sola hoja de filas de 58px: fecha compacta, título truncado con curso y cuenta regresiva a la derecha. Sin evaluaciones, una hoja de estado vacío con un único acceso al calendario.
+
+### Calendar
+
+Conmutador de vista sobre relleno tranquilo con la opción elegida como hoja de control. El mes es una hoja con retícula interna de línea fina; el día elegido lleva velo azul y anillo interior de 2px; el número del día de hoy es un círculo azul. Los bloques de horario llevan el tono de su sección.
 
 ## Do's and Don'ts
 
-- Mantener login y Merriweather intactos; aplicar el campus en su capa local.
-- Conservar identidad de sección, estados reales y acciones con etiquetas claras.
-- Usar tokens semánticos y Phosphor para interfaz; respetar marcas externas existentes en Recursos.
-- Mantener foco visible, teclado, áreas seguras y movimiento reducido.
-- Preservar independencia y distintivos de tiendas sin enlace hasta el acuerdo institucional.
-- No duplicar carpetas o assets web en árboles nativos para extender este sistema.
-- No introducir gradientes de texto, resplandores saturados, emojis decorativos ni `transition: all`.
-- No convertir rótulos pequeños en mayúsculas de tablas o navegación en decoración encima de títulos.
-- No afirmar conformidad WCAG AA o AAA por estas capturas o comprobaciones automáticas; la auditoría integral sigue pendiente.
+### Do:
+
+- **Do** declarar tokens nuevos del campus en `:root:has(.app-shell)` para que diálogos y hojas montados en `body` los hereden.
+- **Do** pasar el color de sección como `--course-tone` y consumir sólo `--tone-wash`, `--tone-wash-strong`, `--tone-ink` o el tono puro.
+- **Do** elevar con `--shadow-1` y quitar el borde a toda superficie nueva; usar `--shadow-2` sólo para lo que flota.
+- **Do** usar cifras tabulares para datos y proporcionales para códigos y secciones.
+- **Do** mantener 44px de área táctil con puntero grueso y la navegación inferior móvil de 58px más área segura.
+- **Do** respetar el movimiento reducido: el campus fija transiciones, animaciones y desplazamiento automático a 0ms y los componentes React animados usan `useReducedMotion()`.
+- **Do** conservar el descargo de independencia en el pie y los distintivos de tiendas sin enlace.
+
+### Don't:
+
+- **Don't** aplicar este sistema a la pantalla de acceso ni a selectores raíz sin `.app-shell`; el login mantiene Merriweather, Manrope y su composición.
+- **Don't** usar azul UBB como color de sección ni como decoración.
+- **Don't** dibujar líneas divisorias entre cabecera, riel, pie o filas.
+- **Don't** poner rótulos pequeños en mayúsculas, píldoras de etiqueta ni textos sobre los títulos.
+- **Don't** usar `transition: all`, gradientes de texto, resplandores saturados ni emojis como iconos; los iconos son de `@phosphor-icons/react`.
+- **Don't** desplazar elementos en hover; el hover cambia fondo o sombra.
+- **Don't** afirmar conformidad WCAG por estas capturas o comprobaciones automáticas; la auditoría integral sigue pendiente.
+
+### Pendientes conocidos
+
+- En Administrar ramos, la marca de color de la lista puede no coincidir con el tono del portal, porque el portal deriva el tono de una plantilla o de un hash. Está registrado como tarea de datos aparte.
+- El marcador del día de hoy en el calendario y los indicadores de no leído (filas de notificación, punto de conversación, aviso no leído) usan azul a propósito: son indicadores de estado bajo la Regla del Azul que Actúa. El contador de la cabecera usa `danger`.
