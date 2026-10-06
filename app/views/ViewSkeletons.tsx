@@ -690,7 +690,13 @@ export function ClassroomSkeleton() {
       role="status"
     >
       <main className="classroom-main">
-        <header className="classroom-top">
+        <header
+          className="classroom-top"
+          style={{ "--course-tone": "oklch(0.62 0.01 265)" } as React.CSSProperties}
+        >
+          <span aria-hidden="true" className="classroom-tab">
+            <span className="sk" style={{ width: "52px", height: "10px" }} />
+          </span>
           <div className="classroom-heading">
             <span
               className="breadcrumb"

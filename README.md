@@ -117,7 +117,7 @@ flowchart TD
 ├── AGENTS.md             # Protocolo de gobernanza para agentes de IA e invariantes de sistema
 ├── capacitor.config.ts   # Configuración de runtime y plugins de Capacitor
 ├── CONTRIBUTING.md       # Flujo de contribución, ramas y Conventional Commits
-├── DESIGN.md             # Sistema de diseño, paleta institucional OKLCH y tipografías
+├── DESIGN.md             # Sistema de diseño «Separadores de archivador»
 ├── GATES.md              # Compuertas de calidad y criterios de aceptación de entrega
 ├── LICENSE               # Licencia de software libre (MIT)
 ├── PLAN.md               # Estado de entrega, tareas activas y backlog técnico
@@ -322,7 +322,7 @@ Para profundizar en las decisiones de diseño y normativas del proyecto:
 - **[Gobernanza de IA e Invariantes (`AGENTS.md`)](AGENTS.md):** Protocolo vinculante sobre derivación de roles, aislamiento de secciones y restricciones negativas.
 - **[Compuertas de Verificación (`GATES.md`)](GATES.md):** Definición de criterios de aceptación y controles de calidad previos al despliegue.
 - **[Guía de Agent QA (`docs/testing/agent-qa.md`)](docs/testing/agent-qa.md):** Manual de ejecución, escenarios por rol y evidencia del arnés de QA determinístico.
-- **[Sistema de Diseño (`DESIGN.md`)](DESIGN.md):** Especificación de tokens OKLCH, pairing tipográfico `Merriweather` / `Manrope` y física de animaciones.
+- **[Sistema de Diseño (`DESIGN.md`)](DESIGN.md):** Sistema visual «Separadores de archivador»: tokens OKLCH, tipografía `Inter` con tamaño óptico, sombras, formas y componentes del campus; el acceso conserva `Merriweather` / `Manrope`.
 - **[Registros de Decisiones de Arquitectura (`docs/adr/`)](docs/adr/):**
   - [ADR-0001: Separación de Responsabilidades Turso / Firestore](docs/adr/0001-turso-firestore-split.md)
   - [ADR-0002: Adopción del Runtime Capacitor Remote-First](docs/adr/0002-capacitor-mobile-runtime.md)
