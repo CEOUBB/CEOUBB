@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - Classroom / PeopleSection
+
+- **Finding:** In `app/views/classroom/PeopleSection.tsx`, the live announcement region container for participant directory search and role filtering results (`<p className="sr-only" aria-live="polite">`) lacked explicit `role="status"` and `aria-atomic="true"`, preventing consistent screen reader announcements during search or role tab changes (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 3.2.2 On Input).
+- **Applied / Evaluated Pattern:** Added `role="status"` and `aria-atomic="true"` to `<p className="sr-only" aria-live="polite">`.
+- **Design System Constraint:** Reused existing visually hidden container element (`.sr-only`) without modifying visual layout or directory filtering logic.
+- **Future Rule:** Ensure dynamic search and filter live feedback regions declare explicit `role="status"` and `aria-atomic="true"` alongside `aria-live="polite"`.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
