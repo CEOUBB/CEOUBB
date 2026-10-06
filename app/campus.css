@@ -90,6 +90,14 @@
 .app-shell :is(button, a, input, select, textarea):focus-visible {
   transition: none;
 }
+.app-shell :is(p, li) a:not([class]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.app-shell .avatar {
+  color: var(--ubb-royal-blue-active);
+}
 .app-shell :is(h1, h2, h3, h4) {
   letter-spacing: -0.017em;
 }
