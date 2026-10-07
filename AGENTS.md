@@ -79,6 +79,7 @@ To navigate non-obvious structural seams efficiently without burning context on 
 
 - **Role Policy & Auth SSOT:** `lib/access-policy.ts` (mirrored in `firebase/firestore.rules` and `firebase/storage.rules`).
 - **Public Access and Private Bootstrap:** `app/access-screen.tsx`, `app/campus/page.tsx`, `proxy.ts`, and `lib/session-cookie.ts`; public styles live in `app/globals.css`, campus rules in `app/campus-base.css`, `app/mobile-shell.css`, and `app/campus.css`.
+- **Design System Tokens:** `DESIGN.md` documents the "Separadores de archivador" system. Its tokens are scoped in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`, shared by the campus, public help and policy pages, `app/not-found.tsx` and `app/global-error.tsx`; the access screen stays outside that scope with its own Merriweather and Manrope system.
 - **Shared Profile Contracts:** `lib/user-profile-contract.ts`; server profile operations remain in `lib/services/user-profile.ts` and must not enter client import graphs.
 - **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
 - **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.

@@ -3,7 +3,17 @@ import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { generateKeyPairSync } from "node:crypto";
 import { existsSync, openSync, closeSync } from "node:fs";
-import { mkdir, readFile, writeFile, cp, symlink, rm, lstat, realpath } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  readdir,
+  writeFile,
+  cp,
+  symlink,
+  rm,
+  lstat,
+  realpath,
+} from "node:fs/promises";
 import { resolve, join, delimiter, relative, sep, isAbsolute } from "node:path";
 import { resolveQaRuntime } from "../../lib/qa-runtime.ts";
 
@@ -159,6 +169,12 @@ export function exited(child) {
     child.once("error", reject);
     child.once("exit", (code) => done(code ?? 1));
   });
+}
+
+async function preserveEmulatorLogs(runDir, output, attempt) {
+  for (const name of await readdir(runDir))
+    if (name.endsWith("-debug.log"))
+      await cp(join(runDir, name), join(output, `emulators-${attempt}-${name}`));
 }
 
 // Implements: REQ-QA-02
@@ -396,37 +412,53 @@ export async function startRuntime(root, runId, output, signal, mode = "developm
     const firebase = firebaseInvocation();
     signal?.throwIfAborted();
     console.log("[qa] Starting isolated Auth, Firestore, Storage and Functions emulators...");
-    const emulator = start(
-      firebase.executable,
-      [
-        ...firebase.args,
-        "emulators:start",
-        "--project",
-        "demo-ceoubb-qa",
-        "--config",
-        configPath,
-        "--only",
-        "auth,firestore,storage,functions",
-        "--non-interactive",
-      ],
-      environment,
-      runDir,
-      join(output, "emulators.log")
-    );
-    children.push(emulator);
-    for (const service of ["auth", "firestore", "storage", "functions"])
-      await ready(
-        `http://127.0.0.1:${ports[service]}${service === "storage" ? "/v0/b/demo-ceoubb-qa.firebasestorage.app/o?maxResults=1" : "/"}`,
-        children,
-        180_000,
-        signal,
-        service === "functions"
-          ? async () =>
-              (await readFile(join(output, "emulators.log"), "utf8")).includes(
-                "All emulators ready"
-              )
-          : undefined
+    let emulator;
+
+    for (let attempt = 1; ; attempt++) {
+      emulator = start(
+        firebase.executable,
+        [
+          ...firebase.args,
+          "emulators:start",
+          "--project",
+          "demo-ceoubb-qa",
+          "--config",
+          configPath,
+          "--only",
+          "auth,firestore,storage,functions",
+          "--non-interactive",
+        ],
+        environment,
+        runDir,
+        join(output, "emulators.log")
       );
+      children.push(emulator);
+
+      try {
+        for (const service of ["auth", "firestore", "storage", "functions"])
+          await ready(
+            `http://127.0.0.1:${ports[service]}${service === "storage" ? "/v0/b/demo-ceoubb-qa.firebasestorage.app/o?maxResults=1" : "/"}`,
+            children,
+            180_000,
+            signal,
+            service === "functions"
+              ? async () =>
+                  (await readFile(join(output, "emulators.log"), "utf8")).includes(
+                    "All emulators ready"
+                  )
+              : undefined
+          );
+        break;
+      } catch (error) {
+        await preserveEmulatorLogs(runDir, output, attempt);
+        signal?.throwIfAborted();
+
+        if (attempt > 1 || (emulator.exitCode === null && emulator.signalCode === null))
+          throw error;
+        children.pop();
+        console.log("[qa] Firebase emulators exited during startup; retrying once.");
+      }
+    }
     console.log("[qa] Seeding synthetic identities, sections and learning data...");
     signal?.throwIfAborted();
     const seed = start(

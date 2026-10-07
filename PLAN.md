@@ -1,6 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Security remediation, 2026-10-03
+## Current handoff: Campus redesign "Separadores de archivador", 2026-10-06
+
+- Scope: [PR #287](https://github.com/CEOUBB/CEOUBB/pull/287), branch `claude/lms-ui-ux-redesign-39a5a8`. Replaces the campus visual system (dashboard, classroom, calendar, communications, resources, settings, administration, Administrar ramos), public help and policy pages, the 404 page and the global error screen. The access screen is unchanged. `DESIGN.md` is the source of truth; `.agents/rules/003-ui-components.mdc` summarizes it for agents.
+- Tokens live in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`; Inter loads with the `opsz` axis in `app/layout.tsx`. Each section carries `--course-tone`, from which `app/campus.css` derives `--tone-wash`, `--tone-wash-strong` and `--tone-ink`.
+- Administrar ramos reuses the classroom divider: tone-tinted header with the code tab, tone indicator under the active tab, sections listed on the desk, a live-preview creation divider and a tone swatch picker.
+- `scripts/qa/runtime.mjs` now preserves Firebase emulator `*-debug.log` files in the QA evidence and retries emulator startup once only when the emulator process exits during startup. Scenario assertions are unchanged.
+- Verification: `verify:fast` 627/627 with 72 protected hashes and 31 specifications; lint 0 errors and 2 existing warnings; teacher QA area 8/8 at 1440 and 390 px. CI on `e13d9fc` passed every required check, including the four local QA catalog shards. React Doctor's two warnings (`nextjs-no-a-element` in `app/global-error.tsx`, `no-derived-useState` in the keyed course data form) are reviewed false positives.
+- Open: the Administrar ramos list can show a tone different from the portal because the portal derives tone from a template or hash; tracked as a separate data task. No production deployment was performed.
+
+## Handoff: Security remediation, 2026-10-03
 
 - Scope and per-finding evidence: [security remediation report](docs/security/remediation-2026-10-03.md).
 - Close portal and Firebase identities on logout; retire native push registration before identity teardown. Restrict personal namespaces, direct submission modality and shared downloads to the institutional, enrollment and exact receipt policies.
@@ -309,7 +318,7 @@ Companion files:
 
 Everything not listed here is implemented and verified; the full historical inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and operational: `ceoubb.com` on Cloudflare Workers with Turso libSQL, Firebase Auth with institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` Cloud Functions on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
 
-- Web: app store badges remain non-clickable placeholders; local portal/library redesign uncommitted/undeployed.
+- Web: app store badges remain non-clickable placeholders; the campus redesign in PR #287 is not merged or deployed.
 - Android: release AAB installation, Google Sign-In, upload/download, role behavior, account deletion, and FCM delivery **not verified** on a clean physical device (CEO-33). Bundled offline library remains on legacy maroon theme.
 - iOS: unbuilt scaffold: no Xcode project configuration, bundle ID, APNs certificates, or iOS Firebase app (CEO-77). Badge remains non-clickable.
 - Firebase/GCP: App Check Web/Android registered with Firestore, Storage, and Auth remaining in observation (`UNENFORCED`); pending client deployment, 24-hour representative traffic, physical Android validation, and gradual enforcement. Firestore and Storage now have a verified emulator matrix; no web push VAPID key is configured. Cloud Billing alerts are configured, but the account remains in Free Trial and must be converted to paid prior to expiration.

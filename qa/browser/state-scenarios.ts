@@ -533,7 +533,7 @@ export async function stateScenario(
     });
     await page.reload();
     await expect(
-      page.getByRole("heading", { name: /Application error: a client-side exception has occurred/ })
+      page.getByRole("heading", { name: "No pudimos abrir Centro de Estudio UBB" })
     ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
     return true;
