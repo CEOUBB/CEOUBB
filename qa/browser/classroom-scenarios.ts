@@ -1,6 +1,8 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Request, type Route } from "@playwright/test";
+import { z } from "zod";
+import { resolveQaRuntime } from "../../lib/qa-runtime.ts";
 import type { QaScenario } from "../catalog.ts";
-import { QA_ASSETS, QA_IDS, QA_SECTIONS, QA_TEAMMATE } from "../fixtures.ts";
+import { QA_ASSETS, QA_IDS, QA_SECTIONS, QA_TEAMMATE, QA_USERS } from "../fixtures.ts";
 import { qaPdf, resetQaFixtures } from "../../scripts/qa/seed.ts";
 import {
   classroomTab,
@@ -11,6 +13,8 @@ import {
   studentGradeDetail,
 } from "./helpers.ts";
 import type { Capture } from "./portal-scenarios.ts";
+import { callableFailure } from "./state-scenarios.ts";
+import { importMotionScenario } from "./motion-scenarios.ts";
 
 const PRESETS: Record<string, string> = {
   notice: "Aviso o portada del ramo",
@@ -25,6 +29,11 @@ export async function classroomScenario(
   capture: Capture
 ): Promise<boolean> {
   const id = scenario.id;
+
+  if (id === "imports.motion") {
+    await importMotionScenario(page, capture);
+    return true;
+  }
   if (
     ![
       "classroom",
@@ -75,6 +84,13 @@ export async function classroomScenario(
     } else if (id.startsWith("classroom.live")) {
       await page.locator(".live-class-editor summary").click();
       await expect(page.getByLabel("Enlace de la reunión")).toBeVisible();
+      await expect(page.getByRole("link", { name: "Entrar a la clase" })).toHaveAttribute(
+        "href",
+        "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+      );
+      await expect(page.getByLabel("Enlace de la reunión")).toHaveValue(
+        "https://teams.microsoft.com/l/meetup-join/qa-synthetic"
+      );
       if (id === "classroom.live-invalid") {
         await page.getByLabel("Enlace de la reunión").fill("https://example.invalid/not-a-meeting");
         await page.getByRole("button", { name: "Guardar enlace", exact: true }).click();
@@ -169,13 +185,21 @@ export async function classroomScenario(
             "Contenido sintético QA"
           );
         } else if (id === "publication.notify-confirm") {
-          await page.locator('input[name="notificationMode"][value="push"]').check();
+          await page
+            .locator('.publish-alerts > label:has(input[name="notificationMode"][value="push"])')
+            .click();
+          await expect(page.locator('input[name="notificationMode"][value="push"]')).toBeChecked();
           await page.locator(".publish-submit").click();
           await expect(
             page.getByRole("dialog", { name: "Confirmar notificación al curso" })
           ).toBeVisible();
         } else if (id === "publication.persistence") {
-          await page.locator('input[name="notificationMode"][value="silent"]').check();
+          await page
+            .locator('.publish-alerts > label:has(input[name="notificationMode"][value="silent"])')
+            .click();
+          await expect(
+            page.locator('input[name="notificationMode"][value="silent"]')
+          ).toBeChecked();
           await capture("form");
           await page.locator(".publish-submit").click();
           await expect(
@@ -210,8 +234,36 @@ export async function classroomScenario(
       await expect(
         page.getByText("El docente aún no publica la ponderación", { exact: true })
       ).toBeVisible();
-    else if (["grades.student", "grades.simulation", "grades.assistant"].includes(id)) {
-      await expect(page.getByText("Informe individual QA", { exact: true }).first()).toBeVisible();
+    else if (id === "grades.assistant") {
+      const panel = page.getByRole("tabpanel", { name: "Notas", exact: true });
+      await expect(
+        panel.getByRole("heading", { name: "Historial de notas", exact: true })
+      ).toBeVisible();
+      const evaluation = panel.getByRole("combobox", { name: "Evaluación", exact: true });
+      await expect(evaluation).toBeVisible();
+      await expect(evaluation).toHaveValue(QA_IDS.report);
+      await expect(evaluation.locator("option:checked")).toHaveText("Informe individual QA");
+      await expect(
+        panel.getByText(
+          "Consulta los cambios de una evaluación. Tu acceso como ayudante es de solo lectura.",
+          { exact: true }
+        )
+      ).toBeVisible();
+      await expect(
+        panel.getByRole("button", { name: "Ver historial de Estudiante QA", exact: true })
+      ).toBeVisible();
+      await expect(panel.locator('input:not([type="search"]), textarea')).toHaveCount(0);
+    } else if (["grades.student", "grades.simulation"].includes(id)) {
+      await expect(
+        page
+          .locator(".grades-view .sheet-list")
+          .getByRole("button", { name: /^Informe individual QA(?: |$)/ })
+          .or(
+            page
+              .locator(".grades-view .grades-table")
+              .getByText("Informe individual QA", { exact: true })
+          )
+      ).toBeVisible();
       if (id === "grades.simulation") {
         await studentGradeDetail(page, "Proyecto en equipo QA");
         await page
@@ -367,44 +419,251 @@ export async function classroomScenario(
     return true;
   }
   if (id.startsWith("quizzes.")) {
+    if (["quizzes.teacher-loading", "quizzes.student-loading"].includes(id)) {
+      const runtime = resolveQaRuntime();
+
+      if (!runtime) throw new Error("QA_QUIZ_REFUSED: a guarded local runtime is required.");
+      const listenUrl = `${runtime.firestore.origin}/google.firestore.v1.Firestore/Listen/channel`;
+      const release = await holdRequest(page, `${listenUrl}?*`);
+      const requested = page.waitForRequest(
+        (request) => request.method() === "POST" && request.url().startsWith(`${listenUrl}?`)
+      );
+
+      try {
+        await classroomTab(page, "Cuestionarios");
+        await requested;
+        const loading = page.getByRole("status", { name: "Cargando cuestionarios…", exact: true });
+        await expect(loading).toBeVisible();
+        await expect(loading).toHaveAttribute("aria-busy", "true");
+        await expect(loading).toHaveClass(
+          id === "quizzes.teacher-loading" ? "quiz-card-list" : "quiz-student-list"
+        );
+        await capture("loading");
+      } finally {
+        await release();
+      }
+      await expect(
+        page
+          .locator(
+            id === "quizzes.teacher-loading" ? ".quiz-catalog .quiz-card" : ".quiz-student-card"
+          )
+          .filter({ hasText: "Cuestionario de práctica QA" })
+      ).toBeVisible();
+
+      if (id === "quizzes.teacher-loading")
+        await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+      return true;
+    }
     await classroomTab(page, "Cuestionarios");
+
     if (id === "quizzes.empty")
       await expect(
         page.getByText("No hay cuestionarios disponibles", { exact: true })
       ).toBeVisible();
-    else if (["quizzes.teacher", "quizzes.import", "quizzes.teacher-loading"].includes(id)) {
-      if (id === "quizzes.teacher-loading") {
-        await expect(
-          page
-            .getByRole("status", { name: "Cargando cuestionarios…" })
-            .or(page.getByLabel("Nombre del cuestionario"))
-            .first()
-        ).toBeVisible();
-      } else {
-        await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
-      }
+    else if (["quizzes.teacher", "quizzes.import"].includes(id)) {
+      await expect(page.getByLabel("Nombre del cuestionario")).toBeVisible();
+
       if (id === "quizzes.import") {
         await page.locator('.quiz-dropzone input[type="file"]').setInputFiles(QA_ASSETS.questions);
         await expect(page.getByText("Pregunta importada QA", { exact: true })).toBeVisible();
       }
-    } else if (id === "quizzes.student-loading") {
-      const quiz = page
-        .locator(".quiz-student-card")
-        .filter({ hasText: "Cuestionario de práctica QA" });
-      await expect(
-        page.getByRole("status", { name: "Cargando cuestionarios…" }).or(quiz).first()
-      ).toBeVisible();
     } else {
       const quiz = page
         .locator(".quiz-student-card")
         .filter({ hasText: "Cuestionario de práctica QA" });
       await expect(quiz).toBeVisible();
+
       if (id !== "quizzes.student") {
         // The Functions attempt deadline uses wall time; keep the browser on the same clock.
-        await page.clock.setFixedTime(new Date());
+        await page.evaluate((timestamp) => {
+          Date.now = () => timestamp;
+        }, Date.now());
         await quiz.getByRole("button", { name: "Rendir ahora", exact: true }).click();
         await expect(page.getByRole("timer")).toBeVisible();
         await expect(page.getByText("¿Cuánto es 2 + 2?", { exact: true })).toBeVisible();
+
+        if (["quizzes.answer-saving", "quizzes.answer-error"].includes(id)) {
+          const runtime = resolveQaRuntime();
+
+          if (!runtime) throw new Error("QA_QUIZ_REFUSED: a guarded local runtime is required.");
+          const draftPath = `courses/${QA_SECTIONS.active}/quizzes/${QA_IDS.quiz}/drafts/${QA_USERS.student.uid}`;
+          const draftName = `projects/${runtime.projectId}/databases/(default)/documents/${draftPath}`;
+          const writeUrl = `${runtime.firestore.origin}/google.firestore.v1.Firestore/Write/channel`;
+          const payloadSchema = z.looseObject({ writes: z.array(z.unknown()) });
+          const answerSchema = z.looseObject({
+            update: z.looseObject({
+              name: z.literal(draftName),
+              fields: z.looseObject({
+                answers: z.looseObject({
+                  mapValue: z.looseObject({
+                    fields: z.looseObject({
+                      [QA_IDS.question]: z.looseObject({
+                        stringValue: z.literal(QA_IDS.correctAnswer),
+                      }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+            updateMask: z.looseObject({
+              fieldPaths: z.tuple([z.literal(`answers.\`${QA_IDS.question}\``)]),
+            }),
+          });
+          const answerWrite = (request: Request, deny = false): string | null => {
+            const url = new URL(request.url());
+
+            if (
+              request.method() !== "POST" ||
+              `${url.origin}${url.pathname}` !== writeUrl ||
+              !request.postData()
+            )
+              return null;
+            const form = new URLSearchParams(request.postData()!);
+
+            for (const [key, value] of form) {
+              if (!/^req\d+___data__$/.test(key)) continue;
+              let raw: unknown;
+
+              try {
+                raw = JSON.parse(value);
+              } catch {
+                continue;
+              }
+              const payload = payloadSchema.safeParse(raw);
+
+              if (!payload.success) continue;
+
+              for (const [index, rawWrite] of payload.data.writes.entries()) {
+                const write = answerSchema.safeParse(rawWrite);
+
+                if (!write.success) continue;
+
+                if (!deny) return request.postData();
+                payload.data.writes[index] = {
+                  ...write.data,
+                  update: {
+                    ...write.data.update,
+                    fields: {
+                      ...write.data.update.fields,
+                      answers: { stringValue: "QA controlled invalid answer" },
+                    },
+                  },
+                  updateMask: { ...write.data.updateMask, fieldPaths: ["answers"] },
+                };
+                form.set(key, JSON.stringify(payload.data));
+                return form.toString();
+              }
+            }
+            return null;
+          };
+          const pattern = `${writeUrl}?*`;
+          let release: (() => Promise<void>) | undefined;
+          const denyAnswer = async (route: Route) => {
+            const postData = answerWrite(route.request(), true);
+            await route.continue(postData === null ? undefined : { postData });
+          };
+
+          if (id === "quizzes.answer-saving")
+            release = await holdRequest(page, pattern, (request) => answerWrite(request) !== null);
+          else await page.route(pattern, denyAnswer);
+          const requested = page.waitForRequest((request) => answerWrite(request) !== null);
+
+          try {
+            await page.getByRole("radio", { name: "4", exact: true }).check();
+            await requested;
+            const status = page.locator(".quiz-question .quiz-save-state");
+
+            if (id === "quizzes.answer-saving") {
+              await expect(status).toHaveText("Guardando…");
+              await capture("loading");
+              await release?.();
+              release = undefined;
+              await expect(status).toHaveText("Guardado");
+            } else {
+              await expect(status).toHaveText("Sin guardar");
+              await capture("error");
+            }
+            const persisted = z
+              .object({
+                fields: z.object({
+                  answers: z.object({
+                    mapValue: z.object({ fields: z.record(z.string(), z.unknown()).optional() }),
+                  }),
+                }),
+              })
+              .parse(await firestoreDocument(draftPath));
+            expect(persisted.fields.answers.mapValue.fields?.[QA_IDS.question]).toEqual(
+              id === "quizzes.answer-saving" ? { stringValue: QA_IDS.correctAnswer } : undefined
+            );
+          } finally {
+            await release?.();
+
+            if (id === "quizzes.answer-error") await page.unroute(pattern, denyAnswer);
+          }
+          return true;
+        }
+
+        if (["quizzes.submit-loading", "quizzes.submit-error"].includes(id)) {
+          const runtime = resolveQaRuntime();
+
+          if (!runtime) throw new Error("QA_QUIZ_REFUSED: a guarded local runtime is required.");
+          const endpoint = `${runtime.functions.origin}/${runtime.projectId}/southamerica-west1/submitQuizAttempt`;
+          let release: (() => Promise<void>) | undefined;
+
+          if (id === "quizzes.submit-loading") release = await holdRequest(page, endpoint);
+          else await page.route(endpoint, callableFailure);
+
+          try {
+            await page.getByRole("radio", { name: "4", exact: true }).check();
+            await expect(page.locator(".quiz-question .quiz-save-state")).toHaveText("Guardado");
+            const requested = page.waitForRequest(
+              (request) => request.method() === "POST" && request.url() === endpoint
+            );
+            await page.getByRole("button", { name: "Entregar y corregir", exact: true }).click();
+            await requested;
+
+            if (id === "quizzes.submit-loading") {
+              await expect(
+                page.getByRole("button", { name: "Corrigiendo…", exact: true })
+              ).toBeDisabled();
+              await expect(page.locator(".quiz-question")).toHaveAttribute("disabled", "");
+              for (const radio of await page.locator(".quiz-question").getByRole("radio").all()) {
+                await expect(radio).toBeDisabled();
+              }
+              await capture("loading");
+              await release?.();
+              release = undefined;
+              await expect(page.locator(".quiz-grade-seal strong")).toHaveText("7,0");
+              const persisted = await firestoreDocument(
+                `courses/${QA_SECTIONS.active}/grades/qa-student`
+              );
+              expect(
+                Number(
+                  persisted.fields.scores.mapValue.fields[QA_IDS.quizEvaluation].doubleValue ??
+                    persisted.fields.scores.mapValue.fields[QA_IDS.quizEvaluation].integerValue
+                )
+              ).toBe(7);
+            } else {
+              await expect(page.locator(".quiz-submit-error")).toHaveText(
+                "QA controlled save failure [503]"
+              );
+              await expect(
+                page.getByRole("button", { name: "Entregar y corregir", exact: true })
+              ).toBeEnabled();
+              await expect(page.locator(".quiz-question")).not.toHaveAttribute("disabled");
+              for (const radio of await page.locator(".quiz-question").getByRole("radio").all()) {
+                await expect(radio).toBeEnabled();
+              }
+              await capture("error");
+            }
+          } finally {
+            await release?.();
+
+            if (id === "quizzes.submit-error") await page.unroute(endpoint, callableFailure);
+          }
+          return true;
+        }
+
         if (id === "quizzes.submission") {
           await page.getByRole("radio", { name: "4", exact: true }).check();
           await capture("attempt");

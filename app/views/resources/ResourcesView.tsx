@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
+import { useHydratedReducedMotion as useReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import * as m from "motion/react-m";
 import Image from "next/image";
 import { ArrowUpRight, DeviceMobile, DownloadSimple } from "@phosphor-icons/react";

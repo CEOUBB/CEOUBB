@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { QA_SCENARIOS } from "../catalog.ts";
-import { QA_NOW } from "../fixtures.ts";
 import { isFirestoreNavigationCancellation } from "../browser-errors.ts";
 import { resetQaFixtures } from "../../scripts/qa/seed.ts";
-import { login, removeQaMutationDocuments } from "./helpers.ts";
+import { installQaDate, login, removeQaMutationDocuments } from "./helpers.ts";
 import { portalScenario } from "./portal-scenarios.ts";
 import { classroomScenario } from "./classroom-scenarios.ts";
 import { stateScenario } from "./state-scenarios.ts";
@@ -19,14 +18,31 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
   }, testInfo) => {
     if (!baseURL) throw new Error("QA_BASE_URL is required.");
     const errors: string[] = [];
+    const rootConsoleErrors: Promise<string | null>[] = [];
     const navigationCancellations: string[] = [];
     let navigating = false;
+    const reload = page.reload.bind(page);
+    page.reload = async (options) => {
+      navigating = true;
+
+      try {
+        return await reload(options);
+      } finally {
+        navigating = false;
+      }
+    };
     const mutates =
       scenario.id.endsWith("persistence") ||
       [
         "communications.reply",
+        "shell.motion",
+        "imports.motion",
         "quizzes.attempt",
         "quizzes.submission",
+        "quizzes.answer-saving",
+        "quizzes.answer-error",
+        "quizzes.submit-loading",
+        "quizzes.submit-error",
         "interop.scorm",
         "interop.xapi",
       ].includes(scenario.id);
@@ -50,7 +66,23 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
       }
       errors.push(error.message);
     });
-    await page.clock.setFixedTime(new Date(QA_NOW));
+    page.on("console", (message) => {
+      if (scenario.id !== "public.global-error" || message.type() !== "error") return;
+      const exception = message.args()[0];
+      rootConsoleErrors.push(
+        exception
+          ? exception.evaluate((error: unknown) =>
+              error instanceof Error &&
+              error.name === "Error" &&
+              error.message === "QA controlled root render failure" &&
+              error.stack?.split("\n")[1]?.trim() === "at window.matchMedia (<anonymous>:5:54)"
+                ? error.message
+                : null
+            )
+          : Promise.resolve(null)
+      );
+    });
+    await installQaDate(page);
     const executed = new Set<string>();
     const capture = async (id: string) => {
       expect(scenario.checkpoints, `Undeclared checkpoint ${scenario.id}:${id}`).toContain(id);
@@ -102,13 +134,19 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
           : scenario.id === "public.global-error"
             ? "QA controlled root render failure"
             : null;
+      const caughtRootErrors = await Promise.all(rootConsoleErrors);
       if (intentionalError) {
-        expect(errors.length, "The real diagnostic must emit its declared error").toBeGreaterThan(
-          0
-        );
+        expect(
+          errors.length + caughtRootErrors.length,
+          "The real diagnostic must emit its declared error"
+        ).toBeGreaterThan(0);
         expect(
           errors.every((error) => error === intentionalError),
           "Unexpected error in diagnostic scenario"
+        ).toBe(true);
+        expect(
+          caughtRootErrors.every((error) => error === intentionalError),
+          "Unexpected console error in root diagnostic"
         ).toBe(true);
       } else expect(errors, "Unhandled browser errors").toEqual([]);
     } catch (error) {

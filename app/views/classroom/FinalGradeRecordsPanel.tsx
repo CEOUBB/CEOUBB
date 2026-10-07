@@ -113,7 +113,13 @@ function FinalGradeRecordTable({
         </div>
       </dl>
 
-      <div className="final-grade-table-wrap">
+      <div
+        className="final-grade-table-wrap"
+        role="region"
+        aria-label="Acta de calificaciones"
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- La tabla desplazable necesita foco para usar las flechas del teclado.
+        tabIndex={0}
+      >
         <table className="final-grade-table">
           <thead>
             <tr>
@@ -314,8 +320,8 @@ export function FinalGradeRecordsPanel({
             <SealCheck size={22} weight="duotone" />
           </span>
           <div>
-            <p className="eyebrow">DUE 5420/2023</p>
             <h2 id="final-grade-records-title">Cierre de actas</h2>
+            <p className="eyebrow">DUE 5420/2023</p>
           </div>
         </div>
         <div className="final-grade-record-actions">

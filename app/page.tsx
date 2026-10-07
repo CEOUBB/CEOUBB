@@ -1,4 +1,4 @@
-import { Portal } from "./Portal";
+import { AccessScreen } from "./access-screen";
 
 // Implements: REQ-AUTH-01, REQ-PERF-01, REQ-AUTH-06, REQ-SEO-03, PERF-083
 const JSON_LD = {
@@ -34,7 +34,7 @@ export default function Home() {
       */}
       <link rel="preload" as="image" href="/brand/ubb-shield.webp" fetchPriority="high" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD_STRING }} />
-      <Portal isQuickAuthAvailable={isQuickAuthAvailable} />
+      <AccessScreen isQuickAuthAvailable={isQuickAuthAvailable} />
     </>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "../lib/academic-content.ts";
 
 const componentSource = readFileSync("app/components/AcademicProse.tsx", "utf8");
-const globalStyles = readFileSync("app/globals.css", "utf8");
+const globalStyles = readFileSync("app/campus-base.css", "utf8");
 
 test("REQ-PROSE-01: elimina scripts, eventos, elementos ejecutables y protocolos XSS", () => {
   const result = sanitizeAcademicHtml(`

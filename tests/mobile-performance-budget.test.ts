@@ -76,7 +76,11 @@ function ruleBodiesFor(css: string, selector: string) {
   return bodies;
 }
 
-const css = stripComments(await readFile(CSS_PATH, "utf8"));
+const css = stripComments(
+  (await readFile(CSS_PATH, "utf8")) +
+    "\n" +
+    (await readFile(new URL("../app/campus-base.css", import.meta.url), "utf8"))
+);
 const declarations = collectDeclarations(css);
 
 // REQ-CAP-09: ninguna regla con `backdrop-filter` puede quedar activa en viewport móvil.

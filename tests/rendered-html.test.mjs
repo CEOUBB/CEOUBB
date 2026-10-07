@@ -329,7 +329,7 @@ test("the notification bell is gone", async () => {
 });
 
 test("keeps the store badges as non-clickable placeholders", async () => {
-  const source = await readFile(new URL("../app/Portal.tsx", import.meta.url), "utf8");
+  const source = await readFile(new URL("../app/access-screen.tsx", import.meta.url), "utf8");
   assert.match(source, /app-store-badge-es\.webp/i);
   assert.match(source, /google-play-badge-es\.webp/i);
   assert.doesNotMatch(source, /store-badge[^>]*href=/i);

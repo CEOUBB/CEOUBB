@@ -46,6 +46,7 @@ export interface AnimatedUnderlineLinkProps extends Omit<
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
   underlineClassName?: string;
+  prefetch?: boolean;
 }
 
 /**
@@ -63,6 +64,7 @@ export function AnimatedUnderlineLink({
   children,
   className,
   underlineClassName,
+  prefetch,
   target,
   rel,
   ...props
@@ -135,7 +137,14 @@ export function AnimatedUnderlineLink({
   }
 
   return (
-    <Link className={rootClassName} href={href} rel={rel} target={target} {...props}>
+    <Link
+      className={rootClassName}
+      href={href}
+      prefetch={prefetch}
+      rel={rel}
+      target={target}
+      {...props}
+    >
       {innerContent}
     </Link>
   );

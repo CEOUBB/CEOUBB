@@ -23,7 +23,7 @@ const ENFORCEMENT_SURFACES = [
 const DOMAIN_SURFACES = ["../firebase/firestore.rules", "../firebase/storage.rules"];
 
 const POLICY_CONSUMERS = [
-  "../app/Portal.tsx",
+  "../app/access-screen.tsx",
   "../lib/firebase-classroom-client.ts",
   "../lib/auth.ts",
   "../app/api/auth/firebase/route.ts",
