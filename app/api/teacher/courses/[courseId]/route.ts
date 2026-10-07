@@ -9,6 +9,19 @@ type CourseContext = { params: Promise<{ courseId: string }> };
 
 // Implements: REQ-SEC-17
 export async function PATCH(request: Request, context: CourseContext) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > 65536) {
+    return Response.json(
+      { error: "El cuerpo de la solicitud es demasiado extenso." },
+      { status: 413 }
+    );
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return Response.json({ error: "Sesión no válida." }, { status: 401 });
   if (actor.role !== "teacher" && actor.role !== "owner") {
@@ -20,7 +33,14 @@ export async function PATCH(request: Request, context: CourseContext) {
   }
   let payload: unknown;
   try {
-    payload = await request.json();
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, "utf8") > 65536) {
+      return Response.json(
+        { error: "El cuerpo de la solicitud es demasiado extenso." },
+        { status: 413 }
+      );
+    }
+    payload = JSON.parse(rawBody);
   } catch {
     return Response.json({ error: "La ficha del ramo no es válida." }, { status: 400 });
   }

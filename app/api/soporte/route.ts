@@ -43,6 +43,15 @@ function aceptacionDiferida() {
 }
 
 export async function POST(request: Request) {
+  // 0. Validación de origen para defensa en profundidad CSRF.
+  const origin = request.headers.get("origin");
+  if (origin) {
+    const requestOrigin = new URL(request.url).origin;
+    if (origin !== requestOrigin) {
+      return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+    }
+  }
+
   // 1. Tipo de contenido y tamaño.
   const tipo = request.headers.get("content-type") ?? "";
   if (!tipo.includes("application/json")) {

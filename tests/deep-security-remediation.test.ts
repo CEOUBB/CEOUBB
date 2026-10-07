@@ -151,7 +151,7 @@ test("REQ-SEC-16: section participants route validates sectionId presence and ma
 });
 
 // Implements: REQ-SEC-17
-test("REQ-SEC-17: teacher course routes validate courseId presence, format and max length", () => {
+test("REQ-SEC-17: teacher course routes validate courseId presence, format and max length, origin, and request size", () => {
   const routePath = path.resolve("app/api/teacher/courses/[courseId]/route.ts");
   const routeContent = fs.readFileSync(routePath, "utf8");
   assert.match(
@@ -163,6 +163,16 @@ test("REQ-SEC-17: teacher course routes validate courseId presence, format and m
     routeContent,
     /courseId\.length > 100/,
     "Teacher course PATCH route must check courseId length bounds"
+  );
+  assert.match(
+    routeContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Teacher course PATCH route must validate origin header against request URL origin"
+  );
+  assert.match(
+    routeContent,
+    /contentLength\s*>\s*65536/,
+    "Teacher course PATCH route must validate content length bounds"
   );
 
   const asstPath = path.resolve("app/api/teacher/courses/[courseId]/assistants/route.ts");
@@ -255,6 +265,22 @@ test("REQ-SEC-21: grade history route validates sectionId presence and max lengt
     routeContent,
     /isSectionId\(sectionId\)/,
     "Grade history route must validate sectionId format with isSectionId"
+  );
+});
+
+// Implements: REQ-SEC-22
+test("REQ-SEC-22: moodle import route validates sectionId with isSectionId and request origin header", () => {
+  const routePath = path.resolve("app/api/courses/[sectionId]/imports/moodle/route.ts");
+  const routeContent = fs.readFileSync(routePath, "utf8");
+  assert.match(
+    routeContent,
+    /isSectionId\(sectionId\)/,
+    "Moodle import route must validate sectionId format with isSectionId"
+  );
+  assert.match(
+    routeContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Moodle import POST route must validate origin header against request URL origin"
   );
 });
 
