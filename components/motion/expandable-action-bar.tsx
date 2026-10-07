@@ -1,7 +1,6 @@
 "use client";
 // beui.dev/components/blocks/expandable-action-bar
 
-import { LayoutGroup, motion, type Transition, useReducedMotion } from "motion/react";
 import {
   type FocusEvent,
   type MouseEvent,
@@ -9,7 +8,6 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -63,20 +61,6 @@ export interface ExpandableActionBarProps {
     state: { expanded: boolean; active: boolean }
   ) => ReactNode;
 }
-
-const ITEM_TRANSITION: Transition = {
-  type: "spring",
-  stiffness: 340,
-  damping: 28,
-  mass: 0.62,
-};
-
-const LABEL_TRANSITION: Transition = {
-  type: "spring",
-  stiffness: 340,
-  damping: 28,
-  mass: 0.7,
-};
 
 const SIZE_CLASS: Record<ExpandableActionBarSize, string> = {
   sm: "min-h-9 gap-1 p-1 text-xs",
@@ -132,8 +116,6 @@ export function ExpandableActionBar({
   classNames,
   renderItem,
 }: ExpandableActionBarProps) {
-  const reduce = useReducedMotion();
-  const layoutId = useId();
   const [isExpanded, setIsExpanded] = useControllableExpanded({
     expanded,
     defaultExpanded,
@@ -158,13 +140,10 @@ export function ExpandableActionBar({
 
   const close = useCallback(() => {
     clearCollapseTimer();
-    const timer = window.setTimeout(() => {
-      setIsExpanded(false);
-      setHoveredId(null);
-      setTapExpanded(false);
-    }, collapseDelay);
-    collapseTimer.current = timer;
-  }, [clearCollapseTimer, collapseDelay, setIsExpanded]);
+    setIsExpanded(false);
+    setHoveredId(null);
+    setTapExpanded(false);
+  }, [clearCollapseTimer, setIsExpanded]);
 
   useEffect(() => clearCollapseTimer, [clearCollapseTimer]);
 
@@ -181,7 +160,11 @@ export function ExpandableActionBar({
   const onRootPointerLeave = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!hover.leave(event)) return;
     setHoveredId(null);
-    if (expandOnHover) close();
+
+    if (expandOnHover) {
+      clearCollapseTimer();
+      collapseTimer.current = window.setTimeout(close, collapseDelay);
+    }
   };
 
   const onRootFocus = () => {
@@ -198,155 +181,120 @@ export function ExpandableActionBar({
   const highlightId = hoveredId ?? activeItemId;
 
   return (
-    <LayoutGroup id={layoutId}>
-      <motion.div
-        layout="size"
-        onPointerEnter={onRootPointerEnter}
-        onPointerLeave={onRootPointerLeave}
-        onFocus={onRootFocus}
-        onBlur={onRootBlur}
-        transition={ITEM_TRANSITION}
-        className={`inline-flex max-w-full ${classNames?.root ?? ""} ${className}`.trim()}
+    <div
+      onPointerEnter={onRootPointerEnter}
+      onPointerLeave={onRootPointerLeave}
+      onFocus={onRootFocus}
+      onBlur={onRootBlur}
+      className={`inline-flex max-w-full ${classNames?.root ?? ""} ${className}`.trim()}
+    >
+      <div
+        ref={trackRef}
+        className={`relative inline-flex max-w-full items-center overflow-hidden rounded-full border border-(--border-hairline) bg-white/95 shadow-2xl backdrop-blur-xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          SIZE_CLASS[size]
+        } ${classNames?.track ?? ""}`.trim()}
       >
-        <motion.div
-          ref={trackRef}
-          layout="size"
-          className={`relative inline-flex max-w-full items-center overflow-hidden rounded-full border border-[oklch(0.92_0.006_60)] bg-white/95 shadow-2xl backdrop-blur-xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
-            SIZE_CLASS[size]
-          } ${classNames?.track ?? ""}`.trim()}
-          transition={ITEM_TRANSITION}
-        >
-          {items.map((item) => {
-            const isActive = item.active || activeId === item.id;
-            const isHighlighted = highlightId === item.id;
+        {items.map((item) => {
+          const isActive = item.active || activeId === item.id;
+          const isHighlighted = highlightId === item.id;
 
-            return (
-              <motion.button
-                key={item.id}
-                layout="position"
-                type="button"
-                disabled={item.disabled}
-                title={typeof item.label === "string" ? item.label : undefined}
-                onPointerEnter={(event: ReactPointerEvent<HTMLButtonElement>) => {
-                  if (!hover.enter(event)) return;
-                  clearCollapseTimer();
+          return (
+            <button
+              key={item.id}
+              type="button"
+              disabled={item.disabled}
+              title={typeof item.label === "string" ? item.label : undefined}
+              onPointerEnter={(event: ReactPointerEvent<HTMLButtonElement>) => {
+                if (!hover.enter(event)) return;
+                clearCollapseTimer();
+                setHoveredId(item.id);
+              }}
+              onPointerDown={(event: ReactPointerEvent<HTMLButtonElement>) => {
+                tap.start(event, isExpanded);
+              }}
+              onPointerCancel={tap.drop}
+              onKeyDown={tap.drop}
+              onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                if (event.detail > 0) event.currentTarget.blur();
+                const gesture = tap.take();
+                const firstTap =
+                  gesture !== null &&
+                  gesture.pointerType !== "mouse" &&
+                  !gesture.state &&
+                  !tapExpanded;
+                if (firstTap && expandOnHover) {
+                  setTapExpanded(true);
+                  open();
                   setHoveredId(item.id);
-                }}
-                onPointerDown={(event: ReactPointerEvent<HTMLButtonElement>) => {
-                  tap.start(event, isExpanded);
-                }}
-                onPointerCancel={tap.drop}
-                onKeyDown={tap.drop}
-                onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                  event.currentTarget.blur();
-                  const gesture = tap.take();
-                  const firstTap =
-                    gesture !== null &&
-                    gesture.pointerType !== "mouse" &&
-                    !gesture.state &&
-                    !tapExpanded;
-                  if (firstTap && expandOnHover) {
-                    setTapExpanded(true);
-                    open();
-                    setHoveredId(item.id);
-                    return;
-                  }
-                  item.onClick?.();
-                  onAction?.(item);
-                }}
-                whileTap={reduce || item.disabled ? undefined : { scale: 0.96 }}
-                transition={ITEM_TRANSITION}
-                className={`relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[oklch(0.36_0.03_255)] outline-none transition-[color,background-color] duration-150 ease-out focus-visible:text-[oklch(0.2_0.03_260)] disabled:pointer-events-none disabled:opacity-40 ${
-                  isHighlighted ? "text-[oklch(0.48_0.18_255)]" : ""
-                } ${ITEM_SIZE_CLASS[size]} ${classNames?.item ?? ""} ${
-                  isActive ? (classNames?.activeItem ?? "") : ""
-                }`.trim()}
-              >
-                {isHighlighted ? (
-                  <motion.span
-                    layoutId="action-bar-highlight"
-                    className="absolute inset-0 -z-10 rounded-full bg-[oklch(0.48_0.18_255/0.1)]"
-                    transition={ITEM_TRANSITION}
-                  />
-                ) : null}
+                  return;
+                }
+                item.onClick?.();
+                onAction?.(item);
+              }}
+              className={`relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-(--text-secondary) outline-none focus-visible:text-(--text-body) disabled:pointer-events-none disabled:opacity-40 ${
+                isHighlighted ? "text-(--color-primary)" : ""
+              } ${ITEM_SIZE_CLASS[size]} ${classNames?.item ?? ""} ${
+                isActive ? (classNames?.activeItem ?? "") : ""
+              }`.trim()}
+            >
+              {isHighlighted ? (
+                <span className="absolute inset-0 -z-10 rounded-full bg-(--color-primary-wash)" />
+              ) : null}
 
-                {renderItem ? (
-                  renderItem(item, { expanded: isExpanded, active: isActive })
-                ) : (
-                  <>
+              {renderItem ? (
+                renderItem(item, { expanded: isExpanded, active: isActive })
+              ) : (
+                <>
+                  <span
+                    className={`inline-flex shrink-0 items-center justify-center ${
+                      ICON_SIZE_CLASS[size]
+                    } ${classNames?.icon ?? ""}`.trim()}
+                  >
+                    {item.icon}
+                  </span>
+
+                  <span
+                    aria-hidden={!isExpanded}
+                    style={{
+                      width: isExpanded ? "auto" : 0,
+                      opacity: isExpanded ? 1 : 0,
+                      marginLeft: isExpanded ? 8 : 0,
+                    }}
+                    className={`inline-block overflow-hidden whitespace-nowrap ${
+                      classNames?.label ?? ""
+                    }`.trim()}
+                  >
+                    {item.label}
+                  </span>
+
+                  {item.shortcut ? (
                     <span
-                      className={`inline-flex shrink-0 items-center justify-center ${
-                        ICON_SIZE_CLASS[size]
-                      } ${classNames?.icon ?? ""}`.trim()}
-                    >
-                      {item.icon}
-                    </span>
-
-                    <motion.span
                       aria-hidden={!isExpanded}
-                      animate={
-                        reduce
-                          ? {
-                              width: isExpanded ? "auto" : 0,
-                              opacity: isExpanded ? 1 : 0,
-                              marginLeft: isExpanded ? 8 : 0,
-                              x: 0,
-                              filter: "blur(0px)",
-                            }
-                          : {
-                              width: isExpanded ? "auto" : 0,
-                              opacity: isExpanded ? 1 : 0,
-                              x: isExpanded ? 0 : -4,
-                              marginLeft: isExpanded ? 8 : 0,
-                              filter: isExpanded ? "blur(0px)" : "blur(3px)",
-                            }
-                      }
-                      transition={reduce ? { duration: 0 } : LABEL_TRANSITION}
-                      className={`inline-block overflow-hidden whitespace-nowrap ${
-                        classNames?.label ?? ""
-                      }`.trim()}
+                      style={{ opacity: isExpanded ? 1 : 0 }}
+                      className={`hidden overflow-hidden whitespace-nowrap text-[10px] text-(--text-faint) sm:inline-block font-mono ${
+                        isExpanded ? "ml-1 max-w-[48px]" : "max-w-0"
+                      } ${classNames?.shortcut ?? ""}`.trim()}
                     >
-                      {item.label}
-                    </motion.span>
+                      {item.shortcut}
+                    </span>
+                  ) : null}
 
-                    {item.shortcut ? (
-                      <motion.span
-                        layout="position"
-                        aria-hidden={!isExpanded}
-                        animate={
-                          reduce
-                            ? { opacity: isExpanded ? 1 : 0 }
-                            : {
-                                opacity: isExpanded ? 1 : 0,
-                                scale: isExpanded ? 1 : 0.85,
-                              }
-                        }
-                        transition={reduce ? { duration: 0 } : LABEL_TRANSITION}
-                        className={`hidden overflow-hidden whitespace-nowrap text-[10px] text-[oklch(0.52_0.03_250)] sm:inline-block font-mono ${
-                          isExpanded ? "ml-1 max-w-[48px]" : "max-w-0"
-                        } ${classNames?.shortcut ?? ""}`.trim()}
-                      >
-                        {item.shortcut}
-                      </motion.span>
-                    ) : null}
-
-                    {item.badge ? (
-                      <span
-                        className={`ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[oklch(0.48_0.18_255)] px-1.5 text-[10px] font-semibold leading-none text-white ${
-                          !isExpanded ? "absolute right-0.5 top-0.5" : ""
-                        } ${classNames?.badge ?? ""}`.trim()}
-                      >
-                        {item.badge}
-                      </span>
-                    ) : null}
-                  </>
-                )}
-              </motion.button>
-            );
-          })}
-        </motion.div>
-      </motion.div>
-    </LayoutGroup>
+                  {item.badge ? (
+                    <span
+                      className={`ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-(--color-primary) px-1.5 text-[10px] font-semibold leading-none text-white ${
+                        !isExpanded ? "absolute right-0.5 top-0.5" : ""
+                      } ${classNames?.badge ?? ""}`.trim()}
+                    >
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

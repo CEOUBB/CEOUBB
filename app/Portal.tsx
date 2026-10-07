@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, use } from "react";
+import { Suspense, use, useEffect } from "react";
 import { browser, createPortal } from "react-dom";
-import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
+import { LazyMotion, MotionConfig, domMax } from "motion/react";
 import { usePortalCore } from "./usePortalCore";
 import { LoadingScreen } from "./LoadingScreen";
 import { PortalHeader, PortalMainView, PortalSidebar } from "./portal-shell";
@@ -43,6 +43,19 @@ export function Portal({
   isQuickAuthAvailable?: boolean;
 } = {}) {
   const core = usePortalCore(initialSession);
+
+  // Implements: REQ-CFG-05
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (core.user && core.prefersReducedMotion) {
+      root.dataset.reducedMotion = "true";
+    }
+
+    return () => {
+      delete root.dataset.reducedMotion;
+    };
+  }, [core.user, core.prefersReducedMotion]);
 
   if (core.checking) return <LoadingScreen />;
   if (!core.user) {
@@ -104,7 +117,7 @@ export function Portal({
   // Mobile navigation tabs reference: label: "Avisos"
 
   return (
-    <LazyMotion key={user.id} features={domAnimation}>
+    <LazyMotion key={user.id} features={domMax}>
       <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "user"}>
         <a className="skip-link" href="#contenido-principal">
           Saltar al contenido principal

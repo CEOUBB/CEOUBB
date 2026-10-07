@@ -320,8 +320,8 @@ export function FinalGradeRecordsPanel({
             <SealCheck size={22} weight="duotone" />
           </span>
           <div>
-            <p className="eyebrow">DUE 5420/2023</p>
             <h2 id="final-grade-records-title">Cierre de actas</h2>
+            <p className="eyebrow">DUE 5420/2023</p>
           </div>
         </div>
         <div className="final-grade-record-actions">
