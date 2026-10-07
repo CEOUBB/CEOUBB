@@ -136,7 +136,13 @@ export async function GET(request: Request, context: AdeccaRouteContext) {
   }
 }
 
+// Implements: REQ-SEC-23
 export async function POST(request: Request, context: AdeccaRouteContext) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return failure("Origen no autorizado.", 403, "UNAUTHORIZED_ORIGIN");
+  }
+
   try {
     const { actor, sectionId } = await sessionAndSection(request, context);
     let input: {
