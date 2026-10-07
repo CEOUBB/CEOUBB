@@ -116,3 +116,10 @@
 - **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `byId.set(item.id, item)` en el bloque `useMemo`.
 - **Outcome / Learning:** Se eliminó la asignación de arreglos temporales de tuplas por cada ítem en el libro de notas del cuestionario.
 - **Future Rule:** Construir mapas indexados en componentes de React iterando de forma imperativa con `for..of` y `.set()` en lugar de `new Map(array.map(...))`.
+
+## 2026-09-22 - Construcción del Map de estudiantes por ID en `EvaluationTeamsEditor` (`app/views/classroom/EvaluationTeamsEditor.tsx`)
+
+- **Finding:** `EvaluationTeamsEditor` instanciaba el mapa `nameById` mediante `new Map(students.map((student) => [student.userId, student.name]))`, asignando arreglos de tuplas intermedias `[student.userId, student.name]` y un arreglo temporal $O(N)$ en cada actualización de la nómina de estudiantes.
+- **Attempted / Identified Solution:** Sustitución por un bucle `for..of` directo con `map.set(student.userId, student.name)` dentro del bloque `useMemo`.
+- **Outcome / Learning:** Se eliminó la asignación intermedia de arreglos y tuplas por estudiante en el editor de equipos de evaluación.
+- **Future Rule:** Indexar nombres de estudiantes o propiedades mediante bucles `for..of` e invocar `.set()` directamente sin mapeos ni arreglos de tuplas intermedios.
