@@ -9,22 +9,24 @@ alwaysApply: false
 This rule is automatically applied when creating or editing UI components, pages, or global styling.
 
 ## 1. Design Tokens & Canvas
-- **Main Canvas:** Use `--canvas-soft` (`#f4f6f9` / `oklch(0.97 0.01 240)`). A calm, paper-soft background designed for extended reading. Do not use pure harsh black or stark clinical white backgrounds.
-- **Single Structural Accent:** UBB Royal Blue (`--brand-blue` / `#0055b8` / `oklch(0.48 0.18 255)`), reserved **strictly** for primary action buttons (CTAs), active navigation links, and focus rings.
-- **Hero Band:** UBB Midnight Navy (`--brand-navy` / `#002b5c` / `oklch(0.24 0.09 255)`), reserved for hero sections and dark classroom headers.
-- **Academic Palette:** Use heraldic accent colors (Gold `#f59e0b`, Red `#e31b23`, Sky `#38bdf8`, Emerald `#10b981`, Purple `#8b5cf6`) solely to categorize subjects, evaluation statuses, and tags. NEVER use category accents to fill primary CTAs.
+- **Visual World:** "Separadores de archivador" (binder dividers). `DESIGN.md` is the source of truth; the campus, public help and policy pages, the 404 page and the global error share the tokens declared in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`. Declare new tokens in that block so dialogs and sheets mounted on `body` inherit them.
+- **Desk and Sheets:** The cool gray desk (`--canvas-soft`, `oklch(0.966 0.004 265)`) carries the header, rail and workspace; content sits on borderless white sheets elevated with `--shadow-1` (floating layers use `--shadow-2`). No visible borders on elevated surfaces and no divider lines; native fields keep their `--border-control` stroke.
+- **Single Structural Accent:** UBB blue (`oklch(0.5 0.19 258)`) is reserved **strictly** for actions and state: primary buttons, action links, focus, selection, today and unread indicators.
+- **Section Tones:** The six academic tones (Sky `#38bdf8`, Emerald `#10b981`, Gold `#f59e0b`, Red `#e31b23`, Teal `#0d9488`, Purple `#8b5cf6`) identify a section, never order or act. Pass them as inline `--course-tone` and consume only `--tone-wash`, `--tone-wash-strong`, `--tone-ink` or the pure tone. A section shows one identical tone as divider tab, rail mark, calendar block, classroom header and publication chip.
+- **Signature Shape:** The divider tab (`.classroom-tab`) protrudes above a sheet whose top-left corner is square. Reuse it for classroom headers, the Administrar ramos workspace and system status sheets instead of inventing new header treatments.
+- **Login Exception:** The public access screen keeps its own system (Merriweather titles, Manrope UI and its own composition) and never mounts `.app-shell`, `.policy-page` or `.public-page`.
 
 ## 2. Typography & Micro-Interactions
-- **Display Headlines & Covers:** `Merriweather` with negative display tracking (`-0.025em` to `-0.035em`) and `text-wrap: balance`.
-- **Operational UI:** `Manrope` for buttons, navigation, data tables, forms, and metadata.
+- **Single Family:** `Inter` (loaded in `app/layout.tsx` with the `opsz` axis) for every campus role. Page titles 32px/700 with negative tracking, section titles 19px/650, body 14px, metadata 13px.
+- **No Labels Above Headings:** No uppercase letterspaced eyebrows, kickers or decorative pills. States (role, period, review, resource type, weight total) are plain 12.5 to 13px text colored by meaning.
 - **Editorial Reading:** Apply `text-wrap: pretty` to body text and explanatory paragraphs to avoid typographical orphans.
-- **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums` (`.num`).
+- **Column Numerals:** Always apply `font-variant-numeric: tabular-nums lining-nums` (`.num`) to dates, grades, counters, hours and tables. Identifiers (course code, section number, period in headings, date fields) use `lining-nums proportional-nums` because Inter's tabular figures widen their hyphens.
 - **Motion Physics:** Use `motion/react` with critically damped spring physics (`type: "spring", stiffness: 340, damping: 28, mass: 0.8`). Prohibited use of slow linear CSS transitions (`ease-in-out` / `transition-all`).
 - **Accessibility:** Wrap motion effects in `useReducedMotion()` in React and `@media (prefers-reduced-motion: reduce)` in CSS.
 - **Iconography:** Use `@phosphor-icons/react` exclusively. Do not hand-roll raw inline SVG icons.
 
 ## 3. Strict Anti-Slop Directives ("Do NOTs")
-- DO NOT use pure `#000000`, `bg-black`, or `bg-zinc-950` with saturated neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`).
+- DO NOT use pure `#000000`, `bg-black`, or `bg-zinc-950` with saturated neon accents (`violet-*`, `indigo-*`). Use the OKLCH desk, sheet and ink tokens from `DESIGN.md`.
 - DO NOT use generic purple-to-indigo gradients on dark backgrounds or continuous text gradient fills (`bg-clip-text text-transparent`).
 - DO NOT use unstyled, symmetrical bento box grids without clear information hierarchy.
 - DO NOT add glowing borders, pulsating neon accents, or noise mesh overlays.

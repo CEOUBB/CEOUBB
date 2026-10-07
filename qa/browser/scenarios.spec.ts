@@ -35,6 +35,8 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
       scenario.id.endsWith("persistence") ||
       [
         "communications.reply",
+        "shell.motion",
+        "imports.motion",
         "quizzes.attempt",
         "quizzes.submission",
         "quizzes.answer-saving",

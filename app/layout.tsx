@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
+import { Inter, JetBrains_Mono, Manrope, Merriweather } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AppToaster } from "../components/AppToaster";
 import "./globals.css";
@@ -25,6 +25,14 @@ const merriweather = Merriweather({
   display: "swap",
   weight: ["700"],
   style: ["normal"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+  axes: ["opsz"],
+  preload: false,
 });
 
 // Implements: REQ-SEO-03
@@ -88,7 +96,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      className={`${manrope.variable} ${merriweather.variable} ${jetBrainsMono.variable}`}
+      className={`${manrope.variable} ${merriweather.variable} ${inter.variable} ${jetBrainsMono.variable}`}
       lang="es"
     >
       <head>

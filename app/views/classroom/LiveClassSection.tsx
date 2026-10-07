@@ -21,7 +21,6 @@ export function LiveClassBanner({ liveClass }: { liveClass: LiveClassLink | null
         <VideoCamera size={24} weight="fill" />
       </span>
       <div className="live-class-copy">
-        <span>Clase en vivo</span>
         <strong>Conéctate por {provider}</strong>
         <small>El enlace se abrirá en una ventana externa.</small>
       </div>

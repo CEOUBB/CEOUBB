@@ -266,7 +266,7 @@ test("server refresh replaces retained client sessions and rejects old private r
     new Function("require", "module", "exports", transpile(hookSource, "ts"))(
       (specifier) =>
         specifier === "motion/react"
-          ? { useReducedMotion: () => reducedMotion }
+          ? { useReducedMotionConfig: () => reducedMotion }
           : require(specifier),
       motionModule,
       motionModule.exports

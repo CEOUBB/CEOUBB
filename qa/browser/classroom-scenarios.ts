@@ -14,6 +14,7 @@ import {
 } from "./helpers.ts";
 import type { Capture } from "./portal-scenarios.ts";
 import { callableFailure } from "./state-scenarios.ts";
+import { importMotionScenario } from "./motion-scenarios.ts";
 
 const PRESETS: Record<string, string> = {
   notice: "Aviso o portada del ramo",
@@ -28,6 +29,11 @@ export async function classroomScenario(
   capture: Capture
 ): Promise<boolean> {
   const id = scenario.id;
+
+  if (id === "imports.motion") {
+    await importMotionScenario(page, capture);
+    return true;
+  }
   if (
     ![
       "classroom",
