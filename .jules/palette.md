@@ -1,5 +1,12 @@
 # Palette 🎨 - Journal & UI Learnings
 
+## [2026-03-31] - FAQ / FaqBrowser
+
+- **Finding:** In `app/faq/FaqBrowser.tsx`, the search results counter paragraph (`<p aria-live="polite" className="policy-count">`) lacked an explicit WAI-ARIA role (`role="status"`), preventing consistent dynamic screen reader announcements during search filtering (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 3.2.2 Predictability).
+- **Applied / Evaluated Pattern:** Added `role="status"` to `<p aria-live="polite" className="policy-count" role="status">`.
+- **Design System Constraint:** Preserved existing layout structure and CSS class styling without visual changes or DOM drift.
+- **Future Rule:** Ensure dynamic search result counter elements declaring `aria-live="polite"` explicitly include `role="status"`.
+
 ## [2026-03-31] - Classroom / FinalGradeRecordsPanel
 
 - **Finding:** In `FinalGradeRecordsPanel.tsx`, `FinalGradeRecordTable` rendered custom ad-hoc pagination buttons without explicit `aria-label` attributes ("Página anterior" / "Página siguiente") or decorative vector icons (`<CaretLeft>` / `<CaretRight>`), creating screen reader ambiguity and visual inconsistency with `GradesSection.tsx` (WCAG 2.2 SC 4.1.2 Name, Role, Value & SC 2.4.4 Link Purpose).
