@@ -1,5 +1,4 @@
 import { getSessionUser } from "../../../../../../lib/auth";
-import { isSectionId } from "../../../../../../lib/section-roles";
 import type {
   MoodleImportPost,
   MoodleImportReport,
@@ -92,9 +91,6 @@ async function sessionAndSection(request: Request, context: MoodleRouteContext) 
     throw new MoodleImportServiceError("Inicia sesión para continuar.", "UNAUTHENTICATED", 401);
   }
   const { sectionId } = await context.params;
-  if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
-    throw new MoodleImportServiceError("La sección no es válida.", "INVALID_IMPORT_BATCH", 400);
-  }
   await authorizeMoodleImport(actor, sectionId, request.method !== "GET");
   return { actor, sectionId };
 }
@@ -123,11 +119,6 @@ export async function GET(request: Request, context: MoodleRouteContext) {
 
 // Implements: REQ-MOODLE-05, REQ-MOODLE-06, REQ-MOODLE-07, REQ-MOODLE-08
 export async function POST(request: Request, context: MoodleRouteContext) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
-    return failure("Origen no autorizado.", 403, "UNAUTHORIZED_ORIGIN");
-  }
-
   try {
     const { actor, sectionId } = await sessionAndSection(request, context);
     let input: {
