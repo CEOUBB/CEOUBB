@@ -128,7 +128,6 @@
   overflow-wrap: anywhere;
 }
 .sideSection small {
-  font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-faint);
 }
@@ -209,8 +208,6 @@
 .pulseCell > span {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -359,7 +356,7 @@
   color: var(--text-muted);
 }
 .workRank {
-  font-family: var(--font-mono);
+  font-weight: 600;
   font-size: 13px;
   color: var(--text-faint);
   font-variant-numeric: var(--num);
@@ -438,8 +435,6 @@
 .labelledField > span {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .labelledField .field {
@@ -535,8 +530,6 @@
 .activityMeta dt {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.125px;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .activityMeta dd {

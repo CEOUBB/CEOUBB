@@ -1,0 +1,23 @@
+## Implementation
+
+- [x] P01 Extract shared profile contracts and remove server crypto from client graph.
+- [x] P02 Disable public route prefetch.
+- [x] P03 Add immutable caching for hashed static assets.
+- [x] P04 Generate and reference local Sharp branding variants.
+- [x] P05 Use sanitizer leaf and intentionally mount import tools.
+- [x] P06 Split public and campus styles, preserving declarations except separately authorized accessibility fixes.
+- [x] P07 Add static access/private session bootstrap and offline privacy guards.
+- [x] P08 Add gated compact activity projection, bounded backfill and authorization checks.
+- [x] P09 Evaluate React Compiler and record the evidence based decision.
+- [x] P10 Attempt staging/provider access and record SQL placement evidence or missing prerequisites.
+- [x] P11 Inspect generated public cache entries and verify the installed adapter against copied static assets.
+
+## Verification and Delivery
+
+- [x] Review authorized source path test adaptations and regenerate the seal.
+- [x] Correct the separately authorized calendar mobile visibility and keyboard/touch accessibility defects.
+- [x] Run formatting, lint, typecheck, fast verification, invariants, production build/integration and the complete registered production QA matrix; retain failed reports and existing lint warnings.
+- [x] Resolve the four existing questionnaire saved-text contrast failures with explicit scope approval; all 77 production quiz-area browser/API cases passed without weakening accessibility assertions.
+- [x] Compare production bundle/network evidence, matched slow 4G and slow 3G laboratory runs, and inspect public/campus desktop and mobile states.
+- [x] Verify full Worker packaging and anonymous/empty-cookie cache headers in Linux CI/preview; retain the Windows symlink limitation and require real staging identities for authenticated Worker separation.
+- [x] Update architectural landmarks, record handoff and limitations, commit in Spanish, push and create/attach draft PR #263 then apply and verify the explicitly authorized saved-text contrast correction.

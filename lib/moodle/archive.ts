@@ -290,18 +290,12 @@ function openZip(bytes: Uint8Array): MoodleArchive {
               if (meta.compressionMethod === 0) {
                 content = new Uint8Array(slice);
               } else if (meta.compressionMethod === 8) {
-                content = inflateSync(slice);
+                content = inflateSync(slice, { out: new Uint8Array(entry.size + 1) });
               }
             }
           }
         }
-        if (!content) {
-          const unzipped = unzipSync(bytes, {
-            filter: (file) => file.name === entry.rawName,
-          });
-          content = unzipped[entry.rawName];
-        }
-        if (!content) {
+        if (!content || content.length !== entry.size) {
           fail(`La entrada ZIP ${entry.name} quedó incompleta.`);
         }
         const expectedCrc = meta?.crc;

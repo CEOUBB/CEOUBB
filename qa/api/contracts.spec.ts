@@ -84,6 +84,7 @@ for (const role of Object.keys(QA_USERS) as QaRole[]) {
     const { api } = await actor(role);
     const me = await api.get("/api/auth/me?includeSections=1");
     expect(me.status()).toBe(200);
+    expect(me.headers()["cache-control"]).toMatch(/no-store/);
     expect(await me.json()).toMatchObject({
       user: { id: QA_USERS[role].id, role: QA_USERS[role].role },
     });
@@ -172,6 +173,154 @@ test("api.sections.isolation @api @critical @area:classroom", async ({ actor }) 
     expect(foreign.status(), `${role} foreign section`).toBe(
       role === "outsider" || role === "owner" ? 200 : 403
     );
+  }
+});
+
+// Implements: REQ-PERF-LOAD-02, REQ-PERF-LOAD-03
+test("api.performance.isolation @api @critical @area:classroom", async ({ actor, request }) => {
+  const activity = documentsUrl(`courses/${QA_SECTIONS.active}/activity/${QA_IDS.notice}`);
+  const student = await actor("student");
+  const teacher = await actor("teacher");
+  const outsider = await actor("outsider");
+  await expect
+    .poll(async () =>
+      (
+        await student.api.get(activity, {
+          headers: { Authorization: `Bearer ${student.token}` },
+        })
+      ).status()
+    )
+    .toBe(200);
+
+  for (const [role, entry] of [
+    ["student", student],
+    ["teacher", teacher],
+  ] as const) {
+    const headers = { Authorization: `Bearer ${entry.token}` };
+    expect(
+      (
+        await entry.api.patch(activity, {
+          headers,
+          data: { fields: { title: { stringValue: "forbidden" } } },
+        })
+      ).status()
+    ).toBe(403);
+    expect((await entry.api.delete(activity, { headers })).status()).toBe(403);
+    const home = await entry.api.get("/?view=courses");
+    expect(home.status()).toBe(200);
+    expect(home.headers()["cache-control"]).toMatch(/private.*no-store/);
+    expect(home.headers().vary).toMatch(/(?:^|,\s*)rsc(?:,|$)/i);
+    const html = await home.text();
+    expect(html).toContain("Mis cursos");
+    expect(html).toContain(QA_USERS[role].id);
+    expect(html).toContain(QA_USERS[role].email);
+    const rsc = await entry.api.get("/?_rsc=qa-private", { headers: { RSC: "1" } });
+    expect(rsc.status()).toBe(200);
+    expect(rsc.headers()["cache-control"]).toMatch(/private.*no-store/);
+    expect(rsc.headers().vary).toMatch(/(?:^|,\s*)rsc(?:,|$)/i);
+    expect(rsc.headers()["content-type"]).toContain("text/x-component");
+    const flight = await rsc.text();
+    expect(flight).toContain(QA_USERS[role].id);
+    expect(flight).toContain(QA_USERS[role].email);
+  }
+  const anonymous = await request.get("/");
+  expect(anonymous.status()).toBe(200);
+  const publicHtml = await anonymous.text();
+
+  for (const role of ["student", "teacher"] as const) {
+    expect(publicHtml).not.toContain(QA_USERS[role].id);
+    expect(publicHtml).not.toContain(QA_USERS[role].email);
+  }
+  expect(
+    (
+      await outsider.api.get(activity, { headers: { Authorization: `Bearer ${outsider.token}` } })
+    ).status()
+  ).toBe(403);
+  expect((await request.get(activity)).status()).toBe(403);
+
+  const source = documentsUrl(`courses/${QA_SECTIONS.active}/posts/qa-performance-activity`);
+  const summary = documentsUrl(`courses/${QA_SECTIONS.active}/activity/qa-performance-activity`);
+  const teacherHeaders = { Authorization: `Bearer ${teacher.token}` };
+  const fields = z
+    .object({ fields: z.record(z.string(), z.unknown()) })
+    .parse(
+      await (
+        await teacher.api.get(
+          documentsUrl(`courses/${QA_SECTIONS.active}/posts/${QA_IDS.notice}`),
+          { headers: teacherHeaders }
+        )
+      ).json()
+    ).fields;
+
+  try {
+    expect(
+      (
+        await teacher.api.patch(source, {
+          headers: teacherHeaders,
+          data: {
+            fields: {
+              ...fields,
+              title: { stringValue: "Actividad QA inicial" },
+              notifyStudents: { booleanValue: false },
+            },
+          },
+        })
+      ).status()
+    ).toBe(200);
+    await expect
+      .poll(async () => (await teacher.api.get(summary, { headers: teacherHeaders })).status())
+      .toBe(200);
+    const projected = z
+      .object({ fields: z.record(z.string(), z.unknown()) })
+      .parse(await (await teacher.api.get(summary, { headers: teacherHeaders })).json()).fields;
+    expect(Object.keys(projected).sort()).toEqual(["createdAt", "dueDate", "kind", "title"]);
+    expect(
+      (
+        await teacher.api.patch(source, {
+          headers: teacherHeaders,
+          data: {
+            fields: {
+              ...fields,
+              title: { stringValue: "Actividad QA editada" },
+              notifyStudents: { booleanValue: false },
+            },
+          },
+        })
+      ).status()
+    ).toBe(200);
+    await expect
+      .poll(
+        async () =>
+          (await (await teacher.api.get(summary, { headers: teacherHeaders })).json()).fields.title
+            .stringValue
+      )
+      .toBe("Actividad QA editada");
+  } finally {
+    expect((await teacher.api.delete(source, { headers: teacherHeaders })).status()).toBe(200);
+    await expect
+      .poll(async () => (await teacher.api.get(summary, { headers: teacherHeaders })).status())
+      .toBe(404);
+  }
+
+  const enrollment = documentsUrl(
+    `enrollments/${QA_USERS.student.uid}/sections/${QA_SECTIONS.active}`
+  );
+  const adminHeaders = { Authorization: "Bearer owner" };
+  const previous = z
+    .object({ fields: z.record(z.string(), z.unknown()) })
+    .parse(await (await teacher.api.get(enrollment, { headers: adminHeaders })).json());
+
+  try {
+    expect((await teacher.api.delete(enrollment, { headers: adminHeaders })).status()).toBe(200);
+    expect(
+      (
+        await student.api.get(activity, { headers: { Authorization: `Bearer ${student.token}` } })
+      ).status()
+    ).toBe(403);
+  } finally {
+    expect(
+      (await teacher.api.patch(enrollment, { headers: adminHeaders, data: previous })).status()
+    ).toBe(200);
   }
 });
 

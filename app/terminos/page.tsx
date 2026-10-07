@@ -198,12 +198,23 @@ export default function TermsPage() {
         <p>
           Para consultas sobre estas condiciones escribe a{" "}
           <a href="mailto:contacto@ceoubb.com">contacto@ceoubb.com</a>. El tratamiento de tus datos
-          personales se detalla en la <Link href="/privacidad">política de privacidad</Link>.
+          personales se detalla en la{" "}
+          <Link prefetch={false} href="/privacidad">
+            política de privacidad
+          </Link>
+          .
         </p>
 
         <nav aria-label="Documentos relacionados">
-          Ver también la <Link href="/privacidad">política de privacidad</Link> y la{" "}
-          <Link href="/accesibilidad">declaración de accesibilidad</Link>.
+          Ver también la{" "}
+          <Link prefetch={false} href="/privacidad">
+            política de privacidad
+          </Link>{" "}
+          y la{" "}
+          <Link prefetch={false} href="/accesibilidad">
+            declaración de accesibilidad
+          </Link>
+          .
         </nav>
       </article>
       <SiteFooter />
