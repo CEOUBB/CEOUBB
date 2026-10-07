@@ -43,9 +43,9 @@ export class ClassroomErrorBoundary extends Component<Props, State> {
           style={{
             margin: "24px",
             padding: "24px",
-            borderRadius: "16px",
-            border: "1px solid var(--border-subtle, rgba(0, 0, 0, 0.08))",
-            background: "var(--surface-raised, #ffffff)",
+            borderRadius: "var(--radius-xl)",
+            boxShadow: "var(--shadow-1)",
+            background: "var(--surface-card)",
             textAlign: "center",
             display: "flex",
             flexDirection: "column",
@@ -53,17 +53,12 @@ export class ClassroomErrorBoundary extends Component<Props, State> {
             gap: "12px",
           }}
         >
-          <WarningCircle
-            aria-hidden="true"
-            color="var(--accent-ruby, #e31b23)"
-            size={36}
-            weight="duotone"
-          />
+          <WarningCircle aria-hidden="true" color="var(--shield-red)" size={36} weight="duotone" />
           <h2
             style={{
               fontSize: "1.15rem",
               fontWeight: 600,
-              color: "var(--ink, #0f172a)",
+              color: "var(--text-body)",
               margin: 0,
             }}
           >
@@ -72,7 +67,7 @@ export class ClassroomErrorBoundary extends Component<Props, State> {
           <p
             style={{
               fontSize: "0.9rem",
-              color: "var(--muted, #475569)",
+              color: "var(--text-muted)",
               maxWidth: "480px",
               margin: 0,
             }}

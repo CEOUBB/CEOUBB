@@ -98,7 +98,6 @@ export function MoodleImportDialog({ course }: { course: Course }) {
       >
         <div className="moodle-import-dialog__header">
           <div>
-            <span className="eyebrow">Migración de curso</span>
             <h2 id={`${inputId}-title`}>Importar desde Moodle UBB</h2>
             <p>Revisa el respaldo antes de restaurarlo en {course.name}.</p>
           </div>
