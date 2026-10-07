@@ -54,7 +54,7 @@ function ContactReceipt({
 }) {
   const etiqueta = categoria ? CATEGORIA_ETIQUETAS[categoria] : "tu consulta";
   return (
-    <div className="policy-confirm" aria-live="polite">
+    <div className="policy-confirm" aria-live="polite" role="status">
       <p className="policy-confirm-head">
         <CheckCircle aria-hidden="true" size={22} weight="fill" />
         Recibimos tu mensaje
@@ -210,7 +210,7 @@ function AsuntoField({
     <div className="policy-field">
       <div className="policy-field-head">
         <label htmlFor="soporte-asunto">Asunto</label>
-        <span aria-live="polite" className="policy-field-counter num">
+        <span aria-live="polite" className="policy-field-counter num" role="status">
           {value.length} / 160
         </span>
       </div>
@@ -247,7 +247,7 @@ function MensajeField({
     <div className="policy-field">
       <div className="policy-field-head">
         <label htmlFor="soporte-mensaje">Mensaje</label>
-        <span aria-live="polite" className="policy-field-counter num">
+        <span aria-live="polite" className="policy-field-counter num" role="status">
           {value.length < 20 ? `${value.length} / 20 mín. (máx. 4000)` : `${value.length} / 4000`}
         </span>
       </div>
@@ -470,6 +470,7 @@ export default function ContactForm() {
         <p
           aria-live="polite"
           className={estado === "error" ? "policy-status bad policy-form-error" : "policy-status"}
+          role={estado === "error" ? "alert" : "status"}
         >
           {estado === "error" ? <WarningCircle aria-hidden="true" size={16} weight="fill" /> : null}
           {mensajeEstado}

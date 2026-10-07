@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { CalendarCheck, ClipboardText, Plus } from "@phosphor-icons/react";
 import type { PlannerItem } from "../../../lib/planner";
 import { shiftDate } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
 import { KIND_LABEL } from "./calendar-constants";
+
+const EMPTY_ITEMS: PlannerItem[] = [];
 
 // Implements: REQ-CEO72-01, REQ-CEO72-04
 export function CalendarMonth({
@@ -28,7 +30,21 @@ export function CalendarMonth({
   onCreate: (date: string, hour: number) => void;
 }) {
   const buttons = useRef(new Map<string, HTMLButtonElement>());
-  const selectedItems = items.filter((item) => item.date === selected);
+
+  const itemsByDate = useMemo(() => {
+    const map = new Map<string, PlannerItem[]>();
+    for (const item of items) {
+      const list = map.get(item.date);
+      if (list) {
+        list.push(item);
+      } else {
+        map.set(item.date, [item]);
+      }
+    }
+    return map;
+  }, [items]);
+
+  const selectedItems = itemsByDate.get(selected) ?? EMPTY_ITEMS;
   return (
     <div className="planner-month-layout">
       <div className="planner-month" aria-label="Calendario mensual">
@@ -38,7 +54,7 @@ export function CalendarMonth({
           </div>
         ))}
         {days.map((day) => {
-          const events = items.filter((item) => item.date === day);
+          const events = itemsByDate.get(day) ?? EMPTY_ITEMS;
           return (
             <button
               key={day}

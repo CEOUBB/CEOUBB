@@ -500,7 +500,7 @@ export function PeopleSection({
         </div>
       </div>
 
-      <p className="sr-only" aria-live="polite">
+      <p className="sr-only" aria-live="polite" role="status" aria-atomic="true">
         {announcement}
       </p>
 

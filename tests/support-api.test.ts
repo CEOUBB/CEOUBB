@@ -31,13 +31,17 @@ const CUERPO_VALIDO = {
 
 const IP = "203.0.113.10";
 
-function peticion(cuerpo: unknown, opciones: { tipo?: string; ip?: string } = {}) {
+function peticion(cuerpo: unknown, opciones: { tipo?: string; ip?: string; origin?: string } = {}) {
+  const headers: Record<string, string> = {
+    "content-type": opciones.tipo ?? "application/json",
+    "x-forwarded-for": opciones.ip ?? IP,
+  };
+  if (opciones.origin) {
+    headers.origin = opciones.origin;
+  }
   return new Request("https://ceoubb.com/api/soporte", {
     method: "POST",
-    headers: {
-      "content-type": opciones.tipo ?? "application/json",
-      "x-forwarded-for": opciones.ip ?? IP,
-    },
+    headers,
     body: typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo),
   });
 }
@@ -60,6 +64,18 @@ beforeEach(async () => {
   await getDb().delete(solicitudesSoporte);
   delete process.env.SOPORTE_MAIL_DRIVER;
   delete process.env.TURNSTILE_SECRET_KEY;
+});
+
+test("SEC-09: rechaza peticiones con encabezado Origin no coincidente con 403", async () => {
+  const respuesta = await POST(peticion(CUERPO_VALIDO, { origin: "https://sitio-malicioso.com" }));
+  assert.equal(respuesta.status, 403);
+  assert.equal((await filas()).length, 0);
+});
+
+test("SEC-09: acepta peticiones con encabezado Origin coincidente", async () => {
+  const respuesta = await POST(peticion(CUERPO_VALIDO, { origin: "https://ceoubb.com" }));
+  assert.equal(respuesta.status, 202);
+  assert.equal((await filas()).length, 1);
 });
 
 test("REQ-SUP-02: rechaza un tipo de contenido que no es JSON", async () => {
