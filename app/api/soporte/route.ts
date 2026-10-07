@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   if (origin) {
     const requestOrigin = new URL(request.url).origin;
     if (origin !== requestOrigin) {
-      return Response.json({ error: "Origen no permitido." }, { status: 403 });
+      return Response.json({ error: "Origen no autorizado." }, { status: 403 });
     }
   }
 

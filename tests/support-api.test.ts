@@ -66,13 +66,13 @@ beforeEach(async () => {
   delete process.env.TURNSTILE_SECRET_KEY;
 });
 
-test("SEC-08: rechaza peticiones con encabezado Origin no coincidente con 403", async () => {
+test("SEC-09: rechaza peticiones con encabezado Origin no coincidente con 403", async () => {
   const respuesta = await POST(peticion(CUERPO_VALIDO, { origin: "https://sitio-malicioso.com" }));
   assert.equal(respuesta.status, 403);
   assert.equal((await filas()).length, 0);
 });
 
-test("SEC-08: acepta peticiones con encabezado Origin coincidente", async () => {
+test("SEC-09: acepta peticiones con encabezado Origin coincidente", async () => {
   const respuesta = await POST(peticion(CUERPO_VALIDO, { origin: "https://ceoubb.com" }));
   assert.equal(respuesta.status, 202);
   assert.equal((await filas()).length, 1);
