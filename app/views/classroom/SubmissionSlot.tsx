@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
+import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ArrowClockwise,
   CheckCircle,
@@ -150,7 +152,7 @@ function createFileUploadItem(file: File, index = 0): FileUploadItem {
 function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: boolean }) {
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <motion.span
+      <m.span
         key={status}
         initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(4px)" }}
         animate={{ opacity: 1, transform: "translateY(0px)" }}
@@ -188,7 +190,7 @@ function StatusIcon({ status, reduce }: { status: FileUploadStatus; reduce: bool
                 ? "Subiendo"
                 : "En cola"}
         </span>
-      </motion.span>
+      </m.span>
     </AnimatePresence>
   );
 }
@@ -204,14 +206,14 @@ function FileUploadRow({
   onRetry: (item: FileUploadItem) => void;
   classNames?: FileUploadClassNames;
 }) {
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useHydratedReducedMotion();
   const status = item.status ?? "queued";
   const progress = Math.max(0, Math.min(100, item.progress ?? 0));
   const progressRatio = progress / 100;
   const showProgress = status === "uploading" || status === "success";
 
   return (
-    <motion.li
+    <m.li
       layout={!reduce}
       initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(8px)" }}
       animate={{ opacity: 1, transform: "translateY(0px)" }}
@@ -279,7 +281,7 @@ function FileUploadRow({
               aria-label={`Progreso de ${item.name}`}
               className={`mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--canvas-soft)] ${classNames?.progress ?? ""}`}
             >
-              <motion.div
+              <m.div
                 className={`h-full rounded-full ${
                   status === "success"
                     ? "bg-[var(--academic-emerald)]"
@@ -297,7 +299,7 @@ function FileUploadRow({
           ) : null}
         </div>
       </div>
-    </motion.li>
+    </m.li>
   );
 }
 
@@ -322,7 +324,7 @@ export function FileUpload({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useHydratedReducedMotion();
   const [internalValue, setInternalValue] = useState<FileUploadItem[]>(defaultValue ?? []);
   const isControlled = value !== undefined;
   const items = value ?? internalValue;
@@ -436,7 +438,7 @@ export function FileUpload({
             : "items-center gap-3.5 p-4 text-left"
         } ${classNames?.dropzone ?? ""}`}
       >
-        <motion.span
+        <m.span
           aria-hidden="true"
           className={`grid shrink-0 place-items-center bg-[var(--canvas-soft)] text-[var(--color-primary)] ${
             centered
@@ -453,7 +455,7 @@ export function FileUpload({
           transition={FAST_TRANSITION}
         >
           <UploadSimple className={centered ? "h-6 w-6" : "h-5 w-5"} weight="bold" />
-        </motion.span>
+        </m.span>
 
         <span className={`min-w-0 ${centered ? "max-w-xs" : "flex-1"}`}>
           <span
@@ -661,7 +663,7 @@ export function SubmissionSlot({
   readOnly: boolean;
   onDropFile?: (file: File, item: GradeItem) => void;
 }) {
-  const shouldReduceMotion = useReducedMotion() ?? false;
+  const shouldReduceMotion = useHydratedReducedMotion();
   const mode = submissionModeOf(item);
   const teamLabel = mode === "individual" ? "" : "en equipo";
   const [dragging, setDragging] = useState(false);
@@ -717,7 +719,7 @@ export function SubmissionSlot({
         aria-label={`Subiendo entrega ${percent}%`}
       >
         <div className="grades-upload-track h-2 w-full overflow-hidden rounded-full bg-[var(--canvas-soft)] border border-[var(--border-hairline)]">
-          <motion.div
+          <m.div
             className="grades-upload-fill h-full rounded-full bg-[var(--color-primary)]"
             style={{
               transformOrigin: "left",
@@ -732,7 +734,7 @@ export function SubmissionSlot({
           <span className="flex items-center gap-1">
             <CircleNotch
               aria-hidden="true"
-              className="h-3 w-3 animate-spin text-[var(--color-primary)]"
+              className={`h-3 w-3 text-[var(--color-primary)] ${shouldReduceMotion ? "" : "animate-spin"}`}
               weight="bold"
             />
             <span>Subiendo</span>
