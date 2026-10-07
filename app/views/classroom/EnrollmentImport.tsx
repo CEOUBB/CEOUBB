@@ -241,7 +241,13 @@ export function EnrollmentImport({
             <SummaryItem label="Observadas" value={preview.totals.invalid} />
           </dl>
 
-          <div className="enrollment-table-wrap">
+          <div
+            className="enrollment-table-wrap"
+            role="region"
+            aria-label="Previsualización de matrículas"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- La tabla desplazable necesita foco para usar las flechas del teclado.
+            tabIndex={0}
+          >
             <table className="enrollment-table">
               <thead>
                 <tr>

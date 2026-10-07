@@ -6,14 +6,15 @@ import {
   preferencesSchema,
   type NotificationChannel,
   type UserPreferences,
-} from "./services/user-profile.ts";
+} from "./user-profile-contract.ts";
 
 export type {
   ChannelPreference,
   NotificationChannel,
   UserPreferences,
-} from "./services/user-profile.ts";
-export { NOTIFICATION_CHANNELS, defaultPreferences } from "./services/user-profile.ts";
+} from "./user-profile-contract.ts";
+// Implements: REQ-PERF-LOAD-01
+export { NOTIFICATION_CHANNELS, defaultPreferences } from "./user-profile-contract.ts";
 
 const CACHE_KEY = "ceoubb:preferences";
 const CHANGE_EVENT = "ceoubb:preferences-changed";

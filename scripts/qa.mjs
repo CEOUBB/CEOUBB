@@ -14,6 +14,7 @@ pnpm qa --list [--json]                   Discover scenario IDs and states
 pnpm qa --area cuestionarios             Verify a selected area
 pnpm qa --scenario auth.session          Verify one reproducible state
 pnpm qa --all --screenshots               Run the complete catalog and capture states
+pnpm qa --all --production --screenshots  Build isolated production and verify final cache headers
 pnpm qa --explore --scenario grades.teacher  Keep the prepared browser open
 pnpm qa --browser chromium-1440           Select one browser/viewport project
 pnpm qa --base origin/main               Choose the change-comparison base
@@ -82,6 +83,11 @@ async function main() {
     runId,
     startedAt: new Date().toISOString(),
     environment: options.staging ? "staging" : "local-emulators",
+    applicationMode: options.staging
+      ? "staging"
+      : options.production
+        ? "production"
+        : "development",
     selection: selection.reason,
     changedFiles: selection.changed,
     scenarios: selection.scenarios,
@@ -115,7 +121,13 @@ async function main() {
   process.once("SIGINT", interrupted);
   process.once("SIGTERM", interrupted);
   try {
-    runtime = await startRuntime(root, runId, output, controller.signal);
+    runtime = await startRuntime(
+      root,
+      runId,
+      output,
+      controller.signal,
+      options.production ? "production" : "development"
+    );
     const environment = {
       QA_OUTPUT_DIR: output,
       QA_SCENARIOS: selection.ids.join(","),

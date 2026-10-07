@@ -24,7 +24,7 @@ export function SiteFooter() {
       <div className="site-footer-inner">
         <nav aria-label="Documentos institucionales y legales" className="site-footer-nav">
           {ENLACES.map((enlace) => (
-            <AnimatedUnderlineLink href={enlace.href} key={enlace.href}>
+            <AnimatedUnderlineLink href={enlace.href} key={enlace.href} prefetch={false}>
               {enlace.texto}
             </AnimatedUnderlineLink>
           ))}
