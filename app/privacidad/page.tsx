@@ -183,10 +183,13 @@ function RetentionSection() {
         conforme a sus propias condiciones y medidas de seguridad.
       </p>
       <p>
-        El formulario de <Link href="/contacto">contacto y soporte</Link> entrega tu mensaje al
-        buzón institucional a través de Brevo, un servicio de correo transaccional. Brevo procesa tu
-        nombre, tu dirección de correo y el texto que escribiste con el único fin de entregarlos, y
-        no se le envía ningún otro dato de tu cuenta.
+        El formulario de{" "}
+        <Link prefetch={false} href="/contacto">
+          contacto y soporte
+        </Link>{" "}
+        entrega tu mensaje al buzón institucional a través de Brevo, un servicio de correo
+        transaccional. Brevo procesa tu nombre, tu dirección de correo y el texto que escribiste con
+        el único fin de entregarlos, y no se le envía ningún otro dato de tu cuenta.
       </p>
       <p>
         Usamos Sentry para detectar errores. Junto al reporte de error se graba una muestra de
@@ -257,8 +260,15 @@ function RightsSection() {
       </p>
 
       <nav aria-label="Documentos relacionados">
-        Ver también los <Link href="/terminos">términos de uso</Link> y la{" "}
-        <Link href="/accesibilidad">declaración de accesibilidad</Link>.
+        Ver también los{" "}
+        <Link prefetch={false} href="/terminos">
+          términos de uso
+        </Link>{" "}
+        y la{" "}
+        <Link prefetch={false} href="/accesibilidad">
+          declaración de accesibilidad
+        </Link>
+        .
       </nav>
     </>
   );

@@ -28,8 +28,8 @@ export const QA_STATE_SCENARIOS: readonly QaScenario[] = [
   state(
     "auth.loading",
     "auth",
-    ["app/LoadingScreen.tsx", "app/usePortalCore.tsx"],
-    "student",
+    ["app/access-screen.tsx", "app/api/auth/dev-login/route.ts"],
+    "public",
     "loading",
     true
   ),

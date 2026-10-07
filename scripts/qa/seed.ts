@@ -34,7 +34,7 @@ import { resolveQaRuntime } from "../../lib/qa-runtime.ts";
 import { inspectLearningPackage } from "../../lib/interop/packages.ts";
 import { prepareCourseImport, stableMoodleDocumentId } from "../../lib/moodle/index.ts";
 import { prepareAdeccaCourseImport, stableAdeccaDocumentId } from "../../lib/adecca/index.ts";
-import { defaultPreferences } from "../../lib/services/user-profile.ts";
+import { defaultPreferences } from "../../lib/user-profile-contract.ts";
 import {
   QA_ENROLLMENTS,
   QA_ASSETS,

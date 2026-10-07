@@ -158,7 +158,13 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
     <>
       <button
         className="secondary-button moodle-import-trigger"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={(event) => {
+          const dialog = dialogRef.current;
+
+          if (!dialog) return;
+          dialog.dataset.motion = event.detail > 0 ? "pointer" : "instant";
+          dialog.showModal();
+        }}
         type="button"
       >
         <FileArrowUp aria-hidden="true" size={18} />
@@ -179,7 +185,6 @@ export function AdeccaImportDialog({ course }: { course: Course }) {
       >
         <div className="moodle-import-dialog__header">
           <div>
-            <span className="eyebrow">Migración de curso</span>
             <h2 id={`${inputId}-title`}>Importar desde ADECCA UBB</h2>
             <p id={`${inputId}-description`}>
               Revisa un paquete local antes de incorporarlo en {course.name}.

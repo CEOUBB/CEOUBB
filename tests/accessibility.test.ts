@@ -24,7 +24,7 @@ function contrast(foreground: string, background: string) {
 
 test("REQ-A11Y-01: portal exposes a visible bypass target", async () => {
   const [portal, shell, portalCss] = await Promise.all([
-    source("app/Portal.tsx"),
+    source("app/access-screen.tsx"),
     source("app/portal-shell.tsx"),
     source("app/globals.css"),
   ]);
@@ -87,7 +87,7 @@ test("REQ-A11Y-08: public statement contains the complete WCAG 2.2 AA claim", as
     source("app/accesibilidad/page.tsx"),
     source("app/privacidad/page.tsx"),
     source("app/terminos/page.tsx"),
-    source("app/Portal.tsx"),
+    source("app/access-screen.tsx"),
     source("app/sitemap.xml/route.ts"),
   ]);
   assert.match(page, /Web Content Accessibility Guidelines 2\.2/);

@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Books, CalendarBlank, FolderSimple, House, Stack } from "@phosphor-icons/react";
 import {
   useAppVisibility,
@@ -62,6 +63,7 @@ const serverDesktopNav = () => false;
 
 // Implements: REQ-QMD-01
 export function usePortalCore(initialSession?: SessionState) {
+  const router = useRouter();
   const [sessionState, dispatchSession] = useReducer(portalSessionReducer, {
     user: initialSession !== undefined ? initialSession.user : null,
     checking: initialSession === undefined,
@@ -113,6 +115,27 @@ export function usePortalCore(initialSession?: SessionState) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [seen, setSeen] = useState<Record<string, string>>(() => readSeen());
   const previousView = useRef<string | null>(null);
+  const [appliedSession, setAppliedSession] = useState(initialSession);
+  const sessionRequests = useRef(0);
+
+  // Implements: REQ-PERF-LOAD-02
+  if (initialSession !== undefined && initialSession !== appliedSession) {
+    setAppliedSession(initialSession);
+    dispatchSession({ type: "LOGOUT" });
+    dispatchSession({ type: "SIGN_IN_SESSION", session: initialSession });
+    dispatchNav({ type: "LOGOUT" });
+    setActivitySync({ key: "", ready: false, error: "" });
+    setSearchOpen(false);
+    setSeen({});
+  }
+
+  useEffect(() => {
+    sessionRequests.current += 1;
+
+    return () => {
+      sessionRequests.current += 1;
+    };
+  }, [initialSession, user?.id]);
 
   const mobile = useIsMobileApp();
   const desktopNav = useSyncExternalStore(
@@ -187,7 +210,10 @@ export function usePortalCore(initialSession?: SessionState) {
   useHardwareBack(handleHardwareBack);
 
   const refreshCourses = useCallback(async () => {
+    const requestVersion = sessionRequests.current;
     const session = await loadCurrentSession();
+
+    if (requestVersion !== sessionRequests.current) return;
     if (session.sections) {
       dispatchSession({ type: "SET_ACADEMIC_SECTIONS", sections: session.sections });
     }
@@ -195,8 +221,9 @@ export function usePortalCore(initialSession?: SessionState) {
   }, []);
 
   useEffect(() => {
-    if (initialSession !== undefined && initialSession.user !== null) return;
+    if (initialSession !== undefined) return;
     let alive = true;
+    const requestVersion = sessionRequests.current;
     loadCurrentSession()
       .then(
         ({
@@ -205,7 +232,7 @@ export function usePortalCore(initialSession?: SessionState) {
           sections,
           archivedNextCursor: nextArchivedCursor,
         }) => {
-          if (!alive) return;
+          if (!alive || requestVersion !== sessionRequests.current) return;
           dispatchSession({
             type: "SESSION_LOADED",
             user: current,
@@ -216,7 +243,7 @@ export function usePortalCore(initialSession?: SessionState) {
         }
       )
       .catch(() => {
-        if (!alive) return;
+        if (!alive || requestVersion !== sessionRequests.current) return;
         dispatchSession({
           type: "SESSION_LOADED",
           user: null,
@@ -243,8 +270,11 @@ export function usePortalCore(initialSession?: SessionState) {
 
   const loadMoreArchived = useCallback(async () => {
     if (!archivedNextCursor || archivedLoading) return;
+    const requestVersion = sessionRequests.current;
     dispatchSession({ type: "SET_ARCHIVED_LOADING", loading: true });
     const page = await loadArchivedAcademicSections(archivedNextCursor);
+
+    if (requestVersion !== sessionRequests.current) return;
     dispatchSession({
       type: "APPEND_ARCHIVED_SECTIONS",
       sections: page.sections,
@@ -293,7 +323,7 @@ export function usePortalCore(initialSession?: SessionState) {
             setActivitySync((current) => ({
               ...current,
               key: user.id + JSON.stringify(sectionIds),
-              ready: false,
+              ready: error ? false : current.ready,
               error,
             }));
         }
@@ -316,12 +346,14 @@ export function usePortalCore(initialSession?: SessionState) {
         memberships,
         user.role,
         (state) => {
+          if (!alive) return;
           dispatchSession({
             type: "SET_COMMUNICATIONS",
             communications: state,
           });
         },
         (error) => {
+          if (!alive) return;
           dispatchSession({ type: "SET_COMMUNICATION_ERROR", error });
         }
       );
@@ -341,7 +373,9 @@ export function usePortalCore(initialSession?: SessionState) {
       if (!alive) return;
       unsub = watchGradebooks(
         sectionIds,
-        (gb) => dispatchSession({ type: "SET_GRADEBOOKS", gradebooks: gb }),
+        (gb) => {
+          if (alive) dispatchSession({ type: "SET_GRADEBOOKS", gradebooks: gb });
+        },
         () => {}
       );
     });
@@ -466,18 +500,27 @@ export function usePortalCore(initialSession?: SessionState) {
 
   const logout = useCallback(async () => {
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      if (!response.ok) {
-        // Fallback gracefully on response error
+      const results = await Promise.allSettled([
+        import("../lib/firebase-client.ts").then(({ signOutOfFirebase }) => signOutOfFirebase()),
+        fetch("/api/auth/logout", { method: "POST" }).then((response) => {
+          if (!response.ok) throw new Error("No se pudo cerrar la sesión del portal.");
+        }),
+      ]);
+
+      if (results.some((result) => result.status === "rejected")) {
+        throw new Error("No se pudo cerrar la sesión.");
       }
+
+      forgetPhoto();
+      forgetPreferences();
+      dispatchSession({ type: "LOGOUT" });
+      dispatchNav({ type: "LOGOUT" });
+      router.refresh();
     } catch {
-      // Ignore network failure
+      const { toast } = await import("../lib/toast.ts");
+      toast.error("No se pudo completar el cierre de sesión. Intenta nuevamente.");
     }
-    forgetPhoto();
-    forgetPreferences();
-    dispatchSession({ type: "LOGOUT" });
-    dispatchNav({ type: "LOGOUT" });
-  }, []);
+  }, [router]);
 
   const finishSignedInWithSession = useCallback((session: SessionState) => {
     dispatchSession({ type: "SIGN_IN_SESSION", session });

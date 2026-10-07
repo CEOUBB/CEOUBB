@@ -9,6 +9,9 @@ import { MINUTE_SPAN, SLOT_HOURS, offsetOf } from "./calendar-constants";
 import { PlannerBlockArticle } from "./PlannerBlock";
 import { usePlannerDrag } from "./usePlannerDrag";
 
+const NOW_LABEL_CLEARANCE_BEFORE = 15;
+const NOW_LABEL_CLEARANCE_AFTER = 25;
+
 export function PlannerGrid({
   days,
   today,
@@ -41,6 +44,14 @@ export function PlannerGrid({
   firstFreeHour: number;
 }) {
   const drag = usePlannerDrag(onNewBlock, onMoveBlock);
+  const showNow =
+    days.includes(today) && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES;
+  const coveredByNow = (hour: number) => {
+    const distance = nowMinutes - hour * 60;
+    return (
+      showNow && distance > -NOW_LABEL_CLEARANCE_BEFORE && distance < NOW_LABEL_CLEARANCE_AFTER
+    );
+  };
   return (
     <>
       <div className="planner-gesture-bar">
@@ -76,17 +87,20 @@ export function PlannerGrid({
       >
         <div aria-hidden="true" className="planner-hours">
           {SLOT_HOURS.map((hour) => (
-            <span className="num" key={hour} style={{ top: offsetOf(hour * 60) }}>
+            <span
+              className="num"
+              data-covered={coveredByNow(hour) || undefined}
+              key={hour}
+              style={{ top: offsetOf(hour * 60) }}
+            >
               {timeOfMinutes(hour * 60)}
             </span>
           ))}
-          {days.includes(today) &&
-            nowMinutes >= DAY_START_MINUTES &&
-            nowMinutes <= DAY_END_MINUTES && (
-              <b className="planner-hours-now num" style={{ top: offsetOf(nowMinutes) }}>
-                {timeOfMinutes(nowMinutes)}
-              </b>
-            )}
+          {showNow && (
+            <b className="planner-hours-now num" style={{ top: offsetOf(nowMinutes) }}>
+              {timeOfMinutes(nowMinutes)}
+            </b>
+          )}
         </div>
         {days.map((day, index) => {
           const blocks = byDay.get(day)?.blocks ?? [];

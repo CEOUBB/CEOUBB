@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useState, ViewTransition } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useReducedMotion } from "motion/react";
-import * as m from "motion/react-m";
 import { watchGooglePhoto } from "../lib/firebase-client";
-import {
-  cachedPhoto,
-  initials,
-  instantTransition,
-  rememberPhoto,
-  springDefault,
-} from "../lib/portal-utils";
+import { cachedPhoto, initials, rememberPhoto } from "../lib/portal-utils";
 
 function useGooglePhoto(email: string) {
-  const [photo, setPhoto] = useState<string | null>(() => cachedPhoto(email));
+  const [photo, setPhoto] = useState<string | null>(null);
   useEffect(
     () =>
       watchGooglePhoto((url) => {
@@ -67,18 +59,5 @@ export function Avatar({
 
 // Implements: REQ-SKEL-VT-01
 export function Screen({ children }: { children: React.ReactNode }) {
-  const shouldReduceMotion = useReducedMotion();
-
-  return (
-    <ViewTransition default="none" update="auto">
-      <m.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-        transition={shouldReduceMotion ? instantTransition : springDefault}
-      >
-        {children}
-      </m.div>
-    </ViewTransition>
-  );
+  return <div>{children}</div>;
 }
