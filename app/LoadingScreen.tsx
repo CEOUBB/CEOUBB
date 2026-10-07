@@ -114,13 +114,12 @@ export function LoadingScreen() {
                   key={card}
                   style={{ "--sk-delay": `${160 + card * 60}ms` } as React.CSSProperties}
                 >
+                  <div className="course-cover">
+                    <span className="course-code">
+                      <span className="sk" style={{ width: "64px", height: "12px" }} />
+                    </span>
+                  </div>
                   <div className="course-body">
-                    <div className="course-head">
-                      <span className="course-identity">
-                        <span className="sk course-symbol" />
-                        <span className="sk" style={{ width: "60px", height: "12px" }} />
-                      </span>
-                    </div>
                     <h3>
                       <span className="sr-only">Cargando curso</span>
                       <span className="sk" style={{ width: "72%", height: "1.3em" }} />
@@ -146,7 +145,10 @@ export function LoadingScreen() {
           <section className="dashboard-section dashboard-agenda">
             <div className="section-title">
               <h2>En tu agenda</h2>
-              <CalendarBlank size={20} aria-hidden="true" />
+              <span className="agenda-calendar-link">
+                <CalendarBlank size={16} aria-hidden="true" />
+                Calendario
+              </span>
             </div>
             <div className="agenda-clear">
               <h3>
@@ -157,9 +159,6 @@ export function LoadingScreen() {
                 <span className="sk sk-quiet" style={{ width: "100%", height: "1.7em" }} />
                 <span className="sk sk-quiet" style={{ width: "82%", height: "1.7em" }} />
               </p>
-              <div className="empty-state-action">
-                <span className="sk" style={{ width: "130px", height: "13px" }} />
-              </div>
             </div>
           </section>
         </div>
