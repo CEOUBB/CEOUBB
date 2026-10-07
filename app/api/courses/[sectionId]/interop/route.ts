@@ -7,6 +7,7 @@ import {
   sessionActor,
 } from "../../../../../lib/interop/http.ts";
 import { MAX_PACKAGE_BYTES } from "../../../../../lib/interop/zip.ts";
+import { isSectionId } from "../../../../../lib/section-roles.ts";
 import {
   authorizeInteropSection,
   linkLtiResource,
@@ -19,6 +20,9 @@ export async function GET(request: Request, context: Context) {
   try {
     const actor = await sessionActor(request);
     const { sectionId } = await context.params;
+    if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+      fail("La sección no es válida.", 400);
+    }
     return json(
       await listInteropResources(
         actor,
@@ -34,6 +38,9 @@ export async function POST(request: Request, context: Context) {
   try {
     const actor = await sessionActor(request, true);
     const { sectionId } = await context.params;
+    if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+      fail("La sección no es válida.", 400);
+    }
     await authorizeInteropSection(actor, sectionId, true);
     const type = request.headers.get("content-type")?.split(";")[0].trim();
     if (type === "application/zip")

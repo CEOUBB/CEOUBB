@@ -283,3 +283,22 @@ test("REQ-SEC-22: moodle import route validates sectionId with isSectionId and r
     "Moodle import POST route must validate origin header against request URL origin"
   );
 });
+
+// Implements: REQ-SEC-23
+test("REQ-SEC-23: ADECCA import POST validates request origin and interop routes validate sectionId", () => {
+  const adeccaPath = path.resolve("app/api/courses/[sectionId]/imports/adecca/route.ts");
+  const adeccaContent = fs.readFileSync(adeccaPath, "utf8");
+  assert.match(
+    adeccaContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "ADECCA import POST route must validate origin header against request URL origin"
+  );
+
+  const interopPath = path.resolve("app/api/courses/[sectionId]/interop/route.ts");
+  const interopContent = fs.readFileSync(interopPath, "utf8");
+  assert.match(
+    interopContent,
+    /isSectionId\(sectionId\)/,
+    "Interop route must validate sectionId format with isSectionId"
+  );
+});

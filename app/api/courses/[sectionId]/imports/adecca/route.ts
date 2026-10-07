@@ -1,5 +1,6 @@
 import { getSessionUser } from "../../../../../../lib/auth";
 import { containsForbiddenSecretMaterial } from "../../../../../../lib/adecca/privacy";
+import { isSectionId } from "../../../../../../lib/section-roles";
 import type {
   AdeccaImportPost,
   AdeccaImportSource,
@@ -98,6 +99,9 @@ async function sessionAndSection(request: Request, context: AdeccaRouteContext) 
     throw new AdeccaImportServiceError("Inicia sesión para continuar.", "UNAUTHENTICATED", 401);
   }
   const { sectionId } = await context.params;
+  if (!sectionId || sectionId.length > 100 || !isSectionId(sectionId)) {
+    throw new AdeccaImportServiceError("La sección no es válida.", "INVALID_IMPORT_BATCH", 400);
+  }
   await authorizeAdeccaImport(actor, sectionId);
   return { actor, sectionId };
 }
@@ -132,7 +136,13 @@ export async function GET(request: Request, context: AdeccaRouteContext) {
   }
 }
 
+// Implements: REQ-SEC-23
 export async function POST(request: Request, context: AdeccaRouteContext) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return failure("Origen no autorizado.", 403, "UNAUTHORIZED_ORIGIN");
+  }
+
   try {
     const { actor, sectionId } = await sessionAndSection(request, context);
     let input: {
