@@ -5,7 +5,7 @@ import Link from "next/link";
 export function PolicyHead() {
   return (
     <header className="policy-head">
-      <Link className="app-brand" href="/">
+      <Link prefetch={false} className="app-brand" href="/">
         <Image
           src="/brand/ubb-shield.webp"
           alt=""
@@ -16,7 +16,7 @@ export function PolicyHead() {
         />
         <strong>Centro de Estudio UBB</strong>
       </Link>
-      <Link className="policy-back" href="/">
+      <Link prefetch={false} className="policy-back" href="/">
         <ArrowLeft size={16} weight="bold" aria-hidden="true" />
         Volver al portal
       </Link>

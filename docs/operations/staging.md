@@ -18,7 +18,7 @@ Staging no contiene una copia de producción. Su dataset ordinario usa cuatro id
 - Turso `ceoubb-staging`: cinco migraciones aplicadas; el sembrado repetido converge a 4 usuarios, 2 secciones y 8 matrículas.
 - Firestore staging: 24 documentos sintéticos deterministas verificados.
 - GitHub `Staging`: federación OIDC activa y `TURSO_AUTH_TOKEN` cifrado en el Environment.
-- Cloudflare Workers Preview/Staging: dominio `staging.ceoubb.com` y URL de worker preview `ceoubb-preview.nameless-sky-3eb5.workers.dev`, autorizados para OAuth en Firebase staging, con Firebase y Turso separados de los valores que conserva Production.
+- Cloudflare preview uses the existing `ceoubb-preview` Worker at `https://staging.ceoubb.com`, with Firebase and Turso isolated from production. Its custom domain is provisioned outside preview CI. The individual Worker Editor token cannot manage account subdomains or zone routes; preview `workers.dev` and version URLs remain disabled.
 
 El primer token Turso emitido durante el provisionamiento fue revocado antes de usarse. Sólo el reemplazo instalado en GitHub y Cloudflare permanece vigente.
 

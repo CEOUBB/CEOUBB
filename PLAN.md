@@ -1,5 +1,51 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
+## Current handoff: Campus redesign "Separadores de archivador", 2026-10-06
+
+- Scope: [PR #287](https://github.com/CEOUBB/CEOUBB/pull/287), branch `claude/lms-ui-ux-redesign-39a5a8`. Replaces the campus visual system (dashboard, classroom, calendar, communications, resources, settings, administration, Administrar ramos), public help and policy pages, the 404 page and the global error screen. The access screen is unchanged. `DESIGN.md` is the source of truth; `.agents/rules/003-ui-components.mdc` summarizes it for agents.
+- Tokens live in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`; Inter loads with the `opsz` axis in `app/layout.tsx`. Each section carries `--course-tone`, from which `app/campus.css` derives `--tone-wash`, `--tone-wash-strong` and `--tone-ink`.
+- Administrar ramos reuses the classroom divider: tone-tinted header with the code tab, tone indicator under the active tab, sections listed on the desk, a live-preview creation divider and a tone swatch picker.
+- `scripts/qa/runtime.mjs` now preserves Firebase emulator `*-debug.log` files in the QA evidence and retries emulator startup once only when the emulator process exits during startup. Scenario assertions are unchanged.
+- Verification: `verify:fast` 627/627 with 72 protected hashes and 31 specifications; lint 0 errors and 2 existing warnings; teacher QA area 8/8 at 1440 and 390 px. CI on `e13d9fc` passed every required check, including the four local QA catalog shards. React Doctor's two warnings (`nextjs-no-a-element` in `app/global-error.tsx`, `no-derived-useState` in the keyed course data form) are reviewed false positives.
+- Open: the Administrar ramos list can show a tone different from the portal because the portal derives tone from a template or hash; tracked as a separate data task. No production deployment was performed.
+
+## Handoff: Security remediation, 2026-10-03
+
+- Scope and per-finding evidence: [security remediation report](docs/security/remediation-2026-10-03.md).
+- Close portal and Firebase identities on logout; retire native push registration before identity teardown. Restrict personal namespaces, direct submission modality and shared downloads to the institutional, enrollment and exact receipt policies.
+- Deny archived communication and teacher management writes. Read academic period state inside callable write transactions and reuse the guarded ADECCA commit. Bound ZIP decompression output and preserve the existing OpenNext patch while updating affected dependencies.
+- Local verification passed: 627 unit tests, 25 HTML/HTTP integration tests, 35 invariants, 72 protected file hashes, 31 specification validations, 50 QA harness/regression checks and 18 emulator rule tests. Lint retains 2 existing warnings in unchanged files.
+- Production QA passed the complete 172-case desktop catalog and 23-case API matrix. Final production authentication/API verification passed 45 checks across the Chromium viewport projects, critical Firefox/WebKit authentication and API contracts. This does not establish the full product catalog in every browser.
+- Release review follow-up configured GitHub environment restrictions and required production approval. The duplicate repository-level Firebase service account secret was removed after confirming successful production deployment with the existing `Production` secret. The animation PR was merged and its staging, Firebase production and Cloudflare deployment succeeded. This security PR is still open, and its changed rules and Functions have not been deployed.
+- The dedicated preview token is stored in `Preview` and restricted to the existing preview Worker. The first real deployment uploaded code but failed on an account subdomain lookup. Preview configuration now publishes through the existing staging custom domain without account subdomain or zone route management; revision `0dc2a2f278659f755253e85b55163a297d0bbe7d` passed CI and deployed successfully to `staging.ceoubb.com`. Its four browser QA shards and production API matrix passed with no missing coverage. Live anonymous and invalid-session HTTP checks confirmed private response cache rejection; authenticated identity isolation remains unverified. The user saved a new Cloudflare deployment token in `Production`; its dashboard policy grants account Workers Editor and ceoubb.com Zone Read/Workers Routes Write. The original Android keystore was found outside the checkout; its passwords were not recovered locally. A temporary trusted workflow validated the existing release certificate and private key, sealed the original signing values to GitHub Production's public key, and transferred them through the environment secret API. Protected-environment verification then validated the stored private key against the published APK and authenticated Cloudflare production service/subdomain reads without publishing changes. The temporary workflow has been removed.
+- External completion: remove superseded repository credentials immediately after the protected release workflow is integrated, and verify this PR's deployed rules/Functions plus real providers and native behavior. The root registry retains the locally mitigated `braces` advisory; Functions audit reports none.
+
+## Handoff: Loading performance implementation, 2026-09-29
+
+- Scope and measured evidence: [loading performance report](docs/performance/loading-performance-2026-09-29.md), OpenSpec `improve-loading-performance`.
+- Public access is static; validated private bootstrap runs under `/campus`. Personalized HTML, RSC and authentication responses must remain outside shared and offline caches.
+- Shared profile contracts, selective import tools, campus styles and local Sharp branding variants reduce public startup work. The compact Firestore activity reader remains disabled outside disposable QA until rules, trigger, bounded backfill and fresh parity verification are deployed and verified.
+- React Compiler and SQL placement changes remain conditional on measured interaction/provider evidence. No production deployment or migration was performed.
+- Verification: production build, protected unit contracts, invariants and affected E2E passed. The frozen complete production QA report records 778/783 passing; its conversation fixture was strengthened and all 29 followup browser/API cases passed. Initial Linux development QA passed 170/172 cases plus 23 production API cases; the live-class initial-state fixture was strengthened and all 37 followup browser/API cases passed. The explicitly authorized saved-text contrast correction passed all 77 production quiz-area browser/API cases with no missing checkpoints (`20260930T142234018Z-616278d8`), resolving the four historical contrast failures. Shared live-editor fixture readiness now covers all branches; its production followup passed 37/37 browser/API cases (`20260930T145153945Z-d99b5928`).
+- Matched local Lighthouse: public home LCP 6962.465 to 3428.465 ms at simulated slow 4G; 33332.457 to 14232.634 ms at simulated slow 3G. These are laboratory results; private provider latency, field INP and Chilean carrier/device behavior remain unverified.
+- Delivery: [PR #263](https://github.com/CEOUBB/CEOUBB/pull/263) is published and attached. Linux OpenNext packaging and actual preview anonymous/empty-cookie HTML/RSC cache checks passed; measured preview home LCP is 3594.410 ms for simulated slow 4G and 13681.166 ms for slow 3G. The saved-text scope blocker is resolved locally; repeat Linux CI on the corrected commit before merging. Dedicated institutional staging identities, authenticated Worker separation and real provider delivery remain external prerequisites.
+
+## Handoff: TypeScript 7.0.2 and Bun 1.4.2 Hybrid Runtime Migration, 2026-09-30
+
+- **Capability:** `toolchain/ts7-bun-hybrid` establishing a high-performance local runtime using Bun 1.4.2 and native TypeScript 7.0.2 compiler while isolating typescript-eslint AST dependencies and preserving Node.js 22 for universal CI runners, Cloudflare Workers builds, Firebase emulators, and test runners.
+- **Architectural Implementation:**
+  1. _Native Compiler Performance:_ Upgraded root devDependency `typescript` to `7.0.2`. Whole-project typechecking via native Go `tsc` drops to under 300ms, powering `pnpm run typecheck`, `pnpm run verify:fast`, and Next.js builds.
+  2. _Package Extensions AST Isolation:_ Configured `pnpm.packageExtensions` to inject `typescript@6.0.3` exclusively into `@typescript-eslint/typescript-estree`, `@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin`, and associated utilities. This resolves the AST parser incompatibility with the Go native TypeScript 7 binary, allowing `pnpm run lint` to execute cleanly with zero errors.
+  3. _Universal CI/Build Portability & Bun Local Acceleration:_ Configured universal scripts in `package.json` utilizing Node.js 22 for standard CI environments (GitHub Actions, Cloudflare Workers OpenNext builds, and Android CI) while providing high-speed Bun alternatives (`dev:bun`, `build:bun`, `verify:invariants:bun`, `qa:check:bun`) and direct Bun script execution for local developer workflows.
+  4. _Preserved Node.js 22 Boundary:_ Retained `node` (>= 22.13.0) for universal CI pipelines, Cloudflare Workers packaging via `@opennextjs/cloudflare`, Firebase Functions syntax validation (`check:functions`), and Firebase emulator test execution (`check:rules`).
+  5. _Governance and Documentation:_ Synchronized `AGENTS.md` (Rule 5 and Section 8.1), `README.md`, `CONTRIBUTING.md`, and `package.json` scripts.
+- **Verification:**
+  - `verify:fast`: Native `tsc` + unit tests + SHA-256 test lock validation passed with exit code 0.
+  - `verify:invariants`: Security access policy, Chilean grade arithmetic, and academic data models executed in under 500ms.
+  - `qa:check`: Reconciled to run cleanly with exit code 0 under standard Node strip-types or Bun.
+  - `lint`: Full ESLint pass completed cleanly with zero warnings and zero errors.
+  - Strict preservation of all test assertions and SHA-256 test hashes with zero weakening.
+
 ## Handoff: On-demand Agent QA pipeline (OpenSpec agent-qa-pipeline), 2026-09-22
 
 - **Capability:** `operations/agent-qa` providing reproducible web verification, synthetic institutional accounts, isolated Firebase emulators, and report generation via `pnpm qa`.
@@ -272,7 +318,7 @@ Companion files:
 
 Everything not listed here is implemented and verified; the full historical inventory lives in `docs/archive/PLAN_ARCHIVE.md`. Deployed and operational: `ceoubb.com` on Cloudflare Workers with Turso libSQL, Firebase Auth with institutional domain policy, Firestore + Storage rules published, `notifyStudentsOnCoursePost` and `deleteMyAccount` Cloud Functions on Node.js 22 in `southamerica-west1`, FCM HTTP v1, PWA, `/biblioteca/`, `/privacidad`, Android source at `versionCode 13` / `versionName 1.0.6`.
 
-- Web: app store badges remain non-clickable placeholders; local portal/library redesign uncommitted/undeployed.
+- Web: app store badges remain non-clickable placeholders; the campus redesign in PR #287 is not merged or deployed.
 - Android: release AAB installation, Google Sign-In, upload/download, role behavior, account deletion, and FCM delivery **not verified** on a clean physical device (CEO-33). Bundled offline library remains on legacy maroon theme.
 - iOS: unbuilt scaffold: no Xcode project configuration, bundle ID, APNs certificates, or iOS Firebase app (CEO-77). Badge remains non-clickable.
 - Firebase/GCP: App Check Web/Android registered with Firestore, Storage, and Auth remaining in observation (`UNENFORCED`); pending client deployment, 24-hour representative traffic, physical Android validation, and gradual enforcement. Firestore and Storage now have a verified emulator matrix; no web push VAPID key is configured. Cloud Billing alerts are configured, but the account remains in Free Trial and must be converted to paid prior to expiration.

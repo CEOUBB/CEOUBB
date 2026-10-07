@@ -1,6 +1,6 @@
 import { getSessionUser } from "../../../../lib/auth";
+import { preferencesSchema } from "../../../../lib/user-profile-contract";
 import {
-  preferencesSchema,
   readPreferencesFromFirestore,
   writePreferencesToFirestore,
 } from "../../../../lib/services/user-profile";
