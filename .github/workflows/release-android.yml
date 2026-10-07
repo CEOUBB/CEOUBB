@@ -17,7 +17,6 @@ jobs:
   build-and-upload-apk:
     name: Build & Upload Android APK
     runs-on: ubuntu-latest
-    environment: Production
     timeout-minutes: 25
     steps:
       - name: Checkout repository
@@ -47,7 +46,7 @@ jobs:
       - name: Sync Capacitor Android
         run: pnpm exec cap sync android
 
-      - name: Configure Production Keystore
+      - name: Configure Keystore (Optional)
         id: keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -55,20 +54,27 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::error::La publicación requiere todas las credenciales de firma de producción."
-            exit 1
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Configurando firma de producción..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore.jks
+            printf "storeFile=keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
+            echo "has_signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No se encontraron secrets de firma; se compilará APK en modo standard/debug."
+            echo "has_signing=false" >> "$GITHUB_OUTPUT"
           fi
-          umask 077
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/keystore.jks
-          printf "storeFile=keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
 
       - name: Build Android APK
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          cp app/build/outputs/apk/release/app-release.apk ../ceoubb-release.apk
+          if [ "${{ steps.keystore.outputs.has_signing }}" = "true" ]; then
+            ./gradlew assembleRelease --no-daemon --stacktrace
+            cp app/build/outputs/apk/release/app-release.apk ../ceoubb-release.apk
+          else
+            ./gradlew assembleDebug --no-daemon --stacktrace
+            cp app/build/outputs/apk/debug/app-debug.apk ../ceoubb-debug.apk
+          fi
 
       - name: Clean Keystore Artifacts
         if: always()
@@ -79,6 +85,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
-          files: ceoubb-release.apk
+          files: ceoubb-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

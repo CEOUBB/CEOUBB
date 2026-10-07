@@ -4,9 +4,7 @@
 
 ## Platform
 
-web
-
-La aplicación Android (`cl.ubb.centroestudio`) es un contenedor Capacitor que carga el portal web remoto; no tiene interfaz nativa propia.
+web, mobile-android (Capacitor 7: `cl.ubb.centroestudio`)
 
 ## Users
 

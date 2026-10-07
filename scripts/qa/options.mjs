@@ -30,7 +30,6 @@ export function parseArgs(args) {
       all: { type: "boolean" },
       screenshots: { type: "boolean" },
       explore: { type: "boolean" },
-      production: { type: "boolean" },
       staging: { type: "boolean" },
       "update-snapshots": { type: "boolean" },
       area: { type: "string" },
@@ -59,8 +58,6 @@ export function parseArgs(args) {
   if (values.staging && (values.explore || values["update-snapshots"]))
     throw new Error("Staging cannot be used together with exploration or reference updates.");
   if (values.staging && values.shard) throw new Error("Staging cannot be split into shards.");
-  if (values.staging && values.production)
-    throw new Error("--production builds local QA and cannot be combined with --staging.");
   if (values.explore && values.browser && !values.browser.startsWith("chromium-"))
     throw new Error("--explore requires a Chromium browser project for agent attachment.");
   return { ...values, area: aliases[values.area] ?? values.area };

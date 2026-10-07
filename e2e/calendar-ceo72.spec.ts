@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import { build } from "esbuild";
 import { dirname } from "node:path";
 import { readFile } from "node:fs/promises";
-import { installQaDate } from "../qa/browser/helpers.ts";
 
 // UI, agregador, validación, mappers y adaptador de calendario reales.
 // Sólo el SDK de transporte se sustituye; nunca escribe datos de producción.
@@ -78,7 +77,7 @@ createRoot(document.getElementById('root')).render(<LazyMotion features={domAnim
 });
 
 test.beforeEach(async ({ page }, info) => {
-  await installQaDate(page, new Date("2026-09-15T13:30:00Z"));
+  await page.clock.setFixedTime(new Date("2026-09-15T13:30:00Z"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const styles = await page.evaluate(() => ({
@@ -96,22 +95,15 @@ test.beforeEach(async ({ page }, info) => {
   );
   await page.goto("/__calendar");
   await page.addScriptTag({ content: bundle });
-  await page.addStyleTag({ content: await readFile("app/campus-base.css", "utf8") });
-  await page.addStyleTag({ content: await readFile("app/mobile-shell.css", "utf8") });
   await page.addStyleTag({ content: await readFile("app/campus.css", "utf8") });
-  if (info.project.use.isMobile) {
-    await expect(page.getByLabel("Ir a una fecha")).toBeHidden();
-    await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-09-15");
-  } else {
-    await page.getByLabel("Ir a una fecha").fill("2026-09-15");
-  }
+  await page.getByLabel("Ir a una fecha").fill("2026-09-15");
   await expect(page.getByText("Sincronizando bloques…")).toHaveCount(0);
   const controlHeights = await page
     .locator(
       ".planner-controls > :is(.planner-view-switch, .planner-step, .planner-create), .planner-jump input"
     )
     .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
-  expect(controlHeights).toEqual([44, 44, info.project.use.isMobile ? 0 : 44, 44]);
+  expect(controlHeights).toEqual([44, 44, 44, 44]);
   const touchToggle = page.getByRole("button", { name: "Selección táctil desactivada" });
   if (info.project.use.hasTouch) await expect(touchToggle).toBeVisible();
   else await expect(touchToggle).toBeHidden();
@@ -221,13 +213,7 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   );
   await page.getByRole("button", { name: "Mes siguiente" }).click();
   await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-10-01");
-
-  if (info.project.use.isMobile) {
-    await page.getByRole("button", { name: "Hoy", exact: true }).click();
-    await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-09-15");
-  } else {
-    await page.getByLabel("Ir a una fecha").fill("2026-09-15");
-  }
+  await page.getByLabel("Ir a una fecha").fill("2026-09-15");
   await page.getByRole("button", { name: "Añadir bloque" }).click();
   await page.getByLabel("Título", { exact: true }).fill("Clase de EDO");
   await page.getByRole("combobox", { name: "Tipo", exact: true }).selectOption("clase");

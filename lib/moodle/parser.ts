@@ -1,7 +1,6 @@
 import Papa from "papaparse";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
-// Implements: REQ-PERF-LOAD-01
-import { sanitizeAcademicHtml } from "../academic-sanitizer.ts";
+import { sanitizeAcademicHtml } from "../academic-content.ts";
 import { htmlToAcademicMarkdown } from "../multimodal-editor.ts";
 import { RICH_TEXT_MAX_LENGTH, safeLinkDestination } from "../rich-text.ts";
 import {

@@ -76,13 +76,7 @@ export function MoodleImportDialog({ course }: { course: Course }) {
     <>
       <button
         className="secondary-button moodle-import-trigger"
-        onClick={(event) => {
-          const dialog = dialogRef.current;
-
-          if (!dialog) return;
-          dialog.dataset.motion = event.detail > 0 ? "pointer" : "instant";
-          dialog.showModal();
-        }}
+        onClick={() => dialogRef.current?.showModal()}
         type="button"
       >
         <FileArrowUp aria-hidden="true" size={18} />
@@ -98,6 +92,7 @@ export function MoodleImportDialog({ course }: { course: Course }) {
       >
         <div className="moodle-import-dialog__header">
           <div>
+            <span className="eyebrow">Migración de curso</span>
             <h2 id={`${inputId}-title`}>Importar desde Moodle UBB</h2>
             <p>Revisa el respaldo antes de restaurarlo en {course.name}.</p>
           </div>

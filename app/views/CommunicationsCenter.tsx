@@ -305,14 +305,14 @@ function CommunicationsPanels({
                       <ItemIcon size={20} weight="duotone" />
                     </span>
                     <span className="announcement-copy">
-                      <span className="announcement-title">{item.title}</span>
                       <span className="announcement-meta">
                         <strong>{course?.name ?? `Sección ${item.courseId}`}</strong>
                         <span>{details.label}</span>
-                        <time className="num" dateTime={item.createdAt}>
-                          {communicationDate(item.createdAt)}
-                        </time>
                       </span>
+                      <span className="announcement-title">{item.title}</span>
+                      <time className="num" dateTime={item.createdAt}>
+                        {communicationDate(item.createdAt)}
+                      </time>
                     </span>
                     <span className="announcement-end">
                       {isUnread && <span className="announcement-unread">Nuevo</span>}

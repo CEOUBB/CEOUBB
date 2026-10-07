@@ -551,15 +551,7 @@ export function watchCourseActivity(
         stops.push(
           sdk.onSnapshot(
             sdk.query(
-              // Implements: REQ-PERF-LOAD-03
-              sdk.collection(
-                db,
-                "courses",
-                courseId,
-                process.env.NEXT_PUBLIC_CEOUBB_ACTIVITY_PROJECTION === "enabled"
-                  ? "activity"
-                  : "posts"
-              ),
+              sdk.collection(db, "courses", courseId, "posts"),
               sdk.orderBy("createdAt", "desc"),
               sdk.limit(ACTIVITY_LIMIT_PER_SECTION)
             ),

@@ -123,6 +123,7 @@ function QuizBuilderForm({
     <form className="quiz-builder" onSubmit={submit}>
       <div className="section-title compact-title">
         <div>
+          <span className="eyebrow">Nuevo control</span>
           <h2>Importar y publicar</h2>
         </div>
         <span className="quiz-limit">máx. {MAX_QUIZ_QUESTIONS}</span>
@@ -311,6 +312,7 @@ function QuizCatalogList({
     <div className="quiz-catalog">
       <div className="section-title compact-title">
         <div>
+          <span className="eyebrow">Sección</span>
           <h2>Cuestionarios publicados</h2>
         </div>
         <span className="quiz-count">{quizzes.length}</span>

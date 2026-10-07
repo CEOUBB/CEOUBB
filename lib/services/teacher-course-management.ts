@@ -172,15 +172,14 @@ function normalizedAssistant(value: unknown): AssistantInput {
   }
 }
 
-async function managedSection(actor: PublicUser, sectionId: string, db: Database, writable = true) {
+async function managedSection(actor: PublicUser, sectionId: string, db: Database) {
   requireTeacher(actor);
   if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(sectionId)) {
     throw new CourseManagementError("NOT_FOUND", 404, "El ramo no existe.");
   }
   const rows = await db
-    .select({ id: secciones.id, teacherId: secciones.docenteId, periodStatus: periodos.estado })
+    .select({ id: secciones.id, teacherId: secciones.docenteId })
     .from(secciones)
-    .innerJoin(periodos, eq(secciones.periodoId, periodos.id))
     .where(eq(secciones.id, sectionId))
     .limit(1);
   const section = rows[0];
@@ -191,10 +190,6 @@ async function managedSection(actor: PublicUser, sectionId: string, db: Database
       403,
       "Sólo el docente responsable puede administrar este ramo."
     );
-  }
-
-  if (writable && section.periodStatus !== "abierto") {
-    throw new CourseManagementError("CONFLICT", 409, "El período de esta sección está cerrado.");
   }
   return section;
 }
@@ -544,7 +539,7 @@ export async function listCourseAssistants(
   options: { limit?: number; cursor?: string | null } & CourseManagementDependencies = {}
 ): Promise<Page<CourseAssistant>> {
   const db = database(options);
-  await managedSection(actor, sectionId, db, false);
+  await managedSection(actor, sectionId, db);
   const limit = boundedLimit(options.limit);
   const rows = await db
     .select({ userId: users.id, name: users.name, email: users.email })

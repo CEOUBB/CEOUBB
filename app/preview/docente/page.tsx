@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TeacherWorkspacePreview } from "./TeacherWorkspacePreview";
 import { isTeacherPreviewEnabled } from "./teacher-preview-environment";
-import "../../campus-base.css";
-import "../../mobile-shell.css";
-import "../../campus.css";
 
 export const dynamic = "force-dynamic";
 

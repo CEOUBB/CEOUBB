@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { resolveQaRuntime } from "../qa-runtime.ts";
 import { fail } from "./errors.ts";
 
 // Implements: REQ-QMD-05
@@ -37,7 +36,7 @@ export function platformOrigin() {
     url.password ||
     (url.protocol !== "https:" &&
       !(
-        (process.env.NODE_ENV !== "production" || resolveQaRuntime() !== null) &&
+        process.env.NODE_ENV !== "production" &&
         url.protocol === "http:" &&
         ["localhost", "127.0.0.1"].includes(url.hostname)
       ))
@@ -70,7 +69,7 @@ export function contentOrigin() {
     url.hostname === platformHostname ||
     (url.protocol !== "https:" &&
       !(
-        (process.env.NODE_ENV !== "production" || resolveQaRuntime() !== null) &&
+        process.env.NODE_ENV !== "production" &&
         url.protocol === "http:" &&
         ["localhost", "127.0.0.1"].includes(url.hostname)
       ))

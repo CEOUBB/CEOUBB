@@ -158,7 +158,7 @@ test("academic prose confines technical overflow for web and Android", () => {
     path.join(process.cwd(), "app/views/classroom/RichText.tsx"),
     "utf8"
   );
-  const cssSource = fs.readFileSync(path.join(process.cwd(), "app/campus-base.css"), "utf8");
+  const cssSource = fs.readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
 
   assert.match(rendererSource, /className=\{`academic-prose rich-text /);
   assert.match(rendererSource, /className="rich-table-scroll"/);

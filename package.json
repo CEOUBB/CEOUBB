@@ -9,25 +9,19 @@
   "scripts": {
     "prepare": "simple-git-hooks",
     "dev": "next dev",
-    "dev:bun": "bun --bun next dev",
     "build": "next build",
-    "build:bun": "bun --bun next build",
     "test": "next build && node scripts/run-unit-tests.mjs && node tests/rendered-html.test.mjs",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:a11y": "node --experimental-strip-types --test tests/accessibility.test.ts",
     "test:e2e": "playwright test",
     "qa": "node --experimental-strip-types scripts/qa.mjs",
-    "qa:bun": "bun scripts/qa.mjs",
     "qa:check": "node --experimental-strip-types --test qa/*.test.mjs qa/*.test.ts",
-    "qa:check:bun": "bun test qa/catalog.test.ts && node --experimental-strip-types --test qa/*.test.mjs",
     "verify:fast": "tsc --noEmit && node scripts/run-unit-tests.mjs && node scripts/verify-test-hashes.mjs --check && openspec validate --specs",
-    "verify:fast:bun": "tsc --noEmit && node scripts/run-unit-tests.mjs && bun scripts/verify-test-hashes.mjs --check && openspec validate --specs",
     "verify:invariants": "node --experimental-strip-types --test tests/access-policy.test.ts tests/grades.test.ts tests/academic-model.test.ts",
-    "verify:invariants:bun": "bun test tests/access-policy.test.ts tests/grades.test.ts tests/academic-model.test.ts",
     "typecheck": "tsc --noEmit",
     "check:functions": "node --check firebase/functions/index.js && node --check firebase/functions/grade-audit.js && node --check firebase/functions/quiz-engine.js && node --check firebase/functions/generated/grades.js",
     "sync:grade-scale": "tsc lib/grades.ts lib/access-policy.ts --ignoreConfig --target ES2020 --module commonjs --outDir firebase/functions/generated --declaration false --skipLibCheck --esModuleInterop --noEmit false",
-    "check:rules": "pnpm dlx firebase-tools@15.28.2 emulators:exec --config firebase/firebase.json --project demo-ceoubb-rules --only firestore,storage --log-verbosity=QUIET \"node --experimental-strip-types --test --test-concurrency=1 tests/firebase-rules.test.ts qa/security/rules.test.mjs\"",
+    "check:rules": "pnpm dlx firebase-tools@15.28.2 emulators:exec --config firebase/firebase.json --project demo-ceoubb-rules --only firestore,storage --log-verbosity=QUIET \"node --experimental-strip-types --test tests/firebase-rules.test.ts\"",
     "test:rules": "pnpm run check:rules",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -36,18 +30,18 @@
     "specs:validate": "openspec validate --specs",
     "specs:status": "openspec list --specs",
     "db:generate": "drizzle-kit generate",
-    "db:setup:local": "node --experimental-strip-types scripts/setup-local-db.mjs --reset",
-    "db:seed:local": "node --experimental-strip-types scripts/setup-local-db.mjs",
-    "staging:seed": "node --experimental-strip-types scripts/seed-staging.mjs",
-    "preview:seed": "node --experimental-strip-types scripts/seed-preview-demo.mjs",
-    "capacity:preflight": "node --experimental-strip-types scripts/capacity-preflight.mjs",
-    "capacity:prepare": "node --experimental-strip-types scripts/prepare-capacity-fixtures.mjs",
-    "capacity:disable-auth": "node --experimental-strip-types scripts/capacity-auth-provider.mjs disable",
-    "capacity:telemetry": "node --experimental-strip-types scripts/collect-capacity-telemetry.mjs",
-    "capacity:report": "node --experimental-strip-types scripts/build-capacity-report.mjs",
-    "cloudflare:build": "opennextjs-cloudflare build && opennextjs-cloudflare populateCache local",
+    "db:setup:local": "node scripts/setup-local-db.mjs --reset",
+    "db:seed:local": "node scripts/setup-local-db.mjs",
+    "staging:seed": "node scripts/seed-staging.mjs",
+    "preview:seed": "node scripts/seed-preview-demo.mjs",
+    "capacity:preflight": "node scripts/capacity-preflight.mjs",
+    "capacity:prepare": "node scripts/prepare-capacity-fixtures.mjs",
+    "capacity:disable-auth": "node scripts/capacity-auth-provider.mjs disable",
+    "capacity:telemetry": "node scripts/collect-capacity-telemetry.mjs",
+    "capacity:report": "node scripts/build-capacity-report.mjs",
+    "cloudflare:build": "opennextjs-cloudflare build",
     "cloudflare:preview": "opennextjs-cloudflare preview",
-    "cloudflare:deploy": "pnpm run cloudflare:build && wrangler deploy --minify --keep-vars"
+    "cloudflare:deploy": "opennextjs-cloudflare build && wrangler deploy --minify --keep-vars"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.5.2",
@@ -75,7 +69,7 @@
     "isomorphic-dompurify": "4.2.0",
     "katex": "^0.18.7",
     "motion": "^13.4.0",
-    "next": "16.3.6",
+    "next": "16.3.5",
     "nuqs": "^2.10.1",
     "papaparse": "^5.7.0",
     "pdfjs-dist": "^6.3.289",
@@ -103,7 +97,7 @@
     "@eslint/js": "10.0.1",
     "@firebase/rules-unit-testing": "5.0.2",
     "@fission-ai/openspec": "^1.13.1",
-    "@next/eslint-plugin-next": "16.3.6",
+    "@next/eslint-plugin-next": "16.3.5",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/hast": "^3.0.5",
@@ -123,50 +117,11 @@
     "simple-git-hooks": "^2.14.0",
     "sonner": "^2.0.8",
     "tailwindcss": "4.3.3",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
     "wrangler": "^4.134.0"
   },
   "type": "module",
-  "pnpm": {
-    "packageExtensions": {
-      "@typescript-eslint/eslint-plugin": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "@typescript-eslint/parser": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "@typescript-eslint/project-service": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "@typescript-eslint/type-utils": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "@typescript-eslint/typescript-estree": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "@typescript-eslint/utils": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      },
-      "typescript-eslint": {
-        "dependencies": {
-          "typescript": "6.0.3"
-        }
-      }
-    }
-  },
   "simple-git-hooks": {
     "pre-commit": "node scripts/scan-staged-secrets.mjs && node scripts/verify-test-hashes.mjs --check && pnpm run verify:invariants",
     "commit-msg": "node scripts/verify-commit-msg.mjs $1",

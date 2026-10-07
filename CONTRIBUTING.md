@@ -6,9 +6,8 @@ Este documento establece las directrices y estándares de desarrollo para contri
 
 ## Requisitos del Entorno
 
-- **Node.js**: `>= 22.13.0` (requerido para emuladores Firebase, Cloud Functions y fixtures Node)
-- **Bun**: `>= 1.4.2` (runtime autoritativo local para Next.js, base de datos SQLite/Turso y ejecución de pruebas con `bun test`)
-- **Gestor de paquetes**: `pnpm 10.5.2` (ó `10.x` compatible, exclusivo para gestión de dependencias `pnpm install` / `pnpm add`; no utilizar `npm` ni `yarn`)
+- **Node.js**: `>= 22.13.0`
+- **Gestor de paquetes**: `pnpm 10.5.2` (ó `10.x` compatible, obligatorio para emulador Firebase; no utilizar `npm` ni `bun`)
 - **Java JDK**: `Java 21` (distribución Temurin recomendada, requerida para compilación de Android en Capacitor)
 - **Android Studio / SDK**: Android API 36 / Build Tools 36.0.0+ (requerido para emulación y depuración móvil en Capacitor)
 
@@ -87,10 +86,10 @@ docs(readme): actualizar instrucciones de compilación local
 Previo a la apertura de un Pull Request, es obligatorio ejecutar y validar satisfactoriamente el conjunto de compuertas de calidad:
 
 ```bash
-# Verificación rápida con candado criptográfico (<3s: Typecheck nativo tsc 7.0.2 + Tests unitarios + Hash Guard)
+# Verificación rápida con candado criptográfico (<3s: Typecheck + Tests + Hash Guard)
 pnpm run verify:fast
 
-# Verificación de invariantes de seguridad (<500ms)
+# Verificación de invariantes de seguridad y reglas de Firebase (<500ms)
 pnpm run verify:invariants
 
 # Verificación de formato y sintaxis

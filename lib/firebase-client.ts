@@ -107,20 +107,9 @@ async function nativeCredentialSignIn() {
 
 /** Cierra la sesión en las dos capas: sin esto la hoja nativa recuerda la cuenta rechazada. */
 // Implements: REQ-CAP-12b
-export async function signOutOfFirebase() {
-  if (Capacitor.isNativePlatform()) {
-    await import("./push-notifications.ts")
-      .then(({ unregisterPushNotifications }) => unregisterPushNotifications())
-      .catch(() => undefined);
-  }
-
-  const results = await Promise.allSettled([
-    signOut(getAuth(firebaseApp)),
-    ...(Capacitor.isNativePlatform() ? [FirebaseAuthentication.signOut()] : []),
-  ]);
-  const failure = results.find((result) => result.status === "rejected");
-
-  if (failure?.status === "rejected") throw failure.reason;
+async function abandonSession() {
+  await signOut(getAuth(firebaseApp)).catch(() => undefined);
+  if (Capacitor.isNativePlatform()) await FirebaseAuthentication.signOut().catch(() => undefined);
 }
 
 async function isRegisteredOwner(uid: string): Promise<boolean> {
@@ -147,7 +136,7 @@ export async function signInWithInstitutionalGoogle() {
   if (!roleForEmail(result.user.email ?? "")) {
     const owner = await isRegisteredOwner(result.user.uid);
     if (!owner) {
-      await signOutOfFirebase();
+      await abandonSession();
       throw new Error(ACCESS_REJECTION_MESSAGE);
     }
   }

@@ -152,9 +152,7 @@ export default function FaqBrowser() {
                     <p key={parrafo.slice(0, 40)}>{parrafo}</p>
                   ))}
                   {pregunta.enlace ? (
-                    <Link prefetch={false} href={pregunta.enlace.href}>
-                      {pregunta.enlace.texto}
-                    </Link>
+                    <Link href={pregunta.enlace.href}>{pregunta.enlace.texto}</Link>
                   ) : null}
                 </div>
               </details>
@@ -169,7 +167,7 @@ export default function FaqBrowser() {
             Ninguna pregunta publicada menciona <strong>{filtro}</strong>. Puede que sea algo que
             todavía no hemos respondido aquí.
           </p>
-          <Link prefetch={false} className="policy-submit" href="/contacto">
+          <Link className="policy-submit" href="/contacto">
             Preguntar directamente
           </Link>
         </div>

@@ -69,24 +69,14 @@ export default function FaqPage() {
           párrafo, y `.policy-page p a` le impondría subrayado y color de
           enlace por encima de los suyos.
         */}
-        <Link prefetch={false} className="policy-submit" href="/contacto">
+        <Link className="policy-submit" href="/contacto">
           Ir a contacto y soporte
         </Link>
 
         <nav aria-label="Documentos relacionados">
-          Ver también la{" "}
-          <Link prefetch={false} href="/privacidad">
-            política de privacidad
-          </Link>
-          , los{" "}
-          <Link prefetch={false} href="/terminos">
-            términos de uso
-          </Link>{" "}
-          y la{" "}
-          <Link prefetch={false} href="/accesibilidad">
-            declaración de accesibilidad
-          </Link>
-          .
+          Ver también la <Link href="/privacidad">política de privacidad</Link>, los{" "}
+          <Link href="/terminos">términos de uso</Link> y la{" "}
+          <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
       <SiteFooter />

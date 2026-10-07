@@ -4,10 +4,6 @@ import { sessions, users } from "../db/schema.ts";
 import type { AccountRole } from "./access-policy.ts";
 import type { SessionState } from "./portal-utils.ts";
 import { MAX_PAGE_SIZE, listUserSections } from "./services/academic-catalog.ts";
-import { SESSION_COOKIE } from "./session-cookie.ts";
-import { resolveQaRuntime } from "./qa-runtime.ts";
-
-export { SESSION_COOKIE } from "./session-cookie.ts";
 
 export type PublicUser = {
   id: string;
@@ -18,10 +14,10 @@ export type PublicUser = {
   photoUrl?: string | null;
 };
 
+export const SESSION_COOKIE = "centro_estudio_session";
 export const MAX_ACTIVE_SESSIONS_PER_USER = 10;
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
-const SESSION_SECURE =
-  resolveQaRuntime() || process.env.NODE_ENV !== "production" ? "" : "; Secure";
+const SESSION_SECURE = process.env.NODE_ENV === "production" ? "; Secure" : "";
 
 // Implements: REQ-PERF-02
 export async function pruneExpiredSessions(): Promise<number> {
@@ -152,8 +148,14 @@ export async function getServerSessionState(rawToken: string | null): Promise<Se
   }
 
   const [current, archived] = await Promise.all([
-    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "current" }),
-    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "archived" }),
+    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "current" }).catch(() => ({
+      items: [],
+      nextCursor: null,
+    })),
+    listUserSections(user.id, { limit: MAX_PAGE_SIZE, scope: "archived" }).catch(() => ({
+      items: [],
+      nextCursor: null,
+    })),
   ]);
 
   const memberships = current.items.map((section) => ({

@@ -1,5 +1,3 @@
-import { resolveQaRuntime } from "../qa-runtime.ts";
-
 // lib/services/turnstile.ts
 // Implements: SEC-04, SEC-07, REQ-SUP-04
 
@@ -9,8 +7,7 @@ import { resolveQaRuntime } from "../qa-runtime.ts";
  */
 export async function verifyTurnstileToken(token?: string, ip?: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  // Implements: REQ-QA-02
-  if (!secret) return process.env.NODE_ENV !== "production" || resolveQaRuntime() !== null;
+  if (!secret) return process.env.NODE_ENV !== "production";
 
   if (!token || typeof token !== "string" || token.trim() === "") {
     return false;

@@ -44,29 +44,12 @@ Role derivation is strictly deterministic and governed exclusively by institutio
 
 Access to course data is granted **if and only if** an active enrollment projection exists at `enrollments/{uid}/sections/{seccionId}`. Firestore and Storage rules enforce it with `exists()`; the projection is written server-side by `lib/services/enrollment-projection.ts` and is read-only for every client. Collection-group wildcard reads (`match /{path=**}/...`) are prohibited: they reopen every section of the university.
 
-Personal calendar and avatar writes require institutional membership. A shared team submission download additionally requires current enrollment and the receipt's exact `storagePath`; directory membership alone never grants access. Direct client receipts are restricted to individual evaluations. Archived periods deny communication and teacher management mutations, while historical reads remain available. Callable academic writes and ADECCA post imports read section and period state in the same Firestore transaction that commits the mutation.
-
-Logout closes the portal cookie, web Firebase identity and native Firebase identity. Native push registration is retired before identity teardown; callbacks from an earlier registration cannot persist a token for another account. Production release workflows require production signing credentials and never publish debug APKs. Cloudflare preview deployments use a separate `CLOUDFLARE_PREVIEW_API_TOKEN`; production token scopes and environment protection still require provider-side verification.
-
-GitHub's `Production` environment requires approval by its designated release reviewer and accepts only `main` or `v*` tags. `Staging` accepts only `main`; `Preview` accepts only `refs/pull/*/merge`. Production deployment and signing credentials must reside in `Production`, outside repository-wide secret scope. Environment configuration does not establish that every credential has been migrated or that Cloudflare token permissions are isolated.
-
-Preview CI updates only the existing `ceoubb-preview` Worker using its individual Editor token. Its `staging.ceoubb.com` custom domain is provisioned separately and must remain bound before publication; CI does not manage zone routes or the account subdomain. Preview `workers.dev` and version preview URLs remain disabled. Preview deployment links use `https://staging.ceoubb.com`.
-
 ### 2.2 Data Partitioning & Persistence
 
 - **System of Record (SoR):** Turso/libSQL with Drizzle ORM stores the relational academic structure (`facultades`, `carreras`, `secciones`, `inscripciones`, `usuarios`).
 - **Operational Projection:** Firestore holds real-time posts, notifications, files, and the one-way membership projection used by `exists()` in security rules.
 - **Course Identity:** A course is always a **Section** (_subject $\times$ academic period $\times$ section_), never a plain unstructured string.
 - **Grade Arithmetic:** `lib/grades.ts` is the single source of truth for the Chilean 1.0–7.0 scale and weighted average calculations.
-
-### 2.2.1 Activity Projection and Private Cache Isolation
-
-- `courses/{sectionId}/activity/{postId}` is a compact, server owned projection maintained by `firebase/functions/activity-projection.js`. Reads require the same owner or active institutional enrollment policy as posts; every client write is denied.
-- `NEXT_PUBLIC_CEOUBB_ACTIVITY_PROJECTION` defaults disabled. Enable the literal `enabled` only after deploying rules and the post write trigger, completing the bounded backfill, and verifying a full fresh parity scan. Dry runs and completed checkpoints restart full verification; only unfinished write checkpoints resume.
-- Anonymous `/` remains static. `proxy.ts` uses session cookie presence only to route to `/campus`; `app/campus/page.tsx` validates the session and loads authorized sections on the server. Cookie presence never grants access.
-- Deployed Cloudflare private HTML, RSC and auth responses require `private, no-store` and `Vary: *` to reject Cache Storage writes, including attempts by older service workers. The service worker precaches anonymous access with omitted credentials and never persists private HTML or RSC. Native Next App Pages replace middleware Vary at render time; local identity/no-store checks must be paired with the OpenNext adapter contract and real Worker HTTP verification.
-- Proxy `Vary` must preserve Cookie and Next's RSC/router negotiation fields: OpenNext's response adapter gives middleware headers precedence. Review the explicit field list when updating Next or OpenNext.
-- OpenNext uses the existing ASSETS binding only for deployment-time prerendered content. `scripts/check-public-cache.mjs` rejects private prerendering and ISR; introduce a writable adapter before adding revalidation or dynamic cached data.
 
 ### 2.3 Mobile Seam & Remote Architecture
 
@@ -78,9 +61,6 @@ Preview CI updates only the existing `ceoubb-preview` Worker using its individua
 To navigate non-obvious structural seams efficiently without burning context on full repository scans:
 
 - **Role Policy & Auth SSOT:** `lib/access-policy.ts` (mirrored in `firebase/firestore.rules` and `firebase/storage.rules`).
-- **Public Access and Private Bootstrap:** `app/access-screen.tsx`, `app/campus/page.tsx`, `proxy.ts`, and `lib/session-cookie.ts`; public styles live in `app/globals.css`, campus rules in `app/campus-base.css`, `app/mobile-shell.css`, and `app/campus.css`.
-- **Design System Tokens:** `DESIGN.md` documents the "Separadores de archivador" system. Its tokens are scoped in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`, shared by the campus, public help and policy pages, `app/not-found.tsx` and `app/global-error.tsx`; the access screen stays outside that scope with its own Merriweather and Manrope system.
-- **Shared Profile Contracts:** `lib/user-profile-contract.ts`; server profile operations remain in `lib/services/user-profile.ts` and must not enter client import graphs.
 - **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
 - **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.
 - **Pure Grade Arithmetic:** `lib/grades.ts` (Chilean 1.0–7.0 scale, rounding, weighting).
@@ -135,7 +115,7 @@ When authoring, refining, or consuming skills (`.agents/skills/`), agents and co
 2. **NO TEST WEAKENING (TEST-LOCKING):** Agents are strictly forbidden from weakening assertions, deleting tests, adding `.skip()`, or widening thresholds in `tests/` to force builds to pass.
 3. **NO ANY OR TYPE BYPASS:** Prohibited use of `any`, `@ts-ignore`, or unsafe type assertions (`as unknown as T`) without a deterministic validation parser (Zod).
 4. **NO UNBOUNDED QUERIES:** All database queries must include explicit `.limit()` clauses and indexed pagination cursors.
-5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively as package manager (`pnpm install`, `pnpm add`). Running `npm` or `yarn` is prohibited. `bun` (>= 1.4.2) is supported as local runtime for Next.js (`bun --bun next dev`, `bun --bun next build`), local database scripts, and test execution (`bun test`), with `node` (>= 22.13.0) preserved as universal runtime for CI pipelines, production Cloudflare OpenNext builds, verification scripts, and Firebase emulator runners. Installing new packages without explicit authorization is forbidden.
+5. **NO DEPENDENCY DRIFT:** Use `pnpm` exclusively. Running `npm`, `yarn`, or `bun` is prohibited. Installing new packages without explicit authorization is forbidden.
 6. **NO FRONTEND AI SLOP (HIGH-CRAFT DESIGN GOVERNANCE):**
    - **Color & Surfaces:** Prohibited use of `#000000`, `bg-black`, `bg-zinc-950` with generic neon accents (`violet-*`, `indigo-*`). Use OKLCH surface tokens (`bg-surface-base`, `bg-surface-raised`) with warm neutrals and calibrated luminance.
    - **Glows & Text Gradients:** Prohibited use of saturated box-shadow glows (`blur-3xl`), glowing borders, and continuous gradient text (`bg-clip-text text-transparent`). Elevate via surface luminance tokens and layered micro-shadows without decorative borders.
@@ -165,7 +145,7 @@ When implementing or refactoring entities, clone the architectural patterns of t
 ```bash
 pnpm run format              # 0. Code formatting with Prettier (mandatory before commit/push)
 pnpm run format:check        # 1. Formatting verification (<1.0s)
-pnpm run verify:fast         # 2. Native Typecheck (tsc 7.0.2) + Unit Tests (Node/Bun) + SHA-256 Test-Locking Check (<3.0s)
+pnpm run verify:fast         # 2. Typecheck + Unit Tests + SHA-256 Test-Locking Check (<3.0s)
 pnpm run verify:invariants   # 3. Security Invariants + Firebase Rules Validation (<500ms)
 pnpm test                    # 4. Full Production Build + 15 Integration Suites (Pre-flight)
 ```
@@ -193,8 +173,6 @@ A task is considered complete ONLY when verified end-to-end. Do not stop at a pr
 ### 8.3 On-demand Agent QA
 
 After changing application behavior, run `pnpm qa` for affected areas and critical journeys. Use `pnpm qa --list --json` to discover scenarios, `--scenario <id>` or `--area <area>` during development, `--explore --scenario <id>` for interactive inspection, and `--all --screenshots` for the complete registered matrix. Follow [the agent QA guide](docs/testing/agent-qa.md) for prerequisites, staging, evidence, and scenario maintenance.
-
-Use `--production` when verifying final HTML/RSC cache headers or a mixed browser/API matrix. This builds disposable local output against the same guarded emulators and file database; it does not authorize production targets. The local application uses `localhost`, with a separate loopback content origin. Only a complete validated disposable QA target may omit the session cookie's Secure attribute for HTTP loopback, accept distinct HTTP loopback interoperability origins, or simulate Turnstile without a secret. Ordinary production retains Secure cookies, HTTPS interoperability and missing-secret rejection. Development mode remains available for iteration and exploration.
 
 New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
 

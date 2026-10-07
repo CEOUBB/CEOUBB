@@ -29,12 +29,9 @@
   justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  border: 0;
-  border-radius: var(--radius-lg);
-  background: var(
-    --danger-wash,
-    color-mix(in srgb, var(--shield-red-deep) 8%, var(--surface-card))
-  );
+  border: 1px solid color-mix(in srgb, var(--shield-red-deep) 30%, var(--border-hairline));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--shield-red-deep) 5%, var(--surface-card));
   font-size: 14px;
 }
 
@@ -43,10 +40,6 @@
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.interop-alert summary {
-  min-height: 24px;
 }
 
 .interop-player h2 {
@@ -321,7 +314,10 @@
 
 .interop-resource-list li > div:first-child > span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.125px;
+  text-transform: uppercase;
 }
 
 .interop-actions {

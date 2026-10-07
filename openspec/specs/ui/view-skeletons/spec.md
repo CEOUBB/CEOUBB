@@ -23,12 +23,12 @@ The system SHALL provide dedicated, layout-faithful skeleton placeholders for ea
 ##### Scenario: Admin view loading state
 
 - **WHEN** an authorized administrator navigates to the Accounts screen while its dynamic chunk is loading
-- **THEN** the system SHALL render a geometric skeleton containing the admin header metrics, search box, table rows with role labels, and pagination footer
+- **THEN** the system SHALL render a geometric skeleton containing the admin header metrics, search box, table rows with role pills, and pagination footer
 
 ##### Scenario: Classroom view loading state
 
 - **WHEN** the user opens an enrolled course while the classroom module is loading
-- **THEN** the system SHALL render a geometric skeleton containing the course breadcrumb, title, divider tab with the course code, 5 navigation tabs, notice post cards, and the side rail info card
+- **THEN** the system SHALL render a geometric skeleton containing the course breadcrumb, title, code pill, 5 navigation tabs, notice post cards, and the side rail info card
 
 #### Requirement: Accessible Loading State Announcement
 

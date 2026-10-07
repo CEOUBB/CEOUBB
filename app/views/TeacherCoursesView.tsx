@@ -3,11 +3,18 @@
 import { useEffect, useReducer, useState, type FormEvent } from "react";
 import { useQueryState, parseAsStringLiteral } from "nuqs";
 import { teacherTabs } from "../../lib/search-params";
-import { ArrowRight, BookOpenText, Plus, Trash, UserPlus, X } from "@phosphor-icons/react";
+import {
+  ArrowRight,
+  BookOpenText,
+  CheckCircle,
+  Plus,
+  Trash,
+  UserPlus,
+  UsersThree,
+} from "@phosphor-icons/react";
 import {
   COURSE_MODALITIES,
   COURSE_TONES,
-  courseToneValue,
   modalityLabel,
   type CourseAssistant,
   type CourseModality,
@@ -203,16 +210,11 @@ export function TeacherCoursesView({
           <p>Crea tu sección y mantén su ficha, evaluaciones y ayudantes desde un solo lugar.</p>
         </div>
         <button
-          aria-expanded={creating}
-          className={`${creating ? "secondary-button" : "primary-button"} teacher-create-trigger`}
+          className="primary-button teacher-create-trigger"
           onClick={() => dispatch({ type: "TOGGLE_CREATING" })}
           type="button"
         >
-          {creating ? (
-            <X aria-hidden="true" size={16} weight="bold" />
-          ) : (
-            <Plus aria-hidden="true" size={16} weight="bold" />
-          )}
+          <Plus aria-hidden="true" size={17} weight="bold" />
           {creating ? "Cerrar formulario" : "Crear ramo"}
         </button>
       </header>
@@ -251,7 +253,7 @@ export function TeacherCoursesView({
           <aside className="teacher-course-list" aria-label="Ramos administrados">
             <div className="teacher-course-list-head">
               <span>Mis secciones</span>
-              <span className="num">{courses.length}</span>
+              <b className="num">{courses.length}</b>
             </div>
             {courses.map((course) => (
               <button
@@ -274,14 +276,8 @@ export function TeacherCoursesView({
           </aside>
 
           {selected && (
-            <div
-              className="teacher-course-workspace"
-              style={{ "--course-tone": selected.tone } as React.CSSProperties}
-            >
+            <div className="teacher-course-workspace">
               <div className="teacher-course-heading">
-                <span aria-hidden="true" className="classroom-tab">
-                  {selected.code}
-                </span>
                 <div>
                   <h2>{selected.name}</h2>
                   <p className="num">
@@ -408,20 +404,16 @@ function CreateCourseForm({
   };
 
   return (
-    <form
-      className="teacher-create-form"
-      onSubmit={submit}
-      style={{ "--course-tone": courseToneValue(tone) } as React.CSSProperties}
-    >
+    <form className="teacher-create-form" onSubmit={submit}>
       <div className="teacher-form-heading">
-        <span aria-hidden="true" className="classroom-tab">
-          {code.trim() || "Nuevo ramo"}
-        </span>
-        <h2>Datos académicos esenciales</h2>
-        {period && <p>{period.label}</p>}
+        <div>
+          <span>Nueva sección</span>
+          <h2>Datos académicos esenciales</h2>
+        </div>
+        {period && <span className="teacher-period-pill">{period.label}</span>}
       </div>
       <div className="teacher-form-grid">
-        <label className="teacher-field-third">
+        <label>
           Código del ramo
           <input
             maxLength={24}
@@ -430,7 +422,7 @@ function CreateCourseForm({
             value={code}
           />
         </label>
-        <label className="teacher-field-two-thirds">
+        <label className="teacher-field-wide">
           Nombre del ramo
           <input
             maxLength={120}
@@ -439,7 +431,29 @@ function CreateCourseForm({
             value={name}
           />
         </label>
-        <label className="teacher-field-two-thirds">
+        <label>
+          Créditos SCT
+          <input
+            max={30}
+            min={0}
+            onChange={(event) => setCredits(event.target.value)}
+            required
+            type="number"
+            value={credits}
+          />
+        </label>
+        <label>
+          Sección
+          <input
+            max={99}
+            min={1}
+            onChange={(event) => setSection(event.target.value)}
+            required
+            type="number"
+            value={section}
+          />
+        </label>
+        <label className="teacher-field-wide">
           Unidad académica
           <select
             onChange={(event) => setDepartmentId(event.target.value)}
@@ -453,7 +467,7 @@ function CreateCourseForm({
             ))}
           </select>
         </label>
-        <label className="teacher-field-third">
+        <label>
           Período
           <select onChange={(event) => setPeriodId(event.target.value)} required value={periodId}>
             {catalog.periods.map((item) => (
@@ -463,29 +477,7 @@ function CreateCourseForm({
             ))}
           </select>
         </label>
-        <label className="teacher-field-third">
-          Créditos SCT
-          <input
-            max={30}
-            min={0}
-            onChange={(event) => setCredits(event.target.value)}
-            required
-            type="number"
-            value={credits}
-          />
-        </label>
-        <label className="teacher-field-third">
-          Sección
-          <input
-            max={99}
-            min={1}
-            onChange={(event) => setSection(event.target.value)}
-            required
-            type="number"
-            value={section}
-          />
-        </label>
-        <label className="teacher-field-third">
+        <label>
           Modalidad
           <select
             onChange={(event) => setModality(event.target.value as CourseModality)}
@@ -498,11 +490,20 @@ function CreateCourseForm({
             ))}
           </select>
         </label>
-        <label className="teacher-field-full">
+        <label>
           Sala o enlace
           <input maxLength={80} onChange={(event) => setRoom(event.target.value)} value={room} />
         </label>
-        <TonePicker onChange={setTone} value={tone} />
+        <label>
+          Identidad visual
+          <select onChange={(event) => setTone(event.target.value as CourseTone)} value={tone}>
+            {COURSE_TONES.map((value) => (
+              <option key={value} value={value}>
+                {toneLabel(value)}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="teacher-field-full">
           Descripción para estudiantes
           <textarea
@@ -535,7 +536,6 @@ function CourseDataForm({
 }) {
   const [working, setWorking] = useState(false);
   const [status, setStatus] = useState("");
-  const [tone, setTone] = useState<CourseTone>(course.toneKey);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -543,12 +543,13 @@ function CourseDataForm({
     setStatus("Guardando ficha…");
     const values = new FormData(event.currentTarget);
     const modality = COURSE_MODALITIES.find((value) => value === values.get("modality"));
+    const tone = COURSE_TONES.find((value) => value === values.get("tone"));
     const input: UpdateTeacherCourseInput = {
       title: String(values.get("title") ?? ""),
       summary: String(values.get("summary") ?? ""),
       modality: modality ?? course.modality,
       room: String(values.get("room") ?? ""),
-      tone,
+      tone: tone ?? course.toneKey,
     };
     try {
       const updated = await updateManagedCourse(course.id, input);
@@ -564,15 +565,18 @@ function CourseDataForm({
   return (
     <form className="teacher-config-panel" onSubmit={submit}>
       <div className="teacher-panel-intro">
-        <h3>Datos del ramo</h3>
-        <p>Esta información aparece en la portada y en la navegación de tus estudiantes.</p>
+        <BookOpenText aria-hidden="true" size={22} />
+        <div>
+          <h3>Datos del ramo</h3>
+          <p>Esta información aparece en la portada y en la navegación de tus estudiantes.</p>
+        </div>
       </div>
       <div className="teacher-form-grid">
         <label className="teacher-field-full">
           Nombre visible
           <input defaultValue={course.name} maxLength={120} name="title" required />
         </label>
-        <label className="teacher-field-third">
+        <label>
           Modalidad
           <select defaultValue={course.modality} name="modality">
             {COURSE_MODALITIES.map((value) => (
@@ -582,11 +586,20 @@ function CourseDataForm({
             ))}
           </select>
         </label>
-        <label className="teacher-field-two-thirds">
+        <label>
           Sala o enlace
           <input defaultValue={course.room} maxLength={80} name="room" />
         </label>
-        <TonePicker onChange={setTone} value={tone} />
+        <label>
+          Identidad visual
+          <select defaultValue={course.toneKey} name="tone">
+            {COURSE_TONES.map((value) => (
+              <option key={value} value={value}>
+                {toneLabel(value)}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="teacher-field-full">
           Descripción
           <textarea defaultValue={course.summary} maxLength={2000} name="summary" rows={5} />
@@ -650,8 +663,11 @@ function CourseEvaluations({ course }: { course: ManagedCourse }) {
   return (
     <section className="teacher-config-panel">
       <div className="teacher-panel-intro">
-        <h3>Evaluaciones</h3>
-        <p>Define el esquema completo; la suma debe ser exactamente 100%.</p>
+        <CheckCircle aria-hidden="true" size={22} />
+        <div>
+          <h3>Evaluaciones</h3>
+          <p>Define el esquema completo; la suma debe ser exactamente 100%.</p>
+        </div>
       </div>
       {loading && <p role="status">Cargando la ponderación del ramo…</p>}
       {error && (
@@ -756,8 +772,11 @@ function CourseAssistants({ course }: { course: ManagedCourse }) {
   return (
     <section className="teacher-config-panel">
       <div className="teacher-panel-intro">
-        <h3>Ayudantes</h3>
-        <p>Designa estudiantes ya registrados con su correo institucional UBB.</p>
+        <UsersThree aria-hidden="true" size={22} />
+        <div>
+          <h3>Ayudantes</h3>
+          <p>Designa estudiantes ya registrados con su correo institucional UBB.</p>
+        </div>
       </div>
       <form className="teacher-assistant-form" onSubmit={assign}>
         <span className="teacher-assistant-label" id="assistant-email-label">
@@ -781,7 +800,7 @@ function CourseAssistants({ course }: { course: ManagedCourse }) {
       </form>
       <div className="teacher-assistant-list">
         {assistants.length === 0 ? (
-          <p className="teacher-assistant-empty">Este ramo aún no tiene ayudantes designados.</p>
+          <p className="empty-row">Este ramo aún no tiene ayudantes designados.</p>
         ) : (
           assistants.map((assistant) => (
             <div key={assistant.userId}>
@@ -810,33 +829,6 @@ function CourseAssistants({ course }: { course: ManagedCourse }) {
         {status}
       </p>
     </section>
-  );
-}
-
-function TonePicker({
-  onChange,
-  value,
-}: {
-  onChange: (tone: CourseTone) => void;
-  value: CourseTone;
-}) {
-  return (
-    <fieldset className="teacher-tone-picker teacher-field-full">
-      <legend>Identidad visual</legend>
-      {COURSE_TONES.map((tone) => (
-        <label key={tone} style={{ "--course-tone": courseToneValue(tone) } as React.CSSProperties}>
-          <input
-            checked={value === tone}
-            name="tone"
-            onChange={() => onChange(tone)}
-            type="radio"
-            value={tone}
-          />
-          <span aria-hidden="true" className="teacher-tone-swatch" />
-          {toneLabel(tone)}
-        </label>
-      ))}
-    </fieldset>
   );
 }
 

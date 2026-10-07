@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { AnimatePresence } from "motion/react";
 import type { Tab } from "./classroom-utils";
 import { LockKey, Plus, Tray } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
@@ -96,8 +97,6 @@ export function ClassroomView({
   const [composing, setComposing] = useState(false);
   // Implements: REQ-REV-04
   const [reviewing, setReviewing] = useState(false);
-  // Implements: REQ-PERF-LOAD-01
-  const [importsMounted, setImportsMounted] = useState(false);
 
   const handleTabKeyDown = (key: Tab, event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -182,9 +181,6 @@ export function ClassroomView({
           las acciones del ramo colgando de un título de sección.
         */}
         <header className="classroom-top">
-          <span aria-hidden="true" className="classroom-tab num">
-            {course.code}
-          </span>
           <div className="classroom-heading">
             <span className="breadcrumb">
               <button onClick={goBack} type="button">
@@ -212,19 +208,12 @@ export function ClassroomView({
               {canManageContent && (
                 <>
                   {canTeach && (
-                    <details
-                      className="classroom-imports"
-                      onToggle={(event) => {
-                        if (event.currentTarget.open) setImportsMounted(true);
-                      }}
-                    >
+                    <details className="classroom-imports">
                       <summary>Importar contenidos</summary>
-                      {importsMounted && (
-                        <div className="classroom-import-actions">
-                          {canTeach && <MoodleImportDialog course={course} />}
-                          {canTeach && <AdeccaImportDialog course={course} />}
-                        </div>
-                      )}
+                      <div className="classroom-import-actions">
+                        {canTeach && <MoodleImportDialog course={course} />}
+                        {canTeach && <AdeccaImportDialog course={course} />}
+                      </div>
                     </details>
                   )}
                   <button className="publication-cta" onClick={startPublication} type="button">
@@ -264,88 +253,93 @@ export function ClassroomView({
             );
           })}
         </div>
-        <Screen key={tab}>
-          <div
-            id={`classroom-panel-${tab}`}
-            role="tabpanel"
-            aria-labelledby={`classroom-tab-${tab}`}
-          >
-            <ClassroomErrorBoundary fallbackTitle="No se pudo cargar la vista del curso" key={tab}>
-              {tab === "home" && (
-                <>
-                  <LiveClassBanner liveClass={classroom.liveClass} />
-                  <div className="classroom-columns">
-                    <PostsSection
-                      posts={posts}
-                      user={user}
-                      canManageContent={canManageContent}
-                      editPost={editPost}
-                      deletePost={deletePost}
-                      openAttachment={openAttachment}
-                      startPublication={startPublication}
-                    />
-                    <CourseRail
-                      course={course}
-                      canTeach={canTeach}
-                      readOnly={readOnly}
-                      showParticipants={() => setTab("people")}
-                      courseReference={courseReference}
-                      copiedCourseReference={copiedCourseReference}
-                      copyCourseReference={copyCourseReference}
-                      liveClass={classroom.liveClass}
-                      liveClassStatus={liveClassStatus}
-                      liveClassInvalid={liveClassInvalid}
-                      saveLiveClass={saveLiveClass}
-                      clearLiveClass={clearLiveClass}
-                      status={status}
-                    />
-                  </div>
-                </>
-              )}
-              {tab === "grades" && (
-                <GradesSection
-                  retry={retryClassroom}
-                  course={course}
-                  classroom={classroom}
-                  user={user}
-                  canTeach={canTeach}
-                  canReadHistory={canReadGradeHistory(user.role, sectionRole)}
-                  note={note}
-                  status={status}
-                  readOnly={readOnly}
-                />
-              )}
-              {tab === "quizzes" && (
-                <QuizzesSection
-                  course={course}
-                  classroom={classroom}
-                  canTeach={canTeach}
-                  note={note}
-                  readOnly={readOnly}
-                />
-              )}
-              {tab === "interop" && (
-                <InteropSection
-                  key={course.id}
-                  sectionId={course.id}
-                  canTeach={canTeach}
-                  isOwner={user.role === "owner"}
-                  readOnly={readOnly}
-                  note={note}
-                />
-              )}
-              {tab === "people" && (
-                <PeopleSection
-                  canTeach={canTeach}
-                  course={course}
-                  sectionRole={sectionRole}
-                  students={students}
-                  user={user}
-                />
-              )}
-            </ClassroomErrorBoundary>
-          </div>
-        </Screen>
+        <AnimatePresence initial={false} mode="wait">
+          <Screen key={tab}>
+            <div
+              id={`classroom-panel-${tab}`}
+              role="tabpanel"
+              aria-labelledby={`classroom-tab-${tab}`}
+            >
+              <ClassroomErrorBoundary
+                fallbackTitle="No se pudo cargar la vista del curso"
+                key={tab}
+              >
+                {tab === "home" && (
+                  <>
+                    <LiveClassBanner liveClass={classroom.liveClass} />
+                    <div className="classroom-columns">
+                      <PostsSection
+                        posts={posts}
+                        user={user}
+                        canManageContent={canManageContent}
+                        editPost={editPost}
+                        deletePost={deletePost}
+                        openAttachment={openAttachment}
+                        startPublication={startPublication}
+                      />
+                      <CourseRail
+                        course={course}
+                        canTeach={canTeach}
+                        readOnly={readOnly}
+                        showParticipants={() => setTab("people")}
+                        courseReference={courseReference}
+                        copiedCourseReference={copiedCourseReference}
+                        copyCourseReference={copyCourseReference}
+                        liveClass={classroom.liveClass}
+                        liveClassStatus={liveClassStatus}
+                        liveClassInvalid={liveClassInvalid}
+                        saveLiveClass={saveLiveClass}
+                        clearLiveClass={clearLiveClass}
+                        status={status}
+                      />
+                    </div>
+                  </>
+                )}
+                {tab === "grades" && (
+                  <GradesSection
+                    retry={retryClassroom}
+                    course={course}
+                    classroom={classroom}
+                    user={user}
+                    canTeach={canTeach}
+                    canReadHistory={canReadGradeHistory(user.role, sectionRole)}
+                    note={note}
+                    status={status}
+                    readOnly={readOnly}
+                  />
+                )}
+                {tab === "quizzes" && (
+                  <QuizzesSection
+                    course={course}
+                    classroom={classroom}
+                    canTeach={canTeach}
+                    note={note}
+                    readOnly={readOnly}
+                  />
+                )}
+                {tab === "interop" && (
+                  <InteropSection
+                    key={course.id}
+                    sectionId={course.id}
+                    canTeach={canTeach}
+                    isOwner={user.role === "owner"}
+                    readOnly={readOnly}
+                    note={note}
+                  />
+                )}
+                {tab === "people" && (
+                  <PeopleSection
+                    canTeach={canTeach}
+                    course={course}
+                    sectionRole={sectionRole}
+                    students={students}
+                    user={user}
+                  />
+                )}
+              </ClassroomErrorBoundary>
+            </div>
+          </Screen>
+        </AnimatePresence>
       </main>
     </div>
   );

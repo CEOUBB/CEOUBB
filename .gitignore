@@ -54,7 +54,6 @@ dev.*.log
 local.db*
 /outputs/
 /work/
-/working/
 /graphify*/
 /graphify-out/
 

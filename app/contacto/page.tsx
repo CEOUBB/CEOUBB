@@ -28,9 +28,7 @@ export default function ContactoPage() {
 
         <nav className="contact-shortcuts" aria-label="Opciones de ayuda">
           <a href="#formulario">Escribir a soporte</a>
-          <Link prefetch={false} href="/faq">
-            Consultar preguntas frecuentes
-          </Link>
+          <Link href="/faq">Consultar preguntas frecuentes</Link>
           <a href="#canales">Canales y plazos</a>
         </nav>
 
@@ -41,9 +39,7 @@ export default function ContactoPage() {
           la aplicación móvil, es probable que encuentres la respuesta en un minuto.
         </p>
         <p>
-          <Link prefetch={false} href="/faq">
-            Revisar las preguntas frecuentes
-          </Link>
+          <Link href="/faq">Revisar las preguntas frecuentes</Link>
         </p>
 
         <h2 id="canales">Canales y plazos</h2>
@@ -66,20 +62,14 @@ export default function ContactoPage() {
           <dd>
             Se atienden por este mismo canal, con el mismo compromiso de plazos. Indica la página,
             la tarea que intentabas realizar y, si quieres, tu navegador o tecnología de asistencia.
-            Los detalles están en la{" "}
-            <Link prefetch={false} href="/accesibilidad">
-              declaración de accesibilidad
-            </Link>
+            Los detalles están en la <Link href="/accesibilidad">declaración de accesibilidad</Link>
             .
           </dd>
           <dt>Datos personales</dt>
           <dd>
             Las solicitudes de acceso, rectificación o eliminación de tus datos también llegan aquí.
             El procedimiento está descrito en la{" "}
-            <Link prefetch={false} href="/privacidad">
-              política de privacidad
-            </Link>
-            .
+            <Link href="/privacidad">política de privacidad</Link>.
           </dd>
         </dl>
 
@@ -102,23 +92,10 @@ export default function ContactoPage() {
         </p>
 
         <nav aria-label="Documentos relacionados">
-          Ver también las{" "}
-          <Link prefetch={false} href="/faq">
-            preguntas frecuentes
-          </Link>
-          , la{" "}
-          <Link prefetch={false} href="/privacidad">
-            política de privacidad
-          </Link>
-          , los{" "}
-          <Link prefetch={false} href="/terminos">
-            términos de uso
-          </Link>{" "}
-          y la{" "}
-          <Link prefetch={false} href="/accesibilidad">
-            declaración de accesibilidad
-          </Link>
-          .
+          Ver también las <Link href="/faq">preguntas frecuentes</Link>, la{" "}
+          <Link href="/privacidad">política de privacidad</Link>, los{" "}
+          <Link href="/terminos">términos de uso</Link> y la{" "}
+          <Link href="/accesibilidad">declaración de accesibilidad</Link>.
         </nav>
       </article>
       <SiteFooter />

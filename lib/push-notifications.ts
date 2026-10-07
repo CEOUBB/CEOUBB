@@ -20,7 +20,6 @@ import { isNativeShell } from "./mobile-bridge";
 
 /** Una sola suscripción por proceso: en React los efectos pueden correr dos veces. */
 let registrationStarted = false;
-let registrationGeneration = 0;
 
 /**
  * Espera a que Firebase resuelva la sesión. Copia deliberada del helper
@@ -49,11 +48,10 @@ function currentUser() {
  * campo es lo que la regla de Firestore permite (REQ-CAP-18): cualquier campo
  * extra en el mismo write haría que `hasOnly` rechace la operación completa.
  */
-async function persistToken(fcmToken: string, uid: string, generation: number): Promise<void> {
+async function persistToken(fcmToken: string): Promise<void> {
   if (!fcmToken) return;
   await firebaseEmulatorsReady;
   const [sdk, user] = await Promise.all([import("firebase/firestore"), currentUser()]);
-  if (user.uid !== uid || generation !== registrationGeneration || !registrationStarted) return;
   const db = sdk.getFirestore(firebaseApp);
   await sdk.setDoc(sdk.doc(db, "users", user.uid), { fcmToken }, { merge: true });
 }
@@ -98,7 +96,6 @@ export async function registerPushNotifications(): Promise<void> {
   if (!isNativeShell()) return;
   if (registrationStarted) return;
   registrationStarted = true;
-  const generation = registrationGeneration;
 
   if (!(await pushIsWanted())) {
     await clearToken().catch(() => undefined);
@@ -106,7 +103,6 @@ export async function registerPushNotifications(): Promise<void> {
   }
 
   try {
-    const user = await currentUser();
     const current = await PushNotifications.checkPermissions();
     let receive: PermissionState = current.receive;
 
@@ -120,42 +116,17 @@ export async function registerPushNotifications(): Promise<void> {
     // Permiso denegado: se sale en silencio. Sin push, sin diálogos, sin bloquear
     // la navegación; la app queda plenamente utilizable.
     if (receive !== "granted") return;
-    if (generation !== registrationGeneration) return;
 
     // El token llega por evento, no por el retorno de `register()`.
     await PushNotifications.addListener("registration", (token) => {
-      void persistToken(token.value, user.uid, generation).catch(() => undefined);
+      void persistToken(token.value).catch(() => undefined);
     });
     // Un fallo de FCM (sin Play Services, sin red) se traga: no hay nada que el
     // estudiante pueda hacer al respecto y no justifica un error en pantalla.
     await PushNotifications.addListener("registrationError", () => undefined);
 
-    if (generation === registrationGeneration) await PushNotifications.register();
+    await PushNotifications.register();
   } catch {
-    if (generation === registrationGeneration) registrationStarted = false;
     // Plugin ausente o rechazo del sistema: push queda apagado y ya.
-  }
-}
-
-export async function unregisterPushNotifications(): Promise<void> {
-  if (!isNativeShell()) return;
-  registrationGeneration += 1;
-  registrationStarted = false;
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-
-  try {
-    await Promise.race([
-      Promise.allSettled([
-        clearToken(),
-        PushNotifications.unregister(),
-        PushNotifications.removeAllDeliveredNotifications(),
-        PushNotifications.removeAllListeners(),
-      ]),
-      new Promise<void>((resolve) => {
-        timeout = setTimeout(resolve, 2000);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeout);
   }
 }

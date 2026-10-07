@@ -1,9 +1,8 @@
 import { expect, type Page, type Route } from "@playwright/test";
 import type { QaScenario } from "../catalog.ts";
 import { QA_STATE_SCENARIOS } from "../state-catalog.ts";
-import { QA_IDS, QA_SECTIONS, QA_SUPPORT_SUBJECT } from "../fixtures.ts";
-import { qaPdf, qaSupportRequests, resetQaFixtures } from "../../scripts/qa/seed.ts";
-import { DURACION_MINIMA_MS } from "../../lib/support-request.ts";
+import { QA_IDS, QA_SECTIONS } from "../fixtures.ts";
+import { qaPdf, resetQaFixtures } from "../../scripts/qa/seed.ts";
 import {
   accountMenu,
   classroomTab,
@@ -61,7 +60,7 @@ async function loadingSkeleton(page: Page, id: string, capture: Capture) {
   }
 }
 
-export async function callableFailure(route: Route) {
+async function callableFailure(route: Route) {
   if (route.request().method() === "OPTIONS") {
     await route.fulfill({
       status: 204,
@@ -152,73 +151,13 @@ export async function stateScenario(
     return true;
   }
 
-  if (id === "shell.notifications-loading" || id === "communications.conversation-loading") {
-    const host = process.env.FIRESTORE_EMULATOR_HOST;
-    const project = process.env.FIREBASE_PROJECT_ID;
-
-    if (!host || !/^127\.0\.0\.1:\d+$/.test(host) || !project?.startsWith("demo-"))
-      throw new Error("QA_FIRESTORE_CONFIG: local emulator required.");
-    const endpoint = `http://${host}/google.firestore.v1.Firestore/Listen/channel`;
-    const notification = id === "shell.notifications-loading";
-
-    if (!notification) {
-      await navigate(page, "Avisos y mensajes");
-      await page.getByRole("tab", { name: /Mensajes/ }).click();
-      await expect(page.getByRole("complementary", { name: "Conversaciones" })).toBeVisible();
-      await expect(
-        page.getByRole("complementary", { name: "Conversaciones" }).locator("li button").first()
-      ).toBeVisible();
-    }
-    const release = await holdRequest(page, `${endpoint}**`);
-    const panel = notification
-      ? page.locator(".notification-popover")
-      : page.getByRole("region", { name: "Conversación seleccionada" });
-    const skeleton = panel.getByRole("status", {
-      name: notification ? "Cargando notificaciones" : "Cargando conversación…",
-      exact: true,
-    });
-
-    try {
-      await Promise.all([
-        page.waitForRequest(
-          (request) => request.method() !== "OPTIONS" && request.url().startsWith(`${endpoint}?`)
-        ),
-        notification
-          ? page.reload()
-          : page
-              .getByRole("complementary", { name: "Conversaciones" })
-              .locator("li button")
-              .first()
-              .click(),
-      ]);
-
-      if (notification) await page.locator(".notifications-menu > summary").click();
-      await expect(panel).toBeVisible();
-      await expect(skeleton).toBeVisible();
-      await expect(skeleton).toHaveAttribute("aria-busy", "true");
-
-      if (!notification)
-        await expect(panel.locator(".message-history")).toHaveAttribute("aria-busy", "true");
-      await capture("loading");
-    } finally {
-      await release();
-    }
-    await expect(skeleton).not.toBeVisible();
-    await expect(
-      panel.locator(notification ? ".notification-row" : ".message-list").first()
-    ).toBeVisible();
-    return true;
-  }
-
   if (id === "auth.loading") {
-    await page.context().clearCookies();
-    await page.goto("/");
-    const release = await holdRequest(page, "**/api/auth/dev-login");
-
+    const release = await holdRequest(page, "**/api/auth/me*");
     try {
-      await page.getByRole("button", { name: "Entrar como estudiante", exact: true }).click();
-      await expect(page.locator(".google-button")).toHaveText("Verificando cuenta…");
-      await expect(page.locator(".google-button")).toBeDisabled();
+      await page.reload();
+      await expect(page.locator(".boot-shell")).toBeVisible();
+      await expect(page.locator(".boot-shell")).toHaveAttribute("aria-busy", "true");
+      await expect(page.getByText("Abriendo Centro de Estudio UBB…")).toBeVisible();
       await capture("loading");
     } finally {
       await release();
@@ -533,7 +472,7 @@ export async function stateScenario(
     });
     await page.reload();
     await expect(
-      page.getByRole("heading", { name: "No pudimos abrir Centro de Estudio UBB" })
+      page.getByRole("heading", { name: /Application error: a client-side exception has occurred/ })
     ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
     return true;
@@ -634,55 +573,20 @@ export async function stateScenario(
     }
     if (id === "public.contact-delivered" || id === "public.contact-deferred") {
       const isDelivered = id === "public.contact-delivered";
-      if (isDelivered)
-        await page.route("**/api/soporte", (route) =>
-          route.fulfill({
-            status: 201,
-            contentType: "application/json",
-            body: JSON.stringify({ ok: true, deferred: false }),
-          })
-        );
-      else await qaSupportRequests(true);
-
-      try {
-        await fillContactForm(page, isDelivered ? {} : { asunto: QA_SUPPORT_SUBJECT });
-
-        if (!isDelivered) {
-          const earliestSubmit =
-            (await page.evaluate(() => performance.now())) + DURACION_MINIMA_MS;
-          await page.waitForFunction((earliest) => performance.now() >= earliest, earliestSubmit);
-        }
-        const [response] = await Promise.all([
-          page.waitForResponse(
-            (response) =>
-              response.url().endsWith("/api/soporte") && response.request().method() === "POST"
-          ),
-          page
-            .locator("form")
-            .getByRole("button", { name: /Enviar mensaje/ })
-            .click(),
-        ]);
-        expect(response.status()).toBe(isDelivered ? 201 : 202);
-
-        if (!isDelivered) {
-          expect(await response.json()).toEqual({ estado: "recibido", entregado: false });
-          const saved = await qaSupportRequests();
-          expect(saved).toHaveLength(1);
-          expect(saved[0]).toMatchObject({
-            email: "estudiante.qa@alumnos.ubiobio.cl",
-            estado: "pendiente",
-          });
-        }
-        await expect(page.locator(".policy-confirm")).toBeVisible();
-
-        if (!isDelivered)
-          await expect(page.locator(".policy-confirm")).toContainText(
-            "su envío al buzón institucional está pendiente"
-          );
-        await capture("success");
-      } finally {
-        if (!isDelivered) await qaSupportRequests(true);
-      }
+      await page.route("**/api/soporte", (route) =>
+        route.fulfill({
+          status: isDelivered ? 201 : 202,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true, deferred: !isDelivered }),
+        })
+      );
+      await fillContactForm(page);
+      await page
+        .locator("form")
+        .getByRole("button", { name: /Enviar mensaje/ })
+        .click();
+      await expect(page.locator(".policy-confirm")).toBeVisible();
+      await capture("success");
       return true;
     }
   }

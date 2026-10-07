@@ -1,28 +1,10 @@
-import { expect, type Page, type Request, type Route } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 import { deleteApp, initializeApp } from "firebase/app";
 import { connectAuthEmulator, getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { z } from "zod";
-import { QA_NOW, QA_PASSWORD, QA_SECTION_NAMES, QA_USERS } from "../fixtures.ts";
+import { QA_PASSWORD, QA_SECTION_NAMES, QA_USERS } from "../fixtures.ts";
 import type { QaRole } from "../catalog.ts";
 import { cleanupQaSessions } from "../../scripts/qa/seed.ts";
-
-export async function installQaDate(page: Page, date: Date | number = Date.parse(QA_NOW)) {
-  const timestamp = typeof date === "number" ? date : date.getTime();
-
-  if (!Number.isFinite(timestamp)) throw new Error("QA_DATE_INVALID");
-  await page.addInitScript((timestamp: number) => {
-    const NativeDate = Date;
-    globalThis.Date = new Proxy(NativeDate, {
-      apply() {
-        return new NativeDate(Date.now()).toString();
-      },
-      construct(target, args, newTarget) {
-        return Reflect.construct(target, args.length ? args : [Date.now()], newTarget);
-      },
-    });
-    Date.now = () => timestamp;
-  }, timestamp);
-}
 
 // Implements: REQ-QA-02, REQ-QA-05
 export async function login(
@@ -123,12 +105,6 @@ export async function course(page: Page, kind: "active" | "empty" | "archived" =
     const archive = page.locator(".archived-courses summary");
     if (await archive.count()) await archive.click();
     await page.getByRole("button", { name: `Abrir en solo lectura el ramo ${name}` }).click();
-    const enter = page
-      .getByRole("dialog", { name, exact: true })
-      .getByRole("button", { name: "Entrar al aula", exact: true });
-    await expect(heading.or(enter).first()).toBeVisible();
-
-    if (await enter.isVisible()) await enter.click();
   } else {
     const enterCard = page.getByRole("button", { name: `Entrar al aula de ${name}` });
     await expect(enterCard).toBeVisible();
@@ -176,17 +152,13 @@ export async function controlledError(page: Page, path: string) {
   );
 }
 
-export async function holdRequest(
-  page: Page,
-  path: string,
-  matches?: (request: Request) => boolean
-) {
+export async function holdRequest(page: Page, path: string) {
   let release: () => void = () => undefined;
   const pending = new Promise<void>((resolve) => {
     release = resolve;
   });
   const handler = async (route: Route) => {
-    if (route.request().method() === "OPTIONS" || (matches && !matches(route.request()))) {
+    if (route.request().method() === "OPTIONS") {
       await route.continue().catch(() => undefined);
       return;
     }

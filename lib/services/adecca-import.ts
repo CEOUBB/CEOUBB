@@ -39,7 +39,7 @@ import {
   safeAdeccaHttpUrl,
 } from "../adecca/privacy.ts";
 import {
-  commitOpenSectionWrites,
+  commitFirestoreWrites,
   FIREBASE_PROJECT_ID,
   isValidPathSegment,
   projectEnrollments,
@@ -774,7 +774,7 @@ export async function writeAdeccaImportPosts(
     return { entry, operationToken, itemHashes };
   });
   try {
-    await commitOpenSectionWrites(sectionId, writes);
+    await commitFirestoreWrites(writes);
     const state = await getDb().transaction(async (tx) => {
       const entry = await requireAdeccaImport(
         tx,

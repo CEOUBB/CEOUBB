@@ -140,15 +140,8 @@ export default function AccessibilityPage() {
         </p>
 
         <nav aria-label="Documentos relacionados">
-          Ver también la{" "}
-          <Link prefetch={false} href="/privacidad">
-            política de privacidad
-          </Link>{" "}
-          y los{" "}
-          <Link prefetch={false} href="/terminos">
-            términos de uso
-          </Link>
-          .
+          Ver también la <Link href="/privacidad">política de privacidad</Link> y los{" "}
+          <Link href="/terminos">términos de uso</Link>.
         </nav>
       </article>
       <SiteFooter />

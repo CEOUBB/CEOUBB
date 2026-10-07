@@ -1,13 +1,5 @@
+import { z } from "zod";
 import { firebaseRestOrigins } from "../firebase-endpoints.ts";
-import {
-  AVATAR_CONTENT_TYPES,
-  NOTIFICATION_CHANNELS,
-  defaultPreferences,
-  firebaseUid,
-  type ChannelPreference,
-  type NotificationChannel,
-  type UserPreferences,
-} from "../user-profile-contract.ts";
 import {
   FIREBASE_PROJECT_ID,
   STORAGE_SCOPE,
@@ -18,28 +10,69 @@ import {
   type FirestoreWrite,
 } from "./enrollment-projection.ts";
 
-// Implements: REQ-PERF-LOAD-01
-export {
-  AVATAR_CONTENT_TYPES,
-  AVATAR_MAX_BYTES,
-  NOTIFICATION_CHANNELS,
-  defaultPreferences,
-  detectImageMagicBytes,
-  firebaseUid,
-  preferencesSchema,
-  type ChannelPreference,
-  type NotificationChannel,
-  type UserPreferences,
-} from "../user-profile-contract.ts";
-
 const STORAGE_BUCKET =
   process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "centro-de-estudio-ubb.firebasestorage.app";
+
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const AVATAR_CONTENT_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
 const AVATAR_EXTENSIONS: Record<(typeof AVATAR_CONTENT_TYPES)[number], string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
 };
+
+export const NOTIFICATION_CHANNELS = [
+  "sectionPublications",
+  "teacherAnnouncements",
+  "gradeChanges",
+  "assessmentReminders",
+] as const;
+
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+export type ChannelPreference = { web: boolean; push: boolean };
+
+export type UserPreferences = {
+  channels: Record<NotificationChannel, ChannelPreference>;
+  reducedMotion: boolean;
+};
+
+const channelPreferenceSchema = z.object({ web: z.boolean(), push: z.boolean() });
+
+/*
+  El esquema es cerrado en los dos ejes: `strict()` rechaza un canal que no
+  exista y `z.boolean()` rechaza cualquier valor que no sea booleano. Una
+  preferencia mal formada no puede escribir nada.
+*/
+// Implements: REQ-CFG-04
+export const preferencesSchema = z.strictObject({
+  channels: z.strictObject({
+    sectionPublications: channelPreferenceSchema,
+    teacherAnnouncements: channelPreferenceSchema,
+    gradeChanges: channelPreferenceSchema,
+    assessmentReminders: channelPreferenceSchema,
+  }),
+  reducedMotion: z.boolean(),
+});
+
+/*
+  Toda cuenta parte con cada canal activo. El valor por defecto vive aquí y no
+  en la vista para que servidor y cliente coincidan sin escribir un documento
+  antes de que el usuario cambie algo.
+*/
+// Implements: REQ-CFG-04
+export function defaultPreferences(): UserPreferences {
+  const channels = {} as Record<NotificationChannel, ChannelPreference>;
+  for (const channel of NOTIFICATION_CHANNELS) {
+    channels[channel] = { web: true, push: true };
+  }
+  return { channels, reducedMotion: false };
+}
+
+export function firebaseUid(value: string): string {
+  return value.startsWith("firebase:") ? value.slice("firebase:".length) : value;
+}
 
 // Implements: REQ-CFG-02
 export function avatarStoragePath(uid: string, contentType: string): string {
@@ -51,6 +84,53 @@ export function avatarStoragePath(uid: string, contentType: string): string {
 
 export function avatarPublicUrl(storagePath: string): string {
   return `${firebaseRestOrigins().storageDownload}/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(storagePath)}?alt=media`;
+}
+
+/**
+ * Inspecciona los primeros 12 bytes de un buffer para determinar de forma
+ * inequívoca si el archivo corresponde a PNG, JPEG o WebP legítimo.
+ * Implements: REQ-CFG-02, REQ-SEC-12
+ */
+export function detectImageMagicBytes(
+  buffer: ArrayBuffer
+): "image/jpeg" | "image/png" | "image/webp" | null {
+  if (!buffer || buffer.byteLength < 12) return null;
+  const bytes = new Uint8Array(buffer.slice(0, 12));
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+
+  // JPEG: FF D8 FF
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+
+  // WebP: RIFF (bytes 0-3) .... WEBP (bytes 8-11)
+  if (
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+
+  return null;
 }
 
 /*

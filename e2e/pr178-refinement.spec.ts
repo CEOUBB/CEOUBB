@@ -80,9 +80,6 @@ for (const width of [1440, 390]) {
       })
     );
     await page.goto("/__pr178_fixture");
-    for (const path of ["app/campus-base.css", "app/mobile-shell.css", "app/campus.css"]) {
-      await page.addStyleTag({ content: await readFile(path, "utf8") });
-    }
     await page.addScriptTag({ content: bundle });
     await page.evaluate(() => document.fonts.ready);
     await expect(page.locator(".receipt-confirmed-badge")).toHaveCSS("font-size", "12px");

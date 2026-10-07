@@ -1,6 +1,6 @@
 "use client";
 
-import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
+import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { ArrowsOutCardinal, Check, X } from "@phosphor-icons/react";
 import type { PointerEvent } from "react";
@@ -97,7 +97,7 @@ export function PlannerBlockArticle({
   onMoveStart?: (event: PointerEvent<HTMLButtonElement>, block: PlannerItem) => void;
   onMoveClick?: (block: PlannerItem, keyboard: boolean) => void;
 }) {
-  const shouldReduceMotion = useHydratedReducedMotion();
+  const shouldReduceMotion = useReducedMotion();
   const motionProps = getArticleAnimation(shouldReduceMotion);
 
   return (

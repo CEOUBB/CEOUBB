@@ -61,7 +61,7 @@ test("REQ-HELP-09: ambas rutas están en el mapa del sitio y en los pies de pág
   assert.match(sitemap, /\/faq<\/loc>/);
   assert.match(sitemap, /\/contacto<\/loc>/);
 
-  const portal = await leer("../app/access-screen.tsx");
+  const portal = await leer("../app/Portal.tsx");
   assert.match(portal, /href="\/faq"/);
   assert.match(portal, /href="\/contacto"/);
 

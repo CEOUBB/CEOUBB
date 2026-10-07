@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createRequire } from "node:module";
-import { readFile } from "node:fs/promises";
 const require = createRequire(import.meta.url);
 // Playwright normally emits component-test descriptors; this fixture renders React HTML.
 Object.assign(require("playwright/jsx-runtime"), require("react/jsx-runtime"));
@@ -46,16 +45,12 @@ for (const width of [1440, 390]) {
       await page.route(fixture, (route) =>
         route.fulfill({
           contentType: "text/html; charset=utf-8",
-          body: `<html class="${rootClass ?? ""}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styles}</head><body>${name === "LoadingScreen" ? markup : `<div class="app-shell"><main class="portal-main" style="grid-column: 1 / -1">${markup}</main></div>`}</body></html>`,
+          body: `<html class="${rootClass ?? ""}"><head><meta charset="utf-8">${styles}</head><body>${name === "LoadingScreen" ? markup : `<div class="app-shell"><main class="portal-main" style="grid-column: 1 / -1">${markup}</main></div>`}</body></html>`,
         })
       );
       await page.goto(fixture);
-      for (const path of ["app/campus-base.css", "app/mobile-shell.css", "app/campus.css"]) {
-        await page.addStyleTag({ content: await readFile(path, "utf8") });
-      }
       await page.unroute(fixture);
       await page.evaluate(() => document.fonts.ready);
-      expect(await page.evaluate(() => innerWidth)).toBe(width);
       expect(await page.evaluate(() => document.characterSet)).toBe("UTF-8");
       expect(await page.locator("body").innerText(), `${name}: codificación`).not.toMatch(
         /\u00c3|\u00c2|\ufffd/

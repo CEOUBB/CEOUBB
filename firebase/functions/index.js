@@ -2,8 +2,7 @@ const { initializeApp } = require("firebase-admin/app");
 const { FieldValue, Timestamp, getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { setGlobalOptions } = require("firebase-functions/v2");
-const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
-const { projectCourseActivity } = require("./activity-projection");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { authenticationIsActive } = require("./auth-access");
 const {
@@ -48,14 +47,10 @@ function callableError(cause) {
   return new HttpsError("internal", "No fue posible completar la operación.");
 }
 
-async function assertSectionWritable(db, courseId, transaction) {
-  const sectionRef = db.collection("academicSections").doc(courseId);
-  const section = await (transaction ? transaction.get(sectionRef) : sectionRef.get());
+async function assertSectionWritable(db, courseId) {
+  const section = await db.collection("academicSections").doc(courseId).get();
   const periodId = section.exists ? section.get("periodoId") : "";
-  const periodRef = periodId ? db.collection("academicPeriods").doc(periodId) : null;
-  const period = periodRef
-    ? await (transaction ? transaction.get(periodRef) : periodRef.get())
-    : null;
+  const period = periodId ? await db.collection("academicPeriods").doc(periodId).get() : null;
   if (!period || !period.exists || period.get("status") !== "abierto") {
     throw new HttpsError(
       "failed-precondition",
@@ -215,28 +210,27 @@ exports.publishQuiz = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request) => {
       .doc(next.courseId)
       .collection("quizKeys")
       .doc(quizRef.id);
-    await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
-      transaction.create(quizRef, {
-        courseId: next.courseId,
-        title: next.title,
-        description: next.description,
-        durationMinutes: next.durationMinutes,
-        gradeItemId: next.gradeItemId,
-        status: "published",
-        questions: next.questions,
-        totalPoints: next.totalPoints,
-        createdBy: actor.actorUid,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-      transaction.create(keyRef, {
-        courseId: next.courseId,
-        quizId: quizRef.id,
-        answers: next.answers,
-        createdBy: actor.actorUid,
-        createdAt: FieldValue.serverTimestamp(),
-      });
+    const batch = db.batch();
+    batch.create(quizRef, {
+      courseId: next.courseId,
+      title: next.title,
+      description: next.description,
+      durationMinutes: next.durationMinutes,
+      gradeItemId: next.gradeItemId,
+      status: "published",
+      questions: next.questions,
+      totalPoints: next.totalPoints,
+      createdBy: actor.actorUid,
+      createdAt: FieldValue.serverTimestamp(),
     });
+    batch.create(keyRef, {
+      courseId: next.courseId,
+      quizId: quizRef.id,
+      answers: next.answers,
+      createdBy: actor.actorUid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
     return { quizId: quizRef.id };
   } catch (cause) {
     throw callableError(cause);
@@ -256,7 +250,6 @@ exports.startQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request)
     const draftRef = quizRef.collection("drafts").doc(request.auth.uid);
     const resultRef = quizRef.collection("results").doc(request.auth.uid);
     const outcome = await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
       const [quiz, draft, result] = await transaction.getAll(quizRef, draftRef, resultRef);
       if (!quiz.exists || quiz.get("status") !== "published") {
         throw new HttpsError("not-found", "El cuestionario no está disponible.");
@@ -334,7 +327,6 @@ exports.submitQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request
       .collection("grades")
       .doc(request.auth.uid);
     const result = await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
       const [quiz, key, draft, existingResult, gradebook, grade] = await transaction.getAll(
         quizRef,
         keyRef,
@@ -417,11 +409,11 @@ exports.submitQuizAttempt = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (request
   }
 });
 
-async function assertStudentsEnrolled(db, courseId, rows, reader = db) {
+async function assertStudentsEnrolled(db, courseId, rows) {
   const refs = rows.map((row) =>
     db.collection("enrollments").doc(row.userId).collection("sections").doc(courseId)
   );
-  const snapshots = await reader.getAll(...refs);
+  const snapshots = await db.getAll(...refs);
   if (snapshots.some((snapshot) => !snapshot.exists || snapshot.get("role") !== "student")) {
     throw new HttpsError(
       "failed-precondition",
@@ -535,7 +527,6 @@ exports.saveAuditedStudentScores = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (
       MAX_CONCURRENT_TRANSACTIONS,
       async (group) =>
         db.runTransaction(async (transaction) => {
-          await assertSectionWritable(db, courseId, transaction);
           const gradeRefs = group.map((row) =>
             db.collection("courses").doc(courseId).collection("grades").doc(row.userId)
           );
@@ -649,7 +640,6 @@ exports.saveAuditedGradeFeedback = onCall(async (request) => {
       targets.map((userId) => ({ userId }))
     );
     const changedCount = await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
       const gradeRefs = targets.map((userId) =>
         db.collection("courses").doc(next.courseId).collection("grades").doc(userId)
       );
@@ -750,73 +740,69 @@ exports.registerTeamSubmission = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (re
       throw new HttpsError("permission-denied", "La ruta del archivo no corresponde a tu entrega.");
     }
 
-    await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
-      const gradebook = await transaction.get(
-        db.collection("courses").doc(next.courseId).collection("meta").doc("gradebook")
-      );
-      const item = (gradebook.exists ? storedGradebook(gradebook.data()).items : []).find(
-        (candidate) => candidate.id === next.evalId
-      );
-      if (!item || item.submissionMode === "individual") {
+    const gradebook = await db
+      .collection("courses")
+      .doc(next.courseId)
+      .collection("meta")
+      .doc("gradebook")
+      .get();
+    const item = (gradebook.exists ? storedGradebook(gradebook.data()).items : []).find(
+      (candidate) => candidate.id === next.evalId
+    );
+    if (!item || item.submissionMode === "individual") {
+      throw new HttpsError("failed-precondition", "Esta evaluación no admite entregas en equipo.");
+    }
+    if (item.submissionMode === "team_fixed") {
+      const published = (item.teams ?? []).find((team) => team.memberIds.includes(actor.actorUid));
+      if (!published || published.id !== next.teamId) {
         throw new HttpsError(
           "failed-precondition",
-          "Esta evaluación no admite entregas en equipo."
+          "El equipo indicado no coincide con el que publicó el docente."
         );
       }
-      if (item.submissionMode === "team_fixed") {
-        const published = (item.teams ?? []).find((team) =>
-          team.memberIds.includes(actor.actorUid)
+      const sameTeam =
+        published.memberIds.length === next.memberIds.length &&
+        published.memberIds.every((member) => next.memberIds.includes(member));
+      if (!sameTeam) {
+        throw new HttpsError(
+          "failed-precondition",
+          "La entrega debe incluir exactamente a los integrantes publicados por el docente."
         );
-        if (!published || published.id !== next.teamId) {
-          throw new HttpsError(
-            "failed-precondition",
-            "El equipo indicado no coincide con el que publicó el docente."
-          );
-        }
-        const sameTeam =
-          published.memberIds.length === next.memberIds.length &&
-          published.memberIds.every((member) => next.memberIds.includes(member));
-        if (!sameTeam) {
-          throw new HttpsError(
-            "failed-precondition",
-            "La entrega debe incluir exactamente a los integrantes publicados por el docente."
-          );
-        }
       }
+    }
 
-      await assertStudentsEnrolled(
-        db,
-        next.courseId,
-        next.memberIds.map((userId) => ({ userId })),
-        transaction
-      );
+    await assertStudentsEnrolled(
+      db,
+      next.courseId,
+      next.memberIds.map((userId) => ({ userId }))
+    );
 
-      const createdAt = FieldValue.serverTimestamp();
-      for (const userId of next.memberIds) {
-        const ref = db
-          .collection("courses")
-          .doc(next.courseId)
-          .collection("submissions")
-          .doc(`${next.evalId}_${userId}`);
-        transaction.set(ref, {
-          uid: userId,
-          courseId: next.courseId,
-          evalId: next.evalId,
-          authorName: actor.actorName,
-          fileName: next.fileName,
-          storagePath: next.storagePath,
-          contentType: next.contentType,
-          size: next.size,
-          sha256: next.sha256,
-          submittedBy: actor.actorUid,
-          submittedByName: actor.actorName,
-          teamId: next.teamId,
-          memberIds: next.memberIds,
-          createdAt,
-        });
-      }
-    });
+    const createdAt = FieldValue.serverTimestamp();
+    const batch = db.batch();
+    for (const userId of next.memberIds) {
+      const ref = db
+        .collection("courses")
+        .doc(next.courseId)
+        .collection("submissions")
+        .doc(`${next.evalId}_${userId}`);
+      batch.set(ref, {
+        uid: userId,
+        courseId: next.courseId,
+        evalId: next.evalId,
+        authorName: actor.actorName,
+        fileName: next.fileName,
+        storagePath: next.storagePath,
+        contentType: next.contentType,
+        size: next.size,
+        sha256: next.sha256,
+        submittedBy: actor.actorUid,
+        submittedByName: actor.actorName,
+        teamId: next.teamId,
+        memberIds: next.memberIds,
+        createdAt,
+      });
+    }
+    await batch.commit();
     return { memberCount: next.memberIds.length };
   } catch (cause) {
     throw callableError(cause);
@@ -830,7 +816,6 @@ exports.saveAuditedGradebook = onCall(APP_CHECK_OBSERVATION_OPTIONS, async (requ
     const db = getFirestore();
     const actor = await authorizedGradeActor(request, db, next.courseId);
     const changedCount = await db.runTransaction(async (transaction) => {
-      await assertSectionWritable(db, next.courseId, transaction);
       const gradebookRef = db
         .collection("courses")
         .doc(next.courseId)
@@ -958,14 +943,6 @@ async function pruneDeadTokens(db, refsByToken, tokens, responses) {
   await writer.close();
   return dead.length;
 }
-
-// Implements: REQ-PERF-LOAD-03
-exports.projectCoursePostActivity = onDocumentWritten(
-  { document: "courses/{courseId}/posts/{postId}", retry: true },
-  async (event) => {
-    await projectCourseActivity(getFirestore(), event.params.courseId, event.params.postId);
-  }
-);
 
 exports.notifyStudentsOnCoursePost = onDocumentCreated(
   "courses/{courseId}/posts/{postId}",

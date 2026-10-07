@@ -118,7 +118,7 @@ export function StudentQuizzes({
         <div className="quiz-student-list">
           {quizzes.map((quiz, index) => (
             <article className="quiz-student-card" key={quiz.id}>
-              <span className="quiz-sequence">{index + 1}</span>
+              <span className="quiz-sequence">{String(index + 1).padStart(2, "0")}</span>
               <div>
                 <span className="quiz-card-state">Disponible</span>
                 <h3>{quiz.title}</h3>
@@ -209,7 +209,7 @@ function QuizRunner({
         timers.current.delete(questionId);
         const pending = pendingValues.current.get(questionId);
         pendingValues.current.delete(questionId);
-        if (pending !== undefined) void persist(questionId, pending).catch(() => undefined);
+        if (pending !== undefined) void persist(questionId, pending);
       }, 450)
     );
   };
@@ -279,6 +279,7 @@ function QuizRunner({
           <ArrowLeft size={18} aria-hidden="true" /> Salir
         </button>
         <div>
+          <span className="eyebrow">Rendición en curso</span>
           <h2>{quiz.title}</h2>
         </div>
         <div
@@ -298,7 +299,7 @@ function QuizRunner({
         aria-valuemax={quiz.questions.length}
         aria-label={`${answered} de ${quiz.questions.length} preguntas respondidas`}
       >
-        <span style={{ transform: `scaleX(${percentage / 100})` }} />
+        <span style={{ width: `${percentage}%` }} />
       </div>
       <div className="quiz-question-list">
         {quiz.questions.map((question, index) => (
@@ -363,6 +364,7 @@ function QuizCorrectionView({
       </button>
       <div className="quiz-result-hero">
         <div>
+          <span className="eyebrow">Corrección inmediata</span>
           <h2>{quiz.title}</h2>
           <p>
             Entregado el {formatDay(result.submittedAt)} · {correct} de {quiz.questions.length}{" "}

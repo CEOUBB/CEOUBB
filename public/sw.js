@@ -4,7 +4,7 @@
   proporciona la resiliencia offline necesaria.
 */
 // Implements: REQ-CAP-19
-const CACHE = "centro-estudio-ubb-v10";
+const CACHE = "centro-estudio-ubb-v9";
 const SHELL = ["/", "/manifest.webmanifest"];
 const IMMUTABLE = /^\/(_next\/static\/|vendor\/)/;
 
@@ -13,9 +13,7 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function") 
     event.waitUntil(
       caches
         .open(CACHE)
-        .then((cache) =>
-          cache.addAll(SHELL.map((path) => new Request(path, { credentials: "omit" })))
-        )
+        .then((cache) => cache.addAll(SHELL))
         .then(() => self.skipWaiting())
     );
   });
@@ -35,14 +33,7 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function") 
     const request = event.request;
     if (request.method !== "GET") return;
     const url = new URL(request.url);
-    if (
-      url.origin !== self.location.origin ||
-      url.pathname.startsWith("/api/") ||
-      url.pathname === "/campus" ||
-      url.searchParams.has("_rsc") ||
-      request.headers.get("RSC") === "1"
-    )
-      return;
+    if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
     event.respondWith(
       IMMUTABLE.test(url.pathname) ? cacheFirst(event, request) : networkFirst(event, request)
     );
@@ -50,12 +41,7 @@ if (typeof self !== "undefined" && typeof self.addEventListener === "function") 
 }
 
 function store(event, request, response) {
-  if (
-    !response.ok ||
-    /\b(private|no-store)\b/i.test(response.headers.get("Cache-Control") ?? "") ||
-    /text\/x-component/i.test(response.headers.get("Content-Type") ?? "")
-  )
-    return response;
+  if (!response.ok) return response;
   const copy = response.clone();
   event.waitUntil(caches.open(CACHE).then((cache) => cache.put(request, copy)));
   return response;
@@ -63,8 +49,17 @@ function store(event, request, response) {
 
 async function cacheFirst(event, request) {
   const cached = await caches.match(request);
-
-  if (cached) return cached;
+  if (cached) {
+    event.waitUntil(
+      fetch(request)
+        .then(
+          (response) =>
+            response.ok && caches.open(CACHE).then((cache) => cache.put(request, response))
+        )
+        .catch(() => undefined)
+    );
+    return cached;
+  }
   return store(event, request, await fetch(request));
 }
 

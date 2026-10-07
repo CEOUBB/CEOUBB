@@ -36,13 +36,15 @@ export function DiffTable({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-(--border-hairline) bg-white shadow-sm ${className}`}
+      className={`relative overflow-hidden rounded-xl border border-[oklch(0.9_0.012_250)] bg-white shadow-sm ${className}`}
     >
-      <div className="flex items-center justify-between border-b border-(--border-hairline) bg-(--canvas-soft) px-4 py-2.5">
-        <span className="text-xs font-semibold text-(--text-body)">
+      <div className="flex items-center justify-between border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)] px-4 py-2.5">
+        <span className="text-xs font-semibold text-[oklch(0.2_0.03_260)]">
           Auditoría de rectificaciones ({items.length})
         </span>
-        <span className="text-[11px] font-medium text-(--text-muted)">Más recientes primero</span>
+        <span className="text-[11px] font-medium text-[oklch(0.48_0.03_250)]">
+          Más recientes primero
+        </span>
       </div>
 
       <div className="overflow-x-auto">
@@ -55,7 +57,7 @@ export function DiffTable({
             <col className="w-[22%]" />
           </colgroup>
           <thead>
-            <tr className="border-b border-(--border-hairline) bg-(--canvas-soft)/60 text-xs font-semibold text-(--text-muted)">
+            <tr className="border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)]/60 text-xs font-semibold text-[oklch(0.48_0.03_250)]">
               <th className="px-3 py-2.5">Fecha y Acción</th>
               <th className="px-3 py-2.5 text-center">Nota Anterior</th>
               <th className="px-3 py-2.5 text-center">Nota Nueva</th>
@@ -88,13 +90,13 @@ export function DiffTable({
                   );
                 } else if (diff < 0) {
                   deltaNode = (
-                    <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.5_0.22_25)] num">
+                    <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
                       {diff.toFixed(1)}
                     </span>
                   );
                 } else {
                   deltaNode = (
-                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-(--text-muted) num">
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-[oklch(0.48_0.03_250)] num">
                       0.0
                     </span>
                   );
@@ -107,7 +109,7 @@ export function DiffTable({
                 );
               } else if (hasPrevious && !hasNew && prevVal !== null) {
                 deltaNode = (
-                  <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.5_0.22_25)] num">
+                  <span className="inline-flex items-center rounded-full bg-[oklch(0.55_0.22_25_/_0.12)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.55_0.22_25)] num">
                     -{formatGrade(prevVal)}
                   </span>
                 );
@@ -116,19 +118,21 @@ export function DiffTable({
               return (
                 <tr
                   key={entry.id}
-                  className="border-b border-(--border-hairline) transition-colors duration-200 last:border-0 hover:bg-(--canvas-soft)/40"
+                  className="border-b border-[oklch(0.9_0.012_250)] transition-colors duration-200 last:border-0 hover:bg-[oklch(0.975_0.005_240)]/40"
                 >
                   <td className="px-3 py-2.5 align-top">
                     <div className="flex flex-col">
-                      <strong className="text-xs font-semibold text-(--text-body)">{action}</strong>
+                      <strong className="text-xs font-semibold text-[oklch(0.2_0.03_260)]">
+                        {action}
+                      </strong>
                       <time
-                        className="num text-[11px] text-(--text-muted) mt-0.5"
+                        className="num text-[11px] text-[oklch(0.48_0.03_250)] mt-0.5"
                         dateTime={entry.changedAt}
                         title={entry.changedAt}
                       >
                         {formatGradeHistoryDate(entry.changedAt)}
                       </time>
-                      <span className="text-[11px] text-(--text-muted) italic mt-0.5">
+                      <span className="text-[11px] text-[oklch(0.48_0.03_250)] italic mt-0.5">
                         {newVal === null
                           ? "Retiro de nota"
                           : prevVal === null
@@ -157,7 +161,7 @@ export function DiffTable({
                         {formatGrade(prevVal)}
                       </span>
                     ) : (
-                      <span className="text-xs text-(--text-muted) italic">Sin nota</span>
+                      <span className="text-xs text-[oklch(0.48_0.03_250)] italic">Sin nota</span>
                     )}
                   </td>
 
@@ -185,16 +189,16 @@ export function DiffTable({
 
                   <td className="px-3 py-2.5 align-top">
                     <div className="flex flex-col min-w-0">
-                      <span className="truncate text-xs font-semibold text-(--text-body)">
+                      <span className="truncate text-xs font-semibold text-[oklch(0.2_0.03_260)]">
                         {entry.actorName || entry.actorEmail || entry.actorUid}
                       </span>
                       {entry.actorEmail && (
-                        <span className="truncate text-[11px] text-(--text-muted)">
+                        <span className="truncate text-[11px] text-[oklch(0.48_0.03_250)]">
                           {entry.actorEmail}
                         </span>
                       )}
                       {!entry.actorEmail && entry.actorName && (
-                        <span className="truncate text-[10px] text-(--text-muted) num">
+                        <span className="truncate text-[10px] text-[oklch(0.48_0.03_250)] num">
                           ID: {entry.actorUid}
                         </span>
                       )}

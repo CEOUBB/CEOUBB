@@ -20,9 +20,6 @@ const scenarios = [
 test("explicit selection is discoverable and rejects typos and empty matches", () => {
   assert.equal(parseArgs(["--area", "cuestionarios", "--list"]).area, "quizzes");
   assert.equal(parseArgs(["--area", "publicacion"]).area, "publications");
-  assert.equal(parseArgs([]).production, undefined);
-  assert.equal(parseArgs(["--all", "--production", "--browser", "api"]).production, true);
-  assert.throws(() => parseArgs(["--staging", "--production"]), /cannot be combined/);
   assert.throws(() => parseArgs(["--explore", "--browser", "api"]), /browser project/);
   assert.throws(() => parseArgs(["--unknown"]), /Unknown option/);
   assert.throws(() => parseArgs(["--scenario"]), /value/);
@@ -114,17 +111,6 @@ test("reports require evidence per viewport and never turn empty, failed or skip
       "passed",
       "visual differences alone are advisory"
     );
-    const production = await writeReport(
-      output,
-      { ...single, applicationMode: "production" },
-      undefined,
-      0
-    );
-    assert.equal(production.applicationMode, "production");
-    assert.equal(
-      production.tests[0].reproduce,
-      "pnpm qa --scenario auth.session --browser chromium-1440 --screenshots --production"
-    );
     await writeResults([result("chromium-1440", "failed")]);
     assert.equal((await writeReport(output, single, undefined, 0)).status, "failed");
     await writeResults([result("api", "skipped")]);
@@ -133,19 +119,6 @@ test("reports require evidence per viewport and never turn empty, failed or skip
       "incomplete"
     );
     assert.match(await readFile(join(output, "index.html"), "utf8"), /incomplete/);
-    await writeFile(
-      join(output, "playwright.json"),
-      JSON.stringify({
-        suites: [{ specs: [{ title: "api.performance.isolation", tests: [result("api")] }] }],
-      })
-    );
-    const productionApi = await writeReport(
-      output,
-      { ...manifest, browser: "api", applicationMode: "production" },
-      undefined,
-      0
-    );
-    assert.equal(productionApi.tests[0].reproduce, "pnpm qa --all --browser api --production");
   } finally {
     // mkdtemp returns the exact absolute directory created exclusively by this test.
     await rm(output, { recursive: true, force: true });

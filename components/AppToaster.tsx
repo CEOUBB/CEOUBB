@@ -16,7 +16,12 @@ export function AppToaster() {
           <CheckCircle size={18} weight="fill" className="text-emerald-600" aria-hidden="true" />
         ),
         info: (
-          <Info size={18} weight="fill" className="text-(--color-primary)" aria-hidden="true" />
+          <Info
+            size={18}
+            weight="fill"
+            className="text-[oklch(0.48_0.18_255)]"
+            aria-hidden="true"
+          />
         ),
         warning: (
           <WarningCircle size={18} weight="fill" className="text-amber-600" aria-hidden="true" />
@@ -27,20 +32,20 @@ export function AppToaster() {
         loading: (
           <CircleNotch
             size={18}
-            className="animate-spin text-(--color-primary)"
+            className="animate-spin text-[oklch(0.48_0.18_255)]"
             aria-hidden="true"
           />
         ),
       }}
       toastOptions={{
         className: "ceoubb-toast",
-        classNames: { closeButton: "ceoubb-toast-close" },
         style: {
-          fontFamily: "var(--font-core)",
-          borderRadius: "var(--radius-lg)",
-          borderColor: "var(--border-hairline)",
-          boxShadow: "var(--shadow-2)",
-          "--error-text": "var(--shield-red-deep)",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
+          borderRadius: "0.75rem",
+          borderColor: "oklch(0.92 0.006 60)",
+          boxShadow:
+            "0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)",
+          "--error-text": "oklch(0.42 0.2 25)",
         } as React.CSSProperties,
       }}
     />

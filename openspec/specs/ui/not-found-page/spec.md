@@ -11,8 +11,8 @@ Define el comportamiento visual, semántico y de accesibilidad de la página de 
 WHEN un usuario o agente navega a cualquier ruta que no existe en el sistema o una acción invoca `notFound()`, el sistema SHALL renderizar la página `app/not-found.tsx` aplicando los principios de `/deliberate` y `/impeccable`:
 
 1. El texto visible SHALL estar redactado estrictamente en español formal institucional.
-2. La tipografía SHALL utilizar la familia del campus definida en `DESIGN.md`: `Inter` con tamaño óptico para títulos y cuerpo.
-3. Los estilos de superficie y color SHALL utilizar exclusivamente los tokens OKLCH del bloque `:root:has(.app-shell, .policy-page, .public-page)` de `app/globals.css` (escritorio gris frío, hoja blanca sin borde, tinta y azul UBB para la acción), evitando negros puros (`#000000`, `bg-black`, `bg-zinc-950`). La página SHALL montar `.public-page` y presentar el error como una hoja con la pestaña de separador del sistema.
+2. La tipografía SHALL utilizar el emparejamiento canónico del sistema: titulares en `Merriweather` (serif) y cuerpo/utilidad en `Manrope` (sans-serif).
+3. Los estilos de superficie y color SHALL utilizar exclusivamente tokens semánticos OKLCH de `DESIGN.md` (`bg-surface-base`, `text-surface-foreground`, `border-surface-border`), evitando negros puros (`#000000`, `bg-black`, `bg-zinc-950`).
 4. El contenedor principal SHALL estar marcado semánticamente con el elemento `<main id="main-content">` con foco accesible programático.
 5. El diseño SHALL proveer un control primario de retorno claro que enlace a la raíz (`/`) con estados interactivos completos (`:hover`, `:active`, `:focus-visible` calibrados con muelles no lineales).
 6. La interfaz SHALL respetar la preferencia del sistema de movimiento reducido (`prefers-reduced-motion`).

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, BookOpen } from "@phosphor-icons/react";
 import * as m from "motion/react-m";
 import { AnimatedUnderline } from "@/components/motion/animated-underline-link";
 import type { Course } from "../../lib/courses";
@@ -33,15 +33,20 @@ function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: Co
       transition={shouldReduceMotion ? instantTransition : springDefault}
       variants={shouldReduceMotion ? undefined : rise}
     >
-      <div className="course-cover">
-        <span className="course-code num">{course.code}</span>
-        {unseen > 0 && (
-          <span className="fresh num">
-            {unseen} {unseen === 1 ? "nueva" : "nuevas"}
-          </span>
-        )}
-      </div>
       <div className="course-body">
+        <div className="course-head">
+          <span className="course-identity">
+            <span className="course-symbol" aria-hidden="true">
+              <BookOpen size={23} weight="duotone" />
+            </span>
+            <span className="course-code num">{course.code}</span>
+          </span>
+          {unseen > 0 && (
+            <span className="fresh num">
+              {unseen} {unseen === 1 ? "nueva" : "nuevas"}
+            </span>
+          )}
+        </div>
         <h3>{course.name}</h3>
         <p>{course.teacher}</p>
         <p className="course-section num">

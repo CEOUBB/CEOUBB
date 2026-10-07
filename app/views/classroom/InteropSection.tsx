@@ -305,8 +305,8 @@ export function InteropSection({
           {state.resources.map((resource) => (
             <li key={resource.id}>
               <div>
-                <h3>{resource.title}</h3>
                 <span>{kindLabel[resource.kind]}</span>
+                <h3>{resource.title}</h3>
               </div>
               <div className="interop-actions">
                 {resource.kind !== "lti" && (

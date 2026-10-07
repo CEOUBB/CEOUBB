@@ -49,14 +49,6 @@ function scenario(
   return { id, area, sources, role, state, critical, checkpoints };
 }
 const shell = [
-  "app/access-screen.tsx",
-  "app/campus/page.tsx",
-  "app/campus-base.css",
-  "app/globals.css",
-  "app/campus.css",
-  "app/mobile-shell.css",
-  "proxy.ts",
-  "public/sw.js",
   "app/Portal.tsx",
   "app/portal-shell.tsx",
   "app/mobile-shell.tsx",
@@ -65,8 +57,6 @@ const shell = [
 ];
 const courses = ["app/views/CoursesDashboard.tsx", "app/views/CourseCard.tsx", "lib/courses.ts"];
 const classroom = [
-  "firebase/functions/activity-projection.js",
-  "firebase/firestore.rules",
   "app/Classroom.tsx",
   "app/views/classroom/ClassroomView.tsx",
   "app/views/classroom/PostsSection.tsx",
@@ -168,13 +158,7 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario(
     "auth.logout",
     "auth",
-    [
-      "app/portal-shell.tsx",
-      "app/usePortalCore.tsx",
-      "app/api/auth/logout/route.ts",
-      "lib/firebase-client.ts",
-      "lib/push-notifications.ts",
-    ],
+    ["app/portal-shell.tsx", "app/api/auth/logout/route.ts"],
     "student",
     "success",
     true
@@ -184,21 +168,6 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario("shell.notifications", "shell", [...shell, ...communications], "student", "populated"),
   scenario("shell.palette", "shell", shell, "student", "dialog", true),
   scenario("shell.palette-empty", "shell", shell, "student", "empty"),
-  scenario(
-    "shell.motion",
-    "shell",
-    [
-      ...shell,
-      ...classroom,
-      ...settings,
-      "app/portal-ui.tsx",
-      "lib/hooks/use-hydrated-reduced-motion.ts",
-    ],
-    "student",
-    "dialog",
-    true,
-    ["keyboard", "navigation", "reduced", "restored"]
-  ),
   scenario("courses.student", "courses", courses, "student", "populated", true),
   scenario("courses.teacher", "courses", courses, "teacher", "populated"),
   scenario("courses.owner", "courses", courses, "owner", "populated"),
@@ -361,23 +330,6 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario("imports.enrollment", "imports", imports, "teacher", "form"),
   scenario("imports.moodle", "imports", imports, "teacher", "dialog"),
   scenario("imports.adecca", "imports", imports, "teacher", "dialog"),
-  scenario(
-    "imports.motion",
-    "imports",
-    [
-      ...imports,
-      ...settings,
-      "app/globals.css",
-      "app/campus-base.css",
-      "app/views/classroom/PeopleSection.tsx",
-      "components/motion/expandable-action-bar.tsx",
-      "lib/hooks/use-hydrated-reduced-motion.ts",
-    ],
-    "teacher",
-    "dialog",
-    false,
-    ["pointer", "keyboard", "reduced"]
-  ),
   scenario("imports.moodle-invalid", "imports", imports, "teacher", "error"),
   scenario("imports.adecca-invalid", "imports", imports, "teacher", "error"),
   scenario("imports.enrollment-persistence", "imports", imports, "teacher", "success", true, [
