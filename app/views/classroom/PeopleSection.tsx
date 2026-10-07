@@ -10,7 +10,9 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
+import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import {
   ExpandableActionBar,
   type ExpandableActionBarItem,
@@ -258,7 +260,7 @@ export function PeopleSection({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -591,19 +593,22 @@ export function PeopleSection({
 
       <AnimatePresence>
         {selectedIds.size > 0 && (
-          <motion.aside
+          <m.aside
             role="region"
             aria-label="Acciones de participantes seleccionados"
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed bottom-6 inset-x-0 z-50 flex justify-center pointer-events-none px-4"
+            className="fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4"
+            style={{
+              bottom: "calc(var(--mobile-nav-height, 0px) + var(--safe-bottom, 0px) + 24px)",
+            }}
           >
             <div className="pointer-events-auto shadow-2xl">
               <ExpandableActionBar items={actionBarItems} size="md" expandOnHover />
             </div>
-          </motion.aside>
+          </m.aside>
         )}
       </AnimatePresence>
     </section>

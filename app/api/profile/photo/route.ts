@@ -6,11 +6,13 @@ import { getSessionUser } from "../../../../lib/auth";
 import {
   AVATAR_CONTENT_TYPES,
   AVATAR_MAX_BYTES,
+  detectImageMagicBytes,
+  firebaseUid,
+} from "../../../../lib/user-profile-contract";
+import {
   avatarPublicUrl,
   avatarStoragePath,
   deleteAvatarObject,
-  detectImageMagicBytes,
-  firebaseUid,
   projectUserPhotoToFirestore,
   uploadAvatarObject,
 } from "../../../../lib/services/user-profile";

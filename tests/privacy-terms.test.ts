@@ -127,7 +127,7 @@ test("the terms of use state eligibility and teacher responsibility", async () =
 
 // Implements: REQ-PRIV-06
 test("both legal documents are linked from the portal and the sitemap", async () => {
-  const portal = await readSurface("../app/Portal.tsx");
+  const portal = await readSurface("../app/access-screen.tsx");
   const sitemap = await readSurface("../app/sitemap.xml/route.ts");
   for (const route of ["/privacidad", "/terminos"]) {
     assert.match(portal, new RegExp(`href="${route}"`), `the footer does not link ${route}`);

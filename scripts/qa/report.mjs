@@ -36,8 +36,8 @@ export async function writeReport(output, manifest, error, exitCode) {
               : {}),
           })),
           reproduce: scenario
-            ? `pnpm qa --scenario ${scenario.id} --browser ${test.projectName} --screenshots`
-            : `pnpm qa --all --browser api`,
+            ? `pnpm qa --scenario ${scenario.id} --browser ${test.projectName} --screenshots${manifest.applicationMode === "production" ? " --production" : ""}`
+            : `pnpm qa --all --browser api${manifest.applicationMode === "production" ? " --production" : ""}`,
         });
       }
     for (const child of suite.suites ?? []) visit(child);

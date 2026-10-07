@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -17,7 +17,7 @@ import type { Course } from "../lib/courses";
 import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-utils";
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
-import { AnimatePresence, m } from "motion/react";
+import { m } from "motion/react";
 import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
@@ -95,6 +95,9 @@ const FOCUSABLE_POPOVER_ITEMS = 'button:not([disabled]), a[href], [tabindex]:not
 */
 // Implements: REQ-NOTIF-09
 const PANEL_SPRING = { type: "spring", stiffness: 340, damping: 28 } as const;
+const subscribeShortcut = () => () => {};
+const shortcutSnapshot = () => (/mac|iphone|ipad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl K");
+const shortcutServerSnapshot = () => "Ctrl K";
 
 /*
   Un solo descarte para los dos desplegables del header: cierre por puntero
@@ -191,10 +194,12 @@ export function PortalHeader({
   unreadCommunications: number;
   toggleSidebar: () => void;
 }) {
-  const shortcut =
-    typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent)
-      ? "⌘K"
-      : "Ctrl K";
+  // Implements: REQ-PERF-LOAD-02
+  const shortcut = useSyncExternalStore(
+    subscribeShortcut,
+    shortcutSnapshot,
+    shortcutServerSnapshot
+  );
   const account = useRef<HTMLDetailsElement>(null);
   const notificationsMenu = useRef<HTMLDetailsElement>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -543,78 +548,76 @@ export function PortalMainView({
       <p aria-atomic="true" aria-live="polite" className="sr-only" id="portal-view-title">
         Vista actual: {context}
       </p>
-      <AnimatePresence initial={false} mode="wait">
-        {screen === "course" && openedCourse ? (
-          <PortalScreen key={`course-${openedCourse.id}`}>
-            <Classroom
-              course={openedCourse}
-              user={user}
-              sectionRole={sectionRole}
-              goBack={() => setScreen("courses")}
-            />
-          </PortalScreen>
-        ) : (
-          <PortalScreen key={screen}>
-            <div className="portal-main">
-              {screen === "courses" && (
-                <CoursesDashboard
-                  user={user}
-                  courses={courses}
-                  archivedCourses={archivedCourses}
-                  archivedHasMore={archivedHasMore}
-                  archivedLoading={archivedLoading}
-                  activity={activity}
-                  seen={seen}
-                  entries={entries}
-                  onCalendar={() => setScreen("calendar")}
-                  manageCourses={
-                    user.role === "teacher" || user.role === "owner"
-                      ? () => setScreen("teacher")
-                      : undefined
-                  }
-                  openCourse={openCourse}
-                  onLoadMoreArchived={onLoadMoreArchived}
-                />
-              )}
-              {screen === "calendar" && (
-                <CalendarView
-                  courses={courses}
-                  gradebooks={gradebooks}
-                  activity={activity}
-                  openCourse={openCourse}
-                />
-              )}
-              {screen === "notifications" && (
-                <CommunicationsCenter
-                  activity={activity}
-                  connectionError={communicationError}
-                  ready={communicationsReady}
-                  retry={retryCommunications}
-                  courses={courses}
-                  cursors={communicationCursors}
-                  focusThread={focusThread}
-                  memberships={memberships}
-                  openCourse={openCourse}
-                  threads={communicationThreads}
-                  user={user}
-                />
-              )}
-              {screen === "settings" && (
-                <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
-              )}
-              {screen === "resources" && <ResourcesView />}
-              {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (
-                <TeacherCoursesView
-                  onCoursesChanged={onCoursesChanged}
-                  openCourse={(course: ManagedCourse) => openCourse(course)}
-                />
-              )}
-              {screen === "admin" && user.role === "owner" && <AdminView />}
-              <SiteFooter />
-            </div>
-          </PortalScreen>
-        )}
-      </AnimatePresence>
+      {screen === "course" && openedCourse ? (
+        <PortalScreen key={`course-${openedCourse.id}`}>
+          <Classroom
+            course={openedCourse}
+            user={user}
+            sectionRole={sectionRole}
+            goBack={() => setScreen("courses")}
+          />
+        </PortalScreen>
+      ) : (
+        <PortalScreen key={screen}>
+          <div className="portal-main">
+            {screen === "courses" && (
+              <CoursesDashboard
+                user={user}
+                courses={courses}
+                archivedCourses={archivedCourses}
+                archivedHasMore={archivedHasMore}
+                archivedLoading={archivedLoading}
+                activity={activity}
+                seen={seen}
+                entries={entries}
+                onCalendar={() => setScreen("calendar")}
+                manageCourses={
+                  user.role === "teacher" || user.role === "owner"
+                    ? () => setScreen("teacher")
+                    : undefined
+                }
+                openCourse={openCourse}
+                onLoadMoreArchived={onLoadMoreArchived}
+              />
+            )}
+            {screen === "calendar" && (
+              <CalendarView
+                courses={courses}
+                gradebooks={gradebooks}
+                activity={activity}
+                openCourse={openCourse}
+              />
+            )}
+            {screen === "notifications" && (
+              <CommunicationsCenter
+                activity={activity}
+                connectionError={communicationError}
+                ready={communicationsReady}
+                retry={retryCommunications}
+                courses={courses}
+                cursors={communicationCursors}
+                focusThread={focusThread}
+                memberships={memberships}
+                openCourse={openCourse}
+                threads={communicationThreads}
+                user={user}
+              />
+            )}
+            {screen === "settings" && (
+              <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
+            )}
+            {screen === "resources" && <ResourcesView />}
+            {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (
+              <TeacherCoursesView
+                onCoursesChanged={onCoursesChanged}
+                openCourse={(course: ManagedCourse) => openCourse(course)}
+              />
+            )}
+            {screen === "admin" && user.role === "owner" && <AdminView />}
+            <SiteFooter />
+          </div>
+        </PortalScreen>
+      )}
     </main>
   );
 }
