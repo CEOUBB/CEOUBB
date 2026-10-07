@@ -182,6 +182,9 @@ export function ClassroomView({
           las acciones del ramo colgando de un título de sección.
         */}
         <header className="classroom-top">
+          <span aria-hidden="true" className="classroom-tab num">
+            {course.code}
+          </span>
           <div className="classroom-heading">
             <span className="breadcrumb">
               <button onClick={goBack} type="button">
