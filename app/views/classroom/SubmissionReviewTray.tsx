@@ -316,6 +316,7 @@ export function SubmissionReviewTray({
                   <li key={row.userId}>
                     <button
                       aria-current={row.userId === selected?.userId ? "true" : undefined}
+                      aria-label={`Revisar entrega de ${row.name}, ${SUBMISSION_STATE_LABELS[row.state]}${row.grade !== null ? `, nota ${formatGrade(row.grade)}` : ""}`}
                       className="review-queue-row"
                       onClick={() => select(row)}
                       type="button"
@@ -342,7 +343,7 @@ export function SubmissionReviewTray({
 
             <nav aria-label="Paginación de la cola" className="review-queue-pages">
               <button
-                aria-label="Página anterior"
+                aria-label="Página anterior de la cola"
                 className="pagination-btn"
                 disabled={page.page <= 1}
                 onClick={() => select(filtered[(page.page - 2) * QUEUE_PAGE_SIZE])}
@@ -354,7 +355,7 @@ export function SubmissionReviewTray({
                 {page.startIndex}–{page.endIndex} de {page.totalItems}
               </span>
               <button
-                aria-label="Página siguiente"
+                aria-label="Página siguiente de la cola"
                 className="pagination-btn"
                 disabled={page.page >= page.totalPages}
                 onClick={() => select(filtered[page.page * QUEUE_PAGE_SIZE])}
@@ -605,6 +606,7 @@ function GradingPanel({
 
       <nav aria-label="Recorrer la cola" className="review-move">
         <button
+          aria-label="Estudiante anterior en la cola"
           className="pagination-btn"
           disabled={position.index <= 0}
           onClick={() => onMove(-1)}
@@ -617,6 +619,7 @@ function GradingPanel({
           {(position.index + 1).toLocaleString("es-CL")} de {position.total.toLocaleString("es-CL")}
         </span>
         <button
+          aria-label="Estudiante siguiente en la cola"
           className="pagination-btn"
           disabled={position.index >= position.total - 1}
           onClick={() => onMove(1)}
