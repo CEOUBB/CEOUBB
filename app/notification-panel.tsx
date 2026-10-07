@@ -1,7 +1,8 @@
 "use client";
 
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { motion, type Transition, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import type { Transition } from "motion/react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import type { NotificationItem } from "../lib/communications.ts";
 import { EASE_OUT, SPRING_LAYOUT, SPRING_PRESS, SPRING_SWAP } from "../lib/ease";
+import { useHydratedReducedMotion } from "../lib/hooks/use-hydrated-reduced-motion";
 
 const NOTIFICATION_DATE = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
@@ -110,7 +112,7 @@ export function ActionSwapText({
   children: ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   return (
     <span
       className={`relative -my-[0.08em] inline-block max-w-full whitespace-nowrap py-[0.08em] align-bottom ${className}`}
@@ -119,7 +121,7 @@ export function ActionSwapText({
       <span aria-hidden className="invisible inline-block whitespace-nowrap">
         {children}
       </span>
-      <motion.span
+      <m.span
         key={value}
         initial={reduce ? false : { opacity: 0, y: "90%", filter: "blur(3px)" }}
         animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: "0%", filter: "blur(0px)" }}
@@ -128,7 +130,7 @@ export function ActionSwapText({
         className="absolute left-0 top-[0.08em] inline-block max-w-full truncate"
       >
         {children}
-      </motion.span>
+      </m.span>
     </span>
   );
 }
@@ -146,7 +148,7 @@ export function NotificationStack({
   className = "",
   classNames,
 }: NotificationStackProps) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const isControlled = expanded !== undefined;
   const isExpanded = expanded ?? internalExpanded;
@@ -170,7 +172,7 @@ export function NotificationStack({
   if (!primaryItem) {
     return (
       <div
-        className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-[oklch(0.975_0.005_240)] px-4 py-6 text-sm font-medium text-[oklch(0.48_0.03_250)] ${className}`}
+        className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-(--canvas-soft) px-4 py-6 text-sm font-medium text-(--text-muted) ${className}`}
       >
         <BellSlash className="h-4 w-4" aria-hidden="true" />
         {emptyLabel}
@@ -179,14 +181,14 @@ export function NotificationStack({
   }
 
   return (
-    <div className={`relative z-10 block w-full text-left text-[oklch(0.2_0.03_260)] ${className}`}>
+    <div className={`relative z-10 block w-full text-left text-(--text-body) ${className}`}>
       <div className="relative p-2">
-        <motion.span
+        <m.span
           aria-hidden="true"
           layout
           initial={false}
           transition={backgroundTransition}
-          className="absolute inset-0 rounded-2xl bg-[oklch(0.975_0.005_240)]"
+          className="absolute inset-0 rounded-2xl bg-(--canvas-soft)"
         />
         <div
           className={`relative z-10 grid gap-1.5 ${!isExpanded ? "pb-2" : ""} ${classNames?.stack ?? ""}`}
@@ -194,7 +196,7 @@ export function NotificationStack({
           {visibleItems.map((item, index) => {
             const isPrimary = index === 0;
             return (
-              <motion.div
+              <m.div
                 key={item.id}
                 layout="position"
                 initial={false}
@@ -205,7 +207,7 @@ export function NotificationStack({
                     : `inset(0px ${index * STACK_INSET}px round 12px)`,
                 }}
                 transition={cardTransition}
-                className={`block rounded-xl border border-[oklch(0.9_0.012_250)] bg-white px-3.5 py-2.5 shadow-sm ${classNames?.card ?? ""}`}
+                className={`block rounded-xl border border-(--border-hairline) bg-white px-3.5 py-2.5 shadow-sm ${classNames?.card ?? ""}`}
                 style={{
                   zIndex: visibleItems.length - index,
                   gridColumn: 1,
@@ -218,37 +220,37 @@ export function NotificationStack({
                       {item.title}
                     </span>
                     {item.trailing ? (
-                      <span className="shrink-0 text-xs text-[oklch(0.48_0.03_250)] num">
+                      <span className="shrink-0 text-xs text-(--text-muted) num">
                         {item.trailing}
                       </span>
                     ) : null}
                   </span>
                   {item.description ? (
-                    <span className="block mt-1 text-xs text-[oklch(0.48_0.03_250)] line-clamp-2">
+                    <span className="block mt-1 text-xs text-(--text-muted) line-clamp-2">
                       {item.description}
                     </span>
                   ) : null}
                 </span>
-              </motion.div>
+              </m.div>
             );
           })}
         </div>
 
-        <motion.div
+        <m.div
           layout="position"
           transition={transition}
           className={`relative z-10 mt-2 flex min-h-8 items-center justify-between px-1 ${classNames?.footer ?? ""}`}
         >
           <div className="flex items-center gap-2">
             <span
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[oklch(0.48_0.18_255)] text-xs font-semibold text-white num ${classNames?.count ?? ""}`}
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full bg-(--color-primary) text-xs font-semibold text-white num ${classNames?.count ?? ""}`}
             >
               {items.length}
             </span>
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs font-semibold text-[oklch(0.2_0.03_260)] hover:text-[oklch(0.48_0.18_255)]"
+              className="text-xs font-semibold text-(--text-body) hover:text-(--color-primary)"
             >
               <ActionSwapText value={isExpanded ? "expanded" : "collapsed"}>
                 {isExpanded ? "Contraer pila" : collapsedLabel}
@@ -259,13 +261,13 @@ export function NotificationStack({
             <button
               type="button"
               onClick={onViewAll}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[oklch(0.48_0.18_255)] hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-(--color-primary) hover:underline"
             >
               <span>{expandedLabel}</span>
               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );
@@ -287,7 +289,6 @@ export function NotificationSkeleton() {
     >
       {[0, 1, 2].map((row) => (
         <span className="notification-skeleton-row" key={row}>
-          <span className="notification-skeleton-band" />
           <span className="sk sk-round" style={{ width: 32, height: 32 }} />
           <span className="notification-skeleton-lines">
             <span className="sk notification-skeleton-line" />
@@ -313,7 +314,8 @@ function NotificationAvatar({ item }: { item: NotificationItem }) {
       aria-hidden="true"
       className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm overflow-hidden"
       style={{
-        backgroundColor: item.tone || (isThread ? "oklch(0.48 0.18 255)" : "oklch(0.24 0.09 255)"),
+        backgroundColor:
+          item.tone || (isThread ? "var(--color-primary)" : "var(--color-secondary)"),
       }}
     >
       {isThread ? (
@@ -336,40 +338,29 @@ function NotificationRow({
 }) {
   return (
     <li>
-      <motion.button
-        className="notification-row group relative flex w-full items-center gap-3 border-b border-[oklch(0.9_0.012_250)] p-3 text-left transition-colors duration-150 hover:bg-[oklch(0.975_0.005_240)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.48_0.18_255)]"
+      <m.button
+        className="notification-row group"
         data-unread={item.unread ? "true" : "false"}
         onClick={() => onOpen(item)}
-        whileHover={{ x: 2 }}
         whileTap={{ scale: 0.99 }}
         transition={SPRING_PRESS}
         type="button"
       >
-        <span
-          aria-hidden="true"
-          className="notification-band shrink-0 w-1 self-stretch rounded-full"
-          style={{ background: item.tone || "oklch(0.48 0.18 255)" }}
-        />
-
         <NotificationAvatar item={item} />
 
-        <span className="notification-copy flex min-w-0 flex-1 flex-col">
-          <strong className="truncate text-sm font-semibold text-[oklch(0.2_0.03_260)] group-hover:text-[oklch(0.48_0.18_255)] transition-colors">
-            {item.title}
-          </strong>
-          <small className="truncate text-xs text-[oklch(0.48_0.03_250)] mt-0.5">
+        <span className="notification-copy">
+          <strong>{item.title}</strong>
+          <small>
             {item.courseName} · {item.excerpt}
           </small>
         </span>
 
-        <span className="notification-time num shrink-0 text-right text-[11px] text-[oklch(0.48_0.03_250)]">
-          {notificationDate(item.createdAt)}
-        </span>
+        <span className="notification-time num">{notificationDate(item.createdAt)}</span>
 
         {item.unread && (
           <span className="notification-dot" aria-label="Sin leer" role="img">
-            <motion.span
-              className="block h-full w-full rounded-full bg-[oklch(0.55_0.22_25)]"
+            <m.span
+              className="block h-full w-full rounded-full bg-(--shield-red)"
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.25 }}
@@ -378,7 +369,7 @@ function NotificationRow({
             />
           </span>
         )}
-      </motion.button>
+      </m.button>
     </li>
   );
 }
@@ -402,23 +393,20 @@ export function NotificationList({
 
   return (
     <div className="notification-panel-body flex flex-col max-h-[min(70vh,540px)]">
-      <header className="notification-panel-head flex items-center justify-between gap-2 border-b border-[oklch(0.9_0.012_250)] px-4 py-3">
+      <header className="notification-panel-head flex items-center justify-between gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
-          <p
-            id="notification-panel-title"
-            className="text-sm font-semibold text-[oklch(0.2_0.03_260)]"
-          >
+          <p id="notification-panel-title" className="text-sm font-semibold text-(--text-body)">
             Notificaciones
           </p>
           {unread > 0 && (
-            <span className="inline-flex items-center rounded-full bg-[oklch(0.48_0.18_255)] px-2 py-0.5 text-[11px] font-semibold text-white num">
+            <span className="inline-flex items-center rounded-full bg-(--color-primary) px-2 py-0.5 text-[11px] font-semibold text-white num">
               {unread}
             </span>
           )}
         </div>
         {unread > 0 && (
-          <motion.button
-            className="notification-mark-all inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-[oklch(0.48_0.18_255)] hover:bg-[rgba(0,85,184,0.07)] transition-colors"
+          <m.button
+            className="notification-mark-all inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-(--color-primary) hover:bg-(--color-primary-wash) transition-colors"
             onClick={onMarkAll}
             type="button"
             whileTap={{ scale: 0.97 }}
@@ -426,24 +414,22 @@ export function NotificationList({
           >
             <Checks aria-hidden="true" size={15} />
             Marcar todas como leídas
-          </motion.button>
+          </m.button>
         )}
       </header>
 
       {loading ? (
         <NotificationSkeleton />
       ) : items.length === 0 ? (
-        <div className="notification-empty flex flex-col items-center justify-center gap-2 py-10 text-center text-sm text-[oklch(0.48_0.03_250)]">
-          <BellSlash aria-hidden="true" size={32} className="text-[oklch(0.48_0.03_250)]" />
+        <div className="notification-empty flex flex-col items-center justify-center gap-2 py-10 text-center text-sm text-(--text-muted)">
+          <BellSlash aria-hidden="true" size={32} className="text-(--text-muted)" />
           <p>No tienes notificaciones nuevas</p>
         </div>
       ) : (
         <div className="notification-list flex-1 overflow-y-auto">
           {groups.today.length > 0 && (
             <div className="notification-group">
-              <div className="sticky top-0 z-10 border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)]/90 backdrop-blur-sm px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[oklch(0.48_0.03_250)]">
-                Hoy ({groups.today.length})
-              </div>
+              <div className="notification-group-title">Hoy ({groups.today.length})</div>
               <ul className="list-none p-0 m-0">
                 {groups.today.map((item) => (
                   <NotificationRow key={item.id} item={item} onOpen={onOpen} />
@@ -454,9 +440,7 @@ export function NotificationList({
 
           {groups.thisWeek.length > 0 && (
             <div className="notification-group">
-              <div className="sticky top-0 z-10 border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)]/90 backdrop-blur-sm px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[oklch(0.48_0.03_250)]">
-                Esta semana ({groups.thisWeek.length})
-              </div>
+              <div className="notification-group-title">Esta semana ({groups.thisWeek.length})</div>
               <ul className="list-none p-0 m-0">
                 {groups.thisWeek.map((item) => (
                   <NotificationRow key={item.id} item={item} onOpen={onOpen} />
@@ -467,9 +451,7 @@ export function NotificationList({
 
           {groups.older.length > 0 && (
             <div className="notification-group">
-              <div className="sticky top-0 z-10 border-b border-[oklch(0.9_0.012_250)] bg-[oklch(0.975_0.005_240)]/90 backdrop-blur-sm px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[oklch(0.48_0.03_250)]">
-                Anteriores ({groups.older.length})
-              </div>
+              <div className="notification-group-title">Anteriores ({groups.older.length})</div>
               <ul className="list-none p-0 m-0">
                 {groups.older.map((item) => (
                   <NotificationRow key={item.id} item={item} onOpen={onOpen} />
@@ -481,7 +463,7 @@ export function NotificationList({
       )}
 
       <button
-        className="notification-see-all flex items-center justify-between border-t border-[oklch(0.9_0.012_250)] bg-white px-4 py-3 text-xs font-semibold text-[oklch(0.48_0.18_255)] transition-colors hover:bg-[oklch(0.975_0.005_240)]"
+        className="notification-see-all flex items-center justify-between bg-(--surface-card) px-4 py-3 text-xs font-semibold text-(--color-primary) transition-colors hover:bg-(--canvas-soft)"
         onClick={onSeeAll}
         type="button"
       >

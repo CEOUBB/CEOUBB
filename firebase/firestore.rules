@@ -224,7 +224,7 @@ service cloud.firestore {
       // Bloques del calendario semanal. Estrictamente privados: ni el owner
       // ni un docente pueden leer la agenda personal de otra cuenta.
       match /calendar_events/{eventId} {
-        allow read, write: if signedIn() && request.auth.uid == userId
+        allow read, write: if isMember() && request.auth.uid == userId
           && (request.method in ['get', 'list', 'delete']
             || (validCalendarEventShape() && (request.method == 'create' || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'userId', 'title', 'detail', 'date', 'startTime', 'endTime', 'courseId', 'kind', 'completed', 'updatedAt'
@@ -277,13 +277,13 @@ service cloud.firestore {
 
     match /courses/{courseId}/messageThreads/{threadId} {
       allow read: if threadParticipant(courseId, threadId);
-      allow create: if validThreadCreate(courseId, threadId);
-      allow update: if threadParticipant(courseId, threadId) && validThreadUpdate(courseId, threadId);
+      allow create: if sectionIsWritable(courseId) && validThreadCreate(courseId, threadId);
+      allow update: if sectionIsWritable(courseId) && threadParticipant(courseId, threadId) && validThreadUpdate(courseId, threadId);
       allow delete: if false;
 
       match /messages/{messageId} {
         allow read: if threadParticipant(courseId, threadId);
-        allow create: if threadParticipant(courseId, threadId) && validDirectMessage(courseId, threadId);
+        allow create: if sectionIsWritable(courseId) && threadParticipant(courseId, threadId) && validDirectMessage(courseId, threadId);
         allow update, delete: if false;
       }
     }
@@ -357,6 +357,7 @@ service cloud.firestore {
           && data.evaluation is map && data.evaluation.id == data.evalId
           && exists(/databases/$(database)/documents/courses/$(courseId)/meta/gradebook)
           && data.evaluation in get(/databases/$(database)/documents/courses/$(courseId)/meta/gradebook).data.items
+          && data.evaluation.get('submissionMode', 'individual') == 'individual'
           && data.authorName is string && data.authorName.size() <= 120
           && data.fileName is string && data.fileName.size() > 0 && data.fileName.size() <= 255
           && data.contentType is string && data.contentType.size() > 0 && data.contentType.size() <= 120
