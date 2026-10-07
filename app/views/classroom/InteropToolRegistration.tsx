@@ -103,6 +103,7 @@ export function ToolRegistration({
             </dl>
             <button
               className="secondary-button"
+              aria-label={`${tool.enabled ? "Deshabilitar" : "Habilitar"} ${tool.name}`}
               disabled={saving || disabled}
               onClick={async () => {
                 setSaving(true);
