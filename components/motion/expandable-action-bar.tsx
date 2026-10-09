@@ -203,6 +203,7 @@ export function ExpandableActionBar({
               key={item.id}
               type="button"
               disabled={item.disabled}
+              aria-label={typeof item.label === "string" ? item.label : undefined}
               title={typeof item.label === "string" ? item.label : undefined}
               onPointerEnter={(event: ReactPointerEvent<HTMLButtonElement>) => {
                 if (!hover.enter(event)) return;
@@ -246,6 +247,7 @@ export function ExpandableActionBar({
               ) : (
                 <>
                   <span
+                    aria-hidden="true"
                     className={`inline-flex shrink-0 items-center justify-center ${
                       ICON_SIZE_CLASS[size]
                     } ${classNames?.icon ?? ""}`.trim()}
