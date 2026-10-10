@@ -2442,11 +2442,10 @@ button.planner-headday {
       opacity: 1;
     }
   }
-  .planner-block-remove {
-    display: none;
-  }
-  .planner-block-open strong {
-    padding-right: 0;
+  .planner-block-remove::after {
+    content: "";
+    position: absolute;
+    inset: -10px;
   }
   .planner-check {
     width: 18px;
