@@ -237,20 +237,24 @@ export function CoursesDashboard({
     parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
   );
 
+  const courseMap = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses]);
+
   const next = nextEntry(entries);
-  const nextCourse = next && courses.find((course) => course.id === next.courseId);
+  const nextCourse = next ? courseMap.get(next.courseId) : null;
   const todayISO = getSantiagoDateISO();
-  const later = useMemo(
-    () =>
-      entries
-        .filter((entry) => entry !== next && entry.date >= todayISO)
-        .flatMap((entry) => {
-          const course = courses.find((item) => item.id === entry.courseId);
-          return course ? [{ entry, course }] : [];
-        })
-        .slice(0, AGENDA_LATER_LIMIT),
-    [entries, next, courses, todayISO]
-  );
+  const later = useMemo(() => {
+    const list: AgendaItem[] = [];
+    for (const entry of entries) {
+      if (entry !== next && entry.date >= todayISO) {
+        const course = courseMap.get(entry.courseId);
+        if (course) {
+          list.push({ entry, course });
+          if (list.length === AGENDA_LATER_LIMIT) break;
+        }
+      }
+    }
+    return list;
+  }, [entries, next, courseMap, todayISO]);
   const teaches = user.role === "teacher" || user.role === "owner";
   const shouldReduceMotion = useHydratedReducedMotion();
 
