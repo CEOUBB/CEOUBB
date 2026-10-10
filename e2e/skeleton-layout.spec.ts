@@ -106,8 +106,15 @@ for (const width of [1440, 390]) {
       if (name === "CalendarSkeleton") {
         await expect(page.locator(".planner-col:visible")).toHaveCount(width > 900 ? 7 : 1);
         await expect(page.locator(".planner-block")).toHaveCount(0);
-        if (width > 767) await expect(page.locator(".planner-controls input")).toBeVisible();
-        else await expect(page.locator(".planner-controls input")).toBeHidden();
+        await expect(page.locator(".planner-toolbar .planner-today")).toBeVisible();
+        if (width > 767) {
+          await expect(page.locator(".planner-side")).toBeVisible();
+          await expect(page.locator(".planner-strip")).toBeHidden();
+        } else {
+          await expect(page.locator(".planner-side")).toBeHidden();
+          await expect(page.locator(".planner-strip-day")).toHaveCount(7);
+          await expect(page.locator(".planner-strip")).toBeVisible();
+        }
       }
       await page.screenshot({
         path: `.impeccable/review/skeleton-${name}-${width}.png`,

@@ -1,50 +1,55 @@
 "use client";
 
-import { Course } from "../../../lib/courses";
-import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
+import { CaretDown } from "@phosphor-icons/react";
+import type { PlannerItem } from "../../../lib/planner";
+import type { AnchorRect } from "./calendar-constants";
+import { AcademicChip } from "./CalendarParts";
+
+const VISIBLE_CHIPS = 2;
 
 export function PlannerRibbon({
   days,
-  focusDay,
-  byDay,
-  courseById,
-  openCourse,
+  ribbons,
+  expanded,
+  onExpand,
+  onOpen,
 }: {
   days: string[];
-  focusDay: string;
-  byDay: Map<string, { ribbon: PlannerItem[]; blocks: PlacedBlock[] }>;
-  courseById: Map<string, Course>;
-  openCourse: (course: Course) => void;
+  ribbons: Map<string, PlannerItem[]>;
+  expanded: boolean;
+  onExpand: () => void;
+  onOpen: (item: PlannerItem, anchor: AnchorRect) => void;
 }) {
+  const overflow = days.some((day) => (ribbons.get(day)?.length ?? 0) > VISIBLE_CHIPS);
   return (
-    <div className="planner-ribbon" key={`ribbon-${days[0]}`}>
-      <span className="planner-ribbon-label">Entregas</span>
-      {days.map((day) => {
-        const ribbon = byDay.get(day)?.ribbon ?? [];
-        return (
-          <div
-            className="planner-ribbon-cell"
-            data-focus={day === focusDay ? "true" : undefined}
-            key={day}
+    <div className="planner-ribbon">
+      <div className="planner-ribbon-gutter">
+        {overflow && (
+          <button
+            aria-expanded={expanded}
+            aria-label={expanded ? "Mostrar menos entregas" : "Mostrar todas las entregas"}
+            className="planner-ribbon-toggle"
+            onClick={onExpand}
+            type="button"
           >
-            {ribbon.map((item) => {
-              const course = item.courseId ? courseById.get(item.courseId) : undefined;
-              return (
-                <button
-                  className="planner-due"
-                  data-kind={item.kind}
-                  key={item.id}
-                  onClick={() => course && openCourse(course)}
-                  style={{ "--course-tone": item.tone } as React.CSSProperties}
-                  title={`${item.title} · ${item.courseName ?? ""} · ${item.detail}`}
-                  type="button"
-                >
-                  <span aria-hidden="true" className="planner-due-dot" />
-                  <span className="planner-due-title">{item.title}</span>
-                  <small>{item.detail}</small>
-                </button>
-              );
-            })}
+            <CaretDown aria-hidden="true" size={13} weight="bold" />
+          </button>
+        )}
+      </div>
+      {days.map((day) => {
+        const items = ribbons.get(day) ?? [];
+        const shown = expanded ? items : items.slice(0, VISIBLE_CHIPS);
+        const hidden = items.length - shown.length;
+        return (
+          <div className="planner-ribbon-cell" data-day={day} key={day}>
+            {shown.map((item) => (
+              <AcademicChip item={item} key={item.id} onOpen={onOpen} />
+            ))}
+            {hidden > 0 && (
+              <button className="planner-ribbon-more num" onClick={onExpand} type="button">
+                {hidden} más
+              </button>
+            )}
           </div>
         );
       })}

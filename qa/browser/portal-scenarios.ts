@@ -214,6 +214,21 @@ export async function portalScenario(
     else if (id === "calendar.month") {
       await page.getByRole("button", { name: "Mes", exact: true }).click();
       await expect(page.locator(".planner-month")).toBeVisible();
+    } else if (id === "calendar.day") {
+      await page.getByRole("button", { name: "Día", exact: true }).click();
+      await expect(page.getByRole("region", { name: "Horario del día" })).toBeVisible();
+    } else if (id === "calendar.agenda") {
+      await page.getByRole("button", { name: "Agenda", exact: true }).click();
+      await expect(page.locator(".planner-agenda")).toBeVisible();
+    } else if (id === "calendar.quick-create") {
+      await page
+        .getByRole("button", { name: /^Crear un bloque el / })
+        .first()
+        .click();
+      const quick = page.getByRole("dialog", { name: "Nuevo bloque" });
+      await expect(quick.getByLabel("Título", { exact: true })).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(quick).toHaveCount(0);
     } else {
       await page.getByRole("button", { name: /Nuevo bloque|Agregar bloque/ }).click();
       const dialog = page.getByRole("dialog", { name: "Nuevo bloque" });

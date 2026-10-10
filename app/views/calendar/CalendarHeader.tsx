@@ -1,174 +1,209 @@
 "use client";
 
-import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
-import type { Course } from "../../../lib/courses";
-import { isIsoDate, shiftDate, shiftMonth } from "../../../lib/planner";
-import { dayOf, weekRangeLabel, weekdayOf } from "../../../lib/portal-utils";
+import type { RefObject } from "react";
+import * as m from "motion/react-m";
+import {
+  CaretDown,
+  CaretLeft,
+  CaretRight,
+  Keyboard,
+  Plus,
+  SidebarSimple,
+} from "@phosphor-icons/react";
+import type { CalendarView } from "../../../lib/planner";
+import { dayOf, weekdayOf } from "../../../lib/portal-utils";
+import { VIEWS, longDate, rectOf } from "./calendar-constants";
+import type { AnchorRect } from "./calendar-constants";
+import { useSwipe } from "./usePlannerDrag";
 
-interface CalendarHeaderProps {
-  view: "week" | "month";
-  anchor: string;
-  setView: (view: "week" | "month") => void;
-  days: string[];
-  dueCount: number;
-  blockCount: number;
-  today: string;
-  focusDay: string;
-  firstFreeHour: number;
-  goWeek: (date: string) => void;
-  setPickedDay: (date: string) => void;
-  newBlock: (date: string, hour: number) => void;
-}
+const STEP_LABEL: Record<CalendarView, [string, string]> = {
+  day: ["Día anterior", "Día siguiente"],
+  week: ["Semana anterior", "Semana siguiente"],
+  month: ["Mes anterior", "Mes siguiente"],
+  agenda: ["Cuatro semanas antes", "Cuatro semanas después"],
+};
 
 export function CalendarHeader({
-  view,
-  anchor,
-  setView,
-  days,
-  dueCount,
-  blockCount,
-  today,
-  focusDay,
-  firstFreeHour,
-  goWeek,
-  setPickedDay,
-  newBlock,
-}: CalendarHeaderProps) {
+  summary,
+  loaded,
+  shortcutsRef,
+  onCreate,
+  onShortcuts,
+}: {
+  summary: string;
+  loaded: boolean;
+  shortcutsRef: RefObject<HTMLButtonElement | null>;
+  onCreate: () => void;
+  onShortcuts: (anchor: AnchorRect) => void;
+}) {
   return (
     <header className="page-head planner-bar">
       <div className="planner-lead">
         <h1>Calendario</h1>
-        <p>
-          <span className="num">
-            {view === "month"
-              ? new Date(`${anchor}T12:00:00Z`).toLocaleDateString("es-CL", {
-                  month: "long",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })
-              : weekRangeLabel(days[0], days[6])}
-          </span>
-          <span>·</span>
-          <span>
-            <b className="num">{dueCount}</b> {dueCount === 1 ? "vencimiento" : "vencimientos"}
-          </span>
-          <span>·</span>
-          <span>
-            <b>{blockCount}</b> {blockCount === 1 ? "bloque" : "bloques"}
-          </span>
+        <p className="num">
+          {loaded ? summary : <span role="status">Sincronizando bloques…</span>}
         </p>
       </div>
-      <div className="planner-controls">
-        <div className="planner-view-switch" role="group" aria-label="Vista del calendario">
-          <button type="button" aria-pressed={view === "week"} onClick={() => setView("week")}>
-            Semana
-          </button>
-          <button type="button" aria-pressed={view === "month"} onClick={() => setView("month")}>
-            Mes
-          </button>
-        </div>
-        <div className="planner-step">
-          <button
-            aria-label={view === "month" ? "Mes anterior" : "Semana anterior"}
-            onClick={() =>
-              goWeek(view === "month" ? shiftMonth(anchor, -1) : shiftDate(days[0], -7))
-            }
-            type="button"
-          >
-            <CaretLeft aria-hidden="true" size={16} weight="bold" />
-          </button>
-          <button
-            className="planner-now-button"
-            onClick={() => {
-              goWeek(today);
-              setPickedDay(today);
-            }}
-            type="button"
-          >
-            Hoy
-          </button>
-          <button
-            aria-label={view === "month" ? "Mes siguiente" : "Semana siguiente"}
-            onClick={() => goWeek(view === "month" ? shiftMonth(anchor, 1) : shiftDate(days[0], 7))}
-            type="button"
-          >
-            <CaretRight aria-hidden="true" size={16} weight="bold" />
-          </button>
-        </div>
-        <label className="planner-jump">
-          <span className="sr-only">Ir a una fecha</span>
-          <input
-            aria-label="Ir a una fecha"
-            onChange={(event) => isIsoDate(event.target.value) && goWeek(event.target.value)}
-            type="date"
-            value={anchor}
-          />
-        </label>
+      <div className="planner-actions">
         <button
-          className="planner-create"
-          onClick={() => newBlock(focusDay, firstFreeHour)}
+          aria-keyshortcuts="Shift+?"
+          aria-label="Atajos de teclado"
+          className="planner-icon-button planner-shortcuts-button"
+          onClick={(event) => onShortcuts(rectOf(event.currentTarget))}
+          ref={shortcutsRef}
           type="button"
         >
-          <Plus aria-hidden="true" size={15} weight="bold" /> Nuevo bloque
+          <Keyboard aria-hidden="true" size={18} />
+        </button>
+        <button
+          aria-keyshortcuts="C"
+          className="primary-button planner-create"
+          onClick={onCreate}
+          type="button"
+        >
+          <Plus aria-hidden="true" size={16} weight="bold" />
+          <span>Nuevo bloque</span>
         </button>
       </div>
     </header>
   );
 }
 
-interface CalendarFiltersProps {
-  courses: Course[];
-  hiddenCourses: Set<string>;
-  toggleCourse: (courseId: string) => void;
-}
-
-export function CalendarFilters({ courses, hiddenCourses, toggleCourse }: CalendarFiltersProps) {
-  if (courses.length === 0) return null;
+export function CalendarToolbar({
+  view,
+  title,
+  sideOpen,
+  pickerOpen,
+  onView,
+  onToday,
+  onStep,
+  onToggleSide,
+  onPicker,
+}: {
+  view: CalendarView;
+  title: string;
+  sideOpen: boolean;
+  pickerOpen: boolean;
+  onView: (view: CalendarView) => void;
+  onToday: () => void;
+  onStep: (direction: 1 | -1) => void;
+  onToggleSide: () => void;
+  onPicker: (anchor: AnchorRect) => void;
+}) {
+  const [previous, next] = STEP_LABEL[view];
   return (
-    <div aria-label="Filtrar por ramo" className="planner-filters" role="group">
-      {courses.map((course) => {
-        const on = !hiddenCourses.has(course.id);
-        return (
+    <div className="planner-toolbar">
+      <button
+        aria-label={sideOpen ? "Ocultar panel lateral" : "Mostrar panel lateral"}
+        aria-pressed={sideOpen}
+        className="planner-icon-button planner-side-toggle"
+        onClick={onToggleSide}
+        type="button"
+      >
+        <SidebarSimple aria-hidden="true" size={18} />
+      </button>
+      <button aria-keyshortcuts="T" className="planner-today" onClick={onToday} type="button">
+        Hoy
+      </button>
+      <div className="planner-step">
+        <button
+          aria-keyshortcuts="K"
+          aria-label={previous}
+          onClick={() => onStep(-1)}
+          type="button"
+        >
+          <CaretLeft aria-hidden="true" size={16} weight="bold" />
+        </button>
+        <button aria-keyshortcuts="J" aria-label={next} onClick={() => onStep(1)} type="button">
+          <CaretRight aria-hidden="true" size={16} weight="bold" />
+        </button>
+      </div>
+      <h2 className="planner-range">
+        <button
+          aria-expanded={pickerOpen}
+          aria-haspopup="dialog"
+          onClick={(event) => onPicker(rectOf(event.currentTarget))}
+          type="button"
+        >
+          <span>{title}</span>
+          <CaretDown aria-hidden="true" size={14} weight="bold" />
+        </button>
+      </h2>
+      <div aria-label="Vista del calendario" className="planner-view-switch" role="group">
+        {VIEWS.map((option) => (
           <button
-            aria-pressed={on}
-            className="planner-pill"
-            key={course.id}
-            onClick={() => toggleCourse(course.id)}
-            style={{ "--course-tone": course.tone } as React.CSSProperties}
+            aria-keyshortcuts={option.key.toUpperCase()}
+            aria-pressed={view === option.id}
+            key={option.id}
+            onClick={() => onView(option.id)}
             type="button"
           >
-            <span aria-hidden="true" className="planner-pill-dot" />
-            {course.name}
+            {view === option.id && (
+              <m.span
+                aria-hidden="true"
+                className="planner-view-indicator"
+                layoutId="planner-view-indicator"
+                transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              />
+            )}
+            <span>{option.label}</span>
           </button>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
 
-interface CalendarDayBarProps {
+// Implements: REQ-CEO72-09 — tira semanal del teléfono con indicadores por ramo y deslizamiento lateral.
+export function DayStrip({
+  days,
+  selected,
+  today,
+  tones,
+  direction,
+  onPick,
+  onSwipe,
+}: {
   days: string[];
-  focusDay: string;
+  selected: string;
   today: string;
-  setPickedDay: (day: string) => void;
-}
-
-export function CalendarDayBar({ days, focusDay, today, setPickedDay }: CalendarDayBarProps) {
+  tones: Map<string, string[]>;
+  direction: number;
+  onPick: (day: string) => void;
+  onSwipe: (direction: 1 | -1) => void;
+}) {
+  const swipe = useSwipe(onSwipe);
   return (
-    <nav aria-label="Día visible" className="planner-daybar">
-      {days.map((day) => (
-        <button
-          aria-current={day === focusDay ? "date" : undefined}
-          className="planner-daychip"
-          data-today={day === today ? "true" : undefined}
-          key={day}
-          onClick={() => setPickedDay(day)}
-          type="button"
-        >
-          <small>{weekdayOf(day)}</small>
-          <b>{dayOf(day)}</b>
-        </button>
-      ))}
+    <nav aria-label="Días de la semana" className="planner-strip" {...swipe}>
+      <div
+        className="planner-strip-days"
+        data-entering={direction === 0 ? undefined : "true"}
+        key={days[0]}
+        style={{ "--planner-dir": direction } as React.CSSProperties}
+      >
+        {days.map((day) => {
+          const dots = tones.get(day) ?? [];
+          return (
+            <button
+              aria-current={day === today ? "date" : undefined}
+              aria-label={`${longDate(day)}${dots.length ? `, ${dots.length} ${dots.length === 1 ? "actividad" : "actividades"}` : ""}`}
+              aria-pressed={day === selected}
+              className="planner-strip-day"
+              key={day}
+              onClick={() => onPick(day)}
+              type="button"
+            >
+              <small>{weekdayOf(day)}</small>
+              <b className="num">{Number(dayOf(day))}</b>
+              <span aria-hidden="true">
+                {dots.slice(0, 3).map((tone, index) => (
+                  <i key={index} style={{ "--course-tone": tone } as React.CSSProperties} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

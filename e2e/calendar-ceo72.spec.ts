@@ -99,22 +99,26 @@ test.beforeEach(async ({ page }, info) => {
   await page.addStyleTag({ content: await readFile("app/campus-base.css", "utf8") });
   await page.addStyleTag({ content: await readFile("app/mobile-shell.css", "utf8") });
   await page.addStyleTag({ content: await readFile("app/campus.css", "utf8") });
-  if (info.project.use.isMobile) {
-    await expect(page.getByLabel("Ir a una fecha")).toBeHidden();
-    await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-09-15");
-  } else {
-    await page.getByLabel("Ir a una fecha").fill("2026-09-15");
-  }
+  const mobile = Boolean(info.project.use.isMobile);
   await expect(page.getByText("Sincronizando bloques…")).toHaveCount(0);
+  await expect(page.locator(".planner")).toHaveAttribute("data-view", mobile ? "day" : "week");
+  await expect(
+    page.getByRole("region", { name: mobile ? "Horario del día" : "Horario semanal" })
+  ).toBeVisible();
+  await expect(page.locator(".planner-range")).toHaveText("Septiembre de 2026");
+  if (mobile)
+    await expect(page.locator('.planner-strip-day[aria-pressed="true"]')).toHaveAccessibleName(
+      "martes, 15 de septiembre, 2 actividades"
+    );
+  const control = info.project.use.hasTouch ? 44 : 36;
   const controlHeights = await page
-    .locator(
-      ".planner-controls > :is(.planner-view-switch, .planner-step, .planner-create), .planner-jump input"
-    )
+    .locator(".planner-toolbar > :is(.planner-today, .planner-step, .planner-view-switch)")
     .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
-  expect(controlHeights).toEqual([44, 44, info.project.use.isMobile ? 0 : 44, 44]);
-  const touchToggle = page.getByRole("button", { name: "Selección táctil desactivada" });
-  if (info.project.use.hasTouch) await expect(touchToggle).toBeVisible();
-  else await expect(touchToggle).toBeHidden();
+  expect(controlHeights).toEqual([control, control, control]);
+  await expect(page.getByRole("button", { name: /Selección táctil/ })).toHaveCount(0);
+  const side = page.getByRole("complementary", { name: "Panel del calendario" });
+  if (mobile) await expect(side).toBeHidden();
+  else await expect(side).toBeVisible();
 });
 
 test("bloque compacto de clase: superficie plana, foco y estado completado", async ({
@@ -133,6 +137,7 @@ test("bloque compacto de clase: superficie plana, foco y estado completado", asy
   await expect(block).toHaveCSS("border-right-width", "1px");
   await expect(block).toHaveCSS("box-shadow", "none");
   await expect(block).toHaveCSS("background-image", "none");
+  await expect(block.locator(".planner-live-status")).toHaveText("En curso");
   if (!info.project.use.hasTouch) await block.hover();
   await expect(block).toHaveCSS("box-shadow", "none");
   await block.locator(".planner-block-open").focus();
@@ -145,59 +150,60 @@ test("bloque compacto de clase: superficie plana, foco y estado completado", asy
   await expect(block).toHaveCSS("border-left-width", "1px");
 });
 
-test("gesto táctil nativo crea un intervalo y conserva desplazamiento fuera del modo selección", async ({
+test("mantener presionado crea y mueve bloques sin bloquear el desplazamiento táctil", async ({
   page,
 }) => {
-  await expect(page.locator(".planner-slot").first()).toHaveCSS("touch-action", "auto");
+  await expect(page.locator(".planner-grid")).toHaveCSS("touch-action", "pan-y pinch-zoom");
   const session = await page.context().newCDPSession(page);
   await session.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
-  await page.getByRole("button", { name: "Selección táctil desactivada" }).click();
+  const touch = async (from: { x: number; y: number }, to: { x: number; y: number }, hold = 0) => {
+    await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [from] });
+    if (hold) await page.waitForTimeout(hold);
+    await session.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [to] });
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
   const slot = page.locator('.planner-col[data-day="2026-09-15"] .planner-slot').nth(1);
   await slot.scrollIntoViewIfNeeded();
-  await expect(slot).toHaveCSS("touch-action", "none");
   const box = await slot.boundingBox();
   if (!box) throw new Error("Falta hora táctil");
   const x = box.x + box.width / 2;
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchStart",
-    touchPoints: [{ x, y: box.y + 2 }],
-  });
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchMove",
-    touchPoints: [{ x, y: box.y + box.height * 1.5 }],
-  });
-  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+
+  await touch({ x, y: box.y + 2 }, { x, y: box.y + box.height * 1.5 });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".planner-drag-preview")).toHaveCount(0);
+
+  await slot.scrollIntoViewIfNeeded();
+  const held = await slot.boundingBox();
+  if (!held) throw new Error("Falta hora táctil");
+  await touch({ x, y: held.y + 2 }, { x, y: held.y + held.height * 1.5 }, 450);
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveValue("09:00");
   await expect(page.getByLabel("Hasta", { exact: true })).toHaveValue("10:45");
   await page.getByLabel("Título", { exact: true }).fill("Bloque táctil");
   await page.getByRole("button", { name: "Guardar bloque" }).click();
-  const handle = page.getByRole("button", { name: "Mover “Bloque táctil”", exact: true });
-  const from = await handle.boundingBox();
-  if (!from) throw new Error("Falta control táctil");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  const from = await page
+    .getByRole("button", { name: /^Ver detalles de “Bloque táctil”/ })
+    .boundingBox();
+  if (!from) throw new Error("Falta bloque táctil");
   const moveX = from.x + from.width / 2;
   const moveY = from.y + from.height / 2;
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchStart",
-    touchPoints: [{ x: moveX, y: moveY }],
-  });
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchMove",
-    touchPoints: [{ x: moveX, y: moveY + box.height }],
-  });
-  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await touch({ x: moveX, y: moveY }, { x: moveX, y: moveY + held.height }, 450);
   await expect(page.locator(".planner-block small")).toContainText("10:00–11:45");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await session.detach();
 });
 
 test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ page }, info) => {
+  const mobile = Boolean(info.project.use.isMobile);
   await page.locator(".planner-view-switch").screenshot({
     path: `test-results/ceo72-view-switch-${info.project.name}.png`,
   });
   const segments = await page.locator(".planner-view-switch button").evaluateAll((buttons) =>
     buttons.map((button) => {
       const label = document.createRange();
-      label.selectNodeContents(button);
+      label.selectNodeContents(button.lastElementChild ?? button);
       const style = getComputedStyle(button);
       return {
         width: button.getBoundingClientRect().width,
@@ -215,19 +221,16 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   await expect(page.locator(".planner-day-agenda")).toContainText("Certamen 1");
   await expect(page.locator(".planner-day-agenda")).toContainText("Informe de laboratorio");
   await page.locator('.planner-month-day[aria-pressed="true"]').press("ArrowRight");
-  await expect(page.locator('.planner-month-day[aria-pressed="true"]')).toHaveAttribute(
-    "aria-label",
-    /2026-09-16/
-  );
+  const pressed = page.locator('.planner-month-day[aria-pressed="true"]');
+  await expect(pressed).toHaveAttribute("data-day", "2026-09-16");
+  await expect(pressed).toBeFocused();
   await page.getByRole("button", { name: "Mes siguiente" }).click();
-  await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-10-01");
+  await expect(page.locator(".planner-range")).toHaveText("Octubre de 2026");
+  await expect(pressed).toHaveAttribute("data-day", "2026-10-01");
 
-  if (info.project.use.isMobile) {
-    await page.getByRole("button", { name: "Hoy", exact: true }).click();
-    await expect(page.getByLabel("Ir a una fecha")).toHaveValue("2026-09-15");
-  } else {
-    await page.getByLabel("Ir a una fecha").fill("2026-09-15");
-  }
+  await page.getByRole("button", { name: "Hoy", exact: true }).click();
+  await expect(page.locator(".planner-range")).toHaveText("Septiembre de 2026");
+  await expect(pressed).toHaveAttribute("data-day", "2026-09-15");
   await page.getByRole("button", { name: "Añadir bloque" }).click();
   await page.getByLabel("Título", { exact: true }).fill("Clase de EDO");
   await page.getByRole("combobox", { name: "Tipo", exact: true }).selectOption("clase");
@@ -239,28 +242,28 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   await expect(page.locator("#count")).toHaveText("3");
   await page.getByRole("button", { name: "Cambio remoto", exact: true }).click();
   await expect(page.locator(".planner-day-agenda")).toContainText("Cambio desde otro dispositivo");
-  if (info.project.use.isMobile) {
-    await expect(
-      page.locator('.planner-month-day[aria-pressed="true"] .planner-month-count')
-    ).toHaveText("4 act.");
-    for (const [date, weekEnd, nextWeek, title] of [
-      ["2026-09-15", "2026-09-20", "2026-09-21", "Informe de laboratorio"],
-      ["2026-09-22", "2026-09-27", "2026-09-28", "Clase de EDO"],
+  const today = page.locator('.planner-month-day[data-day="2026-09-15"]');
+  await expect(today).toHaveAttribute(
+    "aria-label",
+    "martes, 15 de septiembre, 4 actividades, 1 evaluación, 1 entrega"
+  );
+  if (mobile) {
+    await expect(today.locator(".planner-month-dots i")).toHaveCount(4);
+    for (const [date, title] of [
+      ["2026-09-15", "Informe de laboratorio"],
+      ["2026-09-22", "Clase de EDO"],
     ]) {
-      await page.getByRole("button", { name: new RegExp(`^${date},`) }).click();
+      await page.locator(`.planner-month-day[data-day="${date}"]`).click();
       await expect(page.locator(".planner-day-agenda")).toContainText(title);
+      const month = await page.locator(".planner-month").boundingBox();
       const agenda = await page.locator(".planner-day-agenda").boundingBox();
-      const before = await page
-        .getByRole("button", { name: new RegExp(`^${weekEnd},`) })
-        .boundingBox();
-      const after = await page
-        .getByRole("button", { name: new RegExp(`^${nextWeek},`) })
-        .boundingBox();
-      if (!agenda || !before || !after) throw new Error("Falta la agenda entre semanas");
-      expect(agenda.y).toBe(before.y + before.height);
-      expect(after.y).toBe(agenda.y + agenda.height);
+      if (!month || !agenda) throw new Error("Falta la agenda del día");
+      expect(agenda.y).toBeGreaterThanOrEqual(month.y + month.height);
     }
-    await page.getByRole("button", { name: /^2026-09-15,/ }).click();
+    await today.click();
+  } else {
+    await expect(today.locator(".planner-month-event")).toHaveCount(3);
+    await expect(today.locator(".planner-month-more")).toHaveText("1 más");
   }
   await page.screenshot({
     path: `test-results/ceo72-month-${info.project.name}.png`,
@@ -269,7 +272,7 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
   ).toBeTruthy();
-  if (info.project.use.isMobile) {
+  if (mobile) {
     await page.setViewportSize({ width: 320, height: 851 });
     expect(
       await page
@@ -299,7 +302,7 @@ test("mes, teclado, recurrencia atómica, error y páginas reactivas", async ({ 
   await expect(page.locator(".planner-day-agenda li")).toHaveCount(2);
 });
 
-test("crear y mover por puntero, teclado y cancelación", async ({ page }, info) => {
+test("crear, mover y redimensionar por puntero, teclado y cancelación", async ({ page }, info) => {
   const slot = page.locator('.planner-col[data-day="2026-09-15"] .planner-slot').nth(1);
   await slot.scrollIntoViewIfNeeded();
   const bounds = await slot.boundingBox();
@@ -309,14 +312,19 @@ test("crear y mover por puntero, teclado y cancelación", async ({ page }, info)
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height * 1.5, { steps: 8 });
   await page.mouse.up();
   await expect(page.getByRole("dialog")).toBeVisible();
+  if (!info.project.use.isMobile) {
+    await expect(page.getByRole("dialog", { name: "Nuevo bloque" })).toBeVisible();
+    await expect(page.locator(".planner-pending")).toContainText("09:00–10:45");
+  }
   await expect(page.getByLabel("Desde", { exact: true })).toHaveValue("09:00");
   await expect(page.getByLabel("Hasta", { exact: true })).toHaveValue("10:45");
   await page.getByLabel("Título", { exact: true }).fill("Preparar certamen");
   await page.getByRole("button", { name: "Guardar bloque" }).click();
-  const handle = page.getByRole("button", { name: "Mover “Preparar certamen”", exact: true });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const handle = page.getByRole("button", { name: /^Ver detalles de “Preparar certamen”/ });
   await expect(handle).toBeVisible();
   const from = await handle.boundingBox();
-  if (!from) throw new Error("Falta control Mover");
+  if (!from) throw new Error("Falta el bloque");
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
   await page.mouse.down();
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2 + bounds.height, {
@@ -324,6 +332,18 @@ test("crear y mover por puntero, teclado y cancelación", async ({ page }, info)
   });
   await page.mouse.up();
   await expect(page.locator(".planner-block small")).toContainText("10:00–11:45");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  const grip = await page.locator(".planner-block-resize").boundingBox();
+  if (!grip) throw new Error("Falta el borde de duración");
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2 + bounds.height / 2, {
+    steps: 6,
+  });
+  await expect(page.locator(".planner-drag-preview")).toContainText("2 h 15 min");
+  await page.mouse.up();
+  await expect(page.locator(".planner-block small")).toContainText("10:00–12:15");
   await page.screenshot({
     path: `test-results/ceo72-week-${info.project.name}.png`,
     fullPage: true,
@@ -332,6 +352,7 @@ test("crear y mover por puntero, teclado y cancelación", async ({ page }, info)
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByLabel("Fecha", { exact: true }).fill("2026-09-16");
   await page.getByRole("button", { name: "Guardar bloque" }).click();
+  await page.getByRole("button", { name: "Semana", exact: true }).click();
   await expect(page.locator('.planner-col[data-day="2026-09-16"] .planner-block')).toContainText(
     "Preparar certamen"
   );
@@ -339,13 +360,96 @@ test("crear y mover por puntero, teclado y cancelación", async ({ page }, info)
   await slot.scrollIntoViewIfNeeded();
   const cancelBounds = await slot.boundingBox();
   if (!cancelBounds) throw new Error("Falta hora para cancelar");
-  await page.mouse.move(cancelBounds.x + 20, cancelBounds.y + 5);
+  await page.mouse.move(cancelBounds.x + cancelBounds.width / 2, cancelBounds.y + 5);
   await page.mouse.down();
-  await page.mouse.move(cancelBounds.x + 20, cancelBounds.y + cancelBounds.height, { steps: 4 });
+  await page.mouse.move(
+    cancelBounds.x + cancelBounds.width / 2,
+    cancelBounds.y + cancelBounds.height,
+    { steps: 4 }
+  );
   await page.keyboard.press("Escape");
   await page.mouse.up();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".planner-drag-preview")).toHaveCount(0);
   await slot.press("Enter");
   await expect(page.getByRole("dialog")).toBeVisible();
+});
+
+test("vistas día y agenda, atajos, selector de fecha y detalle académico", async ({
+  page,
+}, info) => {
+  const mobile = Boolean(info.project.use.isMobile);
+  const range = page.locator(".planner-range");
+  const column = page.locator(".planner-col");
+  await page.keyboard.press("a");
+  await expect(page.locator(".planner")).toHaveAttribute("data-view", "agenda");
+  await expect(range).toHaveText(mobile ? "Sept y oct de 2026" : "Septiembre y octubre de 2026");
+  const agenda = page.locator(".planner-agenda");
+  await expect(agenda.locator('.planner-agenda-day[data-today="true"]')).toContainText(
+    "Certamen 1"
+  );
+  await expect(agenda).toContainText("Informe de laboratorio");
+  await page.screenshot({ path: `test-results/ceo72-agenda-${info.project.name}.png` });
+
+  await page.keyboard.press("d");
+  await expect(page.getByRole("region", { name: "Horario del día" })).toBeVisible();
+  await expect(range).toHaveText(mobile ? "Septiembre de 2026" : "Martes, 15 de septiembre");
+  await expect(column).toHaveAttribute("data-day", "2026-09-15");
+  await page.keyboard.press("j");
+  await expect(column).toHaveAttribute("data-day", "2026-09-16");
+  if (!mobile) await expect(range).toHaveText("Miércoles, 16 de septiembre");
+  await page.keyboard.press("t");
+  await expect(column).toHaveAttribute("data-day", "2026-09-15");
+
+  await range.getByRole("button").click();
+  const picker = page.getByRole("dialog", { name: "Elegir fecha" });
+  await expect(picker).toBeVisible();
+  await picker.getByRole("button", { name: "jueves, 17 de septiembre", exact: true }).click();
+  await expect(picker).toBeHidden();
+  await expect(column).toHaveAttribute("data-day", "2026-09-17");
+  if (mobile)
+    await expect(page.locator('.planner-strip-day[aria-pressed="true"]')).toHaveAccessibleName(
+      "jueves, 17 de septiembre"
+    );
+  await page.getByRole("button", { name: "Hoy", exact: true }).click();
+
+  await page
+    .locator(".planner-ribbon")
+    .getByRole("button", { name: /^Evaluación: Certamen 1, Ecuaciones Diferenciales/ })
+    .click();
+  const peek = page.getByRole("dialog", {
+    name: "Evaluación: Certamen 1, Ecuaciones Diferenciales",
+  });
+  await expect(peek).toBeVisible();
+  await peek.getByRole("button", { name: "Ir al aula" }).click();
+  await expect(page.locator("#course")).toHaveText("Aula abierta");
+  await page.keyboard.press("Escape");
+  await expect(peek).toBeHidden();
+  await page
+    .locator(".planner-ribbon")
+    .getByRole("button", { name: /^Evaluación: Certamen 1/ })
+    .click();
+  await peek.getByRole("button", { name: "Planificar estudio" }).click();
+  await expect(page.getByLabel("Título", { exact: true })).toHaveValue("Preparar Certamen 1");
+  await expect(page.getByLabel("Fecha", { exact: true })).toHaveValue("2026-09-15");
+  await expect(page.getByLabel("Desde", { exact: true })).toHaveValue("11:00");
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  if (mobile) return;
+  await page.keyboard.press("Shift+?");
+  const shortcuts = page.getByRole("dialog", { name: "Atajos de teclado" });
+  await expect(shortcuts).toContainText("Vista de semana");
+  await page.keyboard.press("Escape");
+  await expect(shortcuts).toBeHidden();
+  await page.keyboard.press("s");
+  await page
+    .getByRole("complementary", { name: "Panel del calendario" })
+    .getByRole("button", { name: "Ecuaciones Diferenciales", exact: true })
+    .click();
+  await expect(page.locator(".planner-ribbon")).toHaveCount(0);
+  await page.getByRole("button", { name: "Ocultar panel lateral" }).click();
+  await expect(page.getByRole("complementary", { name: "Panel del calendario" })).toBeHidden();
+  await page.getByRole("button", { name: "Mostrar panel lateral" }).click();
+  await expect(page.getByRole("complementary", { name: "Panel del calendario" })).toBeVisible();
 });
