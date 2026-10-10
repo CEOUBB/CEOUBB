@@ -230,7 +230,9 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 
 **La Regla de las Dos Cifras.** Fechas, notas, contadores, horas y tablas usan `--num` (`lining-nums tabular-nums`) o `.num`. Los identificadores (código de asignatura, número de sección, período en el encabezado, campos de fecha) usan `lining-nums proportional-nums`: se leen como nombres, no como columnas.
 
-**La Regla de la Fecha de Calendario.** Las únicas mayúsculas del campus son las abreviaturas de día y mes dentro de las hojas de fecha de la agenda (11px y 10.5px, tracking 0.04em). Son el formato de una hoja de calendario, no rótulos sobre títulos.
+**La Regla de la Fecha de Calendario.** Las únicas mayúsculas del campus son las abreviaturas de día y mes que forman una fecha: las hojas de fecha de la agenda del dashboard (11px y 10.5px), y en el calendario la cabecera de días de la cuadrícula horaria, el encabezado de días del mes, la tira semanal del teléfono y las hojas de fecha de la agenda (11px, peso 600, tracking 0.04em; 10px con tracking 0.02em en la semana compacta del teléfono). El mes mínimo usa iniciales de una letra (L, M, X, J, V, S, D) a 11px sin tracking. Siempre acompañan a un número de día; son el formato de una hoja de calendario, no rótulos sobre títulos.
+
+**La Regla de la Escala Local del Calendario.** El calendario usa tamaños fuera de la jerarquía del campus y los mantiene dentro de `.planner`: 11px para zona horaria, horas del canal, abreviaturas, "más" y título mínimo de bloque; 10px para la píldora de la hora actual y, en la semana compacta del teléfono, para zona, horas y abreviaturas; 11.5, 12.5 y 13.5px para chips, detalles de bloque y controles; el título del rango a 19px peso 650 con tracking -0.018em en escritorio y 21px peso 700 en el teléfono; cifras de fecha de 22px (agenda), 19px (cabecera de la cuadrícula y agenda del teléfono), 17px (tira semanal), 15px (semana y mes del teléfono), 13px (mes) y 12.5px (mes mínimo). Es una excepción local registrada, no una ampliación de la escala: no extender estos valores a otras superficies.
 
 ## Layout
 
@@ -245,7 +247,7 @@ El dashboard combina cursos y una columna de agenda de 320px con separación de 
 | Hasta 767px  | El shell móvil oculta el riel y muestra navegación inferior de 58px más área segura.                                        |
 | Hasta 700px  | Padding de contenedor de 16px, comienzo a 20px, títulos de 28px, cabecera de aula y pestañas con radio `lg` en vez de `xl`. |
 
-Desde 768px la cabecera es translúcida sobre el escritorio (`saturate(180%) blur(20px)`); por debajo es opaca. El calendario acota su cuadrícula semanal a `min(60dvh, 620px)` con barras de desplazamiento finas.
+Desde 768px la cabecera es translúcida sobre el escritorio (`saturate(180%) blur(20px)`); por debajo es opaca. En las vistas de día y semana el calendario fija la altura de su zona de trabajo en `clamp(520px, calc(100dvh - var(--header-offset) - 210px), 1040px)` y desplaza las horas dentro de su hoja con barras finas; en el teléfono la altura es `max(380px, …)` descontando cabecera, navegación inferior, área segura y la barra propia. La columna lateral del calendario (272px) desaparece cuando el contenedor `planner` mide menos de 880px.
 
 ## Elevation & Depth
 
@@ -262,7 +264,7 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 
 ### Named Rules
 
-**La Regla de la Hoja sin Borde.** Una superficie elevada nunca lleva borde visible; su límite es el anillo de 0.5px de la sombra. Los únicos bordes son los de campos nativos y la retícula interna del calendario mensual.
+**La Regla de la Hoja sin Borde.** Una superficie elevada nunca lleva borde visible; su límite es el anillo de 0.5px de la sombra. Los únicos bordes son los de campos nativos (incluida la línea inferior de 1.5px del título en la creación rápida), el borde tonal de 1px de los bloques del calendario y de su copia al moverlos, el anillo de 1.5px del marcador de bloque hecho y el borde izquierdo de 1px en línea fina de cada columna de día de la cuadrícula horaria. La retícula del mes y las líneas de hora se dibujan con sombras interiores y gradientes, no con bordes.
 
 **La Regla sin Divisores.** Ni cabecera, ni riel, ni pie, ni filas de lista usan líneas divisorias; la separación se logra con espacio, con la diferencia entre escritorio y hoja o con la sombra de 0.5px de la cabecera.
 
@@ -270,7 +272,7 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 
 Rectángulos suaves en escala corta: 5px para teclas y detalles, 7px para botones discretos, 10px para acciones, campos y destinos del riel, 14px para hojas y fichas, 20px para diálogos, la ficha abierta de Administrar ramos y el conjunto del aula. El círculo completo queda para avatares, el día de hoy y los saltos del índice de recursos.
 
-La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, la marca de cada sección en la lista de Administrar ramos. Las muestras del selector de identidad visual repiten la forma en 16 por 12px.
+La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, la marca de cada sección en la lista de Administrar ramos. Las muestras del selector de identidad visual repiten la forma en 16 por 12px. En el calendario la marca de sección es un rectángulo de 16 por 12px en el tono puro con radio `4px 4px 2px 2px` y una base interior más clara de 4px; es la única medida de radio del calendario fuera de los tokens, junto con los extremos de 16px de la banda de semana del mes mínimo. Lo demás usa tokens: `sm` para bloques y opciones del conmutador, `md` para controles, `lg` para hojas y popovers, `xl` para el botón flotante y las hojas inferiores del teléfono.
 
 ## Components
 
@@ -327,7 +329,27 @@ Rol, estado de período, estado de corrección, tipo de recurso, tramo de benefi
 
 ### Calendar
 
-Conmutador de vista sobre relleno tranquilo con la opción elegida como hoja de control. El mes es una hoja con retícula interna de línea fina; el día elegido lleva velo azul y anillo interior de 2px; el número del día de hoy es un círculo azul. Los bloques de horario llevan el tono de su sección.
+**Agenda y línea de tiempo.** La cabecera de página lleva "Calendario", un resumen de una línea del período visible y "Nuevo bloque". Debajo, una barra de una sola línea: "Hoy", flechas de período, el título del rango (que abre el selector de fecha) y el conmutador de vista. A la izquierda, una columna de 272px sobre el escritorio, como el riel, con el mes mínimo, "Lo que viene" y "Ramos"; a la derecha, la hoja de la vista. "Lo que viene" es una hoja con las evaluaciones y entregas de los próximos 28 días (máximo 8): marca de separador, título, ramo, cuenta regresiva en `danger` si es hoy o pronto y la acción "Planificar estudio", que en escritorio aparece al pasar o enfocar la fila. "Ramos" filtra por sección en filas de 34px; un ramo oculto pasa a tinta tenue y su marca queda como contorno de 1.5px en su tono. La columna se pliega a mano, la elección se guarda en el dispositivo y desaparece sola cuando el contenedor `planner` mide menos de 880px.
+
+**Vistas.** Día, semana, mes y una agenda continua de cuatro semanas; la vista elegida se guarda en el dispositivo. El conmutador es un relleno tranquilo fuerte con la opción elegida como hoja de control.
+
+**Cuadrícula horaria.** De 08:00 a 21:00, filas de 48px y canal de horas de 58px. Las horas y las medias horas, más tenues, se dibujan con gradientes en `--planner-line` (tinta al 7.5%). La cabecera de días y la franja de entregas quedan fijas dentro del desplazamiento: evaluaciones y entregas son chips de 24px en `--tone-wash` (`--tone-wash-strong` para evaluaciones), nunca bloques entre las horas, y la franja se pliega. Hoy lleva su número en un círculo azul de 34px y un velo azul tenue en la columna; los fines de semana, un gris aún más tenue. La hora actual es una línea `danger` de 2px con un punto de 10px, por debajo de los bloques, y una píldora `danger` con la hora en el canal. La parte transcurrida de hoy queda bajo un velo del escritorio al 60%. Una hora libre muestra velo azul y un signo más al pasar o enfocar.
+
+**Bloques.** Superficie tonal plana: `--course-tone` al 13% con blanco, borde de 1px al 26% y radio `sm`, sin franja lateral, sombra ni pulso. El bloque en curso sube al 20% con borde al 44%. Un marcador circular de 14px (18px con puntero grueso) con anillo de 1.5px marca el bloque como hecho, que baja a opacidad 0.55 con el título tachado. El contenido responde a consultas de contenedor por alto (una sola línea bajo 34px, título en dos líneas desde 44px, segundo detalle desde 72px, cuatro líneas desde 96px) y por ancho (sin hora bajo 86px, sin eliminar bajo 72px, sin detalle bajo 52px, sin marcador y con título de 11px bajo 44px). Al crear, la vista previa es azul UBB con hoja levantada; al mover o redimensionar, una copia tonal con borde al 52% y sombra flotante, mientras el original queda a opacidad 0.35. El borde inferior redimensiona; con puntero grueso el asa mide 14px y queda siempre visible, y eliminar se oculta.
+
+**Mes.** Hoja con retícula interna de línea fina hecha con sombras interiores; celdas de 118px como mínimo y fines de semana con un 40% de escritorio. El día elegido lleva `primary-wash` y un anillo interior de 1.5px de `primary` al 55%; el número de hoy es un círculo azul de 26px. Evaluaciones y entregas son filas de 20px en `--tone-wash`; los bloques, un punto de 6px en su tono. Bajo el mes, la lista del día elegido.
+
+**Agenda.** Una sola hoja con los días de cuatro semanas: hoja de fecha de 52px con la abreviatura en mayúsculas y el número de 22px, en azul si es hoy; un día sin actividad se escribe en tinta tenue.
+
+**Popovers.** Creación rápida (344px), detalle académico (328px), selector de fecha (300px) y atajos (288px) usan la capa superior nativa: hoja con radio `lg` y sombra flotante, sin fondo que bloquee. La creación rápida abre junto al rango elegido; el detalle académico ofrece "Ir al aula" y "Planificar estudio".
+
+**Teléfono.** Hasta 767px el `h1` queda oculto a la vista y el resumen desaparece; el título del rango pasa a barra de aplicación (21px, peso 700) al frente de la barra y el conmutador ocupa su propia fila. "Nuevo bloque" se convierte en un botón flotante de 56px con radio `xl` y sombra azulada sobre la navegación inferior. La vista de día suma una tira semanal (abreviatura de 11px, número de 17px en círculo de 38px y puntos de 5px por ramo; el día elegido en `primary-tint`, hoy en azul pleno) y oculta la cabecera de la cuadrícula, porque la tira ya nombra el día. Las filas miden 54px y el canal 46px; la semana compacta baja el canal a 38px, usa 10px en zona, horas y abreviaturas y reduce los chips al icono. En el mes las celdas miden 54px, los eventos pasan a puntos de 5px y la selección pasa al número. Los popovers se vuelven hojas inferiores a todo el ancho, de 88dvh como máximo, con radio `xl` arriba, agarradera de 36 por 4px y fondo oscurecido al 32%; sus acciones crecen a 44px. Crear un bloque abre directamente el diálogo completo.
+
+**Controles.** `--planner-control` mide 36px con puntero fino y 44px con puntero grueso (Hoy, flechas, rango y conmutador); los días del mes mínimo pasan de 32 a 40px.
+
+**Movimiento.** Sólo donde explica un cambio: el indicador del conmutador se desliza con resorte 340/28; el período nuevo entra 30px desde el lado hacia el que se avanzó (240ms, `--ease-out-quint`) mientras el canal de horas queda quieto; el gesto horizontal sigue al dedo y se asienta en 220ms; los bloques entran desde `scale(0.96)` en 180ms y salen a `scale(0.97)` en 120ms; la marca de hecho aparece con resorte 620/26; los popovers suben 6px desde `scale(0.98)` y las hojas del teléfono 32px, ambos con `@starting-style`; el velo transcurrido avanza en 600ms. Con movimiento reducido los bloques y la marca cambian sin transición, el `MotionConfig` del portal anula los resortes y el campus fija transiciones y animaciones a 0ms.
+
+**Carga.** `CalendarSkeleton` monta las mismas clases `planner` con cabecera, barra y cuadrícula, de modo que la carga ocupa la geometría final.
 
 ## Do's and Don'ts
 

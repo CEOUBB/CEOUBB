@@ -129,6 +129,40 @@ export function movedBlockTimes(start: number, duration: number) {
   return { startTime: timeOfMinutes(bounded), endTime: timeOfMinutes(bounded + duration) };
 }
 
+// Implements: REQ-CEO72-07 — la duración mínima es un cuarto de hora y el cierre no pasa de las 21:00.
+export function resizedBlockTimes(start: number, end: number) {
+  const bounded = Math.max(start + 15, Math.min(DAY_END_MINUTES, end));
+  return { startTime: timeOfMinutes(start), endTime: timeOfMinutes(bounded) };
+}
+
+export type CalendarView = "day" | "week" | "month" | "agenda";
+
+export const AGENDA_DAYS = 28;
+
+// Implements: REQ-CEO72-05
+export function viewDates(view: CalendarView, anchor: string): string[] {
+  if (view === "day") return [anchor];
+  if (view === "week") return weekDates(anchor);
+  if (view === "month") return monthDates(anchor);
+  return Array.from({ length: AGENDA_DAYS }, (_, index) => shiftDate(anchor, index));
+}
+
+export function stepDate(view: CalendarView, date: string, direction: 1 | -1): string {
+  if (view === "day") return shiftDate(date, direction);
+  if (view === "week") return shiftDate(date, 7 * direction);
+  if (view === "month") return shiftMonth(date, direction);
+  return shiftDate(date, AGENDA_DAYS * direction);
+}
+
+export function durationLabel(startTime: string, endTime: string): string {
+  const minutes = minutesOf(endTime) - minutesOf(startTime);
+  if (minutes <= 0) return "";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
 export function normalizeTime(value: unknown): string | null {
   const match = TIME_PATTERN.exec(String(value ?? ""));
   if (!match) return null;

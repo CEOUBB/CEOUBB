@@ -48,6 +48,7 @@
   "tests/native-services.test.ts": "8f6c7004fb1cee3d3545a3d6044bd9467c0795d5457fd931197f62a454ada11a",
   "tests/participants.test.ts": "6118fd1db0ba50c375fac3538ba7c44cc3957b83b04e2791a4aa034e501a02c0",
   "tests/planner-ceo72.test.ts": "c6f6966dbb1e197fae5e3b5710ecbacbc705774d795bc399567bdae261d1e61c",
+  "tests/planner-views.test.ts": "b751548eef922a9e8e7dce28fd48c73e4a2fb8db57842831979b3a5e6c6bc93e",
   "tests/planner.test.ts": "5c39fc7323e5cf747bdb388dd21b8853b2c80358a8e0d89f311a3c714b302336",
   "tests/portal-utils.test.ts": "982a991ba338bb6208c49c17297b1cf9b01d54102306978446f0c3ff0eed5fd3",
   "tests/preview-demo-seed.test.ts": "7222cb2aa3434353ce1c5034b2af14e09a54498e56acbc78182d19d5bbe66b6b",

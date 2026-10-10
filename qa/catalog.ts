@@ -108,6 +108,10 @@ const calendar = [
   "app/views/calendar/CalendarView.tsx",
   "app/views/calendar/CalendarMonth.tsx",
   "app/views/calendar/BlockDialog.tsx",
+  "app/views/calendar/PlannerGrid.tsx",
+  "app/views/calendar/CalendarAgenda.tsx",
+  "app/views/calendar/QuickCreate.tsx",
+  "app/views/calendar/usePlannerDrag.ts",
   "lib/firebase/calendar.ts",
 ];
 const people = [
@@ -237,6 +241,9 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   ]),
   scenario("calendar.week", "calendar", calendar, "student", "populated", true),
   scenario("calendar.month", "calendar", calendar, "student", "populated"),
+  scenario("calendar.day", "calendar", calendar, "student", "populated"),
+  scenario("calendar.agenda", "calendar", calendar, "student", "populated"),
+  scenario("calendar.quick-create", "calendar", calendar, "student", "dialog"),
   scenario("calendar.create", "calendar", calendar, "student", "form"),
   scenario("calendar.recurrence", "calendar", calendar, "student", "form"),
   scenario("calendar.invalid", "calendar", calendar, "student", "error"),
