@@ -4,6 +4,7 @@ import {
   DAY_END_MINUTES,
   DAY_START_HOUR,
   DAY_START_MINUTES,
+  timeOfMinutes,
 } from "../../../lib/planner";
 import type {
   CalendarView,
@@ -110,6 +111,16 @@ export function rangeTitle(
   return capitalize(`${name(first)} ${first.slice(0, 4)} y ${name(last)} ${last.slice(0, 4)}`);
 }
 
+export function rectOf(element: Element): AnchorRect {
+  const { left, top, width, height } = element.getBoundingClientRect();
+  return { left, top, width, height };
+}
+
+export function academicLabel(item: PlannerItem): string {
+  const kind = item.kind === "evaluation" ? "Evaluación" : "Entrega";
+  return `${kind}: ${item.title}${item.courseName ? `, ${item.courseName}` : ""}`;
+}
+
 export function itemTimeLabel(item: PlannerItem): string {
   if (item.startTime && item.endTime) return `${item.startTime}–${item.endTime}`;
   if (item.kind === "evaluation") return "Evaluación";
@@ -118,6 +129,31 @@ export function itemTimeLabel(item: PlannerItem): string {
 
 export function isPersonalKind(kind: PlannerKind): kind is PersonalEventKind {
   return kind in KIND_LABEL;
+}
+
+export function draftFor(day: string, start: number, end: number): BlockDraft {
+  return {
+    title: "",
+    detail: "",
+    date: day,
+    startTime: timeOfMinutes(start),
+    endTime: timeOfMinutes(end),
+    courseId: "",
+    kind: "study",
+  };
+}
+
+export function draftOf(item: PlannerItem): BlockDraft {
+  return {
+    id: item.id,
+    title: item.title,
+    detail: item.detail,
+    date: item.date,
+    startTime: item.startTime ?? "",
+    endTime: item.endTime ?? "",
+    courseId: item.courseId ?? "",
+    kind: isPersonalKind(item.kind) ? item.kind : "study",
+  };
 }
 
 export function itemContext(item: PlannerItem): string {

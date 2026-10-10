@@ -8,7 +8,7 @@ import { KIND_LABEL, PERSONAL_KINDS, longDate } from "./calendar-constants";
 import type { AnchorRect, BlockDraft } from "./calendar-constants";
 import { CalendarPopover } from "./CalendarPopover";
 import { ToneMark } from "./CalendarParts";
-import type { PendingRange } from "./PlannerGrid";
+import type { PendingRange } from "./PlannerColumn";
 
 // Implements: REQ-CEO72-06 — título, horario, tipo y ramo junto a la selección; el resto vive en Más opciones.
 export function QuickCreate({

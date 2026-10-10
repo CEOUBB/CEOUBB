@@ -19,7 +19,7 @@ export function CalendarPopover({
   onClose: () => void;
   children: ReactNode;
 }) {
-  const node = useRef<HTMLDivElement>(null);
+  const node = useRef<HTMLDialogElement>(null);
 
   useLayoutEffect(() => {
     const element = node.current;
@@ -39,7 +39,7 @@ export function CalendarPopover({
   }, [anchor]);
 
   return (
-    <div
+    <dialog
       aria-label={label}
       className={`planner-popover ${className}`}
       onToggle={(event) => {
@@ -47,9 +47,8 @@ export function CalendarPopover({
       }}
       popover="auto"
       ref={node}
-      role="dialog"
     >
       {children}
-    </div>
+    </dialog>
   );
 }

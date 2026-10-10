@@ -3,9 +3,9 @@
 import { Check } from "@phosphor-icons/react";
 import type { PlannerItem } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
-import { itemContext, itemTimeLabel, longDate, monthShort } from "./calendar-constants";
+import { itemContext, itemTimeLabel, longDate, monthShort, rectOf } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
-import { ItemIcon, ToneMark, rectOf } from "./CalendarParts";
+import { ItemIcon, ToneMark } from "./CalendarParts";
 
 export function AgendaRow({
   item,

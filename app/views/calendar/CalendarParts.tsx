@@ -2,6 +2,7 @@
 
 import { ClipboardText, Exam } from "@phosphor-icons/react";
 import type { PlannerItem, PlannerKind } from "../../../lib/planner";
+import { academicLabel, rectOf } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
 
 export function ItemIcon({ kind, size = 13 }: { kind: PlannerKind; size?: number }) {
@@ -17,16 +18,6 @@ export function ToneMark({ tone }: { tone: string }) {
       style={{ "--course-tone": tone } as React.CSSProperties}
     />
   );
-}
-
-export function rectOf(element: Element): AnchorRect {
-  const { left, top, width, height } = element.getBoundingClientRect();
-  return { left, top, width, height };
-}
-
-export function academicLabel(item: PlannerItem): string {
-  const kind = item.kind === "evaluation" ? "Evaluación" : "Entrega";
-  return `${kind}: ${item.title}${item.courseName ? `, ${item.courseName}` : ""}`;
 }
 
 export function AcademicChip({

@@ -1,22 +1,19 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { AnimatePresence } from "motion/react";
-import { Plus } from "@phosphor-icons/react";
 import {
   DAY_END_HOUR,
   DAY_END_MINUTES,
   DAY_START_HOUR,
   DAY_START_MINUTES,
-  durationLabel,
   timeOfMinutes,
 } from "../../../lib/planner";
 import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
 import { dayOf, getSantiagoMinutes, weekdayOf } from "../../../lib/portal-utils";
-import { MINUTE_SPAN, SLOT_HOURS, longDate, offsetOf, zoneLabel } from "./calendar-constants";
+import { SLOT_HOURS, longDate, offsetOf, zoneLabel } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
-import { rectOf } from "./CalendarParts";
-import { PlannerBlockArticle } from "./PlannerBlock";
+import { PlannerColumn } from "./PlannerColumn";
+import type { PendingRange } from "./PlannerColumn";
 import { PlannerRibbon } from "./PlannerRibbon";
 import { usePlannerDrag } from "./usePlannerDrag";
 
@@ -24,10 +21,79 @@ const NOW_LABEL_CLEARANCE_BEFORE = 15;
 const NOW_LABEL_CLEARANCE_AFTER = 25;
 const SCROLL_BREATHING = 14;
 
-export type PendingRange = { day: string; start: number; end: number };
+function PlannerHead({
+  days,
+  today,
+  focusDay,
+  onPickDay,
+}: {
+  days: string[];
+  today: string;
+  focusDay: string;
+  onPickDay: (day: string) => void;
+}) {
+  const single = days.length === 1;
+  return (
+    <div className="planner-head">
+      <span className="planner-zone num">{zoneLabel(days[0])}</span>
+      {days.map((day) => {
+        const label = (
+          <>
+            <small>{weekdayOf(day)}</small>
+            <b className="num">{dayOf(day)}</b>
+          </>
+        );
+        const state = {
+          className: "planner-headday",
+          "data-focus": day === focusDay ? "true" : undefined,
+          "data-today": day === today ? "true" : undefined,
+        };
+        return single ? (
+          <div {...state} key={day}>
+            {label}
+          </div>
+        ) : (
+          <button
+            {...state}
+            aria-label={`Ver el ${longDate(day)}`}
+            key={day}
+            onClick={() => onPickDay(day)}
+            type="button"
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-function spanStyle(start: number, end: number): React.CSSProperties {
-  return { top: offsetOf(start), height: `${((end - start) / MINUTE_SPAN) * 100}%` };
+function HourGutter({ nowMinutes, showNow }: { nowMinutes: number; showNow: boolean }) {
+  const coveredByNow = (hour: number) => {
+    const distance = nowMinutes - hour * 60;
+    return (
+      showNow && distance > -NOW_LABEL_CLEARANCE_BEFORE && distance < NOW_LABEL_CLEARANCE_AFTER
+    );
+  };
+  return (
+    <div aria-hidden="true" className="planner-hours">
+      {SLOT_HOURS.map((hour) => (
+        <span
+          className="num"
+          data-covered={coveredByNow(hour) || undefined}
+          key={hour}
+          style={{ top: offsetOf(hour * 60) }}
+        >
+          {timeOfMinutes(hour * 60)}
+        </span>
+      ))}
+      {showNow && (
+        <b className="planner-hours-now num" style={{ top: offsetOf(nowMinutes) }}>
+          {timeOfMinutes(nowMinutes)}
+        </b>
+      )}
+    </div>
+  );
 }
 
 export function PlannerGrid({
@@ -95,20 +161,18 @@ export function PlannerGrid({
   const single = span === 1;
   const showNow =
     days.includes(today) && nowMinutes >= DAY_START_MINUTES && nowMinutes <= DAY_END_MINUTES;
-  const coveredByNow = (hour: number) => {
-    const distance = nowMinutes - hour * 60;
-    return (
-      showNow && distance > -NOW_LABEL_CLEARANCE_BEFORE && distance < NOW_LABEL_CLEARANCE_AFTER
-    );
-  };
   const dragged =
     selection && selection.mode !== "create"
       ? blocks.find((block) => block.id === selection.id)
       : undefined;
   const gridRef = useCallback(
-    (node: HTMLDivElement | null) => {
+    (node: HTMLDivElement) => {
       scroller.current = node;
-      return surfaceRef(node);
+      const release = surfaceRef(node);
+      return () => {
+        scroller.current = null;
+        release();
+      };
     },
     [surfaceRef]
   );
@@ -169,37 +233,7 @@ export function PlannerGrid({
           ref={canvasRef}
         >
           <div className="planner-top">
-            <div className="planner-head">
-              <span className="planner-zone num">{zoneLabel(days[0])}</span>
-              {days.map((day) => {
-                const label = (
-                  <>
-                    <small>{weekdayOf(day)}</small>
-                    <b className="num">{dayOf(day)}</b>
-                  </>
-                );
-                const state = {
-                  className: "planner-headday",
-                  "data-focus": day === focusDay ? "true" : undefined,
-                  "data-today": day === today ? "true" : undefined,
-                };
-                return single ? (
-                  <div {...state} key={day}>
-                    {label}
-                  </div>
-                ) : (
-                  <button
-                    {...state}
-                    aria-label={`Ver el ${longDate(day)}`}
-                    key={day}
-                    onClick={() => onPickDay(day)}
-                    type="button"
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+            <PlannerHead days={days} focusDay={focusDay} onPickDay={onPickDay} today={today} />
             {hasRibbon && (
               <PlannerRibbon
                 days={days}
@@ -212,147 +246,28 @@ export function PlannerGrid({
           </div>
 
           <div className="planner-canvas">
-            <div aria-hidden="true" className="planner-hours">
-              {SLOT_HOURS.map((hour) => (
-                <span
-                  className="num"
-                  data-covered={coveredByNow(hour) || undefined}
-                  key={hour}
-                  style={{ top: offsetOf(hour * 60) }}
-                >
-                  {timeOfMinutes(hour * 60)}
-                </span>
-              ))}
-              {showNow && (
-                <b className="planner-hours-now num" style={{ top: offsetOf(nowMinutes) }}>
-                  {timeOfMinutes(nowMinutes)}
-                </b>
-              )}
-            </div>
-            {days.map((day, index) => {
-              const dayBlocks = byDay.get(day)?.blocks ?? [];
-              const isToday = day === today;
-              return (
-                <div
-                  className="planner-col"
-                  data-day={day}
-                  data-focus={day === focusDay ? "true" : undefined}
-                  data-today={isToday ? "true" : undefined}
-                  data-weekend={!single && index > 4 ? "true" : undefined}
-                  key={day}
-                >
-                  {isToday && nowMinutes > DAY_START_MINUTES && (
-                    <div
-                      aria-hidden="true"
-                      className="planner-spent"
-                      style={
-                        {
-                          "--planner-spent": String(
-                            (Math.min(nowMinutes, DAY_END_MINUTES) - DAY_START_MINUTES) /
-                              MINUTE_SPAN
-                          ),
-                        } as React.CSSProperties
-                      }
-                    />
-                  )}
-                  {SLOT_HOURS.map((hour) => (
-                    <button
-                      aria-label={`Crear un bloque el ${longDate(day)} a las ${timeOfMinutes(hour * 60)}`}
-                      className="planner-slot"
-                      data-drag="create"
-                      key={hour}
-                      onClick={(event) => {
-                        const anchor = rectOf(event.currentTarget);
-                        click(
-                          () =>
-                            onCreate(day, hour * 60, Math.min(hour + 1, DAY_END_HOUR) * 60, anchor),
-                          event.detail === 0
-                        );
-                      }}
-                      onKeyDown={(event) => {
-                        const delta = {
-                          ArrowUp: -1,
-                          ArrowDown: 1,
-                          ArrowLeft: -SLOT_HOURS.length,
-                          ArrowRight: SLOT_HOURS.length,
-                        }[event.key];
-                        if (delta === undefined) return;
-                        event.preventDefault();
-                        const slots = Array.from(
-                          event.currentTarget
-                            .closest(".planner-grid")
-                            ?.querySelectorAll<HTMLButtonElement>(".planner-slot") ?? []
-                        );
-                        slots[slots.indexOf(event.currentTarget) + delta]?.focus();
-                      }}
-                      tabIndex={day === focusDay && hour === firstFreeHour ? 0 : -1}
-                      type="button"
-                    >
-                      <Plus aria-hidden="true" size={12} weight="bold" />
-                    </button>
-                  ))}
-                  <AnimatePresence initial={false}>
-                    {dayBlocks.map((block) => (
-                      <PlannerBlockArticle
-                        block={block}
-                        click={click}
-                        dragging={dragged?.id === block.id}
-                        isLive={
-                          isToday &&
-                          nowMinutes >= block.startMinutes &&
-                          nowMinutes < block.endMinutes
-                        }
-                        key={block.id}
-                        onEdit={onEdit}
-                        onRemove={onRemove}
-                        onToggleDone={onToggleDone}
-                      />
-                    ))}
-                  </AnimatePresence>
-                  {pending?.day === day && !selection && (
-                    <div
-                      aria-hidden="true"
-                      className="planner-pending num"
-                      style={spanStyle(pending.start, pending.end)}
-                    >
-                      <strong>Nuevo bloque</strong>
-                      <small>
-                        {timeOfMinutes(pending.start)}–{timeOfMinutes(pending.end)}
-                      </small>
-                    </div>
-                  )}
-                  {selection?.day === day && (
-                    <div
-                      aria-hidden="true"
-                      className="planner-drag-preview num"
-                      data-mode={selection.mode}
-                      style={
-                        {
-                          ...spanStyle(selection.start, selection.end),
-                          "--course-tone": dragged?.tone,
-                        } as React.CSSProperties
-                      }
-                    >
-                      <strong>{dragged?.title ?? "Nuevo bloque"}</strong>
-                      <small>
-                        {timeOfMinutes(selection.start)}–{timeOfMinutes(selection.end)} ·{" "}
-                        {durationLabel(
-                          timeOfMinutes(selection.start),
-                          timeOfMinutes(selection.end)
-                        )}
-                      </small>
-                    </div>
-                  )}
-                  {isToday && showNow && (
-                    <div
-                      aria-hidden="true"
-                      className="planner-now"
-                      style={{ top: offsetOf(nowMinutes) }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+            <HourGutter nowMinutes={nowMinutes} showNow={showNow} />
+            {days.map((day, index) => (
+              <PlannerColumn
+                blocks={byDay.get(day)?.blocks ?? []}
+                click={click}
+                day={day}
+                dragged={dragged}
+                firstFreeHour={firstFreeHour}
+                focused={day === focusDay}
+                isToday={day === today}
+                key={day}
+                nowMinutes={nowMinutes}
+                onCreate={onCreate}
+                onEdit={onEdit}
+                onRemove={onRemove}
+                onToggleDone={onToggleDone}
+                pending={pending}
+                selection={selection}
+                showNow={showNow}
+                weekend={!single && index > 4}
+              />
+            ))}
           </div>
         </div>
       </div>

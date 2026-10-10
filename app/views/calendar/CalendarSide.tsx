@@ -5,8 +5,9 @@ import { CalendarPlus } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import type { PlannerItem } from "../../../lib/planner";
 import { countdown, evaluationUrgency } from "../../../lib/portal-utils";
+import { academicLabel, rectOf } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
-import { ItemIcon, ToneMark, academicLabel, rectOf } from "./CalendarParts";
+import { ItemIcon, ToneMark } from "./CalendarParts";
 import { MiniMonth } from "./MiniMonth";
 
 export function CourseFilters({

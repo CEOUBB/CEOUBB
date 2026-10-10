@@ -3,10 +3,10 @@
 import { ArrowRight, CalendarPlus, X } from "@phosphor-icons/react";
 import type { PlannerItem } from "../../../lib/planner";
 import { countdown, evaluationUrgency } from "../../../lib/portal-utils";
-import { longDate } from "./calendar-constants";
+import { academicLabel, longDate } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
 import { CalendarPopover } from "./CalendarPopover";
-import { ItemIcon, ToneMark, academicLabel } from "./CalendarParts";
+import { ItemIcon, ToneMark } from "./CalendarParts";
 
 export function ItemPeek({
   item,

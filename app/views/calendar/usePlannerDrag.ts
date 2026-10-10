@@ -14,7 +14,7 @@ import type { PlannerItem } from "../../../lib/planner";
 import type { AnchorRect } from "./calendar-constants";
 
 type DragMode = "create" | "move" | "resize";
-type DragSelection = {
+export type DragSelection = {
   mode: DragMode;
   day: string;
   start: number;
@@ -103,8 +103,7 @@ export function usePlannerDrag({
     return () => window.removeEventListener("keydown", escape);
   }, []);
 
-  const surfaceRef = useCallback((node: HTMLElement | null) => {
-    if (!node) return;
+  const surfaceRef = useCallback((node: HTMLElement) => {
     const hold = (event: TouchEvent) => {
       if (gesture.current?.active && event.cancelable) event.preventDefault();
     };

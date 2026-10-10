@@ -12,9 +12,8 @@ import {
 } from "@phosphor-icons/react";
 import type { CalendarView } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
-import { VIEWS, longDate } from "./calendar-constants";
+import { VIEWS, longDate, rectOf } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
-import { rectOf } from "./CalendarParts";
 import { useSwipe } from "./usePlannerDrag";
 
 const STEP_LABEL: Record<CalendarView, [string, string]> = {
