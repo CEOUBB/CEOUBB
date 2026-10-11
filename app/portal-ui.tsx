@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState, ViewTransition } from "react";
 import Image from "next/image";
 import { watchGooglePhoto } from "../lib/firebase-client";
 import { cachedPhoto, initials, rememberPhoto } from "../lib/portal-utils";
@@ -57,7 +57,42 @@ export function Avatar({
   );
 }
 
-// Implements: REQ-SKEL-VT-01
+const SCREEN_ENTER = {
+  "tab-forward": "tab-enter-forward",
+  "tab-back": "tab-enter-back",
+  default: "screen-enter",
+};
+const DEFERRED_UPDATE = {
+  "tab-forward": "none",
+  "tab-back": "none",
+  default: "reveal",
+};
+const SCREEN_EXIT = {
+  "tab-forward": "tab-exit-forward",
+  "tab-back": "tab-exit-back",
+  default: "screen-exit",
+};
+
+// Implements: REQ-SKEL-VT-01, REQ-MOTION-02
 export function Screen({ children }: { children: React.ReactNode }) {
-  return <div>{children}</div>;
+  return (
+    <ViewTransition default="none" enter={SCREEN_ENTER} exit={SCREEN_EXIT}>
+      {children}
+    </ViewTransition>
+  );
+}
+
+// Implements: REQ-MOTION-03
+export function Deferred({
+  fallback,
+  children,
+}: {
+  fallback: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <ViewTransition default="none" update={DEFERRED_UPDATE}>
+      <Suspense fallback={fallback}>{children}</Suspense>
+    </ViewTransition>
+  );
 }

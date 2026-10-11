@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -48,6 +49,7 @@ import {
 } from "../lib/communications.ts";
 import { forgetPreferences, useReducedMotionPreference } from "../lib/user-preferences";
 import { portalSessionReducer } from "./portal-session";
+import { transitionView } from "../lib/view-transition";
 import { sectionRoleFor } from "../lib/section-roles";
 import type { PaletteItem } from "./command-palette";
 import type { MobileTab } from "./mobile-shell";
@@ -102,7 +104,10 @@ export function usePortalCore(initialSession?: SessionState) {
     focusThread: "",
   });
   const { screen, course, preview, coursesSheet, focusThread } = navState;
-  const setScreen = useCallback((s: Screen) => dispatchNav({ type: "SET_SCREEN", screen: s }), []);
+  const setScreen = useCallback(
+    (s: Screen) => transitionView(() => dispatchNav({ type: "SET_SCREEN", screen: s })),
+    []
+  );
   const setCoursesSheet = useCallback(
     (open: boolean) => dispatchNav({ type: "SET_COURSES_SHEET", open }),
     []
@@ -144,6 +149,7 @@ export function usePortalCore(initialSession?: SessionState) {
     serverDesktopNav
   );
   const sidebarOpen = sidebarPreference ?? (desktopNav && !mobile);
+  const sidebarMode = sidebarPreference === null ? "auto" : sidebarOpen ? "open" : "closed";
   const setSidebarOpen = useCallback(
     (value: boolean | ((open: boolean) => boolean)) =>
       setSidebarPreference((previous) =>
@@ -392,7 +398,7 @@ export function usePortalCore(initialSession?: SessionState) {
     });
   }, [user]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!user) {
       previousView.current = null;
       return;
@@ -404,11 +410,8 @@ export function usePortalCore(initialSession?: SessionState) {
     }
     if (previousView.current === view) return;
     previousView.current = view;
-    const frame = requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      document.querySelector<HTMLElement>("#contenido-principal")?.focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.querySelector<HTMLElement>("#contenido-principal")?.focus({ preventScroll: true });
   }, [course?.id, screen, user]);
 
   const unreadCommunications = useMemo(
@@ -454,8 +457,10 @@ export function usePortalCore(initialSession?: SessionState) {
       } catch {
         // sin almacenamiento local los avisos se vuelven a marcar como nuevos
       }
-      setSeen(merged);
-      dispatchNav({ type: "ENTER_COURSE", course: next });
+      transitionView(() => {
+        setSeen(merged);
+        dispatchNav({ type: "ENTER_COURSE", course: next });
+      });
     },
     [activity, seen]
   );
@@ -488,7 +493,9 @@ export function usePortalCore(initialSession?: SessionState) {
       }
       const threadId = item.threadId ?? "";
       persistRead([threadCursorKey(item.courseId, threadId)]);
-      dispatchNav({ type: "OPEN_THREAD", key: `${item.courseId}:${threadId}` });
+      transitionView(() =>
+        dispatchNav({ type: "OPEN_THREAD", key: `${item.courseId}:${threadId}` })
+      );
     },
     [courses, enterCourse, persistRead]
   );
@@ -656,6 +663,7 @@ export function usePortalCore(initialSession?: SessionState) {
       setCoursesSheet,
       setPreview,
       sidebarOpen,
+      sidebarMode,
       setSidebarOpen,
       searchOpen,
       setSearchOpen,
@@ -705,6 +713,7 @@ export function usePortalCore(initialSession?: SessionState) {
       setCoursesSheet,
       setPreview,
       sidebarOpen,
+      sidebarMode,
       setSidebarOpen,
       searchOpen,
       setSearchOpen,

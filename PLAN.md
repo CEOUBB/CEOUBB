@@ -1,6 +1,14 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Calendar redesign, 2026-10-10
+## Current handoff: Motion, skeletons and mobile first paint, 2026-10-11
+
+- Scope: branch `claude/unruffled-cartwright-969c16`. Screen and classroom tab changes started by pointer or touch run through React `<ViewTransition>` (`lib/view-transition.ts`, `Screen` and `Deferred` in `app/portal-ui.tsx`); keyboard and reduced motion apply them immediately. The course divider tab morphs between the card and the classroom header. Lazy views moved from `next/dynamic` to `React.lazy` with `Suspense` so skeletons receive real props.
+- Skeletons were rebuilt on the real view classes (`app/views/ViewSkeletons.tsx`, primitives in `app/views/skeleton-bones.tsx`, diagonal shimmer in `lib/skeleton-wave.ts`). They render known data and draw bones only for pending data; arriving lists use `resolve` / `resolve-children`, which stay instant after keyboard input. Posts expose `postsStatus` so an empty state never shows while the first snapshot is pending.
+- Mobile first paint: `MobileBottomNav` is always server rendered and the phone chrome rules hang from `.app-shell:has(.mobile-nav)` inside the 767px media query, so phones paint the mobile shell before hydration. `data-mobile` remains only for behaviour and the notification sheet. `/campus/loading.tsx` was tried and removed: React's batched Suspense reveal kept the fallback at least about 300ms and duplicated the shell in the DOM.
+- Tests: no sealed test changed. `e2e/skeleton-layout.spec.ts` passes props to the skeletons and a fixed calendar view; `qa/browser/motion-scenarios.ts` asserts a view transition for pointer navigation and none for keyboard tabs.
+- Open: no production deployment. Physical Android and iOS devices were not exercised.
+
+## Handoff: Calendar redesign, 2026-10-10
 
 - Scope: branch `claude/calendar-redesign-ac7278`. Rebuilds `app/views/calendar/` as "Agenda y línea de tiempo": a collapsible side column (mini month, "Lo que viene", course filters), day, week, month and four week agenda views, quick create popover, academic item peek, block resizing, single key shortcuts, and a phone layout with a week strip, floating create button and bottom sheets. Decisions, interaction model and REQ-CEO72-05 to 09 live in `docs/design/ceo-72-calendario.md`; `DESIGN.md` records the shipped system.
 - Touch creation is a 350 ms long press; the explicit touch selection toggle, the per block "Mover" handle and the toolbar date input are retired. The time zone label is computed with `Intl` instead of a hardcoded `GMT−4`.

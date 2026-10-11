@@ -87,6 +87,7 @@ To navigate non-obvious structural seams efficiently without burning context on 
 - **Domain Views vs Shared UI:** Primary dashboards and feature screens reside in `app/views/` (e.g. `CoursesDashboard.tsx`, `calendar/CalendarView.tsx`), while reusable UI primitives reside in `components/`.
 - **Server API & Route Handlers:** Secure endpoints live in `app/api/` (Zod validation, session auth, transactional mutations).
 - **Mobile Bridge:** Native Android host in `android/`, Capacitor runtime integration in `lib/mobile-bridge.ts` & `lib/native-files.ts`.
+- **Motion & Loading:** `lib/view-transition.ts` routes pointer navigation through React View Transitions and applies keyboard or reduced motion changes immediately; `app/portal-ui.tsx` (`Screen`, `Deferred`) owns screen and reveal boundaries. Skeletons live in `app/views/ViewSkeletons.tsx` with primitives in `app/views/skeleton-bones.tsx` and the shared shimmer in `lib/skeleton-wave.ts`; they render known data and draw bones only for pending data. Transition rules live in `app/globals.css`, skeleton material in `app/campus-base.css`.
 
 ---
 

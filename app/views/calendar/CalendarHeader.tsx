@@ -14,6 +14,7 @@ import type { CalendarView } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
 import { VIEWS, longDate, rectOf } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
+import { Line } from "../skeleton-bones";
 import { useSwipe } from "./usePlannerDrag";
 
 const STEP_LABEL: Record<CalendarView, [string, string]> = {
@@ -41,7 +42,16 @@ export function CalendarHeader({
       <div className="planner-lead">
         <h1>Calendario</h1>
         <p className="num">
-          {loaded ? summary : <span role="status">Sincronizando bloques…</span>}
+          {loaded ? (
+            summary
+          ) : (
+            <>
+              <span className="sr-only" role="status">
+                Sincronizando bloques…
+              </span>
+              <Line quiet w="15em" />
+            </>
+          )}
         </p>
       </div>
       <div className="planner-actions">

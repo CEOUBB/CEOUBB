@@ -2,6 +2,7 @@
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { GradesSkeleton } from "../ViewSkeletons";
 import {
   ChatCenteredText,
   Check,
@@ -91,6 +92,8 @@ export function GradesSection({
 }) {
   const { gradebook, exemption, gradebookStatus } = classroom;
   const ready = gradebookStatus === "ready";
+  const [initialLoading] = useState(gradebookStatus === "loading" && gradebook.length === 0);
+  const contentClass = initialLoading ? "grades-content resolve" : "grades-content";
   const unavailable = !ready && (
     <div className="grades-load-status" role="status">
       <p>
@@ -105,12 +108,13 @@ export function GradesSection({
       )}
     </div>
   );
+  if (gradebookStatus === "loading" && gradebook.length === 0) return <GradesSkeleton />;
   if (!ready && gradebook.length === 0) return unavailable;
   if (canTeach)
     return (
       <>
         {unavailable}
-        <fieldset className="grades-content" disabled={!ready}>
+        <fieldset className={contentClass} disabled={!ready}>
           <TeacherGrades
             key={course.id}
             course={course}
@@ -127,7 +131,7 @@ export function GradesSection({
   return (
     <>
       {unavailable}
-      <fieldset className="grades-content" disabled={!ready}>
+      <fieldset className={contentClass} disabled={!ready}>
         <StudentGrades
           course={course}
           user={user}

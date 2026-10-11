@@ -260,227 +260,86 @@
   font-family: var(--font-playfair, var(--font-serif)), "Playfair Display", serif;
 }
 
-/* ── Carga: esqueleto del portal ──────────────────────────────
-   Reproduce la geometría real del shell para que el contenido caiga donde ya
-   estaba dibujado. Un solo barrido de luz cruza toda la página en diagonal;
-   --sk-delay escalona cada bloque contra esa ola.
+/* ── Carga: esqueletos ───────────────────────────────────────
+   Implements: REQ-SKELETON-01, REQ-STAGGERED-SHIMMER-MOTION, REQ-MOTION-05
    ─────────────────────────────────────────────────────────── */
 
-.boot-shell {
-  min-height: 100vh;
-  min-height: 100svh;
-  display: grid;
-  grid-template-columns: 268px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  grid-template-areas: "header header" "sidebar main";
-  background: var(--canvas-soft);
-}
-
 .sk {
+  --sk-band: 220px;
   position: relative;
   display: block;
   max-width: 100%;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--hairline) 62%, var(--canvas));
+  border-radius: var(--radius-xs);
+  background: var(--sk-bone, oklch(0.2 0.01 265 / 0.075));
+  animation: sk-in 360ms var(--ease-spring) 140ms backwards;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--sk-band);
+    background: linear-gradient(100deg, transparent, oklch(1 0 0 / 0.62) 50%, transparent);
+    translate: calc(-1 * var(--sk-band)) 0;
+    animation: sk-wave 2600ms linear var(--sk-delay, 0ms) infinite;
+  }
 }
 
-/* El brillo viaja sobre el bloque; el ancho del recorrido es el del propio bloque,
-   y el retraso compartido hace que la cresta cruce la página como una sola ola.
-   La cresta se queda muy por debajo del blanco puro: sobre un lienzo de papel un
-   destello opaco se lee como parpadeo, no como espera. */
-.sk::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 18%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 82%
-  );
-  animation: sk-sweep 1.9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
-  animation-delay: var(--sk-delay, 0ms);
-}
-
-/* Hueso apagado para lo que en la pantalla real es texto secundario: la silueta
-   conserva jerarquía en vez de aplanar todo al mismo gris. */
 .sk-quiet {
-  background: color-mix(in srgb, var(--hairline) 38%, var(--canvas));
+  --sk-bone: oklch(0.2 0.01 265 / 0.05);
 }
 
 .sk-round {
   border-radius: var(--radius-full);
 }
 
-.boot-header {
-  position: relative;
-  grid-area: header;
-  min-height: var(--header-height);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 var(--space-md) 0 10px;
-  background: var(--canvas);
-  border-bottom: 1px solid var(--border-hairline);
+.sk-line {
+  display: inline-block;
+  vertical-align: top;
+  block-size: 0.78em;
+  margin-block: calc((1lh - 0.78em) / 2);
+  border-radius: 0.24em;
 }
 
-/* La marca no es un hueso gris: es lo único cierto mientras la sesión resuelve. */
-.boot-header img {
-  width: auto;
-  height: 32px;
-  flex: 0 0 auto;
-  margin-left: 6px;
+.sk-contents {
+  display: contents;
 }
 
-.boot-header strong {
-  flex: 0 0 auto;
-  margin-left: 10px;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  white-space: nowrap;
+.resolve,
+.resolve-children > * {
+  animation: 320ms var(--ease-spring) backwards;
 }
 
-.boot-menu {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-input="keyboard"]) :is(.resolve, .resolve-children > *) {
+    animation-name: resolve;
+  }
 }
 
-/* La barra real lleva la ruta activa junto a la marca; sin ella el encabezado
-   del esqueleto queda medio vacío y al llegar la vista el título se corre. */
-.boot-crumb {
-  flex: 0 0 auto;
-  width: 96px;
-  height: 12px;
-  margin-left: var(--space-md);
+.resolve-children > :nth-child(2) {
+  animation-delay: 40ms;
 }
-.boot-search {
-  flex: 0 1 320px;
-  min-width: 0;
-  height: 38px;
-  margin-left: auto;
-  border-radius: var(--radius-full);
+.resolve-children > :nth-child(3) {
+  animation-delay: 80ms;
 }
-.boot-bell {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  margin-left: var(--space-md);
-}
-.boot-identity {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex: 0 0 auto;
-  margin-left: var(--space-sm);
-}
-.boot-avatar {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-}
-.boot-identity-lines {
-  display: grid;
-  gap: 5px;
-}
-.boot-identity-lines .sk:first-child {
-  width: 58px;
-  height: 11px;
-}
-.boot-identity-lines .sk:last-child {
-  width: 78px;
-  height: 9px;
+.resolve-children > :nth-child(n + 4) {
+  animation-delay: 120ms;
 }
 
-.boot-side {
-  grid-area: sidebar;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-md) 10px;
-  background: var(--canvas);
-  border-right: 1px solid var(--border-hairline);
-}
-
-/* La navegación real es icono más rótulo sobre blanco, no una losa gris de
-   ancho completo: el esqueleto dibuja esa misma anatomía. */
-.boot-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 40px;
-  padding: 0 10px;
-}
-.boot-row > .sk {
-  animation: none;
-}
-.boot-row-icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  border-radius: 6px;
-}
-.boot-row-label {
-  height: 12px;
-}
-.boot-row-lines {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-}
-.boot-row-lines .sk:first-child {
-  height: 12px;
-}
-.boot-row-lines .sk:last-child {
-  width: 54px;
-  height: 9px;
-}
-.boot-legend {
-  width: 84px;
-  height: 11px;
-  margin: var(--space-md) 0 4px 10px;
-}
-.boot-side-foot {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: auto;
-}
-
-.boot-main {
-  grid-area: main;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  padding: var(--space-xl) var(--container-pad) var(--space-4xl);
-  max-width: var(--container-max);
-  width: 100%;
-  margin: 0 auto;
+@media (prefers-reduced-motion: reduce) {
+  .sk {
+    animation: none;
+  }
+  .sk::after {
+    display: none;
+  }
 }
 
 /* ── Esqueletos de vistas y de módulos internos ────────────────
    Sólo las geometrías que la pantalla real no expone en una clase propia.
    Todo lo demás reutiliza las clases verdaderas de cada lista o panel.
    ─────────────────────────────────────────────────────────── */
-
-.teacher-course-row-skeleton {
-  display: grid;
-  grid-template-columns: 4px minmax(0, 1fr);
-  gap: 11px;
-  align-items: stretch;
-  min-height: 66px;
-  padding: 9px 11px 9px 7px;
-}
-.teacher-course-row-skeleton > .sk {
-  animation: none;
-}
 
 .review-doc-skeleton {
   display: grid;
@@ -489,25 +348,21 @@
   place-items: center;
 }
 .review-doc-skeleton-page {
+  display: grid;
+  align-content: start;
+  gap: 10px;
   width: min(100%, 520px);
   aspect-ratio: 1 / 1.294;
   max-height: 560px;
+  padding: 9% 10%;
   border-radius: var(--radius-sm);
-}
+  background: var(--surface-card);
+  box-shadow: var(--shadow-1);
+  font-size: 15px;
 
-/* Sin animación, el esqueleto sigue siendo una silueta legible del portal. */
-@media (prefers-reduced-motion: reduce) {
-  .sk::after {
-    display: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .boot-shell {
-    grid-template-areas: "header" "main";
-  }
-  .boot-side {
-    display: none;
+  & .sk-line:first-child {
+    margin-bottom: 14px;
+    font-size: 22px;
   }
 }
 
@@ -1152,6 +1007,21 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
   z-index: 50;
+  transform-origin: top right;
+}
+
+/* Implements: REQ-MOTION-08 */
+html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
+  transition:
+    opacity 150ms var(--ease-spring),
+    translate 220ms var(--ease-spring),
+    scale 220ms var(--ease-spring);
+
+  @starting-style {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.97;
+  }
 }
 
 .account-popover strong {
@@ -1346,34 +1216,6 @@
 }
 .notification-see-all:hover {
   background: var(--color-primary-wash);
-}
-
-.notification-skeleton {
-  display: flex;
-  flex-direction: column;
-}
-.notification-skeleton-row {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 40px;
-  align-items: center;
-  gap: var(--space-sm);
-  min-height: 72px;
-  padding: 12px;
-}
-.notification-skeleton-lines {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xxs);
-}
-.notification-skeleton-line {
-  height: 12px;
-  width: 70%;
-  border-radius: var(--radius-xs);
-  background: var(--border-hairline);
-}
-.notification-skeleton-line.short {
-  height: 10px;
-  width: 45%;
 }
 
 .notification-scrim {
@@ -6156,6 +5998,30 @@ div.editor-latex-token {
     backdrop-filter: blur(2px);
   }
 }
+
+/* Implements: REQ-MOTION-08 */
+@media (min-width: 768px) {
+  html:not([data-input="keyboard"]) .planner-dialog[open] {
+    transition:
+      opacity 180ms var(--ease-spring),
+      translate 260ms var(--ease-spring),
+      scale 260ms var(--ease-spring);
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 8px;
+      scale: 0.97;
+    }
+
+    &::backdrop {
+      transition: opacity 200ms ease-out;
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+}
 .planner-dialog form {
   display: flex;
   flex-direction: column;
@@ -6394,6 +6260,10 @@ div.editor-latex-token {
 .res-group {
   display: grid;
   gap: var(--space-sm);
+
+  &:focus {
+    outline: none;
+  }
 }
 .res-group .section-title {
   margin-top: 0;
@@ -8815,6 +8685,11 @@ div.editor-latex-token {
     max-width: 84vw;
     box-shadow: var(--shadow-2);
   }
+  .app-shell:not([data-sidebar="open"]) .app-sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
   .app-shell[data-sidebar="open"] .sidebar-scrim {
     display: block;
     position: fixed;
@@ -9455,8 +9330,7 @@ div.editor-latex-token {
   }
 }
 
-.teacher-course-list > button,
-.teacher-course-row-skeleton {
+.teacher-course-list > button {
   display: grid;
   grid-template-columns: 12px minmax(0, 1fr);
   align-items: center;
@@ -9464,9 +9338,6 @@ div.editor-latex-token {
   min-height: 56px;
   padding: 8px 12px;
   border-radius: var(--radius-md);
-}
-
-.teacher-course-list > button {
   color: var(--text-secondary);
   text-align: start;
   transition:
@@ -9509,14 +9380,10 @@ div.editor-latex-token {
   }
 }
 
-.teacher-course-mark,
-.teacher-course-row-skeleton > .sk:first-child {
+.teacher-course-mark {
   width: 12px;
   height: 9px;
   border-radius: 3px 3px 1px 1px;
-}
-
-.teacher-course-mark {
   background: var(--course-tone);
 }
 
@@ -9949,8 +9816,7 @@ div.editor-latex-token {
     display: none;
   }
 
-  .teacher-course-list > button,
-  .teacher-course-row-skeleton {
+  .teacher-course-list > button {
     flex: 0 0 min(232px, 70vw);
   }
 

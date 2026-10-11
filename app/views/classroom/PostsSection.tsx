@@ -16,6 +16,7 @@ import { formatBytes, formatDate, formatDueDate, type User } from "../../../lib/
 import { safeLinkDestination } from "../../../lib/rich-text";
 import { filterPostsByQuery, kindLabel, paginateList } from "./classroom-utils";
 import { EmptyState } from "./EmptyState";
+import { PostListSkeleton } from "../ViewSkeletons";
 import { RichPostEditor } from "./RichPostEditor";
 import { RichText } from "./RichText";
 
@@ -79,6 +80,7 @@ function PostEditForm({
 
 export function PostsSection({
   posts,
+  loading,
   user,
   canManageContent,
   editPost,
@@ -87,6 +89,7 @@ export function PostsSection({
   startPublication,
 }: {
   posts: ClassroomPost[];
+  loading: boolean;
   user: User;
   canManageContent: boolean;
   editPost: (post: ClassroomPost, values: { title: string; body: string }) => Promise<boolean>;
@@ -99,6 +102,7 @@ export function PostsSection({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
+  const [initialLoading] = useState(loading);
 
   const [prevQuery, setPrevQuery] = useState(deferredQuery);
   if (deferredQuery !== prevQuery) {
@@ -147,7 +151,7 @@ export function PostsSection({
         </search>
       )}
 
-      {posts.length === 0 && (
+      {!loading && posts.length === 0 && (
         <EmptyState
           icon={Megaphone}
           title={
@@ -174,130 +178,139 @@ export function PostsSection({
         </p>
       )}
 
-      <div className="post-list">
-        {paginated.items.map((post) => {
-          const canManage =
-            canManageContent &&
-            Boolean(post.authorId) &&
-            (user.role === "owner" || post.authorEmail.toLowerCase() === user.email.toLowerCase());
-          const safePostLink = post.linkUrl ? safeLinkDestination(post.linkUrl) : null;
-          /* Un archivo subido es una publicación con ruta de almacenamiento:
+      {loading ? (
+        <PostListSkeleton />
+      ) : (
+        <div className={initialLoading ? "post-list resolve-children" : "post-list"}>
+          {paginated.items.map((post) => {
+            const canManage =
+              canManageContent &&
+              Boolean(post.authorId) &&
+              (user.role === "owner" ||
+                post.authorEmail.toLowerCase() === user.email.toLowerCase());
+            const safePostLink = post.linkUrl ? safeLinkDestination(post.linkUrl) : null;
+            /* Un archivo subido es una publicación con ruta de almacenamiento:
              se ofrece como adjunto propio para que la Portada lo muestre igual
              que a los que viajan dentro de un aviso. */
-          const attachments: ClassroomAttachment[] = post.storagePath
-            ? [
-                {
-                  name: post.title,
-                  storagePath: post.storagePath,
-                  contentType: "application/octet-stream",
-                  size: 0,
-                },
-                ...post.attachments,
-              ]
-            : post.attachments;
-          return (
-            <article key={post.id}>
-              <span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span>
-              <div>
-                <h3>{post.title}</h3>
-                {editingId === post.id ? (
-                  <PostEditForm onCancel={() => setEditingId(null)} onSave={editPost} post={post} />
-                ) : (
-                  <>
-                    <RichText body={post.body} />
-                    {/* Implements: REQ-PUB-09 */}
-                    {attachments.length > 0 && (
-                      <ul className="post-attachments">
-                        {attachments.map((attachment) => (
-                          <li key={attachment.storagePath}>
+            const attachments: ClassroomAttachment[] = post.storagePath
+              ? [
+                  {
+                    name: post.title,
+                    storagePath: post.storagePath,
+                    contentType: "application/octet-stream",
+                    size: 0,
+                  },
+                  ...post.attachments,
+                ]
+              : post.attachments;
+            return (
+              <article key={post.id}>
+                <span className={`post-kind ${post.kind}`}>{kindLabel(post.kind)}</span>
+                <div>
+                  <h3>{post.title}</h3>
+                  {editingId === post.id ? (
+                    <PostEditForm
+                      onCancel={() => setEditingId(null)}
+                      onSave={editPost}
+                      post={post}
+                    />
+                  ) : (
+                    <>
+                      <RichText body={post.body} />
+                      {/* Implements: REQ-PUB-09 */}
+                      {attachments.length > 0 && (
+                        <ul className="post-attachments">
+                          {attachments.map((attachment) => (
+                            <li key={attachment.storagePath}>
+                              <button
+                                onClick={() => openAttachment(attachment)}
+                                title={`Descargar ${attachment.name}`}
+                                type="button"
+                              >
+                                <Paperclip aria-hidden="true" size={14} />
+                                <span>{attachment.name}</span>
+                                {attachment.size > 0 && (
+                                  <small className="num">{formatBytes(attachment.size)}</small>
+                                )}
+                                <DownloadSimple aria-hidden="true" size={14} />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <footer>
+                        <span>{post.authorName}</span>
+                        <time>{formatDate(post.createdAt)}</time>
+                        <span className="post-folder">{post.folder}</span>
+                        {post.dueDate && (
+                          <span className="post-due">
+                            <CalendarCheck size={13} weight="fill" aria-hidden="true" />
+                            Entrega {formatDueDate(post.dueDate)}
+                          </span>
+                        )}
+                        {safePostLink && (
+                          <a href={safePostLink} target="_blank" rel="noopener noreferrer">
+                            Abrir recurso <ArrowUpRight aria-hidden="true" size={12} />
+                          </a>
+                        )}
+                        {canManage && deletingId !== post.id && (
+                          <span className="content-actions">
                             <button
-                              onClick={() => openAttachment(attachment)}
-                              title={`Descargar ${attachment.name}`}
+                              aria-label={`Modificar aviso "${post.title}"`}
+                              onClick={() => setEditingId(post.id)}
                               type="button"
                             >
-                              <Paperclip aria-hidden="true" size={14} />
-                              <span>{attachment.name}</span>
-                              {attachment.size > 0 && (
-                                <small className="num">{formatBytes(attachment.size)}</small>
-                              )}
-                              <DownloadSimple aria-hidden="true" size={14} />
+                              Modificar
                             </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <footer>
-                      <span>{post.authorName}</span>
-                      <time>{formatDate(post.createdAt)}</time>
-                      <span className="post-folder">{post.folder}</span>
-                      {post.dueDate && (
-                        <span className="post-due">
-                          <CalendarCheck size={13} weight="fill" aria-hidden="true" />
-                          Entrega {formatDueDate(post.dueDate)}
-                        </span>
-                      )}
-                      {safePostLink && (
-                        <a href={safePostLink} target="_blank" rel="noopener noreferrer">
-                          Abrir recurso <ArrowUpRight aria-hidden="true" size={12} />
-                        </a>
-                      )}
-                      {canManage && deletingId !== post.id && (
-                        <span className="content-actions">
-                          <button
-                            aria-label={`Modificar aviso "${post.title}"`}
-                            onClick={() => setEditingId(post.id)}
-                            type="button"
-                          >
-                            Modificar
-                          </button>
-                          <button
-                            aria-label={`Eliminar aviso "${post.title}"`}
-                            onClick={() => setDeletingId(post.id)}
-                            type="button"
-                          >
-                            Eliminar
-                          </button>
-                        </span>
-                      )}
-                    </footer>
-                    {canManage && deletingId === post.id && (
-                      <div
-                        className="context-confirmation"
-                        role="group"
-                        aria-label={`Eliminar aviso ${post.title}`}
-                      >
-                        <p>
-                          ¿Eliminar este aviso? <span>Esta acción no se puede deshacer.</span>
-                        </p>
-                        <div className="confirmation-actions">
-                          <button
-                            className="planner-dialog-cancel"
-                            onClick={() => setDeletingId(null)}
-                            type="button"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            className="confirmation-danger"
-                            aria-label={`Confirmar eliminación de "${post.title}"`}
-                            onClick={() => {
-                              setDeletingId(null);
-                              deletePost(post);
-                            }}
-                            type="button"
-                          >
-                            Eliminar aviso
-                          </button>
+                            <button
+                              aria-label={`Eliminar aviso "${post.title}"`}
+                              onClick={() => setDeletingId(post.id)}
+                              type="button"
+                            >
+                              Eliminar
+                            </button>
+                          </span>
+                        )}
+                      </footer>
+                      {canManage && deletingId === post.id && (
+                        <div
+                          className="context-confirmation"
+                          role="group"
+                          aria-label={`Eliminar aviso ${post.title}`}
+                        >
+                          <p>
+                            ¿Eliminar este aviso? <span>Esta acción no se puede deshacer.</span>
+                          </p>
+                          <div className="confirmation-actions">
+                            <button
+                              className="planner-dialog-cancel"
+                              onClick={() => setDeletingId(null)}
+                              type="button"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              className="confirmation-danger"
+                              aria-label={`Confirmar eliminación de "${post.title}"`}
+                              onClick={() => {
+                                setDeletingId(null);
+                                deletePost(post);
+                              }}
+                              type="button"
+                            >
+                              Eliminar aviso
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       {paginated.totalPages > 1 && (
         <nav aria-label="Paginación de publicaciones" className="classroom-pagination">

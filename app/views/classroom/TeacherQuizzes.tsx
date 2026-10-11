@@ -299,6 +299,7 @@ function QuizCatalogList({
   loading: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
 }) {
+  const [initialLoading] = useState(loading);
   const gradeItemsById = useMemo(() => {
     const byId = new Map<string, (typeof gradebook)[number]>();
     for (const item of gradebook) {
@@ -320,7 +321,7 @@ function QuizCatalogList({
       ) : quizzes.length === 0 ? (
         <QuizEmpty teacher />
       ) : (
-        <div className="quiz-card-list">
+        <div className={initialLoading ? "quiz-card-list resolve-children" : "quiz-card-list"}>
           {quizzes.map((quiz) => (
             <article className="quiz-card" key={quiz.id}>
               <div className="quiz-card-icon">

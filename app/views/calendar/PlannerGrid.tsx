@@ -1,16 +1,10 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import {
-  DAY_END_HOUR,
-  DAY_END_MINUTES,
-  DAY_START_HOUR,
-  DAY_START_MINUTES,
-  timeOfMinutes,
-} from "../../../lib/planner";
+import { DAY_END_MINUTES, DAY_START_MINUTES, timeOfMinutes } from "../../../lib/planner";
 import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
-import { dayOf, getSantiagoMinutes, weekdayOf } from "../../../lib/portal-utils";
-import { SLOT_HOURS, longDate, offsetOf, zoneLabel } from "./calendar-constants";
+import { dayOf, weekdayOf } from "../../../lib/portal-utils";
+import { SLOT_HOURS, longDate, offsetOf, scrollGridToHour, zoneLabel } from "./calendar-constants";
 import type { AnchorRect } from "./calendar-constants";
 import { PlannerColumn } from "./PlannerColumn";
 import type { PendingRange } from "./PlannerColumn";
@@ -19,7 +13,6 @@ import { usePlannerDrag } from "./usePlannerDrag";
 
 const NOW_LABEL_CLEARANCE_BEFORE = 15;
 const NOW_LABEL_CLEARANCE_AFTER = 25;
-const SCROLL_BREATHING = 14;
 
 function PlannerHead({
   days,
@@ -177,23 +170,7 @@ export function PlannerGrid({
     [surfaceRef]
   );
 
-  useLayoutEffect(() => {
-    const node = scroller.current;
-    const column = node?.querySelector<HTMLElement>(".planner-col");
-    if (!node || !column) return;
-    const now = node.querySelector(".planner-col[data-today]")
-      ? getSantiagoMinutes()
-      : DAY_START_MINUTES + 60;
-    const hour = Math.min(Math.max(Math.floor(now / 60) - 1, DAY_START_HOUR), DAY_END_HOUR - 1);
-    const sticky = node.querySelector<HTMLElement>(".planner-top")?.offsetHeight ?? 0;
-    const columnTop =
-      column.getBoundingClientRect().top - node.getBoundingClientRect().top + node.scrollTop;
-    node.scrollTop =
-      columnTop +
-      ((hour - DAY_START_HOUR) / SLOT_HOURS.length) * column.offsetHeight -
-      sticky -
-      SCROLL_BREATHING;
-  }, [span]);
+  useLayoutEffect(() => scrollGridToHour(scroller.current), [span]);
 
   return (
     <div

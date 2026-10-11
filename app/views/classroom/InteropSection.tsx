@@ -301,7 +301,7 @@ export function InteropSection({
           }
         />
       ) : (
-        <ul className="interop-resource-list">
+        <ul className="interop-resource-list resolve-children">
           {state.resources.map((resource) => (
             <li key={resource.id}>
               <div>

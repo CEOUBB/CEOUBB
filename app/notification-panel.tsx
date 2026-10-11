@@ -14,6 +14,8 @@ import {
 import type { NotificationItem } from "../lib/communications.ts";
 import { EASE_OUT, SPRING_LAYOUT, SPRING_PRESS, SPRING_SWAP } from "../lib/ease";
 import { useHydratedReducedMotion } from "../lib/hooks/use-hydrated-reduced-motion";
+import { skeletonWave } from "../lib/skeleton-wave";
+import { Bone, Line } from "./views/skeleton-bones";
 
 const NOTIFICATION_DATE = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
@@ -273,30 +275,41 @@ export function NotificationStack({
   );
 }
 
-/*
-  El esqueleto repite la geometría real de la fila: banda de tono, dos líneas de
-  texto y el mismo alto útil. Si difiere, el panel salta al resolverse la
-  suscripción y el usuario pierde la fila que estaba por tocar.
-*/
 // Implements: REQ-NOTIF-06
 export function NotificationSkeleton() {
   return (
     <div
       aria-busy="true"
       aria-label="Cargando notificaciones"
-      className="notification-skeleton"
+      className="notification-list flex-1"
+      ref={skeletonWave}
       role="status"
     >
-      {[0, 1, 2].map((row) => (
-        <span className="notification-skeleton-row" key={row}>
-          <span className="sk sk-round" style={{ width: 32, height: 32 }} />
-          <span className="notification-skeleton-lines">
-            <span className="sk notification-skeleton-line" />
-            <span className="sk sk-quiet notification-skeleton-line short" />
-          </span>
-          <span className="sk sk-quiet" style={{ width: 36, height: 10 }} />
-        </span>
-      ))}
+      <div className="notification-group">
+        <div className="notification-group-title">
+          <Line quiet w="4.5em" />
+        </div>
+        <ul className="list-none p-0 m-0">
+          {[0, 1, 2].map((row) => (
+            <li key={row}>
+              <span className="notification-row">
+                <Bone h={32} round w={32} />
+                <span className="notification-copy">
+                  <strong>
+                    <Line w={`${58 + ((row * 17) % 30)}%`} />
+                  </strong>
+                  <small>
+                    <Line quiet w={`${70 - row * 9}%`} />
+                  </small>
+                </span>
+                <span className="notification-time">
+                  <Line quiet w="2.6em" />
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -390,6 +403,7 @@ export function NotificationList({
 }) {
   const groups = useMemo(() => groupNotifications(items), [items]);
   const unread = groups.unreadCount;
+  const [initialLoading] = useState(loading);
 
   return (
     <div className="notification-panel-body flex flex-col max-h-[min(70vh,540px)]">
@@ -426,7 +440,9 @@ export function NotificationList({
           <p>No tienes notificaciones nuevas</p>
         </div>
       ) : (
-        <div className="notification-list flex-1 overflow-y-auto">
+        <div
+          className={`notification-list flex-1 overflow-y-auto${initialLoading ? " resolve" : ""}`}
+        >
           {groups.today.length > 0 && (
             <div className="notification-group">
               <div className="notification-group-title">Hoy ({groups.today.length})</div>

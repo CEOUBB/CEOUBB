@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createElement } from "react";
+import { createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
@@ -19,6 +19,13 @@ const {
 const { CourseCard }: typeof import("../app/views/CourseCard") = require("../app/views/CourseCard");
 const { COURSES }: typeof import("../lib/courses") = require("../lib/courses");
 
+const FIXTURE_USER = {
+  id: "skeleton-fixture",
+  email: "docente@ubiobio.cl",
+  name: "Docente de prueba",
+  role: "teacher",
+} as const;
+
 // Implements: REQ-SKELETON-01
 // Render the production components against the production CSS, without adding a preview route.
 for (const width of [1440, 390]) {
@@ -33,15 +40,39 @@ for (const width of [1440, 390]) {
     const rootClass = await page.locator("html").getAttribute("class");
     const base = page.url();
 
-    const variants = {
-      LoadingScreen,
-      ...skeletons,
-      NotificationSkeleton,
-      TeacherQuizSkeleton: () =>
-        createElement<{ teacher?: boolean }>(skeletons.QuizListSkeleton, { teacher: true }),
+    const variants: Record<string, ReactElement> = {
+      LoadingScreen: createElement(LoadingScreen),
+      CalendarSkeleton: createElement(skeletons.CalendarSkeleton, {
+        courses: COURSES,
+        initialView: width > 767 ? "week" : "day",
+      }),
+      ResourcesSkeleton: createElement(skeletons.ResourcesSkeleton),
+      AdminSkeleton: createElement(skeletons.AdminSkeleton),
+      PeriodListSkeleton: createElement(skeletons.PeriodListSkeleton),
+      AccountRowsSkeleton: createElement(skeletons.AccountRowsSkeleton),
+      CommunicationsSkeleton: createElement(skeletons.CommunicationsSkeleton),
+      AnnouncementListSkeleton: createElement(skeletons.AnnouncementListSkeleton),
+      ConversationListSkeleton: createElement(skeletons.ConversationListSkeleton),
+      ConversationSkeleton: createElement(skeletons.ConversationSkeleton),
+      TeacherCoursesSkeleton: createElement(skeletons.TeacherCoursesSkeleton),
+      TeacherCoursesBodySkeleton: createElement(skeletons.TeacherCoursesBodySkeleton),
+      ClassroomSkeleton: createElement(skeletons.ClassroomSkeleton, {
+        course: COURSES[0],
+        sectionRole: "teacher",
+        user: FIXTURE_USER,
+      }),
+      PostListSkeleton: createElement(skeletons.PostListSkeleton),
+      SettingsSkeleton: createElement(skeletons.SettingsSkeleton, { user: FIXTURE_USER }),
+      SessionListSkeleton: createElement(skeletons.SessionListSkeleton),
+      QuizListSkeleton: createElement(skeletons.QuizListSkeleton),
+      TeacherQuizSkeleton: createElement(skeletons.QuizListSkeleton, { teacher: true }),
+      InteropListSkeleton: createElement(skeletons.InteropListSkeleton),
+      GradeHistorySkeleton: createElement(skeletons.GradeHistorySkeleton),
+      DocumentPaneSkeleton: createElement(skeletons.DocumentPaneSkeleton),
+      NotificationSkeleton: createElement(NotificationSkeleton),
     };
-    for (const [name, Component] of Object.entries(variants)) {
-      const markup = renderToStaticMarkup(createElement(Component));
+    for (const [name, element] of Object.entries(variants)) {
+      const markup = renderToStaticMarkup(element);
       const fixture = new URL("/__skeleton_fixture__", base).href;
       await page.route(fixture, (route) =>
         route.fulfill({
@@ -126,7 +157,6 @@ for (const width of [1440, 390]) {
         const actual = renderToStaticMarkup(
           createElement(CourseCard, {
             course: { ...COURSES[0], name: "Estática" },
-            shouldReduceMotion: true,
             onOpen: () => {},
           })
         );

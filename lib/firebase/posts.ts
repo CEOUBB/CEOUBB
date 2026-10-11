@@ -170,6 +170,7 @@ export const MAX_WATCHED_SECTIONS = 40;
 
 export type ClassroomState = {
   posts: ClassroomPost[];
+  postsStatus: "loading" | "ready" | "error";
   files: ClassroomFile[];
   students: ClassroomStudent[];
   gradebook: GradeItem[];
@@ -202,13 +203,13 @@ export function watchClassroom(
   let active = true;
   const stops: (() => void)[] = [];
 
-  onChange({ gradebookStatus: "loading" });
+  onChange({ postsStatus: "loading", gradebookStatus: "loading" });
 
   const syncDevPosts = () => {
     if (!active) return;
     const devPosts = readDevPosts(courseId);
     if (devPosts.length > 0) {
-      onChange({ posts: devPosts });
+      onChange({ posts: devPosts, postsStatus: "ready" });
     }
   };
 
@@ -244,12 +245,13 @@ export function watchClassroom(
               for (const p of posts) {
                 if (!merged.some((m) => m.id === p.id)) merged.push(p);
               }
-              onChange({ posts: merged.length > 0 ? merged : posts, files });
+              onChange({ posts: merged.length > 0 ? merged : posts, files, postsStatus: "ready" });
             } else {
-              onChange({ posts, files });
+              onChange({ posts, files, postsStatus: "ready" });
             }
           },
           () => {
+            onChange({ postsStatus: "error" });
             if (!isDevOrLocalEnvironment()) {
               onError("No se pudieron sincronizar las publicaciones de Firebase.");
             }

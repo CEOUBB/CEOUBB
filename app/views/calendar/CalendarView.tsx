@@ -7,12 +7,16 @@ import { DAY_END_HOUR, DAY_START_HOUR, shiftDate, stepDate } from "../../../lib/
 import type { CalendarView as View, PlannerItem } from "../../../lib/planner";
 import { getSantiagoDateISO, getSantiagoMinutes } from "../../../lib/portal-utils";
 import {
+  CALENDAR_SIDE_KEY,
+  CALENDAR_VIEW_KEY,
   VIEWS,
-  compactViewport,
   draftFor,
   draftOf,
   rangeTitle,
+  initialCalendarView,
+  initialSideOpen,
   rectOf,
+  storeCalendarSetting,
   useCompactViewport,
 } from "./calendar-constants";
 import type { AnchorRect, BlockDraft } from "./calendar-constants";
@@ -28,31 +32,6 @@ import { MiniMonth } from "./MiniMonth";
 import type { PendingRange } from "./PlannerColumn";
 import { QuickCreate } from "./QuickCreate";
 
-const VIEW_KEY = "ceoubb:calendar-view";
-const SIDE_KEY = "ceoubb:calendar-side";
-
-function readStored(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function store(key: string, value: string): boolean {
-  try {
-    window.localStorage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function initialView(): View {
-  const stored = VIEWS.find((option) => option.id === readStored(VIEW_KEY));
-  return stored?.id ?? (compactViewport() ? "day" : "week");
-}
-
 export function CalendarView({
   courses,
   gradebooks,
@@ -65,7 +44,7 @@ export function CalendarView({
   openCourse: (course: Course) => void;
 }) {
   const today = getSantiagoDateISO();
-  const [view, setView] = useState<View>(initialView);
+  const [view, setView] = useState<View>(initialCalendarView);
   const [date, setDate] = useState(today);
   const [direction, setDirection] = useState(0);
   const [hidden, setHidden] = useState<string[]>([]);
@@ -74,7 +53,7 @@ export function CalendarView({
   const [peek, setPeek] = useState<{ item: PlannerItem; anchor: AnchorRect } | null>(null);
   const [picker, setPicker] = useState<AnchorRect | null>(null);
   const [shortcuts, setShortcuts] = useState<AnchorRect | null>(null);
-  const [sideOpen, setSideOpen] = useState(() => readStored(SIDE_KEY) !== "closed");
+  const [sideOpen, setSideOpen] = useState(initialSideOpen);
   const [pendingDelete, setPendingDelete] = useState<PlannerItem | null>(null);
   const [alert, setAlert] = useState("");
   const [notice, setNotice] = useState("");
@@ -120,7 +99,7 @@ export function CalendarView({
   };
   const step = (sign: 1 | -1) => goTo(stepDate(view, date, sign));
   const changeView = (next: View) => {
-    store(VIEW_KEY, next);
+    storeCalendarSetting(CALENDAR_VIEW_KEY, next);
     setDirection(0);
     setView(next);
   };
@@ -129,7 +108,7 @@ export function CalendarView({
     changeView("day");
   };
   const toggleSide = () => {
-    store(SIDE_KEY, sideOpen ? "closed" : "open");
+    storeCalendarSetting(CALENDAR_SIDE_KEY, sideOpen ? "closed" : "open");
     setSideOpen(!sideOpen);
   };
   const toggleCourse = (courseId: string) =>

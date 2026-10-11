@@ -200,6 +200,19 @@ export function courseToneValue(tone: CourseTone): string {
   return TONE_VALUES[tone];
 }
 
+const TONE_LABELS: Record<CourseTone, string> = {
+  sky: "Celeste",
+  emerald: "Esmeralda",
+  gold: "Dorado",
+  red: "Rojo",
+  teal: "Turquesa",
+  purple: "Morado",
+};
+
+export function courseToneLabel(tone: CourseTone): string {
+  return TONE_LABELS[tone];
+}
+
 export function modalityLabel(modality: CourseModality): string {
   return modality === "hibrida" ? "Híbrida" : modality === "remota" ? "Remota" : "Presencial";
 }
