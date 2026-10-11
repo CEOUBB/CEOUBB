@@ -136,16 +136,21 @@ export async function portalScenario(
         await navigate(page, "Calendario");
         await expect(page.getByRole("heading", { name: "Calendario", exact: true })).toBeVisible();
         await expect(page.getByRole("group", { name: "Vista del calendario" })).toBeVisible();
-        const dayBar = page.getByRole("navigation", { name: "Día visible" });
+        const dayBar = page.getByRole("navigation", { name: "Días de la semana" });
 
         if (await dayBar.isVisible()) {
           const evaluation = QA_GRADE_ITEMS.find((item) => item.id === QA_IDS.report);
 
           if (!evaluation?.date) throw new Error("QA evaluation date is missing");
           const day = new Date(`${evaluation.date}T12:00:00Z`).getUTCDate();
-          await dayBar.getByRole("button", { name: new RegExp(` ${day}$`) }).click();
+          await dayBar.getByRole("button", { name: new RegExp(`, ${day} de `) }).click();
         }
-        await expect(page.getByText(/Informe individual QA/).first()).toBeVisible();
+        await expect(
+          page
+            .getByText(/Informe individual QA/)
+            .filter({ visible: true })
+            .first()
+        ).toBeVisible();
         await navigate(page, "Área personal");
       }
       await expect(page.getByRole("heading", { name: "En tu agenda" })).toBeVisible();
