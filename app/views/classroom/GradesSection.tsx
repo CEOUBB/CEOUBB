@@ -92,8 +92,8 @@ export function GradesSection({
 }) {
   const { gradebook, exemption, gradebookStatus } = classroom;
   const ready = gradebookStatus === "ready";
-  const [resolving] = useState(gradebookStatus === "loading" && gradebook.length === 0);
-  const contentClass = resolving ? "grades-content resolve" : "grades-content";
+  const [initialLoading] = useState(gradebookStatus === "loading" && gradebook.length === 0);
+  const contentClass = initialLoading ? "grades-content resolve" : "grades-content";
   const unavailable = !ready && (
     <div className="grades-load-status" role="status">
       <p>

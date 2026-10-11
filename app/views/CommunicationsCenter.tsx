@@ -231,7 +231,7 @@ function CommunicationsPanels({
   messageError: string;
 }) {
   const [search, setSearch] = useState("");
-  const [resolving] = useState(!ready);
+  const [initialPending] = useState(!ready);
   const visibleTargets = targets.filter((target) =>
     `${target.heading} ${target.detail}`
       .toLocaleLowerCase("es-CL")
@@ -275,7 +275,9 @@ function CommunicationsPanels({
             </button>
           </div>
         ) : (
-          <ol className={resolving ? "announcement-list resolve-children" : "announcement-list"}>
+          <ol
+            className={initialPending ? "announcement-list resolve-children" : "announcement-list"}
+          >
             {activity.map((item) => {
               const course = courseMap.get(item.courseId);
               const details = COMMUNICATION_KIND[item.kind];
@@ -374,7 +376,9 @@ function CommunicationsPanels({
             </p>
           </div>
         ) : (
-          <ol className={resolving ? "conversation-list resolve-children" : "conversation-list"}>
+          <ol
+            className={initialPending ? "conversation-list resolve-children" : "conversation-list"}
+          >
             {visibleTargets.length === 0 && (
               <li className="conversation-no-results">
                 <span role="status">

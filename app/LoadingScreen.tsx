@@ -75,7 +75,12 @@ export function LoadingScreen() {
         Abriendo Centro de Estudio UBB…
       </p>
       <header className="app-header" inert>
-        <button className="icon-button menu-button" tabIndex={-1} type="button">
+        <button
+          aria-label="Abrir el menú"
+          className="icon-button menu-button"
+          tabIndex={-1}
+          type="button"
+        >
           <List aria-hidden="true" size={20} />
         </button>
         <button className="app-brand" tabIndex={-1} type="button">
@@ -104,7 +109,7 @@ export function LoadingScreen() {
         </button>
         <div className="header-actions">
           <details className="notifications-menu">
-            <summary className="header-notifications" tabIndex={-1}>
+            <summary aria-label="Notificaciones" className="header-notifications" tabIndex={-1}>
               <Bell aria-hidden="true" size={20} />
             </summary>
           </details>

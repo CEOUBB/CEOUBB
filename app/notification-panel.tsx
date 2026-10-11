@@ -403,7 +403,7 @@ export function NotificationList({
 }) {
   const groups = useMemo(() => groupNotifications(items), [items]);
   const unread = groups.unreadCount;
-  const [resolving] = useState(loading);
+  const [initialLoading] = useState(loading);
 
   return (
     <div className="notification-panel-body flex flex-col max-h-[min(70vh,540px)]">
@@ -440,7 +440,9 @@ export function NotificationList({
           <p>No tienes notificaciones nuevas</p>
         </div>
       ) : (
-        <div className={`notification-list flex-1 overflow-y-auto${resolving ? " resolve" : ""}`}>
+        <div
+          className={`notification-list flex-1 overflow-y-auto${initialLoading ? " resolve" : ""}`}
+        >
           {groups.today.length > 0 && (
             <div className="notification-group">
               <div className="notification-group-title">Hoy ({groups.today.length})</div>

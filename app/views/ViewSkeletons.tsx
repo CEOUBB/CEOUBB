@@ -31,7 +31,7 @@ import type { Course } from "../../lib/courses";
 import { COURSE_TONES, courseToneLabel, courseToneValue } from "../../lib/course-management";
 import { timeOfMinutes, viewDates, weekDates } from "../../lib/planner";
 import type { CalendarView } from "../../lib/planner";
-import { dayOf, getSantiagoDateISO, roleLabel, weekdayOf } from "../../lib/portal-utils";
+import { dayOf, getSantiagoDateISO, weekdayOf } from "../../lib/portal-utils";
 import type { User } from "../../lib/portal-utils";
 import { canManageSectionContent, canTeachSection } from "../../lib/section-roles";
 import type { SectionRole } from "../../lib/section-roles";
@@ -60,6 +60,7 @@ import { CourseFilters } from "./calendar/CalendarSide";
 import { MiniMonth } from "./calendar/MiniMonth";
 import { ClassroomHeader, ClassroomTabs } from "./classroom/ClassroomChrome";
 import { MobileStrip, ResourceGroupSection } from "./resources/resource-parts";
+import { AccountFacts } from "./settings-parts";
 import { RESOURCE_GROUPS } from "./resources/resources-data";
 import { Bone, Line } from "./skeleton-bones";
 
@@ -1100,22 +1101,7 @@ export function SettingsSkeleton({ user }: { user: User }) {
               Tu correo y tu rango se derivan de la cuenta institucional y no se editan desde aquí.
             </p>
           </div>
-          <dl className="settings-facts">
-            <div>
-              <dt>Correo institucional</dt>
-              <dd>{user.email}</dd>
-            </div>
-            <div>
-              <dt>Rango</dt>
-              <dd>{roleLabel(user.role)}</dd>
-            </div>
-            {user.carrera ? (
-              <div>
-                <dt>Carrera</dt>
-                <dd>{user.carrera}</dd>
-              </div>
-            ) : null}
-          </dl>
+          <AccountFacts user={user} />
           <h3 className="settings-subhead">Sesiones activas</h3>
           <SessionListSkeleton />
           <div className="settings-actions">
@@ -1302,8 +1288,8 @@ export function ConversationSkeleton() {
           { own: false, width: "62%", lines: 2 },
           { own: true, width: "44%", lines: 1 },
           { own: false, width: "70%", lines: 2 },
-        ].map((bubble, index) => (
-          <li className={bubble.own ? "own" : undefined} key={index}>
+        ].map((bubble) => (
+          <li className={bubble.own ? "own" : undefined} key={bubble.width}>
             <span
               className="message-bubble"
               style={{ display: "grid", gap: "2px", width: bubble.width }}

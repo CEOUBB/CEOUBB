@@ -20,7 +20,7 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { roleLabel, type User } from "../../lib/portal-utils.ts";
+import type { User } from "../../lib/portal-utils.ts";
 import {
   CHANNELS_WITHOUT_SENDER,
   CHANNEL_LABELS,
@@ -33,6 +33,7 @@ import {
   type UserPreferences,
 } from "../../lib/user-preferences.ts";
 import { Avatar } from "../portal-ui.tsx";
+import { AccountFacts } from "./settings-parts.tsx";
 import { SessionListSkeleton } from "./ViewSkeletons.tsx";
 
 type ActiveSession = {
@@ -642,22 +643,7 @@ function AccountPanel({
         </p>
       </div>
 
-      <dl className="settings-facts">
-        <div>
-          <dt>Correo institucional</dt>
-          <dd>{user.email}</dd>
-        </div>
-        <div>
-          <dt>Rango</dt>
-          <dd>{roleLabel(user.role)}</dd>
-        </div>
-        {user.carrera ? (
-          <div>
-            <dt>Carrera</dt>
-            <dd>{user.carrera}</dd>
-          </div>
-        ) : null}
-      </dl>
+      <AccountFacts user={user} />
 
       <h3 className="settings-subhead" id="settings-sessions-title">
         Sesiones activas

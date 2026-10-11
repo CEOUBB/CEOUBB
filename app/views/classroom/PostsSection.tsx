@@ -102,7 +102,7 @@ export function PostsSection({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
-  const [resolving] = useState(loading);
+  const [initialLoading] = useState(loading);
 
   const [prevQuery, setPrevQuery] = useState(deferredQuery);
   if (deferredQuery !== prevQuery) {
@@ -181,7 +181,7 @@ export function PostsSection({
       {loading ? (
         <PostListSkeleton />
       ) : (
-        <div className={resolving ? "post-list resolve-children" : "post-list"}>
+        <div className={initialLoading ? "post-list resolve-children" : "post-list"}>
           {paginated.items.map((post) => {
             const canManage =
               canManageContent &&
