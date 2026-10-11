@@ -6,6 +6,7 @@ import {
   DAY_START_MINUTES,
   timeOfMinutes,
 } from "../../../lib/planner";
+import { getSantiagoMinutes } from "../../../lib/portal-utils";
 import type {
   CalendarView,
   PersonalEventKind,
@@ -191,4 +192,52 @@ function watchCompact(callback: () => void) {
 
 export function useCompactViewport(): boolean {
   return useSyncExternalStore(watchCompact, compactViewport, () => false);
+}
+
+export const CALENDAR_VIEW_KEY = "ceoubb:calendar-view";
+export const CALENDAR_SIDE_KEY = "ceoubb:calendar-side";
+
+function readCalendarSetting(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function storeCalendarSetting(key: string, value: string): boolean {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function initialCalendarView(): CalendarView {
+  const stored = VIEWS.find((option) => option.id === readCalendarSetting(CALENDAR_VIEW_KEY));
+  return stored?.id ?? (compactViewport() ? "day" : "week");
+}
+
+export function initialSideOpen(): boolean {
+  return readCalendarSetting(CALENDAR_SIDE_KEY) !== "closed";
+}
+
+const SCROLL_BREATHING = 14;
+
+export function scrollGridToHour(node: HTMLElement | null) {
+  const column = node?.querySelector<HTMLElement>(".planner-col");
+  if (!node || !column) return;
+  const now = node.querySelector(".planner-col[data-today]")
+    ? getSantiagoMinutes()
+    : DAY_START_MINUTES + 60;
+  const hour = Math.min(Math.max(Math.floor(now / 60) - 1, DAY_START_HOUR), DAY_END_HOUR - 1);
+  const sticky = node.querySelector<HTMLElement>(".planner-top")?.offsetHeight ?? 0;
+  const columnTop =
+    column.getBoundingClientRect().top - node.getBoundingClientRect().top + node.scrollTop;
+  node.scrollTop =
+    columnTop +
+    ((hour - DAY_START_HOUR) / SLOT_HOURS.length) * column.offsetHeight -
+    sticky -
+    SCROLL_BREATHING;
 }

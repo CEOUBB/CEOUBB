@@ -55,6 +55,11 @@ function readCache(): UserPreferences | null {
   }
 }
 
+// Implements: REQ-CFG-08
+export function cachedPreferences(): UserPreferences {
+  return readCache() ?? defaultPreferences();
+}
+
 function writeCache(preferences: UserPreferences) {
   try {
     window.localStorage.setItem(CACHE_KEY, JSON.stringify(preferences));

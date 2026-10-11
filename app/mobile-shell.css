@@ -1,7 +1,8 @@
 /*
-  Shell móvil — sólo activo por debajo de 768px, el mismo umbral que usa
-  `useIsMobileApp()` en `lib/mobile-bridge.ts`. Si los dos se desalinean, la barra
-  inferior se monta sin que el CSS le haga sitio y tapa el pie del contenido.
+  Shell móvil: sólo activo por debajo de 768px. La barra inferior viaja siempre en
+  el HTML del servidor y el ancho decide qué cromo se pinta, así el primer cuadro
+  en un teléfono ya es el shell móvil y la hidratación no reordena nada. Las reglas
+  cuelgan de `:has(.mobile-nav)`: un shell sin barra no reserva su hueco.
   Los tokens salen de `DESIGN.md`; aquí no se define ningún color nuevo.
 */
 
@@ -17,23 +18,23 @@
 @media (max-width: 767px) {
   /* Implements: REQ-CAP-04 — el cromo de escritorio desaparece: el riel lateral
      y su cortina se sustituyen por la barra del pulgar, no conviven con ella. */
-  .app-shell[data-mobile="true"] {
+  .app-shell:has(.mobile-nav) {
     --mobile-nav-height: 58px;
   }
 
-  .app-shell[data-mobile="true"] .app-sidebar,
-  .app-shell[data-mobile="true"] .sidebar-scrim,
-  .app-shell[data-mobile="true"] .menu-button {
+  .app-shell:has(.mobile-nav) .app-sidebar,
+  .app-shell:has(.mobile-nav) .sidebar-scrim,
+  .app-shell:has(.mobile-nav) .menu-button {
     display: none;
   }
 
-  .app-shell[data-mobile="true"] .app-main {
+  .app-shell:has(.mobile-nav) .app-main {
     /* Implements: REQ-CAP-07 — el contenido termina por encima del inset inferior. */
     padding-bottom: calc(var(--mobile-nav-height) + var(--safe-bottom));
   }
 
   /* Implements: REQ-CAP-04 */
-  .app-shell[data-mobile="true"] .mobile-nav {
+  .app-shell .mobile-nav {
     position: fixed;
     inset: auto 0 0;
     z-index: 46;
@@ -97,7 +98,7 @@
     font-weight: 600;
   }
 
-  .app-shell[data-mobile="true"] .header-context {
+  .app-shell:has(.mobile-nav) .header-context {
     display: none;
   }
 }
@@ -105,7 +106,7 @@
 /* ── Teléfono: el portal deja de ser un escritorio encogido ── */
 
 /*
-  Todo lo de aquí abajo cuelga del ancho, no de `data-mobile`: los diálogos nativos
+  Todo lo de aquí abajo cuelga sólo del ancho: los diálogos nativos
   y la paleta viven en la capa superior del navegador y hay que poder alcanzarlos
   con el mismo selector desde el móvil web y desde la WebView.
 */
@@ -242,60 +243,6 @@
   }
 }
 
-/* ── Esqueleto de arranque ───────────────────────────────── */
-
-/*
-  El esqueleto sólo cumple si es la silueta de lo que va a llegar. En el teléfono
-  seguía dibujando el portal de escritorio: la cabecera se metía bajo el reloj, el
-  buscador se encogía a un cuadrado que ya no existe, las portadas de 16/5 ocupaban
-  un tercio de cada tarjeta y no había ni rastro de la barra del pulgar. El
-  resultado era un salto de layout completo al resolver la sesión.
-*/
-@media (max-width: 767px) {
-  .boot-header {
-    min-height: calc(var(--header-height) + var(--safe-top));
-    padding: var(--safe-top) 10px 0;
-  }
-
-  .boot-menu {
-    display: none;
-  }
-  .boot-header img {
-    margin-left: 0;
-  }
-  /* En el teléfono la barra sólo lleva marca, buscador y avatar: la ruta y el
-     nombre de la cuenta viven dentro del menú, no en la cabecera. */
-  .boot-crumb,
-  .boot-bell,
-  .boot-identity-lines {
-    display: none;
-  }
-  .boot-search {
-    flex: 1 1 auto;
-    height: 40px;
-    margin-left: 6px;
-    border-radius: var(--radius-full);
-  }
-  .boot-avatar {
-    margin-left: 6px;
-  }
-
-  .boot-main {
-    gap: var(--space-md);
-    padding: var(--space-lg) var(--space-md) var(--space-xl);
-  }
-  /* La barra del pulgar es lo único fijo de la pantalla: si falta, al resolver la
-     sesión el contenido salta 58px hacia arriba. */
-  .boot-shell::after {
-    content: "";
-    position: fixed;
-    inset: auto 0 0;
-    height: calc(58px + var(--safe-bottom));
-    border-top: 1px solid var(--border-hairline);
-    background: var(--white);
-  }
-}
-
 @keyframes palette-sheet-in {
   from {
     opacity: 0;
@@ -346,7 +293,7 @@
 @media (max-width: 767px) {
   /* Nada de zoom por doble toque ni de destello gris del sistema al pulsar:
      el acuse de recibo lo damos nosotros, en el mismo frame. */
-  .app-shell[data-mobile="true"] {
+  .app-shell {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }

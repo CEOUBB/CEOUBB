@@ -1300,7 +1300,7 @@ button.agenda-calendar-link:hover {
   .app-shell .page-head.lead p > span:is(:nth-child(2), :nth-child(4)) {
     display: none;
   }
-  .app-shell[data-mobile="true"] .mobile-nav {
+  .app-shell .mobile-nav {
     border-top-color: transparent;
     box-shadow: 0 -0.5px 0 var(--hairline);
   }
@@ -1358,83 +1358,6 @@ button.agenda-calendar-link:hover {
   }
 }
 
-/* Implements: REQ-SKELETON-01 — la carga consume la geometría del campus. */
-.app-shell.boot-shell {
-  grid-template-rows: calc(var(--header-height) + var(--safe-top)) minmax(0, 1fr);
-}
-.boot-header {
-  gap: 10px;
-  background: var(--paper);
-  border-bottom-color: transparent;
-  box-shadow: 0 0.5px 0 var(--hairline);
-}
-.boot-header strong {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.012em;
-}
-.boot-search {
-  border-radius: var(--radius-md);
-}
-.boot-side {
-  padding: 18px 12px 16px;
-  background: var(--paper);
-  border-right-color: transparent;
-}
-.boot-row {
-  min-height: 38px;
-  padding: 7px 10px;
-}
-.boot-legend {
-  margin-top: 28px;
-  margin-bottom: 12px;
-}
-.boot-main {
-  justify-content: flex-start;
-}
-.boot-shell .course-action {
-  display: flex;
-  align-items: center;
-}
-.boot-shell .course-cover {
-  background: var(--fill-quiet);
-}
-.boot-shell .course-cover .course-code {
-  background: var(--fill-quiet);
-  &::after {
-    display: none;
-  }
-}
-[aria-busy="true"] .classroom-meta {
-  max-width: 100%;
-}
-[aria-busy="true"] .classroom-meta > .sk {
-  flex-shrink: 1;
-}
-[aria-busy="true"] :is(.planner-toolbar, .planner-actions, .planner-strip) button:disabled,
-[aria-busy="true"] .course-tabs button:disabled {
-  opacity: 1;
-  cursor: default;
-}
-@media (max-width: 700px) {
-  .boot-header {
-    gap: 6px;
-  }
-  .boot-header strong {
-    font-size: 15px;
-    margin-left: 0;
-  }
-  .boot-search {
-    flex: 1 1 auto;
-  }
-}
-
-.skeleton-rail-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-}
 /* La consulta móvil ocupa el espacio útil entre cabecera y navegación. */
 .communications-heading .communications-summary {
   display: flex;

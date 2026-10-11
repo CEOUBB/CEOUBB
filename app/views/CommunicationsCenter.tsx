@@ -27,7 +27,11 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import type { Course } from "../../lib/courses.ts";
-import { ConversationSkeleton } from "./ViewSkeletons";
+import {
+  AnnouncementListSkeleton,
+  ConversationListSkeleton,
+  ConversationSkeleton,
+} from "./ViewSkeletons";
 import {
   announcementCursorKey,
   canListStudentThreads,
@@ -227,6 +231,7 @@ function CommunicationsPanels({
   messageError: string;
 }) {
   const [search, setSearch] = useState("");
+  const [resolving] = useState(!ready);
   const visibleTargets = targets.filter((target) =>
     `${target.heading} ${target.detail}`
       .toLocaleLowerCase("es-CL")
@@ -250,33 +255,27 @@ function CommunicationsPanels({
             {ready && !connectionError ? `${activity.length} publicaciones` : "Sin actualizar"}
           </span>
         </header>
-        {activity.length === 0 ? (
+        {activity.length === 0 && !ready && !connectionError ? (
+          <AnnouncementListSkeleton />
+        ) : activity.length === 0 ? (
           <div className="communications-empty">
-            {connectionError || !ready ? (
+            {connectionError ? (
               <Bell aria-hidden="true" size={48} weight="light" />
             ) : (
               <CheckCircle aria-hidden="true" size={48} weight="light" />
             )}
-            <h2>
-              {connectionError
-                ? "Avisos no disponibles"
-                : !ready
-                  ? "Cargando avisos…"
-                  : "Todo al día"}
-            </h2>
+            <h2>{connectionError ? "Avisos no disponibles" : "Todo al día"}</h2>
             <p>
               {connectionError
                 ? "No pudimos comprobar las novedades. Reintenta para ver los avisos de tus secciones."
-                : !ready
-                  ? "Estamos comprobando las novedades de tus secciones."
-                  : "Los avisos de tus ramos aparecerán aquí cuando el equipo docente publique."}
+                : "Los avisos de tus ramos aparecerán aquí cuando el equipo docente publique."}
             </p>
             <button className="communications-empty-action" onClick={showMessages} type="button">
               Ir a mensajes <ArrowRight aria-hidden="true" size={18} />
             </button>
           </div>
         ) : (
-          <ol className="announcement-list">
+          <ol className={resolving ? "announcement-list resolve-children" : "announcement-list"}>
             {activity.map((item) => {
               const course = courseMap.get(item.courseId);
               const details = COMMUNICATION_KIND[item.kind];
@@ -362,24 +361,20 @@ function CommunicationsPanels({
             />
           </label>
         )}
-        {targets.length === 0 ? (
+        {targets.length === 0 && !ready && !connectionError ? (
+          <ConversationListSkeleton />
+        ) : targets.length === 0 ? (
           <div className="communications-empty compact">
             <ChatCircleText aria-hidden="true" size={48} weight="light" />
-            <h3>
-              {connectionError
-                ? "Conversaciones no disponibles"
-                : !ready
-                  ? "Cargando conversaciones…"
-                  : "Sin conversaciones"}
-            </h3>
+            <h3>{connectionError ? "Conversaciones no disponibles" : "Sin conversaciones"}</h3>
             <p>
-              {connectionError || !ready
+              {connectionError
                 ? "Espera a que se actualice la lista o reintenta la conexión."
                 : "Aparecerán al contar con una matrícula activa o una consulta estudiantil."}
             </p>
           </div>
         ) : (
-          <ol className="conversation-list">
+          <ol className={resolving ? "conversation-list resolve-children" : "conversation-list"}>
             {visibleTargets.length === 0 && (
               <li className="conversation-no-results">
                 <span role="status">
@@ -489,7 +484,7 @@ function CommunicationsPanels({
                   </p>
                 </div>
               ) : (
-                <ol className="message-list">
+                <ol className="message-list resolve">
                   {messages.map((message) => {
                     const own = message.authorId === currentUserId;
                     return (

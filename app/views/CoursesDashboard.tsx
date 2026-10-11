@@ -2,8 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import { useQueryState, parseAsString } from "nuqs";
-import { useHydratedReducedMotion } from "../../lib/hooks/use-hydrated-reduced-motion";
-import * as m from "motion/react-m";
 import {
   Archive,
   ArrowRight,
@@ -25,7 +23,6 @@ import {
   getSantiagoDateISO,
   nextEntry,
   shortDate,
-  stagger,
   weekdayOf,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
@@ -252,7 +249,6 @@ export function CoursesDashboard({
     [entries, next, courses, todayISO]
   );
   const teaches = user.role === "teacher" || user.role === "owner";
-  const shouldReduceMotion = useHydratedReducedMotion();
 
   const displayedCourses = useMemo(() => {
     let list = courses;
@@ -370,12 +366,7 @@ export function CoursesDashboard({
               )}
             </label>
           )}
-          <m.div
-            animate="show"
-            className="course-grid"
-            initial={shouldReduceMotion ? "show" : "hidden"}
-            variants={shouldReduceMotion ? undefined : stagger}
-          >
+          <div className="course-grid">
             {courses.length === 0 && (
               <div className="course-empty-state">
                 <EmptyState
@@ -405,11 +396,10 @@ export function CoursesDashboard({
                 key={course.id}
                 course={course}
                 summary={activitySummaryByCourse.get(course.id)}
-                shouldReduceMotion={Boolean(shouldReduceMotion)}
                 onOpen={handleOpenCourse}
               />
             ))}
-          </m.div>
+          </div>
         </section>
         <DashboardAgenda
           later={later}

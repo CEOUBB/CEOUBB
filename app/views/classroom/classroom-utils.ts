@@ -32,6 +32,7 @@ export type Note = { text: string; tone: "info" | "ok" | "bad" };
 
 export const emptyClassroom: ClassroomState = {
   posts: [],
+  postsStatus: "loading",
   files: [],
   students: [],
   gradebook: [],

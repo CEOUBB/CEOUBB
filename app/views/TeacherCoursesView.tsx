@@ -7,6 +7,7 @@ import { ArrowRight, BookOpenText, Plus, Trash, UserPlus, X } from "@phosphor-ic
 import {
   COURSE_MODALITIES,
   COURSE_TONES,
+  courseToneLabel,
   courseToneValue,
   modalityLabel,
   type CourseAssistant,
@@ -26,7 +27,7 @@ import {
   updateManagedCourse,
 } from "../../lib/teacher-course-client";
 import { GradebookSettingsEditor } from "./classroom/GradebookSettingsEditor";
-import { TeacherCoursesBodySkeleton } from "./ViewSkeletons";
+import { GradebookEditorSkeleton, TeacherCoursesBodySkeleton } from "./ViewSkeletons";
 
 type ManagerTab = "data" | "evaluations" | "assistants";
 
@@ -247,7 +248,7 @@ export function TeacherCoursesView({
           </button>
         </div>
       ) : (
-        <div className="teacher-manager-layout">
+        <div className="teacher-manager-layout resolve">
           <aside className="teacher-course-list" aria-label="Ramos administrados">
             <div className="teacher-course-list-head">
               <span>Mis secciones</span>
@@ -657,7 +658,7 @@ function CourseEvaluations({ course }: { course: ManagedCourse }) {
         <h3>Evaluaciones</h3>
         <p>Define el esquema completo; la suma debe ser exactamente 100%.</p>
       </div>
-      {loading && <p role="status">Cargando la ponderación del ramo…</p>}
+      {loading && <GradebookEditorSkeleton />}
       {error && (
         <div className="grades-load-status" role="status">
           <p>{error} Tus evaluaciones no se han modificado.</p>
@@ -837,23 +838,11 @@ function TonePicker({
             value={tone}
           />
           <span aria-hidden="true" className="teacher-tone-swatch" />
-          {toneLabel(tone)}
+          {courseToneLabel(tone)}
         </label>
       ))}
     </fieldset>
   );
-}
-
-function toneLabel(tone: CourseTone): string {
-  const labels: Record<CourseTone, string> = {
-    sky: "Celeste",
-    emerald: "Esmeralda",
-    gold: "Dorado",
-    red: "Rojo",
-    teal: "Turquesa",
-    purple: "Morado",
-  };
-  return labels[tone];
 }
 
 function initials(name: string): string {

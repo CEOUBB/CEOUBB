@@ -349,7 +349,19 @@ Rol, estado de período, estado de corrección, tipo de recurso, tramo de benefi
 
 **Movimiento.** Sólo donde explica un cambio: el indicador del conmutador se desliza con resorte 340/28; el período nuevo entra 30px desde el lado hacia el que se avanzó (240ms, `--ease-out-quint`) mientras el canal de horas queda quieto; el gesto horizontal sigue al dedo y se asienta en 220ms; los bloques entran desde `scale(0.96)` en 180ms y salen a `scale(0.97)` en 120ms; la marca de hecho aparece con resorte 620/26; los popovers suben 6px desde `scale(0.98)` y las hojas del teléfono 32px, ambos con `@starting-style`; el velo transcurrido avanza en 600ms. Con movimiento reducido los bloques y la marca cambian sin transición, el `MotionConfig` del portal anula los resortes y el campus fija transiciones y animaciones a 0ms.
 
-**Carga.** `CalendarSkeleton` monta las mismas clases `planner` con cabecera, barra y cuadrícula, de modo que la carga ocupa la geometría final.
+**Carga.** `CalendarSkeleton` monta la cabecera, la barra, el mes mínimo y la lista de ramos reales en la vista y el panel guardados en el dispositivo; sólo "Lo que viene" y los bloques son huesos.
+
+## Movimiento y carga
+
+El movimiento explica continuidad, nunca decora. Todo vive en `app/globals.css` (transiciones de vista y fotogramas) y `app/campus-base.css` (material de los esqueletos).
+
+- **Cambio de pantalla.** Con puntero o toque, la vista que sale se funde en 100ms y la que entra llega 90ms después: opacidad y 10px de subida en 300ms con `--ease-spring`. Las pestañas del aula entran 20px desde el lado de la pestaña elegida y el indicador de 3px se desliza hasta ella. Con teclado o movimiento reducido el cambio es inmediato (`lib/view-transition.ts`). Cabecera y barra inferior tienen nombre de transición propio y no parpadean.
+- **Momento firma.** Al abrir un ramo desde su ficha, la pestaña del separador con el código viaja de la ficha a la cabecera del aula en 440ms mientras las pantallas se funden; al volver, regresa a su ficha.
+- **Esqueletos.** Muestran todo lo que ya se conoce (copia fija, nombre, código y tono del ramo, cuenta, vista del calendario) y dibujan huesos sólo para lo que falta. El hueso es tinta al 7.5% (5% en el apagado), por lo que funciona sobre hoja, escritorio o tinte de sección; `.sk-line` ocupa exactamente el alto de línea del texto que reemplaza. Aparece tras 140ms para que una carga rápida no destelle, y un único brillo diagonal recorre la página a velocidad constante (`lib/skeleton-wave.ts`).
+- **Resolución.** Un módulo diferido se funde con su esqueleto mediante una transición de vista que deja quietos títulos y controles; las listas que llegan dentro de una vista entran con `resolve`: opacidad y 6px en 320ms, escalonadas hasta 120ms; si la última entrada fue el teclado, aparecen sin animar.
+- **Superposiciones.** El menú de cuenta baja 6px desde `scale(0.97)` y los diálogos de escritorio suben 8px desde `scale(0.97)`, ambos con `@starting-style` y sólo con puntero.
+- **Primer cuadro en el teléfono.** La barra inferior viaja siempre en el HTML del servidor y el ancho decide qué cromo se pinta; bajo 768px el shell llega móvil desde el primer cuadro y la hidratación no reordena nada.
+- **Movimiento reducido.** Huesos estáticos sin brillo, sin transiciones de vista y sin resolución animada.
 
 ## Do's and Don'ts
 

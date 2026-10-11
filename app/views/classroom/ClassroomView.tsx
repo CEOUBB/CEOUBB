@@ -9,6 +9,8 @@ import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
 import { hapticTap } from "../../../lib/mobile-bridge";
 import { COURSE_TABS } from "./classroom-utils";
+import { ClassroomHeader, ClassroomTabs } from "./ClassroomChrome";
+import { transitionView } from "../../../lib/view-transition";
 import { PostsSection } from "./PostsSection";
 import { GradesSection } from "./GradesSection";
 import { PeopleSection } from "./PeopleSection";
@@ -20,6 +22,7 @@ import { useClassroomHandlers } from "./use-classroom-handlers";
 import type { SectionRole } from "../../../lib/section-roles";
 import { canReadGradeHistory } from "../../../lib/section-roles";
 import { ClassroomErrorBoundary } from "../../components/ClassroomErrorBoundary";
+import { InteropWorkspaceSkeleton } from "../ViewSkeletons";
 
 const MoodleImportDialog = dynamic(
   () => import("./MoodleImportDialog").then((module) => module.MoodleImportDialog),
@@ -33,7 +36,7 @@ const AdeccaImportDialog = dynamic(
 
 const InteropSection = dynamic(
   () => import("./InteropSection").then((module) => module.InteropSection),
-  { ssr: false }
+  { ssr: false, loading: () => <InteropWorkspaceSkeleton /> }
 );
 
 /*
@@ -110,6 +113,12 @@ export function ClassroomView({
     document.getElementById(`classroom-tab-${nextKey}`)?.focus();
   };
 
+  const selectTab = (next: Tab) => {
+    const from = COURSE_TABS.findIndex((item) => item.key === tab);
+    const to = COURSE_TABS.findIndex((item) => item.key === next);
+    transitionView(() => setTab(next), to > from ? "tab-forward" : "tab-back");
+  };
+
   const startPublication = () => {
     hapticTap();
     setComposing(true);
@@ -181,23 +190,7 @@ export function ClassroomView({
           rótulo de la pestaña activa justo encima de la pestaña activa dejaba
           las acciones del ramo colgando de un título de sección.
         */}
-        <header className="classroom-top">
-          <span aria-hidden="true" className="classroom-tab num">
-            {course.code}
-          </span>
-          <div className="classroom-heading">
-            <span className="breadcrumb">
-              <button onClick={goBack} type="button">
-                Mis cursos
-              </button>{" "}
-              / {course.name}
-            </span>
-            <h1>{course.name}</h1>
-            <p className="classroom-identity">
-              <span className="num">{course.code}</span> · Sección{" "}
-              <span className="num">{course.section}</span> · {course.period}
-            </p>
-          </div>
+        <ClassroomHeader course={course} onBack={goBack}>
           {/* Implements: REQ-PUB-13 — las acciones docentes viven en el
               encabezado del ramo, disponibles desde cualquier pestaña. */}
           {(canTeach || canManageContent) && (
@@ -235,35 +228,8 @@ export function ClassroomView({
               )}
             </div>
           )}
-        </header>
-        <div
-          aria-label="Secciones del aula"
-          className="course-tabs"
-          role="tablist"
-          aria-orientation="horizontal"
-        >
-          {COURSE_TABS.map(({ key, label, Icon }) => {
-            const isActive = tab === key;
-            return (
-              <button
-                key={key}
-                id={`classroom-tab-${key}`}
-                role="tab"
-                tabIndex={isActive ? 0 : -1}
-                aria-selected={isActive}
-                aria-controls={`classroom-panel-${key}`}
-                className={isActive ? "active" : undefined}
-                onClick={() => setTab(key)}
-                onKeyDown={(e) => handleTabKeyDown(key, e)}
-                type="button"
-              >
-                <Icon size={18} aria-hidden="true" />
-                <span>{label}</span>
-                {isActive && <span className="course-tab-indicator" aria-hidden="true" />}
-              </button>
-            );
-          })}
-        </div>
+        </ClassroomHeader>
+        <ClassroomTabs onKeyDown={handleTabKeyDown} onSelect={selectTab} tab={tab} />
         <Screen key={tab}>
           <div
             id={`classroom-panel-${tab}`}
@@ -276,6 +242,7 @@ export function ClassroomView({
                   <LiveClassBanner liveClass={classroom.liveClass} />
                   <div className="classroom-columns">
                     <PostsSection
+                      loading={classroom.postsStatus === "loading"}
                       posts={posts}
                       user={user}
                       canManageContent={canManageContent}
@@ -288,7 +255,7 @@ export function ClassroomView({
                       course={course}
                       canTeach={canTeach}
                       readOnly={readOnly}
-                      showParticipants={() => setTab("people")}
+                      showParticipants={() => selectTab("people")}
                       courseReference={courseReference}
                       copiedCourseReference={copiedCourseReference}
                       copyCourseReference={copyCourseReference}

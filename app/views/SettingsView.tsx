@@ -25,7 +25,7 @@ import {
   CHANNELS_WITHOUT_SENDER,
   CHANNEL_LABELS,
   NOTIFICATION_CHANNELS,
-  defaultPreferences,
+  cachedPreferences,
   loadPreferences,
   savePreferences,
   type ChannelPreference,
@@ -33,6 +33,7 @@ import {
   type UserPreferences,
 } from "../../lib/user-preferences.ts";
 import { Avatar } from "../portal-ui.tsx";
+import { SessionListSkeleton } from "./ViewSkeletons.tsx";
 
 type ActiveSession = {
   id: string;
@@ -670,13 +671,16 @@ function AccountPanel({
       ) : null}
 
       {sessions === null ? (
-        <p className="settings-note">Leyendo tus sesiones…</p>
+        <SessionListSkeleton />
       ) : sessions.length === 0 ? (
         <p className="settings-note">
           No hay ninguna sesión activa que mostrar además de la que estás usando.
         </p>
       ) : (
-        <ul aria-labelledby="settings-sessions-title" className="settings-sessions">
+        <ul
+          aria-labelledby="settings-sessions-title"
+          className="settings-sessions resolve-children"
+        >
           {sessions.map((session) => (
             <li className="settings-session" key={session.id}>
               <div className="settings-session-copy">
@@ -734,7 +738,7 @@ export function SettingsView({
   onPhotoChange: (photoUrl: string | null) => void;
 }) {
   const [status, setStatus] = useState("");
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
+  const [preferences, setPreferences] = useState<UserPreferences>(cachedPreferences);
   const [preferencesBusy, setPreferencesBusy] = useState(true);
   const [preferencesError, setPreferencesError] = useState("");
 

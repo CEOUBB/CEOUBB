@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { lazy, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,11 +18,10 @@ import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
 import { m } from "motion/react";
-import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import type { ManagedCourse } from "../lib/course-management";
-import { Avatar, Screen as PortalScreen } from "./portal-ui";
+import { Avatar, Deferred, Screen as PortalScreen } from "./portal-ui";
 import { NotificationList } from "./notification-panel";
 import type { NotificationItem } from "../lib/communications.ts";
 import { SiteFooter } from "./site-footer";
@@ -39,52 +38,29 @@ import {
   TeacherCoursesSkeleton,
 } from "./views/ViewSkeletons";
 
-const CalendarView = dynamic(
-  () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
-  {
-    ssr: false,
-    loading: () => <CalendarSkeleton />,
-  }
+const CalendarView = lazy(() =>
+  import("./views/calendar/CalendarView").then((module) => ({ default: module.CalendarView }))
 );
-
-const ResourcesView = dynamic(
-  () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
-  {
-    ssr: false,
-    loading: () => <ResourcesSkeleton />,
-  }
+const ResourcesView = lazy(() =>
+  import("./views/resources/ResourcesView").then((module) => ({ default: module.ResourcesView }))
 );
-
-const CommunicationsCenter = dynamic(
-  () => import("./views/CommunicationsCenter").then((m) => m.CommunicationsCenter),
-  {
-    ssr: false,
-    loading: () => <CommunicationsSkeleton />,
-  }
+const CommunicationsCenter = lazy(() =>
+  import("./views/CommunicationsCenter").then((module) => ({
+    default: module.CommunicationsCenter,
+  }))
 );
-
-const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
-  ssr: false,
-  loading: () => <AdminSkeleton />,
-});
-
-const TeacherCoursesView = dynamic(
-  () => import("./views/TeacherCoursesView").then((m) => m.TeacherCoursesView),
-  {
-    ssr: false,
-    loading: () => <TeacherCoursesSkeleton />,
-  }
+const AdminView = lazy(() =>
+  import("./views/AdminView").then((module) => ({ default: module.AdminView }))
 );
-
-const SettingsView = dynamic(() => import("./views/SettingsView").then((m) => m.SettingsView), {
-  ssr: false,
-  loading: () => <SettingsSkeleton />,
-});
-
-const Classroom = dynamic(() => import("./Classroom"), {
-  ssr: false,
-  loading: () => <ClassroomSkeleton />,
-});
+const TeacherCoursesView = lazy(() =>
+  import("./views/TeacherCoursesView").then((module) => ({
+    default: module.TeacherCoursesView,
+  }))
+);
+const SettingsView = lazy(() =>
+  import("./views/SettingsView").then((module) => ({ default: module.SettingsView }))
+);
+const Classroom = lazy(() => import("./Classroom"));
 
 const FOCUSABLE_POPOVER_ITEMS = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -550,12 +526,18 @@ export function PortalMainView({
       </p>
       {screen === "course" && openedCourse ? (
         <PortalScreen key={`course-${openedCourse.id}`}>
-          <Classroom
-            course={openedCourse}
-            user={user}
-            sectionRole={sectionRole}
-            goBack={() => setScreen("courses")}
-          />
+          <Deferred
+            fallback={
+              <ClassroomSkeleton course={openedCourse} sectionRole={sectionRole} user={user} />
+            }
+          >
+            <Classroom
+              course={openedCourse}
+              user={user}
+              sectionRole={sectionRole}
+              goBack={() => setScreen("courses")}
+            />
+          </Deferred>
         </PortalScreen>
       ) : (
         <PortalScreen key={screen}>
@@ -581,39 +563,55 @@ export function PortalMainView({
               />
             )}
             {screen === "calendar" && (
-              <CalendarView
-                courses={courses}
-                gradebooks={gradebooks}
-                activity={activity}
-                openCourse={openCourse}
-              />
+              <Deferred fallback={<CalendarSkeleton courses={courses} />}>
+                <CalendarView
+                  courses={courses}
+                  gradebooks={gradebooks}
+                  activity={activity}
+                  openCourse={openCourse}
+                />
+              </Deferred>
             )}
             {screen === "notifications" && (
-              <CommunicationsCenter
-                activity={activity}
-                connectionError={communicationError}
-                ready={communicationsReady}
-                retry={retryCommunications}
-                courses={courses}
-                cursors={communicationCursors}
-                focusThread={focusThread}
-                memberships={memberships}
-                openCourse={openCourse}
-                threads={communicationThreads}
-                user={user}
-              />
+              <Deferred fallback={<CommunicationsSkeleton />}>
+                <CommunicationsCenter
+                  activity={activity}
+                  connectionError={communicationError}
+                  ready={communicationsReady}
+                  retry={retryCommunications}
+                  courses={courses}
+                  cursors={communicationCursors}
+                  focusThread={focusThread}
+                  memberships={memberships}
+                  openCourse={openCourse}
+                  threads={communicationThreads}
+                  user={user}
+                />
+              </Deferred>
             )}
             {screen === "settings" && (
-              <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
+              <Deferred fallback={<SettingsSkeleton user={user} />}>
+                <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
+              </Deferred>
             )}
-            {screen === "resources" && <ResourcesView />}
+            {screen === "resources" && (
+              <Deferred fallback={<ResourcesSkeleton />}>
+                <ResourcesView />
+              </Deferred>
+            )}
             {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (
-              <TeacherCoursesView
-                onCoursesChanged={onCoursesChanged}
-                openCourse={(course: ManagedCourse) => openCourse(course)}
-              />
+              <Deferred fallback={<TeacherCoursesSkeleton />}>
+                <TeacherCoursesView
+                  onCoursesChanged={onCoursesChanged}
+                  openCourse={(course: ManagedCourse) => openCourse(course)}
+                />
+              </Deferred>
             )}
-            {screen === "admin" && user.role === "owner" && <AdminView />}
+            {screen === "admin" && user.role === "owner" && (
+              <Deferred fallback={<AdminSkeleton />}>
+                <AdminView />
+              </Deferred>
+            )}
             <SiteFooter />
           </div>
         </PortalScreen>
