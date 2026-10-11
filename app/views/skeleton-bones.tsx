@@ -15,7 +15,13 @@ export function Bone({
   round?: boolean;
 }) {
   const className = ["sk", quiet && "sk-quiet", round && "sk-round"].filter(Boolean).join(" ");
-  return <span className={className} style={{ width: w, height: h, borderRadius: r }} />;
+  return (
+    <span
+      aria-hidden="true"
+      className={className}
+      style={{ width: w, height: h, borderRadius: r }}
+    />
+  );
 }
 
 // Implements: REQ-SKELETON-01
