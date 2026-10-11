@@ -397,6 +397,46 @@ export type TrashEntry = {
   deletedBy: string;
 };
 
+export function sectionAnchor(sectionId: string) {
+  return `seccion-${sectionId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+export function filesOf(item: CoursePost): ClassroomAttachment[] {
+  if (!item.storagePath) return item.attachments;
+  return [
+    {
+      name: item.title || "Archivo",
+      storagePath: item.storagePath,
+      contentType: "",
+      size: 0,
+    },
+    ...item.attachments,
+  ];
+}
+
+const scheduleFormat = new Intl.DateTimeFormat("es-CL", {
+  day: "numeric",
+  month: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "America/Santiago",
+});
+
+// Implements: REQ-PAGE-05
+export function formatSchedule(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : scheduleFormat.format(date);
+}
+
+// Implements: REQ-PAGE-03
+export function pageErrorText(cause: unknown, fallback: string) {
+  if (!(cause instanceof Error) || !cause.message) return fallback;
+  if (!("code" in cause)) return cause.message;
+  return cause.code === "permission-denied" || cause.code === "storage/unauthorized"
+    ? "No tienes permiso para modificar el contenido de este ramo."
+    : fallback;
+}
+
 // Implements: REQ-PAGE-06
 export function trashDaysLeft(deletedAt: string, now: number) {
   const deleted = Date.parse(deletedAt);

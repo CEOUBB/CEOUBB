@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { CaretRight, EyeSlash, ListBullets, Megaphone } from "@phosphor-icons/react";
 import type { CoursePost } from "../../../lib/firebase-classroom-client";
-import type { PageSectionView } from "../../../lib/course-page";
+import { sectionAnchor, type PageSectionView } from "../../../lib/course-page";
 import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import { formatDate } from "../../../lib/portal-utils";
 import { MobileSheet } from "../../mobile-shell";
-import { sectionAnchor } from "./CoursePage";
 
 const INDEX_THRESHOLD = 3;
 

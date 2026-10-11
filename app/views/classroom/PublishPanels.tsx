@@ -10,7 +10,7 @@ import {
   type ClassroomAttachment,
 } from "../../../lib/firebase-classroom-client";
 import { formatBytes } from "../../../lib/portal-utils";
-import { fileIcon } from "./CoursePageItems";
+import { FileKindIcon } from "./CoursePageItems";
 
 // Implements: REQ-PUB-09
 export function usePostAttachments(courseId: string, initial: ClassroomAttachment[] = []) {
@@ -160,10 +160,13 @@ export function AttachmentField({
       {attachments.length > 0 && (
         <ul className="publish-attachments">
           {attachments.map((attachment) => {
-            const AttachmentIcon = fileIcon(attachment.contentType, attachment.name);
             return (
               <li key={attachment.storagePath}>
-                <AttachmentIcon aria-hidden="true" size={16} />
+                <FileKindIcon
+                  contentType={attachment.contentType}
+                  name={attachment.name}
+                  size={16}
+                />
                 <span>
                   <strong>{attachment.name}</strong>
                   <small className="num">{formatBytes(attachment.size)}</small>

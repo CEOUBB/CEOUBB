@@ -499,7 +499,7 @@ async function referenced(courseId: string, path: string) {
 
 // Implements: REQ-PAGE-06, REQ-PUB-09
 export async function releaseUploadedFiles(courseId: string, paths: readonly string[]) {
-  const owned = paths.filter((path) => path.startsWith(`courses/${courseId}/`));
+  const owned = [...new Set(paths)].filter((path) => path.startsWith(`courses/${courseId}/`));
   if (owned.length === 0) return;
   const cloud = await cloudStorage();
   for (const path of owned) {
@@ -518,16 +518,20 @@ export async function purgeTrashEntries(courseId: string, entries: readonly Tras
   const { sdk, db } = await session();
   const trash = sdk.collection(db, "courses", courseId, PAGE_COLLECTIONS.trash);
   const ids = new Set(entries.map((entry) => entry.id));
-  for (const entry of entries.filter((candidate) => candidate.kind === "section")) {
-    const members = await sdk.getDocs(
-      sdk.query(
-        trash,
-        sdk.where("trashedWithSection", "==", entry.sectionId),
-        sdk.limit(HIDDEN_ITEMS_LIMIT)
+  const sections = await Promise.all(
+    entries
+      .filter((candidate) => candidate.kind === "section")
+      .map((entry) =>
+        sdk.getDocs(
+          sdk.query(
+            trash,
+            sdk.where("trashedWithSection", "==", entry.sectionId),
+            sdk.limit(HIDDEN_ITEMS_LIMIT)
+          )
+        )
       )
-    );
-    for (const member of members.docs) ids.add(member.id);
-  }
+  );
+  for (const member of sections.flatMap((snapshot) => snapshot.docs)) ids.add(member.id);
   const records = await Promise.all([...ids].map((id) => sdk.getDoc(sdk.doc(trash, id))));
   const paths = records.flatMap((record) =>
     record.exists() ? attachmentPathsOf(record.data()) : []

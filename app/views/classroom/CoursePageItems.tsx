@@ -23,7 +23,14 @@ import {
   type ClassroomAttachment,
   type CoursePost,
 } from "../../../lib/firebase-classroom-client";
-import { FILE_KIND_LABELS, displayName, fileKind, type FileKind } from "../../../lib/course-page";
+import {
+  FILE_KIND_LABELS,
+  displayName,
+  fileKind,
+  filesOf,
+  formatSchedule,
+  type FileKind,
+} from "../../../lib/course-page";
 import { formatBytes } from "../../../lib/portal-utils";
 import { safeLinkDestination } from "../../../lib/rich-text";
 import { RichText } from "./RichText";
@@ -40,33 +47,17 @@ const FILE_ICONS: Record<FileKind, Icon> = {
   file: FileIcon,
 };
 
-export function fileIcon(contentType: string, name: string): Icon {
-  return FILE_ICONS[fileKind(contentType, name)];
-}
-
-const scheduleFormat = new Intl.DateTimeFormat("es-CL", {
-  day: "numeric",
-  month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-export function formatSchedule(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : scheduleFormat.format(date);
-}
-
-export function filesOf(item: CoursePost): ClassroomAttachment[] {
-  if (!item.storagePath) return item.attachments;
-  return [
-    {
-      name: item.title || "Archivo",
-      storagePath: item.storagePath,
-      contentType: "",
-      size: 0,
-    },
-    ...item.attachments,
-  ];
+export function FileKindIcon({
+  contentType,
+  name,
+  size,
+}: {
+  contentType: string;
+  name: string;
+  size: number;
+}) {
+  const KindIcon = FILE_ICONS[fileKind(contentType, name)];
+  return <KindIcon aria-hidden="true" size={size} />;
 }
 
 function hostOf(url: string) {
@@ -88,7 +79,6 @@ export function FileRow({
   openAttachment: OpenAttachment;
 }) {
   const kind = fileKind(file.contentType, file.storagePath || file.name);
-  const KindIcon = FILE_ICONS[kind];
   return (
     <button
       className="page-file"
@@ -97,7 +87,11 @@ export function FileRow({
       type="button"
     >
       <span className="page-file-icon">
-        <KindIcon aria-hidden="true" size={20} />
+        <FileKindIcon
+          contentType={file.contentType}
+          name={file.storagePath || file.name}
+          size={20}
+        />
       </span>
       <span className="page-file-text">
         <strong>{label}</strong>

@@ -10,10 +10,10 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type { CoursePost } from "../../../lib/firebase-classroom-client";
-import { plainExcerpt } from "../../../lib/course-page";
+import { filesOf, plainExcerpt } from "../../../lib/course-page";
 import { formatDate } from "../../../lib/portal-utils";
 import { filterPostsByQuery, paginateList } from "./classroom-utils";
-import { FileList, LinkRow, filesOf, type OpenAttachment } from "./CoursePageItems";
+import { FileList, LinkRow, type OpenAttachment } from "./CoursePageItems";
 import { PaginationActions } from "./PaginationActions";
 import { PageDialog } from "./PageDialog";
 import { RichText } from "./RichText";

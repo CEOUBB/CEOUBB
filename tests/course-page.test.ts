@@ -20,6 +20,7 @@ import {
   locationFor,
   materializationPlan,
   moveId,
+  pageErrorText,
   movedEntry,
   pickContentFields,
   placementFor,
@@ -398,4 +399,29 @@ test("REQ-PAGE-05/06/14 publishes scheduled content silently and imports into th
   assert.match(schedule, /RETENTION_DAYS = 30/);
   assert.match(moodle, /placement: \{ stringValue: "page" \}/);
   assert.match(adecca, /placement: \{\s*stringValue: placementFor\(/);
+});
+
+test("REQ-PAGE-03 nunca muestra el mensaje crudo del SDK", () => {
+  const denied = Object.assign(new Error("Missing or insufficient permissions."), {
+    code: "permission-denied",
+  });
+  const offline = Object.assign(
+    new Error("Failed to get document because the client is offline."),
+    {
+      code: "unavailable",
+    }
+  );
+  assert.equal(
+    pageErrorText(denied, "No se pudo mover la sección."),
+    "No tienes permiso para modificar el contenido de este ramo."
+  );
+  assert.equal(
+    pageErrorText(offline, "No se pudo mover la sección."),
+    "No se pudo mover la sección."
+  );
+  assert.equal(
+    pageErrorText(new Error("La sección ya no está en la papelera."), "x"),
+    "La sección ya no está en la papelera."
+  );
+  assert.equal(pageErrorText("texto", "Respaldo"), "Respaldo");
 });

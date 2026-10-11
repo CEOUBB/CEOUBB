@@ -14,6 +14,7 @@ import type { Course } from "../../../lib/courses";
 import type { ClassroomState } from "../../../lib/firebase-classroom-client";
 import {
   PAGE_POSTS_LIMIT,
+  sectionAnchor,
   type CoursePage as CoursePageModel,
   type PageSectionView,
 } from "../../../lib/course-page";
@@ -52,10 +53,6 @@ function storeCollapsed(courseId: string, ids: ReadonlySet<string>) {
   } catch {
     return;
   }
-}
-
-export function sectionAnchor(sectionId: string) {
-  return `seccion-${sectionId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
 // Implements: REQ-PAGE-01, REQ-PAGE-02

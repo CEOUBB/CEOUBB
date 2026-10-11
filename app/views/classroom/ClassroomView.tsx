@@ -62,6 +62,68 @@ const SubmissionReviewTray = dynamic(
   { ssr: false }
 );
 
+function ClassroomActions({
+  canTeach,
+  canManageContent,
+  course,
+  editingPage,
+  onReview,
+  onEditPage,
+  onCompose,
+}: {
+  canTeach: boolean;
+  canManageContent: boolean;
+  course: Course;
+  editingPage: boolean;
+  onReview: () => void;
+  onEditPage: () => void;
+  onCompose: () => void;
+}) {
+  // Implements: REQ-PERF-LOAD-01
+  const [importsMounted, setImportsMounted] = useState(false);
+  return (
+    <div className="classroom-meta">
+      {canTeach && (
+        /* Implements: REQ-REV-04 */
+        <button className="review-cta" onClick={onReview} type="button">
+          <Tray size={16} aria-hidden="true" />
+          Corregir entregas
+        </button>
+      )}
+      {canManageContent && (
+        <>
+          {canTeach && (
+            <details
+              className="classroom-imports"
+              onToggle={(event) => {
+                if (event.currentTarget.open) setImportsMounted(true);
+              }}
+            >
+              <summary>Importar contenidos</summary>
+              {importsMounted && (
+                <div className="classroom-import-actions">
+                  {canTeach && <MoodleImportDialog course={course} />}
+                  {canTeach && <AdeccaImportDialog course={course} />}
+                </div>
+              )}
+            </details>
+          )}
+          {!editingPage && (
+            <button className="review-cta" onClick={onEditPage} type="button">
+              <PencilSimpleLine size={16} aria-hidden="true" />
+              Editar página
+            </button>
+          )}
+          <button className="publication-cta" onClick={onCompose} type="button">
+            <Plus size={17} weight="bold" aria-hidden="true" />
+            Nuevo aviso
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ClassroomView({
   course,
   user,
@@ -109,8 +171,6 @@ export function ClassroomView({
   const [reader, setReader] = useState<{ focusId: string } | null>(null);
   // Implements: REQ-REV-04
   const [reviewing, setReviewing] = useState(false);
-  // Implements: REQ-PERF-LOAD-01
-  const [importsMounted, setImportsMounted] = useState(false);
 
   const handleTabKeyDown = (key: Tab, event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -221,49 +281,15 @@ export function ClassroomView({
           {/* Implements: REQ-PUB-13, REQ-PAGE-03 — las acciones docentes viven en el
               encabezado del ramo, disponibles desde cualquier pestaña. */}
           {(canTeach || canManageContent) && (
-            <div className="classroom-meta">
-              {canTeach && (
-                /* Implements: REQ-REV-04 */
-                <button className="review-cta" onClick={startReview} type="button">
-                  <Tray size={16} aria-hidden="true" />
-                  Corregir entregas
-                </button>
-              )}
-              {canManageContent && (
-                <>
-                  {canTeach && (
-                    <details
-                      className="classroom-imports"
-                      onToggle={(event) => {
-                        if (event.currentTarget.open) setImportsMounted(true);
-                      }}
-                    >
-                      <summary>Importar contenidos</summary>
-                      {importsMounted && (
-                        <div className="classroom-import-actions">
-                          {canTeach && <MoodleImportDialog course={course} />}
-                          {canTeach && <AdeccaImportDialog course={course} />}
-                        </div>
-                      )}
-                    </details>
-                  )}
-                  {!editingPage && (
-                    <button className="review-cta" onClick={startPageEditing} type="button">
-                      <PencilSimpleLine size={16} aria-hidden="true" />
-                      Editar página
-                    </button>
-                  )}
-                  <button
-                    className="publication-cta"
-                    onClick={() => startPublication()}
-                    type="button"
-                  >
-                    <Plus size={17} weight="bold" aria-hidden="true" />
-                    Nuevo aviso
-                  </button>
-                </>
-              )}
-            </div>
+            <ClassroomActions
+              canManageContent={canManageContent}
+              canTeach={canTeach}
+              course={course}
+              editingPage={editingPage}
+              onCompose={() => startPublication()}
+              onEditPage={startPageEditing}
+              onReview={startReview}
+            />
           )}
         </ClassroomHeader>
         <ClassroomTabs onKeyDown={handleTabKeyDown} onSelect={selectTab} tab={tab} />

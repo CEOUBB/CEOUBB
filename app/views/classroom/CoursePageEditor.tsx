@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useId,
   useMemo,
   useRef,
@@ -70,10 +71,12 @@ import {
   moveId,
   movedEntry,
   positionBetween,
+  pageErrorText,
   positionForIndex,
   recordEntry,
   renumber,
   stepBack,
+  sectionAnchor,
   stepForward,
   type CoursePage,
   type PageItemType,
@@ -85,7 +88,7 @@ import {
 import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import { persistDefaultEditor, readDefaultEditor } from "../../../lib/publication-workflow";
 import { toast } from "../../../lib/toast";
-import { PageSectionsView, sectionAnchor, type ComposeSeed } from "./CoursePage";
+import { PageSectionsView, type ComposeSeed } from "./CoursePage";
 import { PageItemContent, VisibilityNote, type OpenAttachment } from "./CoursePageItems";
 import { CourseTrashDialog } from "./CourseTrashDialog";
 import { PageDialog } from "./PageDialog";
@@ -117,8 +120,8 @@ function storage() {
   }
 }
 
-function messageOf(cause: unknown, fallback: string) {
-  return cause instanceof Error && cause.message ? cause.message : fallback;
+function carriesFiles(event: DragEvent) {
+  return event.dataTransfer.types.includes("Files");
 }
 
 function capitalize(text: string) {
@@ -293,15 +296,18 @@ function ItemForm({
       try {
         cleanLink(values.linkUrl);
       } catch (cause) {
-        setError(messageOf(cause, "Revisa la dirección del enlace."));
+        setError(pageErrorText(cause, "Revisa la dirección del enlace."));
         return;
       }
     }
 
     setSaving(true);
-    const saved = await onSave(values);
-    setSaving(false);
-    if (!saved) setError("No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.");
+    try {
+      const saved = await onSave(values);
+      if (!saved) setError("No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const field = (key: keyof ItemValues) => ({
@@ -453,6 +459,7 @@ function ScheduleDialog({
   onConfirm: (iso: string) => void;
 }) {
   const [value, setValue] = useState(tomorrowMorning);
+  const [earliest] = useState(() => localInputValue(new Date()));
   const [error, setError] = useState("");
   return (
     <PageDialog
@@ -476,7 +483,7 @@ function ScheduleDialog({
         <label>
           Fecha y hora
           <input
-            min={localInputValue(new Date())}
+            min={earliest}
             onChange={(event) => setValue(event.target.value)}
             required
             type="datetime-local"
@@ -698,6 +705,236 @@ function EditableItem({
 }
 
 // Implements: REQ-PAGE-01, REQ-PAGE-03, REQ-PAGE-04, REQ-PAGE-05, REQ-PAGE-06, REQ-PAGE-07, REQ-PAGE-10, REQ-PAGE-15
+// Implements: REQ-PAGE-07
+function usePageHistory(clearOptimistic: (value: null) => void) {
+  const historyRef = useRef<UndoHistory>(EMPTY_HISTORY);
+  const queue = useRef<Promise<void> | null>(null);
+  const [history, setHistory] = useState<UndoHistory>(EMPTY_HISTORY);
+  const [pending, setPending] = useState(0);
+  const [announcement, setAnnouncement] = useState("");
+
+  const perform = useCallback(
+    (task: () => Promise<{ history: UndoHistory; message: string } | null>, failure: string) => {
+      setPending((count) => count + 1);
+      const run = (queue.current ?? Promise.resolve())
+        .then(task)
+        .then(
+          (next) => {
+            if (next) {
+              historyRef.current = next.history;
+              setHistory(next.history);
+              if (next.message) setAnnouncement(next.message);
+            }
+            return true;
+          },
+          (cause) => {
+            toast.error(pageErrorText(cause, failure));
+            clearOptimistic(null);
+            return false;
+          }
+        )
+        .finally(() => setPending((count) => count - 1));
+      queue.current = run.then(() => undefined);
+      return run;
+    },
+    [clearOptimistic]
+  );
+
+  const commit = useCallback(
+    (entry: UndoEntry, failure: string) =>
+      perform(async () => {
+        await entry.redo();
+        return { history: recordEntry(historyRef.current, entry), message: "" };
+      }, failure),
+    [perform]
+  );
+
+  const undo = useCallback(
+    () =>
+      perform(async () => {
+        const step = stepBack(historyRef.current);
+        if (!step) return null;
+        await step.entry.undo();
+        return { history: step.history, message: `Se deshizo: ${step.entry.label}.` };
+      }, "No se pudo deshacer el último cambio."),
+    [perform]
+  );
+
+  const redo = useCallback(
+    () =>
+      perform(async () => {
+        const step = stepForward(historyRef.current);
+        if (!step) return null;
+        await step.entry.redo();
+        return { history: step.history, message: `Se rehízo: ${step.entry.label}.` };
+      }, "No se pudo rehacer el cambio."),
+    [perform]
+  );
+
+  const undoSpecific = useCallback(
+    (entry: UndoEntry) =>
+      perform(async () => {
+        await entry.undo();
+        return {
+          history: {
+            past: historyRef.current.past.filter((candidate) => candidate !== entry),
+            future: historyRef.current.future,
+          },
+          message: "",
+        };
+      }, "No se pudo deshacer."),
+    [perform]
+  );
+
+  const onHistoryKey = useEffectEvent((event: globalThis.KeyboardEvent) => {
+    if (!(event.ctrlKey || event.metaKey)) return;
+    const { target } = event;
+    if (
+      target instanceof Element &&
+      target.closest("input, textarea, select, [contenteditable='true']")
+    )
+      return;
+    const key = event.key.toLowerCase();
+    if (key === "z" && !event.shiftKey) {
+      event.preventDefault();
+      void undo();
+    } else if ((key === "z" && event.shiftKey) || key === "y") {
+      event.preventDefault();
+      void redo();
+    }
+  });
+
+  useEffect(() => {
+    const listener = (event: globalThis.KeyboardEvent) => onHistoryKey(event);
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+
+  const offerUndo = (entry: UndoEntry, text: string) =>
+    toast.message(text, {
+      action: { label: "Deshacer", onClick: () => void undoSpecific(entry) },
+    });
+
+  return { history, pending, announcement, commit, undo, redo, offerUndo };
+}
+
+// Implements: REQ-PAGE-03, REQ-PAGE-07
+function EditBar({
+  announcement,
+  canUndo,
+  canRedo,
+  pending,
+  preview,
+  onUndo,
+  onRedo,
+  onTogglePreview,
+  onOpenTrash,
+  onFinish,
+}: {
+  announcement: string;
+  canUndo: boolean;
+  canRedo: boolean;
+  pending: boolean;
+  preview: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onTogglePreview: () => void;
+  onOpenTrash: () => void;
+  onFinish: () => void;
+}) {
+  return (
+    <div aria-label="Edición de la página" className="page-edit-bar" role="toolbar">
+      <p className="page-edit-status">
+        <PencilSimpleLine aria-hidden="true" size={18} />
+        <strong>Editando la página</strong>
+        <span aria-live="polite" className="page-edit-saving">
+          {pending ? "Guardando…" : "Todo guardado"}
+        </span>
+      </p>
+      <div className="page-edit-actions">
+        <button
+          aria-label="Deshacer"
+          className="page-tool"
+          disabled={!canUndo}
+          onClick={onUndo}
+          title="Deshacer (Ctrl+Z)"
+          type="button"
+        >
+          <ArrowCounterClockwise aria-hidden="true" size={18} />
+        </button>
+        <button
+          aria-label="Rehacer"
+          className="page-tool"
+          disabled={!canRedo}
+          onClick={onRedo}
+          title="Rehacer (Ctrl+Shift+Z)"
+          type="button"
+        >
+          <ArrowClockwise aria-hidden="true" size={18} />
+        </button>
+        <button
+          aria-pressed={preview}
+          className="page-bar-button"
+          onClick={onTogglePreview}
+          type="button"
+        >
+          <Eye aria-hidden="true" size={17} />
+          <span>Vista de estudiante</span>
+        </button>
+        <button className="page-bar-button" onClick={onOpenTrash} type="button">
+          <Trash aria-hidden="true" size={17} />
+          <span>Papelera</span>
+        </button>
+        <button className="primary-button" onClick={onFinish} type="button">
+          <Check aria-hidden="true" size={16} weight="bold" />
+          Listo
+        </button>
+      </div>
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
+    </div>
+  );
+}
+
+// Implements: REQ-PAGE-10
+function AnnounceDialog({
+  added,
+  onSkip,
+  onCompose,
+}: {
+  added: readonly Added[];
+  onSkip: () => void;
+  onCompose: () => void;
+}) {
+  return (
+    <PublishConfirmDialog
+      cancelLabel="Ahora no"
+      confirmLabel="Redactar aviso"
+      message={
+        <>
+          <p>
+            Agregaste{" "}
+            {added.length === 1 ? "un elemento visible" : `${added.length} elementos visibles`} a la
+            página. La página no envía notificaciones por sí sola.
+          </p>
+          <ul className="page-added-list">
+            {added.slice(0, 6).map((entry) => (
+              <li key={entry.id}>
+                <strong>{entry.sectionTitle}</strong> · {entry.title}
+              </li>
+            ))}
+          </ul>
+        </>
+      }
+      note="Puedes revisar el aviso antes de enviarlo y elegir si alerta al curso."
+      onCancel={onSkip}
+      onConfirm={onCompose}
+      title="¿Avisar al curso del material nuevo?"
+    />
+  );
+}
+
 export function CoursePageEditor({
   course,
   classroom,
@@ -713,14 +950,9 @@ export function CoursePageEditor({
 }) {
   const reducedMotion = useHydratedReducedMotion();
   const pageRef = useRef(teamPage);
-  const historyRef = useRef<UndoHistory>(EMPTY_HISTORY);
-  const queue = useRef<Promise<void>>(Promise.resolve());
   const fileInput = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<{ sectionId: string; type: "file" | "image" } | null>(null);
   const materialized = useRef(false);
-  const [history, setHistory] = useState<UndoHistory>(EMPTY_HISTORY);
-  const [pending, setPending] = useState(0);
-  const [announcement, setAnnouncement] = useState("");
   const [preview, setPreview] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -755,7 +987,7 @@ export function CoursePageEditor({
       )
       .catch((cause) => {
         materialized.current = false;
-        setMaterializeError(messageOf(cause, "No se pudo preparar la página para editar."));
+        setMaterializeError(pageErrorText(cause, "No se pudo preparar la página para editar."));
       });
   }, [course.id]);
 
@@ -796,94 +1028,8 @@ export function CoursePageEditor({
     return found;
   };
 
-  const perform = useCallback((task: () => Promise<void>, failure: string) => {
-    setPending((count) => count + 1);
-    const run = queue.current
-      .then(task)
-      .then(
-        () => true,
-        (cause) => {
-          toast.error(messageOf(cause, failure));
-          setSettling(null);
-          return false;
-        }
-      )
-      .finally(() => setPending((count) => count - 1));
-    queue.current = run.then(() => undefined);
-    return run;
-  }, []);
-
-  const commit = useCallback(
-    (entry: UndoEntry, failure: string) =>
-      perform(async () => {
-        await entry.redo();
-        historyRef.current = recordEntry(historyRef.current, entry);
-        setHistory(historyRef.current);
-      }, failure),
-    [perform]
-  );
-
-  const undo = useCallback(
-    () =>
-      perform(async () => {
-        const step = stepBack(historyRef.current);
-        if (!step) return;
-        await step.entry.undo();
-        historyRef.current = step.history;
-        setHistory(step.history);
-        setAnnouncement(`Se deshizo: ${step.entry.label}.`);
-      }, "No se pudo deshacer el último cambio."),
-    [perform]
-  );
-
-  const redo = useCallback(
-    () =>
-      perform(async () => {
-        const step = stepForward(historyRef.current);
-        if (!step) return;
-        await step.entry.redo();
-        historyRef.current = step.history;
-        setHistory(step.history);
-        setAnnouncement(`Se rehízo: ${step.entry.label}.`);
-      }, "No se pudo rehacer el cambio."),
-    [perform]
-  );
-
-  const undoSpecific = useCallback(
-    (entry: UndoEntry) =>
-      perform(async () => {
-        await entry.undo();
-        historyRef.current = {
-          past: historyRef.current.past.filter((candidate) => candidate !== entry),
-          future: historyRef.current.future,
-        };
-        setHistory(historyRef.current);
-      }, "No se pudo deshacer."),
-    [perform]
-  );
-
-  useEffect(() => {
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey)) return;
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
-      const key = event.key.toLowerCase();
-      if (key === "z" && !event.shiftKey) {
-        event.preventDefault();
-        void undo();
-      } else if ((key === "z" && event.shiftKey) || key === "y") {
-        event.preventDefault();
-        void redo();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [redo, undo]);
-
-  const offerUndo = (entry: UndoEntry, text: string) =>
-    toast.message(text, {
-      action: { label: "Deshacer", onClick: () => void undoSpecific(entry) },
-    });
+  const { history, pending, announcement, commit, undo, redo, offerUndo } =
+    usePageHistory(setSettling);
 
   const sectionStub = (id: string, title: string): PageSectionView =>
     findSection(id) ?? {
@@ -1037,16 +1183,19 @@ export function CoursePageEditor({
         label: sectionId === origin.id ? "mover el elemento" : `mover a «${target.title}»`,
         redo: async () => {
           if (renumbered) {
-            for (const [id, value] of renumbered) {
-              const found = findItem(id);
-              if (found)
-                await placeItem(id, {
-                  sectionId,
-                  position: value,
-                  hidden: found.item.hidden,
-                  publishAt: found.item.publishAt,
-                });
-            }
+            await Promise.all(
+              [...renumbered].map(([id, value]) => {
+                const found = findItem(id);
+                return found
+                  ? placeItem(id, {
+                      sectionId,
+                      position: value,
+                      hidden: found.item.hidden,
+                      publishAt: found.item.publishAt,
+                    })
+                  : undefined;
+              })
+            );
           }
           await placeItem(itemId, after);
         },
@@ -1140,21 +1289,23 @@ export function CoursePageEditor({
           }
 
           id = await createPageSection(course.id, { title, position, hidden: source.hidden });
-          for (const item of requireSection(sectionId).items) {
-            await duplicatePageItem(
-              course.id,
-              item,
-              {
-                sectionId: id,
-                sectionTitle: title,
-                position: item.position,
-                hidden: item.hidden,
-                publishAt: item.publishAt,
-                sectionHidden: source.hidden,
-              },
-              false
-            );
-          }
+          await Promise.all(
+            requireSection(sectionId).items.map((item) =>
+              duplicatePageItem(
+                course.id,
+                item,
+                {
+                  sectionId: id,
+                  sectionTitle: title,
+                  position: item.position,
+                  hidden: item.hidden,
+                  publishAt: item.publishAt,
+                  sectionHidden: source.hidden,
+                },
+                false
+              )
+            )
+          );
         },
         undo: async () => {
           const section = sectionStub(id, title);
@@ -1292,7 +1443,7 @@ export function CoursePageEditor({
         );
       } catch (cause) {
         toast.error(
-          `No se pudo subir ${file.name}. ${messageOf(cause, "Revisa el tamaño (hasta 50 MB) y el tipo de archivo.")}`
+          `No se pudo subir ${file.name}. ${pageErrorText(cause, "Revisa el tamaño (hasta 50 MB) y el tipo de archivo.")}`
         );
       } finally {
         setUploads((list) => list.filter((entry) => entry.key !== key));
@@ -1357,7 +1508,7 @@ export function CoursePageEditor({
   };
 
   const onDrop = (sectionId: string) => (event: DragEvent<HTMLElement>) => {
-    if (!event.dataTransfer.types.includes("Files")) return;
+    if (!carriesFiles(event)) return;
     event.preventDefault();
     setDropTarget(null);
     void upload(sectionId, [...event.dataTransfer.files], false);
@@ -1367,63 +1518,27 @@ export function CoursePageEditor({
     "sections",
     sections.map((section) => section.id)
   );
+  const itemsById = new Map(
+    sections.flatMap((section) => section.items).map((item) => [item.id, item])
+  );
   const orderedSections = sectionIds
     .map((id) => sections.find((section) => section.id === id))
     .filter((section): section is PageSectionView => Boolean(section));
 
   return (
     <section aria-label="Editar la página del ramo" className="course-page is-editing">
-      <div aria-label="Edición de la página" className="page-edit-bar" role="toolbar">
-        <p className="page-edit-status">
-          <PencilSimpleLine aria-hidden="true" size={18} />
-          <strong>Editando la página</strong>
-          <span aria-live="polite" className="page-edit-saving">
-            {pending > 0 ? "Guardando…" : "Todo guardado"}
-          </span>
-        </p>
-        <div className="page-edit-actions">
-          <button
-            aria-label="Deshacer"
-            className="page-tool"
-            disabled={history.past.length === 0}
-            onClick={() => void undo()}
-            title="Deshacer (Ctrl+Z)"
-            type="button"
-          >
-            <ArrowCounterClockwise aria-hidden="true" size={18} />
-          </button>
-          <button
-            aria-label="Rehacer"
-            className="page-tool"
-            disabled={history.future.length === 0}
-            onClick={() => void redo()}
-            title="Rehacer (Ctrl+Shift+Z)"
-            type="button"
-          >
-            <ArrowClockwise aria-hidden="true" size={18} />
-          </button>
-          <button
-            aria-pressed={preview}
-            className="page-bar-button"
-            onClick={() => setPreview((value) => !value)}
-            type="button"
-          >
-            <Eye aria-hidden="true" size={17} />
-            <span>Vista de estudiante</span>
-          </button>
-          <button className="page-bar-button" onClick={() => setTrashOpen(true)} type="button">
-            <Trash aria-hidden="true" size={17} />
-            <span>Papelera</span>
-          </button>
-          <button className="primary-button" onClick={finish} type="button">
-            <Check aria-hidden="true" size={16} weight="bold" />
-            Listo
-          </button>
-        </div>
-        <p aria-live="polite" className="sr-only">
-          {announcement}
-        </p>
-      </div>
+      <EditBar
+        announcement={announcement}
+        canRedo={history.future.length > 0}
+        canUndo={history.past.length > 0}
+        onFinish={finish}
+        onOpenTrash={() => setTrashOpen(true)}
+        onRedo={() => void redo()}
+        onTogglePreview={() => setPreview((value) => !value)}
+        onUndo={() => void undo()}
+        pending={pending > 0}
+        preview={preview}
+      />
 
       <input
         aria-hidden="true"
@@ -1497,7 +1612,7 @@ export function CoursePageEditor({
                 onDragEnd={() => finishDrag("sections")}
                 onDragLeave={() => setDropTarget(null)}
                 onDragOver={(event) => {
-                  if (!event.dataTransfer.types.includes("Files")) return;
+                  if (!carriesFiles(event)) return;
                   event.preventDefault();
                   setDropTarget(section.id);
                 }}
@@ -1538,7 +1653,7 @@ export function CoursePageEditor({
                     section.id,
                     section.items.map((item) => item.id)
                   )
-                    .map((id) => section.items.find((item) => item.id === id))
+                    .map((id) => itemsById.get(id))
                     .filter((item): item is CoursePost => Boolean(item))
                     .map((item, itemIndex) => (
                       <EditableItem
@@ -1631,35 +1746,16 @@ export function CoursePageEditor({
       )}
 
       {announceOpen && (
-        <PublishConfirmDialog
-          cancelLabel="Ahora no"
-          confirmLabel="Redactar aviso"
-          message={
-            <>
-              <p>
-                Agregaste{" "}
-                {added.length === 1 ? "un elemento visible" : `${added.length} elementos visibles`}{" "}
-                a la página. La página no envía notificaciones por sí sola.
-              </p>
-              <ul className="page-added-list">
-                {added.slice(0, 6).map((entry) => (
-                  <li key={entry.id}>
-                    <strong>{entry.sectionTitle}</strong> · {entry.title}
-                  </li>
-                ))}
-              </ul>
-            </>
-          }
-          note="Puedes revisar el aviso antes de enviarlo y elegir si alerta al curso."
-          onCancel={() => {
-            setAnnounceOpen(false);
-            onDone(null);
-          }}
-          onConfirm={() => {
+        <AnnounceDialog
+          added={added}
+          onCompose={() => {
             setAnnounceOpen(false);
             onDone(announcementDraftFor(added));
           }}
-          title="¿Avisar al curso del material nuevo?"
+          onSkip={() => {
+            setAnnounceOpen(false);
+            onDone(null);
+          }}
         />
       )}
     </section>

@@ -15,7 +15,7 @@ import {
   trashItems,
   watchClassroom,
 } from "../../../lib/firebase-classroom-client";
-import { buildCoursePage } from "../../../lib/course-page";
+import { buildCoursePage, pageErrorText } from "../../../lib/course-page";
 import { Course } from "../../../lib/courses";
 import { isNativeShell } from "../../../lib/mobile-bridge";
 import { openDocumentNatively } from "../../../lib/native-files";
@@ -179,7 +179,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
         );
         return true;
       } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No se pudo restaurar el aviso.", "bad");
+        note(pageErrorText(cause, "No se pudo restaurar el aviso."), "bad");
         return false;
       }
     },
@@ -193,7 +193,7 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
       try {
         await trashItems(course.id, [post], "Avisos");
       } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No fue posible eliminarlo.", "bad");
+        note(pageErrorText(cause, "No fue posible eliminarlo."), "bad");
         return false;
       }
       toast.message("El aviso se movió a la papelera.", {

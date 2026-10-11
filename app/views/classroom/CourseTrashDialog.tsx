@@ -18,6 +18,7 @@ import {
   watchTrash,
 } from "../../../lib/firebase-classroom-client";
 import {
+  pageErrorText,
   TRASH_RETENTION_DAYS,
   trashDaysLeft,
   type PageItemType,
@@ -86,7 +87,7 @@ export function CourseTrashDialog({
       await task();
       toast.success(done);
     } catch (cause) {
-      toast.error(cause instanceof Error && cause.message ? cause.message : failure);
+      toast.error(pageErrorText(cause, failure));
     } finally {
       setBusy("");
       setConfirming("");
