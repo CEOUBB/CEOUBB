@@ -16,7 +16,23 @@ function routeError(cause: unknown) {
   return Response.json({ error: "No fue posible actualizar las ayudantías." }, { status: 500 });
 }
 
-async function teacher(request: Request) {
+async function teacher(request: Request, checkMutation = false) {
+  if (checkMutation) {
+    const origin = request.headers.get("origin");
+    if (origin && origin !== new URL(request.url).origin) {
+      return { response: Response.json({ error: "Origen no autorizado." }, { status: 403 }) };
+    }
+    const contentLength = Number(request.headers.get("content-length") ?? "0");
+    if (Number.isFinite(contentLength) && contentLength > 16384) {
+      return {
+        response: Response.json(
+          { error: "El cuerpo de la solicitud es demasiado extenso." },
+          { status: 413 }
+        ),
+      };
+    }
+  }
+
   const actor = await getSessionUser(request);
   if (!actor) return { response: Response.json({ error: "Sesión no válida." }, { status: 401 }) };
   if (actor.role !== "teacher" && actor.role !== "owner") {
@@ -54,7 +70,7 @@ export async function GET(request: Request, context: CourseContext) {
 
 // Implements: REQ-SEC-17
 export async function POST(request: Request, context: CourseContext) {
-  const session = await teacher(request);
+  const session = await teacher(request, true);
   if ("response" in session) return session.response;
   const { courseId } = await context.params;
   if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
@@ -76,7 +92,7 @@ export async function POST(request: Request, context: CourseContext) {
 
 // Implements: REQ-SEC-17
 export async function DELETE(request: Request, context: CourseContext) {
-  const session = await teacher(request);
+  const session = await teacher(request, true);
   if ("response" in session) return session.response;
   const { courseId } = await context.params;
   if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
