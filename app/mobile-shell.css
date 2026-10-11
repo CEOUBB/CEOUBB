@@ -185,95 +185,6 @@
     padding-inline: 12px;
   }
 
-  /* ── Calendario ─────────────────────────────────────────── */
-
-  /* La cabecera de la rejilla repetía el día que ya elige la barra de chips y se
-     llevaba 56px de las horas útiles. Con un solo día visible sobra. */
-  .planner-head {
-    display: none;
-  }
-
-  /* La canaleta tiene que caber «08:00» a 11px más su margen; por debajo de eso
-     el radio de la tarjeta recorta la etiqueta por la esquina. */
-  .planner-frame {
-    --planner-gutter: 54px;
-  }
-  .planner-lead h1 {
-    font-size: 28px;
-  }
-
-  /* Seis ramos apilados empujaban la rejilla fuera de la primera pantalla:
-     pasan a un carril horizontal que sangra hasta los bordes. La máscara
-     difumina los extremos: sin ella la píldora cortada a media palabra parece
-     un error de maquetación en vez de la señal de que el carril sigue. */
-  .planner-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    margin-inline: calc(-1 * var(--space-md));
-    padding-inline: var(--space-md);
-    scroll-padding-inline: var(--space-md);
-    scroll-snap-type: x proximity;
-    -webkit-mask-image: linear-gradient(
-      90deg,
-      transparent 0,
-      #000 var(--space-md),
-      #000 calc(100% - 28px),
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      90deg,
-      transparent 0,
-      #000 var(--space-md),
-      #000 calc(100% - 28px),
-      transparent 100%
-    );
-  }
-
-  .planner-filters::-webkit-scrollbar {
-    display: none;
-  }
-  .planner-pill {
-    flex: 0 0 auto;
-    min-height: 38px;
-    padding: 8px 14px 8px 11px;
-    scroll-snap-align: start;
-    font-size: 13.5px;
-  }
-
-  .planner-daychip {
-    min-height: 50px;
-  }
-  .planner-step button,
-  .planner-now-button {
-    min-height: 40px;
-  }
-
-  /* La acción principal del calendario ocupa el resto de la fila de controles;
-     el salto por fecha sobra cuando anterior / Hoy / siguiente ya están al lado. */
-  .planner-jump {
-    display: none;
-  }
-  .page-head > .planner-controls {
-    flex-wrap: nowrap;
-  }
-  /* `height` fija de 34px es geometría de escritorio con ratón: en el pulgar la
-     acción principal necesita alto táctil y aire lateral. */
-  .planner-create {
-    flex: 1 1 auto;
-    justify-content: center;
-    height: auto;
-    min-height: 44px;
-    padding: 10px 20px;
-  }
-  .planner-blank .planner-create {
-    flex: 0 0 auto;
-  }
-
-  .planner-blank {
-    padding: var(--space-lg) var(--space-md) var(--space-md);
-  }
-
   /* ── Diálogo de bloque ──────────────────────────────────── */
 
   /* Modal centrado sobre un teclado abierto no cabe: sube desde abajo, como las
@@ -411,9 +322,6 @@
   .course-tabs button:hover,
   .sheet-row:hover,
   .palette-item:hover,
-  .planner-pill:hover,
-  .planner-block:hover,
-  .planner-due:hover,
   .icon-button:hover:not(:disabled),
   .app-brand:hover,
   .header-search:hover,
@@ -446,14 +354,11 @@
   .course-card:active,
   .sheet-row:active,
   .palette-item:active,
-  .planner-daychip:active,
-  .planner-pill:active,
   .course-tabs button:active {
     background: var(--canvas-soft);
   }
 
   .next-eval-action:active,
-  .planner-create:active,
   .sheet-cta:active,
   .planner-dialog-save:active {
     transform: scale(0.985);
@@ -463,7 +368,7 @@
      no existe el cursor de texto sobre una pestaña. */
   .mobile-nav,
   .course-tabs,
-  .planner-daybar,
+  .planner-strip,
   .app-header {
     user-select: none;
   }

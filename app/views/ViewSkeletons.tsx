@@ -20,7 +20,7 @@ import {
 } from "@phosphor-icons/react";
 import { RESOURCE_GROUPS } from "./resources/resources-data";
 import { COURSE_TABS } from "./classroom/classroom-utils";
-import { dayOf, getSantiagoDateISO, weekRangeLabel, weekdayOf } from "../../lib/portal-utils";
+import { dayOf, getSantiagoDateISO, weekdayOf } from "../../lib/portal-utils";
 
 /*
   Un esqueleto sólo dibuja huesos donde el contenido depende de datos. Los
@@ -60,7 +60,6 @@ function weekOf(anchor: string): string[] {
   return Array.from({ length: 7 }, (_, index) => shiftIsoDate(start, index));
 }
 
-const SKELETON_FILTER_COURSES = [0, 1, 2];
 const SKELETON_ADMIN_ROWS = [0, 1, 2, 3];
 const SKELETON_ADMIN_PERIODS = [0, 1];
 
@@ -68,141 +67,154 @@ const SKELETON_ADMIN_PERIODS = [0, 1];
 const SKELETON_SETTINGS_CHANNELS = [230, 210, 205, 260];
 const SKELETON_SETTINGS_SESSIONS = [0, 1];
 
+const SKELETON_VIEWS = ["Día", "Semana", "Mes", "Agenda"];
+const SKELETON_UPCOMING = [0, 1, 2];
+const skeletonMonth = new Intl.DateTimeFormat("es-CL", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function bone(width: string, height: string, delay: number): React.CSSProperties {
+  return { width, height, "--sk-delay": `${delay}ms` } as React.CSSProperties;
+}
+
 export function CalendarSkeleton() {
   const today = getSantiagoDateISO();
   const days = weekOf(today);
+  const month = skeletonMonth.format(new Date(`${days[0]}T12:00:00Z`));
 
   return (
-    <section aria-busy="true" aria-label="Cargando calendario…" className="planner" role="status">
+    <section
+      aria-busy="true"
+      aria-label="Cargando calendario…"
+      className="planner"
+      data-side="open"
+      data-view="day"
+      role="status"
+    >
       <header className="page-head planner-bar">
         <div className="planner-lead">
           <h1>Calendario</h1>
-          {/* El rango de la semana no espera al servidor: se calcula del reloj. */}
           <p>
-            <span>{weekRangeLabel(days[0], days[6])}</span>
-            <span>·</span>
-            <span
-              className="sk sk-quiet"
-              style={
-                {
-                  display: "inline-block",
-                  width: "78px",
-                  height: "12px",
-                  "--sk-delay": "80ms",
-                } as React.CSSProperties
-              }
-            />
-            <span>·</span>
-            <span
-              className="sk sk-quiet"
-              style={
-                {
-                  display: "inline-block",
-                  width: "70px",
-                  height: "12px",
-                  "--sk-delay": "100ms",
-                } as React.CSSProperties
-              }
-            />
+            <span className="sk sk-quiet" style={bone("200px", "12px", 80)} />
           </p>
         </div>
-        <div className="planner-controls" aria-hidden="true" inert>
-          <div className="planner-step">
-            <button type="button" disabled aria-label="Semana anterior">
-              <CaretLeft aria-hidden="true" size={16} />
-            </button>
-            <button type="button" disabled className="planner-now-button">
-              Hoy
-            </button>
-            <button type="button" disabled aria-label="Semana siguiente">
-              <CaretRight aria-hidden="true" size={16} />
-            </button>
-          </div>
-          <label className="planner-jump">
-            <span className="sr-only">Ir a una fecha</span>
-            <input type="date" value={days[0]} disabled />
-          </label>
-          <button type="button" disabled className="planner-create">
-            <Plus aria-hidden="true" size={15} /> Nuevo bloque
+        <div aria-hidden="true" className="planner-actions" inert>
+          <button className="primary-button planner-create" disabled type="button">
+            <Plus aria-hidden="true" size={16} weight="bold" />
+            <span>Nuevo bloque</span>
           </button>
         </div>
       </header>
 
-      <div aria-label="Cargando filtros" className="planner-filters" role="group">
-        {SKELETON_FILTER_COURSES.map((idx) => (
-          <span
-            className="sk"
-            key={`cal-filt-${idx}`}
-            style={
-              {
-                width: `${112 + (idx % 3) * 26}px`,
-                height: "34px",
-                borderRadius: "var(--radius-full)",
-                "--sk-delay": `${200 + idx * 30}ms`,
-              } as React.CSSProperties
-            }
-          />
-        ))}
-      </div>
-
-      {/* En teléfono la semana se navega con esta tira; sin ella el ancho móvil
-          gana una fila al resolverse la vista. */}
-      <nav aria-hidden="true" className="planner-daybar">
-        {days.map((day) => (
-          <span
-            className="planner-daychip"
-            aria-current={day === today ? "date" : undefined}
-            data-today={day === today ? "true" : undefined}
-            key={day}
-          >
-            <small>{weekdayOf(day)}</small>
-            <b className="num">{dayOf(day)}</b>
-          </span>
-        ))}
-      </nav>
-
-      <div
-        className="planner-frame"
-        style={{ "--planner-rows": SKELETON_HOURS.length } as React.CSSProperties}
-      >
-        <div className="planner-head">
-          <span className="planner-zone">GMT−4</span>
-          {days.map((day) => (
-            <div
-              className="planner-headday"
-              data-focus={day === today ? "true" : undefined}
-              data-today={day === today ? "true" : undefined}
-              key={day}
-            >
-              <small>{weekdayOf(day)}</small>
-              <b className="num">{dayOf(day)}</b>
-            </div>
-          ))}
-        </div>
-
-        <div
-          aria-label="Horario semanal"
-          className="planner-grid"
-          role="region"
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- El horario desplazable necesita foco para usar las flechas del teclado.
-          tabIndex={0}
-        >
-          <div aria-hidden="true" className="planner-hours">
-            {SKELETON_HOURS.map((hour) => (
-              <span className="num" key={hour} style={{ top: hourOffset(hour) }}>
-                {hourLabel(hour)}
-              </span>
+      <div className="planner-body">
+        <div aria-hidden="true" className="planner-toolbar" inert>
+          <button className="planner-today" disabled type="button">
+            Hoy
+          </button>
+          <div className="planner-step">
+            <button disabled type="button">
+              <CaretLeft aria-hidden="true" size={16} weight="bold" />
+            </button>
+            <button disabled type="button">
+              <CaretRight aria-hidden="true" size={16} weight="bold" />
+            </button>
+          </div>
+          <h2 className="planner-range">
+            <button disabled type="button">
+              <span>{month.charAt(0).toUpperCase() + month.slice(1)}</span>
+            </button>
+          </h2>
+          <div className="planner-view-switch">
+            {SKELETON_VIEWS.map((label) => (
+              <button aria-pressed={label === "Semana"} disabled key={label} type="button">
+                {label === "Semana" && <span className="planner-view-indicator" />}
+                <span>{label}</span>
+              </button>
             ))}
           </div>
-          {days.map((day, colIdx) => (
+        </div>
+
+        <div className="planner-columns">
+          <div aria-hidden="true" className="planner-side">
+            <span className="sk" style={bone("100%", "252px", 120)} />
+            <div>
+              {SKELETON_UPCOMING.map((index) => (
+                <span
+                  className="sk sk-quiet"
+                  key={index}
+                  style={{ ...bone("100%", "44px", 180 + index * 40), marginTop: 6 }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="planner-stage">
+            <nav aria-hidden="true" className="planner-strip" inert>
+              <div className="planner-strip-days">
+                {days.map((day) => (
+                  <button
+                    aria-current={day === today ? "date" : undefined}
+                    aria-pressed={day === today}
+                    className="planner-strip-day"
+                    disabled
+                    key={day}
+                    type="button"
+                  >
+                    <small>{weekdayOf(day)}</small>
+                    <b className="num">{Number(dayOf(day))}</b>
+                    <span />
+                  </button>
+                ))}
+              </div>
+            </nav>
             <div
-              className="planner-col"
-              data-focus={day === today ? "true" : undefined}
-              data-today={day === today ? "true" : undefined}
-              data-weekend={colIdx > 4 ? "true" : undefined}
-              key={day}
-            ></div>
-          ))}
+              className="planner-frame"
+              data-span="week"
+              style={{ "--planner-rows": SKELETON_HOURS.length } as React.CSSProperties}
+            >
+              <div
+                aria-label="Horario semanal"
+                className="planner-grid"
+                role="region"
+                // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- El horario desplazable necesita foco para usar las flechas del teclado.
+                tabIndex={0}
+              >
+                <div className="planner-top">
+                  <div className="planner-head">
+                    <span className="planner-zone" />
+                    {days.map((day) => (
+                      <div
+                        className="planner-headday"
+                        data-today={day === today ? "true" : undefined}
+                        key={day}
+                      >
+                        <small>{weekdayOf(day)}</small>
+                        <b className="num">{dayOf(day)}</b>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="planner-canvas">
+                  <div aria-hidden="true" className="planner-hours">
+                    {SKELETON_HOURS.map((hour) => (
+                      <span className="num" key={hour} style={{ top: hourOffset(hour) }}>
+                        {hourLabel(hour)}
+                      </span>
+                    ))}
+                  </div>
+                  {days.map((day, index) => (
+                    <div
+                      className="planner-col"
+                      data-today={day === today ? "true" : undefined}
+                      data-weekend={index > 4 ? "true" : undefined}
+                      key={day}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

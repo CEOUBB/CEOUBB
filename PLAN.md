@@ -1,6 +1,14 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Campus redesign "Separadores de archivador", 2026-10-06
+## Current handoff: Calendar redesign, 2026-10-10
+
+- Scope: branch `claude/calendar-redesign-ac7278`. Rebuilds `app/views/calendar/` as "Agenda y línea de tiempo": a collapsible side column (mini month, "Lo que viene", course filters), day, week, month and four week agenda views, quick create popover, academic item peek, block resizing, single key shortcuts, and a phone layout with a week strip, floating create button and bottom sheets. Decisions, interaction model and REQ-CEO72-05 to 09 live in `docs/design/ceo-72-calendario.md`; `DESIGN.md` records the shipped system.
+- Touch creation is a 350 ms long press; the explicit touch selection toggle, the per block "Mover" handle and the toolbar date input are retired. The time zone label is computed with `Intl` instead of a hardcoded `GMT−4`.
+- All calendar CSS lives at the end of `app/campus.css` (old rules removed from `campus-base.css`, `campus.css` and `mobile-shell.css`). No schema, rules or data source changes.
+- Tests: new sealed suite `tests/planner-views.test.ts` (hash registered). `e2e/calendar-ceo72.spec.ts` and the calendar part of `e2e/skeleton-layout.spec.ts` were updated to the new controls with the same flows plus resize, long press, views, shortcuts, picker and peek. QA catalog adds `calendar.day`, `calendar.agenda` and `calendar.quick-create`.
+- Open: the impeccable concept roll for seed `eeb63c02` was not recorded in `.impeccable/`. No production deployment was performed.
+
+## Handoff: Campus redesign "Separadores de archivador", 2026-10-06
 
 - Scope: [PR #287](https://github.com/CEOUBB/CEOUBB/pull/287), branch `claude/lms-ui-ux-redesign-39a5a8`. Replaces the campus visual system (dashboard, classroom, calendar, communications, resources, settings, administration, Administrar ramos), public help and policy pages, the 404 page and the global error screen. The access screen is unchanged. `DESIGN.md` is the source of truth; `.agents/rules/003-ui-components.mdc` summarizes it for agents.
 - Tokens live in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`; Inter loads with the `opsz` axis in `app/layout.tsx`. Each section carries `--course-tone`, from which `app/campus.css` derives `--tone-wash`, `--tone-wash-strong` and `--tone-ink`.

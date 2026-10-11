@@ -1,13 +1,33 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { CalendarCheck, ClipboardText, Plus } from "@phosphor-icons/react";
+import { useRef } from "react";
+import { ArrowRight, Plus } from "@phosphor-icons/react";
 import type { PlannerItem } from "../../../lib/planner";
 import { shiftDate } from "../../../lib/planner";
 import { dayOf, weekdayOf } from "../../../lib/portal-utils";
-import { KIND_LABEL } from "./calendar-constants";
+import { longDate } from "./calendar-constants";
+import type { AnchorRect } from "./calendar-constants";
+import { AgendaRow } from "./CalendarAgenda";
+import { ItemIcon } from "./CalendarParts";
+import { useSwipe } from "./usePlannerDrag";
 
 const EMPTY_ITEMS: PlannerItem[] = [];
+const VISIBLE_EVENTS = 3;
+const VISIBLE_DOTS = 4;
+
+function dayLabel(day: string, events: PlannerItem[]): string {
+  const count = events.length === 1 ? "1 actividad" : `${events.length} actividades`;
+  const evaluations = events.filter((item) => item.kind === "evaluation").length;
+  const deadlines = events.filter((item) => item.kind === "deadline").length;
+  return [
+    longDate(day),
+    count,
+    evaluations > 0 && (evaluations === 1 ? "1 evaluación" : `${evaluations} evaluaciones`),
+    deadlines > 0 && (deadlines === 1 ? "1 entrega" : `${deadlines} entregas`),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
 
 // Implements: REQ-CEO72-01, REQ-CEO72-04
 export function CalendarMonth({
@@ -16,62 +36,75 @@ export function CalendarMonth({
   today,
   selected,
   items,
+  direction,
   onSelect,
   onOpen,
+  onToggleDone,
   onCreate,
+  onOpenDay,
+  onSwipe,
 }: {
   days: string[];
   anchor: string;
   today: string;
   selected: string;
   items: PlannerItem[];
+  direction: number;
   onSelect: (date: string) => void;
-  onOpen: (item: PlannerItem) => void;
-  onCreate: (date: string, hour: number) => void;
+  onOpen: (item: PlannerItem, anchor: AnchorRect) => void;
+  onToggleDone: (item: PlannerItem) => void;
+  onCreate: (date: string) => void;
+  onOpenDay: (date: string) => void;
+  onSwipe: (direction: 1 | -1) => void;
 }) {
   const buttons = useRef(new Map<string, HTMLButtonElement>());
-
-  const itemsByDate = useMemo(() => {
-    const map = new Map<string, PlannerItem[]>();
-    for (const item of items) {
-      const list = map.get(item.date);
-      if (list) {
-        list.push(item);
-      } else {
-        map.set(item.date, [item]);
-      }
-    }
-    return map;
-  }, [items]);
-
+  const swipe = useSwipe(onSwipe);
+  const itemsByDate = Map.groupBy(items, (item) => item.date);
   const selectedItems = itemsByDate.get(selected) ?? EMPTY_ITEMS;
+  const month = anchor.slice(0, 7);
+
   return (
     <div className="planner-month-layout">
-      <div className="planner-month" aria-label="Calendario mensual">
+      <div
+        aria-label="Calendario mensual"
+        className="planner-month"
+        data-entering={direction === 0 ? undefined : "true"}
+        key={month}
+        role="group"
+        style={
+          {
+            "--planner-dir": direction,
+            "--planner-weeks": days.length / 7,
+          } as React.CSSProperties
+        }
+        {...swipe}
+      >
         {days.slice(0, 7).map((day) => (
-          <div className="planner-month-weekday" key={day}>
+          <div aria-hidden="true" className="planner-month-weekday" key={day}>
             {weekdayOf(day)}
           </div>
         ))}
-        {days.map((day) => {
+        {days.map((day, index) => {
           const events = itemsByDate.get(day) ?? EMPTY_ITEMS;
           return (
             <button
-              key={day}
-              type="button"
-              className="planner-month-day num"
-              ref={(node) => {
-                if (node) buttons.current.set(day, node);
-                else buttons.current.delete(day);
-              }}
-              data-outside={day.slice(0, 7) !== anchor.slice(0, 7) || undefined}
-              aria-current={day === today ? "date" : undefined}
-              aria-pressed={day === selected}
               aria-controls="planner-day-agenda"
-              aria-label={`${day}, ${events.length} ${events.length === 1 ? "actividad" : "actividades"}${events.some((item) => item.kind === "evaluation") ? ", evaluación" : ""}${events.some((item) => item.kind === "deadline") ? ", entrega" : ""}`}
-              tabIndex={day === selected ? 0 : -1}
+              aria-current={day === today ? "date" : undefined}
+              aria-label={dayLabel(day, events)}
+              aria-pressed={day === selected}
+              className="planner-month-day"
+              data-day={day}
+              data-outside={!day.startsWith(month) || undefined}
+              data-weekend={index % 7 > 4 || undefined}
+              key={day}
               onClick={() => onSelect(day)}
+              onDoubleClick={() => onOpenDay(day)}
               onKeyDown={(event) => {
+                if (event.key === "Enter" && event.shiftKey) {
+                  event.preventDefault();
+                  onOpenDay(day);
+                  return;
+                }
                 const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[
                   event.key
                 ];
@@ -79,104 +112,78 @@ export function CalendarMonth({
                 event.preventDefault();
                 const next = shiftDate(day, delta);
                 const target = buttons.current.get(next);
-                if (target) {
-                  onSelect(next);
-                  target.focus();
-                }
+                if (!target) return;
+                onSelect(next);
+                target.focus();
               }}
+              ref={(node) => {
+                if (node) buttons.current.set(day, node);
+                else buttons.current.delete(day);
+              }}
+              tabIndex={day === selected ? 0 : -1}
+              type="button"
             >
-              <span className="planner-month-number">{dayOf(day)}</span>
-              <span className="planner-month-events" aria-hidden="true">
-                {events.slice(0, 3).map((item) => (
-                  <span className="planner-month-event" key={item.id}>
-                    {item.kind === "evaluation" ? (
-                      <CalendarCheck size={13} />
-                    ) : item.kind === "deadline" ? (
-                      <ClipboardText size={13} />
+              <span className="planner-month-number num">{Number(dayOf(day))}</span>
+              <span aria-hidden="true" className="planner-month-events">
+                {events.slice(0, VISIBLE_EVENTS).map((item) => (
+                  <span
+                    className="planner-month-event"
+                    data-kind={item.kind}
+                    data-done={item.completed || undefined}
+                    key={item.id}
+                    style={{ "--course-tone": item.tone } as React.CSSProperties}
+                  >
+                    {item.startTime ? (
+                      <>
+                        <i className="planner-month-dot" />
+                        <span className="num">{item.startTime}</span>
+                      </>
                     ) : (
-                      <span className="planner-month-dot" style={{ background: item.tone }} />
+                      <ItemIcon kind={item.kind} size={11} />
                     )}
-                    <span>
-                      {item.kind === "evaluation"
-                        ? "Evaluación: "
-                        : item.kind === "deadline"
-                          ? "Entrega: "
-                          : `${item.startTime} `}
-                      {item.title}
-                    </span>
+                    <span className="planner-month-title">{item.title}</span>
                   </span>
                 ))}
-                {events.length > 3 && (
-                  <span className="planner-month-more">+{events.length - 3} más</span>
+                {events.length > VISIBLE_EVENTS && (
+                  <span className="planner-month-more num">
+                    {events.length - VISIBLE_EVENTS} más
+                  </span>
                 )}
               </span>
-              {events.length > 0 && (
-                <span className="planner-month-count" aria-hidden="true">
-                  {events.length} act.
-                </span>
-              )}
+              <span aria-hidden="true" className="planner-month-dots">
+                {events.slice(0, VISIBLE_DOTS).map((item) => (
+                  <i key={item.id} style={{ "--course-tone": item.tone } as React.CSSProperties} />
+                ))}
+              </span>
             </button>
           );
         })}
       </div>
       <section
-        id="planner-day-agenda"
+        aria-labelledby="planner-day-title"
         className="planner-day-agenda"
-        aria-label="Actividades del día seleccionado"
-        style={{ gridRow: Math.floor(days.indexOf(selected) / 7) + 3 }}
+        id="planner-day-agenda"
       >
         <header>
-          <h2 className="num">
-            {new Date(`${selected}T12:00:00Z`).toLocaleDateString("es-CL", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              timeZone: "UTC",
-            })}
-          </h2>
-          <button className="planner-create" type="button" onClick={() => onCreate(selected, 9)}>
+          <h3 id="planner-day-title">{longDate(selected)}</h3>
+          <button
+            className="planner-quiet-button"
+            onClick={() => onOpenDay(selected)}
+            type="button"
+          >
+            Abrir día <ArrowRight aria-hidden="true" size={13} weight="bold" />
+          </button>
+          <button className="secondary-button" onClick={() => onCreate(selected)} type="button">
             <Plus aria-hidden="true" size={15} weight="bold" /> Añadir bloque
           </button>
         </header>
         {selectedItems.length === 0 ? (
-          <p>No hay actividades para este día.</p>
+          <p className="planner-day-empty">Sin actividades este día.</p>
         ) : (
           <ul>
-            {selectedItems.map((item) => {
-              const context =
-                item.courseName ??
-                (item.kind in KIND_LABEL
-                  ? KIND_LABEL[item.kind as keyof typeof KIND_LABEL]
-                  : item.detail);
-              const status = item.completed ? " · Completado" : "";
-              const timeStr = item.startTime
-                ? `${item.startTime} a ${item.endTime}`
-                : item.kind === "evaluation"
-                  ? "Evaluación"
-                  : "Entrega";
-              return (
-                <li key={item.id}>
-                  <button
-                    aria-label={`Ver detalles de "${item.title}", ${timeStr}, ${context}${status}`}
-                    type="button"
-                    onClick={() => onOpen(item)}
-                  >
-                    <span className="num">
-                      {item.startTime
-                        ? `${item.startTime}–${item.endTime}`
-                        : item.kind === "evaluation"
-                          ? "Evaluación"
-                          : "Entrega"}
-                    </span>
-                    <strong>{item.title}</strong>
-                    <span>
-                      {context}
-                      {status}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {selectedItems.map((item) => (
+              <AgendaRow item={item} key={item.id} onOpen={onOpen} onToggleDone={onToggleDone} />
+            ))}
           </ul>
         )}
       </section>

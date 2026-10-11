@@ -4,10 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { TrashSimple, X } from "@phosphor-icons/react";
 import { Course } from "../../../lib/courses";
 import { deletePersonalEvent, savePersonalEvent } from "../../../lib/firebase-classroom-client";
-import { isIsoDate, shiftDate, validateBlock } from "../../../lib/planner";
+import {
+  PERSONAL_TONE,
+  durationLabel,
+  isIsoDate,
+  shiftDate,
+  validateBlock,
+} from "../../../lib/planner";
 import type { PersonalEventKind } from "../../../lib/planner";
-import { KIND_LABEL } from "./calendar-constants";
+import { KIND_LABEL, PERSONAL_KINDS } from "./calendar-constants";
 import type { BlockDraft } from "./calendar-constants";
+import { ToneMark } from "./CalendarParts";
 
 export function BlockDialog({
   draft,
@@ -26,6 +33,8 @@ export function BlockDialog({
   const [problem, setProblem] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const duration = durationLabel(values.startTime, values.endTime);
+  const tone = courses.find((course) => course.id === values.courseId)?.tone ?? PERSONAL_TONE;
 
   useEffect(() => {
     // `showModal()` sobre un diálogo ya modal lanza `InvalidStateError`, y en
@@ -87,7 +96,7 @@ export function BlockDialog({
             <X aria-hidden="true" size={16} weight="bold" />
           </button>
         </header>
-        <label>
+        <label className="planner-dialog-title">
           Título
           <input
             maxLength={120}
@@ -100,7 +109,9 @@ export function BlockDialog({
         </label>
         <div className="planner-dialog-row">
           <label>
-            Ramo
+            <span className="planner-dialog-label">
+              <ToneMark tone={tone} /> Ramo
+            </span>
             <select
               onChange={(event) => set("courseId", event.target.value)}
               value={values.courseId}
@@ -119,7 +130,7 @@ export function BlockDialog({
               onChange={(event) => set("kind", event.target.value as PersonalEventKind)}
               value={values.kind}
             >
-              {(Object.keys(KIND_LABEL) as PersonalEventKind[]).map((kind) => (
+              {PERSONAL_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
                   {KIND_LABEL[kind]}
                 </option>
@@ -158,6 +169,11 @@ export function BlockDialog({
             />
           </label>
         </div>
+        <p aria-live="polite" className="planner-dialog-duration num">
+          {duration
+            ? `Duración: ${duration}`
+            : "La hora de término debe ser posterior a la de inicio."}
+        </p>
         {!values.id && (
           <div className="planner-dialog-row">
             <label>
