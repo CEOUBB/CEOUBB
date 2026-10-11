@@ -28,6 +28,7 @@ type Relocation = { id: string; from: Collection; to: Collection; patch?: Docume
 type Sdk = typeof import("firebase/firestore");
 
 const MOVES_PER_TRANSACTION = 200;
+const RELEASES_IN_FLIGHT = 8;
 const CONTENT_COLLECTIONS: readonly Collection[] = ["posts", "hiddenItems", "trash"];
 
 async function session() {
@@ -502,15 +503,19 @@ export async function releaseUploadedFiles(courseId: string, paths: readonly str
   const owned = [...new Set(paths)].filter((path) => path.startsWith(`courses/${courseId}/`));
   if (owned.length === 0) return;
   const cloud = await cloudStorage();
-  for (const path of owned) {
-    if (await referenced(courseId, path)) continue;
+  const release = async (path: string) => {
+    if (await referenced(courseId, path)) return;
     try {
       await cloud.sdk.deleteObject(cloud.sdk.ref(cloud.storage, path));
     } catch (cause) {
       const code = typeof cause === "object" && cause && "code" in cause ? cause.code : "";
       if (code !== "storage/object-not-found") throw cause;
     }
-  }
+  };
+  await chunkOperations(owned, RELEASES_IN_FLIGHT).reduce(
+    (previous, group) => previous.then(() => Promise.all(group.map(release))).then(() => undefined),
+    Promise.resolve()
+  );
 }
 
 // Implements: REQ-PAGE-06
