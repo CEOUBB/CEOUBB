@@ -374,6 +374,11 @@ export async function seedQa() {
       createHash("sha256").update(pdf).digest("hex")
     );
     const firestore = getFirestore(app);
+    // Implements: REQ-PAGE-01, REQ-QA-03
+    for (const section of Object.values(QA_SECTIONS)) {
+      for (const collection of ["pageSections", "hiddenItems", "trash"])
+        await firestore.recursiveDelete(firestore.collection(`courses/${section}/${collection}`));
+    }
     const batch = firestore.batch();
     for (const document of documents) batch.set(firestore.doc(document.path), document.data);
     for (const user of QA_USER_FIXTURES) {

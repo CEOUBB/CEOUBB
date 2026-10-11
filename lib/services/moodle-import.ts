@@ -261,7 +261,7 @@ export async function startMoodleImport(
   return { id };
 }
 
-// Implements: REQ-MOODLE-05
+// Implements: REQ-MOODLE-05, REQ-PAGE-14
 export async function writeMoodleImportPosts(
   actor: PublicUser,
   sectionId: string,
@@ -291,6 +291,7 @@ export async function writeMoodleImportPosts(
       fileSize: { integerValue: String(post.fileSize) },
       createdAt: { timestampValue: post.sourceCreatedAt || now },
       sourceSystem: { stringValue: "moodle" },
+      placement: { stringValue: "page" },
       sourceId: { stringValue: post.sourceId },
       sourceKey: { stringValue: sourceKey },
       importFingerprint: { stringValue: fingerprint },

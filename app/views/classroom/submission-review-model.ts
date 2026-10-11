@@ -263,11 +263,17 @@ export function isPdfSubmission(row: Pick<ReviewRow, "contentType" | "fileName">
 
 /*
   Pautas disponibles para consultar mientras se corrige: las publicaciones de la
-  sección que son certamen o guía, de la más reciente a la más antigua.
+  sección que son certamen o guía, y el material de la página que trae
+  archivos, de la más reciente a la más antigua.
 */
-// Implements: REQ-REV-05
+// Implements: REQ-REV-05, REQ-PAGE-02
 export function guidePosts(posts: readonly ClassroomPost[]): ClassroomPost[] {
   return posts
-    .filter((post) => post.kind === "assessment" || post.kind === "guide")
+    .filter(
+      (post) =>
+        post.kind === "assessment" ||
+        post.kind === "guide" ||
+        (post.kind === "resource" && (post.attachments.length > 0 || Boolean(post.storagePath)))
+    )
     .slice(0, MAX_GUIDE_POSTS);
 }

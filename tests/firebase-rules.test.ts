@@ -13,10 +13,13 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { deleteObject, getBytes, listAll, ref, uploadBytes } from "firebase/storage";
 
@@ -571,4 +574,142 @@ test("CAL-04: no se puede crear un bloque con un kind no válido o campos prohib
   await assertFails(
     setDoc(forbiddenFieldsRef, calendarEvent(users.student.uid, { maliciousPayload: "xyz" }))
   );
+});
+
+// Implements: REQ-PAGE-05, REQ-PAGE-06, REQ-PAGE-08, REQ-PAGE-13
+test("REQ-PAGE: la página oculta lo reservado al estudiante y deja coeditar al equipo docente", async () => {
+  const coTeacher = { uid: "teacher-2", email: "teacher.2@ubiobio.cl", role: "teacher" } as const;
+  await testEnvironment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    const course = (path: string, id: string) =>
+      doc(database, "courses", ENROLLED_SECTION_ID, path, id);
+    await Promise.all([
+      setDoc(doc(database, "users", coTeacher.uid), { role: "teacher" }),
+      setDoc(doc(database, "enrollments", coTeacher.uid, "sections", ENROLLED_SECTION_ID), {
+        role: "teacher",
+      }),
+      setDoc(course("pageSections", "visible"), {
+        title: "Unidad 1",
+        position: 1024,
+        hidden: false,
+        publishAt: null,
+        updatedBy: users.teacher.uid,
+      }),
+      setDoc(course("pageSections", "reserved"), {
+        title: "Pautas",
+        position: 2048,
+        hidden: true,
+        publishAt: null,
+        updatedBy: users.teacher.uid,
+      }),
+      setDoc(course("hiddenItems", "pauta"), {
+        authorId: users.teacher.uid,
+        title: "Pauta del certamen",
+        placement: "page",
+        sectionId: "reserved",
+      }),
+      setDoc(course("trash", "old"), {
+        authorId: users.teacher.uid,
+        title: "Material retirado",
+        trashKind: "item",
+      }),
+      setDoc(course("posts", "guide"), {
+        authorId: users.teacher.uid,
+        title: "Guía 1",
+        placement: "page",
+        sectionId: "visible",
+        position: 1024,
+      }),
+    ]);
+  });
+
+  const student = authenticated(users.student).firestore();
+  const studentSections = collection(student, "courses", ENROLLED_SECTION_ID, "pageSections");
+  await assertSucceeds(getDocs(query(studentSections, where("hidden", "==", false), limit(100))));
+  await assertFails(getDocs(query(studentSections, limit(100))));
+  await assertFails(getDoc(doc(studentSections, "reserved")));
+  await assertFails(getDoc(doc(student, "courses", ENROLLED_SECTION_ID, "hiddenItems", "pauta")));
+  await assertFails(getDoc(doc(student, "courses", ENROLLED_SECTION_ID, "trash", "old")));
+  await assertFails(
+    setDoc(doc(studentSections, "forged"), {
+      title: "Sección falsa",
+      position: 1,
+      hidden: false,
+      publishAt: null,
+      updatedBy: users.student.uid,
+    })
+  );
+  await assertFails(
+    setDoc(doc(student, "courses", ENROLLED_SECTION_ID, "hiddenItems", "forged"), {
+      authorId: users.student.uid,
+      title: "Contenido falso",
+    })
+  );
+
+  const coContext = testEnvironment.authenticatedContext(coTeacher.uid, {
+    email: coTeacher.email,
+    email_verified: true,
+  });
+  const co = coContext.firestore();
+  const guide = doc(co, "courses", ENROLLED_SECTION_ID, "posts", "guide");
+  await assertFails(updateDoc(guide, { title: "Cambio sin firma" }));
+  await assertFails(updateDoc(guide, { authorId: coTeacher.uid, updatedBy: coTeacher.uid }));
+  await assertFails(updateDoc(guide, { secreto: "x", updatedBy: coTeacher.uid }));
+  await assertFails(updateDoc(guide, { placement: "otro", updatedBy: coTeacher.uid }));
+  await assertSucceeds(updateDoc(guide, { title: "Guía 1 corregida", updatedBy: coTeacher.uid }));
+  await assertSucceeds(getDoc(doc(co, "courses", ENROLLED_SECTION_ID, "hiddenItems", "pauta")));
+  await assertSucceeds(
+    setDoc(doc(co, "courses", ENROLLED_SECTION_ID, "trash", "guide"), {
+      authorId: users.teacher.uid,
+      title: "Guía 1 corregida",
+      placement: "page",
+      sectionId: "visible",
+      position: 1024,
+      trashKind: "item",
+      trashedWithSection: "",
+      sectionTitle: "Unidad 1",
+      deletedAt: serverTimestamp(),
+      deletedBy: coTeacher.uid,
+      updatedBy: coTeacher.uid,
+    })
+  );
+  await assertSucceeds(deleteDoc(guide));
+  await assertFails(
+    setDoc(doc(co, "courses", ENROLLED_SECTION_ID, "trash", "unsigned"), {
+      authorId: users.teacher.uid,
+      title: "Sin firma",
+    })
+  );
+  await assertSucceeds(
+    setDoc(
+      doc(
+        authenticated(users.assistant).firestore(),
+        "courses",
+        ENROLLED_SECTION_ID,
+        "pageSections",
+        "lab"
+      ),
+      {
+        title: "Laboratorio",
+        position: 3072,
+        hidden: false,
+        publishAt: null,
+        createdBy: users.assistant.uid,
+        updatedBy: users.assistant.uid,
+      }
+    )
+  );
+
+  const filePath = `courses/${ENROLLED_SECTION_ID}/${users.teacher.uid}/pauta.pdf`;
+  await assertSucceeds(
+    uploadBytes(
+      ref(authenticated(users.teacher).storage(BUCKET_URL), filePath),
+      new TextEncoder().encode("pauta"),
+      {
+        contentType: "application/pdf",
+      }
+    )
+  );
+  await assertFails(deleteObject(ref(authenticated(users.student).storage(BUCKET_URL), filePath)));
+  await assertSucceeds(deleteObject(ref(coContext.storage(BUCKET_URL), filePath)));
 });

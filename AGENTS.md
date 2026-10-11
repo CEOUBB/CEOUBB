@@ -68,6 +68,15 @@ Preview CI updates only the existing `ceoubb-preview` Worker using its individua
 - Proxy `Vary` must preserve Cookie and Next's RSC/router negotiation fields: OpenNext's response adapter gives middleware headers precedence. Review the explicit field list when updating Next or OpenNext.
 - OpenNext uses the existing ASSETS binding only for deployment-time prerendered content. `scripts/check-public-cache.mjs` rejects private prerendering and ISR; introduce a writable adapter before adding revalidation or dynamic cached data.
 
+### 2.2.2 Course Page Content (SPEC classroom/course-page)
+
+- A section's content lives in four collections under `courses/{sectionId}`: `posts` (avisos and visible page items), `pageSections` (team-named sections), `hiddenItems` (hidden or scheduled items and every item of a hidden section) and `trash` (30-day recovery). Rules are not filters: anything students must not read never shares `posts`, and students list `pageSections` only with `where("hidden", "==", false)`.
+- `placement` separates avisos (`notice`) from page items (`page`). Posts without it are classified on read by `placementFor` in `lib/course-page.ts`; the edit mode materializes folder groups into real sections. Never backfill.
+- Only avisos may notify students; page items are written with `notifyStudents: false`.
+- Any content manager of the section edits any content document; every client write carries `updatedBy` equal to the writer and `authorId` is immutable. The rule whitelists `contentFields()` and `trashFields()` must equal `CONTENT_FIELDS` and `TRASH_FIELDS`.
+- A Storage object under `courses/{sectionId}/` is deleted only when no document in `posts`, `hiddenItems` or `trash` lists it in `attachmentPaths`; duplicates share objects.
+- `publishScheduledCourseContent` (`firebase/functions/course-page-schedule.js`) publishes due content and purges expired trash every five minutes; it needs the Cloud Scheduler API and the collection-group overrides in `firebase/firestore.indexes.json`.
+
 ### 2.3 Mobile Seam & Remote Architecture
 
 - **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
@@ -84,6 +93,7 @@ To navigate non-obvious structural seams efficiently without burning context on 
 - **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
 - **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.
 - **Pure Grade Arithmetic:** `lib/grades.ts` (Chilean 1.0–7.0 scale, rounding, weighting).
+- **Course Page:** pure model in `lib/course-page.ts`, Firestore operations in `lib/firebase/course-page.ts`, views in `app/views/classroom/CoursePage.tsx` (reader), `CoursePageEditor.tsx` (edit mode, loaded on demand), `AnnouncementsPanel.tsx` and `CourseTrashDialog.tsx`; `PublishView.tsx` composes avisos only.
 - **Domain Views vs Shared UI:** Primary dashboards and feature screens reside in `app/views/` (e.g. `CoursesDashboard.tsx`, `calendar/CalendarView.tsx`), while reusable UI primitives reside in `components/`.
 - **Server API & Route Handlers:** Secure endpoints live in `app/api/` (Zod validation, session auth, transactional mutations).
 - **Mobile Bridge:** Native Android host in `android/`, Capacitor runtime integration in `lib/mobile-bridge.ts` & `lib/native-files.ts`.

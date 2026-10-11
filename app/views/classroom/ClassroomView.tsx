@@ -3,15 +3,18 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { Tab } from "./classroom-utils";
-import { LockKey, Plus, Tray } from "@phosphor-icons/react";
+import { LockKey, PencilSimpleLine, Plus, Tray } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
+import type { CoursePost } from "../../../lib/firebase-classroom-client";
 import { Screen } from "../../portal-ui";
 import type { User } from "../../../lib/portal-utils";
 import { hapticTap } from "../../../lib/mobile-bridge";
 import { COURSE_TABS } from "./classroom-utils";
 import { ClassroomHeader, ClassroomTabs } from "./ClassroomChrome";
 import { transitionView } from "../../../lib/view-transition";
-import { PostsSection } from "./PostsSection";
+import { CoursePage, type ComposeSeed } from "./CoursePage";
+import { AnnouncementsPanel, AnnouncementsReader } from "./AnnouncementsPanel";
+import { CourseIndex, CourseMobileBar } from "./CourseNavigation";
 import { GradesSection } from "./GradesSection";
 import { PeopleSection } from "./PeopleSection";
 import { LiveClassBanner } from "./LiveClassSection";
@@ -82,21 +85,28 @@ export function ClassroomView({
     copiedCourseReference,
     readOnly,
     canManageContent,
+    canSeeHidden,
     canTeach,
     students,
-    posts,
+    page,
     courseReference,
     publish,
     editPost,
     deletePost,
+    restorePost,
     openAttachment,
     copyCourseReference,
     saveLiveClass,
     clearLiveClass,
   } = useClassroomHandlers(course, user, sectionRole);
 
-  // Implements: REQ-PUB-01
+  // Implements: REQ-PUB-01, REQ-PAGE-09, REQ-PAGE-10
   const [composing, setComposing] = useState(false);
+  const [composeSeed, setComposeSeed] = useState<ComposeSeed | null>(null);
+  const [editingPost, setEditingPost] = useState<CoursePost | null>(null);
+  // Implements: REQ-PAGE-03
+  const [editingPage, setEditingPage] = useState(false);
+  const [reader, setReader] = useState<{ focusId: string } | null>(null);
   // Implements: REQ-REV-04
   const [reviewing, setReviewing] = useState(false);
   // Implements: REQ-PERF-LOAD-01
@@ -119,9 +129,23 @@ export function ClassroomView({
     transitionView(() => setTab(next), to > from ? "tab-forward" : "tab-back");
   };
 
-  const startPublication = () => {
+  const startPublication = (seed: ComposeSeed | null = null, post: CoursePost | null = null) => {
     hapticTap();
+    setReader(null);
+    setComposeSeed(seed);
+    setEditingPost(post);
     setComposing(true);
+  };
+
+  const startPageEditing = () => {
+    hapticTap();
+    setTab("home");
+    setEditingPage(true);
+  };
+
+  const finishPageEditing = (seed: ComposeSeed | null) => {
+    setEditingPage(false);
+    if (seed) startPublication(seed);
   };
 
   const startReview = () => {
@@ -160,8 +184,11 @@ export function ClassroomView({
         <RichTextAssets />
         <PublishView
           course={course}
+          editing={editingPost}
           onClose={() => setComposing(false)}
           publish={publish}
+          saveEdit={editPost}
+          seed={composeSeed}
           status={status}
           studentTotal={students.length}
         />
@@ -191,7 +218,7 @@ export function ClassroomView({
           las acciones del ramo colgando de un título de sección.
         */}
         <ClassroomHeader course={course} onBack={goBack}>
-          {/* Implements: REQ-PUB-13 — las acciones docentes viven en el
+          {/* Implements: REQ-PUB-13, REQ-PAGE-03 — las acciones docentes viven en el
               encabezado del ramo, disponibles desde cualquier pestaña. */}
           {(canTeach || canManageContent) && (
             <div className="classroom-meta">
@@ -220,9 +247,19 @@ export function ClassroomView({
                       )}
                     </details>
                   )}
-                  <button className="publication-cta" onClick={startPublication} type="button">
+                  {!editingPage && (
+                    <button className="review-cta" onClick={startPageEditing} type="button">
+                      <PencilSimpleLine size={16} aria-hidden="true" />
+                      Editar página
+                    </button>
+                  )}
+                  <button
+                    className="publication-cta"
+                    onClick={() => startPublication()}
+                    type="button"
+                  >
                     <Plus size={17} weight="bold" aria-hidden="true" />
-                    Nueva publicación
+                    Nuevo aviso
                   </button>
                 </>
               )}
@@ -240,33 +277,62 @@ export function ClassroomView({
               {tab === "home" && (
                 <>
                   <LiveClassBanner liveClass={classroom.liveClass} />
-                  <div className="classroom-columns">
-                    <PostsSection
-                      loading={classroom.postsStatus === "loading"}
-                      posts={posts}
-                      user={user}
-                      canManageContent={canManageContent}
-                      editPost={editPost}
-                      deletePost={deletePost}
+                  {!editingPage && (
+                    <CourseMobileBar
+                      announcements={page.announcements}
+                      onOpenAnnouncements={(focusId) => setReader({ focusId: focusId ?? "" })}
+                      sections={page.sections}
+                    />
+                  )}
+                  <div className="classroom-columns" data-editing={editingPage}>
+                    <CoursePage
+                      canEdit={canManageContent}
+                      classroom={classroom}
+                      course={course}
+                      editing={editingPage}
+                      onFinishEditing={finishPageEditing}
+                      onStartEditing={startPageEditing}
                       openAttachment={openAttachment}
-                      startPublication={startPublication}
+                      page={page}
+                      team={canSeeHidden}
                     />
                     <CourseRail
-                      course={course}
+                      announcements={
+                        <AnnouncementsPanel
+                          announcements={page.announcements}
+                          loading={classroom.postsStatus === "loading"}
+                          onOpen={(focusId) => setReader({ focusId: focusId ?? "" })}
+                        />
+                      }
                       canTeach={canTeach}
-                      readOnly={readOnly}
-                      showParticipants={() => selectTab("people")}
-                      courseReference={courseReference}
+                      clearLiveClass={clearLiveClass}
                       copiedCourseReference={copiedCourseReference}
                       copyCourseReference={copyCourseReference}
+                      course={course}
+                      courseReference={courseReference}
+                      index={editingPage ? null : <CourseIndex sections={page.sections} />}
                       liveClass={classroom.liveClass}
-                      liveClassStatus={liveClassStatus}
                       liveClassInvalid={liveClassInvalid}
+                      liveClassStatus={liveClassStatus}
+                      readOnly={readOnly}
                       saveLiveClass={saveLiveClass}
-                      clearLiveClass={clearLiveClass}
+                      showParticipants={() => selectTab("people")}
                       status={status}
                     />
                   </div>
+                  {reader && (
+                    <AnnouncementsReader
+                      announcements={page.announcements}
+                      canManage={canManageContent}
+                      focusId={reader.focusId}
+                      onClose={() => setReader(null)}
+                      onCompose={() => startPublication()}
+                      onDelete={deletePost}
+                      onRestore={restorePost}
+                      onEdit={(post) => startPublication(null, post)}
+                      openAttachment={openAttachment}
+                    />
+                  )}
                 </>
               )}
               {tab === "grades" && (
