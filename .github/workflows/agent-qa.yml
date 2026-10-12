@@ -79,7 +79,7 @@ jobs:
           path: ~/.cache/firebase/emulators
           key: ${{ runner.os }}-agent-qa-emulators-${{ hashFiles('firebase/firebase.json', 'pnpm-lock.yaml') }}
       - name: Verify the QA safety and reporting contracts
-        if: matrix.shard == 'api'
+        if: matrix.shard == '1/6'
         run: pnpm qa:check
       # Implements: REQ-QA-08, REQ-QA-10, REQ-QA-11
       - name: Run affected checks or the complete catalog
