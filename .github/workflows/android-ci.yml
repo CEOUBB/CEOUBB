@@ -69,7 +69,7 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug lintDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace
+          ./gradlew assembleDebug lintDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --stacktrace
 
       - name: Enable KVM
         run: |
@@ -77,18 +77,41 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Restore Android emulator snapshot
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: ${{ runner.os }}-avd-36-google_apis-x86_64
+
+      - name: Create Android emulator snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
       - name: Run instrumented tests on Android 36
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
           api-level: 36
           arch: x86_64
           target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot-save -noaudio -no-boot-anim
           disable-animations: true
           script: |
             adb shell cmd connectivity airplane-mode enable
             adb shell svc wifi disable
             adb shell svc data disable
-            cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace
+            cd android && ./gradlew :app:connectedDebugAndroidTest --stacktrace
 
       - name: Upload Android test and lint reports
         if: always()
