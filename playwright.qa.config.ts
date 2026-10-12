@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 import { resolve } from "node:path";
 
 const output = process.env.QA_OUTPUT_DIR ?? resolve("qa-results", "manual");
+const phase = process.env.QA_PHASE === "parallel" ? "-parallel" : "";
 const explore = process.env.QA_EXPLORE === "1";
 const inspectPort = Number(process.env.QA_CDP_PORT);
 if (explore && (!Number.isInteger(inspectPort) || inspectPort < 1 || inspectPort > 65535))
@@ -17,13 +18,13 @@ export default defineConfig({
   expect: { timeout: 12_000 },
   retries: 0,
   forbidOnly: !!process.env.CI,
-  outputDir: resolve(output, "artifacts"),
+  outputDir: resolve(output, `artifacts${phase}`),
   snapshotPathTemplate: `${resolve(process.env.QA_REFERENCE_DIR ?? ".qa/references", process.platform).replaceAll("\\", "/")}/{projectName}/{testFilePath}/{arg}{ext}`,
   updateSnapshots: process.env.QA_UPDATE_SNAPSHOTS === "1" ? "all" : "none",
   reporter: [
     ["list"],
-    ["html", { outputFolder: resolve(output, "html"), open: "never" }],
-    ["json", { outputFile: resolve(output, "playwright.json") }],
+    ["html", { outputFolder: resolve(output, `html${phase}`), open: "never" }],
+    ["json", { outputFile: resolve(output, `playwright${phase}.json`) }],
   ],
   use: {
     baseURL: process.env.QA_BASE_URL ?? "http://127.0.0.1:3123",

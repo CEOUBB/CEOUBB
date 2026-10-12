@@ -471,3 +471,37 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
 );
 
 export const QA_AREAS = [...new Set(QA_SCENARIOS.map((entry) => entry.area))];
+
+export const QA_FIXTURE_MUTATIONS = [
+  "communications.reply",
+  "shell.motion",
+  "imports.motion",
+  "quizzes.attempt",
+  "quizzes.submission",
+  "quizzes.answer-saving",
+  "quizzes.answer-error",
+  "quizzes.submit-loading",
+  "quizzes.submit-error",
+  "interop.scorm",
+  "interop.xapi",
+];
+export const QA_EXCLUSIVE_WRITES = [
+  "grades.history-loading",
+  "grades.history-error",
+  "grades.feedback-saving",
+  "grades.feedback-success",
+  "submissions.file-loading",
+  "submissions.viewer-loading",
+  "submissions.uploading",
+  "submissions.upload-retry",
+  "public.contact-deferred",
+];
+
+export function mutatesFixtures(id: string) {
+  return id.endsWith("persistence") || QA_FIXTURE_MUTATIONS.includes(id);
+}
+
+// Implements: REQ-QA-02
+export function runsExclusively(id: string) {
+  return mutatesFixtures(id) || QA_EXCLUSIVE_WRITES.includes(id);
+}
