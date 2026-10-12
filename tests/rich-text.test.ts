@@ -124,7 +124,7 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
     "utf8"
   );
   const postsSource = fs.readFileSync(
-    path.join(process.cwd(), "app/views/classroom/PostsSection.tsx"),
+    path.join(process.cwd(), "app/views/classroom/CoursePageItems.tsx"),
     "utf8"
   );
   const classroomSource = fs.readFileSync(
@@ -147,7 +147,7 @@ test("renderer delegates only formulas to locked-down vendored KaTeX", () => {
   assert.match(source, /output:\s*"htmlAndMathml"/);
   assert.match(postsSource, /href=\{safePostLink\}/);
   assert.doesNotMatch(postsSource, /href=\{post\.linkUrl\}/);
-  assert.match(postsSource, /<RichText body=\{post\.body\}/);
+  assert.match(postsSource, /<RichText body=\{item\.body\}/);
   assert.match(classroomSource, /<PublishView/);
   assert.match(publishStudioSource, /<RichPostEditor[\s\S]*?name="body"/);
   assert.match(capacitorSource, /https:\/\/ceoubb\.com/);

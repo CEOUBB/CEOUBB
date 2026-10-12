@@ -9,7 +9,7 @@ import React, {useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {StudentGradesSummary, TeacherStudentRow} from './app/views/classroom/GradesSection';
 import {SubmissionSlot} from './app/views/classroom/SubmissionSlot';
-import {PostsSection} from './app/views/classroom/PostsSection';
+import {AnnouncementsReader} from './app/views/classroom/AnnouncementsPanel';
 import {BlockDialog} from './app/views/calendar/BlockDialog';
 import {PublishConfirmDialog} from './app/views/classroom/PublishPanels';
 const user = {id:'demo',name:'Docente Demo',email:'docente@ubiobio.cl',role:'teacher'};
@@ -17,12 +17,14 @@ const item = {id:'exam',name:'Certamen 1',weight:35,date:'2026-09-25',submission
 function Fixture() {
  const [dialog,setDialog] = useState('');
  const [deleted,setDeleted] = useState(false);
+ const [reader,setReader] = useState(false);
  return <main style={{maxWidth:1040,margin:'24px auto',padding:20}}>
  <h1>Revisión de los elementos de la PR 178</h1>
  <section style={{maxWidth:340,margin:'24px 0'}}><StudentGradesSummary summary={{average:6.8,gradedWeight:70,totalWeight:100,complete:false}} passing={{state:'secured'}} exempt={{state:'required',grade:2.6}} exemptionTarget={5.5} status={{text:'',tone:'ok'}} /></section>
  <section style={{width:200,marginBottom:24}}><SubmissionSlot item={item} receipt={{fileName:'informe_laboratorio_termodinamica.pdf',contentType:'application/pdf',size:1024000,createdAt:'2026-09-08T12:00:00Z',memberIds:['demo'],sha256:'e3b0c44298fc123456789'}} percent={null} onPick={()=>{}} readOnly={false}/></section>
  <div className='grades-matrix'><TeacherStudentRow student={{userId:'demo',name:'Estudiante Demo',email:'estudiante@alumnos.ubiobio.cl'}} gradebook={[item]} scores={{}} feedback={{}} readOnly={false} onEditFeedback={()=>{}} onViewHistory={()=>{}} onSetScore={async(_u,_i,v)=>{await new Promise(r=>setTimeout(r,400)); return v !== '99';}} /></div>
- <PostsSection posts={deleted?[]:[{id:'post',kind:'notice',title:'Bienvenida e inicio de clases',body:'Revisa las guías y las fechas de evaluación del semestre.',authorId:'demo',authorName:user.name,authorEmail:user.email,createdAt:'2026-09-09T12:00:00Z',folder:'Avisos',attachments:[]}]} user={user} canManageContent={true} editPost={async()=>true} deletePost={()=>setDeleted(true)} openAttachment={()=>{}} startPublication={()=>{}} />
+ <button onClick={()=>setReader(true)}>Abrir avisos de prueba</button>
+ {reader && <AnnouncementsReader announcements={deleted?[]:[{id:'post',kind:'notice',placement:'notice',itemType:'text',sectionId:'',position:0,hidden:false,publishAt:'',location:'posts',title:'Bienvenida e inicio de clases',body:'Revisa las guías y las fechas de evaluación del semestre.',authorId:'demo',authorName:user.name,authorEmail:user.email,authorRole:'teacher',createdAt:'2026-09-09T12:00:00Z',folder:'Avisos',linkUrl:null,storagePath:'',dueDate:'',attachments:[]}]} focusId='' canManage={true} onCompose={()=>{}} onEdit={()=>{}} onDelete={()=>setDeleted(true)} openAttachment={()=>{}} onClose={()=>setReader(false)} />}
  <div className='confirmation-actions' style={{marginTop:24}}><button onClick={()=>setDialog('block')}>Editar bloque de prueba</button><button onClick={()=>setDialog('discard')}>Descartar borrador de prueba</button></div>
  {dialog==='block' && <BlockDialog draft={{id:'block',title:'Preparar certamen',detail:'',date:'2026-09-10',startTime:'10:00',endTime:'11:00',courseId:'',kind:'study'}} courses={[]} onClose={()=>setDialog('')} onFail={()=>{}}/>}
  {dialog==='discard' && <PublishConfirmDialog title='¿Descartar publicación?' message={<p>Los cambios no guardados se perderán.</p>} isDestructive confirmLabel='Descartar' cancelLabel='Seguir editando' onConfirm={()=>setDialog('')} onCancel={()=>setDialog('')} />}
@@ -104,15 +106,15 @@ for (const width of [1440, 390]) {
     await grade.press("Tab");
     await expect(grade).toHaveAttribute("aria-invalid", "true");
     await expect(page.locator(".grade-save-status")).toContainText("No guardada");
-    await page
-      .getByRole("button", { name: 'Eliminar aviso "Bienvenida e inicio de clases"', exact: true })
-      .click();
-    await expect(page.locator(".context-confirmation")).toContainText(
-      "Esta acción no se puede deshacer"
-    );
-    await page.screenshot({ path: `.impeccable/review/pr178-states-${width}.png`, fullPage: true });
-    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Abrir avisos de prueba" }).click();
     await expect(page.getByText("Bienvenida e inicio de clases", { exact: true })).toBeVisible();
+    await page
+      .getByRole("button", { name: "Eliminar aviso «Bienvenida e inicio de clases»", exact: true })
+      .click();
+    await expect(page.getByText("No hay avisos publicados.")).toBeVisible();
+    await page.screenshot({ path: `.impeccable/review/pr178-states-${width}.png`, fullPage: true });
+    await page.keyboard.press("Escape");
+    await expect(page.getByText("No hay avisos publicados.")).toHaveCount(0);
     await page.getByRole("button", { name: "Editar bloque de prueba" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: "Eliminar", exact: true }).click();

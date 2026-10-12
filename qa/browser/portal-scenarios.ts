@@ -68,7 +68,7 @@ export async function portalScenario(
     expect((await session.json()).user.id).toBe("firebase:qa-student");
     await page.reload();
     await expect(page.getByRole("heading", { name: /^Hola,/ })).toBeVisible();
-    await expect(page.getByText("4 publicaciones", { exact: true })).toBeVisible();
+    await expect(page.getByText("5 publicaciones", { exact: true })).toBeVisible();
     return true;
   }
   if (id === "auth.logout") {
@@ -121,9 +121,8 @@ export async function portalScenario(
     } else if (id === "courses.archive") {
       await course(page, "archived");
       await expect(page.getByText("Solo lectura.", { exact: true })).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: "Nueva publicación", exact: true })
-      ).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Nuevo aviso", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Editar página", exact: true })).toHaveCount(0);
     } else if (id === "courses.filter-empty") {
       await page.getByRole("searchbox", { name: "Filtrar cursos" }).fill("no-such-qa-course");
       await expect(page.locator(".course-card")).toHaveCount(0);

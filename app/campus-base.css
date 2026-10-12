@@ -2457,12 +2457,6 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
 
 /* ── Aula · avisos ────────────────────────────────────────── */
 
-.posts-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
 .post-list {
   display: flex;
   flex-direction: column;
@@ -2500,17 +2494,6 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-}
-
-.post-kind {
-  align-self: flex-start;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--tone-wash, var(--color-primary-wash));
-  color: var(--tone-ink, var(--color-primary));
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .post-list h3 {
@@ -2892,8 +2875,7 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
   font-variant-numeric: tabular-nums;
 }
 
-.rich-editor textarea,
-.post-edit-form input {
+.rich-editor textarea {
   width: 100%;
   padding: 9px 10px;
   border: 1px solid var(--border-control);
@@ -2912,8 +2894,7 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
   resize: vertical;
   font-family: var(--font-mono);
 }
-.rich-editor textarea:focus,
-.post-edit-form input:focus {
+.rich-editor textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);
@@ -3481,7 +3462,11 @@ div.editor-latex-token {
   font-size: 11px;
 }
 
-.editor-form-value {
+.rich-editor textarea.editor-form-value {
+  width: 1px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
   resize: none;
 }
 
@@ -3992,27 +3977,6 @@ div.editor-latex-token {
   border-radius: var(--radius-xs);
 }
 
-.post-edit-form {
-  display: grid;
-  gap: var(--space-sm);
-  margin-top: 4px;
-}
-.post-edit-form > label {
-  display: grid;
-  gap: 6px;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-}
-.post-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-xs);
-}
-.post-edit-actions button {
-  min-height: 40px;
-}
-
 .content-actions {
   display: inline-flex;
   gap: var(--space-xs);
@@ -4164,56 +4128,6 @@ div.editor-latex-token {
 /* ── Aula · adjuntos de una publicación ───────────────────── */
 
 /* Implements: REQ-PUB-09 */
-.post-attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin: var(--space-sm) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.post-attachments button {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  max-width: 100%;
-  padding: 0 12px;
-  background: var(--canvas-soft);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  color: var(--text-body);
-  font-size: 14px;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.post-attachments button:hover {
-  background: var(--surface-card);
-  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--border-hairline));
-}
-
-.post-attachments button > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.post-attachments button small {
-  color: var(--text-faint);
-  font-size: 12px;
-}
-
-.post-attachments button svg:last-child {
-  color: var(--color-primary);
-}
-
-.post-folder {
-  color: var(--text-faint);
-}
-
 /* ── Estudio de publicación ───────────────────────────────── */
 
 /* El lienzo ocupa toda la pantalla del portal: es una página de redacción,
@@ -4225,101 +4139,6 @@ div.editor-latex-token {
   width: 100%;
   min-width: 0;
   overflow-x: clip;
-}
-
-.publish-preset-stage {
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  padding: var(--space-3xl) var(--container-pad) var(--space-4xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.publish-preset-stage h1 {
-  font-family: var(--font-display);
-  font-size: clamp(28px, 3.4vw, 40px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.publish-preset-lead {
-  max-width: 62ch;
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.publish-preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-sm);
-  margin-top: var(--space-xs);
-}
-
-.publish-preset {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  align-items: start;
-  gap: 4px var(--space-sm);
-  min-height: 96px;
-  padding: var(--space-md);
-  text-align: left;
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
-  animation: presetCardIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  transition:
-    border-color var(--transition-fast),
-    background-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    transform 100ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.publish-preset:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--border-hairline));
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-1);
-}
-
-.publish-preset:active {
-  transform: scale(0.985);
-}
-
-.publish-preset:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.publish-preset-icon {
-  grid-row: 1 / span 2;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: var(--tone-wash, var(--fill-quiet, var(--canvas-soft)));
-  color: var(--tone-ink, var(--text-secondary));
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast),
-    transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.publish-preset:hover .publish-preset-icon {
-  transform: scale(1.04);
-}
-
-.publish-preset strong {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.publish-preset small {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.43;
 }
 
 .publish-back {
@@ -4912,7 +4731,10 @@ div.editor-latex-token {
     order: 3;
   }
 
-  .publish-preset-stage,
+  .publish-bar-context {
+    visibility: hidden;
+  }
+
   .publish-body {
     padding-right: var(--space-md);
     padding-left: var(--space-md);
@@ -4921,10 +4743,6 @@ div.editor-latex-token {
   .publish-restored {
     margin-right: var(--space-md);
     margin-left: var(--space-md);
-  }
-
-  .publish-preset-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -12462,7 +12280,6 @@ div.editor-latex-token {
   .quiz-builder textarea,
   .quiz-builder select,
   .quiz-text-answer input,
-  .publish-preset,
   .publish-back,
   .publish-studio,
   .publish-submit,

@@ -1,18 +1,21 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ClassroomAttachment,
-  ClassroomPost,
   ClassroomState,
+  CoursePost,
   classroomFileUrl,
-  deleteClassroomPost,
   editClassroomPost,
   publishClassroomPost,
+  releaseUploadedFiles,
+  restoreTrashEntry,
   touchSectionPresence,
   saveLiveClassLink,
+  trashItems,
   watchClassroom,
 } from "../../../lib/firebase-classroom-client";
+import { buildCoursePage, pageErrorText } from "../../../lib/course-page";
 import { Course } from "../../../lib/courses";
 import { isNativeShell } from "../../../lib/mobile-bridge";
 import { openDocumentNatively } from "../../../lib/native-files";
@@ -45,7 +48,8 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     }
   }, []);
   const readOnly = course.readOnly === true;
-  const canManageContent = !readOnly && canManageSectionContent(user.role, sectionRole);
+  const canSeeHidden = canManageSectionContent(user.role, sectionRole);
+  const canManageContent = !readOnly && canSeeHidden;
   const canTeach = canTeachSection(user.role, sectionRole);
   const { students, posts } = classroom;
   const courseReference = `${course.code} - ${course.section}`;
@@ -60,10 +64,23 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
       watchClassroom(
         course.id,
         canTeach,
+        canSeeHidden,
         (patch) => setClassroom((current) => ({ ...current, ...patch })),
         (message) => note(message, "bad")
       ),
-    [course.id, canTeach, note, retry]
+    [course.id, canTeach, canSeeHidden, note, retry]
+  );
+
+  // Implements: REQ-PAGE-01, REQ-PAGE-05
+  const page = useMemo(
+    () =>
+      buildCoursePage({
+        sections: classroom.sections,
+        posts: classroom.posts,
+        hiddenItems: classroom.hiddenItems,
+        audience: canSeeHidden ? "team" : "student",
+      }),
+    [canSeeHidden, classroom.hiddenItems, classroom.posts, classroom.sections]
   );
 
   useEffect(() => {
@@ -118,32 +135,73 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     [course.id, note, rejectReadOnly]
   );
 
+  // Implements: REQ-PAGE-08, REQ-PAGE-09, REQ-PUB-09
   const editPost = useCallback(
-    async (post: ClassroomPost, values: { title: string; body: string }) => {
+    async (
+      post: CoursePost,
+      values: { title: string; body: string; attachments: ClassroomAttachment[] }
+    ) => {
       if (rejectReadOnly()) return false;
       try {
         await editClassroomPost(course.id, post.id, values);
-        note("Publicación actualizada.", "ok");
-        return true;
+        note("Aviso actualizado.", "ok");
       } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No fue posible modificarla.", "bad");
+        note(cause instanceof Error ? cause.message : "No fue posible modificarlo.", "bad");
         return false;
       }
+      const kept = new Set(values.attachments.map((attachment) => attachment.storagePath));
+      const removed = post.attachments
+        .map((attachment) => attachment.storagePath)
+        .filter((path) => !kept.has(path));
+      await releaseUploadedFiles(course.id, removed).catch(() =>
+        note("El aviso se guardó, pero no se pudieron borrar los archivos que quitaste.", "bad")
+      );
+      return true;
     },
     [course.id, note, rejectReadOnly]
   );
 
-  const deletePost = useCallback(
-    async (post: ClassroomPost) => {
-      if (rejectReadOnly()) return;
+  // Implements: REQ-PAGE-06, REQ-PAGE-09
+  const restorePost = useCallback(
+    async (post: CoursePost) => {
       try {
-        await deleteClassroomPost(course.id, post.id, post.storagePath);
-        note("Publicación eliminada.", "ok");
+        await restoreTrashEntry(
+          course.id,
+          {
+            id: post.id,
+            kind: "item",
+            sectionId: "",
+            sectionTitle: "",
+            placement: "notice",
+            hidden: false,
+          },
+          []
+        );
+        return true;
       } catch (cause) {
-        note(cause instanceof Error ? cause.message : "No fue posible eliminarla.", "bad");
+        note(pageErrorText(cause, "No se pudo restaurar el aviso."), "bad");
+        return false;
       }
     },
-    [course.id, note, rejectReadOnly]
+    [course.id, note]
+  );
+
+  // Implements: REQ-PAGE-06, REQ-PAGE-09
+  const deletePost = useCallback(
+    async (post: CoursePost) => {
+      if (rejectReadOnly()) return false;
+      try {
+        await trashItems(course.id, [post], "Avisos");
+      } catch (cause) {
+        note(pageErrorText(cause, "No fue posible eliminarlo."), "bad");
+        return false;
+      }
+      toast.message("El aviso se movió a la papelera.", {
+        action: { label: "Deshacer", onClick: () => void restorePost(post) },
+      });
+      return true;
+    },
+    [course.id, note, rejectReadOnly, restorePost]
   );
 
   /*
@@ -254,10 +312,13 @@ export function useClassroomHandlers(course: Course, user: User, sectionRole: Se
     canTeach,
     students,
     posts,
+    page,
+    canSeeHidden,
     courseReference,
     publish,
     editPost,
     deletePost,
+    restorePost,
     openAttachment,
     copyCourseReference,
     saveLiveClass,

@@ -88,7 +88,7 @@ test("la portada coloca el banner antes de los avisos y no reserva un vacío al 
     new URL("../app/views/classroom/LiveClassSection.tsx", import.meta.url),
     "utf8"
   );
-  assert.ok(view.indexOf("<LiveClassBanner") < view.indexOf("<PostsSection"));
+  assert.ok(view.indexOf("<LiveClassBanner") < view.indexOf("<CoursePage"));
   // Sin enlace no se dibuja nada: el aviso jamás reserva un hueco vacío.
   assert.match(section, /export function LiveClassBanner[\s\S]*?if \(!liveClass\) return null;/);
   assert.match(section, /Entrar a la clase/);
