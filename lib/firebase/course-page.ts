@@ -55,8 +55,8 @@ async function relocate(
   const groups = chunkOperations(moves, MOVES_PER_TRANSACTION);
   if (groups.length === 0) groups.push([]);
 
-  for (const [index, group] of groups.entries()) {
-    await sdk.runTransaction(db, async (transaction) => {
+  const commitGroup = (group: readonly Relocation[], index: number) =>
+    sdk.runTransaction(db, async (transaction) => {
       const snapshots = await Promise.all(
         group.map((move) => transaction.get(reference(move.from, move.id)))
       );
@@ -74,7 +74,11 @@ async function relocate(
       });
       if (index === groups.length - 1) finalWrite?.(transaction);
     });
-  }
+
+  await groups.reduce<Promise<void>>(
+    (previous, group, index) => previous.then(() => commitGroup(group, index)),
+    Promise.resolve()
+  );
 }
 
 // Implements: REQ-PAGE-01

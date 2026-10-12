@@ -82,6 +82,7 @@ const coursePage = [
   "app/views/classroom/CoursePage.tsx",
   "app/views/classroom/CoursePageItems.tsx",
   "app/views/classroom/CoursePageEditor.tsx",
+  "app/views/classroom/use-page-editing.ts",
   "app/views/classroom/CourseTrashDialog.tsx",
   "app/views/classroom/PageDialog.tsx",
 ];
