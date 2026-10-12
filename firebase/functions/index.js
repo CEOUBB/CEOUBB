@@ -4,6 +4,9 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { projectCourseActivity } = require("./activity-projection");
+const { runCoursePageSchedule } = require("./course-page-schedule");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getStorage } = require("firebase-admin/storage");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { authenticationIsActive } = require("./auth-access");
 const {
@@ -964,6 +967,17 @@ exports.projectCoursePostActivity = onDocumentWritten(
   { document: "courses/{courseId}/posts/{postId}", retry: true },
   async (event) => {
     await projectCourseActivity(getFirestore(), event.params.courseId, event.params.postId);
+  }
+);
+
+// Implements: REQ-PAGE-05, REQ-PAGE-06
+exports.publishScheduledCourseContent = onSchedule(
+  { schedule: "every 5 minutes", timeZone: "America/Santiago", retryCount: 0 },
+  async () => {
+    const result = await runCoursePageSchedule(getFirestore(), getStorage().bucket());
+    console.log(
+      `[publishScheduledCourseContent] ${result.sections} secciones, ${result.items} elementos publicados, ${result.purged} entradas purgadas.`
+    );
   }
 );
 

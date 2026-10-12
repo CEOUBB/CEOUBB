@@ -69,8 +69,22 @@ const classroom = [
   "firebase/firestore.rules",
   "app/Classroom.tsx",
   "app/views/classroom/ClassroomView.tsx",
-  "app/views/classroom/PostsSection.tsx",
+  "app/views/classroom/CoursePage.tsx",
+  "app/views/classroom/AnnouncementsPanel.tsx",
+  "app/views/classroom/CourseNavigation.tsx",
   "app/views/classroom/CourseRail.tsx",
+];
+const coursePage = [
+  "lib/course-page.ts",
+  "lib/firebase/course-page.ts",
+  "lib/firebase/posts.ts",
+  "firebase/firestore.rules",
+  "app/views/classroom/CoursePage.tsx",
+  "app/views/classroom/CoursePageItems.tsx",
+  "app/views/classroom/CoursePageEditor.tsx",
+  "app/views/classroom/use-page-editing.ts",
+  "app/views/classroom/CourseTrashDialog.tsx",
+  "app/views/classroom/PageDialog.tsx",
 ];
 const publications = [
   "app/views/classroom/PublishView.tsx",
@@ -265,7 +279,8 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario("classroom.coordinator", "classroom", classroom, "coordinator", "populated"),
   scenario("classroom.empty", "classroom", classroom, "student", "empty"),
   scenario("classroom.search-empty", "classroom", classroom, "student", "empty"),
-  scenario("classroom.delete-dialog", "classroom", classroom, "teacher", "dialog"),
+  scenario("classroom.announcements", "classroom", classroom, "student", "dialog"),
+  scenario("classroom.delete-undo", "classroom", classroom, "teacher", "success"),
   scenario("classroom.edit-notice", "classroom", classroom, "teacher", "form"),
   scenario(
     "classroom.live-class",
@@ -290,10 +305,7 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
     true,
     ["form", "persisted"]
   ),
-  scenario("publication.presets", "publications", publications, "teacher", "default"),
-  ...["notice", "assessment", "guide", "blank"].map((kind) =>
-    scenario(`publication.${kind}`, "publications", publications, "teacher", "form")
-  ),
+  scenario("publication.compose", "publications", publications, "teacher", "form"),
   scenario("publication.discard", "publications", publications, "teacher", "dialog"),
   scenario("publication.markdown", "publications", publications, "teacher", "form"),
   scenario("publication.html", "publications", publications, "teacher", "form"),
@@ -303,6 +315,11 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
     "form",
     "persisted",
   ]),
+  scenario("page.student", "page", coursePage, "student", "populated", true),
+  scenario("page.teacher-hidden", "page", coursePage, "teacher", "populated"),
+  scenario("page.preview", "page", coursePage, "teacher", "populated"),
+  scenario("page.trash", "page", coursePage, "teacher", "dialog"),
+  scenario("page.edit", "page", coursePage, "teacher", "success", true, ["form", "persisted"]),
   scenario("grades.student", "grades", grades, "student", "populated", true),
   scenario("grades.empty", "grades", grades, "student", "empty"),
   scenario("grades.teacher", "grades", grades, "teacher", "populated", true),

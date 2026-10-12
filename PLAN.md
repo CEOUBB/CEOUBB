@@ -1,6 +1,15 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Motion, skeletons and mobile first paint, 2026-10-11
+## Current handoff: Course page builder, 2026-10-11
+
+- Scope: branch `claude/teacher-engine-design-functionality-55bf16`, OpenSpec `classroom/course-page` (archived as `2026-10-11-course-page-builder`). The cover is now a page the teaching team builds: named sections with text, file, link and image items, edited in place with drag and keyboard reordering, move between sections, duplicate, hide, schedule, undo and redo (50 steps), student preview and a 30-day trash. Avisos live in their own rail panel and reader and remain the only content that notifies; "Listo" offers a prefilled aviso after visible material is added. The preset stage was removed and `PublishView` composes avisos only.
+- Data: `pageSections`, `hiddenItems` and `trash` under `courses/{sectionId}`; historical posts are classified on read and materialized when the team first opens the edit mode. See `AGENTS.md` §2.2.2.
+- Deployment order: Firestore rules and indexes, Storage rules, enable the Cloud Scheduler API and deploy `publishScheduledCourseContent`, then the web build. Plain `pnpm dev` without emulators uses dev posts and does not persist page edits.
+- Tests: `tests/course-page.test.ts` and a rules test for hidden content and co-editing were added; existing tests were repointed to the files that now hold each guarantee. The frozen allow count in `tests/native-services.test.ts` moved to 56 for the three new collections. QA registers `page.student`, `page.teacher-hidden`, `page.preview`, `page.trash` and `page.edit`; the active QA section now seeds five posts.
+- Fixed in passing: `.rich-editor textarea { width: 100% }` overrode `.sr-only` on the editor's submitted value and gave the composer 31px of horizontal scroll at 390px, which aborted view transitions ("Viewport size changed"); the composer header context is hidden at 700px and below.
+- Open: no production deployment. Physical Android and iOS devices were not exercised. Restricted text colours, per-group visibility and cross-course import remain out of scope.
+
+## Handoff: Motion, skeletons and mobile first paint, 2026-10-11
 
 - Scope: branch `claude/unruffled-cartwright-969c16`. Screen and classroom tab changes started by pointer or touch run through React `<ViewTransition>` (`lib/view-transition.ts`, `Screen` and `Deferred` in `app/portal-ui.tsx`); keyboard and reduced motion apply them immediately. The course divider tab morphs between the card and the classroom header. Lazy views moved from `next/dynamic` to `React.lazy` with `Suspense` so skeletons receive real props.
 - Skeletons were rebuilt on the real view classes (`app/views/ViewSkeletons.tsx`, primitives in `app/views/skeleton-bones.tsx`, diagonal shimmer in `lib/skeleton-wave.ts`). They render known data and draw bones only for pending data; arriving lists use `resolve` / `resolve-children`, which stay instant after keyboard input. Posts expose `postsStatus` so an empty state never shows while the first snapshot is pending.

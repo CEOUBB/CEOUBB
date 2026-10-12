@@ -8,29 +8,25 @@ import {
   FloppyDisk,
   PencilSimpleLine,
 } from "@phosphor-icons/react";
-import type { ClassroomAttachment } from "../../../lib/firebase-classroom-client";
+import type { ClassroomAttachment, CoursePost } from "../../../lib/firebase-classroom-client";
 import type { Course } from "../../../lib/courses";
 import { hapticTap } from "../../../lib/mobile-bridge";
 import {
-  CONTENT_TYPES,
   clearPublicationDraft,
-  createPublicationDraft,
   persistDefaultEditor,
   persistPublicationDraft,
   readDefaultEditor,
   readPublicationDraft,
   readingStats,
-  templateForContentType,
   type EditorMode,
   type NotificationMode,
-  type PublicationContentType,
 } from "../../../lib/publication-workflow";
 import { NOTIFICATION_MODES } from "../../../lib/publication-workflow";
 import type { Note } from "./classroom-utils";
+import type { ComposeSeed } from "./CoursePage";
 import { RichPostEditor } from "./RichPostEditor";
 import {
   AttachmentField,
-  PresetStage,
   PublishConfirmDialog,
   PublishRestoredNotice,
   usePostAttachments,
@@ -101,7 +97,7 @@ function AlertField({
 
 function PublishBar({
   courseName,
-  contentType,
+  context,
   draftState,
   savedLabel,
   saving,
@@ -109,8 +105,8 @@ function PublishBar({
   onDiscard,
 }: {
   courseName: string;
-  contentType: PublicationContentType;
-  draftState: "new" | "saving" | "saved";
+  context: string;
+  draftState: "new" | "saving" | "saved" | "editing";
   savedLabel: string;
   saving: boolean;
   submitLabel: string;
@@ -129,34 +125,36 @@ function PublishBar({
       </button>
       <p className="publish-bar-context">
         <span>{courseName}</span>
-        <small>{CONTENT_TYPES.find((option) => option.value === contentType)?.label}</small>
+        <small>{context}</small>
       </p>
       {/* El borrador vive en este equipo, no en la nube: el icono y el texto
           lo dicen para que nadie lo busque desde el teléfono. */}
-      <p
-        aria-label="Estado del borrador"
-        aria-live="polite"
-        className="publish-autosave"
-        data-draft-state={draftState}
-        role="status"
-      >
-        {draftState === "saved" && savedLabel ? (
-          <>
-            <FloppyDisk aria-hidden="true" size={16} weight="fill" />
-            Guardado en este equipo <span className="num">{savedLabel}</span>
-          </>
-        ) : draftState === "saving" ? (
-          <>
-            <FloppyDisk aria-hidden="true" size={16} />
-            Guardando…
-          </>
-        ) : (
-          <>
-            <PencilSimpleLine aria-hidden="true" size={16} />
-            Borrador nuevo
-          </>
-        )}
-      </p>
+      {draftState !== "editing" && (
+        <p
+          aria-label="Estado del borrador"
+          aria-live="polite"
+          className="publish-autosave"
+          data-draft-state={draftState}
+          role="status"
+        >
+          {draftState === "saved" && savedLabel ? (
+            <>
+              <FloppyDisk aria-hidden="true" size={16} weight="fill" />
+              Guardado en este equipo <span className="num">{savedLabel}</span>
+            </>
+          ) : draftState === "saving" ? (
+            <>
+              <FloppyDisk aria-hidden="true" size={16} />
+              Guardando…
+            </>
+          ) : (
+            <>
+              <PencilSimpleLine aria-hidden="true" size={16} />
+              Borrador nuevo
+            </>
+          )}
+        </p>
+      )}
       <button className="publish-submit" disabled={saving} type="submit">
         {submitLabel}
       </button>
@@ -164,43 +162,53 @@ function PublishBar({
   );
 }
 
-// Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11 REQ-PUB-12
+// Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-11 REQ-PUB-12 REQ-PAGE-09 REQ-PAGE-10
 export function PublishView({
   course,
+  seed,
+  editing,
   onClose,
   publish,
+  saveEdit,
   status,
   studentTotal,
 }: {
   course: Course;
+  seed: ComposeSeed | null;
+  editing: CoursePost | null;
   onClose: () => void;
   publish: (
     event: FormEvent<HTMLFormElement>,
     attachments: ClassroomAttachment[]
   ) => Promise<boolean>;
+  saveEdit: (
+    post: CoursePost,
+    values: { title: string; body: string; attachments: ClassroomAttachment[] }
+  ) => Promise<boolean>;
   status: Note;
   studentTotal: number;
 }) {
-  /*
-    Un borrador a medio escribir vale más que la elección de plantilla: si el
-    docente vuelve, retomamos su texto y saltamos directo al lienzo. La lectura
-    ocurre una sola vez, al inicializar el estado, para no encadenar renders.
-  */
   // Implements: REQ-PUB-11
-  const [restoredDraft] = useState(() => readPublicationDraft(browserStorage(), course.id));
-  const [contentType, setContentType] = useState<PublicationContentType | null>(
-    restoredDraft?.contentType ?? null
+  const [restoredDraft] = useState(() =>
+    editing || seed ? null : readPublicationDraft(browserStorage(), course.id)
   );
   const [editorMode, setEditorMode] = useState<EditorMode>(
     () => restoredDraft?.editorMode ?? readDefaultEditor(browserStorage()) ?? "visual"
   );
-  const [title, setTitle] = useState(restoredDraft?.title ?? "");
-  const [body, setBody] = useState(restoredDraft?.body ?? "");
+  const [title, setTitle] = useState(editing?.title ?? seed?.title ?? restoredDraft?.title ?? "");
+  const [body, setBody] = useState(editing?.body ?? seed?.body ?? restoredDraft?.body ?? "");
   const [notificationMode, setNotificationMode] = useState<NotificationMode>(
     restoredDraft?.notificationMode ?? "push"
   );
-  const { attachments, uploading, attachmentError, fileRef, attachFiles, removeAttachment } =
-    usePostAttachments(course.id);
+  const {
+    attachments,
+    uploading,
+    attachmentError,
+    fileRef,
+    attachFiles,
+    removeAttachment,
+    releaseSessionUploads,
+  } = usePostAttachments(course.id, editing?.attachments);
   const [savedLabel, setSavedLabel] = useState(() => savedTimeLabel(restoredDraft?.savedAt ?? ""));
   const [draftState, setDraftState] = useState<"new" | "saving" | "saved">(
     restoredDraft ? "saved" : "new"
@@ -214,10 +222,11 @@ export function PublishView({
   const formRef = useRef<HTMLFormElement>(null);
   /* El primer pase del efecto es el montaje: no hay cambios que anunciar. */
   const settledRef = useRef(false);
+  const initialRef = useRef({ title, body });
 
   useEffect(() => {
-    if (contentType !== null) titleRef.current?.focus();
-  }, [contentType]);
+    titleRef.current?.focus();
+  }, []);
 
   /* Publicar sin soltar el teclado: el atajo que espera quien escribe seguido.
      Se registra sobre el elemento y no en JSX para no colgar un manejador de
@@ -232,18 +241,17 @@ export function PublishView({
     };
     form.addEventListener("keydown", shortcut);
     return () => form.removeEventListener("keydown", shortcut);
-  }, [contentType]);
+  }, []);
 
   // Implements: REQ-PUB-11
   useEffect(() => {
-    if (contentType === null) return;
+    if (editing) return;
     const hasContent = Boolean(title.trim() || body.trim());
     if (hasContent && settledRef.current) setDraftState("saving");
     settledRef.current = true;
     const timer = window.setTimeout(() => {
       const stamp = new Date().toISOString();
       const stored = persistPublicationDraft(browserStorage(), course.id, {
-        contentType,
         editorMode,
         notificationMode,
         title,
@@ -262,20 +270,20 @@ export function PublishView({
       }
     }, AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [body, contentType, course.id, editorMode, notificationMode, title]);
+  }, [body, course.id, editing, editorMode, notificationMode, title]);
 
   const stats = useMemo(() => readingStats(body), [body]);
-
-  const choosePreset = (value: PublicationContentType) => {
-    hapticTap();
-    setContentType(value);
-    setBody(templateForContentType(value));
-  };
 
   const changeEditorMode = useCallback((mode: EditorMode) => {
     setEditorMode(mode);
     persistDefaultEditor(browserStorage(), mode);
   }, []);
+
+  const close = () => {
+    if (!editing) clearPublicationDraft(browserStorage(), course.id);
+    void releaseSessionUploads();
+    onClose();
+  };
 
   /*
     Publicar con alerta es la única acción irreversible del estudio: la
@@ -286,10 +294,22 @@ export function PublishView({
   // Implements: REQ-PUB-06
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    hapticTap();
+    if (editing) {
+      setSaving(true);
+      try {
+        if (await saveEdit(editing, { title, body, attachments })) onClose();
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     if (notificationMode === "push" && !skipPushConfirmRef.current) {
       setShowPushConfirm(true);
       return;
     }
+
     skipPushConfirmRef.current = false;
     setSaving(true);
     try {
@@ -309,50 +329,37 @@ export function PublishView({
   };
 
   const discard = () => {
-    if (title.trim() || body.trim()) {
+    const changed =
+      title !== initialRef.current.title ||
+      body !== initialRef.current.body ||
+      (!editing && Boolean(title.trim() || body.trim()));
+    if (changed) {
       setShowDiscardConfirm(true);
       return;
     }
-    clearPublicationDraft(browserStorage(), course.id);
-    onClose();
-  };
 
-  const handleConfirmDiscard = () => {
-    setShowDiscardConfirm(false);
-    clearPublicationDraft(browserStorage(), course.id);
-    onClose();
+    close();
   };
-
-  if (contentType === null) {
-    return <PresetStage courseName={course.name} onChoose={choosePreset} onClose={onClose} />;
-  }
 
   const submitLabel = saving
-    ? "Publicando…"
-    : notificationMode === "push"
-      ? "Publicar y alertar"
-      : "Publicar en silencio";
+    ? editing
+      ? "Guardando…"
+      : "Publicando…"
+    : editing
+      ? "Guardar cambios"
+      : notificationMode === "push"
+        ? "Publicar y alertar"
+        : "Publicar en silencio";
 
   return (
     <>
       <form
         className="publish-studio"
-        data-requirement="Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10 REQ-PUB-11"
+        data-requirement="Implements: REQ-PUB-01 REQ-PUB-06 REQ-PUB-08 REQ-PUB-09 REQ-PUB-11 REQ-PAGE-09"
         onSubmit={submit}
         ref={formRef}
       >
-        <input
-          name="kind"
-          type="hidden"
-          value={
-            createPublicationDraft({
-              contentType,
-              editorMode,
-              folder: "",
-              notificationMode,
-            }).kind
-          }
-        />
+        <input name="kind" type="hidden" value="notice" />
         <input name="editorMode" type="hidden" value={editorMode} />
         {/* Carpeta, fecha de entrega y enlace externo no se exponen en el
           inspector por decisión de producto: viajan vacíos para conservar el
@@ -362,9 +369,9 @@ export function PublishView({
         <input name="linkUrl" type="hidden" value="" />
 
         <PublishBar
-          contentType={contentType}
+          context={editing ? "Modificar aviso" : "Nuevo aviso"}
           courseName={course.name}
-          draftState={draftState}
+          draftState={editing ? "editing" : draftState}
           onDiscard={discard}
           savedLabel={savedLabel}
           saving={saving}
@@ -383,13 +390,13 @@ export function PublishView({
 
         <div className="publish-body">
           <label className="publish-title-field">
-            <span className="sr-only">Título de la publicación</span>
+            <span className="sr-only">Título del aviso</span>
             <input
               autoComplete="off"
               maxLength={140}
               name="title"
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Título de la publicación"
+              placeholder="Título del aviso"
               ref={titleRef}
               required
               value={title}
@@ -400,7 +407,7 @@ export function PublishView({
             <div className="publish-canvas">
               <RichPostEditor
                 editorMode={editorMode}
-                label="Cuerpo de la publicación"
+                label="Cuerpo del aviso"
                 name="body"
                 onChange={setBody}
                 onEditorModeChange={changeEditorMode}
@@ -413,8 +420,14 @@ export function PublishView({
               </p>
             </div>
 
-            <aside aria-label="Ajustes de la publicación" className="publish-inspector">
-              <AlertField notificationMode={notificationMode} onChange={setNotificationMode} />
+            <aside aria-label="Ajustes del aviso" className="publish-inspector">
+              {editing ? (
+                <p className="publish-edit-note">
+                  Guardar los cambios no vuelve a notificar al curso.
+                </p>
+              ) : (
+                <AlertField notificationMode={notificationMode} onChange={setNotificationMode} />
+              )}
 
               <AttachmentField
                 attachments={attachments}
@@ -432,7 +445,7 @@ export function PublishView({
       {showPushConfirm && (
         <PublishConfirmDialog
           busy={saving}
-          cancelLabel="Revisar publicación"
+          cancelLabel="Revisar aviso"
           confirmLabel={saving ? "Publicando…" : "Publicar y alertar"}
           message={
             <p>
@@ -459,12 +472,17 @@ export function PublishView({
           isDestructive
           message={
             <p>
-              ¿Descartar esta publicación y volver al ramo? Los cambios no guardados se perderán.
+              {editing
+                ? "¿Descartar los cambios y volver al ramo? El aviso queda como estaba."
+                : "¿Descartar este aviso y volver al ramo? Lo que escribiste se perderá."}
             </p>
           }
           onCancel={() => setShowDiscardConfirm(false)}
-          onConfirm={handleConfirmDiscard}
-          title="¿Descartar publicación?"
+          onConfirm={() => {
+            setShowDiscardConfirm(false);
+            close();
+          }}
+          title={editing ? "¿Descartar cambios?" : "¿Descartar aviso?"}
         />
       )}
     </>

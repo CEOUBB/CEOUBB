@@ -61,7 +61,7 @@ for (const width of [1440, 390]) {
         sectionRole: "teacher",
         user: FIXTURE_USER,
       }),
-      PostListSkeleton: createElement(skeletons.PostListSkeleton),
+      CoursePageSkeleton: createElement(skeletons.CoursePageSkeleton),
       SettingsSkeleton: createElement(skeletons.SettingsSkeleton, { user: FIXTURE_USER }),
       SessionListSkeleton: createElement(skeletons.SessionListSkeleton),
       QuizListSkeleton: createElement(skeletons.QuizListSkeleton),

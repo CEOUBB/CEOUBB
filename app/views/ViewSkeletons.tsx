@@ -21,6 +21,8 @@ import {
   LockKey,
   LockSimple,
   MagnifyingGlass,
+  Megaphone,
+  PencilSimpleLine,
   Plus,
   SignOut,
   Trash,
@@ -752,43 +754,47 @@ export function TeacherCoursesBodySkeleton() {
 
 /* ── Aula ───────────────────────────────────────────────────── */
 
-export function PostListSkeleton() {
+// Implements: REQ-SKELETON-01, REQ-PAGE-01
+export function CoursePageSkeleton() {
   return (
     <div
       aria-busy="true"
-      aria-label="Cargando publicaciones…"
-      className="post-list"
+      aria-label="Cargando la página del ramo…"
+      className="page-sections"
       ref={skeletonWave}
       role="status"
     >
-      {[0, 1, 2].map((row) => (
-        <article key={row}>
-          <span className="post-kind">
-            <Line w="3.4em" />
-          </span>
-          <div>
-            <h3>
-              <Line w={`${46 + ((row * 17) % 30)}%`} />
-            </h3>
-            <div className="academic-prose rich-text">
-              <p>
-                <Line w="94%" quiet />
-                <Line w={`${58 + ((row * 13) % 24)}%`} quiet />
-              </p>
+      {[0, 1].map((section) => (
+        <section className="page-section" key={section}>
+          <header className="page-section-head">
+            <h2>
+              <span className="page-section-toggle">
+                <span aria-hidden="true" className="page-section-mark" />
+                <Line w={`${34 + section * 14}%`} />
+              </span>
+            </h2>
+          </header>
+          <div className="page-section-body">
+            <div className="page-item">
+              <div className="academic-prose rich-text">
+                <p>
+                  <Line w="96%" quiet />
+                  <Line w="88%" quiet />
+                  <Line w={`${52 + section * 10}%`} quiet />
+                </p>
+              </div>
             </div>
-            <footer>
-              <span>
-                <Line w="6.5em" quiet />
+            <div className="page-item" data-type="file">
+              <span className="page-file">
+                <Bone h={36} r="var(--radius-md)" w={36} />
+                <span className="page-file-text">
+                  <Line w="42%" />
+                  <Line w="18%" quiet />
+                </span>
               </span>
-              <span>
-                <Line w="5.5em" quiet />
-              </span>
-              <span>
-                <Line w="4em" quiet />
-              </span>
-            </footer>
+            </div>
           </div>
-        </article>
+        </section>
       ))}
     </div>
   );
@@ -805,6 +811,24 @@ function CourseRailSkeleton({
 }) {
   return (
     <aside className="course-rail" inert>
+      <section className="rail-announcements">
+        <div className="section-title compact-title">
+          <h2>
+            <Megaphone size={19} weight="fill" aria-hidden="true" />
+            Avisos
+          </h2>
+        </div>
+        <div className="course-notices-card">
+          <div className="course-notices-list">
+            {[0, 1].map((row) => (
+              <span className="course-notice-row" key={row}>
+                <Line w={`${62 + row * 18}%`} />
+                <Line w="92%" quiet />
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
       <div className="section-title compact-title">
         <h2>
           <Info size={19} weight="fill" aria-hidden="true" />
@@ -918,10 +942,16 @@ export function ClassroomSkeleton({
                   </details>
                 )}
                 {canManage && (
-                  <button className="publication-cta" tabIndex={-1} type="button">
-                    <Plus size={17} weight="bold" aria-hidden="true" />
-                    Nueva publicación
-                  </button>
+                  <>
+                    <button className="review-cta" tabIndex={-1} type="button">
+                      <PencilSimpleLine size={16} aria-hidden="true" />
+                      Editar página
+                    </button>
+                    <button className="publication-cta" tabIndex={-1} type="button">
+                      <Plus size={17} weight="bold" aria-hidden="true" />
+                      Nuevo aviso
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -930,11 +960,8 @@ export function ClassroomSkeleton({
         <ClassroomTabs inert tab="home" />
         <div>
           <div className="classroom-columns">
-            <section className="posts-section">
-              <div className="section-title compact-title">
-                <h2>Publicaciones del ramo</h2>
-              </div>
-              <PostListSkeleton />
+            <section className="course-page">
+              <CoursePageSkeleton />
             </section>
             <CourseRailSkeleton canTeach={canTeach} course={course} readOnly={readOnly} />
           </div>

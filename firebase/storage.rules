@@ -108,7 +108,8 @@ service firebase.storage {
     match /courses/{courseId}/{userId}/{fileName} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
       allow create, update: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.auth.uid == userId && request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024 && isAllowedAcademicMimeType();
-      allow delete: if (isOwner() || managesSectionContent(courseId) && request.auth.uid == userId) && sectionIsWritable(courseId);
+      // Implements: REQ-PAGE-06, REQ-PAGE-08
+      allow delete: if (isOwner() || managesSectionContent(courseId)) && sectionIsWritable(courseId);
     }
 
     /*

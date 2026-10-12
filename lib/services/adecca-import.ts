@@ -29,6 +29,8 @@ import type {
   AdeccaRosterParticipant,
 } from "../adecca/types.ts";
 import { normalizeAccessEmail, roleForEmail } from "../access-policy.ts";
+import { placementFor } from "../course-page.ts";
+import { postKind } from "../firebase/mappers.ts";
 import type { PublicUser } from "../auth.ts";
 import { stableAdeccaDocumentId } from "../adecca/ids.ts";
 import { adeccaFileIsSupported } from "../adecca/file-policy.ts";
@@ -675,6 +677,7 @@ export async function startAdeccaImport(
   });
 }
 
+// Implements: REQ-PAGE-14
 export async function writeAdeccaImportPosts(
   actor: PublicUser,
   sectionId: string,
@@ -724,6 +727,13 @@ export async function writeAdeccaImportPosts(
       contentHash: { stringValue: post.contentHash },
       createdAt: { timestampValue: post.sourceCreatedAt || now },
       sourceSystem: { stringValue: "adecca" },
+      placement: {
+        stringValue: placementFor({
+          kind: postKind(post.kind),
+          storagePath: post.storagePath,
+          sourceSystem: "adecca",
+        }),
+      },
       sourceId: { stringValue: post.sourceId },
       sourceKey: { stringValue: sourceKey },
       importFingerprint: { stringValue: fingerprint },

@@ -582,6 +582,9 @@ test("the actual publication hook records simulated QA delivery and refuses malf
           };
         if (module === "firebase-functions/v2") return { setGlobalOptions() {} };
         if (module === "firebase-functions/v2/https") return { HttpsError: Error, onCall() {} };
+        if (module === "firebase-functions/v2/scheduler") return { onSchedule() {} };
+        if (module === "firebase-admin/storage") return { getStorage: () => ({ bucket() {} }) };
+        if (module === "./course-page-schedule") return { runCoursePageSchedule: async () => ({}) };
         if (module === "firebase-functions/v2/firestore")
           return {
             onDocumentWritten() {},

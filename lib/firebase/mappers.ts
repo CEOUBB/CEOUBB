@@ -4,6 +4,14 @@ import { DEFAULT_FOLDER } from "../courses.ts";
 import { normalizeItems } from "../grades.ts";
 import { normalizeDueDate, normalizeTime } from "../planner.ts";
 import type { PersonalEvent, PersonalEventKind } from "../planner.ts";
+import {
+  itemTypeFor,
+  placementFor,
+  type ItemLocation,
+  type PageItemType,
+  type PageSection,
+  type Placement,
+} from "../course-page.ts";
 
 export type ClassroomPostKind = "notice" | "guide" | "assessment" | "resource";
 
@@ -58,6 +66,17 @@ export type ClassroomPost = {
   createdAt: string;
 };
 
+// Implements: REQ-PAGE-01, REQ-PAGE-11
+export type CoursePost = ClassroomPost & {
+  placement: Placement;
+  sectionId: string;
+  position: number;
+  itemType: PageItemType;
+  hidden: boolean;
+  publishAt: string;
+  location: ItemLocation;
+};
+
 export type ClassroomFile = {
   id: string;
   authorId: string;
@@ -91,12 +110,25 @@ export function toGradebookState(value: DocumentData | null) {
   };
 }
 
-// Implements: REQ-SEC-12
-export function toPost(document: QueryDocumentSnapshot<DocumentData>): ClassroomPost {
+function optionalIso(value: unknown) {
+  return value === null || value === undefined || value === "" ? "" : iso(value);
+}
+
+// Implements: REQ-SEC-12, REQ-PAGE-11
+export function toPost(
+  document: QueryDocumentSnapshot<DocumentData>,
+  location: ItemLocation = "posts"
+): CoursePost {
   const value = document.data();
   const authorEmail = String(value.authorEmail ?? "");
   const rawLink = String(value.fileUrl || value.linkUrl || "").trim();
   const linkUrl = /^https?:\/\//i.test(rawLink) ? rawLink : null;
+  const kind = postKind(String(value.kind ?? "notice"));
+  const storagePath = String(value.storagePath ?? "");
+  const body = String(value.body ?? "");
+  const attachments = toAttachments(value.attachments);
+  const createdAt = iso(value.createdAt);
+  const position = Number(value.position);
   return {
     id: document.id,
     authorId: String(value.authorId ?? ""),
@@ -104,14 +136,40 @@ export function toPost(document: QueryDocumentSnapshot<DocumentData>): Classroom
     authorName: String(value.authorName || authorEmail || "Equipo docente"),
     authorRole: roleForEmail(authorEmail) ?? "student",
     title: String(value.title ?? "Publicación"),
-    body: String(value.body ?? ""),
-    kind: postKind(String(value.kind ?? "notice")),
+    body,
+    kind,
     folder: String(value.folder || DEFAULT_FOLDER),
     linkUrl,
-    storagePath: String(value.storagePath ?? ""),
-    attachments: toAttachments(value.attachments),
+    storagePath,
+    attachments,
     dueDate: normalizeDueDate(value.dueDate),
-    createdAt: iso(value.createdAt),
+    createdAt,
+    placement: placementFor({
+      placement: value.placement,
+      kind,
+      storagePath,
+      sourceSystem: value.sourceSystem,
+    }),
+    sectionId: typeof value.sectionId === "string" ? value.sectionId : "",
+    position: Number.isFinite(position) ? position : Date.parse(createdAt),
+    itemType: itemTypeFor({ itemType: value.itemType, storagePath, attachments, linkUrl, body }),
+    hidden: location === "hiddenItems" && value.hidden === true,
+    publishAt: optionalIso(value.publishAt),
+    location,
+  };
+}
+
+// Implements: REQ-PAGE-01
+export function toSection(document: QueryDocumentSnapshot<DocumentData>): PageSection {
+  const value = document.data();
+  const position = Number(value.position);
+  return {
+    id: document.id,
+    title: String(value.title ?? "").trim() || "Sin título",
+    position: Number.isFinite(position) ? position : 0,
+    hidden: value.hidden === true,
+    publishAt: optionalIso(value.publishAt),
+    virtual: false,
   };
 }
 
