@@ -4,7 +4,15 @@ import { connectAuthEmulator, getAuth, signInWithEmailAndPassword } from "fireba
 import { z } from "zod";
 import { QA_NOW, QA_PASSWORD, QA_SECTION_NAMES, QA_USERS } from "../fixtures.ts";
 import type { QaRole } from "../catalog.ts";
-import { cleanupQaSessions } from "../../scripts/qa/seed.ts";
+import { removeQaSessions } from "../../scripts/qa/seed.ts";
+import { SESSION_COOKIE } from "../../lib/session-cookie.ts";
+
+const loginSessions = new Set<string>();
+
+export async function removeQaLoginSessions() {
+  await removeQaSessions(loginSessions);
+  loginSessions.clear();
+}
 
 export async function installQaDate(page: Page, date: Date | number = Date.parse(QA_NOW)) {
   const timestamp = typeof date === "number" ? date : date.getTime();
@@ -25,12 +33,7 @@ export async function installQaDate(page: Page, date: Date | number = Date.parse
 }
 
 // Implements: REQ-QA-02, REQ-QA-05
-export async function login(
-  page: Page,
-  role: Exclude<QaRole, "public">,
-  baseURL: string,
-  options: { preserveSessions?: boolean } = {}
-) {
+export async function login(page: Page, role: Exclude<QaRole, "public">, baseURL: string) {
   const host = process.env.FIREBASE_AUTH_EMULATOR_HOST;
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -38,7 +41,6 @@ export async function login(
     throw new Error("QA_AUTH_CONFIG: a demo project and loopback Auth emulator are required.");
   }
   const account = QA_USERS[role];
-  if (!options.preserveSessions) await cleanupQaSessions(role);
   const app = initializeApp({ apiKey, projectId }, `qa-${role}-${Date.now()}`);
   try {
     const auth = getAuth(app);
@@ -54,6 +56,11 @@ export async function login(
     expect(response.status(), "Ordinary Firebase-to-web session exchange").toBe(200);
     const session = await response.json();
     expect(session.user.id).toBe(account.id);
+    const token = (await page.context().cookies(baseURL)).find(
+      (cookie) => cookie.name === SESSION_COOKIE
+    )?.value;
+    if (!token) throw new Error("QA_SESSION_MISSING: the session exchange set no cookie.");
+    loginSessions.add(token);
     // Use Firebase's own serialization of the authenticated emulator user. The browser
     // SDK restores and refreshes this real identity; no fabricated FirebaseUser is used.
     await page.addInitScript(

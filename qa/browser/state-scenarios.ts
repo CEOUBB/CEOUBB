@@ -280,7 +280,7 @@ export async function stateScenario(
   if (id.startsWith("settings.sessions-") || id === "settings.session-revoke-error") {
     if (id === "settings.session-revoke-error") {
       // Create a second ordinary session; GET still reads the real local database.
-      await login(page, "student", new URL(page.url()).origin, { preserveSessions: true });
+      await login(page, "student", new URL(page.url()).origin);
       await page.route("**/api/profile/sessions", (route) =>
         route.request().method() === "DELETE"
           ? route.fulfill({

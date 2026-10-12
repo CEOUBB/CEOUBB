@@ -1,5 +1,6 @@
 import { parseArgs as parseNodeArgs } from "node:util";
 import { execFileSync } from "node:child_process";
+import { runsExclusively } from "../../qa/catalog.ts";
 
 const aliases = {
   cuestionarios: "quizzes",
@@ -139,7 +140,10 @@ export function selectScenarios(catalog, options, changed) {
     const [currentStr, totalStr] = options.shard.split("/");
     const current = Number(currentStr);
     const total = Number(totalStr);
-    selected = selected.filter((_, idx) => idx % total === current - 1);
+    selected = [
+      ...selected.filter((entry) => !runsExclusively(entry.id)),
+      ...selected.filter((entry) => runsExclusively(entry.id)),
+    ].filter((_, idx) => idx % total === current - 1);
     reason += ` (shard ${current}/${total})`;
   }
   return { ids: selected.map((entry) => entry.id), scenarios: selected, reason, changed };

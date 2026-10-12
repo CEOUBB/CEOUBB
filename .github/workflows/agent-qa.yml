@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["1/4", "2/4", "3/4", "4/4"]
+        shard: ["1/6", "2/6", "3/6", "4/6", "5/6", "6/6", "api"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,6 +67,7 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm --dir firebase/functions install --frozen-lockfile --ignore-scripts
       - name: Install browser engines
+        if: matrix.shard != 'api'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             pnpm exec playwright install --with-deps chromium
@@ -78,9 +79,11 @@ jobs:
           path: ~/.cache/firebase/emulators
           key: ${{ runner.os }}-agent-qa-emulators-${{ hashFiles('firebase/firebase.json', 'pnpm-lock.yaml') }}
       - name: Verify the QA safety and reporting contracts
+        if: matrix.shard == '1/6'
         run: pnpm qa:check
       # Implements: REQ-QA-08, REQ-QA-10, REQ-QA-11
       - name: Run affected checks or the complete catalog
+        if: matrix.shard != 'api'
         env:
           QA_EVENT: ${{ github.event_name }}
           QA_BASE_BRANCH: ${{ github.base_ref }}
@@ -92,7 +95,7 @@ jobs:
         run: |
           args=(--screenshots --shard "$QA_SHARD")
           if [ "$QA_EVENT" = "pull_request" ]; then
-            args+=(--base "origin/$QA_BASE_BRANCH" --browser chromium-1440)
+            args+=(--base "origin/$QA_BASE_BRANCH" --browser chromium-1440 --production)
           elif [ "$QA_REQUESTED_MODE" = "area" ]; then
             test -n "$QA_REQUESTED_AREA" || { echo "An area is required."; exit 1; }
             args+=(--area "$QA_REQUESTED_AREA" --production)
@@ -105,7 +108,7 @@ jobs:
           fi
           pnpm qa "${args[@]}"
       - name: Verify API authorization and persistence contracts
-        if: github.event_name == 'pull_request' && matrix.shard == '1/4'
+        if: matrix.shard == 'api' && github.event_name == 'pull_request'
         run: pnpm qa --all --browser api --production
       - name: Retain reports, screenshots and failing traces
         if: always()

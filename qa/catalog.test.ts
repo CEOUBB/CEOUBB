@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
-import { QA_AREAS, QA_ROLES, QA_SCENARIOS, QA_STATES } from "./catalog.ts";
+import {
+  QA_AREAS,
+  QA_EXCLUSIVE_WRITES,
+  QA_FIXTURE_MUTATIONS,
+  QA_ROLES,
+  QA_SCENARIOS,
+  QA_STATES,
+  mutatesFixtures,
+  runsExclusively,
+} from "./catalog.ts";
+import { selectScenarios } from "../scripts/qa/options.mjs";
 
 test("QA catalog IDs, state evidence and source mappings are valid", () => {
   assert.equal(new Set(QA_SCENARIOS.map((scenario) => scenario.id)).size, QA_SCENARIOS.length);
@@ -64,6 +74,27 @@ test("catalog covers shipped account roles, section roles and web feature famili
       QA_SCENARIOS.some((scenario) => scenario.area === area && scenario.critical),
       `Missing cross-browser critical journey ${area}`
     );
+});
+
+test("every shared fixture writer is a registered scenario scheduled alone", () => {
+  const ids = new Set(QA_SCENARIOS.map((scenario) => scenario.id));
+  for (const id of [...QA_FIXTURE_MUTATIONS, ...QA_EXCLUSIVE_WRITES]) {
+    assert.ok(ids.has(id), `Unknown exclusive scenario ${id}`);
+    assert.ok(runsExclusively(id));
+  }
+  for (const scenario of QA_SCENARIOS.filter(({ id }) => id.endsWith("persistence")))
+    assert.ok(mutatesFixtures(scenario.id) && runsExclusively(scenario.id));
+  assert.equal(runsExclusively("grades.teacher"), false);
+});
+
+test("shards split exclusive scenarios evenly and cover the catalog once", () => {
+  const shards = Array.from(
+    { length: 6 },
+    (_, index) => selectScenarios(QA_SCENARIOS, { all: true, shard: `${index + 1}/6` }, []).ids
+  );
+  assert.deepEqual(shards.flat().toSorted(), QA_SCENARIOS.map(({ id }) => id).toSorted());
+  const exclusive = shards.map((ids) => ids.filter(runsExclusively).length);
+  assert.ok(Math.max(...exclusive) - Math.min(...exclusive) <= 1, exclusive.join(","));
 });
 
 test("catalog remains independent from the browser runtime and reports missing evidence", () => {
