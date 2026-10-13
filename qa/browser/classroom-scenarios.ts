@@ -194,7 +194,9 @@ export async function classroomScenario(
       await expect(trash).toBeVisible();
       await expect(trash.getByText("La papelera está vacía.")).toBeVisible();
     } else if (id === "page.edit") {
-      await page.getByRole("button", { name: "Agregar sección", exact: true }).click();
+      await page
+        .getByRole("button", { name: "Agregar sección", exact: true })
+        .click({ force: true });
       await page.getByRole("textbox", { name: "Nombre de la sección" }).fill("Sección QA");
       await page.getByRole("button", { name: "Crear sección", exact: true }).click();
       const created = pageSection("Sección QA");
