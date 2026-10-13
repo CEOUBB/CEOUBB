@@ -310,7 +310,11 @@ export function PortalHeader({
           onToggle={(event) => setAccountOpen(event.currentTarget.open)}
           ref={account}
         >
-          <summary aria-haspopup="menu" aria-label={`Cuenta de ${user.name}`}>
+          <summary
+            aria-expanded={accountOpen}
+            aria-haspopup="menu"
+            aria-label={`Cuenta de ${user.name}`}
+          >
             <Avatar email={user.email} name={user.name} photoUrl={user.photoUrl} />
             <span className="account-copy">
               <strong>{firstName(user.name)}</strong>

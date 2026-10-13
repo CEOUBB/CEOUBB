@@ -251,6 +251,7 @@ export function NotificationStack({
             </span>
             <button
               type="button"
+              aria-expanded={isExpanded}
               onClick={() => setIsExpanded(!isExpanded)}
               className="text-xs font-semibold text-(--text-body) hover:text-(--color-primary)"
             >
