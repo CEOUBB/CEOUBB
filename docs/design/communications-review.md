@@ -1,31 +1,28 @@
-# Rediseño de Avisos y mensajes
+# Avisos y mensajes redesign
 
-Prioridad confirmada: bandeja clara y conversaciones protagonistas, dentro de la identidad institucional del campus.
+Structure chosen by the owner on the Impeccable decision page: "Lo pendiente primero". The screen opens on what awaits the user, summarized as one stacked sheet per section; read items move to a single history; a conversation docks as a column beside the page on desktop and takes the full screen on phones. The header bell follows the same order (unread first, then earlier items) as a popover on desktop and a draggable `vaul` sheet on phones.
 
-El centro reúne navegación de Avisos/Mensajes, búsqueda por nombre y contexto de sección, lista con fechas y estado de lectura, historial y redactor. En móvil la conversación ocupa el espacio útil entre cabecera y navegación; volver recupera la lista. Los avisos usan filas con tipo, ramo, fecha y acceso al aula. El estado vacío ofrece acceso a Mensajes.
+## What changed
 
-Se reutilizan los servicios y políticas actuales. No se añaden dependencias, rutas públicas de demostración ni cambios de backend. Las pestañas incorporan flechas, Inicio/Fin y orientación ARIA responsive con snapshot de servidor. El scroll de mensajes queda limitado al historial.
+- **Unread band.** One stack per section, carrying the section divider tab and a `--tone-wash` head with the count and a mark-as-read action. Narrower sheets peek under the front sheet when more items wait; the stack fans out in place (grid rows transition) and leaves with a spring when marked read. With nothing pending the band shows "Todo al día".
+- **History.** One sheet grouped by day with sticky day labels. Todo and Avisos list only read items, so nothing repeats the band; Mensajes is the full conversation directory with search, unread dots in a leading column and "Por responder" for teachers when the student wrote last.
+- **Conversation.** Docked column (clamp 340 to 440px) with a section-tone header, white incoming bubbles on the desk, UBB-blue own bubbles, turns grouped by author and a ten-minute gap, day separators, a "Mensajes nuevos" marker from the cursor captured at open, optimistic sending with "Enviando…" and "Enviado", Enter to send on fine pointers, per-conversation drafts, and a jump-to-latest control. On phones it is a full-screen layer that slides in from the right, hides the header and bottom navigation, honours safe areas and answers the Android back button.
+- **Time.** `stampLabel` and `dayLabel` in `lib/communications.ts` give one voice to every timestamp ("Ahora", "Hace 5 min", clock time, "Ayer", weekday, short date), refreshed by the shared `useClock` hook.
+- **Read state.** Opening a conversation, or receiving a message while it is open, marks the thread read. No data model, rule or function changed; read receipts were left out because they would expose teachers' reading activity and need thread-level markers.
 
-## Verificación
+## Verification
 
-- `pnpm test`: compilación de producción y 624 pruebas aprobadas tras integrar `main` (#169).
-- `pnpm run lint`, TypeScript y formato aprobados.
-- `verify:fast`: 606 pruebas, 67 sellos SHA-256 y 31 especificaciones aprobadas antes de integrar #169; el hook de push vuelve a comprobar la versión final.
-- `verify:invariants`: 35 pruebas aprobadas.
-- Playwright: cuatro recorridos a 1918, 1440, 900 y 390px; búsqueda sin resultados, limpieza, orientación y teclado de pestañas, envío vacío bloqueado, error sin pérdida del texto, envío exitoso, vuelta móvil y redactor sobre la barra inferior.
-- Dos recorridos adicionales de skeletons a 1440 y 390px aprobados tras integrar #169.
-- React Doctor: 91/100 en la primera pasada, con avisos de tamaño de componentes y Motion existente. No se amplió el alcance para refactorizar esas superficies.
+- `pnpm test` (production build, unit and rendered HTML suites), `verify:fast` (657 tests, 75 sealed test files, 32 OpenSpec specs), `verify:invariants`, lint (two pre-existing warnings in other views), TypeScript and Prettier.
+- New unit tests in `tests/communications-thread.test.ts` cover time labels, day labels, turn grouping, the unread marker and the awaiting-reply state.
+- Agent QA against local emulators: communications scenarios at 320, 390, 768 and 1440 in Chromium; `communications.reply` and `communications.messages` in Firefox and WebKit; `shell.notifications` and `shell.notifications-loading`. `api.performance.isolation` fails in development mode by design (it needs `--production`). `shell.palette`, `shell.palette-empty` and `shell.motion` fail at 320px on `main` as well (palette overlay leaves the bottom navigation 0.4px exposed); tracked separately.
+- Independent finish review: five material fixes and one regression found and resolved in two verdict passes.
 
-La revisión visual independiente validó las 12 capturas y pidió sincronizar la orientación ARIA de las pestañas. La corrección está cubierta por los cuatro recorridos finales. El subagente agotó su cuota antes del veredicto de esa corrección; el cierre y la documentación se realizaron en la tarea principal. No se presenta como una segunda aprobación independiente.
+## Captures
 
-El detector Impeccable señaló desviaciones de tamaños respecto a la rampa documentada, incluyendo CSS global heredado. No se afirma una auditoría WCAG completa ni un detector global limpio.
+Playwright captures of the real application with synthetic QA identities and data. The QA browser clock is fixed in the past, so a message sent on the day of capture appears under its calendar date after a "Hoy" group.
 
-## Capturas y límites
+![Desktop with a docked conversation](communications/desktop.png)
 
-Las capturas de conversación renderizan el componente real con datos y transporte sintéticos del test; los estados vacíos usan la sesión de desarrollo local. No hubo envíos reales ni validación de Firebase en producción. Las imágenes son capturas de Playwright, sin generación ni edición gráfica.
+![Phone conversation](communications/mobile.png)
 
-![Conversación de escritorio con datos sintéticos](communications/desktop.png)
-
-![Conversación móvil con datos sintéticos](communications/mobile.png)
-
-![Estado vacío local](communications/empty.png)
+![Everything read](communications/empty.png)

@@ -151,6 +151,13 @@
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
 - PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
 
+## Handoff: Avisos y mensajes, "Lo pendiente primero", 2026-10-13
+
+- **Delivered:** full redesign of the communications screen and the header bell on desktop and phones. Unread band with one stacked sheet per section (divider tab, tone head, fan-out, mark as read), day-grouped history that lists only read items, Mensajes directory with search and "Por responder" for teachers, docked conversation column (full-screen layer on phones) with grouped turns, day separators, unread marker, optimistic sending, per-conversation drafts and Enter to send. Bell: desktop popover and draggable `vaul` sheet with "Sin leer" first.
+- **Scope:** UI only. No Firestore rule, function or data model change. Read receipts deliberately left out (they need thread-level markers and expose teachers' reading activity). `deriveNotifications` gained an optional limit plus `kind` and `dueDate`; new pure helpers `stampLabel`, `dayLabel`, `groupMessages`, `firstUnreadMessageId` and `awaitsTeamReply`, and the shared `lib/hooks/use-clock.ts`.
+- **Verification:** `pnpm test` (production build), `verify:fast` (657 tests, 75 sealed files including the new `tests/communications-thread.test.ts`, 32 specs), `verify:invariants`, lint, TypeScript and Prettier. Agent QA: communications area at 320/390/768/1440 in Chromium, `communications.reply` and `communications.messages` in Firefox and WebKit, `shell.notifications` at 320/768/1440 and its loading state.
+- **Known and separate:** `shell.palette`, `shell.palette-empty` and `shell.motion` fail at 320px on `main` too (palette overlay leaves the bottom navigation 0.4px exposed). `api.performance.isolation` needs `--production`. Evidence and captures: `docs/design/communications-review.md`; visual system recorded in `DESIGN.md` ("Avisos y mensajes").
+
 ## Handoff: rediseño de Avisos y mensajes, 2026-09-09
 
 - **Entrega:** bandeja institucional con riel, búsqueda de conversaciones, avisos en filas, fechas, estados vacíos y redactor móvil visible. Pestañas con teclado y orientación ARIA responsive; scroll limitado al historial.

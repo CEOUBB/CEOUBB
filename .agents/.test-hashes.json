@@ -19,6 +19,7 @@
   "tests/classroom-pagination.test.ts": "5f6fa5c80a2cee6a710303a7d1cd1978cdf6992da31c82f24de10935b3032fd4",
   "tests/classroom-render-stability.test.ts": "ab1a6d50b2d65a2f96d5567b00f0f8bc70cbfa78e389c186f0f04263af1294a8",
   "tests/cloudflare-bundle.test.ts": "873565922aa29f98105674a1e274a22dcc7ed0f1e7c6f4f0cce455c52393d937",
+  "tests/communications-thread.test.ts": "7770f682b51b9935a2c86ba1d1a3ec890916791f4608e9b53c6d3ef6a52c8c5d",
   "tests/communications.test.ts": "98e63fae4cf2e86053cd271d04069c02f9d1fd1b118b5ca1fb2b8c990c40c32f",
   "tests/content-disposition-sanitization.test.ts": "1f94707dc69771ad40480e3101ac489d346e70449ae8313ccd1c688fbbd0d6bf",
   "tests/course-page.test.ts": "8b9967d897c20af4c92636ac1b97fcf751bdd70936d92379034bfc60c72a010f",

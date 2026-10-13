@@ -133,6 +133,7 @@ export function Portal({
         >
           <PortalHeader
             context={context}
+            mobile={mobile}
             notifications={notifications}
             notificationsLoading={notificationsLoading}
             onHome={() => setScreen("courses")}

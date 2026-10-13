@@ -166,7 +166,7 @@ export async function portalScenario(
       page.getByRole("heading", { name: "Avisos y mensajes", exact: true })
     ).toBeVisible();
     if (id === "communications.announcements") {
-      await expect(page.locator(".announcement-list")).toBeVisible();
+      await expect(page.locator(".communications-list")).toBeVisible();
     } else {
       await page.getByRole("tab", { name: /Mensajes/ }).click();
       const list = page.getByRole("complementary", { name: "Conversaciones" });

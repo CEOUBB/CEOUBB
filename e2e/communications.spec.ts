@@ -71,7 +71,7 @@ for (const width of [1918, 1440, 900, 390]) {
     await page.getByRole("button", { name: "Buscar ramos y vistas", exact: true }).click();
     await page.getByRole("combobox", { name: "Buscar en Centro de Estudio UBB" }).fill("Avisos");
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { name: "Novedades de tus ramos" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Historial" })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({
       path: `.impeccable/review/communications-empty-${width}.png`,
@@ -79,11 +79,15 @@ for (const width of [1918, 1440, 900, 390]) {
     });
     await page.addScriptTag({ content: bundle });
     const center = page.locator(".communications-center");
-    await expect(center.getByRole("tablist")).toHaveAttribute(
-      "aria-orientation",
-      width <= 1000 ? "horizontal" : "vertical"
-    );
-    await expect(center.getByRole("button", { name: /Material de apoyo/ })).toBeVisible();
+    await expect(center.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+    await expect(
+      center.getByRole("article", { name: "Estática" }).getByText("Material de apoyo", {
+        exact: false,
+      })
+    ).toBeVisible();
+    await expect(
+      center.getByRole("tabpanel").getByRole("button", { name: /Material de apoyo/ })
+    ).toHaveCount(0);
     await page.screenshot({
       path: `.impeccable/review/communications-announcements-${width}.png`,
       fullPage: true,
@@ -114,13 +118,9 @@ for (const width of [1918, 1440, 900, 390]) {
     await expect(body).toBeFocused();
     await expect(center.locator(".message-bubble").last()).toContainText("Gracias, ahora entiendo");
     await page.evaluate(() => window.scrollTo(0, 0));
-    if (width <= 700) {
-      const composer = await send.boundingBox();
-      const navigation = await page.locator(".mobile-nav").boundingBox();
-      expect(composer).not.toBeNull();
-      expect(navigation).not.toBeNull();
-      expect(composer!.y + composer!.height).toBeLessThanOrEqual(navigation!.y);
-    }
+    const composer = await send.boundingBox();
+    expect(composer).not.toBeNull();
+    expect(composer!.y + composer!.height).toBeLessThanOrEqual(1000);
     await page.screenshot({
       path: `.impeccable/review/communications-messages-${width}.png`,
       fullPage: true,

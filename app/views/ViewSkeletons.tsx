@@ -10,7 +10,6 @@ import {
   ArrowCounterClockwise,
   ArrowRight,
   Bell,
-  ChatCircleText,
   Check,
   CopySimple,
   Eye,
@@ -19,7 +18,6 @@ import {
   Info,
   LinkSimple,
   LockKey,
-  LockSimple,
   MagnifyingGlass,
   Megaphone,
   PencilSimpleLine,
@@ -486,34 +484,83 @@ export function AdminSkeleton() {
 
 /* ── Avisos y mensajes ──────────────────────────────────────── */
 
+const HISTORY_TABS = ["Todo", "Avisos", "Mensajes"];
+
 // Implements: REQ-COMM-01
-export function AnnouncementListSkeleton() {
+export function PendingBandSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Cargando avisos…" ref={skeletonWave} role="status">
-      <ol className="announcement-list">
-        {[0, 1, 2, 3].map((row) => (
-          <li key={row}>
-            <span className="announcement-row" style={NEUTRAL_TONE}>
-              <Bone w={40} h={40} r="var(--radius-md)" />
-              <span className="announcement-copy">
-                <span className="announcement-title">
-                  <Line w={`${38 + ((row * 19) % 34)}%`} />
-                </span>
-                <span className="announcement-meta">
-                  <strong>
-                    <Line w={`${10 + ((row * 7) % 6)}em`} quiet />
-                  </strong>
-                  <time>
-                    <Line w="8em" quiet />
-                  </time>
-                </span>
-              </span>
-              <span className="announcement-end">
-                <ArrowRight aria-hidden="true" size={18} />
+    <section
+      aria-busy="true"
+      aria-label="Cargando avisos…"
+      className="pending-band"
+      ref={skeletonWave}
+      role="status"
+    >
+      <h2>Sin leer</h2>
+      <div className="pending-grid">
+        {[0, 1].map((stack) => (
+          <article
+            className="pending-stack"
+            data-depth={1 - stack}
+            key={stack}
+            style={NEUTRAL_TONE}
+          >
+            <span className="pending-tab">
+              <Line quiet w="3.4em" />
+            </span>
+            <span className="pending-head">
+              <h3>
+                <Line w={`${7 + stack * 3}em`} />
+              </h3>
+            </span>
+            <span className="pending-row">
+              <Bone h={36} r="var(--radius-md)" w={36} />
+              <span className="pending-copy">
+                <strong>
+                  <Line w={`${82 - stack * 18}%`} />
+                </strong>
+                <small>
+                  <Line quiet w="5em" />
+                </small>
               </span>
             </span>
-          </li>
+          </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+// Implements: REQ-COMM-01
+export function HistoryListSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Cargando historial…" ref={skeletonWave} role="status">
+      <ol className="communications-list">
+        <li className="communications-day">
+          <h3>
+            <Line quiet w="3em" />
+          </h3>
+          <ul>
+            {[0, 1, 2, 3].map((row) => (
+              <li key={row}>
+                <span className="announcement-row" style={NEUTRAL_TONE}>
+                  <Bone h={36} r="var(--radius-md)" w={36} />
+                  <span className="row-copy">
+                    <span className="row-title">
+                      <Line w={`${38 + ((row * 19) % 34)}%`} />
+                    </span>
+                    <span className="row-meta">
+                      <Line quiet w={`${10 + ((row * 7) % 6)}em`} />
+                    </span>
+                  </span>
+                  <span className="row-time">
+                    <Line quiet w="2.6em" />
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </li>
       </ol>
     </div>
   );
@@ -527,16 +574,17 @@ export function ConversationListSkeleton() {
         {[0, 1, 2].map((row) => (
           <li key={row}>
             <span className="conversation-row" style={NEUTRAL_TONE}>
-              <Bone w={40} h={40} round />
-              <span className="conversation-copy">
-                <strong>
+              <span className="row-flag" />
+              <Bone h={36} round w={36} />
+              <span className="row-copy">
+                <span className="row-title">
                   <Line w={`${9 + ((row * 3) % 5)}em`} />
-                </strong>
-                <small>
-                  <Line w="7em" quiet />
-                </small>
-                <span>
-                  <Line w={`${70 - row * 12}%`} quiet />
+                </span>
+                <span className="row-preview">
+                  <Line quiet w={`${70 - row * 12}%`} />
+                </span>
+                <span className="row-meta">
+                  <Line quiet w="7em" />
                 </span>
               </span>
             </span>
@@ -548,7 +596,7 @@ export function ConversationListSkeleton() {
 }
 
 // Implements: REQ-COMM-01
-export function CommunicationsSkeleton() {
+export function CommunicationsSkeleton({ teaching }: { teaching: boolean }) {
   return (
     <section
       aria-busy="true"
@@ -557,51 +605,35 @@ export function CommunicationsSkeleton() {
       ref={skeletonWave}
       role="status"
     >
-      <header className="page-head communications-heading">
-        <div>
-          <h1>Avisos y mensajes</h1>
-          <p>Revisa lo nuevo en tus ramos y conversa en privado con el equipo docente.</p>
-        </div>
-        <div className="communications-summary">
-          <Bell aria-hidden="true" size={20} />
-          <small>
-            <Line w="5.5em" quiet />
-          </small>
-        </div>
-      </header>
-
-      <div className="communications-workspace">
-        <div className="communications-toolbar" inert>
-          <div className="communications-tabs">
-            <button aria-selected="true" role="tab" tabIndex={-1} type="button">
-              <Bell aria-hidden="true" size={18} weight="fill" />
-              Avisos
-            </button>
-            <button aria-selected="false" role="tab" tabIndex={-1} type="button">
-              <ChatCircleText aria-hidden="true" size={18} />
-              Mensajes
-            </button>
-          </div>
-          <p className="communications-rail-note">
-            <LockSimple aria-hidden="true" size={18} />
-            Tus consultas se comparten sólo con el equipo de tu sección.
-          </p>
-        </div>
-
-        <div className="communications-content">
-          <p className="communications-feedback" />
-          <div className="communications-panel">
-            <header className="communications-panel-heading">
-              <div>
-                <h2>Novedades de tus ramos</h2>
-                <p>Avisos, materiales y evaluaciones publicados por el equipo docente.</p>
+      <div className="communications-layout">
+        <div className="communications-stream">
+          <header className="page-head communications-heading">
+            <div>
+              <h1>Avisos y mensajes</h1>
+              <p>
+                {teaching
+                  ? "Lo nuevo de tus secciones y las consultas privadas de tus estudiantes."
+                  : "Lo nuevo de tus ramos y tus conversaciones privadas con el equipo docente."}
+              </p>
+            </div>
+          </header>
+          <PendingBandSkeleton />
+          <section className="communications-history">
+            <div className="communications-history-head">
+              <h2>Historial</h2>
+              <div className="communications-tabs" inert>
+                {HISTORY_TABS.map((label, index) => (
+                  <button aria-selected={index === 0} key={label} role="tab" type="button">
+                    {index === 0 && <span className="communications-tab-indicator" />}
+                    <span>{label}</span>
+                  </button>
+                ))}
               </div>
-              <span>
-                <Line w="7em" quiet />
-              </span>
-            </header>
-            <AnnouncementListSkeleton />
-          </div>
+            </div>
+            <div className="communications-panel">
+              <HistoryListSkeleton />
+            </div>
+          </section>
         </div>
       </div>
     </section>
@@ -1312,19 +1344,17 @@ export function ConversationSkeleton() {
     <div aria-busy="true" aria-label="Cargando conversación…" ref={skeletonWave} role="status">
       <ol className="message-list">
         {[
-          { own: false, width: "62%", lines: 2 },
-          { own: true, width: "44%", lines: 1 },
-          { own: false, width: "70%", lines: 2 },
+          { own: false, width: "68%", lines: 2 },
+          { own: true, width: "46%", lines: 1 },
+          { own: false, width: "58%", lines: 2 },
         ].map((bubble) => (
-          <li className={bubble.own ? "own" : undefined} key={bubble.width}>
-            <span
-              className="message-bubble"
-              style={{ display: "grid", gap: "2px", width: bubble.width }}
-            >
-              <Line w="6em" quiet />
+          <li className={bubble.own ? "message-run own" : "message-run"} key={bubble.width}>
+            <span className="message-bubble" style={{ width: bubble.width }}>
               <Line w="100%" />
-              {bubble.lines === 2 && <Line w="68%" />}
-              <Line w="4em" quiet />
+              {bubble.lines === 2 && <Line w="64%" />}
+            </span>
+            <span className="message-time">
+              <Line quiet w="2.6em" />
             </span>
           </li>
         ))}

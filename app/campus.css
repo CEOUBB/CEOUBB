@@ -1,6 +1,7 @@
 /* Campus «Separadores»: los tokens viven en globals.css; aquí, la composición del campus. */
 
-.app-shell [style*="--course-tone"] {
+.app-shell [style*="--course-tone"],
+.sheet-content [style*="--course-tone"] {
   --tone-wash: color-mix(in oklch, var(--course-tone) 15%, white);
   --tone-wash-strong: color-mix(in oklch, var(--course-tone) 26%, white);
   --tone-ink: color-mix(in oklch, var(--course-tone) 52%, oklch(0.17 0.02 265));
@@ -373,7 +374,6 @@
 .app-shell
   :is(
     .account-popover,
-    .notification-popover,
     .next-eval,
     .archived-courses,
     .classroom-import-actions,
@@ -392,7 +392,6 @@
     .grades-editor,
     .teams-editor-card,
     .final-grade-records,
-    .communications-workspace,
     .teacher-manager-empty,
     .moodle-import-dialog,
     .settings-panel,
@@ -418,7 +417,7 @@
   border-color: transparent;
   box-shadow: var(--shadow-1);
 }
-.app-shell :is(.account-popover, .notification-popover, .classroom-import-actions),
+.app-shell :is(.account-popover, .classroom-import-actions),
 .palette,
 .app-shell .planner-dialog {
   box-shadow: var(--shadow-2);
@@ -992,15 +991,7 @@ button.agenda-calendar-link:hover {
   background: var(--surface-card);
   box-shadow: var(--shadow-lift);
 }
-.app-shell
-  :is(
-    .course-facts,
-    .settings-panel,
-    .quiz-catalog,
-    .communications-workspace,
-    .participant-list,
-    .notification-popover
-  ) {
+.app-shell :is(.course-facts, .settings-panel, .quiz-catalog, .participant-list) {
   --border-hairline: transparent;
 }
 .app-shell .course-tabs {
@@ -1070,12 +1061,6 @@ button.agenda-calendar-link:hover {
   box-shadow: var(--shadow-1);
 }
 
-.app-shell :is(.communications-panel-heading h2, .conversation-list-heading h2) {
-  font-family: var(--font-core);
-  font-weight: 650;
-  letter-spacing: -0.015em;
-}
-
 .app-shell :is(.grades-editor-row, .grades-editor-foot) {
   padding-top: 0;
   border-top: 0;
@@ -1116,45 +1101,6 @@ button.agenda-calendar-link:hover {
   display: none;
 }
 
-.notification-group-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 10px 16px 6px;
-  background: var(--surface-card);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-.notification-row {
-  & .notification-copy small,
-  & .notification-time {
-    color: var(--text-secondary);
-  }
-  & > :first-child {
-    grid-row: 1 / span 2;
-  }
-  & .notification-copy :is(strong, small) {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    white-space: normal;
-  }
-  & .notification-copy strong {
-    font-size: 14px;
-  }
-  & .notification-time {
-    grid-column: 2;
-  }
-}
-
-/* ── Pie ──────────────────────────────────────────────── */
-.app-shell .site-footer {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top-color: transparent;
-}
 .app-shell .site-footer-inner {
   align-items: flex-start;
   text-align: left;
@@ -1347,41 +1293,6 @@ button.agenda-calendar-link:hover {
     scroll-behavior: auto;
     transition-duration: 0ms;
     animation-duration: 0ms;
-  }
-}
-
-/* La consulta móvil ocupa el espacio útil entre cabecera y navegación. */
-.communications-heading .communications-summary {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-.communications-messages {
-  flex: none;
-}
-@media (max-width: 700px) {
-  .communications-center:has([data-conversation-open="true"]) .communications-workspace {
-    position: fixed;
-    inset: var(--header-offset) 0 calc(var(--mobile-nav-height, 58px) + var(--safe-bottom));
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    border-radius: 0;
-    border-inline: 0;
-  }
-  .communications-center:has([data-conversation-open="true"]) .communications-toolbar {
-    display: none;
-  }
-  .communications-center:has([data-conversation-open="true"]) .communications-content {
-    flex: 1;
-    min-height: 0;
-  }
-  .communications-messages[data-conversation-open="true"] {
-    flex: 1;
-    height: auto;
-    min-height: 0;
   }
 }
 
