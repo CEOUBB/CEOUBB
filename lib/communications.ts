@@ -159,6 +159,13 @@ export type NotificationItem = {
   threadId?: string;
 };
 
+export const POST_KIND_LABELS: Record<CourseActivity["kind"], string> = {
+  notice: "Aviso",
+  guide: "Guía",
+  assessment: "Evaluación",
+  resource: "Recurso",
+};
+
 const ACTIVITY_EXCERPTS: Record<string, string> = {
   notice: "Nuevo aviso",
   guide: "Nueva guía",

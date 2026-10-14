@@ -53,6 +53,7 @@ import {
   firstUnreadMessageId,
   fullStamp,
   groupMessages,
+  POST_KIND_LABELS,
   readCursorMap,
   stampLabel,
   threadCursorKey,
@@ -73,7 +74,7 @@ import { SPRING_LAYOUT } from "../../lib/ease";
 import { useClock } from "../../lib/hooks/use-clock";
 import { formatDueDate, type User } from "../../lib/portal-utils.ts";
 import type { SectionMembership } from "../../lib/section-roles.ts";
-import { CommunicationMark, POST_KINDS } from "../notification-panel";
+import { CommunicationMark } from "../notification-panel";
 
 type CommunicationsMode = "all" | "announcements" | "messages";
 
@@ -291,7 +292,7 @@ function PendingRow({
       <span className="pending-copy">
         <strong>{item.title}</strong>
         <small>
-          {item.kind ? POST_KINDS[item.kind].label : item.excerpt}
+          {item.kind ? POST_KIND_LABELS[item.kind] : item.excerpt}
           {due && ` · Entrega ${due}`}
         </small>
       </span>
@@ -411,7 +412,7 @@ function AnnouncementRow({
       <span className="row-copy">
         <span className="row-title">{item.title}</span>
         <span className="row-meta">
-          {courseName} · {POST_KINDS[item.kind].label}
+          {courseName} · {POST_KIND_LABELS[item.kind]}
           {due && ` · Entrega ${due}`}
         </span>
       </span>

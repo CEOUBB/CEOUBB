@@ -20,11 +20,11 @@ import { Bone, Line } from "./views/skeleton-bones";
 
 type PostKind = CourseActivity["kind"];
 
-export const POST_KINDS: Record<PostKind, { label: string; Icon: Icon }> = {
-  notice: { label: "Aviso", Icon: Megaphone },
-  guide: { label: "Guía", Icon: BookOpen },
-  assessment: { label: "Evaluación", Icon: ClipboardText },
-  resource: { label: "Recurso", Icon: LinkSimple },
+const POST_ICONS: Record<PostKind, Icon> = {
+  notice: Megaphone,
+  guide: BookOpen,
+  assessment: ClipboardText,
+  resource: LinkSimple,
 };
 
 export function CommunicationMark({
@@ -36,7 +36,7 @@ export function CommunicationMark({
   kind?: PostKind;
   name?: string;
 }) {
-  const PostIcon = kind ? POST_KINDS[kind].Icon : null;
+  const PostIcon = kind ? POST_ICONS[kind] : null;
   return (
     <span
       aria-hidden="true"
