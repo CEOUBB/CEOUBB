@@ -371,6 +371,8 @@
 .course-action:focus-visible .animated-underline::after,
 .next-eval-action:hover .animated-underline::after,
 .next-eval-action:focus-visible .animated-underline::after,
+.agenda-open:hover .animated-underline::after,
+.agenda-open:focus-visible .animated-underline::after,
 .group:hover .animated-underline::after {
   transform: scaleX(1);
   transform-origin: left;
@@ -1418,13 +1420,6 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--course-tone) 12%, #fff);
 }
-.next-eval-weekday {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--course-tone) 34%, var(--ink-700));
-}
 .next-eval-day {
   font-family: var(--font-display);
   font-size: 26px;
@@ -1468,49 +1463,6 @@ html:not([data-input="keyboard"]) .account-menu[open] .account-popover {
   color: var(--text-muted);
   font-variant-numeric: var(--num);
 }
-/* El nombre del ramo lleva su color oscurecido contra tinta: los tonos claros
-   de la paleta (celeste del escudo, oro) no llegan a 4.5:1 sobre papel. */
-.next-eval-course {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--course-tone) 38%, #0f172a);
-}
-.next-eval-dot {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
-  background: var(--course-tone);
-}
-
-/* Cuenta atrás: el rótulo dice cuánto falta y el color, cuánto apremia. */
-.next-eval-count {
-  grid-area: count;
-  align-self: end;
-  justify-self: start;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 12.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  font-variant-numeric: var(--num);
-  background: var(--canvas-soft);
-  color: var(--text-secondary);
-}
-.next-eval-count[data-urgency="today"],
-.next-eval-count[data-urgency="soon"] {
-  background: color-mix(in srgb, var(--shield-red) 10%, var(--surface-card));
-  color: var(--shield-red-deep);
-}
-/* Una evaluación ya rendida no necesita pastilla: baja a texto suelto, que es
-   la única forma de restarle peso sin bajar del 4.5:1 a 12.5px. */
-.next-eval-count[data-urgency="past"] {
-  background: transparent;
-  padding-inline: 0;
-}
-
 .next-eval-action {
   grid-area: action;
   justify-self: end;

@@ -154,10 +154,15 @@ components:
     rounded: "{rounded.xl}"
     padding: "0 18px"
     height: "50px"
-  agenda-later-row:
+  agenda-sheet:
     backgroundColor: "{colors.surface}"
-    padding: "8px 16px 8px 14px"
-    height: "58px"
+    rounded: "{rounded.lg}"
+  agenda-next:
+    padding: "16px 16px 8px"
+  agenda-later-row:
+    rounded: "{rounded.md}"
+    padding: "10px"
+    height: "60px"
   pending-stack:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.lg}"
@@ -258,7 +263,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 - **Page title** (700, 32px, 1.15): "Mis cursos", títulos de página y nombre de la asignatura en el aula. Baja a 28px hasta 700px.
 - **Section title** (650, 19px, 1.3): encabezados de bloque del dashboard, columnas del aula y grupos de recursos.
 - **Card title** (650, 18px, 1.3): nombre del curso en la ficha y título de la próxima evaluación.
-- **Item title** (650, 16px, 1.4): publicaciones y estado vacío de agenda.
+- **Item title** (650, 16px, 1.4): publicaciones.
 - **Lead** (400, 15px, 1.5): descripción bajo el título de página, máximo 72ch.
 - **Body** (400, 14px, 1.5): navegación, docente, filas y formularios.
 - **Metadata** (400, 13px, 1.45): sección, período, actividad, breadcrumb.
@@ -276,7 +281,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 
 Cabecera de 56px más área segura; riel de 256px a la izquierda, sobre el mismo gris que el escritorio y sin línea divisoria. El contenido tiene un máximo de 1360px con padding horizontal `clamp(20px, 3vw, 44px)`. Portal y aula comienzan 32px bajo la cabecera; los bloques del portal se separan 28px.
 
-El dashboard combina cursos y una columna de agenda de 320px con separación de 36px. Las fichas usan `auto-fill` con mínimo de 264px, separación de 20px entre columnas y 34px entre filas para dejar sitio a la pestaña que sobresale. La agenda abre con la próxima evaluación como hoja propia y sigue con la lista "Más adelante" en una sola hoja de filas.
+El dashboard combina cursos y una columna de agenda de 320px con separación de 36px. Las fichas usan `auto-fill` con mínimo de 264px, separación de 20px entre columnas y 34px entre filas para dejar sitio a la pestaña que sobresale. La agenda es una sola hoja: la próxima evaluación es su cabecera y las siguientes, sus filas.
 
 | Umbral       | Comportamiento construido                                                                                                   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
@@ -356,7 +361,7 @@ Es el archivador abierto del docente. La lista de secciones descansa sobre el es
 
 ### Agenda
 
-La próxima evaluación es una hoja con hoja de fecha de 58px en el tono de su sección, día de 24px peso 700, cuenta regresiva (en `danger` si es hoy o pronto), título, curso y acción. Las siguientes van en una sola hoja de filas de 58px: fecha compacta, título truncado con curso y cuenta regresiva a la derecha. Sin evaluaciones, una hoja de estado vacío con un único acceso al calendario.
+Una sola hoja con dos columnas que se alinean de arriba abajo: fecha (48px) y texto, a 14px. La cabecera es la próxima evaluación en `--tone-wash` de su sección, como el separador del aula: una hoja de fecha blanca con sombra de control (día y mes a 11px en mayúsculas, el día de la semana en `--tone-ink`, número de 24px peso 700), el título en `card-title` sin recortar, el ramo y la ponderación ("40% de la nota") a 13px peso 550 en `--tone-ink`, y al pie la cuenta regresiva a 13px (`danger` si es hoy o pronto) frente a "Ir al ramo" en azul. Toda la cabecera abre el ramo: el botón se extiende sobre ella, el hover profundiza el tinte y el foco la rodea con un anillo azul de 2px. Debajo, las siguientes son filas de 60px como mínimo con 6px de margen dentro de la hoja: fecha compacta (día de la semana a 10.5px, número de 19px), título de 14.5px peso 600 hasta tres líneas, ramo con su marca de separador de 12 por 9px y ponderación a 12.5px, y la cuenta regresiva a la derecha. El título y la ponderación vienen separados en los datos (`title`, `weight`); ramo y ponderación se separan con un punto que, si la ponderación baja de renglón, queda recortado en vez de colgar. Sin evaluaciones, la hoja "Espacio para organizarte" del mismo patrón que "Todo al día", con el icono en `state-ok`.
 
 ### Páginas públicas y estados del sistema
 

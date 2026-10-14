@@ -153,7 +153,7 @@ export async function portalScenario(
         await navigate(page, "Área personal");
       }
       await expect(page.getByRole("heading", { name: "En tu agenda" })).toBeVisible();
-      await expect(page.locator(".next-eval-title")).toBeVisible();
+      await expect(page.locator(".agenda-next h3")).toBeVisible();
     } else
       await expect(
         page.getByRole("button", { name: "Entrar al aula de QA Aula activa" })
