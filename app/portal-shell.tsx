@@ -18,6 +18,7 @@ import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
 import { m } from "motion/react";
+import { Drawer } from "vaul";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import type { ManagedCourse } from "../lib/course-management";
@@ -96,9 +97,11 @@ function useDismissablePopovers(
     };
 
     const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Element;
+      if (target.closest?.(".notification-popover")) return;
       for (const ref of menus) {
         const menu = ref.current;
-        if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
+        if (menu?.open && !menu.contains(target)) menu.open = false;
       }
     };
 
@@ -151,6 +154,7 @@ export function PortalHeader({
   notifications,
   notificationsLoading,
   unreadCommunications,
+  mobile,
   toggleSidebar,
 }: {
   sidebarOpen: boolean;
@@ -168,6 +172,7 @@ export function PortalHeader({
   notifications: readonly NotificationItem[];
   notificationsLoading: boolean;
   unreadCommunications: number;
+  mobile: boolean;
   toggleSidebar: () => void;
 }) {
   // Implements: REQ-PERF-LOAD-02
@@ -192,6 +197,22 @@ export function PortalHeader({
     const menu = account.current;
     if (menu) menu.open = false;
   }, []);
+
+  const notificationContent = (
+    <NotificationList
+      items={notifications}
+      loading={notificationsLoading}
+      onMarkAll={onMarkAllNotifications}
+      onOpen={(item) => {
+        closeNotifications();
+        onOpenNotification(item);
+      }}
+      onSeeAll={() => {
+        closeNotifications();
+        onCommunications();
+      }}
+    />
+  );
 
   return (
     <header
@@ -271,40 +292,40 @@ export function PortalHeader({
             en cada apertura: `details` conserva sus hijos montados y una
             animación declarada sobre ellos sólo se vería la primera vez.
           */}
-          {notificationsOpen && (
-            <>
-              <button
-                aria-hidden="true"
-                aria-label="Cerrar notificaciones"
-                className="notification-scrim"
-                onClick={closeNotifications}
-                tabIndex={-1}
-                type="button"
-              />
-              <m.div
-                animate={{ opacity: 1, y: 0 }}
-                aria-labelledby="notification-panel-title"
-                className="notification-popover"
-                initial={{ opacity: 0, y: 8 }}
-                transition={PANEL_SPRING}
-              >
-                <NotificationList
-                  items={notifications}
-                  loading={notificationsLoading}
-                  onMarkAll={onMarkAllNotifications}
-                  onOpen={(item) => {
-                    closeNotifications();
-                    onOpenNotification(item);
-                  }}
-                  onSeeAll={() => {
-                    closeNotifications();
-                    onCommunications();
-                  }}
-                />
-              </m.div>
-            </>
+          {notificationsOpen && !mobile && (
+            <m.div
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              aria-labelledby="notification-panel-title"
+              className="notification-popover"
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              role="group"
+              transition={{ ...PANEL_SPRING, opacity: { duration: 0.12 } }}
+            >
+              {notificationContent}
+            </m.div>
           )}
         </details>
+        {mobile && (
+          <Drawer.Root
+            onOpenChange={(open) => {
+              if (!open) closeNotifications();
+            }}
+            open={notificationsOpen}
+          >
+            <Drawer.Portal>
+              <Drawer.Overlay className="sheet-overlay" />
+              <Drawer.Content
+                aria-describedby={undefined}
+                className="sheet-content notification-popover"
+              >
+                <Drawer.Handle className="sheet-handle" />
+                <Drawer.Title className="sr-only">Notificaciones</Drawer.Title>
+                <button data-hardware-back hidden onClick={closeNotifications} type="button" />
+                {notificationContent}
+              </Drawer.Content>
+            </Drawer.Portal>
+          </Drawer.Root>
+        )}
         <details
           className="account-menu"
           onToggle={(event) => setAccountOpen(event.currentTarget.open)}
@@ -573,7 +594,7 @@ export function PortalMainView({
               </Deferred>
             )}
             {screen === "notifications" && (
-              <Deferred fallback={<CommunicationsSkeleton />}>
+              <Deferred fallback={<CommunicationsSkeleton teaching={user.role !== "student"} />}>
                 <CommunicationsCenter
                   activity={activity}
                   connectionError={communicationError}

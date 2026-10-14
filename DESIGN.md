@@ -18,6 +18,8 @@ colors:
   fill-quiet-strong: "oklch(0.2 0.01 265 / 0.09)"
   danger: "oklch(0.52 0.2 27)"
   danger-wash: "oklch(0.52 0.2 27 / 0.09)"
+  state-ok: "oklch(0.42 0.11 155)"
+  state-pending: "oklch(0.47 0.11 65)"
   tone-sky: "#38bdf8"
   tone-emerald: "#10b981"
   tone-gold: "#f59e0b"
@@ -152,10 +154,50 @@ components:
     rounded: "{rounded.xl}"
     padding: "0 18px"
     height: "50px"
-  agenda-later-row:
+  agenda-sheet:
     backgroundColor: "{colors.surface}"
-    padding: "8px 16px 8px 14px"
-    height: "58px"
+    rounded: "{rounded.lg}"
+  agenda-next:
+    padding: "16px 16px 8px"
+  agenda-later-row:
+    rounded: "{rounded.md}"
+    padding: "10px"
+    height: "60px"
+  pending-stack:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+  pending-row:
+    rounded: "{rounded.md}"
+    padding: "10px"
+    height: "60px"
+  communications-row:
+    rounded: "{rounded.md}"
+    padding: "12px"
+    height: "64px"
+  conversation-sheet:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.xl}"
+    width: "clamp(340px, 38%, 440px)"
+  message-bubble:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xl}"
+    padding: "9px 14px 10px"
+  message-bubble-own:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.surface}"
+    rounded: "{rounded.xl}"
+    padding: "9px 14px 10px"
+  message-input:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xl}"
+    padding: "10px 16px"
+    height: "42px"
+  notification-row:
+    rounded: "{rounded.md}"
+    padding: "10px 12px 10px 6px"
+    height: "60px"
 ---
 
 # Design System: CEOUBB
@@ -187,7 +229,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 ### Primary
 
 - **Azul UBB** (`primary`): botones principales, enlaces de acción ("Entrar al aula", "Ver calendario"), foco, cursor de texto y controles nativos mediante `accent-color`. `primary-active` oscurece el hover.
-- **Velo azul** (`primary-wash`, `primary-tint`): selección clara en listas (día elegido del calendario), filas de notificación no leídas y su hover.
+- **Velo azul** (`primary-wash`, `primary-tint`): selección clara en listas (día elegido del calendario, conversación abierta en Avisos y mensajes), campana abierta y hover de las acciones azules del panel de notificaciones. Las filas no leídas no se tiñen: el no leído es un punto.
 
 ### Secondary
 
@@ -200,7 +242,8 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 - **Tinta** (`ink`, `ink-secondary`, `ink-muted`, `ink-faint`): título y cuerpo, texto secundario, metadatos, separadores tipográficos y marcadores de posición.
 - **Rellenos tranquilos** (`fill-quiet`, `fill-quiet-strong`): buscador de cabecera, filtro de cursos, botones discretos, hover de filas y fondo del conmutador de vista.
 - **Línea fina** (`hairline`): sombra de 0.5px bajo la cabecera y sobre la navegación inferior; anillo de 0.5px dentro de las sombras de hoja. `control-border` delimita campos nativos.
-- **Peligro** (`danger`, `danger-wash`): eliminar, urgencia de evaluaciones de hoy o próximas y contador de notificaciones de la cabecera.
+- **Peligro** (`danger`, `danger-wash`): eliminar, urgencia de evaluaciones de hoy o próximas, contador de notificaciones de la cabecera y avisos de error en Avisos y mensajes.
+- **Estado escrito** (`state-ok`, `state-pending`): verde y ámbar oscuros, sólo como color de texto o de icono, nunca como fondo. `state-ok` marca lo correcto, abierto o al día (el icono de "Todo al día"); `state-pending` marca lo pendiente ("Por responder" en el directorio del docente, el contador de caracteres del compositor). Se escriben como valores literales en `app/campus-base.css`, no como propiedades personalizadas.
 
 ### Named Rules
 
@@ -220,7 +263,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 - **Page title** (700, 32px, 1.15): "Mis cursos", títulos de página y nombre de la asignatura en el aula. Baja a 28px hasta 700px.
 - **Section title** (650, 19px, 1.3): encabezados de bloque del dashboard, columnas del aula y grupos de recursos.
 - **Card title** (650, 18px, 1.3): nombre del curso en la ficha y título de la próxima evaluación.
-- **Item title** (650, 16px, 1.4): publicaciones y estado vacío de agenda.
+- **Item title** (650, 16px, 1.4): publicaciones.
 - **Lead** (400, 15px, 1.5): descripción bajo el título de página, máximo 72ch.
 - **Body** (400, 14px, 1.5): navegación, docente, filas y formularios.
 - **Metadata** (400, 13px, 1.45): sección, período, actividad, breadcrumb.
@@ -238,7 +281,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 
 Cabecera de 56px más área segura; riel de 256px a la izquierda, sobre el mismo gris que el escritorio y sin línea divisoria. El contenido tiene un máximo de 1360px con padding horizontal `clamp(20px, 3vw, 44px)`. Portal y aula comienzan 32px bajo la cabecera; los bloques del portal se separan 28px.
 
-El dashboard combina cursos y una columna de agenda de 320px con separación de 36px. Las fichas usan `auto-fill` con mínimo de 264px, separación de 20px entre columnas y 34px entre filas para dejar sitio a la pestaña que sobresale. La agenda abre con la próxima evaluación como hoja propia y sigue con la lista "Más adelante" en una sola hoja de filas.
+El dashboard combina cursos y una columna de agenda de 320px con separación de 36px. Las fichas usan `auto-fill` con mínimo de 264px, separación de 20px entre columnas y 34px entre filas para dejar sitio a la pestaña que sobresale. La agenda es una sola hoja: la próxima evaluación es su cabecera y las siguientes, sus filas.
 
 | Umbral       | Comportamiento construido                                                                                                   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
@@ -256,10 +299,11 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 ### Shadow Vocabulary
 
 - **Hoja** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 1px 2px oklch(0.2 0.01 265 / 0.06), 0 6px 16px -6px oklch(0.2 0.01 265 / 0.12)`): paneles, listas, publicaciones, tablas y el destino activo del riel.
-- **Hoja levantada** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 2px 4px oklch(0.2 0.01 265 / 0.05), 0 10px 24px -6px oklch(0.2 0.01 265 / 0.12)`): hover de botones secundarios y del menú de importación.
+- **Hoja levantada** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.09), 0 2px 4px oklch(0.2 0.01 265 / 0.05), 0 10px 24px -6px oklch(0.2 0.01 265 / 0.12)`): hover de botones secundarios y del menú de importación; en reposo, la columna de conversación de escritorio y el botón circular que baja al último mensaje.
 - **Flotante** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.1), 0 6px 14px oklch(0.2 0.01 265 / 0.07), 0 24px 56px -12px oklch(0.2 0.01 265 / 0.24)`): popovers, paleta, diálogos y riel superpuesto.
 - **Control** (`0 0 0 0.5px oklch(0.2 0.01 265 / 0.16), 0 1px 1.5px oklch(0.2 0.01 265 / 0.08)`): botón secundario, tecla del buscador, opción elegida del conmutador.
-- **Separador** (`drop-shadow(0 0 0.5px oklch(0.2 0.01 265 / 0.24)) drop-shadow(0 4px 8px oklch(0.2 0.01 265 / 0.08))`, en hover `0 10px 18px` a 0.11): ficha de curso con su pestaña.
+- **Separador** (`drop-shadow(0 0 0.5px oklch(0.2 0.01 265 / 0.24)) drop-shadow(0 4px 8px oklch(0.2 0.01 265 / 0.08))`, en hover `0 10px 18px` a 0.11): ficha de curso con su pestaña y pila de sección en Avisos y mensajes.
+- **Burbuja** (`0 0 0 0.5px var(--hairline), 0 1px 1.5px oklch(0.2 0.01 265 / 0.06)`): burbuja entrante de un mensaje sobre el escritorio; la burbuja propia, azul, no lleva sombra.
 - **Foco de campo** (`0 0 0 4px oklch(0.5 0.19 258 / 0.22)`): halo azul de campos enfocados junto con el borde azul.
 
 ### Named Rules
@@ -272,7 +316,7 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 
 Rectángulos suaves en escala corta: 5px para teclas y detalles, 7px para botones discretos, 10px para acciones, campos y destinos del riel, 14px para hojas y fichas, 20px para diálogos, la ficha abierta de Administrar ramos y el conjunto del aula. El círculo completo queda para avatares, el día de hoy y los saltos del índice de recursos.
 
-La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, la marca de cada sección en la lista de Administrar ramos. Las muestras del selector de identidad visual repiten la forma en 16 por 12px. En el calendario la marca de sección es un rectángulo de 16 por 12px en el tono puro con radio `4px 4px 2px 2px` y una base interior más clara de 4px; es la única medida de radio del calendario fuera de los tokens, junto con los extremos de 16px de la banda de semana del mes mínimo. Lo demás usa tokens: `sm` para bloques y opciones del conmutador, `md` para controles, `lg` para hojas y popovers, `xl` para el botón flotante y las hojas inferiores del teléfono.
+La silueta propia del sistema es el separador: la ficha de curso tiene la esquina superior izquierda recta porque de ella nace la pestaña (radio superior de 9px; 10px en el aula), y un remate cóncavo de 10 a 12px hecho con un gradiente radial la funde con el borde superior. La pila de cada sección en Avisos y mensajes repite la pestaña de 24px con el mismo radio de 9px y el mismo remate. La misma forma, en 16 por 12px, es la marca de sección en el riel y, en 12 por 9px, la marca de cada sección en la lista de Administrar ramos. Las muestras del selector de identidad visual repiten la forma en 16 por 12px. En el calendario la marca de sección es un rectángulo de 16 por 12px en el tono puro con radio `4px 4px 2px 2px` y una base interior más clara de 4px; es la única medida de radio del calendario fuera de los tokens, junto con los extremos de 16px de la banda de semana del mes mínimo. Lo demás usa tokens: `sm` para bloques y opciones del conmutador, `md` para controles, `lg` para hojas y popovers, `xl` para el botón flotante y las hojas inferiores del teléfono. Los mensajes son burbujas `xl` con la esquina de la cola en `xs`: abajo a la izquierda en las entrantes y abajo a la derecha en las propias; cada burbuja siguiente de una tanda cierra también la esquina superior de su lado, de modo que la tanda se lee como una sola columna. El compositor es una píldora `xl` y enviar, un círculo de 42px.
 
 ## Components
 
@@ -317,7 +361,7 @@ Es el archivador abierto del docente. La lista de secciones descansa sobre el es
 
 ### Agenda
 
-La próxima evaluación es una hoja con hoja de fecha de 58px en el tono de su sección, día de 24px peso 700, cuenta regresiva (en `danger` si es hoy o pronto), título, curso y acción. Las siguientes van en una sola hoja de filas de 58px: fecha compacta, título truncado con curso y cuenta regresiva a la derecha. Sin evaluaciones, una hoja de estado vacío con un único acceso al calendario.
+Una sola hoja con dos columnas que se alinean de arriba abajo: fecha (48px) y texto, a 14px. La cabecera es la próxima evaluación en `--tone-wash` de su sección, como el separador del aula: una hoja de fecha blanca con sombra de control (día y mes a 11px en mayúsculas, el día de la semana en `--tone-ink`, número de 24px peso 700), el título en `card-title` sin recortar, el ramo y la ponderación ("40% de la nota") a 13px peso 550 en `--tone-ink`, y al pie la cuenta regresiva a 13px (`danger` si es hoy o pronto) frente a "Ir al ramo" en azul. Toda la cabecera abre el ramo: el botón se extiende sobre ella, el hover profundiza el tinte y el foco la rodea con un anillo azul de 2px. Debajo, las siguientes son filas de 60px como mínimo con 6px de margen dentro de la hoja: fecha compacta (día de la semana a 10.5px, número de 19px), título de 14.5px peso 600 hasta tres líneas, ramo con su marca de separador de 12 por 9px y ponderación a 12.5px, y la cuenta regresiva a la derecha. El título y la ponderación vienen separados en los datos (`title`, `weight`); ramo y ponderación se separan con un punto que, si la ponderación baja de renglón, queda recortado en vez de colgar. Sin evaluaciones, la hoja "Espacio para organizarte" del mismo patrón que "Todo al día", con el icono en `state-ok`.
 
 ### Páginas públicas y estados del sistema
 
@@ -325,7 +369,7 @@ Ayuda, contacto, preguntas frecuentes y políticas son documentos de lectura: ca
 
 ### Estados como texto
 
-Rol, estado de período, estado de corrección, tipo de recurso, tramo de beneficio y suma de ponderaciones se escriben como texto de 12.5 a 13px: neutro para lo descriptivo, verde para lo correcto o abierto, ámbar para lo pendiente y `danger` para lo vencido. No se dibujan como píldoras. Las acciones de contenido ("Modificar", "Eliminar") quedan visibles en cada publicación; "Eliminar" se separa 24px, va en `danger` y siempre pide confirmación en línea.
+Rol, estado de período, estado de corrección, tipo de recurso, tramo de beneficio y suma de ponderaciones se escriben como texto de 12.5 a 13px: neutro para lo descriptivo, verde (`state-ok`) para lo correcto, abierto o al día, ámbar (`state-pending`) para lo pendiente, como "Por responder", y `danger` para lo vencido. No se dibujan como píldoras. Las acciones de contenido ("Modificar", "Eliminar") quedan visibles en cada publicación; "Eliminar" se separa 24px, va en `danger` y siempre pide confirmación en línea.
 
 ### Calendar
 
@@ -351,6 +395,28 @@ Rol, estado de período, estado de corrección, tipo de recurso, tramo de benefi
 
 **Carga.** `CalendarSkeleton` monta la cabecera, la barra, el mes mínimo y la lista de ramos reales en la vista y el panel guardados en el dispositivo; sólo "Lo que viene" y los bloques son huesos.
 
+### Avisos y mensajes
+
+**Estructura.** Cabecera de página con un resumen de una línea y, si hay pendientes, "Marcar todo como leído" como botón secundario de 36px. Debajo, dos bloques separados 36px (32px en el teléfono): "Sin leer" y "Historial", en `section-title`; la cuenta de "Sin leer" va a 15px peso 600 en tinta tenue y en cifras tabulares.
+
+**Banda sin leer.** Cada sección con novedades es un separador apilado: hoja blanca con la esquina superior izquierda recta, sombra de separador y la pestaña de 24px con el código. La cabecera de 50px en `--tone-wash` lleva el nombre (15px, 650, una línea), "N nuevos" (13px, 550) y la acción de marcar la sección como leída (36px; 44px con puntero grueso), todo en `--tone-ink`. Las filas miden 60px (68px en el teléfono): marca, título de 15px peso 600 y detalle de 13px a dos líneas como máximo, y la hora de 12.5px a la derecha. Se ve la primera novedad; detrás asoman una hoja de 7px con sangría de 16px (escritorio al 45%) y, con dos o más ocultas, otra de 6px con sangría de 32px (escritorio al 80%). "Ver N más" despliega hasta cuatro y el resto se cuenta en una línea de 12.5px. Las pilas forman una rejilla `auto-fill` de 300px como mínimo con 46px entre filas, para la pestaña, y 20px entre columnas; una columna en el teléfono. Sin pendientes, una hoja "Todo al día" con el icono en `state-ok`.
+
+**Historial.** Un conmutador "Todo", "Avisos", "Mensajes" en relleno tranquilo fuerte de 36px (40px y a todo el ancho en el teléfono) con la opción elegida como hoja de control. "Todo" y "Avisos" listan sólo lo ya leído: lo nuevo vive en la banda. Van en una sola hoja agrupados por día, con rótulos de 12.5px peso 600 en tinta tenue ("Hoy", "Ayer" o el día con fecha larga) que quedan fijos bajo la cabecera al desplazar. "Mensajes" es el directorio: buscador de 40px en relleno tranquilo y la lista completa de conversaciones. Las filas miden 64px (68px en el teléfono): marca de 36px, título de 15px peso 500, vista previa de 14px y metadatos de 13px, con la hora relativa a la derecha ("Ahora", "Hace N min", la hora, "Ayer", el día de la semana o la fecha corta). Una conversación sin leer sube el título a 650 y la vista previa a tinta plena; la abierta lleva `primary-wash`. La marca va en `--tone-wash` con su contenido en `--tone-ink`: un cuadrado `md` con el icono del tipo de publicación para los avisos y un círculo con las iniciales para las conversaciones.
+
+**La Regla del Punto Donde Cabe.** La columna inicial de 10px con el punto azul de 9px existe sólo donde una fila puede estar sin leer: el directorio de conversaciones y la campana. Las filas del historial de avisos, que siempre están leídas, no reservan esa columna. El punto lleva nombre accesible ("Sin leer", "No leído").
+
+**Conversación.** Desde 768px la rejilla abre una segunda columna de `clamp(340px, 38%, 440px)` a 24px del historial: una hoja fija bajo la cabecera, con radio `xl`, sombra de hoja levantada y alto `min(100dvh - cabecera - 48px, 900px)`. Su cabecera de 68px va en `--tone-wash`: marca de 38px sobre blanco, título de 16px peso 650 y contexto de 12.5px, en `--tone-ink`. El historial es escritorio (`--paper`), y sobre él las entrantes son hojas blancas con sombra de burbuja y las propias, azul UBB con texto blanco y selección invertida; texto de 15px con interlineado 1.45. Los mensajes del mismo autor con menos de 10 minutos entre sí forman una tanda (82% de ancho, 86% en el teléfono; 3px entre burbujas y 14px entre tandas), y la tanda ajena lleva el nombre del autor a 12px peso 600. Cada día abre con un separador fijo centrado (12px, 600, sobre una píldora del color del escritorio) y "Mensajes nuevos" (12px, 650, azul) precede al primer mensaje ajeno sin leer. Bajo cada tanda, la hora del último mensaje a 11.5px, con " · Enviado" en la última propia ya entregada; mientras se envía, la burbuja baja a opacidad 0.62 con "Enviando…". Un círculo de 36px con hoja levantada baja al último mensaje.
+
+**Compositor.** Campo nativo con borde de 1px en `control-border`, radio `xl`, 15px (16px en el teléfono para que el sistema no amplíe) que crece con `field-sizing: content` de 42 a 168px; sin ese soporte, `@supports not (field-sizing: content)` lo fija en 86px. Enviar es un círculo azul de 42px que, desactivado, pasa a relleno tranquilo fuerte. Con puntero fino Enter envía y Mayús + Enter agrega una línea, y sólo entonces se muestra esa pista; con puntero grueso Enter siempre agrega una línea. Los errores van en `danger-wash` con icono `danger`.
+
+**Teléfono.** Bajo 768px la conversación es una capa a pantalla completa sin radio ni sombra: la cabecera suma el área segura, "Volver" de 44px reemplaza a cerrar y el compositor descuenta el área segura inferior. Mientras está abierta, el documento no se desplaza y la cabecera y la navegación inferior se ocultan cuando la capa termina de entrar (360ms).
+
+**Campana.** En escritorio, un popover de 400px como máximo con radio `lg`, sombra flotante y alto `min(72vh, 580px)`; en el teléfono, una hoja inferior de vaul a todo el ancho, de 88dvh como máximo, con radio `xl` arriba, título de 19px peso 700, acciones de 44px y filas de 64px. Encabezado "Notificaciones" (16px, 650) con "Marcar todas como leídas" en azul. Las filas se agrupan en "Sin leer" y "Anteriores", o "Recientes" cuando no hay pendientes, con rótulos de 12.5px peso 600 en tinta tenue; cada fila mide 60px con la columna del punto, marca de 34px, título de 14.5px (500; 650 sin leer), detalle de 13px y hora de 12px. Cierra con "Ver todas las notificaciones" (48px, azul) sobre escritorio al 55%. El icono de la campana pasa a relleno con pendientes y el contador `danger` se corta en "99+". Como la hoja del teléfono se monta en `body`, `app/campus.css` deriva `--tone-wash`, `--tone-wash-strong` y `--tone-ink` también dentro de `.sheet-content`.
+
+**Movimiento.** Las pilas entran desde `scale(0.96)` con opacidad y salen igual en 160ms; las que quedan ocupan su lugar con resorte 340/28 (`SPRING_LAYOUT`). Al desplegar, las hojas traseras se pliegan a `scaleY(0.2)` y se funden, la lista crece por `grid-template-rows` en 360ms y las filas bajan 8px escalonadas cada 30ms hasta 90ms. El indicador del conmutador se desliza con `layoutId` y el mismo resorte. En escritorio la columna se abre con `grid-template-columns` en 380ms y la hoja entra con `@starting-style` desde 24px a la derecha y opacidad 0 (opacidad 200ms, desplazamiento 380ms); al cerrar se funde en 120ms. En el teléfono la capa entra desde `translate: 100% 0` en 360ms y sale con resorte 380/38. El último mensaje aparece 10px más abajo desde `scale(0.98)`. Todo usa `--ease-spring` y `--ease-out-quint`.
+
+**Carga.** `CommunicationsSkeleton`, `PendingBandSkeleton`, `ConversationListSkeleton` y `ConversationSkeleton` repiten la geometría de la banda, el directorio y la conversación; el esqueleto de la campana conserva vacía la columna del punto.
+
 ## Movimiento y carga
 
 El movimiento explica continuidad, nunca decora. Todo vive en `app/globals.css` (transiciones de vista y fotogramas) y `app/campus-base.css` (material de los esqueletos).
@@ -359,7 +425,8 @@ El movimiento explica continuidad, nunca decora. Todo vive en `app/globals.css` 
 - **Momento firma.** Al abrir un ramo desde su ficha, la pestaña del separador con el código viaja de la ficha a la cabecera del aula en 440ms mientras las pantallas se funden; al volver, regresa a su ficha.
 - **Esqueletos.** Muestran todo lo que ya se conoce (copia fija, nombre, código y tono del ramo, cuenta, vista del calendario) y dibujan huesos sólo para lo que falta. El hueso es tinta al 7.5% (5% en el apagado), por lo que funciona sobre hoja, escritorio o tinte de sección; `.sk-line` ocupa exactamente el alto de línea del texto que reemplaza. Aparece tras 140ms para que una carga rápida no destelle, y un único brillo diagonal recorre la página a velocidad constante (`lib/skeleton-wave.ts`).
 - **Resolución.** Un módulo diferido se funde con su esqueleto mediante una transición de vista que deja quietos títulos y controles; las listas que llegan dentro de una vista entran con `resolve`: opacidad y 6px en 320ms, escalonadas hasta 120ms; si la última entrada fue el teclado, aparecen sin animar.
-- **Superposiciones.** El menú de cuenta baja 6px desde `scale(0.97)` y los diálogos de escritorio suben 8px desde `scale(0.97)`, ambos con `@starting-style` y sólo con puntero.
+- **Superposiciones.** El menú de cuenta baja 6px desde `scale(0.97)` y los diálogos de escritorio suben 8px desde `scale(0.97)`, ambos con `@starting-style` y sólo con puntero. El panel de la campana baja 6px desde `scale(0.98)` con resorte 340/28 en cada apertura, y el contador de la cabecera crece desde `scale(0.86)` cuando cambia.
+- **Avisos y mensajes.** La columna de conversación entra con `@starting-style`: 24px y opacidad en escritorio, 100% desde la derecha en el teléfono. Pilas e indicador del conmutador usan el resorte 340/28. El detalle está en Components.
 - **Primer cuadro en el teléfono.** La barra inferior viaja siempre en el HTML del servidor y el ancho decide qué cromo se pinta; bajo 768px el shell llega móvil desde el primer cuadro y la hidratación no reordena nada.
 - **Movimiento reducido.** Huesos estáticos sin brillo, sin transiciones de vista y sin resolución animada.
 
@@ -388,4 +455,4 @@ El movimiento explica continuidad, nunca decora. Todo vive en `app/globals.css` 
 ### Pendientes conocidos
 
 - En Administrar ramos, la marca de color de la lista puede no coincidir con el tono del portal, porque el portal deriva el tono de una plantilla o de un hash. Está registrado como tarea de datos aparte.
-- El marcador del día de hoy en el calendario y los indicadores de no leído (filas de notificación, punto de conversación, aviso no leído) usan azul a propósito: son indicadores de estado bajo la Regla del Azul que Actúa. El contador de la cabecera usa `danger`.
+- El marcador del día de hoy en el calendario y el indicador de no leído usan azul a propósito: son estado bajo la Regla del Azul que Actúa. El no leído es un punto de 9px en la columna inicial de la campana y del directorio de conversaciones, más peso 650 en el título; un aviso no leído vive en la banda "Sin leer" y no en el historial. El contador de la cabecera usa `danger`.

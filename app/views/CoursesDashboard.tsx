@@ -6,6 +6,7 @@ import {
   Archive,
   ArrowRight,
   CalendarBlank,
+  CalendarCheck,
   ChalkboardTeacher,
   MagnifyingGlass,
   X,
@@ -21,8 +22,8 @@ import {
   evaluationUrgency,
   firstName,
   getSantiagoDateISO,
+  monthOf,
   nextEntry,
-  shortDate,
   weekdayOf,
 } from "../../lib/portal-utils";
 import type { CalendarEntry, User } from "../../lib/portal-utils";
@@ -30,6 +31,26 @@ import type { CalendarEntry, User } from "../../lib/portal-utils";
 const AGENDA_LATER_LIMIT = 3;
 
 type AgendaItem = { entry: CalendarEntry; course: Course };
+
+function AgendaMeta({
+  course,
+  weight,
+  marked = false,
+}: {
+  course: string;
+  weight?: number;
+  marked?: boolean;
+}) {
+  return (
+    <span className="agenda-meta">
+      <span>
+        {marked && <span aria-hidden="true" className="teacher-course-mark" />}
+        {course}
+      </span>
+      {weight !== undefined && <span className="num">{weight}% de la nota</span>}
+    </span>
+  );
+}
 
 function DashboardAgenda({
   next,
@@ -54,83 +75,73 @@ function DashboardAgenda({
         </button>
       </div>
       {next ? (
-        <article
-          className="next-eval"
-          style={{ "--course-tone": next.tone } as React.CSSProperties}
-        >
-          <time className="next-eval-date" dateTime={next.date}>
-            <span className="next-eval-weekday">{weekdayOf(next.date)}</span>
-            <span className="next-eval-day num">{dayOf(next.date)}</span>
-            <span className="next-eval-month">{shortDate(next.date).slice(3)}</span>
-          </time>
-          <h3 className="next-eval-title">{next.detail}</h3>
-          <p className="next-eval-meta">
-            <span className="next-eval-course">
-              <span aria-hidden="true" className="next-eval-dot" />
-              {next.course}
-            </span>
-            {nextCourse && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="num">{nextCourse.code}</span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  Sección <span className="num">{nextCourse.section}</span>
-                </span>
-              </>
-            )}
-          </p>
-          <span className="next-eval-count num" data-urgency={evaluationUrgency(next.date)}>
-            {countdown(next.date)}
-          </span>
-          {nextCourse && (
-            <button
-              aria-label={`Ir al ramo ${nextCourse.name}`}
-              className="next-eval-action"
-              onClick={() => openCourse(nextCourse)}
-              type="button"
-            >
-              <AnimatedUnderline>Ir al ramo</AnimatedUnderline>{" "}
-              <ArrowRight aria-hidden="true" size={15} />
-            </button>
-          )}
-        </article>
-      ) : (
-        <div className="agenda-clear">
-          <h3>Espacio para organizarte</h3>
-          <p>No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.</p>
-        </div>
-      )}
-      {later.length > 0 && (
-        <ol aria-label="Siguientes evaluaciones" className="agenda-later">
-          {later.map(({ entry, course }) => (
-            <li key={entry.key} style={{ "--course-tone": entry.tone } as React.CSSProperties}>
-              <button
-                aria-label={`${entry.detail}, ${course.name}, ${countdown(entry.date)}`}
-                onClick={() => openCourse(course)}
-                type="button"
-              >
-                <time className="agenda-later-date num" dateTime={entry.date}>
-                  <span>{weekdayOf(entry.date)}</span>
-                  <b>{dayOf(entry.date)}</b>
-                </time>
-                <span className="agenda-later-copy">
-                  <strong>{entry.detail}</strong>
-                  <small>
-                    <span aria-hidden="true" className="next-eval-dot" />
-                    {course.name}
-                  </small>
-                </span>
-                <span
-                  className="agenda-later-count num"
-                  data-urgency={evaluationUrgency(entry.date)}
+        <div className="agenda-sheet">
+          <article
+            className="agenda-next"
+            style={{ "--course-tone": next.tone } as React.CSSProperties}
+          >
+            <time className="agenda-leaf" dateTime={next.date}>
+              <span>{weekdayOf(next.date)}</span>
+              <b className="num">{dayOf(next.date)}</b>
+              <span>{monthOf(next.date)}</span>
+            </time>
+            <div className="agenda-next-copy">
+              <h3>{next.title ?? next.detail}</h3>
+              <AgendaMeta course={next.course} weight={next.weight} />
+            </div>
+            <footer className="agenda-next-foot">
+              <span className="agenda-count num" data-urgency={evaluationUrgency(next.date)}>
+                {countdown(next.date)}
+              </span>
+              {nextCourse && (
+                <button
+                  aria-label={`Ir al ramo ${nextCourse.name}`}
+                  className="agenda-open"
+                  onClick={() => openCourse(nextCourse)}
+                  type="button"
                 >
-                  {countdown(entry.date)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
+                  <AnimatedUnderline>Ir al ramo</AnimatedUnderline>{" "}
+                  <ArrowRight aria-hidden="true" size={15} />
+                </button>
+              )}
+            </footer>
+          </article>
+          {later.length > 0 && (
+            <ol aria-label="Siguientes evaluaciones" className="agenda-later">
+              {later.map(({ entry, course }) => (
+                <li key={entry.key} style={{ "--course-tone": entry.tone } as React.CSSProperties}>
+                  <button
+                    aria-label={`${entry.detail}, ${course.name}, ${countdown(entry.date)}`}
+                    onClick={() => openCourse(course)}
+                    type="button"
+                  >
+                    <time className="agenda-day" dateTime={entry.date}>
+                      <span>{weekdayOf(entry.date)}</span>
+                      <b className="num">{dayOf(entry.date)}</b>
+                    </time>
+                    <span className="agenda-later-copy">
+                      <strong>{entry.title ?? entry.detail}</strong>
+                      <AgendaMeta course={course.name} marked weight={entry.weight} />
+                    </span>
+                    <span className="agenda-count num" data-urgency={evaluationUrgency(entry.date)}>
+                      {countdown(entry.date)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      ) : (
+        <div className="pending-clear agenda-clear">
+          <CalendarCheck aria-hidden="true" size={26} />
+          <div>
+            <h3>Espacio para organizarte</h3>
+            <p>
+              No hay evaluaciones próximas. Revisa tu calendario y reserva tiempo para estudiar.
+            </p>
+          </div>
+        </div>
       )}
     </section>
   );

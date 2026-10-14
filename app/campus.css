@@ -1,6 +1,7 @@
 /* Campus «Separadores»: los tokens viven en globals.css; aquí, la composición del campus. */
 
-.app-shell [style*="--course-tone"] {
+.app-shell [style*="--course-tone"],
+.sheet-content [style*="--course-tone"] {
   --tone-wash: color-mix(in oklch, var(--course-tone) 15%, white);
   --tone-wash-strong: color-mix(in oklch, var(--course-tone) 26%, white);
   --tone-ink: color-mix(in oklch, var(--course-tone) 52%, oklch(0.17 0.02 265));
@@ -309,7 +310,7 @@
   font-weight: 500;
   color: var(--text-muted);
 }
-.app-shell :is(.course-card h3, .next-eval-title, .classroom-top h1, .agenda-clear h3) {
+.app-shell :is(.course-card h3, .agenda-next h3, .classroom-top h1, .agenda-clear h3) {
   font-family: var(--font-core);
 }
 
@@ -373,7 +374,6 @@
 .app-shell
   :is(
     .account-popover,
-    .notification-popover,
     .next-eval,
     .archived-courses,
     .classroom-import-actions,
@@ -392,7 +392,6 @@
     .grades-editor,
     .teams-editor-card,
     .final-grade-records,
-    .communications-workspace,
     .teacher-manager-empty,
     .moodle-import-dialog,
     .settings-panel,
@@ -418,7 +417,7 @@
   border-color: transparent;
   box-shadow: var(--shadow-1);
 }
-.app-shell :is(.account-popover, .notification-popover, .classroom-import-actions),
+.app-shell :is(.account-popover, .classroom-import-actions),
 .palette,
 .app-shell .planner-dialog {
   box-shadow: var(--shadow-2);
@@ -699,7 +698,8 @@
   color: var(--color-primary);
 }
 
-/* Agenda: la próxima evaluación manda; las siguientes bajan de peso. */
+/* Agenda: una sola hoja. La próxima evaluación es su cabecera, teñida con el
+   tono de su ramo; las siguientes bajan a filas que alinean fecha y texto con ella. */
 .agenda-calendar-link {
   display: inline-flex;
   align-items: center;
@@ -716,130 +716,200 @@
 button.agenda-calendar-link:hover {
   background: var(--color-primary-wash);
 }
-.dashboard-agenda .next-eval {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  grid-template-areas: none;
-  gap: 14px 14px;
-  padding: 18px 18px 6px;
+.agenda-sheet {
+  overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  box-shadow: var(--shadow-1);
 }
-.dashboard-agenda .next-eval-date {
-  grid-column: 1;
-  grid-row: 1;
-  width: 58px;
-  min-width: 0;
-  min-height: 66px;
-  padding: 8px 4px;
-  border-radius: var(--radius-md);
+.agenda-next {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-areas:
+    "leaf copy"
+    "leaf foot";
+  align-items: start;
+  column-gap: 14px;
+  padding: 16px 16px 8px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--tone-wash);
-  color: var(--tone-ink);
-  & .next-eval-weekday,
-  & .next-eval-month {
+  transition: background var(--transition-fast);
+  &:only-child {
+    border-radius: var(--radius-lg);
+  }
+  &:has(.agenda-open:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+  &:has(.agenda-open:active) {
+    background: var(--tone-wash-strong);
+  }
+}
+.agenda-leaf {
+  grid-area: leaf;
+  display: grid;
+  justify-items: center;
+  padding: 7px 0 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-control);
+  line-height: 1.15;
+  & span {
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    color: var(--text-muted);
   }
-  & .next-eval-day {
+  & span:first-child {
+    color: var(--tone-ink);
+  }
+  & b {
     font-size: 24px;
     font-weight: 700;
-    line-height: 1.05;
     letter-spacing: -0.02em;
     color: var(--text-body);
   }
 }
-.dashboard-agenda .next-eval-count {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: center;
-  justify-self: start;
-  padding: 0;
-  background: transparent;
+.agenda-next-copy {
+  grid-area: copy;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-top: 3px;
+  & h3 {
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.017em;
+    color: var(--text-body);
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+}
+/* Ramo y ponderación se separan con un punto que, si la ponderación baja de
+   renglón, queda en la franja recortada a la izquierda en vez de colgar. */
+.agenda-meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-inline-start: -0.9em;
+  clip-path: inset(0 0 0 0.9em);
   font-size: 13px;
-  font-weight: 650;
-  color: var(--text-secondary);
-}
-.app-shell :is(.next-eval-count, .agenda-later-count)[data-urgency="today"],
-.app-shell :is(.next-eval-count, .agenda-later-count)[data-urgency="soon"] {
-  background: transparent;
-  color: var(--danger);
-}
-.dashboard-agenda .next-eval-title {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  font-size: 18px;
-  font-weight: 650;
-  line-height: 1.35;
-  letter-spacing: -0.017em;
-  text-wrap: balance;
-}
-.dashboard-agenda .next-eval-meta {
-  grid-column: 1 / -1;
-  grid-row: 3;
-  font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--text-muted);
+  overflow-wrap: anywhere;
+  .agenda-next & {
+    font-weight: 550;
+    color: var(--tone-ink);
+  }
+  & > span {
+    position: relative;
+    padding-inline-start: 0.9em;
+    &::before {
+      content: "·";
+      position: absolute;
+      inset-inline-start: 0;
+      width: 0.9em;
+      text-align: center;
+    }
+  }
+  & > .num {
+    white-space: nowrap;
+  }
+  & .teacher-course-mark {
+    display: inline-block;
+    margin-right: 6px;
+  }
 }
-.app-shell .next-eval-course {
+.agenda-next-foot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  margin-top: 6px;
+}
+.agenda-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  .agenda-next & {
+    font-size: 13px;
+    color: var(--tone-ink);
+  }
+  &:is([data-urgency="today"], [data-urgency="soon"]) {
+    color: var(--danger);
+  }
+}
+.agenda-open {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--text-secondary);
-  font-weight: 550;
-}
-.dashboard-agenda .next-eval-action {
-  grid-column: 1 / -1;
-  grid-row: 4;
-  justify-self: stretch;
-  justify-content: space-between;
-  min-height: 44px;
-  margin: 2px -8px 0;
+  min-height: 36px;
+  margin-right: -8px;
   padding: 0 8px;
   border-radius: var(--radius-sm);
+  color: var(--color-primary);
   font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  &:focus-visible {
+    outline: none;
+  }
 }
 .agenda-later {
+  display: grid;
+  gap: 2px;
   margin: 0;
-  padding: 4px 0;
+  padding: 6px;
   list-style: none;
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-1);
   & button {
-    position: relative;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 14px;
     width: 100%;
-    min-height: 58px;
-    padding: 8px 16px 8px 14px;
+    min-height: 60px;
+    padding: 10px;
+    border-radius: var(--radius-md);
     text-align: left;
     transition: background var(--transition-fast);
-    &:hover {
-      background: var(--fill-quiet);
-    }
     &:active {
       background: var(--fill-quiet-strong);
     }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+  }
+  & .agenda-count {
+    line-height: 19.5px;
   }
 }
-.agenda-later-date {
+.agenda-day {
   display: grid;
   justify-items: center;
-  line-height: 1.1;
+  line-height: 1.15;
   & span {
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--tone-ink);
+    color: var(--text-muted);
   }
   & b {
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 650;
+    letter-spacing: -0.01em;
     color: var(--text-body);
   }
 }
@@ -848,44 +918,28 @@ button.agenda-calendar-link:hover {
   gap: 2px;
   min-width: 0;
   & strong {
+    display: -webkit-box;
     overflow: hidden;
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 19.5px;
+    color: var(--text-body);
+    overflow-wrap: anywhere;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
   }
-  & small {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
+  & .agenda-meta {
     font-size: 12.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
   }
 }
-.agenda-later-count {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.agenda-clear {
-  padding: 22px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-}
-.agenda-clear h3 {
-  font-size: 16px;
-  font-weight: 650;
-  line-height: 1.4;
-}
-.agenda-clear p {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--text-muted);
-  text-wrap: pretty;
+@media (hover: hover) {
+  .agenda-next:hover {
+    background: color-mix(in oklch, var(--tone-wash) 55%, var(--tone-wash-strong));
+  }
+  .agenda-later button:hover {
+    background: var(--fill-quiet);
+  }
 }
 .app-shell .archived-courses {
   border-radius: var(--radius-lg);
@@ -992,15 +1046,7 @@ button.agenda-calendar-link:hover {
   background: var(--surface-card);
   box-shadow: var(--shadow-lift);
 }
-.app-shell
-  :is(
-    .course-facts,
-    .settings-panel,
-    .quiz-catalog,
-    .communications-workspace,
-    .participant-list,
-    .notification-popover
-  ) {
+.app-shell :is(.course-facts, .settings-panel, .quiz-catalog, .participant-list) {
   --border-hairline: transparent;
 }
 .app-shell .course-tabs {
@@ -1070,12 +1116,6 @@ button.agenda-calendar-link:hover {
   box-shadow: var(--shadow-1);
 }
 
-.app-shell :is(.communications-panel-heading h2, .conversation-list-heading h2) {
-  font-family: var(--font-core);
-  font-weight: 650;
-  letter-spacing: -0.015em;
-}
-
 .app-shell :is(.grades-editor-row, .grades-editor-foot) {
   padding-top: 0;
   border-top: 0;
@@ -1116,45 +1156,6 @@ button.agenda-calendar-link:hover {
   display: none;
 }
 
-.notification-group-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 10px 16px 6px;
-  background: var(--surface-card);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-.notification-row {
-  & .notification-copy small,
-  & .notification-time {
-    color: var(--text-secondary);
-  }
-  & > :first-child {
-    grid-row: 1 / span 2;
-  }
-  & .notification-copy :is(strong, small) {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    white-space: normal;
-  }
-  & .notification-copy strong {
-    font-size: 14px;
-  }
-  & .notification-time {
-    grid-column: 2;
-  }
-}
-
-/* ── Pie ──────────────────────────────────────────────── */
-.app-shell .site-footer {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top-color: transparent;
-}
 .app-shell .site-footer-inner {
   align-items: flex-start;
   text-align: left;
@@ -1347,41 +1348,6 @@ button.agenda-calendar-link:hover {
     scroll-behavior: auto;
     transition-duration: 0ms;
     animation-duration: 0ms;
-  }
-}
-
-/* La consulta móvil ocupa el espacio útil entre cabecera y navegación. */
-.communications-heading .communications-summary {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-.communications-messages {
-  flex: none;
-}
-@media (max-width: 700px) {
-  .communications-center:has([data-conversation-open="true"]) .communications-workspace {
-    position: fixed;
-    inset: var(--header-offset) 0 calc(var(--mobile-nav-height, 58px) + var(--safe-bottom));
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    border-radius: 0;
-    border-inline: 0;
-  }
-  .communications-center:has([data-conversation-open="true"]) .communications-toolbar {
-    display: none;
-  }
-  .communications-center:has([data-conversation-open="true"]) .communications-content {
-    flex: 1;
-    min-height: 0;
-  }
-  .communications-messages[data-conversation-open="true"] {
-    flex: 1;
-    height: auto;
-    min-height: 0;
   }
 }
 

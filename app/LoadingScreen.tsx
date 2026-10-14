@@ -209,21 +209,34 @@ export function LoadingScreen() {
                   Calendario
                 </span>
               </div>
-              <article className="next-eval" style={NEUTRAL_TONE}>
-                <span className="next-eval-date">
-                  <Line quiet w="2em" />
-                  <Line w="1.4em" />
-                </span>
-                <h3 className="next-eval-title">
-                  <Line w="88%" />
-                </h3>
-                <p className="next-eval-meta">
-                  <Line quiet w="72%" />
-                </p>
-                <span className="next-eval-count">
-                  <Line quiet w="4em" />
-                </span>
-              </article>
+              <div className="agenda-sheet">
+                <article className="agenda-next" style={NEUTRAL_TONE}>
+                  <span className="agenda-leaf">
+                    <span>
+                      <Line quiet w="2.2em" />
+                    </span>
+                    <b>
+                      <Line w="1.2em" />
+                    </b>
+                    <span>
+                      <Line quiet w="2.4em" />
+                    </span>
+                  </span>
+                  <div className="agenda-next-copy">
+                    <h3>
+                      <Line w="88%" />
+                    </h3>
+                    <span className="agenda-meta">
+                      <Line quiet w="72%" />
+                    </span>
+                  </div>
+                  <div className="agenda-next-foot">
+                    <span className="agenda-count">
+                      <Line quiet w="4.5em" />
+                    </span>
+                  </div>
+                </article>
+              </div>
             </section>
           </div>
           <SiteFooter />

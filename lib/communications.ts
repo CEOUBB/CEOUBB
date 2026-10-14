@@ -154,7 +154,16 @@ export type NotificationItem = {
   createdAt: string;
   unread: boolean;
   cursorKey: string;
+  kind?: CourseActivity["kind"];
+  dueDate?: string;
   threadId?: string;
+};
+
+export const POST_KIND_LABELS: Record<CourseActivity["kind"], string> = {
+  notice: "Aviso",
+  guide: "Guía",
+  assessment: "Evaluación",
+  resource: "Recurso",
 };
 
 const ACTIVITY_EXCERPTS: Record<string, string> = {
@@ -170,7 +179,8 @@ export function deriveNotifications(
   threads: readonly MessageThreadSummary[],
   cursors: readonly CommunicationReadCursor[],
   currentUserId: string,
-  courses: readonly NotificationCourse[]
+  courses: readonly NotificationCourse[],
+  limit = MAX_NOTIFICATION_ITEMS
 ): NotificationItem[] {
   const reads = readCursorMap(cursors);
   const enrolled = new Map<string, NotificationCourse>();
@@ -194,6 +204,8 @@ export function deriveNotifications(
       createdAt: item.createdAt,
       unread: timestampIsUnread(item.createdAt, reads.get(cursorKey)),
       cursorKey,
+      kind: item.kind,
+      dueDate: item.dueDate,
     });
   }
 
@@ -217,9 +229,7 @@ export function deriveNotifications(
     });
   }
 
-  return items
-    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-    .slice(0, MAX_NOTIFICATION_ITEMS);
+  return items.sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, limit);
 }
 
 // Implements: REQ-NOTIF-04
@@ -229,4 +239,169 @@ export function unreadCursorKeys(items: readonly NotificationItem[]): string[] {
     if (item.unread) keys.add(item.cursorKey);
   }
   return [...keys];
+}
+
+const TIME_ZONE = "America/Santiago";
+const DAY_MS = 86_400_000;
+const MESSAGE_RUN_GAP_MS = 10 * 60_000;
+const DAY_KEY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const CLOCK = new Intl.DateTimeFormat("es-CL", {
+  timeZone: TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+const WEEKDAY = new Intl.DateTimeFormat("es-CL", { timeZone: TIME_ZONE, weekday: "long" });
+const SHORT_DATE = new Intl.DateTimeFormat("es-CL", {
+  timeZone: TIME_ZONE,
+  day: "numeric",
+  month: "short",
+});
+const SHORT_DATE_YEAR = new Intl.DateTimeFormat("es-CL", {
+  timeZone: TIME_ZONE,
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+const LONG_DAY = new Intl.DateTimeFormat("es-CL", {
+  timeZone: TIME_ZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+const FULL_STAMP = new Intl.DateTimeFormat("es-CL", {
+  timeZone: TIME_ZONE,
+  dateStyle: "full",
+  timeStyle: "short",
+  hourCycle: "h23",
+});
+
+function validDate(value: string): Date | null {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toLocaleUpperCase("es-CL") + value.slice(1);
+}
+
+export function dayKey(value: string | Date): string {
+  const date = typeof value === "string" ? validDate(value) : value;
+  return date ? DAY_KEY.format(date) : "";
+}
+
+function dayDistance(from: Date, to: Date): number {
+  return Math.round((Date.parse(dayKey(to)) - Date.parse(dayKey(from))) / DAY_MS);
+}
+
+export function clockTime(value: string): string {
+  const date = validDate(value);
+  return date ? CLOCK.format(date) : "";
+}
+
+export function fullStamp(value: string): string {
+  const date = validDate(value);
+  return date ? FULL_STAMP.format(date) : "Fecha no disponible";
+}
+
+// Implements: REQ-COMM-08
+export function stampLabel(value: string, now: Date): string {
+  const date = validDate(value);
+  if (!date) return "";
+  const elapsed = now.getTime() - date.getTime();
+  if (elapsed >= 0 && elapsed < 60_000) return "Ahora";
+  if (elapsed >= 0 && elapsed < 3_600_000) return `Hace ${Math.floor(elapsed / 60_000)} min`;
+  const days = dayDistance(date, now);
+  if (days === 0) return CLOCK.format(date);
+  if (days === 1) return "Ayer";
+  if (days > 1 && days < 7) return capitalize(WEEKDAY.format(date));
+  return dayKey(date).slice(0, 4) === dayKey(now).slice(0, 4)
+    ? SHORT_DATE.format(date)
+    : SHORT_DATE_YEAR.format(date);
+}
+
+export function dayLabel(key: string, now: Date): string {
+  const date = new Date(`${key}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+  const days = Math.round((Date.parse(dayKey(now)) - Date.parse(key)) / DAY_MS);
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Ayer";
+  return capitalize(LONG_DAY.format(date));
+}
+
+export type MessageRun = {
+  key: string;
+  authorId: string;
+  authorName: string;
+  own: boolean;
+  messages: DirectMessage[];
+};
+
+export type MessageDay = {
+  key: string;
+  runs: MessageRun[];
+};
+
+// Implements: REQ-COMM-08
+export function groupMessages(
+  messages: readonly DirectMessage[],
+  currentUserId: string
+): MessageDay[] {
+  const days: MessageDay[] = [];
+  let previous: DirectMessage | null = null;
+
+  for (const message of messages) {
+    const key = dayKey(message.createdAt);
+    let day = days.at(-1);
+
+    if (!day || day.key !== key) {
+      day = { key, runs: [] };
+      days.push(day);
+      previous = null;
+    }
+
+    const run = day.runs.at(-1);
+    const gap = previous
+      ? Date.parse(message.createdAt) - Date.parse(previous.createdAt)
+      : Number.POSITIVE_INFINITY;
+
+    if (run && previous?.authorId === message.authorId && gap <= MESSAGE_RUN_GAP_MS) {
+      run.messages.push(message);
+    } else {
+      day.runs.push({
+        key: message.id,
+        authorId: message.authorId,
+        authorName: message.authorName,
+        own: message.authorId === currentUserId,
+        messages: [message],
+      });
+    }
+
+    previous = message;
+  }
+
+  return days;
+}
+
+export function firstUnreadMessageId(
+  messages: readonly DirectMessage[],
+  readAt: string | undefined,
+  currentUserId: string
+): string {
+  if (!readAt) return "";
+  return (
+    messages.find(
+      (message) =>
+        message.authorId !== currentUserId && timestampIsUnread(message.createdAt, readAt)
+    )?.id ?? ""
+  );
+}
+
+export function awaitsTeamReply(thread: MessageThreadSummary): boolean {
+  return thread.latestAuthorId === thread.studentId;
 }

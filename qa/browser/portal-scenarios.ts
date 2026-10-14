@@ -153,7 +153,7 @@ export async function portalScenario(
         await navigate(page, "Área personal");
       }
       await expect(page.getByRole("heading", { name: "En tu agenda" })).toBeVisible();
-      await expect(page.locator(".next-eval-title")).toBeVisible();
+      await expect(page.locator(".agenda-next h3")).toBeVisible();
     } else
       await expect(
         page.getByRole("button", { name: "Entrar al aula de QA Aula activa" })
@@ -166,7 +166,7 @@ export async function portalScenario(
       page.getByRole("heading", { name: "Avisos y mensajes", exact: true })
     ).toBeVisible();
     if (id === "communications.announcements") {
-      await expect(page.locator(".announcement-list")).toBeVisible();
+      await expect(page.locator(".communications-list")).toBeVisible();
     } else {
       await page.getByRole("tab", { name: /Mensajes/ }).click();
       const list = page.getByRole("complementary", { name: "Conversaciones" });

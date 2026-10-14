@@ -390,9 +390,6 @@
     border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--course-tone) 14%, #fff);
   }
-  .next-eval-weekday {
-    font-size: 11.5px;
-  }
   .next-eval-day {
     font-family: var(--font-core);
     font-size: 14px;
@@ -401,10 +398,6 @@
   }
   .next-eval-month {
     font-size: 11.5px;
-  }
-
-  .next-eval-count {
-    justify-self: end;
   }
 
   /* El asunto de la evaluación es lo que se viene a leer: a ancho completo y

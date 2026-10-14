@@ -18,6 +18,8 @@ export type CalendarEntry = {
   courseId: string;
   course: string;
   detail: string;
+  title?: string;
+  weight?: number;
   date: string;
   tone: string;
 };
@@ -86,19 +88,17 @@ export function calendarEntries(courses: Course[], gradebooks: CourseGradebook[]
   const gradebookMap = new Map(gradebooks.map((gb) => [gb.courseId, gb]));
   const entries = courses.flatMap((course) => {
     const dated = gradebookMap.get(course.id)?.items.filter((item) => item.date) ?? [];
-    const source =
+    const source: { id: string; name: string; date: string; weight?: number }[] =
       dated.length > 0
-        ? dated.map((item) => ({
-            id: item.id,
-            name: `${item.name} · ${item.weight}% de la nota`,
-            date: item.date,
-          }))
-        : course.evaluations;
+        ? dated
+        : course.evaluations.map(({ id, name, date }) => ({ id, name, date }));
     return source.map((item) => ({
       key: `${course.id}-${item.id}`,
       courseId: course.id,
       course: course.name,
-      detail: item.name,
+      detail: item.weight === undefined ? item.name : `${item.name} · ${item.weight}% de la nota`,
+      title: item.name,
+      weight: item.weight,
       date: item.date,
       tone: course.tone,
     }));
