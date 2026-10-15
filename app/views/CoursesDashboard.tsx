@@ -245,19 +245,24 @@ export function CoursesDashboard({
     parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
   );
 
+  const coursesMap = useMemo(
+    () => new Map(courses.map((course) => [course.id, course])),
+    [courses]
+  );
+
   const next = nextEntry(entries);
-  const nextCourse = next && courses.find((course) => course.id === next.courseId);
+  const nextCourse = next ? coursesMap.get(next.courseId) : undefined;
   const todayISO = getSantiagoDateISO();
   const later = useMemo(
     () =>
       entries
         .filter((entry) => entry !== next && entry.date >= todayISO)
         .flatMap((entry) => {
-          const course = courses.find((item) => item.id === entry.courseId);
+          const course = coursesMap.get(entry.courseId);
           return course ? [{ entry, course }] : [];
         })
         .slice(0, AGENDA_LATER_LIMIT),
-    [entries, next, courses, todayISO]
+    [entries, next, coursesMap, todayISO]
   );
   const teaches = user.role === "teacher" || user.role === "owner";
 
