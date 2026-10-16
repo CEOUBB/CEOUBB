@@ -1,31 +1,6 @@
 # Centro de Estudio UBB: Project Plan & Agent Handoff
 
-## Current handoff: Course page builder, 2026-10-11
-
-- Scope: branch `claude/teacher-engine-design-functionality-55bf16`, OpenSpec `classroom/course-page` (archived as `2026-10-11-course-page-builder`). The cover is now a page the teaching team builds: named sections with text, file, link and image items, edited in place with drag and keyboard reordering, move between sections, duplicate, hide, schedule, undo and redo (50 steps), student preview and a 30-day trash. Avisos live in their own rail panel and reader and remain the only content that notifies; "Listo" offers a prefilled aviso after visible material is added. The preset stage was removed and `PublishView` composes avisos only.
-- Data: `pageSections`, `hiddenItems` and `trash` under `courses/{sectionId}`; historical posts are classified on read and materialized when the team first opens the edit mode. See `AGENTS.md` §2.2.2.
-- Deployment order: Firestore rules and indexes, Storage rules, enable the Cloud Scheduler API and deploy `publishScheduledCourseContent`, then the web build. Plain `pnpm dev` without emulators uses dev posts and does not persist page edits.
-- Tests: `tests/course-page.test.ts` and a rules test for hidden content and co-editing were added; existing tests were repointed to the files that now hold each guarantee. The frozen allow count in `tests/native-services.test.ts` moved to 56 for the three new collections. QA registers `page.student`, `page.teacher-hidden`, `page.preview`, `page.trash` and `page.edit`; the active QA section now seeds five posts.
-- Fixed in passing: `.rich-editor textarea { width: 100% }` overrode `.sr-only` on the editor's submitted value and gave the composer 31px of horizontal scroll at 390px, which aborted view transitions ("Viewport size changed"); the composer header context is hidden at 700px and below.
-- Open: no production deployment. Physical Android and iOS devices were not exercised. Restricted text colours, per-group visibility and cross-course import remain out of scope.
-
-## Handoff: Motion, skeletons and mobile first paint, 2026-10-11
-
-- Scope: branch `claude/unruffled-cartwright-969c16`. Screen and classroom tab changes started by pointer or touch run through React `<ViewTransition>` (`lib/view-transition.ts`, `Screen` and `Deferred` in `app/portal-ui.tsx`); keyboard and reduced motion apply them immediately. The course divider tab morphs between the card and the classroom header. Lazy views moved from `next/dynamic` to `React.lazy` with `Suspense` so skeletons receive real props.
-- Skeletons were rebuilt on the real view classes (`app/views/ViewSkeletons.tsx`, primitives in `app/views/skeleton-bones.tsx`, diagonal shimmer in `lib/skeleton-wave.ts`). They render known data and draw bones only for pending data; arriving lists use `resolve` / `resolve-children`, which stay instant after keyboard input. Posts expose `postsStatus` so an empty state never shows while the first snapshot is pending.
-- Mobile first paint: `MobileBottomNav` is always server rendered and the phone chrome rules hang from `.app-shell:has(.mobile-nav)` inside the 767px media query, so phones paint the mobile shell before hydration. `data-mobile` remains only for behaviour and the notification sheet. `/campus/loading.tsx` was tried and removed: React's batched Suspense reveal kept the fallback at least about 300ms and duplicated the shell in the DOM.
-- Tests: no sealed test changed. `e2e/skeleton-layout.spec.ts` passes props to the skeletons and a fixed calendar view; `qa/browser/motion-scenarios.ts` asserts a view transition for pointer navigation and none for keyboard tabs.
-- Open: no production deployment. Physical Android and iOS devices were not exercised.
-
-## Handoff: Calendar redesign, 2026-10-10
-
-- Scope: branch `claude/calendar-redesign-ac7278`. Rebuilds `app/views/calendar/` as "Agenda y línea de tiempo": a collapsible side column (mini month, "Lo que viene", course filters), day, week, month and four week agenda views, quick create popover, academic item peek, block resizing, single key shortcuts, and a phone layout with a week strip, floating create button and bottom sheets. Decisions, interaction model and REQ-CEO72-05 to 09 live in `docs/design/ceo-72-calendario.md`; `DESIGN.md` records the shipped system.
-- Touch creation is a 350 ms long press; the explicit touch selection toggle, the per block "Mover" handle and the toolbar date input are retired. The time zone label is computed with `Intl` instead of a hardcoded `GMT−4`.
-- All calendar CSS lives at the end of `app/campus.css` (old rules removed from `campus-base.css`, `campus.css` and `mobile-shell.css`). No schema, rules or data source changes.
-- Tests: new sealed suite `tests/planner-views.test.ts` (hash registered). `e2e/calendar-ceo72.spec.ts` and the calendar part of `e2e/skeleton-layout.spec.ts` were updated to the new controls with the same flows plus resize, long press, views, shortcuts, picker and peek. QA catalog adds `calendar.day`, `calendar.agenda` and `calendar.quick-create`.
-- Open: the impeccable concept roll for seed `eeb63c02` was not recorded in `.impeccable/`. No production deployment was performed.
-
-## Handoff: Campus redesign "Separadores de archivador", 2026-10-06
+## Current handoff: Campus redesign "Separadores de archivador", 2026-10-06
 
 - Scope: [PR #287](https://github.com/CEOUBB/CEOUBB/pull/287), branch `claude/lms-ui-ux-redesign-39a5a8`. Replaces the campus visual system (dashboard, classroom, calendar, communications, resources, settings, administration, Administrar ramos), public help and policy pages, the 404 page and the global error screen. The access screen is unchanged. `DESIGN.md` is the source of truth; `.agents/rules/003-ui-components.mdc` summarizes it for agents.
 - Tokens live in `app/globals.css` under `:root:has(.app-shell, .policy-page, .public-page)`; Inter loads with the `opsz` axis in `app/layout.tsx`. Each section carries `--course-tone`, from which `app/campus.css` derives `--tone-wash`, `--tone-wash-strong` and `--tone-ink`.
@@ -150,13 +125,6 @@
 
 - React Doctor: los dos avisos de tamaño son recomendaciones de mantenibilidad; no se desactiva la regla ni se fragmentan componentes para mejorar la puntuación.
 - PR Review Agent: el padre de messagesEnd sí es message-history, fuera de la lista. Su diagnóstico del DOM es falso. La prueba de historial largo reveló un desfase distinto de 44px al aparecer el estado de envío en móvil; el efecto de scroll ahora depende también del feedback, con regresión en los cuatro anchos.
-
-## Handoff: Avisos y mensajes, "Lo pendiente primero", 2026-10-13
-
-- **Delivered:** full redesign of the communications screen and the header bell on desktop and phones. Unread band with one stacked sheet per section (divider tab, tone head, fan-out, mark as read), day-grouped history that lists only read items, Mensajes directory with search and "Por responder" for teachers, docked conversation column (full-screen layer on phones) with grouped turns, day separators, unread marker, optimistic sending, per-conversation drafts and Enter to send. Bell: desktop popover and draggable `vaul` sheet with "Sin leer" first.
-- **Scope:** UI only. No Firestore rule, function or data model change. Read receipts deliberately left out (they need thread-level markers and expose teachers' reading activity). `deriveNotifications` gained an optional limit plus `kind` and `dueDate`; new pure helpers `stampLabel`, `dayLabel`, `groupMessages`, `firstUnreadMessageId` and `awaitsTeamReply`, and the shared `lib/hooks/use-clock.ts`.
-- **Verification:** `pnpm test` (production build), `verify:fast` (657 tests, 75 sealed files including the new `tests/communications-thread.test.ts`, 32 specs), `verify:invariants`, lint, TypeScript and Prettier. Agent QA: communications area at 320/390/768/1440 in Chromium, `communications.reply` and `communications.messages` in Firefox and WebKit, `shell.notifications` at 320/768/1440 and its loading state.
-- **Known and separate:** `shell.palette`, `shell.palette-empty` and `shell.motion` fail at 320px on `main` too (palette overlay leaves the bottom navigation 0.4px exposed). `api.performance.isolation` needs `--production`. Evidence and captures: `docs/design/communications-review.md`; visual system recorded in `DESIGN.md` ("Avisos y mensajes").
 
 ## Handoff: rediseño de Avisos y mensajes, 2026-09-09
 

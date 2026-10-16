@@ -68,7 +68,7 @@ export async function portalScenario(
     expect((await session.json()).user.id).toBe("firebase:qa-student");
     await page.reload();
     await expect(page.getByRole("heading", { name: /^Hola,/ })).toBeVisible();
-    await expect(page.getByText("5 publicaciones", { exact: true })).toBeVisible();
+    await expect(page.getByText("4 publicaciones", { exact: true })).toBeVisible();
     return true;
   }
   if (id === "auth.logout") {
@@ -121,8 +121,9 @@ export async function portalScenario(
     } else if (id === "courses.archive") {
       await course(page, "archived");
       await expect(page.getByText("Solo lectura.", { exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Nuevo aviso", exact: true })).toHaveCount(0);
-      await expect(page.getByRole("button", { name: "Editar página", exact: true })).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Nueva publicación", exact: true })
+      ).toHaveCount(0);
     } else if (id === "courses.filter-empty") {
       await page.getByRole("searchbox", { name: "Filtrar cursos" }).fill("no-such-qa-course");
       await expect(page.locator(".course-card")).toHaveCount(0);
@@ -135,25 +136,20 @@ export async function portalScenario(
         await navigate(page, "Calendario");
         await expect(page.getByRole("heading", { name: "Calendario", exact: true })).toBeVisible();
         await expect(page.getByRole("group", { name: "Vista del calendario" })).toBeVisible();
-        const dayBar = page.getByRole("navigation", { name: "Días de la semana" });
+        const dayBar = page.getByRole("navigation", { name: "Día visible" });
 
         if (await dayBar.isVisible()) {
           const evaluation = QA_GRADE_ITEMS.find((item) => item.id === QA_IDS.report);
 
           if (!evaluation?.date) throw new Error("QA evaluation date is missing");
           const day = new Date(`${evaluation.date}T12:00:00Z`).getUTCDate();
-          await dayBar.getByRole("button", { name: new RegExp(`, ${day} de `) }).click();
+          await dayBar.getByRole("button", { name: new RegExp(` ${day}$`) }).click();
         }
-        await expect(
-          page
-            .getByText(/Informe individual QA/)
-            .filter({ visible: true })
-            .first()
-        ).toBeVisible();
+        await expect(page.getByText(/Informe individual QA/).first()).toBeVisible();
         await navigate(page, "Área personal");
       }
       await expect(page.getByRole("heading", { name: "En tu agenda" })).toBeVisible();
-      await expect(page.locator(".agenda-next h3")).toBeVisible();
+      await expect(page.locator(".next-eval-title")).toBeVisible();
     } else
       await expect(
         page.getByRole("button", { name: "Entrar al aula de QA Aula activa" })
@@ -166,7 +162,7 @@ export async function portalScenario(
       page.getByRole("heading", { name: "Avisos y mensajes", exact: true })
     ).toBeVisible();
     if (id === "communications.announcements") {
-      await expect(page.locator(".communications-list")).toBeVisible();
+      await expect(page.locator(".announcement-list")).toBeVisible();
     } else {
       await page.getByRole("tab", { name: /Mensajes/ }).click();
       const list = page.getByRole("complementary", { name: "Conversaciones" });
@@ -218,21 +214,6 @@ export async function portalScenario(
     else if (id === "calendar.month") {
       await page.getByRole("button", { name: "Mes", exact: true }).click();
       await expect(page.locator(".planner-month")).toBeVisible();
-    } else if (id === "calendar.day") {
-      await page.getByRole("button", { name: "Día", exact: true }).click();
-      await expect(page.getByRole("region", { name: "Horario del día" })).toBeVisible();
-    } else if (id === "calendar.agenda") {
-      await page.getByRole("button", { name: "Agenda", exact: true }).click();
-      await expect(page.locator(".planner-agenda")).toBeVisible();
-    } else if (id === "calendar.quick-create") {
-      await page
-        .getByRole("button", { name: /^Crear un bloque el / })
-        .first()
-        .click();
-      const quick = page.getByRole("dialog", { name: "Nuevo bloque" });
-      await expect(quick.getByLabel("Título", { exact: true })).toBeFocused();
-      await page.keyboard.press("Escape");
-      await expect(quick).toHaveCount(0);
     } else {
       await page.getByRole("button", { name: /Nuevo bloque|Agregar bloque/ }).click();
       const dialog = page.getByRole("dialog", { name: "Nuevo bloque" });

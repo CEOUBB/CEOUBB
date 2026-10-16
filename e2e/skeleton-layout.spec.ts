@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createElement, type ReactElement } from "react";
+import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
@@ -19,13 +19,6 @@ const {
 const { CourseCard }: typeof import("../app/views/CourseCard") = require("../app/views/CourseCard");
 const { COURSES }: typeof import("../lib/courses") = require("../lib/courses");
 
-const FIXTURE_USER = {
-  id: "skeleton-fixture",
-  email: "docente@ubiobio.cl",
-  name: "Docente de prueba",
-  role: "teacher",
-} as const;
-
 // Implements: REQ-SKELETON-01
 // Render the production components against the production CSS, without adding a preview route.
 for (const width of [1440, 390]) {
@@ -40,40 +33,15 @@ for (const width of [1440, 390]) {
     const rootClass = await page.locator("html").getAttribute("class");
     const base = page.url();
 
-    const variants: Record<string, ReactElement> = {
-      LoadingScreen: createElement(LoadingScreen),
-      CalendarSkeleton: createElement(skeletons.CalendarSkeleton, {
-        courses: COURSES,
-        initialView: width > 767 ? "week" : "day",
-      }),
-      ResourcesSkeleton: createElement(skeletons.ResourcesSkeleton),
-      AdminSkeleton: createElement(skeletons.AdminSkeleton),
-      PeriodListSkeleton: createElement(skeletons.PeriodListSkeleton),
-      AccountRowsSkeleton: createElement(skeletons.AccountRowsSkeleton),
-      CommunicationsSkeleton: createElement(skeletons.CommunicationsSkeleton, { teaching: false }),
-      PendingBandSkeleton: createElement(skeletons.PendingBandSkeleton),
-      HistoryListSkeleton: createElement(skeletons.HistoryListSkeleton),
-      ConversationListSkeleton: createElement(skeletons.ConversationListSkeleton),
-      ConversationSkeleton: createElement(skeletons.ConversationSkeleton),
-      TeacherCoursesSkeleton: createElement(skeletons.TeacherCoursesSkeleton),
-      TeacherCoursesBodySkeleton: createElement(skeletons.TeacherCoursesBodySkeleton),
-      ClassroomSkeleton: createElement(skeletons.ClassroomSkeleton, {
-        course: COURSES[0],
-        sectionRole: "teacher",
-        user: FIXTURE_USER,
-      }),
-      CoursePageSkeleton: createElement(skeletons.CoursePageSkeleton),
-      SettingsSkeleton: createElement(skeletons.SettingsSkeleton, { user: FIXTURE_USER }),
-      SessionListSkeleton: createElement(skeletons.SessionListSkeleton),
-      QuizListSkeleton: createElement(skeletons.QuizListSkeleton),
-      TeacherQuizSkeleton: createElement(skeletons.QuizListSkeleton, { teacher: true }),
-      InteropListSkeleton: createElement(skeletons.InteropListSkeleton),
-      GradeHistorySkeleton: createElement(skeletons.GradeHistorySkeleton),
-      DocumentPaneSkeleton: createElement(skeletons.DocumentPaneSkeleton),
-      NotificationSkeleton: createElement(NotificationSkeleton),
+    const variants = {
+      LoadingScreen,
+      ...skeletons,
+      NotificationSkeleton,
+      TeacherQuizSkeleton: () =>
+        createElement<{ teacher?: boolean }>(skeletons.QuizListSkeleton, { teacher: true }),
     };
-    for (const [name, element] of Object.entries(variants)) {
-      const markup = renderToStaticMarkup(element);
+    for (const [name, Component] of Object.entries(variants)) {
+      const markup = renderToStaticMarkup(createElement(Component));
       const fixture = new URL("/__skeleton_fixture__", base).href;
       await page.route(fixture, (route) =>
         route.fulfill({
@@ -138,15 +106,8 @@ for (const width of [1440, 390]) {
       if (name === "CalendarSkeleton") {
         await expect(page.locator(".planner-col:visible")).toHaveCount(width > 900 ? 7 : 1);
         await expect(page.locator(".planner-block")).toHaveCount(0);
-        await expect(page.locator(".planner-toolbar .planner-today")).toBeVisible();
-        if (width > 767) {
-          await expect(page.locator(".planner-side")).toBeVisible();
-          await expect(page.locator(".planner-strip")).toBeHidden();
-        } else {
-          await expect(page.locator(".planner-side")).toBeHidden();
-          await expect(page.locator(".planner-strip-day")).toHaveCount(7);
-          await expect(page.locator(".planner-strip")).toBeVisible();
-        }
+        if (width > 767) await expect(page.locator(".planner-controls input")).toBeVisible();
+        else await expect(page.locator(".planner-controls input")).toBeHidden();
       }
       await page.screenshot({
         path: `.impeccable/review/skeleton-${name}-${width}.png`,
@@ -158,6 +119,7 @@ for (const width of [1440, 390]) {
         const actual = renderToStaticMarkup(
           createElement(CourseCard, {
             course: { ...COURSES[0], name: "Estática" },
+            shouldReduceMotion: true,
             onOpen: () => {},
           })
         );

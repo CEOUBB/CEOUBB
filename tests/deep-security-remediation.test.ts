@@ -182,6 +182,16 @@ test("REQ-SEC-17: teacher course routes validate courseId presence, format and m
     /isSectionId\(courseId\)/,
     "Teacher course assistants route must validate courseId with isSectionId"
   );
+  assert.match(
+    asstContent,
+    /origin\s*&&\s*origin\s*!==\s*new URL\(request\.url\)\.origin/,
+    "Teacher course assistants route must validate origin header against request URL origin"
+  );
+  assert.match(
+    asstContent,
+    /contentLength\s*>\s*65536/,
+    "Teacher course assistants route must validate content length bounds"
+  );
 });
 
 // Implements: REQ-SEC-18

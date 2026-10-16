@@ -1,21 +1,99 @@
 "use client";
 
-// Implements: REQ-PUB-09, REQ-QMD-07
+// Implements: REQ-PUB-09, REQ-PUB-10, REQ-QMD-07
 import { useEffect, useRef, useState, type DragEvent, type RefObject } from "react";
-import { CheckCircle, FolderSimple, Trash, X, XCircle } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle,
+  ClipboardText,
+  FileDoc,
+  File as FileIcon,
+  FilePdf,
+  FilePpt,
+  FileXls,
+  FileZip,
+  FolderSimple,
+  ImageSquare,
+  Megaphone,
+  Trash,
+  X,
+  XCircle,
+  type Icon,
+} from "@phosphor-icons/react";
 import {
   MAX_POST_ATTACHMENTS,
-  releaseUploadedFiles,
   uploadPostAttachment,
   type ClassroomAttachment,
 } from "../../../lib/firebase-classroom-client";
 import { formatBytes } from "../../../lib/portal-utils";
-import { FileKindIcon } from "./CoursePageItems";
+import { CONTENT_TYPES, type PublicationContentType } from "../../../lib/publication-workflow";
+
+const CONTENT_ICONS: Record<PublicationContentType, Icon> = {
+  notice: Megaphone,
+  assessment: ClipboardText,
+  guide: BookOpen,
+  blank: FileIcon,
+};
+
+function attachmentIcon(contentType: string): Icon {
+  if (contentType.startsWith("image/")) return ImageSquare;
+  if (contentType.includes("pdf")) return FilePdf;
+  if (contentType.includes("zip") || contentType.includes("compressed")) return FileZip;
+  if (contentType.includes("presentation") || contentType.includes("powerpoint")) return FilePpt;
+  if (contentType.includes("sheet") || contentType.includes("excel")) return FileXls;
+  if (contentType.includes("word") || contentType.includes("document")) return FileDoc;
+  return FileIcon;
+}
+
+// Implements: REQ-PUB-10
+export function PresetStage({
+  courseName,
+  onChoose,
+  onClose,
+}: {
+  courseName: string;
+  onChoose: (value: PublicationContentType) => void;
+  onClose: () => void;
+}) {
+  return (
+    <section aria-labelledby="publish-preset-title" className="publish-preset-stage">
+      <button className="publish-back" data-hardware-back="publish" onClick={onClose} type="button">
+        <ArrowLeft aria-hidden="true" size={16} weight="bold" />
+        Volver al ramo
+      </button>
+      <h1 id="publish-preset-title">¿Qué vas a publicar en {courseName}?</h1>
+      <p className="publish-preset-lead">
+        Cada opción abre el editor con una estructura ya escrita. Puedes cambiarla entera una vez
+        dentro.
+      </p>
+      <div className="publish-preset-grid">
+        {CONTENT_TYPES.map((option, index) => {
+          const OptionIcon = CONTENT_ICONS[option.value];
+          return (
+            <button
+              className="publish-preset"
+              key={option.value}
+              onClick={() => onChoose(option.value)}
+              style={{ animationDelay: `${index * 35}ms` }}
+              type="button"
+            >
+              <span className="publish-preset-icon">
+                <OptionIcon aria-hidden="true" size={22} />
+              </span>
+              <strong>{option.label}</strong>
+              <small>{option.description}</small>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 // Implements: REQ-PUB-09
-export function usePostAttachments(courseId: string, initial: ClassroomAttachment[] = []) {
-  const [original] = useState(() => new Set(initial.map((attachment) => attachment.storagePath)));
-  const [attachments, setAttachments] = useState<ClassroomAttachment[]>(initial);
+export function usePostAttachments(courseId: string) {
+  const [attachments, setAttachments] = useState<ClassroomAttachment[]>([]);
   const [uploading, setUploading] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -56,18 +134,8 @@ export function usePostAttachments(courseId: string, initial: ClassroomAttachmen
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const removeAttachment = (storagePath: string) => {
+  const removeAttachment = (storagePath: string) =>
     setAttachments((current) => current.filter((item) => item.storagePath !== storagePath));
-    if (!original.has(storagePath))
-      void releaseUploadedFiles(courseId, [storagePath]).catch(() => undefined);
-  };
-
-  // Implements: REQ-PAGE-06
-  const releaseSessionUploads = () =>
-    releaseUploadedFiles(
-      courseId,
-      attachments.map((attachment) => attachment.storagePath).filter((path) => !original.has(path))
-    ).catch(() => undefined);
 
   return {
     attachments,
@@ -76,7 +144,6 @@ export function usePostAttachments(courseId: string, initial: ClassroomAttachmen
     fileRef,
     attachFiles,
     removeAttachment,
-    releaseSessionUploads,
   };
 }
 
@@ -132,7 +199,7 @@ export function AttachmentField({
         </button>
         <small>PDF, PPT, DOCX, XLSX, ZIP o imagen. Hasta 50 MB cada uno.</small>
         <input
-          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.txt,.csv,image/png,image/jpeg,image/webp"
+          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,image/*"
           aria-hidden="true"
           aria-label="Adjuntar archivos"
           className="sr-only"
@@ -160,13 +227,10 @@ export function AttachmentField({
       {attachments.length > 0 && (
         <ul className="publish-attachments">
           {attachments.map((attachment) => {
+            const AttachmentIcon = attachmentIcon(attachment.contentType);
             return (
               <li key={attachment.storagePath}>
-                <FileKindIcon
-                  contentType={attachment.contentType}
-                  name={attachment.name}
-                  size={16}
-                />
+                <AttachmentIcon aria-hidden="true" size={16} />
                 <span>
                   <strong>{attachment.name}</strong>
                   <small className="num">{formatBytes(attachment.size)}</small>

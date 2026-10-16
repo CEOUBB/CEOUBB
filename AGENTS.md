@@ -68,15 +68,6 @@ Preview CI updates only the existing `ceoubb-preview` Worker using its individua
 - Proxy `Vary` must preserve Cookie and Next's RSC/router negotiation fields: OpenNext's response adapter gives middleware headers precedence. Review the explicit field list when updating Next or OpenNext.
 - OpenNext uses the existing ASSETS binding only for deployment-time prerendered content. `scripts/check-public-cache.mjs` rejects private prerendering and ISR; introduce a writable adapter before adding revalidation or dynamic cached data.
 
-### 2.2.2 Course Page Content (SPEC classroom/course-page)
-
-- A section's content lives in four collections under `courses/{sectionId}`: `posts` (avisos and visible page items), `pageSections` (team-named sections), `hiddenItems` (hidden or scheduled items and every item of a hidden section) and `trash` (30-day recovery). Rules are not filters: anything students must not read never shares `posts`, and students list `pageSections` only with `where("hidden", "==", false)`.
-- `placement` separates avisos (`notice`) from page items (`page`). Posts without it are classified on read by `placementFor` in `lib/course-page.ts`; the edit mode materializes folder groups into real sections. Never backfill.
-- Only avisos may notify students; page items are written with `notifyStudents: false`.
-- Any content manager of the section edits any content document; every client write carries `updatedBy` equal to the writer and `authorId` is immutable. The rule whitelists `contentFields()` and `trashFields()` must equal `CONTENT_FIELDS` and `TRASH_FIELDS`.
-- A Storage object under `courses/{sectionId}/` is deleted only when no document in `posts`, `hiddenItems` or `trash` lists it in `attachmentPaths`; duplicates share objects.
-- `publishScheduledCourseContent` (`firebase/functions/course-page-schedule.js`) publishes due content and purges expired trash every five minutes; it needs the Cloud Scheduler API and the collection-group overrides in `firebase/firestore.indexes.json`.
-
 ### 2.3 Mobile Seam & Remote Architecture
 
 - **Capacitor 7 Runtime (`cl.ubb.centroestudio`):** Remote-first. The WebView loads `https://ceoubb.com`; `capacitor/www/` hosts only the offline fallback document.
@@ -93,11 +84,9 @@ To navigate non-obvious structural seams efficiently without burning context on 
 - **Relational SoR (Turso / Drizzle):** `db/schema/` (academic hierarchy, users, enrollments, sections).
 - **Operational Projection & Realtime (Firestore):** `firebase/` and `lib/services/enrollment-projection.ts`.
 - **Pure Grade Arithmetic:** `lib/grades.ts` (Chilean 1.0–7.0 scale, rounding, weighting).
-- **Course Page:** pure model in `lib/course-page.ts`, Firestore operations in `lib/firebase/course-page.ts`, views in `app/views/classroom/CoursePage.tsx` (reader), `CoursePageEditor.tsx` (edit mode, loaded on demand, with state and undoable operations in `use-page-editing.ts`), `AnnouncementsPanel.tsx` and `CourseTrashDialog.tsx`; `PublishView.tsx` composes avisos only.
-- **Domain Views vs Shared UI:** Primary dashboards and feature screens reside in `app/views/` (e.g. `CoursesDashboard.tsx`, `calendar/CalendarView.tsx`), while reusable UI primitives reside in `components/`.
+- **Domain Views vs Shared UI:** Primary dashboards and feature screens reside in `app/views/` (e.g. `CoursesDashboard.tsx`, `CalendarAgendaView.tsx`), while reusable UI primitives reside in `components/`.
 - **Server API & Route Handlers:** Secure endpoints live in `app/api/` (Zod validation, session auth, transactional mutations).
 - **Mobile Bridge:** Native Android host in `android/`, Capacitor runtime integration in `lib/mobile-bridge.ts` & `lib/native-files.ts`.
-- **Motion & Loading:** `lib/view-transition.ts` routes pointer navigation through React View Transitions and applies keyboard or reduced motion changes immediately; `app/portal-ui.tsx` (`Screen`, `Deferred`) owns screen and reveal boundaries. Skeletons live in `app/views/ViewSkeletons.tsx` with primitives in `app/views/skeleton-bones.tsx` and the shared shimmer in `lib/skeleton-wave.ts`; they render known data and draw bones only for pending data. Transition rules live in `app/globals.css`, skeleton material in `app/campus-base.css`.
 
 ---
 
@@ -207,7 +196,7 @@ After changing application behavior, run `pnpm qa` for affected areas and critic
 
 Use `--production` when verifying final HTML/RSC cache headers or a mixed browser/API matrix. This builds disposable local output against the same guarded emulators and file database; it does not authorize production targets. The local application uses `localhost`, with a separate loopback content origin. Only a complete validated disposable QA target may omit the session cookie's Secure attribute for HTTP loopback, accept distinct HTTP loopback interoperability origins, or simulate Turnstile without a secret. Ordinary production retains Secure cookies, HTTPS interoperability and missing-secret rejection. Development mode remains available for iteration and exploration.
 
-New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Read-only scenarios run in parallel; any scenario that persists data, resets fixtures or writes shared records must be registered as exclusive in `qa/catalog.ts` so it runs alone. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
+New features must register their roles, applicable semantic states, source mappings, and executable checkpoints in the QA catalog and scenarios. Inspect the printed `qa-results/<run>/index.html`, screenshots, failures, and missing coverage before declaring verification complete. Functional and accessibility failures block; visual differences require review and never authorize automatic baseline acceptance. Keep uncovered states and external verification visible. Local provider simulations do not prove real delivery.
 
 Preserve the guarded disposable runtime, ordinary Firebase/session exchange, original authorization rules, and protected tests. Use dedicated staging identities only with explicit `--staging`; never use production targets. Existing formatting, lint, typecheck, unit, invariant, hash, build, and integration gates remain required separately. Report existing application defects with reproduction evidence; repair them in separate tasks unless the user expands scope.
 

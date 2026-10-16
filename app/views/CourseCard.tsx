@@ -1,11 +1,12 @@
 "use client";
 
-import React, { ViewTransition } from "react";
+import React from "react";
 import { ArrowRight } from "@phosphor-icons/react";
+import * as m from "motion/react-m";
 import { AnimatedUnderline } from "@/components/motion/animated-underline-link";
 import type { Course } from "../../lib/courses";
 import type { CalendarEntry } from "../../lib/portal-utils";
-import { shortDate } from "../../lib/portal-utils";
+import { instantTransition, rise, shortDate, springDefault } from "../../lib/portal-utils";
 
 export type CourseActivitySummary = {
   total: number;
@@ -16,24 +17,24 @@ export type CourseActivitySummary = {
 export type CourseCardProps = {
   course: Course;
   summary?: CourseActivitySummary;
+  shouldReduceMotion: boolean;
   onOpen: (course: Course) => void;
 };
 
-// Implements: REQ-MOTION-04
-function CourseCardComponent({ course, summary, onOpen }: CourseCardProps) {
+function CourseCardComponent({ course, summary, shouldReduceMotion, onOpen }: CourseCardProps) {
   const upcoming = summary?.upcoming;
   const total = summary?.total ?? 0;
   const unseen = summary?.unseen ?? 0;
 
   return (
-    <article
+    <m.article
       className="course-card"
       style={{ "--course-tone": course.tone } as React.CSSProperties}
+      transition={shouldReduceMotion ? instantTransition : springDefault}
+      variants={shouldReduceMotion ? undefined : rise}
     >
       <div className="course-cover">
-        <ViewTransition default="none" name={`course-${course.id}`} share="course-divider">
-          <span className="course-code num">{course.code}</span>
-        </ViewTransition>
+        <span className="course-code num">{course.code}</span>
         {unseen > 0 && (
           <span className="fresh num">
             {unseen} {unseen === 1 ? "nueva" : "nuevas"}
@@ -70,7 +71,7 @@ function CourseCardComponent({ course, summary, onOpen }: CourseCardProps) {
           <ArrowRight aria-hidden="true" size={15} />
         </button>
       </div>
-    </article>
+    </m.article>
   );
 }
 

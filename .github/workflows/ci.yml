@@ -78,16 +78,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-
 
-      - name: Restore ESLint and Prettier caches
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.cache/eslint
-            node_modules/.cache/prettier
-          key: ${{ runner.os }}-lint-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs', '.prettierrc*', '.prettierignore') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-lint-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs', '.prettierrc*', '.prettierignore') }}-
-
       - name: Run Fast Verification (Typecheck, Hashes, Specs)
         run: pnpm run verify:fast
 

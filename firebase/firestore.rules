@@ -261,81 +261,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Implements: REQ-PAGE-13
-    function contentFields() {
-      return ['authorId', 'authorName', 'authorEmail', 'courseId', 'title', 'body', 'kind', 'folder',
-        'dueDate', 'fileUrl', 'linkUrl', 'fileName', 'storagePath', 'contentType', 'fileSize',
-        'attachments', 'attachmentPaths', 'notifyStudents', 'createdAt', 'updatedAt', 'updatedBy',
-        'placement', 'sectionId', 'position', 'itemType', 'hidden', 'publishAt', 'sourceSystem',
-        'sourceId', 'sourceKey', 'importFingerprint', 'contentHash'];
-    }
-
-    function trashFields() {
-      return ['deletedAt', 'deletedBy', 'trashKind', 'trashedWithSection', 'sectionTitle', 'itemCount'];
-    }
-
-    // Implements: REQ-PAGE-08, REQ-PAGE-13
-    function validCourseContent(courseId, allowed) {
-      let data = request.resource.data;
-      return validCourse(courseId) && sectionIsWritable(courseId)
-        && (request.method == 'create'
-          ? data.keys().hasOnly(allowed)
-          : data.diff(resource.data).affectedKeys().hasOnly(allowed)
-            && data.get('authorId', '') == resource.data.get('authorId', ''))
-        && (data.get('updatedBy', '') == request.auth.uid || data.get('authorId', '') == request.auth.uid)
-        && data.get('courseId', courseId) == courseId
-        && data.get('title', '') is string && data.get('title', '').size() <= 300
-        && data.get('body', '') is string && data.get('body', '').size() <= 200000
-        && data.get('placement', 'page') in ['page', 'notice']
-        && data.get('itemType', 'text') in ['text', 'file', 'link', 'image']
-        && data.get('sectionId', '') is string && data.get('sectionId', '').size() <= 128
-        && data.get('position', 0) is number
-        && data.get('hidden', false) is bool
-        && (data.get('publishAt', null) == null || data.get('publishAt', null) is timestamp)
-        && data.get('notifyStudents', false) is bool
-        && data.get('attachments', []) is list && data.get('attachments', []).size() <= 6
-        && data.get('attachmentPaths', []) is list && data.get('attachmentPaths', []).size() <= 7;
-    }
-
-    // Implements: REQ-SEC-02, REQ-PAGE-08
+    // Implements: REQ-SEC-02
     match /courses/{courseId}/posts/{postId} {
       allow read: if isOwner() || isMember() && isEnrolled(courseId);
-      allow create: if managesSectionContent(courseId) && validCourseContent(courseId, contentFields());
-      allow update: if (isOwner() || managesSectionContent(courseId)) && validCourseContent(courseId, contentFields());
-      allow delete: if (isOwner() || managesSectionContent(courseId)) && sectionIsWritable(courseId);
-    }
-
-    // Implements: REQ-PAGE-05
-    match /courses/{courseId}/hiddenItems/{itemId} {
-      allow read: if isOwner() || managesSectionContent(courseId);
-      allow create: if managesSectionContent(courseId) && validCourseContent(courseId, contentFields());
-      allow update: if (isOwner() || managesSectionContent(courseId)) && validCourseContent(courseId, contentFields());
-      allow delete: if (isOwner() || managesSectionContent(courseId)) && sectionIsWritable(courseId);
-    }
-
-    // Implements: REQ-PAGE-06
-    match /courses/{courseId}/trash/{entryId} {
-      allow read: if isOwner() || managesSectionContent(courseId);
-      allow create: if managesSectionContent(courseId) && validCourseContent(courseId, contentFields().concat(trashFields()));
-      allow update: if (isOwner() || managesSectionContent(courseId)) && validCourseContent(courseId, contentFields().concat(trashFields()));
-      allow delete: if (isOwner() || managesSectionContent(courseId)) && sectionIsWritable(courseId);
-    }
-
-    // Implements: REQ-PAGE-01, REQ-PAGE-05
-    function validPageSection() {
-      let data = request.resource.data;
-      return data.keys().hasOnly(['title', 'position', 'hidden', 'publishAt', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
-        && data.title is string && data.title.size() > 0 && data.title.size() <= 120
-        && data.position is number
-        && data.hidden is bool
-        && (data.get('publishAt', null) == null || data.get('publishAt', null) is timestamp)
-        && data.updatedBy == request.auth.uid;
-    }
-
-    match /courses/{courseId}/pageSections/{sectionId} {
-      allow read: if isOwner() || managesSectionContent(courseId) || isMember() && isEnrolled(courseId) && resource.data.hidden == false;
-      allow create, update: if (isOwner() || managesSectionContent(courseId)) && validCourse(courseId) && sectionIsWritable(courseId) && validPageSection();
-      allow delete: if (isOwner() || managesSectionContent(courseId)) && sectionIsWritable(courseId);
+      allow create: if managesSectionContent(courseId) && validCourse(courseId) && sectionIsWritable(courseId) && request.resource.data.authorId == request.auth.uid;
+      allow update: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) && sectionIsWritable(courseId);
+      allow delete: if (isOwner() || managesSectionContent(courseId) && resource.data.authorId == request.auth.uid) && sectionIsWritable(courseId);
     }
 
     // Implements: REQ-PERF-LOAD-03

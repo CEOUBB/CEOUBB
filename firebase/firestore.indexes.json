@@ -4,22 +4,10 @@
       "collectionGroup": "gradeAudit",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "targetType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "studentId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "gradeItemId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "changedAt",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "targetType", "order": "ASCENDING" },
+        { "fieldPath": "studentId", "order": "ASCENDING" },
+        { "fieldPath": "gradeItemId", "order": "ASCENDING" },
+        { "fieldPath": "changedAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -49,76 +37,7 @@
           "order": "DESCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "trash",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "trashedWithSection",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deletedAt",
-          "order": "DESCENDING"
-        }
-      ]
     }
   ],
-  "fieldOverrides": [
-    {
-      "collectionGroup": "pageSections",
-      "fieldPath": "publishAt",
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "hiddenItems",
-      "fieldPath": "publishAt",
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "trash",
-      "fieldPath": "deletedAt",
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    }
-  ]
+  "fieldOverrides": []
 }

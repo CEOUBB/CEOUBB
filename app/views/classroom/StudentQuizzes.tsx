@@ -44,7 +44,6 @@ export function StudentQuizzes({
   readOnly: boolean;
   note: (text: string, tone?: Note["tone"]) => void;
 }) {
-  const [initialLoading] = useState(loading);
   const [activeQuiz, setActiveQuiz] = useState<QuizDefinition | null>(null);
   const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
@@ -116,9 +115,7 @@ export function StudentQuizzes({
       ) : quizzes.length === 0 ? (
         <QuizEmpty />
       ) : (
-        <div
-          className={initialLoading ? "quiz-student-list resolve-children" : "quiz-student-list"}
-        >
+        <div className="quiz-student-list">
           {quizzes.map((quiz, index) => (
             <article className="quiz-student-card" key={quiz.id}>
               <span className="quiz-sequence">{index + 1}</span>

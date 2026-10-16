@@ -366,12 +366,11 @@ test("keeps profile deletion and course paths locked down", async () => {
     Los conteos incluyen la definición de la función. CEO-7 retira `grades` de
     las escrituras cliente: Firestore conserva posts, progress, meta y submissions;
     Storage mantiene material docente y entregas. CEO-26 agrega el bloque acotado
-    de mensajes privados por sección. REQ-PAGE agrega las secciones de la página;
-    posts, contenido oculto y papelera comparten la guarda de validCourseContent.
+    de mensajes privados por sección.
   */
   assert.equal(
     firestoreRules.match(/validCourse\(courseId\)/g).length,
-    8,
+    7,
     "every course write path must be guarded by validCourse"
   );
   assert.equal(

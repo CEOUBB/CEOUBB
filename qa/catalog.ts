@@ -69,22 +69,8 @@ const classroom = [
   "firebase/firestore.rules",
   "app/Classroom.tsx",
   "app/views/classroom/ClassroomView.tsx",
-  "app/views/classroom/CoursePage.tsx",
-  "app/views/classroom/AnnouncementsPanel.tsx",
-  "app/views/classroom/CourseNavigation.tsx",
+  "app/views/classroom/PostsSection.tsx",
   "app/views/classroom/CourseRail.tsx",
-];
-const coursePage = [
-  "lib/course-page.ts",
-  "lib/firebase/course-page.ts",
-  "lib/firebase/posts.ts",
-  "firebase/firestore.rules",
-  "app/views/classroom/CoursePage.tsx",
-  "app/views/classroom/CoursePageItems.tsx",
-  "app/views/classroom/CoursePageEditor.tsx",
-  "app/views/classroom/use-page-editing.ts",
-  "app/views/classroom/CourseTrashDialog.tsx",
-  "app/views/classroom/PageDialog.tsx",
 ];
 const publications = [
   "app/views/classroom/PublishView.tsx",
@@ -122,10 +108,6 @@ const calendar = [
   "app/views/calendar/CalendarView.tsx",
   "app/views/calendar/CalendarMonth.tsx",
   "app/views/calendar/BlockDialog.tsx",
-  "app/views/calendar/PlannerGrid.tsx",
-  "app/views/calendar/CalendarAgenda.tsx",
-  "app/views/calendar/QuickCreate.tsx",
-  "app/views/calendar/usePlannerDrag.ts",
   "lib/firebase/calendar.ts",
 ];
 const people = [
@@ -255,9 +237,6 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   ]),
   scenario("calendar.week", "calendar", calendar, "student", "populated", true),
   scenario("calendar.month", "calendar", calendar, "student", "populated"),
-  scenario("calendar.day", "calendar", calendar, "student", "populated"),
-  scenario("calendar.agenda", "calendar", calendar, "student", "populated"),
-  scenario("calendar.quick-create", "calendar", calendar, "student", "dialog"),
   scenario("calendar.create", "calendar", calendar, "student", "form"),
   scenario("calendar.recurrence", "calendar", calendar, "student", "form"),
   scenario("calendar.invalid", "calendar", calendar, "student", "error"),
@@ -279,8 +258,7 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
   scenario("classroom.coordinator", "classroom", classroom, "coordinator", "populated"),
   scenario("classroom.empty", "classroom", classroom, "student", "empty"),
   scenario("classroom.search-empty", "classroom", classroom, "student", "empty"),
-  scenario("classroom.announcements", "classroom", classroom, "student", "dialog"),
-  scenario("classroom.delete-undo", "classroom", classroom, "teacher", "success"),
+  scenario("classroom.delete-dialog", "classroom", classroom, "teacher", "dialog"),
   scenario("classroom.edit-notice", "classroom", classroom, "teacher", "form"),
   scenario(
     "classroom.live-class",
@@ -305,7 +283,10 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
     true,
     ["form", "persisted"]
   ),
-  scenario("publication.compose", "publications", publications, "teacher", "form"),
+  scenario("publication.presets", "publications", publications, "teacher", "default"),
+  ...["notice", "assessment", "guide", "blank"].map((kind) =>
+    scenario(`publication.${kind}`, "publications", publications, "teacher", "form")
+  ),
   scenario("publication.discard", "publications", publications, "teacher", "dialog"),
   scenario("publication.markdown", "publications", publications, "teacher", "form"),
   scenario("publication.html", "publications", publications, "teacher", "form"),
@@ -315,11 +296,6 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
     "form",
     "persisted",
   ]),
-  scenario("page.student", "page", coursePage, "student", "populated", true),
-  scenario("page.teacher-hidden", "page", coursePage, "teacher", "populated"),
-  scenario("page.preview", "page", coursePage, "teacher", "populated"),
-  scenario("page.trash", "page", coursePage, "teacher", "dialog"),
-  scenario("page.edit", "page", coursePage, "teacher", "success", true, ["form", "persisted"]),
   scenario("grades.student", "grades", grades, "student", "populated", true),
   scenario("grades.empty", "grades", grades, "student", "empty"),
   scenario("grades.teacher", "grades", grades, "teacher", "populated", true),
@@ -488,37 +464,3 @@ export const QA_SCENARIOS: readonly QaScenario[] = [
 );
 
 export const QA_AREAS = [...new Set(QA_SCENARIOS.map((entry) => entry.area))];
-
-export const QA_FIXTURE_MUTATIONS = [
-  "communications.reply",
-  "shell.motion",
-  "imports.motion",
-  "quizzes.attempt",
-  "quizzes.submission",
-  "quizzes.answer-saving",
-  "quizzes.answer-error",
-  "quizzes.submit-loading",
-  "quizzes.submit-error",
-  "interop.scorm",
-  "interop.xapi",
-];
-export const QA_EXCLUSIVE_WRITES = [
-  "grades.history-loading",
-  "grades.history-error",
-  "grades.feedback-saving",
-  "grades.feedback-success",
-  "submissions.file-loading",
-  "submissions.viewer-loading",
-  "submissions.uploading",
-  "submissions.upload-retry",
-  "public.contact-deferred",
-];
-
-export function mutatesFixtures(id: string) {
-  return id.endsWith("persistence") || QA_FIXTURE_MUTATIONS.includes(id);
-}
-
-// Implements: REQ-QA-02
-export function runsExclusively(id: string) {
-  return mutatesFixtures(id) || QA_EXCLUSIVE_WRITES.includes(id);
-}

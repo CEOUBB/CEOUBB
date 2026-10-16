@@ -50,16 +50,14 @@ test("keeps every other guard on the users update rule", async () => {
   incorpora diez permisos acotados para cursores, hilos privados y sus mensajes.
   CEO-65 suma dos: lectura del propio documento de preferencias y denegación de
   escritura para el cliente, porque la validación Zod vive en la ruta API.
-  REQ-PAGE suma once: secciones de la página (lectura, escritura y borrado), y
-  contenido oculto y papelera, que sólo el equipo docente lee y escribe.
 */
-// REQ-CAP-18, REQ-SEC-02, REQ-PAGE-05, REQ-PAGE-06
+// REQ-CAP-18, REQ-SEC-02
 test("keeps the allow surface frozen at the approved count", async () => {
   const rules = await read("firebase/firestore.rules");
   assert.equal(
     (rules.match(/^\s*allow /gm) ?? []).length,
-    56,
-    "the ruleset must keep exactly 56 allow rules"
+    45,
+    "the ruleset must keep exactly 45 allow rules"
   );
   // No hay regla comodín: lo que no está listado queda denegado por defecto.
   assert.doesNotMatch(rules, /allow .*: if true;/, "no rule may grant unconditional access");

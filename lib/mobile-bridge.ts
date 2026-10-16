@@ -46,7 +46,7 @@ export function useIsMobileApp() {
   return useSyncExternalStore(
     subscribeViewport,
     () => Capacitor.isNativePlatform() || window.matchMedia(MOBILE_VIEWPORT).matches,
-    // En el servidor no hay viewport: el CSS elige el cromo y esto sólo gobierna comportamiento.
+    // En el servidor no hay viewport: el HTML se emite con el shell de escritorio.
     () => false
   );
 }

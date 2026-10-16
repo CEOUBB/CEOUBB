@@ -1,6 +1,10 @@
 import { Exam, GraduationCap, House, PlugsConnected, UsersThree } from "@phosphor-icons/react";
 import { DEFAULT_FOLDER, materialFolders, type Course } from "../../../lib/courses.ts";
-import type { ClassroomFile, ClassroomState } from "../../../lib/firebase-classroom-client.ts";
+import type {
+  ClassroomFile,
+  ClassroomPost,
+  ClassroomState,
+} from "../../../lib/firebase-classroom-client.ts";
 
 /*
   La Portada centraliza las publicaciones del docente y los archivos que las
@@ -28,11 +32,6 @@ export type Note = { text: string; tone: "info" | "ok" | "bad" };
 
 export const emptyClassroom: ClassroomState = {
   posts: [],
-  postsStatus: "loading",
-  postsOverflow: false,
-  sections: [],
-  sectionsStatus: "loading",
-  hiddenItems: [],
   files: [],
   students: [],
   gradebook: [],
@@ -55,6 +54,16 @@ export function groupByFolder(course: Course, files: ClassroomFile[]) {
     groups.get(folder)!.push(file);
   }
   return [...groups].filter(([, items]) => items.length > 0);
+}
+
+export function kindLabel(kind: ClassroomPost["kind"]) {
+  return kind === "assessment"
+    ? "Evaluación"
+    : kind === "guide"
+      ? "Guía"
+      : kind === "resource"
+        ? "Recurso"
+        : "Aviso";
 }
 
 export function tabTitle(tab: Tab) {

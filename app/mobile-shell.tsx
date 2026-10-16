@@ -9,9 +9,8 @@ import { hapticTap } from "../lib/mobile-bridge";
 /*
   Capa móvil del portal. En pantalla estrecha el riel lateral de 268px no cabe y la
   cabecera de escritorio se queda con los dedos lejos: la navegación baja a la zona
-  del pulgar y los detalles pasan a hojas arrastrables. La barra se renderiza siempre
-  y el CSS la muestra según el ancho; las hojas sólo se montan cuando
-  `useIsMobileApp()` lo confirma en el cliente.
+  del pulgar y los detalles pasan a hojas arrastrables. Nada de esto se monta en
+  escritorio — `useIsMobileApp()` decide y estos componentes ni siquiera se renderizan.
 */
 
 export type MobileTab = {

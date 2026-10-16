@@ -98,10 +98,6 @@ export const QA_IDS = {
   guide: "qa-guide",
   assessment: "qa-assessment",
   resource: "qa-resource",
-  pageSection: "qa-page-description",
-  pageText: "qa-page-programme",
-  hiddenSection: "qa-page-reserved",
-  hiddenItem: "qa-page-reserved-guide",
   scorm: "11111111-1111-4111-8111-111111111111",
   xapi: "22222222-2222-4222-8222-222222222222",
   lti: "33333333-3333-4333-8333-333333333333",
@@ -336,66 +332,6 @@ export function qaFirestoreDocuments(pdfSize: number, pdfSha256: string): QaDocu
       }
     );
   }
-  const pageAuthor = {
-    authorId: QA_USERS.teacher.uid,
-    authorEmail: QA_USERS.teacher.email,
-    authorName: QA_USERS.teacher.name,
-    courseId: QA_SECTIONS.active,
-    kind: "resource",
-    placement: "page",
-    itemType: "text",
-    hidden: false,
-    publishAt: null,
-    notifyStudents: false,
-    attachments: [],
-    attachmentPaths: [],
-    dueDate: "",
-    createdAt: stamp,
-    updatedAt: stamp,
-    updatedBy: QA_USERS.teacher.uid,
-  };
-  const pageSection = (title: string, position: number, hidden: boolean) => ({
-    title,
-    position,
-    hidden,
-    publishAt: null,
-    createdAt: stamp,
-    createdBy: QA_USERS.teacher.uid,
-    updatedAt: stamp,
-    updatedBy: QA_USERS.teacher.uid,
-  });
-  docs.push(
-    {
-      path: `courses/${QA_SECTIONS.active}/pageSections/${QA_IDS.pageSection}`,
-      data: pageSection("Descripción del curso", 1024, false),
-    },
-    {
-      path: `courses/${QA_SECTIONS.active}/posts/${QA_IDS.pageText}`,
-      data: {
-        ...pageAuthor,
-        title: "Programa del curso QA",
-        body: "Este ramo sintético se organiza en secciones que nombra el equipo docente.",
-        folder: "Descripción del curso",
-        sectionId: QA_IDS.pageSection,
-        position: 1024,
-      },
-    },
-    {
-      path: `courses/${QA_SECTIONS.active}/pageSections/${QA_IDS.hiddenSection}`,
-      data: pageSection("Pautas reservadas QA", 4096, true),
-    },
-    {
-      path: `courses/${QA_SECTIONS.active}/hiddenItems/${QA_IDS.hiddenItem}`,
-      data: {
-        ...pageAuthor,
-        title: "Pauta reservada QA",
-        body: "Solución del certamen, visible sólo para el equipo docente.",
-        folder: "Pautas reservadas QA",
-        sectionId: QA_IDS.hiddenSection,
-        position: 1024,
-      },
-    }
-  );
   docs.push(
     {
       path: `courses/${QA_SECTIONS.active}/posts/${QA_IDS.resource}`,

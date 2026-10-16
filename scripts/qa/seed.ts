@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { deleteApp, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -47,6 +47,7 @@ import {
   QA_USER_FIXTURES,
   QA_TEAMMATE,
   qaFirestoreDocuments,
+  type QaRole,
 } from "../../qa/fixtures.ts";
 
 // A real, deterministic PDF lets the same artifact exercise Storage, download and preview.
@@ -373,11 +374,6 @@ export async function seedQa() {
       createHash("sha256").update(pdf).digest("hex")
     );
     const firestore = getFirestore(app);
-    // Implements: REQ-PAGE-01, REQ-QA-03
-    for (const section of Object.values(QA_SECTIONS)) {
-      for (const collection of ["pageSections", "hiddenItems", "trash"])
-        await firestore.recursiveDelete(firestore.collection(`courses/${section}/${collection}`));
-    }
     const batch = firestore.batch();
     for (const document of documents) batch.set(firestore.doc(document.path), document.data);
     for (const user of QA_USER_FIXTURES) {
@@ -454,18 +450,16 @@ export async function seedQa() {
 // Restores canonical documents only; caller-created documents require explicit cleanup.
 export const resetQaFixtures = seedQa;
 
-export async function removeQaSessions(tokens: Iterable<string>) {
+// Call before a fresh browser login, never while preserving an active scenario session.
+export async function cleanupQaSessions(role: QaRole) {
   if (!resolveQaRuntime())
     throw new Error("QA_SESSIONS_REFUSED: a guarded local runtime is required.");
-  const hashes = [...tokens].map((token) => createHash("sha256").update(token).digest("hex"));
-
-  if (!hashes.length) return;
   const client = createClient({ url: process.env.TURSO_DATABASE_URL! });
   try {
     await withSqliteRetry(async () => {
       await client.execute("PRAGMA journal_mode = WAL;");
       await client.execute("PRAGMA busy_timeout = 30000;");
-      await drizzle(client).delete(sessions).where(inArray(sessions.tokenHash, hashes));
+      await drizzle(client).delete(sessions).where(eq(sessions.userId, QA_USERS[role].id));
     });
   } finally {
     client.close();

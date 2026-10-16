@@ -1,8 +1,7 @@
 /*
-  Shell móvil: sólo activo por debajo de 768px. La barra inferior viaja siempre en
-  el HTML del servidor y el ancho decide qué cromo se pinta, así el primer cuadro
-  en un teléfono ya es el shell móvil y la hidratación no reordena nada. Las reglas
-  cuelgan de `:has(.mobile-nav)`: un shell sin barra no reserva su hueco.
+  Shell móvil — sólo activo por debajo de 768px, el mismo umbral que usa
+  `useIsMobileApp()` en `lib/mobile-bridge.ts`. Si los dos se desalinean, la barra
+  inferior se monta sin que el CSS le haga sitio y tapa el pie del contenido.
   Los tokens salen de `DESIGN.md`; aquí no se define ningún color nuevo.
 */
 
@@ -18,23 +17,23 @@
 @media (max-width: 767px) {
   /* Implements: REQ-CAP-04 — el cromo de escritorio desaparece: el riel lateral
      y su cortina se sustituyen por la barra del pulgar, no conviven con ella. */
-  .app-shell:has(.mobile-nav) {
+  .app-shell[data-mobile="true"] {
     --mobile-nav-height: 58px;
   }
 
-  .app-shell:has(.mobile-nav) .app-sidebar,
-  .app-shell:has(.mobile-nav) .sidebar-scrim,
-  .app-shell:has(.mobile-nav) .menu-button {
+  .app-shell[data-mobile="true"] .app-sidebar,
+  .app-shell[data-mobile="true"] .sidebar-scrim,
+  .app-shell[data-mobile="true"] .menu-button {
     display: none;
   }
 
-  .app-shell:has(.mobile-nav) .app-main {
+  .app-shell[data-mobile="true"] .app-main {
     /* Implements: REQ-CAP-07 — el contenido termina por encima del inset inferior. */
     padding-bottom: calc(var(--mobile-nav-height) + var(--safe-bottom));
   }
 
   /* Implements: REQ-CAP-04 */
-  .app-shell .mobile-nav {
+  .app-shell[data-mobile="true"] .mobile-nav {
     position: fixed;
     inset: auto 0 0;
     z-index: 46;
@@ -98,7 +97,7 @@
     font-weight: 600;
   }
 
-  .app-shell:has(.mobile-nav) .header-context {
+  .app-shell[data-mobile="true"] .header-context {
     display: none;
   }
 }
@@ -106,7 +105,7 @@
 /* ── Teléfono: el portal deja de ser un escritorio encogido ── */
 
 /*
-  Todo lo de aquí abajo cuelga sólo del ancho: los diálogos nativos
+  Todo lo de aquí abajo cuelga del ancho, no de `data-mobile`: los diálogos nativos
   y la paleta viven en la capa superior del navegador y hay que poder alcanzarlos
   con el mismo selector desde el móvil web y desde la WebView.
 */
@@ -186,6 +185,95 @@
     padding-inline: 12px;
   }
 
+  /* ── Calendario ─────────────────────────────────────────── */
+
+  /* La cabecera de la rejilla repetía el día que ya elige la barra de chips y se
+     llevaba 56px de las horas útiles. Con un solo día visible sobra. */
+  .planner-head {
+    display: none;
+  }
+
+  /* La canaleta tiene que caber «08:00» a 11px más su margen; por debajo de eso
+     el radio de la tarjeta recorta la etiqueta por la esquina. */
+  .planner-frame {
+    --planner-gutter: 54px;
+  }
+  .planner-lead h1 {
+    font-size: 28px;
+  }
+
+  /* Seis ramos apilados empujaban la rejilla fuera de la primera pantalla:
+     pasan a un carril horizontal que sangra hasta los bordes. La máscara
+     difumina los extremos: sin ella la píldora cortada a media palabra parece
+     un error de maquetación en vez de la señal de que el carril sigue. */
+  .planner-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(-1 * var(--space-md));
+    padding-inline: var(--space-md);
+    scroll-padding-inline: var(--space-md);
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      #000 var(--space-md),
+      #000 calc(100% - 28px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      #000 var(--space-md),
+      #000 calc(100% - 28px),
+      transparent 100%
+    );
+  }
+
+  .planner-filters::-webkit-scrollbar {
+    display: none;
+  }
+  .planner-pill {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 8px 14px 8px 11px;
+    scroll-snap-align: start;
+    font-size: 13.5px;
+  }
+
+  .planner-daychip {
+    min-height: 50px;
+  }
+  .planner-step button,
+  .planner-now-button {
+    min-height: 40px;
+  }
+
+  /* La acción principal del calendario ocupa el resto de la fila de controles;
+     el salto por fecha sobra cuando anterior / Hoy / siguiente ya están al lado. */
+  .planner-jump {
+    display: none;
+  }
+  .page-head > .planner-controls {
+    flex-wrap: nowrap;
+  }
+  /* `height` fija de 34px es geometría de escritorio con ratón: en el pulgar la
+     acción principal necesita alto táctil y aire lateral. */
+  .planner-create {
+    flex: 1 1 auto;
+    justify-content: center;
+    height: auto;
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+  .planner-blank .planner-create {
+    flex: 0 0 auto;
+  }
+
+  .planner-blank {
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+  }
+
   /* ── Diálogo de bloque ──────────────────────────────────── */
 
   /* Modal centrado sobre un teclado abierto no cabe: sube desde abajo, como las
@@ -243,6 +331,60 @@
   }
 }
 
+/* ── Esqueleto de arranque ───────────────────────────────── */
+
+/*
+  El esqueleto sólo cumple si es la silueta de lo que va a llegar. En el teléfono
+  seguía dibujando el portal de escritorio: la cabecera se metía bajo el reloj, el
+  buscador se encogía a un cuadrado que ya no existe, las portadas de 16/5 ocupaban
+  un tercio de cada tarjeta y no había ni rastro de la barra del pulgar. El
+  resultado era un salto de layout completo al resolver la sesión.
+*/
+@media (max-width: 767px) {
+  .boot-header {
+    min-height: calc(var(--header-height) + var(--safe-top));
+    padding: var(--safe-top) 10px 0;
+  }
+
+  .boot-menu {
+    display: none;
+  }
+  .boot-header img {
+    margin-left: 0;
+  }
+  /* En el teléfono la barra sólo lleva marca, buscador y avatar: la ruta y el
+     nombre de la cuenta viven dentro del menú, no en la cabecera. */
+  .boot-crumb,
+  .boot-bell,
+  .boot-identity-lines {
+    display: none;
+  }
+  .boot-search {
+    flex: 1 1 auto;
+    height: 40px;
+    margin-left: 6px;
+    border-radius: var(--radius-full);
+  }
+  .boot-avatar {
+    margin-left: 6px;
+  }
+
+  .boot-main {
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-md) var(--space-xl);
+  }
+  /* La barra del pulgar es lo único fijo de la pantalla: si falta, al resolver la
+     sesión el contenido salta 58px hacia arriba. */
+  .boot-shell::after {
+    content: "";
+    position: fixed;
+    inset: auto 0 0;
+    height: calc(58px + var(--safe-bottom));
+    border-top: 1px solid var(--border-hairline);
+    background: var(--white);
+  }
+}
+
 @keyframes palette-sheet-in {
   from {
     opacity: 0;
@@ -269,6 +411,9 @@
   .course-tabs button:hover,
   .sheet-row:hover,
   .palette-item:hover,
+  .planner-pill:hover,
+  .planner-block:hover,
+  .planner-due:hover,
   .icon-button:hover:not(:disabled),
   .app-brand:hover,
   .header-search:hover,
@@ -293,7 +438,7 @@
 @media (max-width: 767px) {
   /* Nada de zoom por doble toque ni de destello gris del sistema al pulsar:
      el acuse de recibo lo damos nosotros, en el mismo frame. */
-  .app-shell {
+  .app-shell[data-mobile="true"] {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
@@ -301,11 +446,14 @@
   .course-card:active,
   .sheet-row:active,
   .palette-item:active,
+  .planner-daychip:active,
+  .planner-pill:active,
   .course-tabs button:active {
     background: var(--canvas-soft);
   }
 
   .next-eval-action:active,
+  .planner-create:active,
   .sheet-cta:active,
   .planner-dialog-save:active {
     transform: scale(0.985);
@@ -315,7 +463,7 @@
      no existe el cursor de texto sobre una pestaña. */
   .mobile-nav,
   .course-tabs,
-  .planner-strip,
+  .planner-daybar,
   .app-header {
     user-select: none;
   }
@@ -390,6 +538,9 @@
     border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--course-tone) 14%, #fff);
   }
+  .next-eval-weekday {
+    font-size: 11.5px;
+  }
   .next-eval-day {
     font-family: var(--font-core);
     font-size: 14px;
@@ -398,6 +549,10 @@
   }
   .next-eval-month {
     font-size: 11.5px;
+  }
+
+  .next-eval-count {
+    justify-self: end;
   }
 
   /* El asunto de la evaluación es lo que se viene a leer: a ancho completo y

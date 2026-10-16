@@ -1,4 +1,4 @@
-// Implements: REQ-PUB-01 REQ-PUB-02 REQ-PUB-03 REQ-PUB-04 REQ-PUB-05 REQ-PUB-06 REQ-PUB-07 REQ-PUB-08 REQ-PUB-09
+// Implements: REQ-PUB-01 REQ-PUB-02 REQ-PUB-03 REQ-PUB-04 REQ-PUB-05 REQ-PUB-06 REQ-PUB-07 REQ-PUB-08 REQ-PUB-09 REQ-PUB-10
 
 export const DEFAULT_EDITOR_STORAGE_KEY = "ceoubb_default_editor";
 export const DRAFT_STORAGE_PREFIX = "ceoubb_publication_draft";
@@ -21,6 +21,29 @@ export const EDITOR_MODES = [
   },
 ] as const;
 
+export const CONTENT_TYPES = [
+  {
+    value: "notice",
+    label: "Aviso o portada del ramo",
+    description: "Bienvenida, información general o anuncio destacado.",
+  },
+  {
+    value: "assessment",
+    label: "Certamen o evaluación",
+    description: "Instrucciones, pauta, fecha o material de evaluación.",
+  },
+  {
+    value: "guide",
+    label: "Guía de estudio",
+    description: "Objetivos, desarrollo, ejercicios y material de apoyo.",
+  },
+  {
+    value: "blank",
+    label: "En blanco",
+    description: "Empieza sin estructura ni contenido sugerido.",
+  },
+] as const;
+
 export const NOTIFICATION_MODES = [
   {
     value: "push",
@@ -35,7 +58,76 @@ export const NOTIFICATION_MODES = [
 ] as const;
 
 export type EditorMode = (typeof EDITOR_MODES)[number]["value"];
+export type PublicationContentType = (typeof CONTENT_TYPES)[number]["value"];
 export type NotificationMode = (typeof NOTIFICATION_MODES)[number]["value"];
+
+/*
+  Cada preset entrega la estructura que un docente escribiría de todos modos.
+  Se inyecta en el cuerpo del editor como Markdown porque ese es el formato que
+  guarda la publicación: el modo visual lo muestra ya compuesto y el modo código
+  lo muestra como fuente, sin una segunda representación que mantener.
+*/
+// Implements: REQ-PUB-10
+export const PUBLICATION_TEMPLATES: Record<PublicationContentType, string> = {
+  notice: [
+    "## Lo importante",
+    "",
+    "Escribe aquí el anuncio en una o dos frases.",
+    "",
+    "> [!NOTE]",
+    "> Detalle que el curso no debe pasar por alto.",
+    "",
+    "## Qué tienes que hacer",
+    "",
+    "- Primera acción",
+    "- Segunda acción",
+  ].join("\n"),
+  assessment: [
+    "## Contenidos evaluados",
+    "",
+    "- Unidad y temas que entran",
+    "",
+    "## Instrucciones",
+    "",
+    "1. Duración y material permitido",
+    "2. Forma de entrega",
+    "",
+    "> [!ASSESSMENT]",
+    "> Fecha, sala y hora de inicio.",
+    "",
+    "## Pauta de corrección",
+    "",
+    "| Ítem | Criterio | Puntaje |",
+    "| --- | --- | --- |",
+    "| 1 | Desarrollo correcto | 20 |",
+    "| 2 | Justificación | 20 |",
+  ].join("\n"),
+  guide: [
+    "## Objetivos de aprendizaje",
+    "",
+    "- Al terminar esta guía serás capaz de…",
+    "",
+    "## Desarrollo",
+    "",
+    "Explica el contenido apoyándote en fórmulas como $\\sum F_x = 0$ cuando ayuden.",
+    "",
+    "---",
+    "",
+    "## Ejercicios propuestos",
+    "",
+    "1. Primer ejercicio",
+    "2. Segundo ejercicio",
+    "",
+    "## Material de apoyo",
+    "",
+    "- Referencias, capítulos y enlaces",
+  ].join("\n"),
+  blank: "",
+};
+
+export function templateForContentType(contentType: PublicationContentType): string {
+  return PUBLICATION_TEMPLATES[contentType] ?? "";
+}
 
 export type PublicationPreferenceStorage = {
   getItem: (key: string) => string | null;
@@ -43,8 +135,20 @@ export type PublicationPreferenceStorage = {
   removeItem: (key: string) => void;
 };
 
+export type PublicationDraft = {
+  contentType: PublicationContentType;
+  editorMode: EditorMode;
+  folder: string;
+  kind: "notice" | "guide" | "assessment";
+  notificationMode: NotificationMode;
+};
+
 export function isEditorMode(value: unknown): value is EditorMode {
   return EDITOR_MODES.some((mode) => mode.value === value);
+}
+
+export function isContentType(value: unknown): value is PublicationContentType {
+  return CONTENT_TYPES.some((type) => type.value === value);
 }
 
 export function isNotificationMode(value: unknown): value is NotificationMode {
@@ -75,6 +179,27 @@ export function persistDefaultEditor(
   }
 }
 
+export function createPublicationDraft({
+  contentType,
+  editorMode,
+  folder,
+  notificationMode,
+}: {
+  contentType: PublicationContentType;
+  editorMode: EditorMode;
+  folder: string;
+  notificationMode: NotificationMode;
+}): PublicationDraft {
+  return {
+    contentType,
+    editorMode,
+    folder: folder.trim(),
+    kind:
+      contentType === "assessment" ? "assessment" : contentType === "guide" ? "guide" : "notice",
+    notificationMode,
+  };
+}
+
 /*
   Borrador de la publicación en curso. Es local al dispositivo y a la sección:
   una guía a medio escribir no debe aparecer en otro ramo, y un cierre de
@@ -82,6 +207,7 @@ export function persistDefaultEditor(
 */
 // Implements: REQ-PUB-11
 export type StoredPublicationDraft = {
+  contentType: PublicationContentType;
   editorMode: EditorMode;
   notificationMode: NotificationMode;
   title: string;
@@ -111,6 +237,7 @@ export function readPublicationDraft(
     const body = typeof value.body === "string" ? value.body : "";
     if (!title.trim() && !body.trim()) return null;
     return {
+      contentType: isContentType(value.contentType) ? value.contentType : "blank",
       editorMode: isEditorMode(value.editorMode) ? value.editorMode : "visual",
       notificationMode: isNotificationMode(value.notificationMode)
         ? value.notificationMode

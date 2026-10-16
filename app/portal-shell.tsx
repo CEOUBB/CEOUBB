@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,11 +18,11 @@ import { calendarEntries, firstName, roleLabel, type User } from "../lib/portal-
 import { Menu } from "./animated-menu";
 import { navItems, type Screen } from "./portal-types";
 import { m } from "motion/react";
-import { Drawer } from "vaul";
+import dynamic from "next/dynamic";
 import type { CourseActivity, CourseGradebook } from "../lib/firebase-classroom-client";
 import type { CommunicationReadCursor, MessageThreadSummary } from "../lib/communications.ts";
 import type { ManagedCourse } from "../lib/course-management";
-import { Avatar, Deferred, Screen as PortalScreen } from "./portal-ui";
+import { Avatar, Screen as PortalScreen } from "./portal-ui";
 import { NotificationList } from "./notification-panel";
 import type { NotificationItem } from "../lib/communications.ts";
 import { SiteFooter } from "./site-footer";
@@ -39,29 +39,52 @@ import {
   TeacherCoursesSkeleton,
 } from "./views/ViewSkeletons";
 
-const CalendarView = lazy(() =>
-  import("./views/calendar/CalendarView").then((module) => ({ default: module.CalendarView }))
+const CalendarView = dynamic(
+  () => import("./views/calendar/CalendarView").then((m) => m.CalendarView),
+  {
+    ssr: false,
+    loading: () => <CalendarSkeleton />,
+  }
 );
-const ResourcesView = lazy(() =>
-  import("./views/resources/ResourcesView").then((module) => ({ default: module.ResourcesView }))
+
+const ResourcesView = dynamic(
+  () => import("./views/resources/ResourcesView").then((m) => m.ResourcesView),
+  {
+    ssr: false,
+    loading: () => <ResourcesSkeleton />,
+  }
 );
-const CommunicationsCenter = lazy(() =>
-  import("./views/CommunicationsCenter").then((module) => ({
-    default: module.CommunicationsCenter,
-  }))
+
+const CommunicationsCenter = dynamic(
+  () => import("./views/CommunicationsCenter").then((m) => m.CommunicationsCenter),
+  {
+    ssr: false,
+    loading: () => <CommunicationsSkeleton />,
+  }
 );
-const AdminView = lazy(() =>
-  import("./views/AdminView").then((module) => ({ default: module.AdminView }))
+
+const AdminView = dynamic(() => import("./views/AdminView").then((m) => m.AdminView), {
+  ssr: false,
+  loading: () => <AdminSkeleton />,
+});
+
+const TeacherCoursesView = dynamic(
+  () => import("./views/TeacherCoursesView").then((m) => m.TeacherCoursesView),
+  {
+    ssr: false,
+    loading: () => <TeacherCoursesSkeleton />,
+  }
 );
-const TeacherCoursesView = lazy(() =>
-  import("./views/TeacherCoursesView").then((module) => ({
-    default: module.TeacherCoursesView,
-  }))
-);
-const SettingsView = lazy(() =>
-  import("./views/SettingsView").then((module) => ({ default: module.SettingsView }))
-);
-const Classroom = lazy(() => import("./Classroom"));
+
+const SettingsView = dynamic(() => import("./views/SettingsView").then((m) => m.SettingsView), {
+  ssr: false,
+  loading: () => <SettingsSkeleton />,
+});
+
+const Classroom = dynamic(() => import("./Classroom"), {
+  ssr: false,
+  loading: () => <ClassroomSkeleton />,
+});
 
 const FOCUSABLE_POPOVER_ITEMS = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -97,11 +120,9 @@ function useDismissablePopovers(
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      const target = event.target as Element;
-      if (target.closest?.(".notification-popover")) return;
       for (const ref of menus) {
         const menu = ref.current;
-        if (menu?.open && !menu.contains(target)) menu.open = false;
+        if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
       }
     };
 
@@ -154,7 +175,6 @@ export function PortalHeader({
   notifications,
   notificationsLoading,
   unreadCommunications,
-  mobile,
   toggleSidebar,
 }: {
   sidebarOpen: boolean;
@@ -172,7 +192,6 @@ export function PortalHeader({
   notifications: readonly NotificationItem[];
   notificationsLoading: boolean;
   unreadCommunications: number;
-  mobile: boolean;
   toggleSidebar: () => void;
 }) {
   // Implements: REQ-PERF-LOAD-02
@@ -197,22 +216,6 @@ export function PortalHeader({
     const menu = account.current;
     if (menu) menu.open = false;
   }, []);
-
-  const notificationContent = (
-    <NotificationList
-      items={notifications}
-      loading={notificationsLoading}
-      onMarkAll={onMarkAllNotifications}
-      onOpen={(item) => {
-        closeNotifications();
-        onOpenNotification(item);
-      }}
-      onSeeAll={() => {
-        closeNotifications();
-        onCommunications();
-      }}
-    />
-  );
 
   return (
     <header
@@ -292,40 +295,40 @@ export function PortalHeader({
             en cada apertura: `details` conserva sus hijos montados y una
             animación declarada sobre ellos sólo se vería la primera vez.
           */}
-          {notificationsOpen && !mobile && (
-            <m.div
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              aria-labelledby="notification-panel-title"
-              className="notification-popover"
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
-              role="group"
-              transition={{ ...PANEL_SPRING, opacity: { duration: 0.12 } }}
-            >
-              {notificationContent}
-            </m.div>
+          {notificationsOpen && (
+            <>
+              <button
+                aria-hidden="true"
+                aria-label="Cerrar notificaciones"
+                className="notification-scrim"
+                onClick={closeNotifications}
+                tabIndex={-1}
+                type="button"
+              />
+              <m.div
+                animate={{ opacity: 1, y: 0 }}
+                aria-labelledby="notification-panel-title"
+                className="notification-popover"
+                initial={{ opacity: 0, y: 8 }}
+                transition={PANEL_SPRING}
+              >
+                <NotificationList
+                  items={notifications}
+                  loading={notificationsLoading}
+                  onMarkAll={onMarkAllNotifications}
+                  onOpen={(item) => {
+                    closeNotifications();
+                    onOpenNotification(item);
+                  }}
+                  onSeeAll={() => {
+                    closeNotifications();
+                    onCommunications();
+                  }}
+                />
+              </m.div>
+            </>
           )}
         </details>
-        {mobile && (
-          <Drawer.Root
-            onOpenChange={(open) => {
-              if (!open) closeNotifications();
-            }}
-            open={notificationsOpen}
-          >
-            <Drawer.Portal>
-              <Drawer.Overlay className="sheet-overlay" />
-              <Drawer.Content
-                aria-describedby={undefined}
-                className="sheet-content notification-popover"
-              >
-                <Drawer.Handle className="sheet-handle" />
-                <Drawer.Title className="sr-only">Notificaciones</Drawer.Title>
-                <button data-hardware-back hidden onClick={closeNotifications} type="button" />
-                {notificationContent}
-              </Drawer.Content>
-            </Drawer.Portal>
-          </Drawer.Root>
-        )}
         <details
           className="account-menu"
           onToggle={(event) => setAccountOpen(event.currentTarget.open)}
@@ -542,29 +545,17 @@ export function PortalMainView({
       id="contenido-principal"
       tabIndex={-1}
     >
-      <p
-        aria-atomic="true"
-        aria-live="polite"
-        className="sr-only"
-        id="portal-view-title"
-        role="status"
-      >
+      <p aria-atomic="true" aria-live="polite" className="sr-only" id="portal-view-title">
         Vista actual: {context}
       </p>
       {screen === "course" && openedCourse ? (
         <PortalScreen key={`course-${openedCourse.id}`}>
-          <Deferred
-            fallback={
-              <ClassroomSkeleton course={openedCourse} sectionRole={sectionRole} user={user} />
-            }
-          >
-            <Classroom
-              course={openedCourse}
-              user={user}
-              sectionRole={sectionRole}
-              goBack={() => setScreen("courses")}
-            />
-          </Deferred>
+          <Classroom
+            course={openedCourse}
+            user={user}
+            sectionRole={sectionRole}
+            goBack={() => setScreen("courses")}
+          />
         </PortalScreen>
       ) : (
         <PortalScreen key={screen}>
@@ -590,55 +581,39 @@ export function PortalMainView({
               />
             )}
             {screen === "calendar" && (
-              <Deferred fallback={<CalendarSkeleton courses={courses} />}>
-                <CalendarView
-                  courses={courses}
-                  gradebooks={gradebooks}
-                  activity={activity}
-                  openCourse={openCourse}
-                />
-              </Deferred>
+              <CalendarView
+                courses={courses}
+                gradebooks={gradebooks}
+                activity={activity}
+                openCourse={openCourse}
+              />
             )}
             {screen === "notifications" && (
-              <Deferred fallback={<CommunicationsSkeleton teaching={user.role !== "student"} />}>
-                <CommunicationsCenter
-                  activity={activity}
-                  connectionError={communicationError}
-                  ready={communicationsReady}
-                  retry={retryCommunications}
-                  courses={courses}
-                  cursors={communicationCursors}
-                  focusThread={focusThread}
-                  memberships={memberships}
-                  openCourse={openCourse}
-                  threads={communicationThreads}
-                  user={user}
-                />
-              </Deferred>
+              <CommunicationsCenter
+                activity={activity}
+                connectionError={communicationError}
+                ready={communicationsReady}
+                retry={retryCommunications}
+                courses={courses}
+                cursors={communicationCursors}
+                focusThread={focusThread}
+                memberships={memberships}
+                openCourse={openCourse}
+                threads={communicationThreads}
+                user={user}
+              />
             )}
             {screen === "settings" && (
-              <Deferred fallback={<SettingsSkeleton user={user} />}>
-                <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
-              </Deferred>
+              <SettingsView onLogout={onLogout} onPhotoChange={onPhotoChange} user={user} />
             )}
-            {screen === "resources" && (
-              <Deferred fallback={<ResourcesSkeleton />}>
-                <ResourcesView />
-              </Deferred>
-            )}
+            {screen === "resources" && <ResourcesView />}
             {screen === "teacher" && (user.role === "teacher" || user.role === "owner") && (
-              <Deferred fallback={<TeacherCoursesSkeleton />}>
-                <TeacherCoursesView
-                  onCoursesChanged={onCoursesChanged}
-                  openCourse={(course: ManagedCourse) => openCourse(course)}
-                />
-              </Deferred>
+              <TeacherCoursesView
+                onCoursesChanged={onCoursesChanged}
+                openCourse={(course: ManagedCourse) => openCourse(course)}
+              />
             )}
-            {screen === "admin" && user.role === "owner" && (
-              <Deferred fallback={<AdminSkeleton />}>
-                <AdminView />
-              </Deferred>
-            )}
+            {screen === "admin" && user.role === "owner" && <AdminView />}
             <SiteFooter />
           </div>
         </PortalScreen>
