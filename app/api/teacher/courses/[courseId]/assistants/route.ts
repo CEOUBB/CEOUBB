@@ -52,17 +52,60 @@ export async function GET(request: Request, context: CourseContext) {
   }
 }
 
+function validateMutationRequest(request: Request): Response | null {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > 65536) {
+    return Response.json(
+      { error: "El cuerpo de la solicitud es demasiado extenso." },
+      { status: 413 }
+    );
+  }
+
+  return null;
+}
+
+async function readMutationBody(request: Request): Promise<{ body?: string; error?: Response }> {
+  try {
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, "utf8") > 65536) {
+      return {
+        error: Response.json(
+          { error: "El cuerpo de la solicitud es demasiado extenso." },
+          { status: 413 }
+        ),
+      };
+    }
+    return { body: rawBody };
+  } catch {
+    return {
+      error: Response.json({ error: "No fue posible leer la solicitud." }, { status: 400 }),
+    };
+  }
+}
+
 // Implements: REQ-SEC-17
 export async function POST(request: Request, context: CourseContext) {
+  const validationError = validateMutationRequest(request);
+  if (validationError) return validationError;
+
   const session = await teacher(request);
   if ("response" in session) return session.response;
   const { courseId } = await context.params;
   if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
     return Response.json({ error: "El ramo no es válido." }, { status: 400 });
   }
+
+  const bodyResult = await readMutationBody(request);
+  if (bodyResult.error) return bodyResult.error;
+
   let payload: unknown;
   try {
-    payload = await request.json();
+    payload = JSON.parse(bodyResult.body ?? "");
   } catch {
     return Response.json({ error: "El correo de la ayudante no es válido." }, { status: 400 });
   }
@@ -76,15 +119,22 @@ export async function POST(request: Request, context: CourseContext) {
 
 // Implements: REQ-SEC-17
 export async function DELETE(request: Request, context: CourseContext) {
+  const validationError = validateMutationRequest(request);
+  if (validationError) return validationError;
+
   const session = await teacher(request);
   if ("response" in session) return session.response;
   const { courseId } = await context.params;
   if (!courseId || courseId.length > 100 || !isSectionId(courseId)) {
     return Response.json({ error: "El ramo no es válido." }, { status: 400 });
   }
+
+  const bodyResult = await readMutationBody(request);
+  if (bodyResult.error) return bodyResult.error;
+
   let payload: unknown;
   try {
-    payload = await request.json();
+    payload = JSON.parse(bodyResult.body ?? "");
   } catch {
     return Response.json({ error: "La ayudantía no es válida." }, { status: 400 });
   }
