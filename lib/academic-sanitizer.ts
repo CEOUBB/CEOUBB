@@ -105,6 +105,11 @@ const ELEMENT_ATTRIBUTES = new Map<string, ReadonlySet<string>>([
   ["td", new Set(["abbr", "colspan", "rowspan"])],
   ["th", new Set(["abbr", "colspan", "rowspan", "scope"])],
 ]);
+const ALLOWED_WEB_PROTOCOLS = new Set(["http:", "https:"]);
+const VALID_DIR_VALUES = new Set(["auto", "ltr", "rtl"]);
+const DIMENSION_ATTRIBUTES = new Set(["colspan", "height", "rowspan", "span", "width"]);
+const NUMERIC_ATTRIBUTES = new Set(["start", "value"]);
+const VALID_SCOPE_VALUES = new Set(["col", "colgroup", "row", "rowgroup"]);
 
 declare const sanitizedAcademicHtmlBrand: unique symbol;
 
@@ -131,7 +136,7 @@ function normalizeWebUrl(value: string): NormalizedUrl | null {
 
   try {
     const parsed = new URL(trimmed, ACADEMIC_BASE_URL);
-    if (!new Set(["http:", "https:"]).has(parsed.protocol)) return null;
+    if (!ALLOWED_WEB_PROTOCOLS.has(parsed.protocol)) return null;
     if (parsed.username || parsed.password) return null;
 
     const hasExplicitOrigin = /^([a-z][a-z\d+.-]*:)?\/\//i.test(trimmed);
@@ -161,14 +166,14 @@ function isAllowedAttribute(element: Element, attributeName: string): boolean {
 }
 
 function isValidAttributeValue(element: Element, attributeName: string, value: string): boolean {
-  if (attributeName === "dir") return new Set(["auto", "ltr", "rtl"]).has(value.toLowerCase());
+  if (attributeName === "dir") return VALID_DIR_VALUES.has(value.toLowerCase());
   if (attributeName === "lang") return /^[a-z]{2,8}(?:-[a-z\d]{1,8})*$/i.test(value);
-  if (["colspan", "height", "rowspan", "span", "width"].includes(attributeName)) {
+  if (DIMENSION_ATTRIBUTES.has(attributeName)) {
     return /^\d+$/.test(value) && Number(value) > 0 && Number(value) <= 10_000;
   }
-  if (["start", "value"].includes(attributeName)) return /^-?\d+$/.test(value);
+  if (NUMERIC_ATTRIBUTES.has(attributeName)) return /^-?\d+$/.test(value);
   if (attributeName === "scope") {
-    return new Set(["col", "colgroup", "row", "rowgroup"]).has(value.toLowerCase());
+    return VALID_SCOPE_VALUES.has(value.toLowerCase());
   }
   if (attributeName === "reversed") return element.tagName.toLowerCase() === "ol";
   return true;
