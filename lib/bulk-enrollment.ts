@@ -15,6 +15,7 @@ const NAME_HEADERS = new Set(["nombre", "name", "nombre_completo"]);
 export type EnrollmentImportErrorCode =
   | "invalid_request"
   | "unauthenticated"
+  | "unauthorized_origin"
   | "forbidden"
   | "section_not_found"
   | "period_closed"
