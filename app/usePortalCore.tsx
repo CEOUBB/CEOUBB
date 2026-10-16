@@ -273,6 +273,7 @@ export function usePortalCore(initialSession?: SessionState) {
   const courses = current;
   const archivedCourses = archived;
   const sectionIds = useMemo(() => current.map((item) => item.id), [current]);
+  const sectionKey = useMemo(() => sectionIds.join(","), [sectionIds]);
 
   const loadMoreArchived = useCallback(async () => {
     if (!archivedNextCursor || archivedLoading) return;
@@ -320,7 +321,7 @@ export function usePortalCore(initialSession?: SessionState) {
           dispatchSession({ type: "SET_ACTIVITY", activity: act });
           setActivitySync((current) => ({
             ...current,
-            key: user.id + JSON.stringify(sectionIds),
+            key: `${user.id}:${sectionKey}`,
             ready: ready === true,
           }));
         },
@@ -328,7 +329,7 @@ export function usePortalCore(initialSession?: SessionState) {
           if (alive)
             setActivitySync((current) => ({
               ...current,
-              key: user.id + JSON.stringify(sectionIds),
+              key: `${user.id}:${sectionKey}`,
               ready: error ? false : current.ready,
               error,
             }));
@@ -339,7 +340,7 @@ export function usePortalCore(initialSession?: SessionState) {
       alive = false;
       unsub?.();
     };
-  }, [user, sectionIds, isAppVisible, communicationRetry]);
+  }, [user, sectionIds, sectionKey, isAppVisible, communicationRetry]);
 
   // Implements: REQ-PERF-08
   useEffect(() => {
@@ -440,7 +441,7 @@ export function usePortalCore(initialSession?: SessionState) {
         : [],
     [activity, communications, courses, user]
   );
-  const activityCurrent = activitySync.key === (user?.id ?? "") + JSON.stringify(sectionIds);
+  const activityCurrent = activitySync.key === `${user?.id ?? ""}:${sectionKey}`;
   const communicationsReady =
     (sectionIds.length === 0 || (activityCurrent && activitySync.ready)) &&
     (memberships.length === 0 || communications.ready === true);
