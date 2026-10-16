@@ -489,9 +489,6 @@ test("callable mutations reject a period archived after preflight authorization"
       },
       "firebase-functions/v2/https": { HttpsError, onCall: (...args) => args.at(-1) },
       "./activity-projection": {},
-      "./course-page-schedule": { runCoursePageSchedule: async () => ({}) },
-      "firebase-functions/v2/scheduler": { onSchedule: () => {} },
-      "firebase-admin/storage": { getStorage: () => ({ bucket: () => ({}) }) },
       "./auth-access": { authenticationIsActive: () => true },
       "./grade-audit": {
         actorFromAuth: () => ({ actorUid: "synthetic-user" }),

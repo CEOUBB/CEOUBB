@@ -2,13 +2,14 @@
 
 import { useHydratedReducedMotion } from "../../../lib/hooks/use-hydrated-reduced-motion";
 import * as m from "motion/react-m";
-import { Check, X } from "@phosphor-icons/react";
-import type { PlacedBlock, PlannerItem } from "../../../lib/planner";
+import { ArrowsOutCardinal, Check, X } from "@phosphor-icons/react";
+import type { PointerEvent } from "react";
+import type { PersonalEventKind, PlacedBlock, PlannerItem } from "../../../lib/planner";
 import { ease, instantTransition } from "../../../lib/portal-utils";
-import { MINUTE_SPAN, itemContext, offsetOf } from "./calendar-constants";
+import { KIND_LABEL, MINUTE_SPAN, offsetOf } from "./calendar-constants";
 
-function blockMotion(reduced: boolean) {
-  if (reduced) {
+function getArticleAnimation(shouldReduceMotion: boolean | null) {
+  if (shouldReduceMotion) {
     return {
       initial: false as const,
       animate: { opacity: 1 },
@@ -17,108 +18,153 @@ function blockMotion(reduced: boolean) {
     };
   }
   return {
-    initial: { opacity: 0, transform: "scale(0.96)" },
+    initial: { opacity: 0, transform: "scale(0.94)" },
     animate: { opacity: 1, transform: "scale(1)" },
-    exit: { opacity: 0, transform: "scale(0.97)", transition: { duration: 0.12 } },
-    transition: { duration: 0.18, ease },
+    exit: { opacity: 0, transform: "scale(0.96)", transition: { duration: 0.12 } },
+    transition: { duration: 0.2, ease },
   };
+}
+
+function getBlockDetailsLabel(block: PlacedBlock): string {
+  const subtitle = block.courseName
+    ? `, ${block.courseName}`
+    : block.kind && KIND_LABEL[block.kind as PersonalEventKind]
+      ? `, ${KIND_LABEL[block.kind as PersonalEventKind]}`
+      : "";
+  return `Ver detalles de “${block.title}”, ${block.startTime} a ${block.endTime}${subtitle}`;
+}
+
+function getBlockSubtitle(block: PlacedBlock): string {
+  if (block.courseName) return ` · ${block.courseName}`;
+  const label = KIND_LABEL[block.kind as PersonalEventKind];
+  return label ? ` · ${label}` : "";
+}
+
+function PlannerCheckButton({
+  block,
+  shouldReduceMotion,
+  onToggleDone,
+}: {
+  block: PlacedBlock;
+  shouldReduceMotion: boolean | null;
+  onToggleDone: (block: PlannerItem) => void;
+}) {
+  const checkLabel = block.completed
+    ? `Marcar “${block.title}” como pendiente`
+    : `Marcar “${block.title}” como hecho`;
+
+  return (
+    <button
+      aria-label={checkLabel}
+      aria-pressed={block.completed}
+      className="planner-check"
+      onClick={() => onToggleDone(block)}
+      type="button"
+    >
+      <m.span
+        animate={
+          shouldReduceMotion
+            ? { opacity: block.completed ? 1 : 0 }
+            : {
+                transform: block.completed ? "scale(1)" : "scale(0.2)",
+                opacity: block.completed ? 1 : 0,
+              }
+        }
+        transition={
+          shouldReduceMotion ? instantTransition : { type: "spring", stiffness: 620, damping: 26 }
+        }
+      >
+        <Check aria-hidden="true" size={10} weight="bold" />
+      </m.span>
+    </button>
+  );
 }
 
 export function PlannerBlockArticle({
   block,
-  isLive,
-  dragging,
+  isLive = false,
   onToggleDone,
   onEdit,
   onRemove,
-  click,
+  onMoveStart,
+  onMoveClick,
 }: {
   block: PlacedBlock;
-  isLive: boolean;
-  dragging: boolean;
+  isLive?: boolean;
   onToggleDone: (block: PlannerItem) => void;
   onEdit: (block: PlannerItem) => void;
   onRemove: (block: PlannerItem) => void;
-  click: (action: () => void, keyboard?: boolean) => void;
+  onMoveStart?: (event: PointerEvent<HTMLButtonElement>, block: PlannerItem) => void;
+  onMoveClick?: (block: PlannerItem, keyboard: boolean) => void;
 }) {
-  const reduced = useHydratedReducedMotion();
-  const motion = blockMotion(reduced);
-  const context = itemContext(block);
-  const done = block.completed;
+  const shouldReduceMotion = useHydratedReducedMotion();
+  const motionProps = getArticleAnimation(shouldReduceMotion);
 
   return (
     <m.article
-      animate={motion.animate}
+      animate={motionProps.animate}
       className="planner-block"
-      data-done={done ? "true" : undefined}
-      data-dragging={dragging || undefined}
+      data-done={block.completed ? "true" : undefined}
       data-live={isLive ? "true" : undefined}
-      exit={motion.exit}
-      initial={motion.initial}
+      exit={motionProps.exit}
+      initial={motionProps.initial}
+      key={block.id}
       style={
         {
           "--course-tone": block.tone,
           top: offsetOf(block.startMinutes),
           height: `${((block.endMinutes - block.startMinutes) / MINUTE_SPAN) * 100}%`,
-          left: `calc(${(block.column / block.columns) * 100}% + 1px)`,
-          width: `calc(${100 / block.columns}% - 3px)`,
+          left: `${(block.column / block.columns) * 100}%`,
+          width: `${100 / block.columns}%`,
         } as React.CSSProperties
       }
-      transition={motion.transition}
+      transition={motionProps.transition}
     >
-      <button
-        aria-label={
-          done ? `Marcar “${block.title}” como pendiente` : `Marcar “${block.title}” como hecho`
-        }
-        aria-pressed={done}
-        className="planner-check"
-        onClick={() => onToggleDone(block)}
-        type="button"
-      >
-        <m.span
-          animate={
-            reduced
-              ? { opacity: done ? 1 : 0 }
-              : { transform: done ? "scale(1)" : "scale(0.2)", opacity: done ? 1 : 0 }
-          }
-          initial={false}
-          transition={reduced ? instantTransition : { type: "spring", stiffness: 620, damping: 26 }}
-        >
-          <Check aria-hidden="true" size={9} weight="bold" />
-        </m.span>
-      </button>
-      <button
-        aria-label={`Ver detalles de “${block.title}”, ${block.startTime} a ${block.endTime}${context ? `, ${context}` : ""}`}
-        className="planner-block-open"
-        data-drag="move"
-        data-id={block.id}
-        onClick={(event) => click(() => onEdit(block), event.detail === 0)}
-        type="button"
-      >
-        <strong>{block.title}</strong>
-        <small className="num">
-          <span className="planner-block-time">
-            {block.startTime}
-            <span>–{block.endTime}</span>
-          </span>
-          {context && <span>{context}</span>}
-        </small>
-        {isLive && <span className="planner-live-status">En curso</span>}
-      </button>
-      <button
-        aria-label={`Eliminar “${block.title}”`}
-        className="planner-block-remove"
-        onClick={() => onRemove(block)}
-        type="button"
-      >
-        <X aria-hidden="true" size={11} weight="bold" />
-      </button>
-      <span
-        aria-hidden="true"
-        className="planner-block-resize"
-        data-drag="resize"
-        data-id={block.id}
+      <PlannerCheckButton
+        block={block}
+        onToggleDone={onToggleDone}
+        shouldReduceMotion={shouldReduceMotion}
       />
+      <button
+        aria-label={getBlockDetailsLabel(block)}
+        className="planner-block-open"
+        onClick={() => onEdit(block)}
+        type="button"
+      >
+        <div className="planner-block-title-row">
+          <strong>{block.title}</strong>
+          {isLive && (
+            <span className="planner-live-status" role="status">
+              En curso
+            </span>
+          )}
+        </div>
+        <small className="num">
+          {block.startTime}–{block.endTime}
+          {getBlockSubtitle(block)}
+        </small>
+      </button>
+      {block.source === "user_personal" && (
+        <button
+          type="button"
+          className="planner-block-move"
+          aria-label={`Mover “${block.title}”`}
+          onPointerDown={(event) => onMoveStart?.(event, block)}
+          onClick={(event) => onMoveClick?.(block, event.detail === 0)}
+        >
+          <ArrowsOutCardinal aria-hidden="true" size={14} />
+        </button>
+      )}
+      {block.source === "user_personal" && (
+        <button
+          aria-label={`Eliminar “${block.title}”`}
+          className="planner-block-remove"
+          onClick={() => onRemove(block)}
+          type="button"
+        >
+          <X aria-hidden="true" size={10} weight="bold" />
+        </button>
+      )}
     </m.article>
   );
 }

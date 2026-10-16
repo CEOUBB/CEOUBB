@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { Check, CopySimple, Info } from "@phosphor-icons/react";
 import type { Course } from "../../../lib/courses";
 import type { LiveClassLink } from "../../../lib/live-class";
@@ -14,10 +14,7 @@ import { LiveClassEditor } from "./LiveClassSection";
   de reunión encabezaba la Portada, dos tareas puntuales ocupando el lugar de
   las frecuentes.
 */
-// Implements: REQ-PAGE-01, REQ-PAGE-09
 export function CourseRail({
-  announcements,
-  index,
   course,
   canTeach,
   readOnly,
@@ -32,8 +29,6 @@ export function CourseRail({
   clearLiveClass,
   status,
 }: {
-  announcements: ReactNode;
-  index: ReactNode;
   course: Course;
   canTeach: boolean;
   readOnly: boolean;
@@ -50,8 +45,6 @@ export function CourseRail({
 }) {
   return (
     <aside className="course-rail">
-      {announcements}
-      {index}
       <div className="section-title compact-title">
         <h2>
           <Info size={19} weight="fill" aria-hidden="true" />

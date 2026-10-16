@@ -1,13 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { QA_SCENARIOS, mutatesFixtures } from "../catalog.ts";
+import { QA_SCENARIOS } from "../catalog.ts";
 import { isFirestoreNavigationCancellation } from "../browser-errors.ts";
 import { resetQaFixtures } from "../../scripts/qa/seed.ts";
-import {
-  installQaDate,
-  login,
-  removeQaLoginSessions,
-  removeQaMutationDocuments,
-} from "./helpers.ts";
+import { installQaDate, login, removeQaMutationDocuments } from "./helpers.ts";
 import { portalScenario } from "./portal-scenarios.ts";
 import { classroomScenario } from "./classroom-scenarios.ts";
 import { stateScenario } from "./state-scenarios.ts";
@@ -36,7 +31,21 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
         navigating = false;
       }
     };
-    const mutates = mutatesFixtures(scenario.id);
+    const mutates =
+      scenario.id.endsWith("persistence") ||
+      [
+        "communications.reply",
+        "shell.motion",
+        "imports.motion",
+        "quizzes.attempt",
+        "quizzes.submission",
+        "quizzes.answer-saving",
+        "quizzes.answer-error",
+        "quizzes.submit-loading",
+        "quizzes.submit-error",
+        "interop.scorm",
+        "interop.xapi",
+      ].includes(scenario.id);
     page.on("request", (request) => {
       if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigating = true;
     });
@@ -179,7 +188,6 @@ for (const scenario of QA_SCENARIOS.filter((entry) => !selected || selected.incl
         await removeQaMutationDocuments();
         await resetQaFixtures();
       }
-      await removeQaLoginSessions();
     }
   });
 }

@@ -5,348 +5,220 @@
 // Implements: REQ-STAGGERED-SHIMMER-MOTION
 // Implements: REQ-SKELETON-01
 
-import { useRef, useState } from "react";
 import {
-  ArrowCounterClockwise,
-  ArrowRight,
   Bell,
-  Check,
-  CopySimple,
+  CaretLeft,
+  CaretRight,
+  LinkSimple,
+  Plus,
+  ChatCircleDots,
   Eye,
   IdentificationCard,
   Image as ImageIcon,
   Info,
-  LinkSimple,
-  LockKey,
   MagnifyingGlass,
-  Megaphone,
-  PencilSimpleLine,
-  Plus,
-  SignOut,
-  Trash,
-  Tray,
-  UploadSimple,
 } from "@phosphor-icons/react";
-import type { Course } from "../../lib/courses";
-import { COURSE_TONES, courseToneLabel, courseToneValue } from "../../lib/course-management";
-import { timeOfMinutes, viewDates, weekDates } from "../../lib/planner";
-import type { CalendarView } from "../../lib/planner";
-import { dayOf, getSantiagoDateISO, weekdayOf } from "../../lib/portal-utils";
-import type { User } from "../../lib/portal-utils";
-import { canManageSectionContent, canTeachSection } from "../../lib/section-roles";
-import type { SectionRole } from "../../lib/section-roles";
-import { skeletonWave } from "../../lib/skeleton-wave";
-import {
-  CHANNELS_WITHOUT_SENDER,
-  CHANNEL_LABELS,
-  NOTIFICATION_CHANNELS,
-  cachedPreferences,
-} from "../../lib/user-preferences";
-import { Avatar } from "../portal-ui";
-import {
-  SLOT_HOURS,
-  initialCalendarView,
-  initialSideOpen,
-  longDate,
-  monthShort,
-  offsetOf,
-  rangeTitle,
-  scrollGridToHour,
-  useCompactViewport,
-  zoneLabel,
-} from "./calendar/calendar-constants";
-import { CalendarHeader, CalendarToolbar, DayStrip } from "./calendar/CalendarHeader";
-import { CourseFilters } from "./calendar/CalendarSide";
-import { MiniMonth } from "./calendar/MiniMonth";
-import { ClassroomHeader, ClassroomTabs } from "./classroom/ClassroomChrome";
-import { MobileStrip, ResourceGroupSection } from "./resources/resource-parts";
-import { AccountFacts } from "./settings-parts";
 import { RESOURCE_GROUPS } from "./resources/resources-data";
-import { Bone, Line } from "./skeleton-bones";
+import { COURSE_TABS } from "./classroom/classroom-utils";
+import { dayOf, getSantiagoDateISO, weekRangeLabel, weekdayOf } from "../../lib/portal-utils";
 
-const noop = () => {};
-const NO_DAYS = new Set<string>();
-const NO_TONES = new Map<string, string[]>();
-const NEUTRAL_TONE = { "--course-tone": "oklch(0.62 0.01 265)" } as React.CSSProperties;
+/*
+  Un esqueleto sólo dibuja huesos donde el contenido depende de datos. Los
+  títulos, las pestañas y los rótulos de columna ya se conocen antes de la
+  primera respuesta: escribirlos de verdad evita que la pantalla parpadee dos
+  veces y deja la silueta legible incluso sin animación.
+*/
 
+/* Los mismos límites de la grilla semanal. Se repiten aquí a propósito: importar
+   `lib/planner` arrastraría el agregador del calendario al paquete inicial que
+   abre el portal, y el esqueleto viaja en ese paquete. */
+const DAY_START_HOUR = 8;
+const DAY_END_HOUR = 21;
+const SKELETON_HOURS = Array.from(
+  { length: DAY_END_HOUR - DAY_START_HOUR },
+  (_, index) => DAY_START_HOUR + index
+);
+
+function hourLabel(hour: number): string {
+  return `${String(hour).padStart(2, "0")}:00`;
+}
+
+function hourOffset(hour: number): string {
+  return `${((hour - DAY_START_HOUR) / (DAY_END_HOUR - DAY_START_HOUR)) * 100}%`;
+}
+
+function shiftIsoDate(iso: string, days: number): string {
+  const moment = new Date(`${iso}T12:00:00Z`);
+  moment.setUTCDate(moment.getUTCDate() + days);
+  return moment.toISOString().slice(0, 10);
+}
+
+/** Lunes a domingo de la semana que contiene `anchor`, igual que el calendario. */
+function weekOf(anchor: string): string[] {
+  const weekday = new Date(`${anchor}T12:00:00Z`).getUTCDay();
+  const start = shiftIsoDate(anchor, -(weekday === 0 ? 6 : weekday - 1));
+  return Array.from({ length: 7 }, (_, index) => shiftIsoDate(start, index));
+}
+
+const SKELETON_FILTER_COURSES = [0, 1, 2];
+const SKELETON_ADMIN_ROWS = [0, 1, 2, 3];
+const SKELETON_ADMIN_PERIODS = [0, 1];
+
+/* Los cuatro canales de aviso de la pantalla real, con el ancho de su rótulo. */
+const SKELETON_SETTINGS_CHANNELS = [230, 210, 205, 260];
+const SKELETON_SETTINGS_SESSIONS = [0, 1];
+
+export function CalendarSkeleton() {
+  const today = getSantiagoDateISO();
+  const days = weekOf(today);
+
+  return (
+    <section aria-busy="true" aria-label="Cargando calendario…" className="planner" role="status">
+      <header className="page-head planner-bar">
+        <div className="planner-lead">
+          <h1>Calendario</h1>
+          {/* El rango de la semana no espera al servidor: se calcula del reloj. */}
+          <p>
+            <span>{weekRangeLabel(days[0], days[6])}</span>
+            <span>·</span>
+            <span
+              className="sk sk-quiet"
+              style={
+                {
+                  display: "inline-block",
+                  width: "78px",
+                  height: "12px",
+                  "--sk-delay": "80ms",
+                } as React.CSSProperties
+              }
+            />
+            <span>·</span>
+            <span
+              className="sk sk-quiet"
+              style={
+                {
+                  display: "inline-block",
+                  width: "70px",
+                  height: "12px",
+                  "--sk-delay": "100ms",
+                } as React.CSSProperties
+              }
+            />
+          </p>
+        </div>
+        <div className="planner-controls" aria-hidden="true" inert>
+          <div className="planner-step">
+            <button type="button" disabled aria-label="Semana anterior">
+              <CaretLeft aria-hidden="true" size={16} />
+            </button>
+            <button type="button" disabled className="planner-now-button">
+              Hoy
+            </button>
+            <button type="button" disabled aria-label="Semana siguiente">
+              <CaretRight aria-hidden="true" size={16} />
+            </button>
+          </div>
+          <label className="planner-jump">
+            <span className="sr-only">Ir a una fecha</span>
+            <input type="date" value={days[0]} disabled />
+          </label>
+          <button type="button" disabled className="planner-create">
+            <Plus aria-hidden="true" size={15} /> Nuevo bloque
+          </button>
+        </div>
+      </header>
+
+      <div aria-label="Cargando filtros" className="planner-filters" role="group">
+        {SKELETON_FILTER_COURSES.map((idx) => (
+          <span
+            className="sk"
+            key={`cal-filt-${idx}`}
+            style={
+              {
+                width: `${112 + (idx % 3) * 26}px`,
+                height: "34px",
+                borderRadius: "var(--radius-full)",
+                "--sk-delay": `${200 + idx * 30}ms`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+
+      {/* En teléfono la semana se navega con esta tira; sin ella el ancho móvil
+          gana una fila al resolverse la vista. */}
+      <nav aria-hidden="true" className="planner-daybar">
+        {days.map((day) => (
+          <span
+            className="planner-daychip"
+            aria-current={day === today ? "date" : undefined}
+            data-today={day === today ? "true" : undefined}
+            key={day}
+          >
+            <small>{weekdayOf(day)}</small>
+            <b className="num">{dayOf(day)}</b>
+          </span>
+        ))}
+      </nav>
+
+      <div
+        className="planner-frame"
+        style={{ "--planner-rows": SKELETON_HOURS.length } as React.CSSProperties}
+      >
+        <div className="planner-head">
+          <span className="planner-zone">GMT−4</span>
+          {days.map((day) => (
+            <div
+              className="planner-headday"
+              data-focus={day === today ? "true" : undefined}
+              data-today={day === today ? "true" : undefined}
+              key={day}
+            >
+              <small>{weekdayOf(day)}</small>
+              <b className="num">{dayOf(day)}</b>
+            </div>
+          ))}
+        </div>
+
+        <div
+          aria-label="Horario semanal"
+          className="planner-grid"
+          role="region"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- El horario desplazable necesita foco para usar las flechas del teclado.
+          tabIndex={0}
+        >
+          <div aria-hidden="true" className="planner-hours">
+            {SKELETON_HOURS.map((hour) => (
+              <span className="num" key={hour} style={{ top: hourOffset(hour) }}>
+                {hourLabel(hour)}
+              </span>
+            ))}
+          </div>
+          {days.map((day, colIdx) => (
+            <div
+              className="planner-col"
+              data-focus={day === today ? "true" : undefined}
+              data-today={day === today ? "true" : undefined}
+              data-weekend={colIdx > 4 ? "true" : undefined}
+              key={day}
+            ></div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Encabezado de página: el título y su bajada son copia fija de cada vista, así
+   que se escriben tal cual y no como huesos que después se reemplazan. */
 function LeadHeader({ title, description }: { title: string; description: string }) {
   return (
     <div className="page-head lead">
       <h1>{title}</h1>
-      <p>
-        <span>{description}</span>
-      </p>
+      <p>{description}</p>
     </div>
   );
 }
-
-/* ── Calendario ─────────────────────────────────────────────── */
-
-function UpcomingSkeleton() {
-  return (
-    <section className="planner-upcoming">
-      <h2>Lo que viene</h2>
-      <ul>
-        {[0, 1, 2].map((row) => (
-          <li key={row}>
-            <span className="planner-upcoming-open">
-              <Bone w={16} h={12} r="4px 4px 2px 2px" />
-              <span className="planner-upcoming-when">
-                <Line w="4.5em" quiet />
-              </span>
-              <strong>
-                <Line w={row === 0 ? "92%" : `${62 + ((row * 17) % 30)}%`} />
-                {row === 0 && <Line w="48%" />}
-              </strong>
-              <small>
-                <Line w="70%" quiet />
-              </small>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function GridSkeleton({ days, today }: { days: string[]; today: string }) {
-  const single = days.length === 1;
-  return (
-    <div
-      className="planner-frame"
-      data-span={single ? "day" : "week"}
-      style={
-        {
-          "--planner-days": days.length,
-          "--planner-rows": SLOT_HOURS.length,
-        } as React.CSSProperties
-      }
-    >
-      <div className="planner-grid" ref={scrollGridToHour}>
-        <div className="planner-sheet">
-          <div className="planner-top">
-            <div className="planner-head">
-              <span className="planner-zone num">{zoneLabel(days[0])}</span>
-              {days.map((day) => {
-                const label = (
-                  <>
-                    <small>{weekdayOf(day)}</small>
-                    <b className="num">{dayOf(day)}</b>
-                  </>
-                );
-                const state = {
-                  className: "planner-headday",
-                  "data-focus": day === today ? "true" : undefined,
-                  "data-today": day === today ? "true" : undefined,
-                };
-                return single ? (
-                  <div key={day} {...state}>
-                    {label}
-                  </div>
-                ) : (
-                  <button key={day} {...state} tabIndex={-1} type="button">
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="planner-canvas">
-            <div aria-hidden="true" className="planner-hours">
-              {SLOT_HOURS.map((hour) => (
-                <span className="num" key={hour} style={{ top: offsetOf(hour * 60) }}>
-                  {timeOfMinutes(hour * 60)}
-                </span>
-              ))}
-            </div>
-            {days.map((day, index) => (
-              <div
-                className="planner-col"
-                data-today={day === today ? "true" : undefined}
-                data-weekend={index > 4 ? "true" : undefined}
-                key={day}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MonthSkeleton({ days, today }: { days: string[]; today: string }) {
-  const month = today.slice(0, 7);
-  return (
-    <div className="planner-month-layout">
-      <div
-        className="planner-month"
-        role="group"
-        style={{ "--planner-weeks": days.length / 7 } as React.CSSProperties}
-      >
-        {days.slice(0, 7).map((day) => (
-          <div aria-hidden="true" className="planner-month-weekday" key={day}>
-            {weekdayOf(day)}
-          </div>
-        ))}
-        {days.map((day, index) => (
-          <button
-            aria-current={day === today ? "date" : undefined}
-            aria-pressed={day === today}
-            className="planner-month-day"
-            data-outside={!day.startsWith(month) || undefined}
-            data-weekend={index % 7 > 4 || undefined}
-            key={day}
-            tabIndex={-1}
-            type="button"
-          >
-            <span className="planner-month-number num">{Number(dayOf(day))}</span>
-            <span aria-hidden="true" className="planner-month-events" />
-          </button>
-        ))}
-      </div>
-      <section className="planner-day-agenda">
-        <header>
-          <h3>{longDate(today)}</h3>
-          <button className="planner-quiet-button" tabIndex={-1} type="button">
-            Abrir día <ArrowRight aria-hidden="true" size={13} weight="bold" />
-          </button>
-          <button className="secondary-button" tabIndex={-1} type="button">
-            <Plus aria-hidden="true" size={15} weight="bold" /> Añadir bloque
-          </button>
-        </header>
-        <p className="planner-day-empty">
-          <Line w="11em" quiet />
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function AgendaSkeleton({ days, today }: { days: string[]; today: string }) {
-  return (
-    <div className="planner-agenda">
-      {days.slice(0, 5).map((day, index) => (
-        <section className="planner-agenda-day" data-today={day === today || undefined} key={day}>
-          <div aria-hidden="true" className="planner-agenda-date">
-            <span>{weekdayOf(day)}</span>
-            <b className="num">{Number(dayOf(day))}</b>
-            <span>{monthShort(day)}</span>
-          </div>
-          <ul>
-            <li className="planner-row">
-              <span className="planner-row-open">
-                <span className="planner-row-time">
-                  <Line w="3em" quiet />
-                </span>
-                <Bone w={16} h={12} r="4px 4px 2px 2px" />
-                <span className="planner-row-copy">
-                  <strong>
-                    <Line w={`${44 + ((index * 23) % 40)}%`} />
-                  </strong>
-                  <small>
-                    <Line w="9em" quiet />
-                  </small>
-                </span>
-              </span>
-            </li>
-          </ul>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function CalendarStageSkeleton({ view, today }: { view: CalendarView; today: string }) {
-  const days = viewDates(view, today);
-  return (
-    <div className="planner-stage">
-      {view === "day" && (
-        <DayStrip
-          days={weekDates(today)}
-          direction={0}
-          onPick={noop}
-          onSwipe={noop}
-          selected={today}
-          today={today}
-          tones={NO_TONES}
-        />
-      )}
-      {view === "month" ? (
-        <MonthSkeleton days={days} today={today} />
-      ) : view === "agenda" ? (
-        <AgendaSkeleton days={days} today={today} />
-      ) : (
-        <GridSkeleton days={days} today={today} />
-      )}
-    </div>
-  );
-}
-
-// Implements: REQ-CEO72-05
-export function CalendarSkeleton({
-  courses,
-  initialView,
-}: {
-  courses: Course[];
-  initialView?: CalendarView;
-}) {
-  const [view] = useState(() => initialView ?? initialCalendarView());
-  const [sideOpen] = useState(initialSideOpen);
-  const shortcuts = useRef<HTMLButtonElement>(null);
-  const compact = useCompactViewport();
-  const today = getSantiagoDateISO();
-
-  return (
-    <section
-      aria-busy="true"
-      aria-label="Cargando calendario…"
-      className="planner"
-      data-side={sideOpen ? "open" : "closed"}
-      data-view={view}
-      ref={skeletonWave}
-      role="status"
-    >
-      <div className="sk-contents" inert>
-        <CalendarHeader
-          loaded={false}
-          onCreate={noop}
-          onShortcuts={noop}
-          shortcutsRef={shortcuts}
-          summary=""
-        />
-      </div>
-      <div className="planner-body" inert>
-        <CalendarToolbar
-          onPicker={noop}
-          onStep={noop}
-          onToday={noop}
-          onToggleSide={noop}
-          onView={noop}
-          pickerOpen={false}
-          sideOpen={sideOpen}
-          title={rangeTitle(view, viewDates(view, today), today, compact)}
-          view={view}
-        />
-        <div className="planner-columns">
-          <aside className="planner-side">
-            <MiniMonth
-              marks={NO_DAYS}
-              onPick={noop}
-              range={view === "week" ? weekDates(today) : []}
-              selected={today}
-              today={today}
-            />
-            {view !== "agenda" && <UpcomingSkeleton />}
-            <CourseFilters courses={courses} hidden={NO_DAYS} onToggle={noop} />
-          </aside>
-          <CalendarStageSkeleton today={today} view={view} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── Recursos ───────────────────────────────────────────────── */
 
 export function ResourcesSkeleton() {
   return (
@@ -354,119 +226,155 @@ export function ResourcesSkeleton() {
       aria-busy="true"
       aria-label="Cargando recursos de estudio…"
       className="resources-hub"
-      ref={skeletonWave}
       role="status"
     >
       <LeadHeader
         description="Herramientas, material académico y convenios para acompañar tu estudio durante el semestre."
         title="Recursos de estudio"
       />
-      <div className="sk-contents" inert>
-        <MobileStrip />
-        <nav className="resource-index">
-          {RESOURCE_GROUPS.map((group) => (
-            <a href={`#recursos-${group.id}`} key={group.id}>
-              {group.title}
-            </a>
-          ))}
-        </nav>
-        {RESOURCE_GROUPS.map((group) => (
-          <ResourceGroupSection
-            group={group}
-            key={group.id}
-            renderMark={() => <Bone w={24} h={24} r="var(--radius-sm)" />}
+
+      <div className="res-top">
+        {/* Tira de la app móvil */}
+        <div className="mobile-strip" style={{ "--sk-delay": "150ms" } as React.CSSProperties}>
+          <span
+            className="sk"
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "var(--radius-md)",
+              flex: "none",
+            }}
           />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Administración ─────────────────────────────────────────── */
-
-// Implements: REQ-DELIB-02
-export function PeriodListSkeleton() {
-  return (
-    <div aria-busy="true" className="admin-period-list" role="status">
-      <span className="sr-only">Cargando períodos…</span>
-      {[0, 1].map((row) => (
-        <article key={row}>
-          <span>
-            <strong>
-              <Line w={`${9 + row * 2}em`} />
-            </strong>
-            <small>
-              <Line w="13em" quiet />
-            </small>
-          </span>
-          <Bone w={84} h={24} r="var(--radius-full)" quiet />
-          <Bone w={168} h={40} r="var(--radius-md)" />
-        </article>
-      ))}
-    </div>
-  );
-}
-
-export function AccountRowsSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Cargando cuentas…" role="status">
-      {[0, 1, 2, 3, 4].map((row) => (
-        <div className="admin-row" key={row}>
-          <span>
-            <b>
-              <Line w={`${9 + ((row * 3) % 5)}em`} />
-            </b>
-            <small>
-              <Line w={`${13 + ((row * 5) % 6)}em`} quiet />
-            </small>
-          </span>
-          <Bone w={92} h={24} r="var(--radius-full)" quiet />
-          <span>
-            <Bone w={132} h={34} r="var(--radius-md)" />
-          </span>
+          <div className="mobile-strip-text">
+            <span className="sk" style={{ width: "116px", height: "13px" }} />
+            <span
+              className="sk sk-quiet"
+              style={{ width: "88%", height: "11px", marginTop: "5px" }}
+            />
+          </div>
+          <span
+            className="sk"
+            style={{ width: "196px", height: "30px", borderRadius: "var(--radius-sm)" }}
+          />
+          <span
+            className="sk"
+            style={{ width: "142px", height: "20px", borderRadius: "var(--radius-full)" }}
+          />
         </div>
+      </div>
+
+      <nav className="resource-index" aria-hidden="true" inert>
+        {RESOURCE_GROUPS.map((group) => (
+          <a href={`#recursos-${group.id}`} key={group.id} tabIndex={-1}>
+            {group.title}
+          </a>
+        ))}
+      </nav>
+      {RESOURCE_GROUPS.map((group) => (
+        <section className={`res-group${group.disclaimer ? " res-group-ubb" : ""}`} key={group.id}>
+          <div className="section-title compact-title">
+            <h2>{group.title}</h2>
+            <span className="res-group-count num">{group.items.length}</span>
+          </div>
+          <ul className="res-index" aria-hidden="true" inert>
+            {group.items.map((item) => (
+              <li className="res-row" key={item.url}>
+                <a href={item.url} aria-label={item.name} tabIndex={-1}>
+                  <span className="res-mark">
+                    <span className="sk" style={{ width: 24, height: 24 }} />
+                  </span>
+                  <span className="res-body">
+                    <span className="sk" style={{ width: "65%", height: 14 }} />
+                    <span
+                      className="sk sk-quiet"
+                      style={{ width: "90%", height: 12, marginTop: 6 }}
+                    />
+                  </span>
+                  <span className="sk" style={{ width: 14, height: 14 }} />
+                </a>
+              </li>
+            ))}
+          </ul>
+          {group.notes && (
+            <ul className="res-notes">
+              {group.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          )}
+          {group.disclaimer && <p className="res-disclaimer">{group.disclaimer}</p>}
+        </section>
       ))}
-    </div>
+    </section>
   );
 }
 
 export function AdminSkeleton() {
   return (
-    <section
-      aria-busy="true"
-      aria-label="Cargando administración de cuentas…"
-      ref={skeletonWave}
-      role="status"
-    >
+    <section aria-busy="true" aria-label="Cargando administración de cuentas…" role="status">
       <div className="page-head lead">
         <h1>Administración de cuentas</h1>
         <p>
-          <span>
-            <Line w="10em" quiet />
-          </span>
+          <span
+            className="sk sk-quiet"
+            style={
+              {
+                display: "inline-block",
+                width: "168px",
+                height: "12px",
+                "--sk-delay": "60ms",
+              } as React.CSSProperties
+            }
+          />
           <span>·</span>
           <span>el rango se asigna por dominio institucional</span>
         </p>
       </div>
 
-      <section className="admin-periods">
+      <section aria-label="Cargando períodos académicos" className="admin-periods">
         <div>
           <h2>Períodos académicos</h2>
           <p>El cierre conserva todos los ramos y los mueve al historial de solo lectura.</p>
         </div>
-        <PeriodListSkeleton />
+        <div className="admin-period-list">
+          {SKELETON_ADMIN_PERIODS.map((row) => (
+            <article
+              key={`admin-period-${row}`}
+              style={{ "--sk-delay": `${90 + row * 40}ms` } as React.CSSProperties}
+            >
+              <span style={{ display: "grid", gap: "6px", minWidth: 0 }}>
+                <span className="sk" style={{ width: "148px", height: "15px" }} />
+                <span className="sk sk-quiet" style={{ width: "196px", height: "12px" }} />
+              </span>
+              <span
+                className="sk"
+                style={{ width: "84px", height: "24px", borderRadius: "var(--radius-full)" }}
+              />
+              <span
+                className="sk"
+                style={{ width: "158px", height: "38px", borderRadius: "var(--radius-md)" }}
+              />
+            </article>
+          ))}
+        </div>
       </section>
 
-      <div className="admin-toolbar" inert>
-        <div className="admin-search-box">
-          <MagnifyingGlass size={18} className="admin-search-icon" aria-hidden="true" />
-          <input
-            aria-hidden="true"
-            className="admin-search-input"
-            placeholder="Buscar por nombre o correo…"
-            tabIndex={-1}
-            type="search"
-          />
+      <div className="admin-toolbar">
+        <div
+          className="admin-search-box"
+          style={{
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-hairline)",
+            borderRadius: "var(--radius-sm)",
+            height: "38px",
+            padding: "0 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <MagnifyingGlass aria-hidden="true" size={18} style={{ color: "var(--text-faint)" }} />
+          <span className="sk sk-quiet" style={{ width: "160px", height: "13px" }} />
         </div>
       </div>
 
@@ -476,172 +384,176 @@ export function AdminSkeleton() {
           <span>Rango</span>
           <span>Acción</span>
         </div>
-        <AccountRowsSkeleton />
-      </div>
-    </section>
-  );
-}
-
-/* ── Avisos y mensajes ──────────────────────────────────────── */
-
-const HISTORY_TABS = ["Todo", "Avisos", "Mensajes"];
-
-// Implements: REQ-COMM-01
-export function PendingBandSkeleton() {
-  return (
-    <section
-      aria-busy="true"
-      aria-label="Cargando avisos…"
-      className="pending-band"
-      ref={skeletonWave}
-      role="status"
-    >
-      <h2>Sin leer</h2>
-      <div className="pending-grid">
-        {[0, 1].map((stack) => (
-          <article
-            className="pending-stack"
-            data-depth={1 - stack}
-            key={stack}
-            style={NEUTRAL_TONE}
+        {SKELETON_ADMIN_ROWS.map((row) => (
+          <div
+            className="admin-row"
+            key={`admin-row-${row}`}
+            style={{ "--sk-delay": `${180 + row * 35}ms` } as React.CSSProperties}
           >
-            <span className="pending-tab">
-              <Line quiet w="3.4em" />
+            <span>
+              <span
+                className="sk"
+                style={{
+                  width: `${150 + (row % 2) * 35}px`,
+                  height: "15px",
+                  display: "block",
+                }}
+              />
+              <span
+                className="sk sk-quiet"
+                style={{
+                  width: `${190 + (row % 2) * 30}px`,
+                  height: "12px",
+                  marginTop: "6px",
+                  display: "block",
+                }}
+              />
             </span>
-            <span className="pending-head">
-              <h3>
-                <Line w={`${7 + stack * 3}em`} />
-              </h3>
+            <span>
+              <span
+                className="sk"
+                style={{
+                  width: "76px",
+                  height: "24px",
+                  borderRadius: "var(--radius-full)",
+                }}
+              />
             </span>
-            <span className="pending-row">
-              <Bone h={36} r="var(--radius-md)" w={36} />
-              <span className="pending-copy">
-                <strong>
-                  <Line w={`${82 - stack * 18}%`} />
-                </strong>
-                <small>
-                  <Line quiet w="5em" />
-                </small>
-              </span>
+            <span>
+              <span
+                className="sk"
+                style={{
+                  width: "105px",
+                  height: "32px",
+                  borderRadius: "var(--radius-xs)",
+                }}
+              />
             </span>
-          </article>
+          </div>
         ))}
+      </div>
+
+      <div className="admin-pagination">
+        <span
+          className="sk"
+          style={{ width: "104px", height: "36px", borderRadius: "var(--radius-md)" }}
+        />
+        <span className="sk sk-quiet" style={{ width: "116px", height: "13px" }} />
+        <span
+          className="sk"
+          style={{ width: "104px", height: "36px", borderRadius: "var(--radius-md)" }}
+        />
       </div>
     </section>
   );
 }
 
+/*
+  Avisos y mensajes tiene cabecera con contador, conmutador de pestañas y una
+  lista de filas de 82px. Antes esta vista tomaba prestado el esqueleto de
+  Recursos y la pantalla se rehacía entera al llegar el módulo.
+*/
 // Implements: REQ-COMM-01
-export function HistoryListSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Cargando historial…" ref={skeletonWave} role="status">
-      <ol className="communications-list">
-        <li className="communications-day">
-          <h3>
-            <Line quiet w="3em" />
-          </h3>
-          <ul>
-            {[0, 1, 2, 3].map((row) => (
-              <li key={row}>
-                <span className="announcement-row" style={NEUTRAL_TONE}>
-                  <Bone h={36} r="var(--radius-md)" w={36} />
-                  <span className="row-copy">
-                    <span className="row-title">
-                      <Line w={`${38 + ((row * 19) % 34)}%`} />
-                    </span>
-                    <span className="row-meta">
-                      <Line quiet w={`${10 + ((row * 7) % 6)}em`} />
-                    </span>
-                  </span>
-                  <span className="row-time">
-                    <Line quiet w="2.6em" />
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </li>
-      </ol>
-    </div>
-  );
-}
-
-// Implements: REQ-COMM-04
-export function ConversationListSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Cargando conversaciones…" ref={skeletonWave} role="status">
-      <ol className="conversation-list">
-        {[0, 1, 2].map((row) => (
-          <li key={row}>
-            <span className="conversation-row" style={NEUTRAL_TONE}>
-              <span className="row-flag" />
-              <Bone h={36} round w={36} />
-              <span className="row-copy">
-                <span className="row-title">
-                  <Line w={`${9 + ((row * 3) % 5)}em`} />
-                </span>
-                <span className="row-preview">
-                  <Line quiet w={`${70 - row * 12}%`} />
-                </span>
-                <span className="row-meta">
-                  <Line quiet w="7em" />
-                </span>
-              </span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-// Implements: REQ-COMM-01
-export function CommunicationsSkeleton({ teaching }: { teaching: boolean }) {
+export function CommunicationsSkeleton() {
   return (
     <section
       aria-busy="true"
       aria-label="Cargando avisos y mensajes…"
       className="communications-center"
-      ref={skeletonWave}
       role="status"
     >
-      <div className="communications-layout">
-        <div className="communications-stream">
-          <header className="page-head communications-heading">
-            <div>
-              <h1>Avisos y mensajes</h1>
-              <p>
-                {teaching
-                  ? "Lo nuevo de tus secciones y las consultas privadas de tus estudiantes."
-                  : "Lo nuevo de tus ramos y tus conversaciones privadas con el equipo docente."}
-              </p>
-            </div>
-          </header>
-          <PendingBandSkeleton />
-          <section className="communications-history">
-            <div className="communications-history-head">
-              <h2>Historial</h2>
-              <div className="communications-tabs" inert>
-                {HISTORY_TABS.map((label, index) => (
-                  <button aria-selected={index === 0} key={label} role="tab" type="button">
-                    {index === 0 && <span className="communications-tab-indicator" />}
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="communications-panel">
-              <HistoryListSkeleton />
-            </div>
-          </section>
+      <header className="page-head communications-heading">
+        <div>
+          <h1>Avisos y mensajes</h1>
+          <p>Revisa lo nuevo en tus ramos y conversa en privado con el equipo docente.</p>
+        </div>
+        <div className="communications-summary">
+          <span
+            className="sk"
+            style={{ width: "34px", height: "26px", "--sk-delay": "70ms" } as React.CSSProperties}
+          />
+          <small>
+            <span
+              className="sk sk-quiet"
+              style={
+                {
+                  display: "inline-block",
+                  width: "62px",
+                  height: "10px",
+                  marginTop: "6px",
+                  "--sk-delay": "90ms",
+                } as React.CSSProperties
+              }
+            />
+          </small>
+        </div>
+      </header>
+
+      <div className="communications-workspace">
+        <div className="communications-toolbar">
+          <div className="communications-tabs" aria-hidden="true" inert>
+            <button type="button" disabled aria-selected="true" role="tab" tabIndex={-1}>
+              <Bell aria-hidden="true" size={17} weight="fill" /> Avisos
+            </button>
+            <button type="button" disabled aria-selected="false" role="tab" tabIndex={-1}>
+              <ChatCircleDots aria-hidden="true" size={17} /> Mensajes
+            </button>
+          </div>
+          <span
+            className="sk"
+            style={
+              {
+                width: "158px",
+                height: "38px",
+                borderRadius: "var(--radius-md)",
+                "--sk-delay": "120ms",
+              } as React.CSSProperties
+            }
+          />
+        </div>
+
+        <div className="communications-panel">
+          <ol className="announcement-list">
+            {[0, 1, 2, 3].map((row) => (
+              <li key={`announcement-${row}`}>
+                <span
+                  className="announcement-row"
+                  style={{ "--sk-delay": `${150 + row * 45}ms` } as React.CSSProperties}
+                >
+                  <span
+                    className="sk"
+                    style={{ width: "44px", height: "44px", borderRadius: "var(--radius-md)" }}
+                  />
+                  <span className="announcement-copy">
+                    <span
+                      className="sk sk-quiet"
+                      style={{ width: `${142 + ((row * 37) % 96)}px`, height: "11px" }}
+                    />
+                    <span
+                      className="sk"
+                      style={{ width: `${52 + ((row * 13) % 30)}%`, height: "15px" }}
+                    />
+                    <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
+                  </span>
+                  <span
+                    className="sk sk-quiet"
+                    style={{ width: "10px", height: "10px", borderRadius: "var(--radius-md)" }}
+                  />
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>
   );
 }
 
-/* ── Administrar ramos ──────────────────────────────────────── */
-
+/*
+  Espacio docente: lista pegajosa de secciones a la izquierda y ficha del ramo a
+  la derecha. Reutilizar el esqueleto de administración dejaba una tabla donde
+  después aparecían dos columnas.
+*/
 // Implements: REQ-TEACH-01
 export function TeacherCoursesSkeleton() {
   return (
@@ -649,7 +561,6 @@ export function TeacherCoursesSkeleton() {
       aria-busy="true"
       aria-label="Cargando espacio docente…"
       className="teacher-manager"
-      ref={skeletonWave}
       role="status"
     >
       <header className="teacher-manager-hero">
@@ -657,78 +568,77 @@ export function TeacherCoursesSkeleton() {
           <h1>Administrar ramos</h1>
           <p>Crea tu sección y mantén su ficha, evaluaciones y ayudantes desde un solo lugar.</p>
         </div>
-        <button className="primary-button teacher-create-trigger" inert type="button">
-          <Plus aria-hidden="true" size={16} weight="bold" />
-          Crear ramo
+        <button
+          className="primary-button teacher-create-trigger"
+          type="button"
+          disabled
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <Plus aria-hidden="true" size={16} weight="bold" /> Crear ramo
         </button>
       </header>
-      <p className="teacher-manager-status" />
       <TeacherCoursesBodySkeleton />
     </section>
   );
 }
 
+/* El interior se reutiliza mientras la vista ya montada pide sus secciones. */
 export function TeacherCoursesBodySkeleton() {
   return (
     <div
       aria-busy="true"
       aria-label="Cargando secciones docentes"
       className="teacher-manager-layout"
-      ref={skeletonWave}
       role="status"
     >
-      <aside className="teacher-course-list" inert>
+      <aside className="teacher-course-list">
         <div className="teacher-course-list-head">
           <span>Mis secciones</span>
-          <Line w="1em" quiet />
+          <span className="sk sk-quiet" style={{ width: "10px", height: "12px" }} />
         </div>
         {[0, 1, 2].map((row) => (
-          <button
-            className={row === 0 ? "active" : undefined}
-            key={row}
-            style={NEUTRAL_TONE}
-            tabIndex={-1}
-            type="button"
+          <span
+            className="teacher-course-row-skeleton"
+            key={`teacher-course-${row}`}
+            style={{ "--sk-delay": `${90 + row * 45}ms` } as React.CSSProperties}
           >
-            <span className="teacher-course-mark" aria-hidden="true" />
-            <span>
-              <strong>
-                <Line w={`${9 + ((row * 4) % 5)}em`} />
-              </strong>
-              <small>
-                <Line w="10em" quiet />
-              </small>
+            <span className="sk" />
+            <span style={{ display: "grid", gap: "6px", minWidth: 0, alignContent: "center" }}>
+              <span
+                className="sk"
+                style={{ width: `${118 + ((row * 31) % 60)}px`, height: "14px" }}
+              />
+              <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
             </span>
-          </button>
+          </span>
         ))}
       </aside>
 
-      <div className="teacher-course-workspace" inert style={NEUTRAL_TONE}>
+      <div
+        className="teacher-course-workspace"
+        style={{ "--course-tone": "oklch(0.62 0.01 265)" } as React.CSSProperties}
+      >
         <div className="teacher-course-heading">
           <span aria-hidden="true" className="classroom-tab">
-            <Line w="4.5em" />
+            <span className="sk" style={{ width: "52px", height: "10px" }} />
           </span>
-          <div>
-            <h2>
-              <Line w="11em" />
-            </h2>
-            <p>
-              <Line w="13em" quiet />
-            </p>
+          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+            <span className="sk" style={{ width: "268px", height: "26px" }} />
+            <span className="sk sk-quiet" style={{ width: "146px", height: "13px" }} />
           </div>
-          <button className="secondary-button" tabIndex={-1} type="button">
-            Abrir aula
-            <ArrowRight aria-hidden="true" size={16} />
-          </button>
+          <span
+            className="sk"
+            style={{ width: "128px", height: "40px", borderRadius: "var(--radius-md)" }}
+          />
         </div>
-        <div className="teacher-manager-tabs">
+        <div className="teacher-manager-tabs" aria-hidden="true" inert>
           {["Datos del ramo", "Evaluaciones", "Ayudantes"].map((label, index) => (
             <button
+              type="button"
+              disabled
               className={index === 0 ? "active" : undefined}
               key={label}
-              role="tab"
-              tabIndex={-1}
-              type="button"
             >
               {label}
             </button>
@@ -739,44 +649,31 @@ export function TeacherCoursesBodySkeleton() {
             <h3>Datos del ramo</h3>
             <p>Esta información aparece en la portada y en la navegación de tus estudiantes.</p>
           </div>
-          <div className="teacher-form-grid">
+          <div className="teacher-form-grid" aria-hidden="true" inert>
             <label className="teacher-field-full">
               Nombre visible
-              <input readOnly tabIndex={-1} />
+              <input disabled />
             </label>
             <label className="teacher-field-third">
               Modalidad
-              <select tabIndex={-1}>
+              <select disabled>
                 <option />
               </select>
             </label>
             <label className="teacher-field-two-thirds">
               Sala o enlace
-              <input readOnly tabIndex={-1} />
+              <input disabled />
             </label>
-            <fieldset className="teacher-tone-picker teacher-field-full">
-              <legend>Identidad visual</legend>
-              {COURSE_TONES.map((tone) => (
-                <label
-                  key={tone}
-                  style={{ "--course-tone": courseToneValue(tone) } as React.CSSProperties}
-                >
-                  <input name="tone-skeleton" readOnly tabIndex={-1} type="radio" />
-                  <span aria-hidden="true" className="teacher-tone-swatch" />
-                  {courseToneLabel(tone)}
-                </label>
-              ))}
-            </fieldset>
+            <div className="teacher-tone-picker teacher-field-full">
+              <span className="sk sk-quiet" style={{ width: "100%", height: "40px" }} />
+            </div>
             <label className="teacher-field-full">
               Descripción
-              <textarea readOnly rows={5} tabIndex={-1} />
+              <textarea disabled rows={5} />
             </label>
           </div>
           <div className="teacher-form-actions">
-            <p />
-            <button className="primary-button" tabIndex={-1} type="button">
-              Guardar ficha
-            </button>
+            <span className="sk" style={{ width: 150, height: 44 }} />
           </div>
         </div>
       </div>
@@ -784,518 +681,401 @@ export function TeacherCoursesBodySkeleton() {
   );
 }
 
-/* ── Aula ───────────────────────────────────────────────────── */
-
-// Implements: REQ-SKELETON-01, REQ-PAGE-01
-export function CoursePageSkeleton() {
-  return (
-    <div
-      aria-busy="true"
-      aria-label="Cargando la página del ramo…"
-      className="page-sections"
-      ref={skeletonWave}
-      role="status"
-    >
-      {[0, 1].map((section) => (
-        <section className="page-section" key={section}>
-          <header className="page-section-head">
-            <h2>
-              <span className="page-section-toggle">
-                <span aria-hidden="true" className="page-section-mark" />
-                <Line w={`${34 + section * 14}%`} />
-              </span>
-            </h2>
-          </header>
-          <div className="page-section-body">
-            <div className="page-item">
-              <div className="academic-prose rich-text">
-                <p>
-                  <Line w="96%" quiet />
-                  <Line w="88%" quiet />
-                  <Line w={`${52 + section * 10}%`} quiet />
-                </p>
-              </div>
-            </div>
-            <div className="page-item" data-type="file">
-              <span className="page-file">
-                <Bone h={36} r="var(--radius-md)" w={36} />
-                <span className="page-file-text">
-                  <Line w="42%" />
-                  <Line w="18%" quiet />
-                </span>
-              </span>
-            </div>
-          </div>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function CourseRailSkeleton({
-  course,
-  canTeach,
-  readOnly,
-}: {
-  course: Course;
-  canTeach: boolean;
-  readOnly: boolean;
-}) {
-  return (
-    <aside className="course-rail" inert>
-      <section className="rail-announcements">
-        <div className="section-title compact-title">
-          <h2>
-            <Megaphone size={19} weight="fill" aria-hidden="true" />
-            Avisos
-          </h2>
-        </div>
-        <div className="course-notices-card">
-          <div className="course-notices-list">
-            {[0, 1].map((row) => (
-              <span className="course-notice-row" key={row}>
-                <Line w={`${62 + row * 18}%`} />
-                <Line w="92%" quiet />
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-      <div className="section-title compact-title">
-        <h2>
-          <Info size={19} weight="fill" aria-hidden="true" />
-          Información del ramo
-        </h2>
-      </div>
-      <div className="course-facts">
-        <dl>
-          <div>
-            <dt>Coordinación</dt>
-            <dd>
-              <b>{course.teacher}</b>
-              <small>Cuenta docente institucional</small>
-            </dd>
-          </div>
-          {canTeach && (
-            <div>
-              <dt>Matrícula de la sección</dt>
-              <dd>
-                <button className="course-reference" tabIndex={-1} type="button">
-                  Ver participantes
-                </button>
-              </dd>
-            </div>
-          )}
-          <div>
-            <dt>Código de la sección</dt>
-            <dd>
-              <button className="course-reference swap-button" tabIndex={-1} type="button">
-                <span className="num">{`${course.code} - ${course.section}`}</span>
-                <span className="swap-wrapper" aria-hidden="true">
-                  <span className="swap-content state-default">
-                    <CopySimple aria-hidden="true" size={14} />
-                    Copiar
-                  </span>
-                  <span className="swap-content state-copied">
-                    <Check aria-hidden="true" size={14} weight="bold" />
-                    Copiado
-                  </span>
-                </span>
-              </button>
-            </dd>
-          </div>
-        </dl>
-      </div>
-      {canTeach && !readOnly && (
-        <details className="rail-card live-class-editor">
-          <summary tabIndex={-1}>
-            <span className="rail-card-icon" aria-hidden="true">
-              <LinkSimple size={16} />
-            </span>
-            <span className="rail-card-heading">
-              <strong>Enlace de clase en vivo</strong>
-              <small>
-                <Line w="8em" quiet />
-              </small>
-            </span>
-          </summary>
-        </details>
-      )}
-    </aside>
-  );
-}
-
-// Implements: REQ-MOTION-04
-export function ClassroomSkeleton({
-  course,
-  user,
-  sectionRole,
-}: {
-  course: Course;
-  user: User;
-  sectionRole: SectionRole | null;
-}) {
-  const readOnly = course.readOnly === true;
-  const canTeach = canTeachSection(user.role, sectionRole);
-  const canManage = !readOnly && canManageSectionContent(user.role, sectionRole);
-
+export function ClassroomSkeleton() {
   return (
     <div
       aria-busy="true"
       aria-label="Abriendo aula virtual…"
       className="classroom-layout"
-      ref={skeletonWave}
       role="status"
-      style={{ "--course-tone": course.tone } as React.CSSProperties}
     >
-      <div className="classroom-main">
-        {readOnly && (
-          <div className="classroom-archive-notice">
-            <LockKey aria-hidden="true" size={19} weight="fill" />
-            <span>
-              <strong>Solo lectura.</strong> Este ramo pertenece a {course.period} y conserva sus
-              materiales, entregas y notas como historial académico.
+      <main className="classroom-main">
+        <header
+          className="classroom-top"
+          style={{ "--course-tone": "oklch(0.62 0.01 265)" } as React.CSSProperties}
+        >
+          <span aria-hidden="true" className="classroom-tab">
+            <span className="sk" style={{ width: "52px", height: "10px" }} />
+          </span>
+          <div className="classroom-heading">
+            <span
+              className="breadcrumb"
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <span className="sk sk-quiet" style={{ width: "64px", height: "12px" }} />
+              <span style={{ color: "var(--text-faint)" }}>/</span>
+              <span className="sk sk-quiet" style={{ width: "90px", height: "12px" }} />
             </span>
+            <h1>
+              <span className="sr-only">Cargando aula virtual…</span>
+              <span
+                className="sk"
+                style={
+                  {
+                    width: "220px",
+                    height: "1.25em",
+                    display: "block",
+                    "--sk-delay": "80ms",
+                  } as React.CSSProperties
+                }
+              />
+            </h1>
+            <p className="classroom-identity">
+              <span className="sk sk-quiet" style={{ width: "190px", height: "1.5em" }} />
+            </p>
           </div>
-        )}
-        <div className="sk-contents" inert>
-          <ClassroomHeader course={course}>
-            {(canTeach || canManage) && (
-              <div className="classroom-meta">
-                {canTeach && (
-                  <button className="review-cta" tabIndex={-1} type="button">
-                    <Tray size={16} aria-hidden="true" />
-                    Corregir entregas
-                  </button>
-                )}
-                {canManage && canTeach && (
-                  <details className="classroom-imports">
-                    <summary tabIndex={-1}>Importar contenidos</summary>
-                  </details>
-                )}
-                {canManage && (
-                  <>
-                    <button className="review-cta" tabIndex={-1} type="button">
-                      <PencilSimpleLine size={16} aria-hidden="true" />
-                      Editar página
-                    </button>
-                    <button className="publication-cta" tabIndex={-1} type="button">
-                      <Plus size={17} weight="bold" aria-hidden="true" />
-                      Nuevo aviso
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </ClassroomHeader>
+          <div className="classroom-meta" aria-hidden="true">
+            {[164, 150, 150, 176].map((width, index) => (
+              <span
+                className="sk"
+                key={index}
+                style={{ width, height: "44px", borderRadius: "8px" }}
+              />
+            ))}
+          </div>
+        </header>
+
+        <div className="course-tabs" aria-hidden="true" inert>
+          {COURSE_TABS.map(({ key, label, Icon }) => (
+            <button
+              type="button"
+              disabled
+              key={key}
+              className={key === "home" ? "active" : undefined}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+              {key === "home" && <span className="course-tab-indicator" />}
+            </button>
+          ))}
         </div>
-        <ClassroomTabs inert tab="home" />
+
         <div>
           <div className="classroom-columns">
-            <section className="course-page">
-              <CoursePageSkeleton />
+            <section className="posts-section">
+              <div className="section-title compact-title">
+                <h2>Publicaciones del ramo</h2>
+              </div>
+              {/* La portada llega con publicaciones: se dibujan como tales y no
+                  como el estado vacío, que dice otra cosa. */}
+              <div className="post-list">
+                {[0, 1].map((row) => (
+                  <article
+                    key={`post-${row}`}
+                    style={{ "--sk-delay": `${150 + row * 60}ms` } as React.CSSProperties}
+                  >
+                    <span
+                      className="sk"
+                      style={{ width: "76px", height: "22px", borderRadius: "var(--radius-full)" }}
+                    />
+                    <div>
+                      <span className="sk" style={{ width: `${58 + row * 12}%`, height: "17px" }} />
+                      <span className="sk sk-quiet" style={{ width: "100%", height: "13px" }} />
+                      <span
+                        className="sk sk-quiet"
+                        style={{ width: `${72 - row * 9}%`, height: "13px" }}
+                      />
+                      <span style={{ display: "flex", gap: "var(--space-sm)", marginTop: "6px" }}>
+                        <span className="sk sk-quiet" style={{ width: "104px", height: "11px" }} />
+                        <span className="sk sk-quiet" style={{ width: "86px", height: "11px" }} />
+                        <span className="sk sk-quiet" style={{ width: "68px", height: "11px" }} />
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </section>
-            <CourseRailSkeleton canTeach={canTeach} course={course} readOnly={readOnly} />
+
+            <aside className="course-rail">
+              <div className="section-title compact-title">
+                <h2>
+                  <Info aria-hidden="true" size={19} weight="fill" />
+                  Información del ramo
+                </h2>
+              </div>
+              <div className="course-facts">
+                <dl>
+                  <div>
+                    <dt>Coordinación</dt>
+                    <dd>
+                      <span
+                        className="sk"
+                        style={
+                          {
+                            width: "160px",
+                            height: "16px",
+                            display: "block",
+                            "--sk-delay": "170ms",
+                          } as React.CSSProperties
+                        }
+                      />
+                      <small>Cuenta docente institucional</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estudiantes</dt>
+                    <dd>
+                      <span
+                        className="sk"
+                        style={
+                          {
+                            width: "80px",
+                            height: "16px",
+                            display: "block",
+                            "--sk-delay": "220ms",
+                          } as React.CSSProperties
+                        }
+                      />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Código de la sección</dt>
+                    <dd>
+                      <span className="sk" style={{ width: "176px", height: "32px" }} />
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <div className="rail-card live-class-editor" aria-hidden="true">
+                <div className="skeleton-rail-summary">
+                  <span className="rail-card-icon">
+                    <LinkSimple size={16} />
+                  </span>
+                  <span className="rail-card-heading">
+                    <strong>Enlace de clase en vivo</strong>
+                    <span className="sk sk-quiet" style={{ width: 90, height: 11 }} />
+                  </span>
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-/* ── Configuración ──────────────────────────────────────────── */
-
-const SETTINGS_TARGETS = ["Web", "Push móvil"];
-
-function SettingsSwitchSkeleton({ checked, label }: { checked: boolean; label: string }) {
-  return (
-    <label className="settings-switch">
-      <input
-        checked={checked}
-        className="settings-switch-input"
-        disabled
-        readOnly
-        role="switch"
-        type="checkbox"
-      />
-      <span aria-hidden="true" className="settings-switch-track" />
-      <span>{label}</span>
-    </label>
-  );
-}
-
+/*
+  Reutiliza los paneles y el texto fijo para conservar su distribución al cargar.
+  El número de sesiones se conoce sólo cuando responde el servidor.
+*/
 // Implements: REQ-CFG-08
-export function SessionListSkeleton() {
-  return (
-    <div aria-busy="true" role="status">
-      <span className="sr-only">Leyendo tus sesiones…</span>
-      <ul className="settings-sessions">
-        <li className="settings-session">
-          <div className="settings-session-copy">
-            <strong>
-              <Line w="13em" />
-            </strong>
-            <small>
-              <Line w="10em" quiet />
-            </small>
-          </div>
-          <Bone w={118} h={34} r="var(--radius-md)" quiet />
-        </li>
-      </ul>
-    </div>
-  );
-}
-
-// Implements: REQ-CFG-08
-export function SettingsSkeleton({ user }: { user: User }) {
-  const [preferences] = useState(cachedPreferences);
-
+export function SettingsSkeleton() {
   return (
     <section
       aria-busy="true"
       aria-label="Cargando configuración de la cuenta…"
       className="settings-view"
-      ref={skeletonWave}
       role="status"
     >
       <LeadHeader
         description="Tu foto, los avisos que recibes y las sesiones abiertas en tu cuenta."
         title="Configuración"
       />
-      <p className="settings-status" />
 
-      <div className="sk-contents" inert>
-        <section className="settings-panel">
-          <div className="settings-panel-head">
-            <h2>
-              <ImageIcon aria-hidden="true" size={22} />
-              Foto de perfil
-            </h2>
-            <p className="settings-note">
-              Se sube el recorte cuadrado que dejes encuadrado, no la imagen original. Admite PNG,
-              JPG y WEBP de hasta 2 MB.
-            </p>
-          </div>
-          <div className="settings-photo">
-            <div className="settings-photo-current">
-              <Avatar email={user.email} large name={user.name} photoUrl={user.photoUrl} />
-              <span className="settings-photo-caption">Avatar actual</span>
-            </div>
-          </div>
-          <div className="settings-actions">
-            <span className="settings-file">
-              <span className="secondary-button">
-                <UploadSimple aria-hidden="true" size={18} />
-                Elegir imagen
-              </span>
-            </span>
-            <button className="secondary-button" tabIndex={-1} type="button">
-              <ArrowCounterClockwise aria-hidden="true" size={18} />
-              Restablecer la foto de Google
-            </button>
-          </div>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-head">
-            <h2>
-              <Bell aria-hidden="true" size={22} />
-              Avisos
-            </h2>
-            <p className="settings-note">
-              Cada canal se controla por separado para el portal web y para las notificaciones push
-              de la aplicación móvil. Los cambios se guardan en cuanto los haces.
-            </p>
-          </div>
-          <div className="settings-channels">
-            {NOTIFICATION_CHANNELS.map((channel) => (
-              <div className="settings-channel" key={channel}>
-                <div className="settings-channel-copy">
-                  <strong>{CHANNEL_LABELS[channel]}</strong>
-                  {CHANNELS_WITHOUT_SENDER.includes(channel) ? (
-                    <small>
-                      Tu preferencia queda guardada, pero este aviso todavía no tiene un emisor que
-                      lo envíe.
-                    </small>
-                  ) : null}
-                </div>
-                <div className="settings-channel-toggles">
-                  {SETTINGS_TARGETS.map((label, index) => (
-                    <SettingsSwitchSkeleton
-                      checked={preferences.channels[channel][index === 0 ? "web" : "push"]}
-                      key={label}
-                      label={label}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-head">
-            <h2>
-              <Eye aria-hidden="true" size={22} />
-              Accesibilidad
-            </h2>
-            <p className="settings-note">
-              Con el alternador apagado, la preferencia de movimiento de tu sistema operativo sigue
-              aplicándose por su cuenta.
-            </p>
-          </div>
-          <SettingsSwitchSkeleton
-            checked={preferences.reducedMotion}
-            label="Reducir el movimiento del portal"
-          />
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-head">
-            <h2>
-              <IdentificationCard aria-hidden="true" size={22} />
-              Cuenta y seguridad
-            </h2>
-            <p className="settings-note">
-              Tu correo y tu rango se derivan de la cuenta institucional y no se editan desde aquí.
-            </p>
-          </div>
-          <AccountFacts user={user} />
-          <h3 className="settings-subhead">Sesiones activas</h3>
-          <SessionListSkeleton />
-          <div className="settings-actions">
-            <button className="secondary-button settings-logout" tabIndex={-1} type="button">
-              <SignOut aria-hidden="true" size={18} />
-              Cerrar sesión en este dispositivo
-            </button>
-          </div>
-        </section>
-      </div>
-    </section>
-  );
-}
-
-/* ── Módulos internos del aula ──────────────────────────────── */
-
-// Implements: REQ-EVAL-01
-export function GradesSkeleton() {
-  return (
-    <section
-      aria-busy="true"
-      aria-label="Cargando la ponderación del ramo…"
-      className="grades-view"
-      ref={skeletonWave}
-      role="status"
-    >
-      <div className="grades-table">
-        <div className="grades-head">
-          <span>Evaluación</span>
-          <span>Pondera</span>
-          <span>Nota oficial</span>
-          <span>Simulación</span>
-          <span>Entrega</span>
+      <div className="settings-panel" style={{ "--sk-delay": "110ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <ImageIcon aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            Foto de perfil
+          </h2>
+          <p className="settings-note">
+            Se sube el recorte cuadrado que dejes encuadrado, no la imagen original. Admite PNG, JPG
+            y WEBP de hasta 2 MB.
+          </p>
         </div>
-        {[0, 1, 2, 3].map((row) => (
-          <div className="grades-row" key={row}>
-            <span>
-              <b>
-                <Line w={`${8 + ((row * 3) % 6)}em`} />
-              </b>
-              <small>
-                <Line quiet w="5em" />
-              </small>
-            </span>
-            <span className="grades-weight">
-              <Line quiet w="2.2em" />
-            </span>
-            <span className="grades-official">
-              <Line w="2.4em" />
-            </span>
-            <span>
-              <Bone h={34} r="var(--radius-md)" w={72} />
-            </span>
-            <span className="grades-submission">
-              <Bone h={34} quiet r="var(--radius-md)" w={110} />
-            </span>
+        <div className="settings-photo">
+          <div className="settings-photo-current">
+            <span className="sk sk-round avatar large" />
+            <span className="sk sk-quiet" style={{ width: "84px", height: "12px" }} />
           </div>
-        ))}
+        </div>
+        <div className="settings-actions">
+          <span
+            className="sk"
+            style={{ width: "160px", height: "44px", borderRadius: "var(--radius-md)" }}
+          />
+          <span
+            className="sk"
+            style={{ width: "230px", height: "44px", borderRadius: "var(--radius-md)" }}
+          />
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "160ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <Bell aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            Avisos
+          </h2>
+          <p className="settings-note">
+            Cada canal se controla por separado para el portal web y para las notificaciones push de
+            la aplicación móvil. Los cambios se guardan en cuanto los haces.
+          </p>
+        </div>
+        <div className="settings-channels">
+          {SKELETON_SETTINGS_CHANNELS.map((width, index) => (
+            <div
+              className="settings-channel"
+              key={`settings-channel-${width}`}
+              style={{ "--sk-delay": `${190 + index * 30}ms` } as React.CSSProperties}
+            >
+              <div className="settings-channel-copy">
+                <span className="sk" style={{ width: `${width}px`, height: "15px" }} />
+                {index > 1 && (
+                  <small>
+                    Tu preferencia queda guardada, pero este aviso todavía no tiene un emisor que lo
+                    envíe.
+                  </small>
+                )}
+              </div>
+              <div className="settings-channel-toggles">
+                {["Web", "Push móvil"].map((label) => (
+                  <span className="settings-switch" key={label}>
+                    <span className="sk sk-round" style={{ width: 40, height: 24 }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "330ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <Eye aria-hidden="true" size={22} style={{ color: "var(--text-faint)" }} />
+            Accesibilidad
+          </h2>
+          <p className="settings-note">
+            Con el alternador apagado, la preferencia de movimiento de tu sistema operativo sigue
+            aplicándose por su cuenta.
+          </p>
+        </div>
+        <div className="settings-switch">
+          <span
+            className="sk"
+            style={{ width: "40px", height: "24px", borderRadius: "var(--radius-full)" }}
+          />
+          <span className="sk sk-quiet" style={{ width: "225px", height: "14px" }} />
+        </div>
+      </div>
+
+      <div className="settings-panel" style={{ "--sk-delay": "380ms" } as React.CSSProperties}>
+        <div className="settings-panel-head">
+          <h2>
+            <IdentificationCard
+              aria-hidden="true"
+              size={22}
+              style={{ color: "var(--text-faint)" }}
+            />
+            Cuenta y seguridad
+          </h2>
+          <p className="settings-note">
+            Tu correo y tu rango se derivan de la cuenta institucional y no se editan desde aquí.
+          </p>
+        </div>
+        <div className="settings-facts">
+          <div>
+            <span className="sk sk-quiet" style={{ width: "130px", height: "12px" }} />
+            <span className="sk" style={{ width: "245px", height: "15px" }} />
+          </div>
+          <div>
+            <span className="sk sk-quiet" style={{ width: "60px", height: "12px" }} />
+            <span className="sk" style={{ width: "110px", height: "15px" }} />
+          </div>
+        </div>
+        <span className="sk" style={{ width: "140px", height: "15px" }} />
+        <div className="settings-sessions">
+          {SKELETON_SETTINGS_SESSIONS.map((row) => (
+            <div
+              className="settings-session"
+              key={`settings-session-${row}`}
+              style={{ "--sk-delay": `${420 + row * 35}ms` } as React.CSSProperties}
+            >
+              <div className="settings-session-copy">
+                <span className="sk" style={{ width: "210px", height: "14px" }} />
+                <span className="sk sk-quiet" style={{ width: "175px", height: "12px" }} />
+              </div>
+              <span
+                className="sk"
+                style={{ width: "132px", height: "44px", borderRadius: "var(--radius-md)" }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="settings-actions">
+          <span
+            className="sk"
+            style={{ width: "270px", height: "44px", borderRadius: "var(--radius-md)" }}
+          />
+        </div>
       </div>
     </section>
   );
 }
 
-// Implements: REQ-TEAM-01
-export function GradebookEditorSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Cargando la ponderación del ramo…" role="status">
-      <fieldset className="grades-editor" inert ref={skeletonWave}>
-        {[0, 1, 2].map((row) => (
-          <div className="grades-editor-row" key={row}>
-            <label>
-              Evaluación
-              <input readOnly tabIndex={-1} />
-            </label>
-            <label>
-              Pondera %
-              <input readOnly tabIndex={-1} type="number" />
-            </label>
-            <label>
-              Fecha
-              <input readOnly tabIndex={-1} type="date" />
-            </label>
-            <label>
-              Entrega
-              <select tabIndex={-1}>
-                <option />
-              </select>
-            </label>
-            <button className="remove-row" tabIndex={-1} type="button">
-              <Trash aria-hidden="true" size={15} />
-              Quitar
-            </button>
-          </div>
-        ))}
-      </fieldset>
-    </div>
-  );
-}
+/* ── Esqueletos internos del aula ─────────────────────────────
+   Cada uno reemplaza una línea de texto «Cargando…» por la silueta de lo que
+   está por llegar, con las mismas clases de la lista o el panel real.
+   ─────────────────────────────────────────────────────────── */
 
 // Implements: REQ-QUIZ-01
-export function QuizListSkeleton({ teacher = false }: { teacher?: boolean }) {
+export function QuizListSkeleton({ teacher = false }: { teacher?: boolean } = {}) {
   return (
     <div
       aria-busy="true"
       aria-label="Cargando cuestionarios…"
       className={teacher ? "quiz-card-list" : "quiz-student-list"}
-      ref={skeletonWave}
       role="status"
     >
       {[0, 1, 2].map((row) => (
-        <article className={teacher ? "quiz-card" : "quiz-student-card"} key={row}>
-          <Bone w={teacher ? 44 : 34} h={teacher ? 44 : 26} r="var(--radius-md)" />
-          <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
-            <Bone w={92} h={22} r="var(--radius-sm)" quiet />
-            <Line w={`${46 + row * 9}%`} />
-            <Line w={`${78 - row * 6}%`} quiet />
+        <article
+          className={teacher ? "quiz-card" : "quiz-student-card"}
+          key={`quiz-${row}`}
+          style={{ "--sk-delay": `${60 + row * 50}ms` } as React.CSSProperties}
+        >
+          <span className="sk" style={{ width: teacher ? 44 : 34, height: teacher ? 44 : 26 }} />
+          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+            <span
+              className="sk"
+              style={{ width: "92px", height: "20px", borderRadius: "var(--radius-full)" }}
+            />
+            <span className="sk" style={{ width: `${46 + row * 9}%`, height: "17px" }} />
+            <span className="sk sk-quiet" style={{ width: `${78 - row * 6}%`, height: "13px" }} />
             {teacher ? (
-              <dl>
-                {["Preguntas", "Tiempo", "Nota"].map((label) => (
-                  <div key={label}>
-                    <dt>{label}</dt>
-                    <dd>
-                      <Line w="2.5em" quiet />
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <>
+                <span className="sk" style={{ width: 130, height: 44 }} />
+                <dl>
+                  {["Preguntas", "Tiempo", "Nota"].map((label) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>
+                        <span className="sk sk-quiet" style={{ width: 40, height: 12 }} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
             ) : (
               <span className="quiz-card-facts">
-                <Line w="7em" quiet />
-                <Line w="6em" quiet />
+                <span className="sk sk-quiet" style={{ width: 104, height: 12 }} />
+                <span className="sk sk-quiet" style={{ width: 92, height: 12 }} />
               </span>
             )}
           </div>
-          {!teacher && <Bone w={128} h={40} r="var(--radius-md)" />}
+          {!teacher && (
+            <button
+              className="primary-button"
+              type="button"
+              disabled
+              aria-hidden="true"
+              tabIndex={-1}
+            >
+              <span className="sk" style={{ width: 90, height: 13 }} />
+            </button>
+          )}
         </article>
       ))}
     </div>
@@ -1305,16 +1085,25 @@ export function QuizListSkeleton({ teacher = false }: { teacher?: boolean }) {
 // Implements: REQ-INTEROP-01
 export function InteropListSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Cargando recursos externos…" ref={skeletonWave} role="status">
+    <div aria-busy="true" aria-label="Cargando recursos externos…" role="status">
       <ul className="interop-resource-list">
         {[0, 1, 2].map((row) => (
-          <li key={row}>
-            <div style={{ display: "grid", gap: "4px", minWidth: 0 }}>
-              <Line w="5em" quiet />
-              <Line w={`${12 + ((row * 3) % 8)}em`} />
+          <li
+            key={`interop-${row}`}
+            style={{ "--sk-delay": `${60 + row * 45}ms` } as React.CSSProperties}
+          >
+            <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+              <span className="sk sk-quiet" style={{ width: "72px", height: "11px" }} />
+              <span
+                className="sk"
+                style={{ width: `${188 + ((row * 43) % 120)}px`, height: "16px" }}
+              />
             </div>
             <div className="interop-actions">
-              <Bone w={132} h={44} r="var(--radius-md)" />
+              <span
+                className="sk"
+                style={{ width: "132px", height: "44px", borderRadius: "var(--radius-md)" }}
+              />
             </div>
           </li>
         ))}
@@ -1323,38 +1112,34 @@ export function InteropListSkeleton() {
   );
 }
 
-// Implements: REQ-INTEROP-01
-export function InteropWorkspaceSkeleton() {
-  return (
-    <section className="interop-workspace">
-      <div className="section-title compact-title">
-        <h2>Herramientas y objetos de aprendizaje</h2>
-      </div>
-      <p className="interop-lede">
-        Abre los laboratorios, recursos y actividades que comparte tu equipo docente.
-      </p>
-      <InteropListSkeleton />
-    </section>
-  );
-}
-
 // Implements: REQ-COMM-04
 export function ConversationSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Cargando conversación…" ref={skeletonWave} role="status">
+    <div aria-busy="true" aria-label="Cargando conversación…" role="status">
       <ol className="message-list">
         {[
-          { own: false, width: "68%", lines: 2 },
-          { own: true, width: "46%", lines: 1 },
-          { own: false, width: "58%", lines: 2 },
-        ].map((bubble) => (
-          <li className={bubble.own ? "message-run own" : "message-run"} key={bubble.width}>
-            <span className="message-bubble" style={{ width: bubble.width }}>
-              <Line w="100%" />
-              {bubble.lines === 2 && <Line w="64%" />}
-            </span>
-            <span className="message-time">
-              <Line quiet w="2.6em" />
+          { own: false, width: "62%", lines: 2 },
+          { own: true, width: "48%", lines: 1 },
+          { own: false, width: "70%", lines: 2 },
+        ].map((bubble, index) => (
+          <li className={bubble.own ? "own" : undefined} key={`message-${index}`}>
+            <span
+              className="message-bubble"
+              style={
+                {
+                  display: "grid",
+                  gap: "8px",
+                  width: bubble.width,
+                  "--sk-delay": `${60 + index * 60}ms`,
+                } as React.CSSProperties
+              }
+            >
+              <span className="sk sk-quiet" style={{ width: "96px", height: "11px" }} />
+              <span className="sk" style={{ width: "100%", height: "13px" }} />
+              {bubble.lines === 2 && (
+                <span className="sk" style={{ width: "68%", height: "13px" }} />
+              )}
+              <span className="sk sk-quiet" style={{ width: "62px", height: "10px" }} />
             </span>
           </li>
         ))}
@@ -1370,7 +1155,6 @@ export function GradeHistorySkeleton() {
       aria-busy="true"
       aria-label="Cargando historial de la nota…"
       className="grade-history-skeleton overflow-hidden rounded-xl border border-surface-border bg-surface-raised"
-      ref={skeletonWave}
       role="status"
     >
       <div className="flex items-center justify-between border-b px-4 py-2.5">
@@ -1398,8 +1182,11 @@ export function GradeHistorySkeleton() {
               <tr key={row} className="border-t">
                 {[0, 1, 2, 3, 4].map((column) => (
                   <td key={column} className="px-3 py-2.5">
-                    <Line w={column === 0 ? "80%" : "52%"} />
-                    {column === 0 && <Line w="56%" quiet />}
+                    <span className="sk" style={{ width: "80%", height: 14 }} />
+                    <span
+                      className="sk sk-quiet"
+                      style={{ width: "60%", height: 11, marginTop: 8 }}
+                    />
                   </td>
                 ))}
               </tr>
@@ -1411,6 +1198,8 @@ export function GradeHistorySkeleton() {
   );
 }
 
+/* El visor de PDF pesa lo suyo: mientras baja, la bandeja muestra la hoja que
+   va a ocupar, no un renglón de texto que después desaparece. */
 // Implements: REQ-REV-01
 export function DocumentPaneSkeleton() {
   return (
@@ -1418,16 +1207,9 @@ export function DocumentPaneSkeleton() {
       aria-busy="true"
       aria-label="Preparando el visor de la entrega…"
       className="review-doc-skeleton"
-      ref={skeletonWave}
       role="status"
     >
-      <span className="review-doc-skeleton-page">
-        <Line w="46%" />
-        <Line w="92%" quiet />
-        <Line w="88%" quiet />
-        <Line w="94%" quiet />
-        <Line w="61%" quiet />
-      </span>
+      <span className="sk review-doc-skeleton-page" />
     </div>
   );
 }

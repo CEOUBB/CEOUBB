@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { QA_SCENARIOS, QA_AREAS, runsExclusively } from "../qa/catalog.ts";
+import { QA_SCENARIOS, QA_AREAS } from "../qa/catalog.ts";
 import { parseArgs, selectScenarios, changedFiles } from "./qa/options.mjs";
 import { startRuntime, exited } from "./qa/runtime.mjs";
 import { writeReport } from "./qa/report.mjs";
@@ -130,6 +130,7 @@ async function main() {
     );
     const environment = {
       QA_OUTPUT_DIR: output,
+      QA_SCENARIOS: selection.ids.join(","),
       QA_AREAS: [...new Set(selection.scenarios.map((scenario) => scenario.area))].join(","),
       QA_SCREENSHOTS: options.screenshots ? "1" : "0",
       QA_EXPLORE: options.explore ? "1" : "0",
@@ -140,19 +141,6 @@ async function main() {
     const args = [];
     if (options.browser || options.explore)
       args.push("--project", options.browser ?? "chromium-1440");
-    const parallel =
-      options.explore || options.browser === "api"
-        ? []
-        : selection.ids.filter((id) => !runsExclusively(id));
-    const serial = selection.ids.filter((id) => !parallel.includes(id));
-    const phases = [
-      {
-        name: "parallel",
-        ids: parallel,
-        args: ["--fully-parallel", "--workers", "50%", "--grep-invert", "@api"],
-      },
-      { name: "serial", ids: serial, args: [] },
-    ].filter((phase) => phase.ids.length || (phase.name === "serial" && !options.browser));
     console.log(`[qa] Application: ${runtime.environment.QA_BASE_URL}`);
     if (options.explore) {
       const endpoint = `http://127.0.0.1:${runtime.ports.inspect}`;
@@ -172,19 +160,7 @@ async function main() {
         `[qa] Agent browser attachment: ${endpoint} (available when the browser opens). Ctrl+C stops this run and its services.`
       );
     }
-    exitCode = 0;
-
-    for (const phase of phases) {
-      console.log(`[qa] ${phase.name} phase: ${phase.ids.length} scenarios`);
-      const code = await exited(
-        runtime.startTest([...args, ...phase.args], {
-          ...environment,
-          QA_PHASE: phase.name,
-          QA_SCENARIOS: phase.ids.join(","),
-        })
-      );
-      exitCode ||= code;
-    }
+    exitCode = await exited(runtime.startTest(args, environment));
   } catch (error) {
     failure = error instanceof Error ? error : new Error(String(error));
   } finally {

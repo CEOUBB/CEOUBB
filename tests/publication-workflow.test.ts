@@ -2,16 +2,19 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import {
+  CONTENT_TYPES,
   DEFAULT_EDITOR_STORAGE_KEY,
   EDITOR_MODES,
   NOTIFICATION_MODES,
   clearPublicationDraft,
+  createPublicationDraft,
   draftStorageKey,
   persistDefaultEditor,
   persistPublicationDraft,
   readDefaultEditor,
   readPublicationDraft,
   readingStats,
+  templateForContentType,
   type PublicationPreferenceStorage,
 } from "../lib/publication-workflow.ts";
 import { MAX_POST_ATTACHMENTS, toAttachments } from "../lib/firebase/mappers.ts";
@@ -66,22 +69,44 @@ test("REQ-PUB-01/02/04 validates and persists only supported editor modes", () =
   assert.equal(persistDefaultEditor(blockedStorage, null), false);
 });
 
-test("REQ-PUB-06 offers editor and alert modes without predefined content types", () => {
-  const source = fs.readFileSync(
-    new URL("../lib/publication-workflow.ts", import.meta.url),
-    "utf8"
-  );
+test("REQ-PUB-03/06 maps the wizard choices to a bounded publication draft", () => {
   assert.deepEqual(
     EDITOR_MODES.map(({ value }) => value),
     ["visual", "markdown", "html"]
   );
   assert.equal(EDITOR_MODES.find((mode) => mode.value === "html")?.label, "Marcado HTML");
   assert.deepEqual(
+    CONTENT_TYPES.map(({ value }) => value),
+    ["notice", "assessment", "guide", "blank"]
+  );
+  assert.deepEqual(
     NOTIFICATION_MODES.map(({ value }) => value),
     ["push", "silent"]
   );
-  /* El docente nombra su contenido: el flujo ya no ofrece tipos ni plantillas. */
-  assert.doesNotMatch(source, /CONTENT_TYPES|PUBLICATION_TEMPLATES|templateForContentType/);
+  assert.deepEqual(
+    createPublicationDraft({
+      contentType: "assessment",
+      editorMode: "markdown",
+      folder: "Evaluaciones",
+      notificationMode: "silent",
+    }),
+    {
+      contentType: "assessment",
+      editorMode: "markdown",
+      folder: "Evaluaciones",
+      kind: "assessment",
+      notificationMode: "silent",
+    }
+  );
+  assert.equal(
+    createPublicationDraft({
+      contentType: "blank",
+      editorMode: "visual",
+      folder: "",
+      notificationMode: "push",
+    }).kind,
+    "notice"
+  );
 });
 
 test("REQ-PUB-01/05/08 exposes the publication studio as a full page reached from the course header", () => {
@@ -96,7 +121,7 @@ test("REQ-PUB-01/05/08 exposes the publication studio as a full page reached fro
 
   /* La acción vive en el encabezado del ramo y abre una pantalla, no un diálogo. */
   assert.match(view, /<Plus size=\{17\}/);
-  assert.match(view, /Nuevo aviso/);
+  assert.match(view, /Nueva publicación/);
   assert.match(view, /const \[composing, setComposing\] = useState\(false\)/);
   assert.match(view, /if \(composing\) \{/);
   assert.match(view, /<PublishView/);
@@ -108,27 +133,26 @@ test("REQ-PUB-01/05/08 exposes the publication studio as a full page reached fro
   assert.match(studio, /data-hardware-back="publish"/);
   assert.match(studio, /name="notificationMode"/);
   assert.match(studio, /name="folder"/);
-  assert.match(studio, /<input name="kind" type="hidden" value="notice" \/>/);
-  assert.doesNotMatch(studio, /PresetStage|templateForContentType|contentType/);
+  assert.match(studio, /templateForContentType\(value\)/);
 });
 
-test("REQ-PAGE-01 opens the aviso composer blank, without a preset stage", () => {
-  const panels = fs.readFileSync(
-    new URL("../app/views/classroom/PublishPanels.tsx", import.meta.url),
-    "utf8"
-  );
-  const studio = fs.readFileSync(
-    new URL("../app/views/classroom/PublishView.tsx", import.meta.url),
-    "utf8"
-  );
-  assert.doesNotMatch(panels, /export function PresetStage|publish-preset/);
-  assert.doesNotMatch(studio, /contentType === null|choosePreset/);
-  assert.match(studio, /editing\?\.title \?\? seed\?\.title \?\? restoredDraft\?\.title \?\? ""/);
+test("REQ-PUB-10 seeds each preset with a structured Spanish template", () => {
+  assert.equal(templateForContentType("blank"), "");
+  for (const contentType of ["notice", "assessment", "guide"] as const) {
+    const template = templateForContentType(contentType);
+    assert.ok(template.length > 40, `${contentType} debe traer estructura`);
+    assert.match(template, /^## /m);
+  }
+  assert.match(templateForContentType("assessment"), /\| Ítem \| Criterio \| Puntaje \|/);
+  assert.match(templateForContentType("assessment"), /> \[!ASSESSMENT\]/);
+  assert.match(templateForContentType("guide"), /^---$/m);
+  assert.match(templateForContentType("notice"), /> \[!NOTE\]/);
 });
 
 test("REQ-PUB-11 keeps a per-section draft and drops it once it is empty", () => {
   const storage = memoryStorage();
   const draft = {
+    contentType: "guide" as const,
     editorMode: "markdown" as const,
     notificationMode: "silent" as const,
     title: "Guía 3",
@@ -158,6 +182,7 @@ test("REQ-PUB-11 keeps a per-section draft and drops it once it is empty", () =>
     JSON.stringify({ title: "Aviso", body: "x", editorMode: "wysiwyg", contentType: "otro" })
   );
   assert.equal(readPublicationDraft(storage, "INF3101-1")?.editorMode, "visual");
+  assert.equal(readPublicationDraft(storage, "INF3101-1")?.contentType, "blank");
   storage.setItem(draftStorageKey("INF3101-1"), "{no-json");
   assert.equal(readPublicationDraft(storage, "INF3101-1"), null);
   assert.equal(clearPublicationDraft(storage, "INF3101-1"), true);
@@ -210,17 +235,13 @@ test("REQ-PUB-09 rejects attachment entries without a storage path and caps the 
   assert.equal(toAttachments(many).length, MAX_POST_ATTACHMENTS);
 });
 
-test("REQ-PUB-13 removes the Materiales tab and centralises the course page and avisos on the cover", () => {
+test("REQ-PUB-13 removes the Materiales tab and centralises publications on the cover", () => {
   const utils = fs.readFileSync(
     new URL("../app/views/classroom/classroom-utils.ts", import.meta.url),
     "utf8"
   );
-  const announcements = fs.readFileSync(
-    new URL("../app/views/classroom/AnnouncementsPanel.tsx", import.meta.url),
-    "utf8"
-  );
-  const items = fs.readFileSync(
-    new URL("../app/views/classroom/CoursePageItems.tsx", import.meta.url),
+  const postsSection = fs.readFileSync(
+    new URL("../app/views/classroom/PostsSection.tsx", import.meta.url),
     "utf8"
   );
 
@@ -236,9 +257,9 @@ test("REQ-PUB-13 removes the Materiales tab and centralises the course page and 
     false
   );
   /* Los adjuntos y el buscador viven ahora en la Portada. */
-  assert.match(announcements, /<FileList files=\{filesOf\(post\)\}/);
-  assert.match(announcements, /filterPostsByQuery/);
-  assert.match(items, /onClick=\{\(\) => openAttachment\(file\)\}/);
+  assert.match(postsSection, /post-attachments/);
+  assert.match(postsSection, /filterPostsByQuery/);
+  assert.match(postsSection, /openAttachment\(attachment\)/);
 });
 
 test("REQ-PUB-06/07 writes the alert choice and skips FCM only for explicit false", () => {

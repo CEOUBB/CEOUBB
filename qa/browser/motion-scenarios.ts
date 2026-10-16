@@ -38,23 +38,8 @@ export async function shellMotionScenario(page: Page, capture: Capture) {
   await capture("keyboard");
   await page.keyboard.press("Escape");
   await expect(search).toHaveCount(0);
-  await page.evaluate(() => {
-    const root = document.documentElement;
-    root.dataset.qaViewTransitions = "0";
-    const start = document.startViewTransition?.bind(document);
-    if (!start) return;
-    document.startViewTransition = (update?: Parameters<typeof start>[0]) => {
-      root.dataset.qaViewTransitions = String(Number(root.dataset.qaViewTransitions) + 1);
-      return start(update);
-    };
-  });
-  const viewTransitions = () =>
-    page.evaluate(() => Number(document.documentElement.dataset.qaViewTransitions));
   await navigate(page, "Calendario");
   await expect(page.getByRole("heading", { name: "Calendario", exact: true })).toBeVisible();
-  if (await page.evaluate(() => "startViewTransition" in document)) {
-    expect(await viewTransitions()).toBeGreaterThan(0);
-  }
   const wrapper = page.locator(".app-main > div");
   expect(await wrapper.evaluate((element) => element.getAnimations().length)).toBe(0);
   expect(await wrapper.evaluate((element) => getComputedStyle(element).transform)).toBe("none");
@@ -67,9 +52,6 @@ export async function shellMotionScenario(page: Page, capture: Capture) {
   await course(page);
   const tabs = page.locator(".course-tabs [role=tab]");
   await tabs.first().focus();
-  await page.evaluate(() => {
-    document.documentElement.dataset.qaViewTransitions = "0";
-  });
   await page.keyboard.press("ArrowRight");
   await expect(tabs.nth(1)).toBeFocused();
   await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
@@ -78,7 +60,6 @@ export async function shellMotionScenario(page: Page, capture: Capture) {
   expect(await tabPanel.locator("..").evaluate((element) => element.getAnimations().length)).toBe(
     0
   );
-  expect(await viewTransitions()).toBe(0);
   await capture("navigation");
   await setMotionReduction(page, true);
   await page.evaluate(() => {

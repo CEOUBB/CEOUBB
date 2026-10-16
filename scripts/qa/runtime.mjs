@@ -459,40 +459,6 @@ export async function startRuntime(root, runId, output, signal, mode = "developm
         console.log("[qa] Firebase emulators exited during startup; retrying once.");
       }
     }
-    restoreNextEnv = await preserveNextEnv(root, runDir, mode);
-    const serve = () => {
-      const next = start(
-        process.execPath,
-        [
-          ...(mode === "production" ? ["--dns-result-order=ipv4first"] : []),
-          require.resolve("next/dist/bin/next"),
-          mode === "production" ? "start" : "dev",
-          "--hostname",
-          mode === "production" ? "localhost" : "127.0.0.1",
-          "--port",
-          String(ports.app),
-        ],
-        environment,
-        root,
-        join(output, "application.log")
-      );
-      children.push(next);
-      return next;
-    };
-    const development = mode === "development" && serve();
-    let build;
-
-    if (!development) {
-      const child = start(
-        process.execPath,
-        [require.resolve("next/dist/bin/next"), "build"],
-        environment,
-        root,
-        join(output, "build.log")
-      );
-      children.push(child);
-      build = exited(child).catch((error) => error);
-    }
     console.log("[qa] Seeding synthetic identities, sections and learning data...");
     signal?.throwIfAborted();
     const seed = start(
@@ -541,16 +507,36 @@ export async function startRuntime(root, runId, output, signal, mode = "developm
         }
       );
     console.log("[qa] Starting the real web application...");
-    let next = development;
-
-    if (!next) {
-      const built = await build;
-
-      if (built !== 0)
-        throw built instanceof Error ? built : new Error("QA build failed; inspect build.log.");
+    restoreNextEnv = await preserveNextEnv(root, runDir, mode);
+    signal?.throwIfAborted();
+    if (mode === "production") {
+      const build = start(
+        process.execPath,
+        [require.resolve("next/dist/bin/next"), "build"],
+        environment,
+        root,
+        join(output, "build.log")
+      );
+      children.push(build);
+      if ((await exited(build)) !== 0) throw new Error("QA build failed; inspect build.log.");
       signal?.throwIfAborted();
-      next = serve();
     }
+    const next = start(
+      process.execPath,
+      [
+        ...(mode === "production" ? ["--dns-result-order=ipv4first"] : []),
+        require.resolve("next/dist/bin/next"),
+        mode === "production" ? "start" : "dev",
+        "--hostname",
+        mode === "production" ? "localhost" : "127.0.0.1",
+        "--port",
+        String(ports.app),
+      ],
+      environment,
+      root,
+      join(output, "application.log")
+    );
+    children.push(next);
     await ready(environment.QA_BASE_URL, [emulator, next], 300_000, signal);
     return {
       environment,

@@ -20,12 +20,12 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import type { User } from "../../lib/portal-utils.ts";
+import { roleLabel, type User } from "../../lib/portal-utils.ts";
 import {
   CHANNELS_WITHOUT_SENDER,
   CHANNEL_LABELS,
   NOTIFICATION_CHANNELS,
-  cachedPreferences,
+  defaultPreferences,
   loadPreferences,
   savePreferences,
   type ChannelPreference,
@@ -33,8 +33,6 @@ import {
   type UserPreferences,
 } from "../../lib/user-preferences.ts";
 import { Avatar } from "../portal-ui.tsx";
-import { AccountFacts } from "./settings-parts.tsx";
-import { SessionListSkeleton } from "./ViewSkeletons.tsx";
 
 type ActiveSession = {
   id: string;
@@ -643,7 +641,22 @@ function AccountPanel({
         </p>
       </div>
 
-      <AccountFacts user={user} />
+      <dl className="settings-facts">
+        <div>
+          <dt>Correo institucional</dt>
+          <dd>{user.email}</dd>
+        </div>
+        <div>
+          <dt>Rango</dt>
+          <dd>{roleLabel(user.role)}</dd>
+        </div>
+        {user.carrera ? (
+          <div>
+            <dt>Carrera</dt>
+            <dd>{user.carrera}</dd>
+          </div>
+        ) : null}
+      </dl>
 
       <h3 className="settings-subhead" id="settings-sessions-title">
         Sesiones activas
@@ -657,16 +670,13 @@ function AccountPanel({
       ) : null}
 
       {sessions === null ? (
-        <SessionListSkeleton />
+        <p className="settings-note">Leyendo tus sesiones…</p>
       ) : sessions.length === 0 ? (
         <p className="settings-note">
           No hay ninguna sesión activa que mostrar además de la que estás usando.
         </p>
       ) : (
-        <ul
-          aria-labelledby="settings-sessions-title"
-          className="settings-sessions resolve-children"
-        >
+        <ul aria-labelledby="settings-sessions-title" className="settings-sessions">
           {sessions.map((session) => (
             <li className="settings-session" key={session.id}>
               <div className="settings-session-copy">
@@ -724,7 +734,7 @@ export function SettingsView({
   onPhotoChange: (photoUrl: string | null) => void;
 }) {
   const [status, setStatus] = useState("");
-  const [preferences, setPreferences] = useState<UserPreferences>(cachedPreferences);
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [preferencesBusy, setPreferencesBusy] = useState(true);
   const [preferencesError, setPreferencesError] = useState("");
 

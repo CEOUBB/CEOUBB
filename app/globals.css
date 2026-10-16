@@ -301,26 +301,12 @@ img {
   font-feature-settings: "lnum" 1;
 }
 
-@keyframes sk-in {
+@keyframes sk-sweep {
   from {
-    opacity: 0;
+    transform: translateX(-100%);
   }
-}
-
-@keyframes resolve {
-  from {
-    opacity: 0;
-    translate: 0 6px;
-  }
-}
-
-@keyframes sk-wave {
-  0% {
-    translate: calc(-1 * var(--sk-band)) 0;
-  }
-  50%,
-  100% {
-    translate: var(--sk-span, 1200px) 0;
+  to {
+    transform: translateX(100%);
   }
 }
 
@@ -794,7 +780,7 @@ a:hover > .animated-underline::after {
   scroll-padding-top: calc(var(--header-offset) + 16px);
 }
 @media (max-width: 767px) {
-  :root:has(.mobile-nav) {
+  :root:has(.app-shell[data-mobile="true"]) {
     scroll-padding-bottom: calc(58px + var(--safe-bottom) + 16px);
   }
 }
@@ -1911,93 +1897,63 @@ html[data-reduced-motion="true"] {
 }
 
 /* ==========================================================================
-   Transiciones de vista del campus
-   Implements: REQ-VT-01, REQ-VT-02, REQ-MOTION-02, REQ-MOTION-03, REQ-MOTION-04
+   React 19.3 Native View Transitions & Directional Navigation
+   Implements: REQ-VT-01, REQ-VT-02
    ========================================================================== */
 
-::view-transition {
-  pointer-events: none;
-}
-
 ::view-transition-group(*) {
-  animation-duration: var(--vt-move, 360ms);
-  animation-timing-function: var(--ease-spring);
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-old(*) {
+  animation-duration: 180ms;
+}
+
+::view-transition-new(*) {
   animation-duration: 200ms;
 }
 
-.app-header {
-  view-transition-name: app-header;
+/* Directional View Transitions with addTransitionType('next' | 'previous') */
+html:active-view-transition-type(next) ::view-transition-old(*) {
+  animation-name: vt-slide-out-to-left;
+}
+html:active-view-transition-type(next) ::view-transition-new(*) {
+  animation-name: vt-slide-in-from-right;
 }
 
-.mobile-nav {
-  view-transition-name: mobile-nav;
+html:active-view-transition-type(previous) ::view-transition-old(*) {
+  animation-name: vt-slide-out-to-right;
+}
+html:active-view-transition-type(previous) ::view-transition-new(*) {
+  animation-name: vt-slide-in-from-left;
 }
 
-::view-transition-old(.screen-exit),
-::view-transition-old(.tab-exit-forward),
-::view-transition-old(.tab-exit-back) {
-  animation: vt-leave 100ms cubic-bezier(0.4, 0, 1, 1) both;
-}
-
-::view-transition-new(.screen-enter) {
-  --vt-from: 0 10px;
-  animation: vt-arrive 300ms var(--ease-spring) 90ms both;
-}
-
-::view-transition-old(.tab-exit-forward) {
-  --vt-to: -12px 0;
-}
-
-::view-transition-old(.tab-exit-back) {
-  --vt-to: 12px 0;
-}
-
-::view-transition-new(.tab-enter-forward) {
-  --vt-from: 20px 0;
-  animation: vt-arrive 280ms var(--ease-spring) 70ms both;
-}
-
-::view-transition-new(.tab-enter-back) {
-  --vt-from: -20px 0;
-  animation: vt-arrive 280ms var(--ease-spring) 70ms both;
-}
-
-::view-transition-old(.reveal),
-::view-transition-new(.reveal) {
-  animation-duration: 260ms;
-  animation-timing-function: cubic-bezier(0.33, 0, 0.2, 1);
-}
-
-::view-transition-group(.course-divider) {
-  animation-duration: 440ms;
-  animation-timing-function: cubic-bezier(0.2, 0.85, 0.15, 1);
-}
-
-::view-transition-group(.tab-indicator) {
-  animation-duration: 380ms;
-  animation-timing-function: var(--ease-spring);
-}
-
-::view-transition-old(.tab-indicator),
-::view-transition-new(.tab-indicator) {
-  height: 100%;
-}
-
-@keyframes vt-leave {
+@keyframes vt-slide-out-to-left {
   to {
     opacity: 0;
-    translate: var(--vt-to, 0 0);
+    transform: translateX(-16px);
   }
 }
 
-@keyframes vt-arrive {
+@keyframes vt-slide-in-from-right {
   from {
     opacity: 0;
-    translate: var(--vt-from, 0 0);
+    transform: translateX(16px);
+  }
+}
+
+@keyframes vt-slide-out-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes vt-slide-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
   }
 }
 
@@ -2006,6 +1962,7 @@ html[data-reduced-motion="true"] {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none !important;
+    animation-duration: 0ms !important;
   }
 }
 

@@ -1,4 +1,10 @@
-import { firestore, currentUser, authorFields, isDevOrLocalEnvironment } from "./sdk.ts";
+import {
+  firestore,
+  cloudStorage,
+  currentUser,
+  authorFields,
+  isDevOrLocalEnvironment,
+} from "./sdk.ts";
 import { syncProfile } from "./profile.ts";
 import {
   type ClassroomAttachment,
@@ -6,7 +12,6 @@ import {
   type ClassroomPost,
   type ClassroomPostKind,
   type ClassroomStudent,
-  type CoursePost,
   folderName,
   iso,
   postKind,
@@ -14,19 +19,8 @@ import {
   toFile,
   toGradebookState,
   toPost,
-  toSection,
   toStudent,
 } from "./mappers.ts";
-import {
-  HIDDEN_ITEMS_LIMIT,
-  PAGE_COLLECTIONS,
-  PAGE_POSTS_LIMIT,
-  PAGE_SECTIONS_LIMIT,
-  attachmentPathsOf,
-  itemTypeFor,
-  placementFor,
-  type PageSection,
-} from "../course-page.ts";
 import { normalizeDueDate } from "../planner.ts";
 import {
   type GradeFeedback,
@@ -41,6 +35,7 @@ import { normalizeLiveClassUrl, type LiveClassLink } from "../live-class.ts";
 import { roleForEmail } from "../access-policy.ts";
 
 const ACTIVITY_LIMIT = 120;
+const MAX_CLASSROOM_POSTS = 100;
 const MAX_CLASSROOM_STUDENTS = 250;
 
 const DEV_POSTS_PREFIX = "ceoubb_dev_posts:";
@@ -50,32 +45,19 @@ function devStorageKey(courseId: string): string {
   return `${DEV_POSTS_PREFIX}${courseId}`;
 }
 
-function asCoursePost(post: ClassroomPost & Partial<CoursePost>): CoursePost {
-  return {
-    ...post,
-    placement: post.placement ?? placementFor(post),
-    sectionId: post.sectionId ?? "",
-    position: post.position ?? Date.parse(post.createdAt),
-    itemType: post.itemType ?? itemTypeFor(post),
-    hidden: false,
-    publishAt: "",
-    location: "posts",
-  };
-}
-
-export function readDevPosts(courseId: string): CoursePost[] {
+export function readDevPosts(courseId: string): ClassroomPost[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(devStorageKey(courseId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.map(asCoursePost) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-export function saveDevPost(courseId: string, post: CoursePost): void {
+export function saveDevPost(courseId: string, post: ClassroomPost): void {
   if (typeof window === "undefined") return;
   try {
     const current = readDevPosts(courseId);
@@ -90,7 +72,7 @@ export function saveDevPost(courseId: string, post: CoursePost): void {
 export function updateDevPost(
   courseId: string,
   postId: string,
-  updater: (p: CoursePost) => CoursePost
+  updater: (p: ClassroomPost) => ClassroomPost
 ): void {
   if (typeof window === "undefined") return;
   try {
@@ -187,12 +169,7 @@ const ACTIVITY_LIMIT_PER_SECTION = 20;
 export const MAX_WATCHED_SECTIONS = 40;
 
 export type ClassroomState = {
-  posts: CoursePost[];
-  postsStatus: "loading" | "ready" | "error";
-  postsOverflow: boolean;
-  sections: PageSection[];
-  sectionsStatus: "loading" | "ready" | "error";
-  hiddenItems: CoursePost[];
+  posts: ClassroomPost[];
   files: ClassroomFile[];
   students: ClassroomStudent[];
   gradebook: GradeItem[];
@@ -215,24 +192,23 @@ export type CourseActivity = {
   createdAt: string;
 };
 
-// Implements: REQ-LIVE-01, REQ-LIVE-05, REQ-LIVE-08, REQ-PAGE-05, REQ-PAGE-12
+// Implements: REQ-LIVE-01, REQ-LIVE-05, REQ-LIVE-08
 export function watchClassroom(
   courseId: string,
   teaching: boolean,
-  managing: boolean,
   onChange: (state: Partial<ClassroomState>) => void,
   onError: (message: string) => void
 ) {
   let active = true;
   const stops: (() => void)[] = [];
 
-  onChange({ postsStatus: "loading", sectionsStatus: "loading", gradebookStatus: "loading" });
+  onChange({ gradebookStatus: "loading" });
 
   const syncDevPosts = () => {
     if (!active) return;
     const devPosts = readDevPosts(courseId);
     if (devPosts.length > 0) {
-      onChange({ posts: devPosts, postsStatus: "ready" });
+      onChange({ posts: devPosts });
     }
   };
 
@@ -250,10 +226,10 @@ export function watchClassroom(
           sdk.query(
             sdk.collection(db, "courses", courseId, "posts"),
             sdk.orderBy("createdAt", "desc"),
-            sdk.limit(PAGE_POSTS_LIMIT)
+            sdk.limit(MAX_CLASSROOM_POSTS)
           ),
           (snapshot) => {
-            const posts: CoursePost[] = [];
+            const posts: ClassroomPost[] = [];
             const files: ClassroomFile[] = [];
             for (const document of snapshot.docs) {
               const post = toPost(document);
@@ -262,68 +238,24 @@ export function watchClassroom(
                 files.push(toFile(post, document.data()));
               }
             }
-            const postsOverflow = snapshot.size >= PAGE_POSTS_LIMIT;
             if (isDevOrLocalEnvironment()) {
               const devPosts = readDevPosts(courseId);
               const merged = [...devPosts];
               for (const p of posts) {
                 if (!merged.some((m) => m.id === p.id)) merged.push(p);
               }
-              onChange({
-                posts: merged.length > 0 ? merged : posts,
-                files,
-                postsOverflow,
-                postsStatus: "ready",
-              });
+              onChange({ posts: merged.length > 0 ? merged : posts, files });
             } else {
-              onChange({ posts, files, postsOverflow, postsStatus: "ready" });
+              onChange({ posts, files });
             }
           },
           () => {
-            onChange({ postsStatus: "error" });
             if (!isDevOrLocalEnvironment()) {
               onError("No se pudieron sincronizar las publicaciones de Firebase.");
             }
           }
         )
       );
-      const sectionsCollection = sdk.collection(db, "courses", courseId, PAGE_COLLECTIONS.sections);
-      stops.push(
-        sdk.onSnapshot(
-          managing
-            ? sdk.query(sectionsCollection, sdk.limit(PAGE_SECTIONS_LIMIT))
-            : sdk.query(
-                sectionsCollection,
-                sdk.where("hidden", "==", false),
-                sdk.limit(PAGE_SECTIONS_LIMIT)
-              ),
-          (snapshot) =>
-            onChange({ sections: snapshot.docs.map(toSection), sectionsStatus: "ready" }),
-          () => {
-            if (isDevOrLocalEnvironment()) {
-              onChange({ sections: [], sectionsStatus: "ready" });
-              return;
-            }
-            onChange({ sectionsStatus: "error" });
-            onError("No se pudieron sincronizar las secciones del ramo.");
-          }
-        )
-      );
-      if (managing) {
-        stops.push(
-          sdk.onSnapshot(
-            sdk.query(
-              sdk.collection(db, "courses", courseId, PAGE_COLLECTIONS.hidden),
-              sdk.limit(HIDDEN_ITEMS_LIMIT)
-            ),
-            (snapshot) =>
-              onChange({
-                hiddenItems: snapshot.docs.map((document) => toPost(document, "hiddenItems")),
-              }),
-            () => onError("No se pudo cargar el contenido oculto del ramo.")
-          )
-        );
-      }
       stops.push(
         sdk.onSnapshot(
           sdk.doc(db, "courses", courseId, "meta", "gradebook"),
@@ -670,7 +602,6 @@ export function watchCourseActivity(
   };
 }
 
-// Implements: REQ-PUB-06, REQ-PUB-09, REQ-PAGE-09
 export async function publishClassroomPost(
   courseId: string,
   input: {
@@ -722,12 +653,7 @@ export async function publishClassroomPost(
     contentType: "",
     fileSize: 0,
     attachments,
-    attachmentPaths: attachmentPathsOf({ attachments }),
     notifyStudents: input.notifyStudents,
-    placement: "notice" as const,
-    itemType: "text" as const,
-    sectionId: "",
-    updatedBy: user.uid,
   };
 
   try {
@@ -735,12 +661,10 @@ export async function publishClassroomPost(
     await sdk.addDoc(sdk.collection(db, "courses", courseId, "posts"), {
       ...postFields,
       createdAt: sdk.serverTimestamp(),
-      updatedAt: sdk.serverTimestamp(),
     });
   } catch (cause) {
     if (isDevOrLocalEnvironment()) {
-      const createdAt = new Date().toISOString();
-      saveDevPost(courseId, {
+      const devPost: ClassroomPost = {
         id: `dev-post-${Date.now()}`,
         authorId: user?.uid ?? "dev:teacher-demo",
         authorName: user?.displayName ?? "Docente Demo",
@@ -754,45 +678,91 @@ export async function publishClassroomPost(
         linkUrl: postFields.fileUrl || null,
         storagePath: "",
         attachments: postFields.attachments,
-        createdAt,
-        placement: "notice",
-        sectionId: "",
-        position: Date.parse(createdAt),
-        itemType: "text",
-        hidden: false,
-        publishAt: "",
-        location: "posts",
-      });
+        createdAt: new Date().toISOString(),
+      };
+      saveDevPost(courseId, devPost);
       return;
     }
     throw cause;
   }
 }
 
-// Implements: REQ-PAGE-08, REQ-PAGE-09
 export async function editClassroomPost(
   courseId: string,
   id: string,
-  values: { title: string; body: string; attachments?: ClassroomAttachment[] }
+  values: { title: string; body: string }
 ) {
-  const title = values.title.trim();
-  const body = normalizeRichTextBody(values.body);
-  const attachments = values.attachments ? toAttachments(values.attachments) : null;
   if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
     updateDevPost(courseId, id, (p) => ({
       ...p,
-      title,
-      body,
-      attachments: attachments ?? p.attachments,
+      title: values.title.trim(),
+      body: normalizeRichTextBody(values.body),
     }));
     return;
   }
-  const [{ sdk, db }, user] = await Promise.all([firestore(), currentUser()]);
-  await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
-    title,
-    body,
-    ...(attachments ? { attachments, attachmentPaths: attachmentPathsOf({ attachments }) } : {}),
-    updatedBy: user.uid,
-    updatedAt: sdk.serverTimestamp(),
-  });
+  try {
+    const { sdk, db } = await firestore();
+    await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
+      title: values.title.trim(),
+      body: normalizeRichTextBody(values.body),
+    });
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      updateDevPost(courseId, id, (p) => ({
+        ...p,
+        title: values.title.trim(),
+        body: normalizeRichTextBody(values.body),
+      }));
+      return;
+    }
+    throw cause;
+  }
+}
+
+export async function moveClassroomPost(courseId: string, id: string, folder: string) {
+  if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
+    updateDevPost(courseId, id, (p) => ({
+      ...p,
+      folder: folderName(folder),
+    }));
+    return;
+  }
+  try {
+    const { sdk, db } = await firestore();
+    await sdk.updateDoc(sdk.doc(db, "courses", courseId, "posts", id), {
+      folder: folderName(folder),
+    });
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      updateDevPost(courseId, id, (p) => ({
+        ...p,
+        folder: folderName(folder),
+      }));
+      return;
+    }
+    throw cause;
+  }
+}
+
+export async function deleteClassroomPost(courseId: string, id: string, storagePath = "") {
+  if (isDevOrLocalEnvironment() && id.startsWith("dev-post-")) {
+    deleteDevPost(courseId, id);
+    return;
+  }
+  try {
+    if (storagePath) {
+      const cloud = await cloudStorage();
+      await cloud.sdk
+        .deleteObject(cloud.sdk.ref(cloud.storage, storagePath))
+        .catch(() => undefined);
+    }
+    const { sdk, db } = await firestore();
+    await sdk.deleteDoc(sdk.doc(db, "courses", courseId, "posts", id));
+  } catch (cause) {
+    if (isDevOrLocalEnvironment()) {
+      deleteDevPost(courseId, id);
+      return;
+    }
+    throw cause;
+  }
 }

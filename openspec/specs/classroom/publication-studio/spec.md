@@ -2,18 +2,18 @@
 
 ## Purpose
 
-Governs how an authorized teacher opens the full-page aviso composer from the course header, writes with the multimodal editor, attaches files to the aviso itself, and chooses whether students receive an alert. Page content is governed by `classroom/course-page`. Replaces `classroom/publication-wizard`, whose modal wizard and split-button are removed.
+Governs how an authorized teacher opens a full-page publication studio from the course header, seeds it from a content preset, writes with the multimodal editor, attaches files to the publication itself, and chooses whether students receive an alert. Replaces `classroom/publication-wizard`, whose modal wizard and split-button are removed.
 
 ## Requirements
 
 ### Requirement: Open the Studio as a Full Page (REQ-PUB-01)
 
-WHEN an authorized teacher activates `Nuevo aviso` from the course header, the system SHALL replace the classroom view with a full-page aviso composer in the same synchronous interaction, without an intermediate modal dialog, and SHALL open the editor in the mode stored in `ceoubb_default_editor` when that value is `visual`, `markdown`, or `html`.
+WHEN an authorized teacher activates `+ Nueva publicación` from the course header, the system SHALL replace the classroom view with a full-page publication studio in the same synchronous interaction, without an intermediate modal dialog, and SHALL open the editor in the mode stored in `ceoubb_default_editor` when that value is `visual`, `markdown`, or `html`.
 
 #### Scenario: A remembered Markdown teacher starts writing immediately
 
 - **GIVEN** `ceoubb_default_editor` contains `markdown`
-- **WHEN** the teacher activates `Nuevo aviso`
+- **WHEN** the teacher activates `+ Nueva publicación`
 - **THEN** the studio SHALL occupy the course screen with its own back control
 - **AND** the editor SHALL open in Markdown mode
 - **AND** no `<dialog>` SHALL be rendered by the studio
@@ -29,15 +29,15 @@ IF the stored editor preference is missing, invalid, or inaccessible, THEN the s
 - **THEN** the editor SHALL open in `visual` mode
 - **AND** the teacher SHALL be able to publish normally
 
-### Requirement: Manage Attachments and Alerts in an Inspector (REQ-PUB-03)
+### Requirement: Manage Destination and Metadata in an Inspector (REQ-PUB-03)
 
-WHILE the studio is open, the system SHALL present the writing canvas and an inspector holding attachments and alert policy, and SHALL keep both reachable without leaving the page.
+WHILE the studio is open, the system SHALL present the writing canvas and a metadata inspector holding destination folder, optional due date, optional external link, attachments, and alert policy, and SHALL keep every one of them reachable without leaving the page.
 
-#### Scenario: A teacher announces an evaluation
+#### Scenario: A teacher configures an evaluation
 
-- **GIVEN** the studio is open
-- **WHEN** the teacher attaches a marking guide and selects `Publicar y alertar`
-- **THEN** the published aviso SHALL carry that attachment and alert policy
+- **GIVEN** the studio is open on the `Certamen o evaluación` preset
+- **WHEN** the teacher chooses a folder, sets a due date, attaches a marking guide, and selects `Publicar y alertar`
+- **THEN** the published document SHALL carry that folder, due date, attachment, and alert policy
 
 ### Requirement: Persist the Editor Preference on Explicit Change (REQ-PUB-04)
 
@@ -62,13 +62,13 @@ WHEN the teacher activates the studio's back control or the Android hardware bac
 
 ### Requirement: Honor Destination and Alert Policy (REQ-PUB-06)
 
-WHEN the studio submits an aviso, the system SHALL write it with `placement: "notice"` and the selected `notifyStudents` policy, and SHALL NOT offer predefined content types or templates; IF `notifyStudents` is exactly `false`, THEN the notification Function SHALL terminate without sending FCM.
+WHEN the studio submits a publication, the system SHALL write the selected folder and `notifyStudents` policy in the existing post document; IF `notifyStudents` is exactly `false`, THEN the notification Function SHALL terminate without sending FCM.
 
-#### Scenario: An aviso is published silently
+#### Scenario: A guide is published silently
 
-- **GIVEN** a teacher selected `Publicar en silencio`
-- **WHEN** the aviso is published successfully
-- **THEN** the post SHALL be stored with `placement: "notice"` and `notifyStudents: false`
+- **GIVEN** a teacher selected a course folder and `Publicar en silencio`
+- **WHEN** the guide is published successfully
+- **THEN** the post SHALL be stored in that folder with `notifyStudents: false`
 - **AND** no FCM message SHALL be sent for that post
 
 ### Requirement: Preserve Historical Notification Behavior (REQ-PUB-07)
@@ -108,6 +108,17 @@ WHEN a teacher attaches files in the inspector, the system SHALL upload each fil
 - **WHEN** the post is mapped for display
 - **THEN** that entry SHALL be discarded and the remaining valid entries SHALL be preserved
 
+### Requirement: Seed the Body from a Content Preset (REQ-PUB-10)
+
+WHEN the teacher chooses one of `Aviso o portada del ramo`, `Certamen o evaluación`, or `Guía de estudio`, the system SHALL inject the matching pre-structured Spanish template into the editor body; WHEN the teacher chooses `En blanco`, the body SHALL stay empty.
+
+#### Scenario: The evaluation preset arrives with a marking table
+
+- **GIVEN** the studio is showing the preset choices
+- **WHEN** the teacher chooses `Certamen o evaluación`
+- **THEN** the editor body SHALL contain headings, an assessment callout, and a marking table
+- **AND** the teacher SHALL be able to replace all of it
+
 ### Requirement: Autosave a Draft per Section (REQ-PUB-11)
 
 WHILE the studio is open, the system SHALL persist the draft to device-local storage under a key scoped to the section, SHALL restore it when the teacher returns to the same section, SHALL discard it once the publication succeeds or the teacher confirms discarding, and SHALL NOT persist a draft whose title and body are both blank.
@@ -116,7 +127,7 @@ WHILE the studio is open, the system SHALL persist the draft to device-local sto
 
 - **GIVEN** a teacher wrote a title and body in section `INF3101-1` and left without publishing
 - **WHEN** the teacher opens the studio for `INF3101-1` again
-- **THEN** the title, body, and alert choice SHALL be restored
+- **THEN** the title, body, folder, due date, link, and alert choice SHALL be restored
 - **AND** the studio SHALL state that a draft was recovered
 
 #### Scenario: Another section stays clean
@@ -135,19 +146,19 @@ WHILE the teacher writes, the system SHALL report the word count and an estimate
 - **WHEN** the statistics are computed
 - **THEN** the word count SHALL be `2`
 
-### Requirement: Centralise Content on the Course Cover (REQ-PUB-13)
+### Requirement: Centralise Publications on the Course Cover (REQ-PUB-13)
 
-The course tab bar SHALL NOT offer a `Materiales` tab; the cover SHALL show the course page built by the teaching team together with the avisos panel, and the `Editar página`, `Nuevo aviso` and `Importar contenidos` actions SHALL live in the course header, gated by the same content-management role check that protected them before.
+The course tab bar SHALL NOT offer a `Materiales` tab; the cover SHALL list every teacher publication together with its attachments, and the `+ Nueva publicación` and `Importar Moodle` actions SHALL live in the course header, gated by the same content-management role check that protected them before.
 
 #### Scenario: A student looks for a marking guide
 
-- **GIVEN** a teacher added a marking guide file to the section "Evaluaciones"
+- **GIVEN** a teacher published a certamen with an attached marking guide
 - **WHEN** a student opens the course
-- **THEN** the cover SHALL show the guide as a download inside "Evaluaciones"
+- **THEN** the cover SHALL show the publication with the guide as a download
 - **AND** no `Materiales` tab SHALL be offered
 
 #### Scenario: A student never sees the teacher actions
 
 - **GIVEN** a signed-in student without content-management rights
 - **WHEN** the student opens the course header
-- **THEN** neither `Editar página`, `Nuevo aviso` nor `Importar contenidos` SHALL be rendered
+- **THEN** neither `+ Nueva publicación` nor `Importar Moodle` SHALL be rendered

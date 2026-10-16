@@ -4,7 +4,6 @@ export type {
   ClassroomFile,
   ClassroomStudent,
   ClassroomAttachment,
-  CoursePost,
 } from "./firebase/mappers.ts";
 
 export {
@@ -42,27 +41,9 @@ export {
   publishClassroomPost,
   saveLiveClassLink,
   editClassroomPost,
+  moveClassroomPost,
+  deleteClassroomPost,
 } from "./firebase/posts.ts";
-
-export type { PageItemDraft, PageItemPatch, ItemPlacement } from "./firebase/course-page.ts";
-
-export {
-  createPageSection,
-  updatePageSection,
-  setSectionVisibility,
-  createPageItem,
-  updatePageItem,
-  placePageItem,
-  materializeSections,
-  trashItems,
-  trashSection,
-  sectionTrashId,
-  restoreTrashEntry,
-  duplicatePageItem,
-  releaseUploadedFiles,
-  purgeTrashEntries,
-  watchTrash,
-} from "./firebase/course-page.ts";
 
 import { classroomFileBlob } from "./firebase/storage.ts";
 export { classroomFileBlob };

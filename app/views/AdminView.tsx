@@ -12,8 +12,6 @@ import {
   roleLabel,
 } from "../../lib/portal-utils";
 import type { AcademicPeriodSummary, User } from "../../lib/portal-utils";
-import { AccountRowsSkeleton, PeriodListSkeleton } from "./ViewSkeletons";
-import { Line } from "./skeleton-bones";
 
 function AdminPeriodsSection({
   periods,
@@ -32,42 +30,39 @@ function AdminPeriodsSection({
         <h2 id="admin-periods-title">Períodos académicos</h2>
         <p>El cierre conserva todos los ramos y los mueve al historial de solo lectura.</p>
       </div>
+      {periodsLoading && <p className="empty-row">Cargando períodos…</p>}
       {!periodsLoading && periods.length === 0 && (
         <p className="empty-row">Todavía no hay períodos académicos registrados.</p>
       )}
-      {periodsLoading ? (
-        <PeriodListSkeleton />
-      ) : (
-        <div className="admin-period-list resolve-children">
-          {periods.map((period) => (
-            <article key={period.id}>
-              <span>
-                <strong>{period.nombre}</strong>
-                <small className="num">
-                  {period.fechaInicio} al {period.fechaFin}
-                </small>
+      <div className="admin-period-list">
+        {periods.map((period) => (
+          <article key={period.id}>
+            <span>
+              <strong>{period.nombre}</strong>
+              <small className="num">
+                {period.fechaInicio} al {period.fechaFin}
+              </small>
+            </span>
+            <span className={`period-state ${period.estado}`}>{period.estado}</span>
+            {period.estado === "archivado" ? (
+              <span className="period-archived-label">
+                <Archive aria-hidden="true" size={16} /> Solo lectura
               </span>
-              <span className={`period-state ${period.estado}`}>{period.estado}</span>
-              {period.estado === "archivado" ? (
-                <span className="period-archived-label">
-                  <Archive aria-hidden="true" size={16} /> Solo lectura
-                </span>
-              ) : (
-                <button
-                  aria-label={`Archivar el período ${period.nombre}`}
-                  className="secondary-button"
-                  disabled={archivingPeriod.length > 0}
-                  onClick={() => onArchivePeriod(period)}
-                  type="button"
-                >
-                  <Archive aria-hidden="true" size={16} />
-                  {archivingPeriod === period.id ? "Archivando…" : "Archivar período"}
-                </button>
-              )}
-            </article>
-          ))}
-        </div>
-      )}
+            ) : (
+              <button
+                aria-label={`Archivar el período ${period.nombre}`}
+                className="secondary-button"
+                disabled={archivingPeriod.length > 0}
+                onClick={() => onArchivePeriod(period)}
+                type="button"
+              >
+                <Archive aria-hidden="true" size={16} />
+                {archivingPeriod === period.id ? "Archivando…" : "Archivar período"}
+              </button>
+            )}
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -98,7 +93,6 @@ function AdminAccountsTable({
         <span>Rango</span>
         <span>Acción</span>
       </div>
-      {accounts.length === 0 && loading && <AccountRowsSkeleton />}
       {accounts.length === 0 && !loading && (
         <p className="empty-row">
           {searchQuery.trim()
@@ -224,7 +218,7 @@ export function AdminView() {
     "q",
     parseAsString.withDefault("").withOptions({ shallow: true, throttleMs: 300 })
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [periods, setPeriods] = useState<AcademicPeriodSummary[]>([]);
   const [periodsLoading, setPeriodsLoading] = useState(true);
   const [archivingPeriod, setArchivingPeriod] = useState("");
@@ -348,17 +342,11 @@ export function AdminView() {
         <h1>Administración de cuentas</h1>
         {/* Implements: REQ-DELIB-02 */}
         <p>
-          {loading && total === 0 ? (
-            <span>
-              <Line quiet w="10em" />
-            </span>
-          ) : (
-            <span>
-              <b className="num">{total}</b>{" "}
-              {total === 1 ? "cuenta registrada" : "cuentas registradas"}
-              {searchQuery.trim() ? " (filtradas)" : ""}
-            </span>
-          )}
+          <span>
+            <b className="num">{total}</b>{" "}
+            {total === 1 ? "cuenta registrada" : "cuentas registradas"}
+            {searchQuery.trim() ? " (filtradas)" : ""}
+          </span>
           <span>·</span>
           <span>el rango se asigna por dominio institucional</span>
         </p>

@@ -107,7 +107,6 @@ test("server refresh replaces retained client sessions and rejects old private r
       unreadCursorKeys: () => [],
     },
     "../lib/user-preferences": { forgetPreferences() {}, useReducedMotionPreference: () => false },
-    "../lib/view-transition": { transitionView: (update) => update() },
     "./portal-session": { portalSessionReducer },
     "../lib/section-roles": { sectionRoleFor: () => null },
     "../lib/push-notifications": { registerPushNotifications: async () => {} },

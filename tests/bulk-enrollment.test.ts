@@ -11,7 +11,6 @@ import {
   importChunks,
   parseEnrollmentCsv,
 } from "../lib/bulk-enrollment.ts";
-import { enrollmentImportPayload } from "../app/api/enrollments/import/route-utils.ts";
 import { canManageEnrollmentSection } from "../lib/services/bulk-enrollment.ts";
 import {
   applyEnrollmentImport,
@@ -413,30 +412,4 @@ test("REQ-ENR-04 and REQ-ENR-06: database apply is idempotent and keeps a projec
       cause.code === "invalid_request" &&
       cause.status === 400
   );
-});
-
-test("REQ-SEC-23: enrollmentImportPayload validates request Origin header for CSRF defense", async () => {
-  const mismatched = new Request("https://portal.ceoubb.cl/api/enrollments/import/preview", {
-    method: "POST",
-    headers: { origin: "https://attacker.com" },
-  });
-  await assert.rejects(
-    async () => enrollmentImportPayload(mismatched, false),
-    (cause) =>
-      cause instanceof EnrollmentImportError &&
-      cause.code === "unauthorized_origin" &&
-      cause.status === 403
-  );
-
-  const matched = new Request("https://portal.ceoubb.cl/api/enrollments/import/preview", {
-    method: "POST",
-    headers: {
-      origin: "https://portal.ceoubb.cl",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ sectionId: "sec-1", csv: "nombre,correo\nAna,ana@alumnos.ubiobio.cl" }),
-  });
-  const payload = await enrollmentImportPayload(matched, false);
-  assert.equal(payload.sectionId, "sec-1");
-  assert.equal(payload.csv, "nombre,correo\nAna,ana@alumnos.ubiobio.cl");
 });

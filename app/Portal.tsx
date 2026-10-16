@@ -11,7 +11,6 @@ import { CommandPalette } from "./command-palette";
 import { MobileBottomNav } from "./mobile-shell";
 import type { SessionState } from "../lib/portal-utils";
 import { AccessScreen } from "./access-screen";
-import { useInputModality } from "../lib/view-transition";
 import "./campus-base.css";
 import "./mobile-shell.css";
 import "./campus.css";
@@ -44,7 +43,6 @@ export function Portal({
   isQuickAuthAvailable?: boolean;
 } = {}) {
   const core = usePortalCore(initialSession);
-  useInputModality();
 
   // Implements: REQ-CFG-05
   useEffect(() => {
@@ -93,7 +91,6 @@ export function Portal({
     setCoursesSheet,
     setPreview,
     sidebarOpen,
-    sidebarMode,
     setSidebarOpen,
     searchOpen,
     setSearchOpen,
@@ -129,11 +126,10 @@ export function Portal({
           className="app-shell"
           data-requirement="Implements: REQ-A11Y-01 REQ-A11Y-02 REQ-A11Y-05"
           data-mobile={mobile}
-          data-sidebar={sidebarMode}
+          data-sidebar={sidebarOpen ? "open" : "closed"}
         >
           <PortalHeader
             context={context}
-            mobile={mobile}
             notifications={notifications}
             notificationsLoading={notificationsLoading}
             onHome={() => setScreen("courses")}
@@ -200,7 +196,7 @@ export function Portal({
             setScreen={setScreen}
             user={user}
           />
-          <MobileBottomNav items={mobileTabs} />
+          {mobile && <MobileBottomNav items={mobileTabs} />}
           {mobile && (
             <MobileCoursesSheet
               courses={courses}

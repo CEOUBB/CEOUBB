@@ -9,17 +9,9 @@ const escape = (value) =>
 
 // Implements: REQ-QA-04, REQ-QA-06, REQ-QA-09
 export async function writeReport(output, manifest, error, exitCode) {
-  const reports = (
-    await Promise.all(
-      ["parallel", "serial"].map(async (phase) => {
-        const suffix = phase === "parallel" ? "-parallel" : "";
-        const report = await readFile(join(output, `playwright${suffix}.json`), "utf8")
-          .then(JSON.parse)
-          .catch(() => null);
-        return report && { ...report, html: `html${suffix}/index.html`, phase };
-      })
-    )
-  ).filter(Boolean);
+  const report = await readFile(join(output, "playwright.json"), "utf8")
+    .then(JSON.parse)
+    .catch(() => null);
   const tests = [];
   function visit(suite) {
     for (const spec of suite.specs ?? [])
@@ -50,7 +42,7 @@ export async function writeReport(output, manifest, error, exitCode) {
       }
     for (const child of suite.suites ?? []) visit(child);
   }
-  for (const report of reports) for (const suite of report.suites ?? []) visit(suite);
+  if (report) for (const suite of report.suites ?? []) visit(suite);
   const coverage = manifest.scenarios.flatMap((scenario) => {
     const projects =
       manifest.browser === "api"
@@ -87,10 +79,7 @@ export async function writeReport(output, manifest, error, exitCode) {
   const missing = coverage.filter((entry) => entry.missing.length);
   if (!error && !tests.length)
     error = new Error(
-      reports
-        .flatMap((report) => report.errors ?? [])
-        .map((entry) => entry.message)
-        .join("\n") ||
+      (report?.errors ?? []).map((entry) => entry.message).join("\n") ||
         "No test results were produced; this run did not verify application behavior."
     );
   const failed = tests.filter((test) =>
@@ -140,7 +129,7 @@ export async function writeReport(output, manifest, error, exitCode) {
     .join("");
   await writeFile(
     join(output, "index.html"),
-    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>CEOUBB QA ${escape(manifest.runId)}</title><style>body{font:16px system-ui;max-width:1300px;margin:40px auto;padding:0 20px;color:#26332d;background:#fafbf8}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd2c9;padding:12px;text-align:left;vertical-align:top}code,pre{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}a{color:#255a46}small{color:#536157}h1{font-size:26px}</style><h1>CEOUBB QA: ${escape(summary.status)}</h1><p>${escape(manifest.runId)} · ${escape(manifest.selection)} · ${escape(manifest.environment)}</p><p><a href="summary.json">Machine-readable summary</a> · <a href="manifest.json">Run manifest</a>${reports.map((report) => ` · <a href="${report.html}">Playwright ${report.phase} report</a>`).join("")}</p>${error ? `<pre>${escape(error.message)}</pre>` : ""}<p>${summary.totals.passed} passed; ${summary.totals.failed} failed; ${missing.length} scenarios missing checkpoint evidence.</p><p>Visual differences are advisory. Simulated provider contracts do not prove external delivery. Automated accessibility checks do not replace manual review.</p>${missing.length ? `<details open><summary>Missing coverage</summary><ul>${missing.map((item) => `<li>${escape(item.id)} (${escape(item.project)}): ${escape(item.missing.join(", "))}</li>`).join("")}</ul></details>` : ""}<table><thead><tr><th>Scenario</th><th>Result</th><th>Reproduce</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></html>`
+    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>CEOUBB QA ${escape(manifest.runId)}</title><style>body{font:16px system-ui;max-width:1300px;margin:40px auto;padding:0 20px;color:#26332d;background:#fafbf8}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd2c9;padding:12px;text-align:left;vertical-align:top}code,pre{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}a{color:#255a46}small{color:#536157}h1{font-size:26px}</style><h1>CEOUBB QA: ${escape(summary.status)}</h1><p>${escape(manifest.runId)} · ${escape(manifest.selection)} · ${escape(manifest.environment)}</p><p><a href="summary.json">Machine-readable summary</a> · <a href="manifest.json">Run manifest</a>${report ? ' · <a href="html/index.html">Playwright report</a>' : ""}</p>${error ? `<pre>${escape(error.message)}</pre>` : ""}<p>${summary.totals.passed} passed; ${summary.totals.failed} failed; ${missing.length} scenarios missing checkpoint evidence.</p><p>Visual differences are advisory. Simulated provider contracts do not prove external delivery. Automated accessibility checks do not replace manual review.</p>${missing.length ? `<details open><summary>Missing coverage</summary><ul>${missing.map((item) => `<li>${escape(item.id)} (${escape(item.project)}): ${escape(item.missing.join(", "))}</li>`).join("")}</ul></details>` : ""}<table><thead><tr><th>Scenario</th><th>Result</th><th>Reproduce</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></html>`
   );
   return summary;
 }

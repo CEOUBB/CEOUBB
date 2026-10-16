@@ -1,7 +1,4 @@
-import {
-  EnrollmentImportError,
-  MAX_ENROLLMENT_CSV_BYTES,
-} from "../../../../lib/bulk-enrollment.ts";
+import { EnrollmentImportError, MAX_ENROLLMENT_CSV_BYTES } from "../../../../lib/bulk-enrollment";
 
 const MAX_JSON_OVERHEAD_BYTES = 1024 * 1024;
 
@@ -14,11 +11,6 @@ export async function enrollmentImportPayload(
   page?: number;
   fingerprint?: string;
 }> {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
-    throw new EnrollmentImportError("unauthorized_origin", "Origen no autorizado.", 403);
-  }
-
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (
     Number.isFinite(contentLength) &&

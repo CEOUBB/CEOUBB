@@ -16,14 +16,12 @@ import type { Capture } from "./portal-scenarios.ts";
 import { callableFailure } from "./state-scenarios.ts";
 import { importMotionScenario } from "./motion-scenarios.ts";
 
-async function openAnnouncements(page: Page) {
-  await page
-    .locator(".rail-announcements button.course-notice-row, button.course-mobile-announcement")
-    .filter({ visible: true })
-    .first()
-    .click();
-  await expect(page.getByRole("dialog", { name: "Avisos del ramo" })).toBeVisible();
-}
+const PRESETS: Record<string, string> = {
+  notice: "Aviso o portada del ramo",
+  assessment: "Certamen o evaluación",
+  guide: "Guía de estudio",
+  blank: "En blanco",
+};
 
 export async function classroomScenario(
   page: Page,
@@ -39,7 +37,6 @@ export async function classroomScenario(
   if (
     ![
       "classroom",
-      "page",
       "publication",
       "grades",
       "submissions",
@@ -64,39 +61,26 @@ export async function classroomScenario(
   );
   if (id.startsWith("classroom.")) {
     if (id === "classroom.empty")
-      await expect(page.getByText("Todavía no hay contenido", { exact: true })).toBeVisible();
+      await expect(page.getByText("Todavía no hay publicaciones", { exact: true })).toBeVisible();
     else if (id === "classroom.search-empty") {
       await page
-        .getByRole("searchbox", { name: "Buscar en el contenido del ramo" })
+        .getByRole("searchbox", { name: "Buscar publicaciones y archivos del ramo" })
         .fill("no-such-qa-post");
-      await expect(page.getByText(/Nada en el ramo coincide/)).toBeVisible();
-    } else if (id === "classroom.announcements") {
-      await openAnnouncements(page);
-      await expect(
-        page.getByRole("heading", { name: "Bienvenida al aula QA", exact: true })
-      ).toBeVisible();
-      await expect(page.getByRole("button", { name: /^Eliminar aviso/ })).toHaveCount(0);
-    } else if (id === "classroom.delete-undo") {
-      await openAnnouncements(page);
+      await expect(page.getByText(/No se encontraron publicaciones/)).toBeVisible();
+    } else if (id === "classroom.delete-dialog") {
       await page
-        .getByRole("button", { name: "Eliminar aviso «Bienvenida al aula QA»", exact: true })
-        .click();
-      await expect(page.getByText("«Bienvenida al aula QA» se movió a la papelera.")).toBeVisible();
-      await page
-        .locator(".course-notice-undo")
-        .getByRole("button", { name: "Deshacer", exact: true })
+        .getByRole("button", { name: 'Eliminar aviso "Bienvenida al aula QA"', exact: true })
         .click();
       await expect(
-        page.getByRole("heading", { name: "Bienvenida al aula QA", exact: true })
+        page.getByRole("group", { name: "Eliminar aviso Bienvenida al aula QA" })
       ).toBeVisible();
     } else if (id === "classroom.edit-notice") {
-      await openAnnouncements(page);
       await page
-        .getByRole("button", { name: "Modificar aviso «Bienvenida al aula QA»", exact: true })
+        .getByRole("button", { name: 'Modificar aviso "Bienvenida al aula QA"', exact: true })
         .click();
-      await expect(page.getByLabel("Título del aviso", { exact: true })).toHaveValue(
-        "Bienvenida al aula QA"
-      );
+      await expect(
+        page.locator(".post-edit-form").getByLabel("Título", { exact: true })
+      ).toHaveValue("Bienvenida al aula QA");
     } else if (id.startsWith("classroom.live")) {
       await page.locator(".live-class-editor summary").click();
       await expect(page.getByLabel("Enlace de la reunión")).toBeVisible();
@@ -141,158 +125,105 @@ export async function classroomScenario(
       }
     } else {
       await expect(
-        page.getByText("Bienvenida al aula QA", { exact: true }).filter({ visible: true }).first()
+        page.getByRole("heading", { name: "Bienvenida al aula QA", exact: true })
       ).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Programa del curso QA", exact: true })
-      ).toBeVisible();
-      const actions = [
-        page.getByRole("button", { name: "Nuevo aviso", exact: true }),
-        page.getByRole("button", { name: "Editar página", exact: true }),
-      ];
-      for (const action of actions) {
-        if (scenario.role === "student") await expect(action).toHaveCount(0);
-        else await expect(action).toBeVisible();
-      }
-    }
-    return true;
-  }
-  if (id.startsWith("page.")) {
-    const pageSection = (title: string) =>
-      page.locator("section.page-section").filter({ hasText: title }).first();
-    if (id === "page.student") {
-      await expect(pageSection("Descripción del curso")).toBeVisible();
-      await expect(pageSection("Unidad 1")).toContainText("Guía de estudio QA");
-      await expect(page.getByText("Material de clase QA").first()).toBeVisible();
-      await expect(page.getByText("Pautas reservadas QA")).toHaveCount(0);
-      await expect(page.getByText("Pauta reservada QA")).toHaveCount(0);
-      return true;
-    }
-
-    if (id === "page.teacher-hidden") {
-      await expect(pageSection("Pautas reservadas QA")).toContainText("Oculta para estudiantes");
-      await expect(pageSection("Pautas reservadas QA")).toContainText("Pauta reservada QA");
-      return true;
-    }
-
-    await page.getByRole("button", { name: "Editar página", exact: true }).click();
-    const bar = page.getByRole("toolbar", { name: "Edición de la página" });
-    await expect(bar).toBeVisible();
-    await expect(page.getByText("Preparando la página para editar…")).toHaveCount(0);
-    await expect(pageSection("Unidad 1")).toBeVisible();
-    if (id === "page.preview") {
-      await bar.getByRole("button", { name: "Vista de estudiante" }).click();
-      await expect(page.getByText("Pautas reservadas QA")).toHaveCount(0);
-      await expect(
-        page.getByRole("heading", { name: "Programa del curso QA", exact: true })
-      ).toBeVisible();
-      await bar.getByRole("button", { name: "Listo", exact: true }).click();
-      await expect(bar).toHaveCount(0);
-    } else if (id === "page.trash") {
-      await bar.getByRole("button", { name: "Papelera" }).click();
-      const trash = page.getByRole("dialog", { name: "Papelera del ramo" });
-      await expect(trash).toBeVisible();
-      await expect(trash.getByText("La papelera está vacía.")).toBeVisible();
-    } else if (id === "page.edit") {
-      await page.getByRole("button", { name: "Agregar sección", exact: true }).click();
-      await page.getByRole("textbox", { name: "Nombre de la sección" }).fill("Sección QA");
-      await page.getByRole("button", { name: "Crear sección", exact: true }).click();
-      const created = pageSection("Sección QA");
-      await expect(created).toBeVisible();
-      await created.getByRole("button", { name: "Texto", exact: true }).click();
-      await created.getByRole("textbox", { name: "Título del texto" }).fill("Texto QA");
-      await created.getByRole("tab", { name: /Markdown/ }).click();
-      await created.locator("textarea.editor-source").fill("Contenido creado en la página QA.");
-      await created.getByRole("button", { name: "Guardar", exact: true }).click();
-      await expect(created.getByRole("heading", { name: "Texto QA", exact: true })).toBeVisible();
-      await capture("form");
-      await bar.getByRole("button", { name: "Deshacer", exact: true }).click();
-      await expect(created.getByRole("heading", { name: "Texto QA", exact: true })).toHaveCount(0);
-      await bar.getByRole("button", { name: "Rehacer", exact: true }).click();
-      await expect(created.getByRole("heading", { name: "Texto QA", exact: true })).toBeVisible();
-      await bar.getByRole("button", { name: "Listo", exact: true }).click();
-      const announce = page.getByRole("dialog", { name: "¿Avisar al curso del material nuevo?" });
-      await expect(announce).toContainText("Texto QA");
-      await announce.getByRole("button", { name: "Ahora no", exact: true }).click();
-      await page.reload();
-      await course(page);
-      await expect(pageSection("Sección QA")).toContainText("Texto QA");
-      await capture("persisted");
-      await page.getByRole("button", { name: "Editar página", exact: true }).click();
-      await page.getByRole("button", { name: "Acciones de la sección «Sección QA»" }).click();
-      await page.getByRole("menuitem", { name: "Eliminar sección" }).click();
-      await expect(pageSection("Sección QA")).toHaveCount(0);
-      await bar.getByRole("button", { name: "Papelera" }).click();
-      const trash = page.getByRole("dialog", { name: "Papelera del ramo" });
-      await trash.getByRole("button", { name: "Vaciar papelera", exact: true }).click();
-      await trash.getByRole("button", { name: "Vaciar papelera", exact: true }).click();
-      await expect(trash.getByText("La papelera está vacía.")).toBeVisible();
+      if (scenario.role === "student")
+        await expect(
+          page.getByRole("button", { name: "Nueva publicación", exact: true })
+        ).toHaveCount(0);
+      else
+        await expect(
+          page.getByRole("button", { name: "Nueva publicación", exact: true })
+        ).toBeVisible();
     }
     return true;
   }
   if (id.startsWith("publication.")) {
-    await page.getByRole("button", { name: "Nuevo aviso", exact: true }).click();
-    await expect(page.getByLabel("Título del aviso", { exact: true })).toBeVisible();
-    await expect(page.getByRole("complementary", { name: "Ajustes del aviso" })).toBeVisible();
-    if (id === "publication.discard") {
-      await page.getByLabel("Título del aviso", { exact: true }).fill("QA borrador para descartar");
-      await page.getByRole("button", { name: "Volver al ramo", exact: true }).click();
-      await expect(page.getByRole("dialog", { name: "¿Descartar aviso?" })).toBeVisible();
-    } else if (
-      [
-        "publication.markdown",
-        "publication.html",
-        "publication.preview",
-        "publication.notify-confirm",
-        "publication.persistence",
-      ].includes(id)
-    ) {
-      await page.getByLabel("Título del aviso", { exact: true }).fill("Publicación sintética QA");
-      const mode = id === "publication.html" ? "HTML" : "Markdown";
-      await page.getByRole("tab", { name: new RegExp(mode), exact: false }).click();
+    await page.getByRole("button", { name: "Nueva publicación", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "¿Qué vas a publicar en QA Aula activa?" })
+    ).toBeVisible();
+    if (id !== "publication.presets") {
       await page
-        .locator("textarea.editor-source")
-        .fill(
-          mode === "HTML"
-            ? "<p>Contenido sintético QA</p>"
-            : "## Contenido sintético QA\n\nMaterial para comprobar publicación real."
-        );
-      if (id === "publication.preview") {
-        const preview = page.getByRole("button", { name: "Vista previa", exact: true });
-        if ((await preview.getAttribute("aria-pressed")) !== "true") await preview.click();
-        await expect(page.locator(".rich-editor-preview")).toContainText("Contenido sintético QA");
-      } else if (id === "publication.notify-confirm") {
+        .getByRole("button", { name: new RegExp(`^${PRESETS[id.split(".")[1]] ?? "En blanco"}`) })
+        .click();
+      await expect(page.getByLabel("Título de la publicación", { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("complementary", { name: "Ajustes de la publicación" })
+      ).toBeVisible();
+      if (id === "publication.discard") {
         await page
-          .locator('.publish-alerts > label:has(input[name="notificationMode"][value="push"])')
-          .click();
-        await expect(page.locator('input[name="notificationMode"][value="push"]')).toBeChecked();
-        await page.locator(".publish-submit").click();
-        await expect(
-          page.getByRole("dialog", { name: "Confirmar notificación al curso" })
-        ).toBeVisible();
-      } else if (id === "publication.persistence") {
+          .getByLabel("Título de la publicación", { exact: true })
+          .fill("QA borrador para descartar");
+        await page.getByRole("button", { name: "Volver al ramo", exact: true }).click();
+        await expect(page.getByRole("dialog", { name: "¿Descartar publicación?" })).toBeVisible();
+      } else if (
+        [
+          "publication.markdown",
+          "publication.html",
+          "publication.preview",
+          "publication.notify-confirm",
+          "publication.persistence",
+        ].includes(id)
+      ) {
         await page
-          .locator('.publish-alerts > label:has(input[name="notificationMode"][value="silent"])')
-          .click();
-        await expect(page.locator('input[name="notificationMode"][value="silent"]')).toBeChecked();
-        await capture("form");
-        await page.locator(".publish-submit").click();
-        await expect(
-          page.getByText("Publicación sintética QA").filter({ visible: true }).first()
-        ).toBeVisible();
-        await page.reload();
-        await course(page);
-        await expect(
-          page.getByText("Publicación sintética QA").filter({ visible: true }).first()
-        ).toBeVisible();
-        await capture("persisted");
-        await openAnnouncements(page);
+          .getByLabel("Título de la publicación", { exact: true })
+          .fill("Publicación sintética QA");
+        const mode = id === "publication.html" ? "HTML" : "Markdown";
+        await page.getByRole("tab", { name: new RegExp(mode), exact: false }).click();
         await page
-          .getByRole("button", { name: "Eliminar aviso «Publicación sintética QA»", exact: true })
-          .click();
-        await expect(
-          page.getByRole("heading", { name: "Publicación sintética QA", exact: true })
-        ).toHaveCount(0);
+          .locator("textarea.editor-source")
+          .fill(
+            mode === "HTML"
+              ? "<p>Contenido sintético QA</p>"
+              : "## Contenido sintético QA\n\nMaterial para comprobar publicación real."
+          );
+        if (id === "publication.preview") {
+          const preview = page.getByRole("button", { name: "Vista previa", exact: true });
+          if ((await preview.getAttribute("aria-pressed")) !== "true") await preview.click();
+          await expect(page.locator(".rich-editor-preview")).toContainText(
+            "Contenido sintético QA"
+          );
+        } else if (id === "publication.notify-confirm") {
+          await page
+            .locator('.publish-alerts > label:has(input[name="notificationMode"][value="push"])')
+            .click();
+          await expect(page.locator('input[name="notificationMode"][value="push"]')).toBeChecked();
+          await page.locator(".publish-submit").click();
+          await expect(
+            page.getByRole("dialog", { name: "Confirmar notificación al curso" })
+          ).toBeVisible();
+        } else if (id === "publication.persistence") {
+          await page
+            .locator('.publish-alerts > label:has(input[name="notificationMode"][value="silent"])')
+            .click();
+          await expect(
+            page.locator('input[name="notificationMode"][value="silent"]')
+          ).toBeChecked();
+          await capture("form");
+          await page.locator(".publish-submit").click();
+          await expect(
+            page.getByRole("heading", { name: "Publicación sintética QA", exact: true })
+          ).toBeVisible();
+          await page.reload();
+          await course(page);
+          await expect(
+            page.getByRole("heading", { name: "Publicación sintética QA", exact: true })
+          ).toBeVisible();
+          await capture("persisted");
+          await page
+            .getByRole("button", { name: 'Eliminar aviso "Publicación sintética QA"', exact: true })
+            .click();
+          await page
+            .getByRole("button", {
+              name: 'Confirmar eliminación de "Publicación sintética QA"',
+              exact: true,
+            })
+            .click();
+          await expect(
+            page.getByRole("heading", { name: "Publicación sintética QA", exact: true })
+          ).toHaveCount(0);
+        }
       }
     }
     return true;
@@ -844,14 +775,10 @@ export async function classroomScenario(
         await expect(dialog.getByText(/Importación completada/)).toBeVisible({ timeout: 60_000 });
         await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
         const title = `Aviso importado ${system} QA`;
-        await expect(page.getByText(title, { exact: true }).filter({ visible: true })).toHaveCount(
-          1
-        );
+        await expect(page.getByRole("heading", { name: title, exact: true })).toHaveCount(1);
         await page.reload();
         await course(page);
-        await expect(page.getByText(title, { exact: true }).filter({ visible: true })).toHaveCount(
-          1
-        );
+        await expect(page.getByRole("heading", { name: title, exact: true })).toHaveCount(1);
         await capture("persisted");
       }
     }
