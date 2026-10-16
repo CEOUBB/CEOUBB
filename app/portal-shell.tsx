@@ -542,7 +542,13 @@ export function PortalMainView({
       id="contenido-principal"
       tabIndex={-1}
     >
-      <p aria-atomic="true" aria-live="polite" className="sr-only" id="portal-view-title">
+      <p
+        aria-atomic="true"
+        aria-live="polite"
+        className="sr-only"
+        id="portal-view-title"
+        role="status"
+      >
         Vista actual: {context}
       </p>
       {screen === "course" && openedCourse ? (
