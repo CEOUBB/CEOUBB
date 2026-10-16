@@ -141,7 +141,7 @@
 }
 .app-header .account-copy small {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ── Riel lateral ─────────────────────────────────────── */
