@@ -758,6 +758,12 @@ a:hover > .animated-underline::after {
   --fill-quiet-strong: oklch(0.2 0.01 265 / 0.09);
   --danger: oklch(0.52 0.2 27);
   --danger-wash: oklch(0.52 0.2 27 / 0.09);
+  --state-ok: oklch(0.42 0.11 155);
+  --state-pending: oklch(0.47 0.11 65);
+  --academic-emerald-deep: var(--state-ok);
+  --shield-red: var(--danger);
+  --shield-red-deep: var(--danger);
+  --focus-outline: 2px solid var(--color-primary);
 
   --radius-xs: 5px;
   --radius-sm: 7px;

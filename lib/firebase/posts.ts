@@ -225,6 +225,20 @@ export function watchClassroom(
 ) {
   let active = true;
   const stops: (() => void)[] = [];
+  const failWith =
+    (
+      message: string,
+      localFallback: () => Partial<ClassroomState>,
+      failedState: Partial<ClassroomState> = {}
+    ) =>
+    () => {
+      if (isDevOrLocalEnvironment()) {
+        onChange(localFallback());
+        return;
+      }
+      onChange(failedState);
+      onError(message);
+    };
 
   onChange({ postsStatus: "loading", sectionsStatus: "loading", gradebookStatus: "loading" });
 
@@ -279,12 +293,11 @@ export function watchClassroom(
               onChange({ posts, files, postsOverflow, postsStatus: "ready" });
             }
           },
-          () => {
-            onChange({ postsStatus: "error" });
-            if (!isDevOrLocalEnvironment()) {
-              onError("No se pudieron sincronizar las publicaciones de Firebase.");
-            }
-          }
+          failWith(
+            "No se pudieron sincronizar las publicaciones de Firebase.",
+            () => ({ posts: readDevPosts(courseId), postsStatus: "ready" }),
+            { postsStatus: "error" }
+          )
         )
       );
       const sectionsCollection = sdk.collection(db, "courses", courseId, PAGE_COLLECTIONS.sections);
@@ -299,14 +312,11 @@ export function watchClassroom(
               ),
           (snapshot) =>
             onChange({ sections: snapshot.docs.map(toSection), sectionsStatus: "ready" }),
-          () => {
-            if (isDevOrLocalEnvironment()) {
-              onChange({ sections: [], sectionsStatus: "ready" });
-              return;
-            }
-            onChange({ sectionsStatus: "error" });
-            onError("No se pudieron sincronizar las secciones del ramo.");
-          }
+          failWith(
+            "No se pudieron sincronizar las secciones del ramo.",
+            () => ({ sections: [], sectionsStatus: "ready" }),
+            { sectionsStatus: "error" }
+          )
         )
       );
       if (managing) {
@@ -320,7 +330,9 @@ export function watchClassroom(
               onChange({
                 hiddenItems: snapshot.docs.map((document) => toPost(document, "hiddenItems")),
               }),
-            () => onError("No se pudo cargar el contenido oculto del ramo.")
+            failWith("No se pudo cargar el contenido oculto del ramo.", () => ({
+              hiddenItems: [],
+            }))
           )
         );
       }
@@ -338,17 +350,14 @@ export function watchClassroom(
             }
             onChange({ ...state, gradebookStatus: "ready" });
           },
-          () => {
-            if (isDevOrLocalEnvironment()) {
-              const devGb = readDevGradebook(courseId);
-              if (devGb) {
-                onChange({ ...devGb, gradebookStatus: "ready" });
-                return;
-              }
-            }
-            onChange({ gradebookStatus: "error" });
-            onError("No se pudo cargar la ponderación del curso.");
-          }
+          failWith(
+            "No se pudo cargar la ponderación del curso.",
+            () => ({
+              ...(readDevGradebook(courseId) ?? toGradebookState(null)),
+              gradebookStatus: "ready",
+            }),
+            { gradebookStatus: "error" }
+          )
         )
       );
       stops.push(
@@ -367,7 +376,7 @@ export function watchClassroom(
               onChange({ liveClass: null });
             }
           },
-          () => onError("No se pudo sincronizar la clase en vivo.")
+          failWith("No se pudo sincronizar la clase en vivo.", () => ({ liveClass: null }))
         )
       );
       if (teaching) {
@@ -399,16 +408,9 @@ export function watchClassroom(
               }
               onChange({ students });
             },
-            () => {
-              if (isDevOrLocalEnvironment()) {
-                const devRoster = readDevRoster(courseId);
-                if (devRoster && devRoster.length > 0) {
-                  onChange({ students: devRoster });
-                  return;
-                }
-              }
-              onError("No se pudo sincronizar la nómina del curso.");
-            }
+            failWith("No se pudo sincronizar la nómina del curso.", () => ({
+              students: readDevRoster(courseId) ?? [],
+            }))
           )
         );
         let cachedScores: Record<string, GradeScores> = {};
@@ -464,7 +466,9 @@ export function watchClassroom(
                 });
               }
             },
-            () => onError("No se pudieron sincronizar las notas del curso.")
+            failWith("No se pudieron sincronizar las notas del curso.", () => ({
+              classScores: readDevScores(courseId) ?? {},
+            }))
           )
         );
       } else {
@@ -475,7 +479,7 @@ export function watchClassroom(
               onChange({
                 simulation: snapshot.exists() ? normalizeScores(snapshot.data().simulated) : {},
               }),
-            () => onError("No se pudo cargar tu simulación de notas.")
+            failWith("No se pudo cargar tu simulación de notas.", () => ({ simulation: {} }))
           )
         );
         stops.push(
@@ -488,7 +492,10 @@ export function watchClassroom(
                   ? normalizeGradeFeedback(snapshot.data().feedback)
                   : {},
               }),
-            () => onError("No se pudieron cargar tus notas.")
+            failWith("No se pudieron cargar tus notas.", () => ({
+              officialScores: {},
+              officialFeedback: {},
+            }))
           )
         );
       }

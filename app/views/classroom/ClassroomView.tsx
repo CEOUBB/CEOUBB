@@ -320,6 +320,7 @@ export function ClassroomView({
                       onStartEditing={startPageEditing}
                       openAttachment={openAttachment}
                       page={page}
+                      retry={retryClassroom}
                       team={canSeeHidden}
                     />
                     <CourseRail
