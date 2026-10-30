@@ -964,12 +964,14 @@ export function CoursePageEditor({
   teamPage,
   openAttachment,
   onDone,
+  retry,
 }: {
   course: Course;
   classroom: ClassroomState;
   teamPage: CoursePage;
   openAttachment: OpenAttachment;
   onDone: (seed: ComposeSeed | null) => void;
+  retry: () => void;
 }) {
   const reducedMotion = useHydratedReducedMotion();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -1014,6 +1016,7 @@ export function CoursePageEditor({
     updateItem,
     upload,
   } = usePageEditing({ courseId: course.id, classroom, teamPage });
+  const loadFailed = classroom.postsStatus === "error" || classroom.sectionsStatus === "error";
 
   const saveItem = async (itemId: string, values: ItemValues) => {
     const saved = await updateItem(itemId, values);
@@ -1127,7 +1130,10 @@ export function CoursePageEditor({
           openAttachment={openAttachment}
         />
       ) : !ready || virtualPending ? (
-        <PreparingNotice error={materializeError} onRetry={materialize} />
+        <PreparingNotice
+          error={loadFailed ? "No se pudo cargar el contenido del ramo." : materializeError}
+          onRetry={loadFailed ? retry : materialize}
+        />
       ) : (
         <>
           <Reorder.Group
