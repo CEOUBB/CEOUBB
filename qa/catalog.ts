@@ -512,6 +512,9 @@ export const QA_EXCLUSIVE_WRITES = [
   "submissions.uploading",
   "submissions.upload-retry",
   "public.contact-deferred",
+  "page.preview",
+  "page.trash",
+  "page.edit",
 ];
 
 export function mutatesFixtures(id: string) {
