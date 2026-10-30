@@ -22,7 +22,7 @@
   color: var(--ink-900);
 }
 .app-shell :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: var(--focus-outline);
   outline-offset: 2px;
 }
 .app-shell :is(button, a, input, select, textarea):focus-visible {
@@ -474,14 +474,12 @@
   color: var(--text-faint);
   opacity: 1;
 }
-.app-shell
-  :is(
-    .content-actions button,
-    .pagination-btn,
-    .participant-filters button,
-    .admin-page-btn,
-    .participant-load-more
-  ) {
+.app-shell .classroom-search-box input:is(*, :hover, :focus-visible) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app-shell :is(.content-actions button, .pagination-btn, .admin-page-btn, .participant-load-more) {
   border-color: transparent;
   background: var(--fill-quiet);
   color: var(--text-secondary);
@@ -489,13 +487,9 @@
   font-weight: 550;
 }
 .app-shell
-  :is(
-    .content-actions button,
-    .pagination-btn,
-    .participant-filters button,
-    .admin-page-btn,
-    .participant-load-more
-  ):hover:not(:disabled) {
+  :is(.content-actions button, .pagination-btn, .admin-page-btn, .participant-load-more):hover:not(
+    :disabled
+  ) {
   background: var(--fill-quiet-strong);
   color: var(--text-body);
 }
@@ -739,7 +733,7 @@ button.agenda-calendar-link:hover {
     border-radius: var(--radius-lg);
   }
   &:has(.agenda-open:focus-visible) {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: -2px;
   }
   &:has(.agenda-open:active) {
@@ -887,7 +881,7 @@ button.agenda-calendar-link:hover {
       background: var(--fill-quiet-strong);
     }
     &:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: var(--focus-outline);
       outline-offset: -2px;
     }
   }
@@ -1073,6 +1067,10 @@ button.agenda-calendar-link:hover {
     background: transparent;
     color: var(--text-body);
   }
+  &:focus-visible {
+    border-radius: var(--radius-md);
+    outline-offset: -6px;
+  }
   &.active {
     color: var(--text-body);
     font-weight: 600;
@@ -1108,13 +1106,6 @@ button.agenda-calendar-link:hover {
 .app-shell .post-list p {
   color: var(--text-secondary);
 }
-.app-shell .classroom-empty {
-  border-style: solid;
-  border-color: transparent;
-  padding: 28px;
-  background: var(--surface-card);
-  box-shadow: var(--shadow-1);
-}
 
 .app-shell :is(.grades-editor-row, .grades-editor-foot) {
   padding-top: 0;
@@ -1128,6 +1119,9 @@ button.agenda-calendar-link:hover {
   border: 0;
   border-radius: var(--radius-md);
   background: var(--fill-quiet);
+}
+.app-shell .grades-editor > .empty-row {
+  padding: 0;
 }
 @media (min-width: 768px) {
   .classroom-layout .grades-editor-row {
@@ -2996,7 +2990,7 @@ button.planner-headday {
       color: var(--color-primary-active);
     }
     &:has(input:focus-visible) {
-      outline: 2px solid var(--color-primary);
+      outline: var(--focus-outline);
       outline-offset: 2px;
     }
   }
@@ -3603,7 +3597,7 @@ button.planner-headday {
     background: var(--fill-quiet);
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 2px;
   }
 }
@@ -3724,7 +3718,7 @@ button.planner-headday {
     transition-duration: 0ms;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 2px;
   }
 }
@@ -3804,7 +3798,7 @@ button.planner-headday {
     animation: page-image-in 150ms var(--ease-out-quint);
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 2px;
   }
 }
@@ -3895,7 +3889,7 @@ button.planner-headday {
     background: var(--fill-quiet);
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: -2px;
   }
 }
@@ -3951,7 +3945,7 @@ button.planner-headday {
     text-underline-offset: 3px;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 1px;
   }
 }
@@ -4002,7 +3996,7 @@ button.planner-headday {
       color: var(--text-muted);
     }
     &:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: var(--focus-outline);
       outline-offset: -2px;
     }
   }
@@ -4035,7 +4029,7 @@ button.planner-headday {
     transition-duration: 0ms;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 2px;
   }
 }
@@ -4222,7 +4216,7 @@ button.planner-headday {
     color: var(--danger);
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 1px;
   }
 }
@@ -4252,7 +4246,7 @@ button.planner-headday {
     cursor: default;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 1px;
   }
 }
@@ -4337,7 +4331,7 @@ button.planner-headday {
     cursor: grabbing;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 1px;
   }
 }
@@ -4402,7 +4396,7 @@ button.planner-headday {
     color: var(--text-body);
   }
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: var(--focus-outline);
     outline-offset: 2px;
   }
 }

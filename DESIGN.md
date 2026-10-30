@@ -243,7 +243,7 @@ Neutros fríos casi sin croma, un azul institucional para actuar y un conjunto a
 - **Rellenos tranquilos** (`fill-quiet`, `fill-quiet-strong`): buscador de cabecera, filtro de cursos, botones discretos, hover de filas y fondo del conmutador de vista.
 - **Línea fina** (`hairline`): sombra de 0.5px bajo la cabecera y sobre la navegación inferior; anillo de 0.5px dentro de las sombras de hoja. `control-border` delimita campos nativos.
 - **Peligro** (`danger`, `danger-wash`): eliminar, urgencia de evaluaciones de hoy o próximas, contador de notificaciones de la cabecera y avisos de error en Avisos y mensajes.
-- **Estado escrito** (`state-ok`, `state-pending`): verde y ámbar oscuros, sólo como color de texto o de icono, nunca como fondo. `state-ok` marca lo correcto, abierto o al día (el icono de "Todo al día"); `state-pending` marca lo pendiente ("Por responder" en el directorio del docente, el contador de caracteres del compositor). Se escriben como valores literales en `app/campus-base.css`, no como propiedades personalizadas.
+- **Estado escrito** (`state-ok`, `state-pending`): verde y ámbar oscuros, sólo como color de texto o de icono, nunca como fondo. `state-ok` marca lo correcto, abierto o al día (el icono de "Todo al día"); `state-pending` marca lo pendiente ("Por responder" en el directorio del docente, el contador de caracteres del compositor). Viven como `--state-ok` y `--state-pending` en el bloque de tokens de `app/globals.css`; dentro de ese bloque los alias heredados `--academic-emerald-deep`, `--shield-red` y `--shield-red-deep` apuntan a `--state-ok` y `--danger`, de modo que ningún componente del campus conserve verdes o rojos propios. Los avisos en línea (falta configurar algo, ramo archivado) son relleno tranquilo con el icono en `state-pending`, sin borde ni fondo ámbar.
 
 ### Named Rules
 
@@ -305,6 +305,7 @@ La profundidad viene de la diferencia entre escritorio y hoja más una sombra en
 - **Separador** (`drop-shadow(0 0 0.5px oklch(0.2 0.01 265 / 0.24)) drop-shadow(0 4px 8px oklch(0.2 0.01 265 / 0.08))`, en hover `0 10px 18px` a 0.11): ficha de curso con su pestaña y pila de sección en Avisos y mensajes.
 - **Burbuja** (`0 0 0 0.5px var(--hairline), 0 1px 1.5px oklch(0.2 0.01 265 / 0.06)`): burbuja entrante de un mensaje sobre el escritorio; la burbuja propia, azul, no lleva sombra.
 - **Foco de campo** (`0 0 0 4px oklch(0.5 0.19 258 / 0.22)`): halo azul de campos enfocados junto con el borde azul.
+- **Anillo de foco** (`--focus-outline`, 2px sólido en `primary`): foco de teclado de botones, enlaces y resúmenes plegables. Dentro de carriles con desplazamiento, como las pestañas del aula, el anillo se dibuja hacia adentro con radio `md` para que el recorte no lo corte.
 
 ### Named Rules
 
