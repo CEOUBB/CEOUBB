@@ -1129,9 +1129,46 @@ button.agenda-calendar-link:hover {
   border-radius: var(--radius-md);
   background: var(--fill-quiet);
 }
-@media (min-width: 768px) {
+.classroom-layout .grades-editor {
+  container-type: inline-size;
+}
+.classroom-layout .grades-editor-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "name name" "weight date" "mode mode" "remove remove";
+  margin-block-end: var(--space-sm);
+  & > label:nth-child(1) {
+    grid-area: name;
+  }
+  & > label:nth-child(2) {
+    grid-area: weight;
+  }
+  & > label:nth-child(3) {
+    grid-area: date;
+  }
+  & > label:nth-child(4) {
+    grid-area: mode;
+  }
+  & > .remove-row {
+    grid-area: remove;
+  }
+}
+@container (width >= 34rem) {
+  .classroom-layout .grades-editor-row {
+    grid-template-columns: minmax(0, 1fr) 96px 156px;
+    grid-template-areas: "name weight date" "mode remove remove";
+    & > .remove-row {
+      justify-self: end;
+    }
+  }
+}
+@container (width >= 52rem) {
   .classroom-layout .grades-editor-row {
     grid-template-columns: minmax(0, 1.6fr) 96px 156px minmax(260px, 1.4fr) auto;
+    grid-template-areas: "name weight date mode remove";
+    margin-block-end: 0;
+    & > .remove-row {
+      justify-self: stretch;
+    }
   }
 }
 .app-shell .grades-editor :is(input, select) {
