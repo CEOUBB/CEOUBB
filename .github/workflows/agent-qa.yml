@@ -49,16 +49,16 @@ jobs:
       matrix:
         shard: ["1/6", "2/6", "3/6", "4/6", "5/6", "6/6", "api"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: pnpm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -74,7 +74,7 @@ jobs:
           else
             pnpm exec playwright install --with-deps chromium firefox webkit
           fi
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/firebase/emulators
           key: ${{ runner.os }}-agent-qa-emulators-${{ hashFiles('firebase/firebase.json', 'pnpm-lock.yaml') }}
@@ -112,7 +112,7 @@ jobs:
         run: pnpm qa --all --browser api --production
       - name: Retain reports, screenshots and failing traces
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-qa-local-shard-${{ strategy.job-index }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: qa-results/
@@ -126,11 +126,11 @@ jobs:
     timeout-minutes: 15
     environment: Staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: pnpm
@@ -144,7 +144,7 @@ jobs:
         run: pnpm qa --staging
       - name: Retain staging evidence even when verification is incomplete
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-qa-staging-${{ github.run_id }}-${{ github.run_attempt }}
           path: qa-results/
