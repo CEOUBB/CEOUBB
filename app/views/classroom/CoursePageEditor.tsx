@@ -977,9 +977,7 @@ export function CoursePageEditor({
   const [preview, setPreview] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
-  const [creatingSection, setCreatingSection] = useState<string | null>(
-    teamPage.sections.length === 0 ? "" : null
-  );
+  const [creatingSection, setCreatingSection] = useState<string | null>();
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
@@ -1201,7 +1199,9 @@ export function CoursePageEditor({
             ))}
           </Reorder.Group>
           <AddSection
-            creating={creatingSection === ""}
+            creating={
+              creatingSection === "" || (creatingSection === undefined && sections.length === 0)
+            }
             onCreate={(title) => {
               setCreatingSection(null);
               createSection(title, "");
