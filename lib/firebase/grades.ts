@@ -1,4 +1,4 @@
-import { cloudFunctions, firestore, currentUser, emailOf } from "./sdk.ts";
+import { cloudFunctions, firestore, currentUser, emailOf, isDevOrLocalEnvironment } from "./sdk.ts";
 import {
   type GradeItem,
   type GradeScores,
@@ -50,7 +50,13 @@ export function watchGradebook(
           const state = toGradebookState(snapshot.exists() ? snapshot.data() : null);
           onChange({ courseId, items: state.gradebook, exemption: state.exemption });
         },
-        () => onError("No se pudo cargar el esquema de evaluaciones.")
+        () => {
+          if (isDevOrLocalEnvironment()) {
+            onChange({ courseId, items: [], exemption: null });
+            return;
+          }
+          onError("No se pudo cargar el esquema de evaluaciones.");
+        }
       );
     })
     .catch(() => onError("No se pudo conectar Firebase."));
@@ -97,7 +103,13 @@ export function watchGradebooks(
               });
               onChange([...bySection.values()]);
             },
-            () => onError("No se pudieron cargar las evaluaciones de los cursos.")
+            () => {
+              if (isDevOrLocalEnvironment()) {
+                onChange([...bySection.values()]);
+                return;
+              }
+              onError("No se pudieron cargar las evaluaciones de los cursos.");
+            }
           )
         );
       }

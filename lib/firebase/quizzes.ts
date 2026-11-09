@@ -6,7 +6,7 @@ import type {
   QuizQuestionKind,
   QuizResult,
 } from "../quizzes.ts";
-import { cloudFunctions, currentUser, firestore } from "./sdk.ts";
+import { cloudFunctions, currentUser, firestore, isDevOrLocalEnvironment } from "./sdk.ts";
 import { iso } from "./mappers.ts";
 
 export const MAX_QUIZZES_PER_SECTION = 100;
@@ -144,7 +144,13 @@ export function watchQuizzes(
             .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
           onChange(quizzes);
         },
-        () => onError("No se pudieron cargar los cuestionarios de la sección.")
+        () => {
+          if (isDevOrLocalEnvironment()) {
+            onChange([]);
+            return;
+          }
+          onError("No se pudieron cargar los cuestionarios de la sección.");
+        }
       );
     })
     .catch(() => onError("No se pudo conectar Firebase."));

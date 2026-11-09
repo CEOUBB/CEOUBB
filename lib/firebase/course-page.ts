@@ -1,5 +1,11 @@
 import type { DocumentData, QueryDocumentSnapshot, Transaction } from "firebase/firestore";
-import { authorFields, cloudStorage, currentUser, firestore } from "./sdk.ts";
+import {
+  authorFields,
+  cloudStorage,
+  currentUser,
+  firestore,
+  isDevOrLocalEnvironment,
+} from "./sdk.ts";
 import { chunkOperations } from "./grades.ts";
 import { deleteDevPost } from "./posts.ts";
 import { folderName, iso, toAttachments, toPost, type ClassroomAttachment } from "./mappers.ts";
@@ -591,7 +597,13 @@ export function watchTrash(
           sdk.limit(TRASH_LIMIT)
         ),
         (snapshot) => onChange(snapshot.docs.map(toTrashEntry)),
-        () => onError("No se pudo cargar la papelera del ramo.")
+        () => {
+          if (isDevOrLocalEnvironment()) {
+            onChange([]);
+            return;
+          }
+          onError("No se pudo cargar la papelera del ramo.");
+        }
       );
     })
     .catch(() => onError("No se pudo cargar la papelera del ramo."));

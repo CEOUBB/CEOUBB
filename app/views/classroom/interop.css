@@ -30,11 +30,8 @@
   gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   border: 0;
-  border-radius: var(--radius-lg);
-  background: var(
-    --danger-wash,
-    color-mix(in srgb, var(--shield-red-deep) 8%, var(--surface-card))
-  );
+  border-radius: var(--radius-md);
+  background: var(--danger-wash);
   font-size: 14px;
 }
 
@@ -56,20 +53,27 @@
 /* ── Paneles plegables ────────────────────────────────────── */
 
 .interop-authoring {
-  border: 1px solid var(--border-hairline);
+  border: 0;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  box-shadow: var(--shadow-1);
 }
 
 .interop-authoring summary {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  min-height: 60px;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-lg);
   cursor: pointer;
   list-style: none;
   transition: background var(--transition-fast);
+}
+
+.interop-authoring[open] > summary {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
 }
 
 .interop-authoring summary::-webkit-details-marker,
@@ -79,11 +83,11 @@
 }
 
 .interop-authoring summary:hover {
-  background: var(--canvas-soft);
+  background: var(--fill-quiet);
 }
 
 .interop-authoring summary:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: var(--focus-outline);
   outline-offset: -2px;
 }
 
@@ -107,7 +111,7 @@
 
 .interop-caret {
   flex: none;
-  color: var(--text-faint);
+  color: var(--text-muted);
   transition: transform var(--transition-fast);
 }
 
@@ -122,14 +126,13 @@
 
 /* ── Composición del panel de autoría ─────────────────────── */
 
-/* La medianera se paga a medias entre los dos paneles: si sólo el derecho
-   cargara el relleno, su columna quedaría 28px más angosta que la izquierda. */
+/* Los dos paneles son caminos alternativos: cada uno se hunde en su propio
+   relleno tranquilo, sin medianera dibujada entre ellos. */
 .interop-authoring-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: var(--space-lg);
-  padding: var(--space-md);
-  border-top: 1px solid var(--border-hairline);
+  gap: var(--space-sm);
+  padding: var(--space-xxs) var(--space-md) var(--space-md);
 }
 
 .interop-authoring-pane {
@@ -137,20 +140,15 @@
   flex-direction: column;
   gap: var(--space-xs);
   min-width: 0;
-}
-
-.interop-authoring-pane:first-child {
-  padding-right: var(--space-xl);
-}
-
-.interop-authoring-pane + .interop-authoring-pane {
-  padding-left: var(--space-xl);
-  border-left: 1px solid var(--border-hairline);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--fill-quiet);
 }
 
 .interop-authoring-pane h3 {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .interop-authoring-actions {
@@ -165,18 +163,19 @@
   align-items: flex-start;
   gap: var(--space-xs);
   padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--shield-gold) 40%, var(--border-hairline));
+  border: 0;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--shield-gold) 10%, var(--surface-card));
+  background: var(--surface-card);
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .interop-inline-alert svg {
   flex: none;
   margin-top: 1px;
-  color: var(--academic-bronze);
+  color: var(--state-pending);
 }
 
 /* ── Controles de formulario ──────────────────────────────── */
@@ -195,34 +194,22 @@
   width: 100%;
   min-width: 0;
   min-height: 42px;
-  padding: 9px 10px;
+  padding: 9px 12px;
   border: 1px solid var(--border-control);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-md);
   color: var(--text-body);
   background: var(--surface-card);
   font: inherit;
   font-weight: 400;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
 }
 
 .interop-workspace input:disabled,
 .interop-workspace select:disabled,
 .interop-workspace textarea:disabled {
-  background: var(--canvas-soft);
+  background: var(--fill-quiet);
   border-color: var(--border-hairline);
-  color: var(--text-faint);
+  color: var(--text-muted);
   cursor: not-allowed;
-}
-
-.interop-workspace input:focus-visible,
-.interop-workspace select:focus-visible,
-.interop-workspace textarea:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus);
 }
 
 .interop-workspace .interop-upload {
@@ -231,18 +218,18 @@
   align-items: center;
   gap: var(--space-sm);
   overflow: hidden;
+  min-height: 64px;
   padding: var(--space-sm) var(--space-md);
-  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--border-hairline));
+  border: 0;
   border-radius: var(--radius-md);
-  background: var(--color-primary-wash);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-control);
   cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast);
+  transition: box-shadow var(--transition-fast);
 }
 
 .interop-upload:hover {
-  border-color: var(--color-primary);
+  box-shadow: var(--shadow-lift);
 }
 
 .interop-upload svg {
@@ -265,7 +252,7 @@
 
 .interop-upload small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 400;
 }
 
@@ -277,7 +264,7 @@
 }
 
 .interop-upload:focus-within {
-  outline: 2px solid var(--color-primary);
+  outline: var(--focus-outline);
   outline-offset: 3px;
 }
 
@@ -301,21 +288,24 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) 20px;
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  transition: box-shadow var(--transition-fast);
 }
 
 .interop-resource-list li:hover {
-  border-color: color-mix(in srgb, var(--course-tone, var(--color-primary)) 34%, var(--hairline));
+  box-shadow: var(--shadow-lift);
 }
 
 .interop-resource-list h3 {
   margin: 2px 0 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.012em;
   overflow-wrap: anywhere;
 }
 
@@ -341,11 +331,17 @@
   padding: 0 var(--space-md) var(--space-md);
 }
 
+.interop-tool-list {
+  display: grid;
+  gap: var(--space-xs);
+}
+
 .interop-tool-list li {
   display: grid;
   gap: var(--space-xs);
-  padding: var(--space-sm) 0;
-  border-top: 1px solid var(--border-hairline);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--fill-quiet);
 }
 
 .interop-tool-list dl {
@@ -355,7 +351,7 @@
   margin: 0;
   font-size: 13px;
   color: var(--text-muted);
-  font-variant-numeric: tabular-nums lining-nums;
+  font-variant-numeric: var(--num);
 }
 
 .interop-tool-list dd {
@@ -386,23 +382,15 @@
   width: 100%;
   height: 72vh;
   min-height: 400px;
-  border: 1px solid var(--border-hairline);
+  border: 0;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  box-shadow: var(--shadow-1);
 }
 
 @media (max-width: 860px) {
   .interop-authoring-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .interop-authoring-pane:first-child {
-    padding-right: 0;
-  }
-  .interop-authoring-pane + .interop-authoring-pane {
-    padding-left: 0;
-    padding-top: var(--space-lg);
-    border-left: 0;
-    border-top: 1px solid var(--border-hairline);
   }
 }
 
@@ -412,6 +400,9 @@
   .interop-alert {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .interop-resource-list li {
+    padding: var(--space-md);
   }
   .interop-actions {
     width: 100%;

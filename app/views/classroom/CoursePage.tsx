@@ -166,6 +166,7 @@ export function CoursePage({
   onStartEditing,
   onFinishEditing,
   openAttachment,
+  retry,
 }: {
   course: Course;
   classroom: ClassroomState;
@@ -176,6 +177,7 @@ export function CoursePage({
   onStartEditing: () => void;
   onFinishEditing: (seed: ComposeSeed | null) => void;
   openAttachment: OpenAttachment;
+  retry: () => void;
 }) {
   const loading = classroom.postsStatus === "loading" || classroom.sectionsStatus === "loading";
   const [query, setQuery] = useState("");
@@ -201,6 +203,7 @@ export function CoursePage({
         course={course}
         onDone={onFinishEditing}
         openAttachment={openAttachment}
+        retry={retry}
         teamPage={page}
       />
     );
