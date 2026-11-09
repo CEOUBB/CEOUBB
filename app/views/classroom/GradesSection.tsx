@@ -624,7 +624,14 @@ function TeacherGradesMatrix({
   });
 
   return (
-    <div className="grades-matrix" id="teacher-grades-matrix">
+    <div
+      className="grades-matrix"
+      id="teacher-grades-matrix"
+      role="region"
+      aria-label="Libro de notas"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- La matriz desplazable necesita foco para usar las flechas del teclado.
+      tabIndex={0}
+    >
       <div className="grades-matrix-head">
         <span>Estudiante</span>
         {gradebook.map((item) => (
