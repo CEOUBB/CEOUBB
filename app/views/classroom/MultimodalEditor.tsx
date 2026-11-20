@@ -1081,7 +1081,7 @@ function CodeModal({
             onClick={onCancel}
             type="button"
           >
-            <X size={18} />
+            <X aria-hidden="true" size={18} />
           </button>
         </div>
         <div className="editor-modal-form">
@@ -1182,7 +1182,7 @@ function FormulaModal({
             onClick={onCancel}
             type="button"
           >
-            <X size={18} />
+            <X aria-hidden="true" size={18} />
           </button>
         </div>
         <div className="editor-modal-form">
@@ -1298,7 +1298,7 @@ function LinkModal({
             onClick={onCancel}
             type="button"
           >
-            <X size={18} />
+            <X aria-hidden="true" size={18} />
           </button>
         </div>
         <div className="editor-modal-form">
@@ -1398,7 +1398,7 @@ function TableModal({
             onClick={onCancel}
             type="button"
           >
-            <X size={18} />
+            <X aria-hidden="true" size={18} />
           </button>
         </div>
         <div className="editor-modal-form">
